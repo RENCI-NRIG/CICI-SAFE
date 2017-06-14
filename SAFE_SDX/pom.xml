@@ -1,0 +1,155 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<properties>
+		<maven.build.timestamp.format>MM/dd/yyyy HH:mm</maven.build.timestamp.format>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<orca.snap.repository.id>geni-orca-snapshot</orca.snap.repository.id>
+		<orca.rel.repository.id>geni-orca-release</orca.rel.repository.id>
+		<orca.snap.repository.url>http://ci-dev.renci.org/nexus/content/repositories/geni-orca-snapshot/</orca.snap.repository.url>
+		<orca.rel.repository.url>http://ci-dev.renci.org/nexus/content/repositories/geni-orca-release/</orca.rel.repository.url>
+	</properties>
+
+
+
+
+	<organization>
+		<name>RENCI, The University of North Carolina at Chapel Hill</name>
+		<url>http://www.renci.org</url>
+	</organization>
+
+
+	<groupId>safe</groupId>
+	<artifactId>sdx</artifactId>
+	<name>carreir_server</name>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-assembly-plugin</artifactId>
+				<version>1.10</version>
+				<configuration>
+					<archive>
+						<manifest>
+							<mainClass>orca.stitchport_mapper.StitchPortMapper</mainClass>
+						</manifest>
+					</archive>
+					<descriptorRefs>
+						<descriptorRef>jar-with-dependencies</descriptorRef>
+					</descriptorRefs>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>appassembler-maven-plugin</artifactId>
+				<version>1.10</version>
+				<configuration>
+					<programs>
+						<program>
+							<mainClass>safe.sdx.SdxServer</mainClass>
+							<name>SafeSdxServer</name>
+						</program>
+						<program>
+							<mainClass>safe.sdx.Example</mainClass>
+							<name>SafeSdxExample</name>
+						</program>
+						<program>
+              <mainClass>safe.sdx.RoutingServer</mainClass>
+							<name>SafeSdxRouting</name>
+						</program>
+						<program>
+              <mainClass>safe.sdx.RoutingClient</mainClass>
+							<name>SafeSdxRoutingClient</name>
+						</program>
+						<program>
+              <mainClass>safe.sdx.RpkiServer</mainClass>
+							<name>SafeSdxRpkiServer</name>
+						</program>
+					</programs>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<version>3.5.1</version>
+				<configuration>
+					<source>1.7</source>
+					<target>1.7</target>
+				</configuration>
+			</plugin>
+
+		</plugins>
+	</build>
+
+	<repositories>
+		<repository>
+			<id>${orca.snap.repository.id}</id>
+			<name>Orca Project Maven Snapshot Repository</name>
+			<url>${orca.snap.repository.url}</url>
+			<snapshots>
+				<enabled>true</enabled>
+				<updatePolicy>always</updatePolicy>
+			</snapshots>
+		</repository>
+		<repository>
+			<id>${orca.rel.repository.id}</id>
+			<name>Orca Project Maven Release Repository</name>
+			<url>${orca.rel.repository.url}</url>
+		</repository>
+		<repository>
+				<id>Jsch</id>
+				<url>http://jsch.sf.net/maven2/</url>
+		</repository>
+	</repositories>
+
+
+	<dependencies>
+		<dependency>
+			<groupId>org.renci.ahab</groupId>
+			<artifactId>ahab</artifactId>
+ 			<version>0.1.1</version> 
+			<!-- <version>0.1.1-SNAPSHOT</version> -->
+			<type>pom</type>
+		</dependency>
+		<dependency>
+			<groupId>org.renci.ahab</groupId>
+			<artifactId>libndl</artifactId>
+			<version>0.1.1</version>
+		</dependency>
+		<dependency>
+			<groupId>org.renci.ahab</groupId>
+			<artifactId>libtransport</artifactId>
+ 			<version>0.1.4</version>  
+<!--			<version>0.1.1-SNAPSHOT</version> -->
+		</dependency>
+    <!-- https://mvnrepository.com/artifact/com.jcraft/jsch -->
+    <dependency>
+      <groupId>com.jcraft</groupId>
+      <artifactId>jsch</artifactId>
+      <version>0.1.53</version>
+    </dependency>
+
+
+		<dependency>
+			<groupId>org.apache.logging.log4j</groupId>
+			<artifactId>log4j-core</artifactId>
+			<version>2.3</version>
+		</dependency>
+
+		<!-- https://mvnrepository.com/artifact/org.apache.httpcomponents/httpclient -->
+		<dependency>
+				<groupId>org.apache.httpcomponents</groupId>
+				<artifactId>httpclient</artifactId>
+				<version>4.5.3</version>
+		</dependency>
+
+	</dependencies>
+
+
+
+
+
+	<version>0.1-SNAPSHOT</version>
+</project>
