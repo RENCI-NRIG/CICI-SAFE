@@ -1,0 +1,77 @@
+package safe.safelang
+package model
+
+import org.joda.time.DateTime
+import org.joda.time.format.{DateTimeFormatter, ISODateTimeFormat}
+
+/**
+ * Helper class to hold the certificate validity range.
+ * 
+ * @param notBefore the earliest date/time the credential may be used
+ * @param notAfter the last date/time the credential may be used
+ */
+case class Validity(notBefore: DateTime, notAfter: DateTime) {
+  // check whether the certificate is valid at a given time; default is current time
+  def isValidOn(date: DateTime): Boolean = {
+    (notBefore == null || notBefore.isBefore(date)) && (notAfter == null || notAfter.isAfter(date))
+  }
+
+  override def toString(): String = s"""
+    | notBefore('${Validity.format.print(notBefore)}'),
+    | notAfter('${Validity.format.print(notAfter)}')
+    """.stripMargin
+}
+
+object Validity {
+  val format: DateTimeFormatter = ISODateTimeFormat.dateTime()
+  def now(): DateTime = new DateTime()
+  def apply(): Validity = {
+    val notBefore = now()
+    new Validity(notBefore.minusMinutes(10), notBefore.plusYears(3))
+  }
+
+  def apply(notBefore: String, notAfter: String): Validity = {
+    new Validity(format.parseDateTime(notBefore), format.parseDateTime(notAfter))
+  }
+  def apply(notBeforeMayBe: Option[String], notAfterMayBe: Option[String]): Validity = (notBeforeMayBe, notAfterMayBe) match {
+    case (None, None) =>  
+      val notBefore = now()
+      new Validity(notBefore.minusMinutes(10), notBefore.plusYears(3))
+    case (Some(notBefore), Some(notAfter)) =>
+      new Validity(format.parseDateTime(notBefore), format.parseDateTime(notAfter))
+    case (Some(notBefore), None) =>
+      val notAfter = now().plusYears(3)
+      new Validity(format.parseDateTime(notBefore), notAfter)
+    case (None, Some(notAfter)) =>
+      val notBefore = now()
+      new Validity(notBefore.minusMinutes(10), format.parseDateTime(notAfter))
+  }
+
+  val dateRegex = """\s*(\$now)\s*(([\+\-])\s*([\d]+)(\.(milli|second|minute|hour|day|week|month|year)s?)?)?""".r
+
+  def getDate(date: String, now: DateTime = new DateTime(), format: DateTimeFormatter = ISODateTimeFormat.dateTime()): String = date match {
+    case dateRegex(nowEnv, _, op, num, _, tpe) =>
+      if(op == null) now.toString
+      else if(op == "+") {
+        val newTpe = tpe.capitalize
+        val newOp = s"plus${newTpe}s"
+        //val res = now.newOp(num) // TODO: use macros
+        // enumerate for now
+        val res = if(tpe == "null") now.plus(num.toLong)
+          else if(tpe == "year") now.plusYears(num.toInt)
+          else if(tpe == "minute") now.plusMinutes(num.toInt)
+          else sys.error("not yet implemented")
+        format.print(res)
+      } else if(op == "-") {
+        val res = if(tpe == "null") now.minus(num.toInt)
+          else if(tpe == "year") now.minusYears(num.toInt)
+          else if(tpe == "minute") now.minusMinutes(num.toInt)
+          else sys.error("not yet implemented")
+        format.print(res)
+      } else {
+        //logger.error("Unknown date operation specified")
+        sys.error("Unknown date operation specified")
+      }
+    case  _ => date
+  }
+}

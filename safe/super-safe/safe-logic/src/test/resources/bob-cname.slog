@@ -1,0 +1,13 @@
+appmaster: good(minerApp).
+ihost: runs(miner, minerApp).
+alice: runs(Instance, App)  :- alice: trusted(CP), CP: runs(Instance, App).
+alice: trusted(ihost).
+alice: trusted(appmaster).
+alice: good(App) :- alice: trusted(AA), AA: good(App).
+alice: good(Instance)  :- alice: runs(Instance, App), alice: good(App).
+
+bob: access(Subject, Object) :- bob: goodCanAccess(Object), alice:
+good(Subject).
+bob: goodCanAccess(file72).
+bob: access(miner, file72)?
+

@@ -1,0 +1,6 @@
+uow to run safe akka server:
+
+********** Launch a safe akka server ************
+$ sbt
+[safe@sbt]> project safe-akka
+[safe-akka@sbt]> run -f /home/qiang/Desktop/safe-new-version-repo-working-copy/safe/safe-apps/safe_spark_guard.slang   safeService

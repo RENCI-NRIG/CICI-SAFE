@@ -1,0 +1,8 @@
+- subset/contains/in operator
+- ipv4/ipv6 support
+- check for inequality operator
+- pushing arthimetic predicates to the right
+- support for left-recursion
+- support for data cycles with tabling
+- queries by type
+- support for indexing by primary keys
