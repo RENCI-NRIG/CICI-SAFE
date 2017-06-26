@@ -72,10 +72,20 @@ public class Example {
   private static ISliceTransportAPIv1 sliceProxy;
   private static SliceAccessContext<SSHAccessToken> sctx;
   private static int curip=128;
+  private static String IPPrefix="192.168.";
+  private static String mask="/24";
   private static HashMap<String, Link> links=new HashMap<String, Link>();
   private static String customer_keyhash;
   private static String safeserver;
   private static String sshkey;
+  private static String riakip="153.3.145.36";
+
+  private static  void computeIP(String prefix){
+    String[] ip_mask=prefix.split("/");
+    String[] ip_segs=ip_mask[0].split("\\.");
+    IPPrefix=ip_segs[0]+"."+ip_segs[1]+".";
+    curip=Integer.valueOf(ip_segs[2]);
+  }
 	
 	public static void main(String [] args){
 		//Example usage:   ./target/appassembler/bin/SafeSdxExample  ~/.ssl/geni-pruth1.pem ~/.ssl/geni-pruth1.pem "https://geni.renci.org:11443/orca/xmlrpc" pruth.1 stitch
@@ -103,15 +113,21 @@ public class Example {
 
     if(args[4].equals("server")){
       SDNControllerIP=args[6];
+      if(args.length<9){
+        System.out.print("Using default riak server at 152.3.145.36:8098");
+      }else{
+        riakip=args[8];
+      }
       try{
         if(args[5].equals("true")){
           String carrierName=sliceName;
           System.setProperty("java.security.policy","~/project/exo-geni/ahabserver/allow.policy");
           Slice carrier=createCarrierSlice(carrierName,4,10,1000000,1);
           waitTillActive(carrier);
-          copyFile2Slice(carrier, "/home/yaoyj11/project/exo-geni/SAFE_SDX/src/main/resources/scripts/dpid.sh","~/dpid.sh","~/.ssh/id_rsa");
-          copyFile2Slice(carrier, "/home/yaoyj11/project/exo-geni/SAFE_SDX/src/main/resources/scripts/ovsbridge.sh","~/ovsbridge.sh","~/.ssh/id_rsa");
-          runCmdSlice(carrier,"/bin/bash ~/ovsbridge.sh "+SDNControllerIP+":6633","~/.ssh/id_rsa");
+          sshkey=args[7];
+          copyFile2Slice(carrier, "/home/yaoyj11/project/exo-geni/SAFE_SDX/src/main/resources/scripts/dpid.sh","~/dpid.sh",sshkey);
+          copyFile2Slice(carrier, "/home/yaoyj11/project/exo-geni/SAFE_SDX/src/main/resources/scripts/ovsbridge.sh","~/ovsbridge.sh",sshkey);
+          runCmdSlice(carrier,"/bin/bash ~/ovsbridge.sh "+SDNControllerIP+":6633",sshkey);
         }
       }catch (Exception e){
         e.printStackTrace();
@@ -133,7 +149,12 @@ public class Example {
       String customerName=sliceName;
       try{
         if(args[5].equals("true")){
-          Slice c1=createCustomerSlice(customerName,2,"192.168.",30,1000000,false);
+          try{
+            computeIP(args[6]);
+          }catch(Exception e){
+            e.printStackTrace();
+          }
+          Slice c1=createCustomerSlice(customerName,2,IPPrefix,curip,1000000,true);
           waitTillActive(c1);
           //copyFile2Slice(c1, "/home/yaoyj11/project/exo-geni/SAFE_SDX/src/main/resources/scripts/configospffornewif.sh","~/configospffornewif.sh","~/.ssh/id_rsa");
           //copyFile2Slice(c1, "/home/yaoyj11/project/exo-geni/SAFE_SDX/src/main/resources/scripts/configospffornewif.sh","~/configospffornewif.sh","~/.ssh/id_rsa");
@@ -143,87 +164,6 @@ public class Example {
       }catch (Exception e){
         e.printStackTrace();
       }
-      sshkey=args[6];
-      customer_keyhash=args[7];
-      safeserver=args[8];
-      System.setProperty("java.security.policy","~/project/exo-geni/SAFE_SDX/allow1.policy");
-      String input = new String();  
-      try{
-			java.io.BufferedReader stdin = new java.io.BufferedReader(new java.io.InputStreamReader(System.in));  
-
-      System.out.println("enter to continue stitching slice or configuring routing");
-      input = stdin.readLine();  
-      }catch(Exception e){
-      System.out.println("enter to continue sittiching:errro");
-      }
-
-		 try{
-       ServiceAPI obj = (ServiceAPI) Naming.lookup( "//" + 
-							 "localhost" + 
-							 "/ServiceServer");         //objectname in registry 
-//					System.out.println(obj.sayHello()); 
-       java.io.BufferedReader stdin = new java.io.BufferedReader(new java.io.InputStreamReader(System.in));  
-       while(true){
-         System.out.println("Enter Commands:stitch clientslicename, server slice anme, client resource name, server resource name\n Or advertise route: route dest, routername, gateway\n$>");
-         input = stdin.readLine();  
-         String[] params=input.split(" ");
-         System.out.println("continue?[y/n]\n$>"+input);
-         input = stdin.readLine();  
-         if(input.startsWith("y")){
-           if(params[0].equals("stitch")){
-
-             Slice s2 = null;
-             
-             try {
-               s2 = Slice.loadManifestFile(sliceProxy, params[1]);
-             } catch (ContextTransportException e) {
-               // TODO Auto-generated catch block
-               e.printStackTrace();
-             } catch (TransportException e) {
-               // TODO Auto-generated catch block
-               e.printStackTrace();
-             }
-             
-             ComputeNode node0_s2 = (ComputeNode) s2.getResourceByName(params[3]);
-             String node0_s2_stitching_GUID = node0_s2.getStitchingGUID();
-             
-             String secret="mysecret";
-             System.out.println("node0_s2_stitching_GUID: " + node0_s2_stitching_GUID);
-             try {
-               //s1
-               sliceProxy.permitSliceStitch(params[1],node0_s2_stitching_GUID, secret);
-             } catch (TransportException e) {
-               // TODO Auto-generated catch block
-               System.out.println("error permit stitch");
-               e.printStackTrace();
-               continue;
-             }
-             //post stitch request to SAFE
-             postStitchRequest(customer_keyhash,customerName,node0_s2_stitching_GUID,params[2],params[4]);
-
-             String res=obj.stitchRequest(params[2],params[4],customer_keyhash,customerName,node0_s2_stitching_GUID,secret);
-             System.out.println("Got Stitch Information From Server: "+res);
-             if(res.equals("")){
-               System.out.println("stitch request declined by server");
-             } 
-             else{
-               String[] parts=res.split("_");
-               String ip=parts[1];
-               System.out.println("set IP address of the stitch interface to "+ip);
-               sleep(10);
-               Exec.sshExec("root",node0_s2.getManagementIP(),"ifconfig eth1 "+ip,sshkey);
-             }
-           }else{
-             obj.notifyPrefix(params[1],params[3],params[2],customer_keyhash);
-           }
-         }
-       }
-     }
-     catch (Exception e) 
-     { 
-       System.out.println("HelloClient exception: " + e.getMessage()); 
-       e.printStackTrace(); 
-     } 
     }
 		System.out.println("XXXXXXXXXX Done XXXXXXXXXXXXXX");
 	}
@@ -627,7 +567,6 @@ public class Example {
       node0.setPostBootScript(nodePostBootScript);
       nodelist.add(node0);
       //for(int j=0;j<numstitches;j++){
-	
       //  Network net1 = s.addBroadcastLink("stitch"+String.valueOf(i)+ String.valueOf(j),bw);
       //  InterfaceNode2Net ifaceNode0 = (InterfaceNode2Net) net1.stitch(node0);
       //  ifaceNode0.setIpAddress("192.168."+String.valueOf(100+i*10+j)+".1");
@@ -648,6 +587,7 @@ public class Example {
         ifaceNode1.setNetmask("255.255.255.0");
       }
     }
+    addSafeServer(s,riakip);
     s.commit();
     return s;
 	}
@@ -710,11 +650,10 @@ public class Example {
     ArrayList<ComputeNode> nodelist=new ArrayList<ComputeNode>();
     ArrayList<Network> netlist=new ArrayList<Network>();
     for(int i=0;i<num;i++){
-		
       ComputeNode node0 = s.addComputeNode("CNode"+String.valueOf(i));
       node0.setImage(nodeImageURL,nodeImageHash,nodeImageShortName);
       node0.setNodeType(nodeNodeType);
-      node0.setDomain(domains.get(2));
+      node0.setDomain(domains.get(0));
       node0.setPostBootScript(nodePostBootScript);
       nodelist.add(node0);
       if(network){
@@ -733,10 +672,23 @@ public class Example {
         }
       }
     }
+    //add safe server
+    addSafeServer(s,riakip);
 		s.commit();
     return s;
 	}
 	
+  private static void addSafeServer(Slice s, String rip){
+		String dockerImageShortName="Ubuntu 14.04 Docker";
+		String dockerImageURL ="http://geni-orca.renci.org/owl/5e2190c1-09f1-4c48-8ed6-dacae6b6b435#Ubuntu+14.0.4+Docker";//http://geni-images.renci.org/images/standard/ubuntu/ub1304-ovs-opendaylight-v1.0.0.xml
+		String dockerImageHash ="b4ef61dbd993c72c5ac10b84650b33301bbf6829";
+		String dockerNodeType="XO Large";
+    ComputeNode node0 = s.addComputeNode("safe-server");
+    node0.setImage(dockerImageURL,dockerImageHash,dockerImageShortName);
+    node0.setNodeType(dockerNodeType);
+    node0.setDomain(domains.get(0));
+    node0.setPostBootScript(getSafeScript(rip));
+  }
 	
 	public static void stitchSlices(String carrierName, String customerName, String netName, String nodeName,String newip,int netmask){	
 		System.out.println("ndllib TestDriver: START");
@@ -862,6 +814,14 @@ public class Example {
     return script;
   }
 
+  private static String getSafeScript(String riakip){
+		String script="apt-get update\n"
+      +"docker pull yaoyj11/safeserver\n"
+      +"docker run -i -t -d -p 7777:7777 -h safe --name safe yaoyj11/safeserver\n"
+      +"docker exec -d safe /bin/bash -c  \"cd /root/safe;export SBT_HOME=/opt/sbt-0.13.12;export SCALA_HOME=/opt/scala-2.11.8;sed -i 's/152.3.145.36:8098/"+riakip+":8098/g' safe-server/src/main/resources/application.conf;./sdx.sh\"\n";
+    return script;
+  }
+
   private static  String getQuaggaScript(){
     return "#!/bin/bash\n"
      // +"mask2cdr()\n{\n"+"local x=${1##*255.}\n"
@@ -946,8 +906,8 @@ public class Example {
 //			l.add("UAF (Fairbanks, AK, USA) XO Rack");
 		
 //			l.add("UH (Houston, TX USA) XO Rack");
-//			l.add("TAMU (College Station, TX, USA) XO Rack");
-			l.add("RENCI (Chapel Hill, NC USA) XO Rack");
+			l.add("TAMU (College Station, TX, USA) XO Rack");
+//			l.add("RENCI (Chapel Hill, NC USA) XO Rack");
 //			
 //			l.add("SL (Chicago, IL USA) XO Rack");
 //			

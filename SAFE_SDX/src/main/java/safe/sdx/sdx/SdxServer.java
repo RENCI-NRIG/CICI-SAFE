@@ -130,8 +130,8 @@ public class SdxServer extends UnicastRemoteObject implements ServiceAPI {
 
   private static  void computeIP(String prefix){
     String[] ip_mask=prefix.split("/");
-    String[] ip_segs=ip_mask[0].split(".");
-    IPPrefix=ip_segs[0]+"."+ip_segs[1];
+    String[] ip_segs=ip_mask[0].split("\\.");
+    IPPrefix=ip_segs[0]+"."+ip_segs[1]+".";
     curip=Integer.valueOf(ip_segs[2]);
   }
 	
@@ -152,9 +152,8 @@ public class SdxServer extends UnicastRemoteObject implements ServiceAPI {
     SDNController=SDNControllerIP+":8080";
     OVSController=SDNControllerIP+":6633";
     sshkeyLocation=args[5];
-	  safeserver=args[6];
-    server_keyhash=args[7];
-    IPPrefix=args[8];
+    server_keyhash=args[6];
+    IPPrefix=args[7];
     computeIP(IPPrefix);
 		sliceProxy = SdxServer.getSliceProxy(pemLocation,keyLocation, controllerUrl);		
 		//SSH context
@@ -172,6 +171,8 @@ public class SdxServer extends UnicastRemoteObject implements ServiceAPI {
     Slice server_slice = null;
     try {
       server_slice = Slice.loadManifestFile(sliceProxy, sliceName);
+      ComputeNode safe=(ComputeNode)server_slice.getResourceByName("safe-server");
+      safeserver=safe.getManagementIP()+":7777";
     } catch (ContextTransportException e) {
       // TODO Auto-generated catch block
       e.printStackTrace();
@@ -195,6 +196,7 @@ public class SdxServer extends UnicastRemoteObject implements ServiceAPI {
 	}
 
   public void notifyPrefix(String dest, String gateway, String router,String customer_keyhash) throws RemoteException{
+    System.out.println("received notification for ip prefix"+dest);
     System.setProperty("java.security.policy","~/project/exo-geni/SAFE_SDX/allow.policy");
     for(String[]pair:advertisements){
       if(authorizePrefix(pair[0],pair[1],customer_keyhash,dest)){
@@ -327,7 +329,7 @@ public class SdxServer extends UnicastRemoteObject implements ServiceAPI {
     othervalues[3]=slicename;
     othervalues[4]=nodename;
     String message=SafePost.postSafeStatements(safeserver,"verifyStitch",server_keyhash,othervalues);
-    if(message !=null && message.contains("Unsatisfied")){
+    if(message ==null || message.contains("Unsatisfied")){
       return false;
     }
     else

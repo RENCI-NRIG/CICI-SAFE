@@ -7,8 +7,10 @@
 CustomerSlice	Example.java	/^	public static  Slice CustomerSlice(String sliceName,int num,String prefix, int start){\/\/=1, String subnet="")$/;"	m	class:Example	signature:(String sliceName,int num,String prefix, int start)
 Example	Example.java	/^  public Example()throws RemoteException{}$/;"	m	class:Example	signature:()
 Example	Example.java	/^public class Example {$/;"	c
+IPPrefix	Example.java	/^  private static String IPPrefix="192.168.";$/;"	f	class:Example	file:
 RequestResource	Example.java	/^	private static final String RequestResource = null;$/;"	f	class:Example	file:
 SDNControllerIP	Example.java	/^  private static String SDNControllerIP;$/;"	f	class:Example	file:
+computeIP	Example.java	/^  private static  void computeIP(String prefix){$/;"	m	class:Example	file:	signature:(String prefix)
 configOSPFForNewInterface	Example.java	/^  private static void configOSPFForNewInterface(ComputeNode c, String newip){$/;"	m	class:Example	file:	signature:(ComputeNode c, String newip)
 controllerUrl	Example.java	/^	private static String controllerUrl;$/;"	f	class:Example	file:
 copyFile2Slice	Example.java	/^  private static void copyFile2Slice(Slice s, String lfile, String rfile,String privkey){$/;"	m	class:Example	file:	signature:(Slice s, String lfile, String rfile,String privkey)
@@ -24,11 +26,13 @@ dumbBell	Example.java	/^  public static void dumbBell(String sliceName){$/;"	m	c
 getNetworkInfo	Example.java	/^  public static void getNetworkInfo(Slice s){$/;"	m	class:Example	signature:(Slice s)
 getOVSScript	Example.java	/^  private static String getOVSScript(String cip){$/;"	m	class:Example	file:	signature:(String cip)
 getQuaggaScript	Example.java	/^  private static  String getQuaggaScript(){$/;"	m	class:Example	file:	signature:()
+getSafeScript	Example.java	/^  private static String getSafeScript(String riakip){$/;"	m	class:Example	file:	signature:(String riakip)
 getSlice	Example.java	/^	public static Slice getSlice(ISliceTransportAPIv1 sliceProxy, String sliceName){$/;"	m	class:Example	signature:(ISliceTransportAPIv1 sliceProxy, String sliceName)
 getSliceProxy	Example.java	/^	public static ISliceTransportAPIv1 getSliceProxy(String pem, String key, String controllerUrl){$/;"	m	class:Example	signature:(String pem, String key, String controllerUrl)
 keyLocation	Example.java	/^	private static String keyLocation;$/;"	f	class:Example	file:
 links	Example.java	/^  private static HashMap<String, Link> links=new HashMap<String, Link>();$/;"	f	class:Example	file:
 main	Example.java	/^	public static void main(String [] args){$/;"	m	class:Example	signature:(String [] args)
+mask	Example.java	/^  private static String mask="\/24";$/;"	f	class:Example	file:
 networkStitch	Example.java	/^  public static void networkStitch(String sliceName){$/;"	m	class:Example	signature:(String sliceName)
 pemLocation	Example.java	/^	private static String pemLocation;$/;"	f	class:Example	file:
 postStitchRequest	Example.java	/^  private static boolean postStitchRequest(String customer_keyhash,String customerName,String ReservID,String slicename, String nodename){$/;"	m	class:Example	file:	signature:(String customer_keyhash,String customerName,String ReservID,String slicename, String nodename)

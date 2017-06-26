@@ -52,6 +52,10 @@
 							<name>SafeSdxServer</name>
 						</program>
 						<program>
+							<mainClass>safe.sdx.SdxClient</mainClass>
+							<name>SafeSdxClient</name>
+						</program>
+						<program>
 							<mainClass>safe.sdx.Example</mainClass>
 							<name>SafeSdxExample</name>
 						</program>
