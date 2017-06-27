@@ -1,21 +1,13 @@
 To run the demo for SDX, you need to run a safe server first, and then run the ahab controller to start the sdx service
 
 [1] run safe-server
-  1. Deploy a riak server [you can use our riakserver directly 152.3.145.36:8098 ]
-    ./builddocker.sh
-    ./rundocker.sh
-
-  2. Run a SAFE server
-    (1). Configure SAFE server
-      $vim safe-server/src/main/resourcse/application.conf
-      Set the ip address of storeURI to the IP address of the riak server [or use the default riak server]
-    (2) generate keypairs [you can skip this step since there is keypairs needed for demo]
-    (3) start a SAFE server, you need to edit the path of the slang file to full path in sdx.sh
-      $cd safe/super-safe
-      $./sdx.sh 
-
-
-
+  Deploy a riak server [you can use our riakserver directly 152.3.145.36:8098], or you can deploy a Riak server in Docker container
+  $sudo docker pull yaoyj11/riakimg
+  $sudo docker run -i -t  -d -p 2122:2122 -p 8098:8098 -p 8087:8087 -h riakserver --name riakserver yaoyj11/riakimg
+  Start riak service
+  $sudo docker exec -it riak sudo riak start
+  $sudo docker exec -it riak sudo riak-admin bucket-type activate  safesets
+  $sudo docker exec -it riak sudo riak-admin bucket-type update safesets '{"props":{"allow_mult":false}}'
 
 [2] SDX service , SAFE_SDX directory
 
