@@ -1,1 +1,0 @@
--Dakka.remote.port=6011 -Dsafelang.program=/home/qiang/Desktop/safe-new-version-benchmark/safe/safe-apps/difc/tagOwner.slang  -Dhttp.port=3011  -Dsafe.keypair=/home/qiang/Desktop/safe-new-version-benchmark/safe/safe-apps/difc/keys/tag_owner11.pem  -Xmx256m
