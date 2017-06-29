@@ -1,3 +1,4 @@
+---------------SAFE-SDX-----------------------------
 To run the demo for SDX, you need to run a safe server first, and then run the ahab controller to start the sdx service
 
 [1] run safe-server
@@ -32,20 +33,22 @@ To run the demo for SDX, you need to run a safe server first, and then run the a
     $./sdxclient.sh alice client false "~/.ssh/id_rsa" weQ8OFpXWhIB1AMzKX2SDJcxT738VdHCcl7mFlvOD24
     $./sdxclient.sh bob client false "~/.ssh/id_rsa" iMrcWFMgx6DJeLtVWvBCMzwd8EDtJtZ4L0n3YYn1hi8
 
-  6. alice stitch CNode0 to sdx/c0
+  6. Make SAFE statements to state the stitching and traffic policies, allocation of IP prefixes and stitching requests. (More details to be added)
+
+  7. alice stitch CNode0 to sdx/c0
     $>stitch alice sdx CNode0 c0
     bob stitch CNode0 to sdx/c3
     $>stitch bob sdx CNode0 c3
 
-  7. route
+  8. route
     $>route 192.168.10.1/24 192.168.33.2 server c0
     $>route 192.168.20.1/24 192.168.34.2 server c3
 
-  8. setup routing in client side
+  9. setup routing in client side
 
 
 
-  -----------------For Stitching and Routing Application----------------
+  -----------------For Stitching and Routing Application (Out-Dated)----------------
    Each time a slice stitch to another one. It will store the neighboring information. such as edge router, gateway, neighbor's principal id;
 
    1. Launch multiple AS slices: ./ahab.sh SliceName server true SDNControllerAddr sshkeypath
