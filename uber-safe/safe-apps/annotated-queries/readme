@@ -1,0 +1,14 @@
+Annotated queries
+
+== Test for require
+sbt
+project safe-server
+run -f /home/qiang/Desktop/safe-new-version-benchmark/safe/safe-apps/annotated-queries/require.slang -r safeService
+
+
+== Test for allow
+sbt
+project safe-server
+run -f /home/qiang/Desktop/safe-new-version-benchmark/safe/safe-apps/annotated-queries/allow.slang -r safeService
+
+

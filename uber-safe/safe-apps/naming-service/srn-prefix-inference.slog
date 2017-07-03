@@ -1,0 +1,24 @@
+srnPathTo(?UpstreamOName, ?DownstreamScid) :- 
+  srnRelativeNameToID(RootID, ?UpstreamOName, ?UpstreamScid),  (* RootID is a well-known global variable *) 
+  srnIDPathTo(?UpstreamScid, ?DownstreamScid).   (* sriPathTo??? *)
+
+(* ?Name is a string in the form of a/b/c/d *)
+srnRelativeNameToID(?RootScid, ?Name, ?Scid) :-
+  singleComponent(?Name),
+  ?Root := rootId(?RootScid),
+  ?Root: nameObject(?Name, ?Scid, ?RootScid).
+
+srnRelativeNameToID(?RootScid, ?Name, ?Scid) :-
+  splitHead(?Name, ?FirstComponent, ?RestName),
+  ?Root := rootId(?RootScid),
+  ?Root: nameObject(?FirstComponent, ?ChildScid, ?RootScid),
+  srnRelativeNameToID(?ChildScid, ?RestName, ?Scid).  
+
+srnIDPathTo(?UpstreamScid, ?DownstreamScid) :- 
+  ?UpstreamRoot := rootId(?UpstreamScid),
+  ?UpstreamRoot: nameObject(?Name, ?DownstreamScid, ?UpstreamScid).
+
+srnIDPathTo(?UpstreamScid, ?DownstreamScid) :-
+  ?UpstreamRoot := rootId(?UpstreamScid),
+  ?UpstreamRoot: nameObject(?Name, ?MiddleScid, ?UpstreamScid),
+  srnIDPathTo(?MiddleScid, ?DownstreamScid).                   

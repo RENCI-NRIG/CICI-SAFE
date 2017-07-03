@@ -1,0 +1,71 @@
+Testing with slang shell
+
+IaaS => 152.3.145.38:444
+
+TapCon => 172.0.0.10:10000                   
+
+Docker container => 174.0.0.20:20000             
+
+
+== Launch services
+
+ slang> launchInstance("152.3.136.26:7777", "152.3.145.38:444",  "152.3.136.26:7777",  "172.0.0.10:10000", ":::", ":::", "vm10", "vmimage10", "image")?
+
+ slang> launchInstance("152.3.136.26:7777", "172.0.0.10:10000",  "152.3.136.26:7777",  "174.0.0.20:20000", ":::", ":::", "container10", "containerimage10", "image")?
+
+
+
+== set up image set
+
+slang> postAttesterImage("152.3.136.26:7777", "152.3.145.38:444", ":::", "vmimage10")?
+[satisfied] 
+'-RDSfC74PFuSWORnXKnFI0JfEGdaL8K-ia6y3z9feMU'.
+
+slang> postAttesterImage("152.3.136.26:7777", "152.3.145.38:444", ":::", "containerimage10")?
+[satisfied] 
+'7_i7V8mxWCnAI1o8ms9kKw5OhXRMcnuvKnM13gP__cA'.
+
+
+== Query
+
+slang> attestInstance("152.3.136.26:7777", "p100", ":::", "174.0.0.20:20000")?
+[satisfied] 
+p100:runs('174.0.0.20:20000',containerimage10).
+
+
+
+** Follow-up testing for ACCESS CONTROL
+   - this uses the cloud provider as a sole accepted endorser in the system
+
+== Endorse image properties
+
+slang> postImageProperty("152.3.136.26:7777", "152.3.145.38:444", ":::", "containerimage10", "property10")?
+[satisfied] 
+'7_i7V8mxWCnAI1o8ms9kKw5OhXRMcnuvKnM13gP__cA'.
+
+
+== Set ACL for data objects
+
+slang> postObjectAcl("152.3.136.26:7777", "bob", ":::", "bob:object10", "property10")?
+[satisfied] 
+'sjDuFrUWCBduWUxNrReE5YLwNBQqvTseY3rfozBhmLc'.
+
+slang> postObjectAcl("152.3.136.26:7777", "bob", ":::", "bob:object10", "property11")?
+[satisfied] 
+'sjDuFrUWCBduWUxNrReE5YLwNBQqvTseY3rfozBhmLc'.
+
+
+== Query 
+
+   - access control
+      
+     slang> appAccessesObject("152.3.136.26:7777", "152.3.145.138:4144", ":::", "174.0.0.20:20000", "bob:object10")?
+     [satisfied] 
+     '152.3.145.138:4144':approveAccess('174.0.0.20:20000','bob:object10').
+
+
+   - attest program property
+     slang> attestAppProperty("152.3.136.26:7777", "152.3.145.138:4144", ":::", "174.0.0.20:20000", "property10")?
+     [satisfied] 
+     '152.3.145.138:4144':programHasProperty('174.0.0.20:20000',property10).
+

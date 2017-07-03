@@ -1,0 +1,2 @@
+[safe-logic@sbt]> runMain safe.safelog.Repl -f /home/qiang/Desktop/safe-new-version-benchmark/safe/safe-apps/naming-service/spki-prefix-inference.slog
+

@@ -1,0 +1,5 @@
+p(X) :- q(X).
+q(alice).
+reach(?X, ?Y) :- ?X: neighbor(?Y, $D).
+reach(X, Z) :- X: neighbor(Y), reach(Y, Z).
+

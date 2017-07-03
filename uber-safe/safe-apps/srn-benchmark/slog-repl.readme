@@ -1,0 +1,5 @@
+[safe-logic@sbt]> runMain safe.safelog.Repl -f /home/qiang/Desktop/safe-new-version-benchmark/safe/safe-apps/srn-benchmark/srn-prefix-inference-local.slog
+
+
+runMain safe.safelog.Repl -f /home/qiang/Desktop/slog-weaver/apps/assembled.slog
+

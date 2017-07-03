@@ -1,0 +1,166 @@
+defenv Selfie() :-
+  spec('Load the principal keypair'),
+  principal($1).
+  (* principal('/home/qiang/Desktop/safe-new-version-benchmark/safe/safe-apps/routing/keys/tenant.pem'). *)
+
+defenv SelfNet :- computeIdFromName('Rnj7hCjk8eb10O37qpJGRDlgX6Tc36E_qZeOAF3u1ck', 'vnet/Rnj7hCjk8eb10O37qpJGRDlgX6Tc36E_qZeOAF3u1ck:152.3.136.4/30').
+
+defenv IANA :- u'jSvdyfIYzmWO-d1V_mJqPq1fPkIS8CPkE2TxFfsk3ow'.  (* The owner of the entire IP space *)
+
+defcon makeVNetIdSet(?VNet) :-
+  spec('Construct the identity set for a vnet'),
+  {
+    name("vnet/$VNet").
+  }.
+
+defcon addLink2VNetIDSet(?LinkRef, ?VNet) :-
+  spec("Add a link to the VNet's ID set"),
+  {
+    link($LinkRef).
+    name("vnet/$VNet").
+  }.
+
+defcon addNeighbor(?VNet, ?Neighbor) :-
+  spec("Add a neighbor"),
+  {
+    neighbor($VNet, $Neighbor).
+    name("vnet/$VNet").    (* Store this token to the id set of ?Neighbor *)
+  }.
+
+defcon carryTraffic(?VNet, ?Src, ?Dst) :- 
+  spec("Agree to let $VNet carry traffic from $Src to $Dst"),
+  {
+    carryTraffic($VNet, $Src, $Dst).
+    name("vnet/$VNet").  (* Store this token to the id set of ?Src *)
+  }.
+
+defcon acceptRoute(?VNet, ?NextHop, ?Dst) :-
+  spec("Accept a next hop for a destination"),
+  {
+    acceptRoute($VNet, $NextHop, $Dst).
+    name("vnet/$VNet"). 
+  }.
+
+defcon routingRules() :-
+  spec("Rules for inferring a route"),
+  {
+    routeIP(?DstIP, ?NextHop) :- routeIP($SelfNet, ?DstIP, ?NextHop).  (* DstIP is an ip address *) 
+    routeIP(?VNet, ?DstIP, ?NextHop) :- route(?VNet, ?Dst, ?NextHop), contain(?Dst, ?DstIP).
+
+    route(?Dst, ?NextHop) :- route($SelfNet, ?Dst, ?NextHop).  (* ?Dst is a vnet *)
+
+    peering(?VNet1, ?VNet2) :- 
+      ?Auth1 := rootId(?VNet1), ?Auth1: neighbor(?VNet2), 
+      ?Auth2 := rootId(?VNet2), ?Auth2: neighbor(?VNet1).
+
+    route(?VNet, ?Dst, ?NextHop) :-       (* A route from ?VNet to ?Dst via a specified next hop *) 
+      peering(?VNet, ?Dst),
+      ?DAuth := rootId(?Dst),
+      ?DAuth: carryTraffic(?Dst, ?VNet, ?Dst),  (* ?DAuth originates ?Dst *)
+      ownPrefix(?Dst, ?DAuth),
+      ?NextHop = ?Dst.                    (* Unify *)
+
+    route(?VNet, ?Dst, ?NextHop) :-
+      peering(?VNet, ?Nb),
+      advertiseRoute(?Nb, ?VNet, ?Dst),  (* ?Nb advertises to ?VNet *)
+      ?Authority := rootId(?VNet),
+      ?Authority: acceptRoute(?VNet, ?Nb, ?Dst),
+      ownPrefix(?VNet, ?Authority),
+      ?NextHop = ?Dst.
+
+    advertise(?Nb, ?VNet, ?Dst) :-       (* ?Nb advertises to ?VNet *)
+      route(?Nb, ?Dst, ?NH),
+      ?NH != ?VNet,                      (* ?VNet isn't ?NH; avoid loops *)
+      ?NbAuthority := rootId(?Nb),
+      ?NbAuthority: carryTraffic(?Nb, ?VNet, ?Dst),
+      ownPrefix(?Nb, ?NbAuthority).
+  }.
+
+
+defetch fetchCert(?LinkRef) :- [?LinkRef].
+
+defguard queryRoute(?Dst) :-
+  spec("Query routes to the Dst"),
+  ?RoutingChainRef := fetchCert($SelfNet),
+  ?NetIDChainRef := fetchCert($Self),
+  ?RoutingRulesRef := routingRules(),
+  ?PrefixRulesRef := prefixRules(),
+  {
+    import($RoutingChainRef).
+    import($NetIDChainRef).
+    import($RoutingRulesRef).
+    import($PrefixRulesRef).
+    route($Dst, ?NextHop)?
+  }.
+     
+
+
+
+
+
+
+(*
+    advertise(?Nb, ?Dst, ?Path) :- ?Nb: neighbor($Self), ?Nb: route(?Dst, ?Path), ?Nb: carryTraffic($Self, $Dst).
+    route(?Dst, ?Path) :- neighbor(?Dst), ?Path := initPath(?Dst).    
+    route(?Dst, ?Path) :- advertise(?Nb, ?Dst, ?Path), acceptRoute(?Nb, ?Dst).
+*)
+
+(* We don't need this *)
+defcon advertiseRoute(?Dst, ?Path, ?Neighbor) :-
+  spec("Advertise a route to a neighbor),
+  {
+    advertise($Dst, $Path, $Neighbor).    (* have to sent this link to the neighbor *)
+  }.
+
+
+
+defguard queryRoute(?Dst, ?Path) :-
+  spec("Query a route to a destination"),
+  {
+    
+  }.
+
+
+
+defcon makeATagIdSet(?Tag) :-
+  spec('Construct the identity set for a tag'),
+  {
+    name("tag/$Tag").
+  }.
+
+defcon delegateAccess(?Tag, ?User, ?Delegatable) :-
+  spec('Delegate access for a tag to a user'),
+  ?TagRef := computeIdFromName($Self, "tag/?Tag"),
+  {
+    delegateTagAccess($Tag, $User, $Delegatable).
+    link($TagRef).
+    name("tagAccess/$Tag/$User").     (* this link should be saved in the identity set of ?User *)
+  }.
+
+defcon delegateAccessToATag(?Tag, ?AnotherTag) :-
+  spec('Delegate access to another tag'), (* Access is allowed if access to that tag is allowed *)
+  ?TagRef := computeIdFromName($Self, "tag/?Tag"),
+  {
+    delegateTagAccessToAnotherTag($Tag, $AnotherTag).
+    link($TagRef).
+    name("tagAccess/$Tag/$AnotherTag").  (* this link should be saved in the identity set of ?AnotherTag *)
+  }.
+
+defcon addALinkToTagIdSet(?LinkRef, ?Tag) :-
+  spec("Add a link to a tag's ID set. Invoked after delegation to this tag"),
+  (* ?TagIdSetRef := computeIdFromName($Self, "tag/?Tag"), *)
+  {
+    link($LinkRef).
+    name("tag/$Tag").
+  }.
+
+
+defpost postIdSet(?CN) :- [makeMyIdentitySet(?CN)].
+
+defpost postATag(?Tag) :- [makeATagIdSet(?Tag)].
+
+defpost postTagAccessDelegation(?Tag, ?User, ?Delegatable) :- [delegateAccess(?Tag, ?User, ?Delegatable)].
+
+defpost postTagAccessDelegationToATag(?Tag, ?AnotherTag) :- [delegateAccessToATag(?Tag, ?AnotherTag)].
+
+defpost postALinkToTagIdSet(?LinkRef, ?Tag) :- [addALinkToTagIdSet(?LinkRef, ?Tag)].

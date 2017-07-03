@@ -1,0 +1,27 @@
+Case 1
+======
+sbt
+project safe-server
+run -f /home/qiang/Desktop/safe-new-version-benchmark/safe/safe-apps/group-naming-benchmark/factdb_simple.slang -a  /home/qiang/Desktop/safe-new-version-benchmark/safe/safe-apps/naming-service/keys/proot.pem  -r safeService
+
+curl --data "?Y=world" http://152.3.136.26:7777/factDB
+
+
+Case 2
+======
+run -f /home/qiang/Desktop/slang-weaver/apps/test-4-4-4.slang   -a  /home/qiang/Desktop/safe-new-version-benchmark/safe/safe-apps/naming-service/keys/proot.pem  -r safeService
+
+curl --data "" http://152.3.136.26:7777/spki
+
+
+On OpenStack
+============
+run -f /root/slang-weaver/apps/test-4-4-4.slang   -a  /root/safe-new-version-benchmark/safe/safe-apps/naming-service/keys/proot.pem  -r safeService
+
+curl --data "" http://10.103.0.6:7777/spki
+
+
+safeBench on OpenStack
+======================
+./safebench -d 100s -c 8 -s input.lua  http://10.103.0.6:7777/spki 
+

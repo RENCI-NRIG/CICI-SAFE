@@ -1,0 +1,19 @@
+Running 2m test @ http://152.3.141.177:7777/spki
+  20 threads and 20 connections
+  Thread Stats   Avg      Stdev     Max   +/- Stdev
+    Latency    29.99ms    9.46ms 101.05ms   82.80%
+    Req/Sec    34.08      7.68    61.00     66.28%
+  68706 requests in 1.67m, 12.45MB read
+Requests/sec:    687.01
+Transfer/sec:    127.47KB
+------------------------------
+            1%    19.63ms
+           10%    22.03ms
+           25%    22.89ms
+           50%    26.70ms
+           75%    34.35ms
+           90%    43.39ms
+           95%    48.77ms
+           99%    61.80ms
+        99.99%    99.42ms
+

@@ -1,0 +1,141 @@
+** Client: slang shell with "safe-apps/slang-shell/strong-naming.slang"
+** Server: Slang server with "safe-apps/strong/strong-distributed-storage.slang"
+
+root -> p8820    _Multe5KNgvw3Wk6eYF7_ZVXMXnKwxsTFNIzWiY87hM
+
+key_p8821@slang> env.
+ServerJVM=152.3.136.26:7777
+Envs=:::
+Self=key_p8821
+key_p8821@slang> postIdSetRaw('p8821')?
+key_p8821@slang> postLocalObject(p01_object, 'object000001')?
+
+
+key_p8821@slang> ?Self := 'key_p8822'.
+key_p8822@slang> env.
+ServerJVM=152.3.136.26:7777
+Envs=:::
+Self=key_p8822
+key_p8822@slang> postIdSetRaw('p8822')?
+key_p8822@slang> postLocalObject(p01_object, 'object000001')?
+
+
+key_p8822@slang> ?Self := 'key_p8823'.
+key_p8823@slang> env.
+ServerJVM=152.3.136.26:7777
+Envs=:::
+Self=key_p8823
+key_p8823@slang> postIdSetRaw('p8823')?
+key_p8823@slang> postLocalObject(p01_object, 'object000001')?
+
+
+root (key_p8820) delegates sub0 to key_p8821
+============================================
+key_p8823@slang> env.
+ServerJVM=152.3.136.26:7777
+SubdirLocalName=p01_object
+SubdirPrincipalName=key_p8821
+ParentScid=_Multe5KNgvw3Wk6eYF7_ZVXMXnKwxsTFNIzWiY87hM:root
+DirPrincipalName=key_p8820
+ObjectName=sub0
+Envs=:::
+Self=key_p8823
+key_p8821@slang> delegateName($ObjectName, $SubdirPrincipalName, $SubdirLocalName, $ParentScid)?
+[satisfied] 
+delegateName('sub0', 'key_p8821', 'p01_object', '_Multe5KNgvw3Wk6eYF7_ZVXMXnKwxsTFNIzWiY87hM:root').
+
+
+key_p8821 delegates sub1 to key_p8822
+=====================================
+key_p8821@slang> env.
+ServerJVM=152.3.136.26:7777
+SubdirLocalName=p01_object
+SubdirPrincipalName=key_p8822
+DirLocalName=p01_object
+DirPrincipalName=key_p8821
+ObjectName=sub1
+Envs=:::
+Self=key_p8821
+key_p8821@slang> delegateName($ObjectName, $SubdirPrincipalName, $SubdirLocalName, $DirPrincipalName, $DirLocalName)?
+[satisfied] 
+delegateName('sub1', 'key_p8822', 'p01_object', 'key_p8821', 'p01_object').
+
+
+key_p8822 delegates sub2 to key_p8823
+=====================================
+key_p8822@slang> env.
+ServerJVM=152.3.136.26:7777
+SubdirLocalName=p01_object
+SubdirPrincipalName=key_p8823
+DirLocalName=p01_object
+DirPrincipalName=key_p8822
+ObjectName=sub2
+Envs=:::
+Self=key_p8822
+key_p8822@slang> delegateName($ObjectName, $SubdirPrincipalName, $SubdirLocalName, $DirPrincipalName, $DirLocalName)?
+[satisfied] 
+delegateName('sub2', 'key_p8823', 'p01_object', 'key_p8822', 'p01_object').
+
+
+Query name "sub0/sub1/sub2"
+===========================
+key_p8823@slang> queryName('sub0/sub1/sub2')?
+[satisfied] 
+'EK624CkV-eF-wcA6q0tz3DYy11MqgfI8WbtenuZVyJE':srnNameToID('sub0/sub1/sub2','EK624CkV-eF-wcA6q0tz3DYy11MqgfI8WbtenuZVyJE:object000001').
+
+
+
+Set up for user p8835
+======================
+key_p8835@slang> postIdSetRaw("p8835")?
+
+** Add a group under this user
+key_p8835@slang> postGroupSet('jyFQv9iw3-QrmIfAljubdpWM7TCBqeJ6UjLi4ChBfe8:group0')?
+[satisfied] 
+'jyFQv9iw3-QrmIfAljubdpWM7TCBqeJ6UjLi4ChBfe8:q7byBuNfvpIJQt7Cccbkfg'.
+
+** Add p8836 into this group
+key_p8835@slang> postGroupMember('jyFQv9iw3-QrmIfAljubdpWM7TCBqeJ6UjLi4ChBfe8:group0', '4NVkpj4l8LNOhAMWcvcgDowxBlCZNysO68tBtZZT83c', true)?
+[satisfied] 
+'jyFQv9iw3-QrmIfAljubdpWM7TCBqeJ6UjLi4ChBfe8:IyUmmymWIGdu5Ek4D9TYow'.
+
+
+Set up for user p8836
+=====================
+key_p8836@slang> postIdSetRaw('p8836')?
+[satisfied] 
+'4NVkpj4l8LNOhAMWcvcgDowxBlCZNysO68tBtZZT83c'.
+
+key_p8836@slang> updateSubjectSet('jyFQv9iw3-QrmIfAljubdpWM7TCBqeJ6UjLi4ChBfe8:IyUmmymWIGdu5Ek4D9TYow')?
+'4NVkpj4l8LNOhAMWcvcgDowxBlCZNysO68tBtZZT83c:3JhATAehNcIhd_1NhPXlJw'.
+
+
+Give group0 access to directory (sub0/sub1)
+============================================
+key_p8822@slang> postDirectoryAccess('jyFQv9iw3-QrmIfAljubdpWM7TCBqeJ6UjLi4ChBfe8:group0', 'xMlSfH8QkpSMBI1SdJmnrdlr5A_LRIqHr5m6LPbFmWg:object000001')?
+[satisfied] 
+'xMlSfH8QkpSMBI1SdJmnrdlr5A_LRIqHr5m6LPbFmWg:yE-jqCch06wxD1mIK7G_2g'.
+
+check if p8836 can access sub0/sub1
+===================================
+key_p8822@slang> ?Self := "key_p8840".
+[info] Self='key_p8840'
+key_p8840@slang> env.
+ServerJVM=152.3.136.26:7777
+Envs=|||
+Self=key_p8840
+key_p8840@slang> ?Envs := "|||4NVkpj4l8LNOhAMWcvcgDowxBlCZNysO68tBtZZT83c:3JhATAehNcIhd_1NhPXlJw".
+[info] Envs='|||4NVkpj4l8LNOhAMWcvcgDowxBlCZNysO68tBtZZT83c:3JhATAehNcIhd_1NhPXlJw'
+key_p8840@slang> ?SubjectId := "4NVkpj4l8LNOhAMWcvcgDowxBlCZNysO68tBtZZT83c".
+[info] SubjectId='4NVkpj4l8LNOhAMWcvcgDowxBlCZNysO68tBtZZT83c'
+
+key_p8840@slang> accessNamedObject('4NVkpj4l8LNOhAMWcvcgDowxBlCZNysO68tBtZZT83c', 'sub0/sub1')?
+
+
+
+
+
+
+
+
+
