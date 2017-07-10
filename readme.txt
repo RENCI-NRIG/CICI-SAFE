@@ -1,14 +1,14 @@
 ---------------SAFE-SDX-----------------------------
 To run the demo for SDX, you need to run a safe server first, and then run the ahab controller to start the sdx service
 
-[1] run safe-server
+[1] run riak-server
   Deploy a riak server [you can use our riakserver directly 152.3.145.36:8098], or you can deploy a Riak server in Docker container
   $sudo docker pull yaoyj11/riakimg
   $sudo docker run -i -t  -d -p 2122:2122 -p 8098:8098 -p 8087:8087 -h riakserver --name riakserver yaoyj11/riakimg
   Start riak service
-  $sudo docker exec -it riak sudo riak start
-  $sudo docker exec -it riak sudo riak-admin bucket-type activate  safesets
-  $sudo docker exec -it riak sudo riak-admin bucket-type update safesets '{"props":{"allow_mult":false}}'
+  $sudo docker exec -it riakserver sudo riak start
+  $sudo docker exec -it riakserver sudo riak-admin bucket-type activate  safesets
+  $sudo docker exec -it riakserver sudo riak-admin bucket-type update safesets '{"props":{"allow_mult":false}}'
 
 [2] SDX service , SAFE_SDX directory
 
@@ -19,33 +19,128 @@ To run the demo for SDX, you need to run a safe server first, and then run the a
   $cd target/classes
   $rmiregistry
 
-  3. Create two customer slice and a service slice
+  3. Start Plexus SDN controller
+    cd plexus/plexus
+    ryu-manager app.py
+
+  4. Create two customer slice and a service slice
     Launch a sdx slice: ./ahab.sh SliceName server true SDNControllerAddr sshkeypath [riakip]
     $./ahab.sh server server true 152.3.136.36 "~/.ssh/id_rsa" 152.3.145.36
     Launch multiple customer slices: ./ahab.sh Slicename client true [riakip]
     $./ahab.sh alice client true 192.168.10.1/24 152.3.145.36
     $./ahab.sh bob client true 192.168.20.1/24 152.3.146.36
 
-  4. run slice controller (ahab) for sdx slice :./sdxserver.sh server 152.3.136.36 "~/.ssh/id_rsa"  server_keyhash PrivateIPPrefix
+  5. run slice controller (ahab) for sdx slice :./sdxserver.sh SliceName SDNControllerIP "~/.ssh/id_rsa"  server_keyhash PrivateIPPrefix
     $./sdxserver.sh server 152.3.136.36 "~/.ssh/id_rsa" bphJZn3RJBnNqoCZk6k9SBD8mwSb054PXbwV7HpE80E 192.168.30.1/20
 
-  5. run slice controller(ahab) for sdx client:./sdxclient.sh alice client false  "~/.ssh/id_rsa" customerkeyhash
+  6. run slice controller(ahab) for sdx client:./sdxclient.sh SliceName client false  "~/.ssh/id_rsa" customerkeyhash
     $./sdxclient.sh alice client false "~/.ssh/id_rsa" weQ8OFpXWhIB1AMzKX2SDJcxT738VdHCcl7mFlvOD24
     $./sdxclient.sh bob client false "~/.ssh/id_rsa" iMrcWFMgx6DJeLtVWvBCMzwd8EDtJtZ4L0n3YYn1hi8
 
-  6. Make SAFE statements to state the stitching and traffic policies, allocation of IP prefixes and stitching requests. (More details to be added)
+  7. post SAFE identity sets, make SAFE statements to state the stitching and traffic policies, allocation of IP prefixes and stitching requests.
+    $ cd safe/super-safe/safe-apps/safe-network/exo-geni
+    Edit the SAFESERVER ip address to your safe server IP address in idset.sh, post.sh and updatess.sh, and run following scripts to make posts to safesets. Messages with a token in each message are expected.
+    $./idset.sh
+    $./post.sh
+    $./updatess.sh PROJECTENDORSEMENT_TOKEN
+    Here PROJECTENDORSEMENT_TOKEN is the token for project member endorsement sets, this is the token in last 4th, 5th and 6th messages of the running result post.sh
+    $./updatess.sh IPDELEGATION_TOKEN
+    Here IPDELEGATION_TOKEN is the token for ip deletation sets, this is the token in last, 2nd and 3rd messages of the running result post.sh
+    For example, if the messages of of post.sh are as follows:
+        > POST /postIPAllocate HTTP/1.1
+        > Host: 152.54.14.38:7777
+        > User-Agent: curl/7.47.0
+        > Accept: */*
+        > Content-Type: application/json
+        > Content-Length: 144
+        >
+        * upload completely sent off: 144 out of 144 bytes
+        < HTTP/1.1 200 OK
+        < Server: spray-can/1.3.3
+        < Date: Mon, 10 Jul 2017 23:06:47 GMT
+        < Content-Type: application/json; charset=UTF-8
+        < Content-Length: 66
+        <
+        {
+            "message": "['mjpKqF0WsgUKlhCnIYpa4_CrgOo4gIIlGqLjepxJJ5E']"
+            * Connection #0 to host 152.54.14.38 left intact
+        }pa endorse alice
+        Note: Unnecessary use of -X or --request, POST is already inferred.
+        *   Trying 152.54.14.38...
+        * Connected to 152.54.14.38 (152.54.14.38) port 7777 (#0)
+        > POST /postEndorsePM HTTP/1.1
+        > Host: 152.54.14.38:7777
+        > User-Agent: curl/7.47.0
+        > Accept: */*
+        > Content-Type: application/json
+        > Content-Length: 126
+        >
+        * upload completely sent off: 126 out of 126 bytes
+        < HTTP/1.1 200 OK
+        < Server: spray-can/1.3.3
+        < Date: Mon, 10 Jul 2017 23:06:47 GMT
+        < Content-Type: application/json; charset=UTF-8
+        < Content-Length: 66
+        <
+        {
+            "message": "['jkgOKYbQhgQH-uTCkUVqh45Zge8SR_SkOXkvx6chvyA']"
+            * Connection #0 to host 152.54.14.38 left intact
+        }pa endorse bob
+        Note: Unnecessary use of -X or --request, POST is already inferred.
+        *   Trying 152.54.14.38...
+        * Connected to 152.54.14.38 (152.54.14.38) port 7777 (#0)
+        > POST /postEndorsePM HTTP/1.1
+        > Host: 152.54.14.38:7777
+        > User-Agent: curl/7.47.0
+        > Accept: */*
+        > Content-Type: application/json
+        > Content-Length: 126
+        >
+        * upload completely sent off: 126 out of 126 bytes
+        < HTTP/1.1 200 OK
+        < Server: spray-can/1.3.3
+        < Date: Mon, 10 Jul 2017 23:06:47 GMT
+        < Content-Type: application/json; charset=UTF-8
+        < Content-Length: 66
+        <
+        {
+            "message": "['jkgOKYbQhgQH-uTCkUVqh45Zge8SR_SkOXkvx6chvyA']"
+            * Connection #0 to host 152.54.14.38 left intact
+        }Note: Unnecessary use of -X or --request, POST is already inferred.
+        *   Trying 152.54.14.38...
+        * Connected to 152.54.14.38 (152.54.14.38) port 7777 (#0)
+        > POST /postEndorsePM HTTP/1.1
+        > Host: 152.54.14.38:7777
+        > User-Agent: curl/7.47.0
+        > Accept: */*
+        > Content-Type: application/json
+        > Content-Length: 126
+        >
+        * upload completely sent off: 126 out of 126 bytes
+        < HTTP/1.1 200 OK
+        < Server: spray-can/1.3.3
+        < Date: Mon, 10 Jul 2017 23:06:48 GMT
+        < Content-Type: application/json; charset=UTF-8
+        < Content-Length: 66
+        <
+        {
+            "message": "['jkgOKYbQhgQH-uTCkUVqh45Zge8SR_SkOXkvx6chvyA']"
+            * Connection #0 to host 152.54.14.38 left intact
+    You should run ./updatess.sh mjpKqF0WsgUKlhCnIYpa4_CrgOo4gIIlGqLjepxJJ5E and ./updatess.sh jkgOKYbQhgQH-uTCkUVqh45Zge8SR_SkOXkvx6chvyA
 
-  7. alice stitch CNode0 to sdx/c0
+  8. alice stitch CNode0 to sdx/c0
     $>stitch alice sdx CNode0 c0
     bob stitch CNode0 to sdx/c3
     $>stitch bob sdx CNode0 c3
 
-  8. route
+  9. route
     $>route 192.168.10.1/24 192.168.33.2 server c0
     $>route 192.168.20.1/24 192.168.34.2 server c3
 
-  9. setup routing in client side
-
+  10. setup routing in client side
+    An example command of adding an entry to the routing table is as follows, this only supports dest IP address with /32 netmask
+    $ip route add 192.168.10.1/32 via 192.168.33.2
+    Another way to do this is using Quagga with zebra enabled, and add routing entries in zebra.conf, dest ip with any netmask is supported
 
 
   -----------------For Stitching and Routing Application (Out-Dated)----------------
