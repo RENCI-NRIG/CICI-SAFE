@@ -413,8 +413,8 @@ public class Example {
 //			l.add("UAF (Fairbanks, AK, USA) XO Rack");
 		
 //			l.add("UH (Houston, TX USA) XO Rack");
-			l.add("TAMU (College Station, TX, USA) XO Rack");
-//			l.add("RENCI (Chapel Hill, NC USA) XO Rack");
+//			l.add("TAMU (College Station, TX, USA) XO Rack");
+			l.add("RENCI (Chapel Hill, NC USA) XO Rack");
 //			
 //			l.add("SL (Chicago, IL USA) XO Rack");
 //			
