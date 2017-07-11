@@ -1,0 +1,17 @@
+key_p8888  pnqyQhDPqGhQTOhdc0iInpSMO1y6vBvP43dYIUVw5gA   ObjectOwner
+key_p8     H3Jx7khWFaD0l_qW09juS-srVBn6mrzbXHh5bBp1fuM   imageOwner
+key_p88                                                  certifier
+
+
+slang> accessObject($ServerJVM, key_p888, $Envs, ip0, 'pnqyQhDPqGhQTOhdc0iInpSMO1y6vBvP43dYIUVw5gA:obj0')?
+2016-09-262 17:40:35.769 [main] ERROR Repl {safe.safelog.Repl readEval} - safe.safelog.UnSafeException: Invalid defcall response message Query failed with msg: java.lang.RuntimeException: Unsatisfied queries: List(accessObject('ip0', 'pnqyQhDPqGhQTOhdc0iInpSMO1y6vBvP43dYIUVw5gA:obj0')?)  List()
+slang> accessObject($ServerJVM, key_p888, $Envs, ip0, 'pnqyQhDPqGhQTOhdc0iInpSMO1y6vBvP43dYIUVw5gA:obj1')?
+[satisfied] 
+'ForEEadZYWAzUy4py_Nt7aoWC53AQwLyAzsUSKxIvSE':approveAccess(ip0,'pnqyQhDPqGhQTOhdc0iInpSMO1y6vBvP43dYIUVw5gA:obj1').
+Solved in 55.050947 ms
+
+slang> imgInstanceAccessesObject($ServerJVM, key_p888, $Envs, 'H3Jx7khWFaD0l_qW09juS-srVBn6mrzbXHh5bBp1fuM:img0', 'pnqyQhDPqGhQTOhdc0iInpSMO1y6vBvP43dYIUVw5gA:obj0')?
+2016-09-262 17:38:40.576 [main] ERROR Repl {safe.safelog.Repl readEval} - safe.safelog.UnSafeException: Invalid defcall response message Query failed with msg: java.lang.RuntimeException: Unsatisfied queries: List(imgInstanceAccessesObject('H3Jx7khWFaD0l_qW09juS-srVBn6mrzbXHh5bBp1fuM:img0', 'pnqyQhDPqGhQTOhdc0iInpSMO1y6vBvP43dYIUVw5gA:obj0')?)  List()
+slang> imgInstanceAccessesObject($ServerJVM, key_p888, $Envs, 'H3Jx7khWFaD0l_qW09juS-srVBn6mrzbXHh5bBp1fuM:img0', 'pnqyQhDPqGhQTOhdc0iInpSMO1y6vBvP43dYIUVw5gA:obj1')?
+[satisfied] 
+'ForEEadZYWAzUy4py_Nt7aoWC53AQwLyAzsUSKxIvSE':approveImageAccess('H3Jx7khWFaD0l_qW09juS-srVBn6mrzbXHh5bBp1fuM:img0','pnqyQhDPqGhQTOhdc0iInpSMO1y6vBvP43dYIUVw5gA:obj1').

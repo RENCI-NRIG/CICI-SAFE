@@ -1,0 +1,1 @@
+-Dsafeserver.program=/root/safe/safe-apps/multi-principal/geni-test-new.slang  -Dhttp.port=7777  -Dsafeserver.keypairdir=src/main/resources/multi-principal-keys/server1  -Xmx12000m

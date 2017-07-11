@@ -1,0 +1,281 @@
+Safe Datalog rule: A Datalog rule p :- q1, ..., qn. is safe
+
+(1) if every variable that occurs in a negated subgoal also
+appears in a positive subgoal and
+(2) if every variable that appears in the head of the rule also
+appears in the body of the rule. 
+
+(also called as range-restricted datalog rule)
+
+NAIVE EVALUATION OF Datalog Programs
+------------------------------------
+
+INPUT:  Datalog Program with EDB containing relations R1, ..., Rn
+        and IDB containing rules defining intensional predicates
+        p1, ..., pk.
+
+OUTPUT: Relations P1, ..., Pk for predicates p1, ..., pk which 
+        correspond to the Intensional part of the least model of 
+        the Datalog Program.
+
+METHOD:
+
+  Step 1: Using the algorithm to construct DATALOG EQUATIONs
+          for the Datalog program. 
+          Let Pi = eval(pi,P1, ..., Pk, R1, ..., Rn) be the DATALOG 
+          EQUATION for pi.
+
+  Step 2:
+
+          for i := 1 to k do
+            Pi := {};
+
+          repeat
+            for i := 1 to k do
+              Qi := Pi;
+            for i := 1 to k do
+              Pi := eval(pi,Q1, ..., Qk, R1, ..., Rn);
+          until (Pi = Qi) for all i between 1 and k;
+
+          output P1, ..., Pk;
+
+
+NOTE: If we use    Pi := eval(pi,P1, ..., Pk, R1, ..., Rn);
+      instead of   Pi := eval(pi,Q1, ..., Qk, R1, ..., Rn);
+      and delete   for i := 1 to k do
+                     Qi := Pi;
+      we get a variant of the NAIVE ALGORITHM in which we use the
+      values of relations being generated in the current iteration
+      of the repeat-until loop to calculate other relations in the
+      same iteration. 
+
+SEMI-NAIVE EVALUATION OF Datalog Programs
+-----------------------------------------
+
+INPUT:  Datalog Program with EDB containing relations R1, ..., Rn
+        and IDB containing rules defining intensional predicates
+        p1, ..., pk.
+
+OUTPUT: Relations P1, ..., Pk for predicates p1, ..., pk which 
+        correspond to the Intensional part of the least model of 
+        the Datalog Program.
+
+METHOD:
+
+  Step 1: Using the algorithm to construct DATALOG equations
+          for the Datalog program. 
+          Let Pi = eval(pi,P1, ..., Pk, R1, ..., Rn) be the DATALOG 
+          EQUATION for pi.
+
+  Step 2: Using the algorithm to construct INCREMENTAL DATALOG EQUATIONS
+          for the Datalog program. 
+          Let DPi = eval-incr(pi,P1, ..., Pk, DP1, ..., DPk, R1, ..., Rn) 
+          be the INCREMENTAL DATALOG EQUATION for pi.
+
+  Step 3:
+
+          for i := 1 to k do
+            begin
+              Pi  := eval(pi,{}, ...,{},R1, ..., Rn);
+              DPi := Pi;
+            end;
+
+          repeat
+            for i := 1 to k do
+              DQi := DPi;
+            for i := 1 to k do
+              begin
+                DPi := eval-incr(pi,P1, ..., Pk, DQ1, ..., DQk, R1, ..., Rn);
+                DPi := DPi - Pi;
+              end;
+            for i := 1 to k do
+              Pi := Pi U DPi;
+          until (DPi = {}) for all i between 1 and k;
+
+          output P1, ..., Pk;
+
+
+NOTE: If we use 
+        DPi := eval-incr(pi,P1, ..., Pk, DP1, ..., DPk, R1, ..., Rn);
+      instead of
+        DPi := eval-incr(pi,P1, ..., Pk, DQ1, ..., DQk, R1, ..., Rn);
+      and delete   for i := 1 to k do
+                     DQi := DPi;
+      we get a variant of the SEMI-NAIVE ALGORITHM in which we use the
+      values of relations being generated in the current iteration
+      of the repeat-until loop to calculate other relations in the
+      same iteration. 
+
+OBTAINING INCREMENTAL DATALOG EQUATIONS.
+
+These are obtained by taking the union of expressions
+obtained from eval(pi,...) by substituting one Pi by DPi
+at a time, i.e.
+
+eval-incr(pi,P1, ..., Pk, DP1, ..., DPk, R1, ..., Rn) =
+  Union of eval(pi,P1,...,Pi-1,DPi,Pi+1,...,Pk,R1,...,Rn)
+  for each i, 1 <= i, <= k.
+
+
+ALGORITHM QSQI:
+---------------
+
+Q := { query(X) };
+R := { };
+State := < Q, R >;
+
+While State changes do
+  for all generalized queries q in Q do
+  for all rules r whose head matches with q do
+    begin
+
+      1. Unify head of rule r with q and GENERATE NEW
+         GENERALIZED QUERIES for each IDB predicate in body of
+         rule (by propogating bindings and consulting EDB and current
+         IDB relations).
+
+      2. GENERATE NEW TUPLES FOR IDB RELATIONS defined in the rule
+         by using EDB and current IDB relations.
+
+      3. Update Q and R by adding new GENERALIZED QUERIES and new
+         TUPLES obtained in steps 1. and 2.
+    end;
+
+
+
+MAGIC SETS TRANSFORMATION ALGORITHM
+-----------------------------------
+
+INPUT:  A set of IDB rules including a query rule.
+
+OUTPUT: A new set of rules, query-equivalent to the original set of
+        rules, which will when evaluated using a bottom-up strategy
+        will perform as well as top-down strategies.
+        
+METHOD:
+
+Step 1: Generate an ADORNED SET OF query-reachable rules 
+        from the input rules.
+
+Step 2: Generate Magic Rules.
+
+        FOR each adorned rule r: q_a1 :- ..., p_a2, ...
+            and each IDB predicate p_a2 in the body of the rule DO
+          begin
+            Generate a magic rule as follows:
+            (a) Delete all other occurrences of IDB predicates 
+                in the body of r.
+            (b) Replace the name of the predicate p_a2 by magic_p_a2.
+            (c) Delete all non-distinguished arguments of magic_p_a2 thereby
+                obtaining a predicate with possibly fewer arguments.
+            (d) Delete all non-distinguished EDB predicates in the body of r. 
+            (e) Replace the name of the head predicate q_a1 by magic_q_a1.
+            (f) Delete all non-distinguished arguments of magic_q_a1 thereby
+                obtaining a predicate with possibly fewer arguments.
+            (g) Exchange the two magic predicates.
+          end
+
+Step 3: Modify each ADORNED rule by adding to the body of the rule
+        the magic predicate magic_q_a1 obtained by deleting all 
+        non-distinguished arguments, where q_a1 is the head predicate of 
+        the rule.
+
+Step 4: Output: Modified Adorned Rules + Magic Rules.
+----------------------------------------------------------------------------
+
+EXAMPLE:
+
+Input set of rules:
+-------------------
+
+query(X) :- cousin('tom',X).
+sibling(X,Y) :- parent(X,Z), parent(Y,Z), X <> Y.
+cousin(X,Y) :- parent(X,Xp), parent(Y,Yp), sibling(Xp,Yp).
+cousin(X,Y) :- parent(X,Xp), parent(Y,Yp), cousin(Xp,Yp).
+related (X,Y) :- sibling(X,Y).
+related(X,Y) :- related(X,Z), parent(Y,Z).
+related(X,Y) :- related(Z,Y), parent(X,Z).
+
+Adorned set of rules:
+---------------------
+
+query_f(X) :- cousin_bf('tom',X).
+cousin_bf(X,Y) :- parent(X,Xp), parent(Y,Yp), sibling_bf(Xp,Yp).
+cousin_bf(X,Y) :- parent(X,Xp), parent(Y,Yp), cousin_bf(Xp,Yp).
+sibling_bf(X,Y) :- parent(X,Z), parent(Y,Z), X <> Y.
+
+Magic rules:
+------------
+
+magic_cousin_bf('tom').
+magic_cousin_bf(Xp) :- parent(X,Xp), magic_cousin_bf(X).
+magic_sibling_bf(Xp) :- parent(X,Xp), magic_cousin_bf(X).
+
+Modified Adorned Rules:
+-----------------------
+
+query(X) :- cousin_bf(h,X).
+cousin_bf(X,Y) :- parent(X,Xp), parent(Y,Yp), sibling_bf(Xp,Yp),
+                  magic_cousin_bf(X).
+cousin_bf(X,Y) :- parent(X,Xp), parent(Y,Yp), cousin_bf(Xp,Yp),
+                  magic_cousin_bf(X).
+sibling_bf(X,Y) :- parent(X,Z), parent(Y,Z), X <> Y,
+                   magic_sibling_bf(X).
+
+
+Final Output:
+-------------
+
+magic_cousin_bf(h).
+magic_cousin_bf(Xp) :- parent(X,Xp), magic_cousin_bf(X).
+magic_sibling_bf(Xp) :- parent(X,Xp), magic_cousin_bf(X).
+
+query(X) :- cousin_bf(h,X).
+cousin_bf(X,Y) :- parent(X,Xp), parent(Y,Yp), sibling_bf(Xp,Yp),
+                  magic_cousin_bf(X).
+cousin_bf(X,Y) :- parent(X,Xp), parent(Y,Yp), cousin_bf(Xp,Yp),
+                  magic_cousin_bf(X).
+sibling_bf(X,Y) :- parent(X,Z), parent(Y,Z), X <> Y,
+                   magic_sibling_bf(X).
+
+DETAILED STEPS TO GENERATE A MAGIC RULE:
+---------------------------------------
+Let us consider the following adorned rule and see how a
+magic rule is generated from it.
+
+    cousin_bf(X,Y) :- parent(X,Xp), parent(Y,Yp), cousin_bf(Xp,Yp).
+
+(a) Delete all other occurrences of IDB predicates in the body of r.
+    Since there is only one IDB predicate in the body of the rule,
+    no action needs to be taken.
+
+    cousin_bf(X,Y) :- parent(X,Xp), parent(Y,Yp), cousin_bf(Xp,Yp).
+
+(b) Replace the name of the predicate p_a2 by magic_p_a2.
+
+    cousin_bf(X,Y) :- parent(X,Xp), parent(Y,Yp), magic_cousin_bf(Xp,Yp).
+
+(c) Delete all non-distinguished arguments of magic_p_a2 thereby
+    obtaining a predicate with possibly fewer arguments.
+
+    cousin_bf(X,Y) :- parent(X,Xp), parent(Y,Yp), magic_cousin_bf(Xp).
+
+(d) Delete all non-distinguished EDB predicates in the body of r. 
+
+    cousin_bf(X,Y) :- parent(X,Xp), magic_cousin_bf(Xp).
+
+(e) Replace the name of the head predicate q_a1 by magic_q_a1.
+
+    magic_cousin_bf(X,Y) :- parent(X,Xp), magic_cousin_bf(Xp).
+
+(f) Delete all non-distinguished arguments of magic_q_a1 thereby
+    obtaining a predicate with possibly fewer arguments.
+
+    magic_cousin_bf(X) :- parent(X,Xp), magic_cousin_bf(Xp).
+
+(g) Exchange the two magic predicates.
+
+    magic_cousin_bf(Xp) :- parent(X,Xp), magic_cousin_bf(X).
+
+
+

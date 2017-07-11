@@ -1,0 +1,6 @@
+Server: run -f /home/qiang/Desktop/safe-new-version-benchmark/safe/safe-apps/slogset-tests/defpost_idset.slang  -r safeService
+
+Client: curl  -v -X POST http://152.3.136.26:7777/postASet -H "Content-Type: application/json" -d "{ \"otherValues\": [] }"
+
+
+Client: curl  -v -X POST http://152.3.136.26:7777/postALink -H "Content-Type: application/json" -d "{ \"otherValues\": [\"safdadffdfsf\"] }"

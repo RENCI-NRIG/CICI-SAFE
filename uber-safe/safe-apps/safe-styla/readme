@@ -1,0 +1,19 @@
+qiang@qiang-office-desktop:~/Desktop/safe-new-version-benchmark/safe$ curl http://152.3.136.26:7777/postPolicy -H "Content-Type: application/json" -d "{ \"otherValues\": [\"policy2\"] }"
+{
+  "message": "[u'tieZqfM9w-pq4fdk4iHKX_kXLQOqbGRl7tMCYlNOMrU']"
+}
+
+qiang@qiang-office-desktop:~/Desktop/safe-new-version-benchmark/safe$ curl http://152.3.145.15:8098/types/safesets/buckets/safe/kes/tieZqfM9w-pq4fdk4iHKX_kXLQOqbGRl7tMCYlNOMrU
+cert #'application/slang;charset=ut8;hash=sha256' -> u'tieZqfM9w-pq4fdk4iHKX_kXLQOqbGRl7tMCYlNOMrU'(
+  signedData(
+    version('1'),
+    speaker(u'QPRn9mWntI7e8voHY6An8wD8mVlqaWbpraij5WmVvhE', nil, nil),
+    subject(u'QPRn9mWntI7e8voHY6An8wD8mVlqaWbpraij5WmVvhE', nil),
+    validity('2016-07-12T22:47:18.777-04:00', '2019-07-12T22:47:18.777-04:00', 'PT720H'),
+    cred #'application/slog;charset=utf8;hash=md5' -> 'policy2'{
+      r(?X):-t(?X),w(?Y).
+    },
+    signatureAlgorithm('SHA256withRSA')
+  ),
+  signature(u'HWkP153U3hdH-gfOJnV4gdOeAolMoB2lf3NNex12JIGr5knxBSTUBesYNWzA3qNBb-45LuRzfj7iYuYivGA-mlmt3ZmdDbGV_OeF97jLmUv-9f68qTG3EeOfnceN3sF7hmTQSXzDF8Ue3SNbAqAAmvvYKDeG0gA77SYdoQ0u6zbjeeclJg-7Q_Z9aivTpyyjd1cK5ZAwfrnoAZ0KqSP6bzoC8rP6oR6FaETDsU7Yn0UZMg3e28gy-q6z3MSeFAo6M9zPwHqz11CQajHIMVOppQ-LFpLVrNlJGXFEbvns8wTi8pK3ReFuwJZ5nky1gwpZqIpRVrToELXiP6T0qVwYIA')
+).

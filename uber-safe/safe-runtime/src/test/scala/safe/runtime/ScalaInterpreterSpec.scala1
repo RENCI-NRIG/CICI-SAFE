@@ -1,0 +1,37 @@
+package safe.runtime
+
+import org.scalatest._
+
+class ScalaInterpreterSpec extends UnitSpec {
+  val interpreter = ScalaInterpreter()
+
+  val simpleScript = s"""def power(x: Double, y: Double): Double = x*y
+	               | power(8d, 9d)
+	             """.stripMargin
+
+  val scriptWithArgs = s"""def power(x: Double, y: Double): Double = x*y
+	                 | power($$X.toDouble, $$Y.toDouble)
+	                """.stripMargin
+
+  val scriptWithArgsAsString = s"""def power(x: Double, y: Double): Double = x*y
+	                        | power($$X.toDouble, $$Y.toDouble).toString
+	                       """.stripMargin
+
+
+
+  "Scala interpreter" should "evaluate simple function without explicit arguments" in {
+    interpreter.eval(simpleScript).toString shouldBe "72.0"
+  }
+
+  it should "compile and evaluate function with explicit arguments" in {
+    val cls = interpreter.compile(scriptWithArgs, Array("$X", "$Y"))
+    val ret = interpreter.eval(cls, Array("8", "9"))
+    ret.toString shouldBe "72.0"
+  }
+
+  it should "compile and evaluate function with explicit arguments returned as string" in {
+    val cls = interpreter.compile(scriptWithArgsAsString, Array("$X", "$Y"))
+    val ret = interpreter.eval(cls, Array("8", "9"))
+    ret.toString shouldBe "72.0"
+  }
+}

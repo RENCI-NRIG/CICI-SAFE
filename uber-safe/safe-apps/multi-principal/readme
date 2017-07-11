@@ -1,0 +1,37 @@
+Retrieve a slogset directly from Riak:
+
+http://152.3.145.10:8098/types/safesets/buckets/safe/keys
+
+qiang@qiang-office-desktop:~/Desktop/safe-new-version-benchmark/safe/safe-apps/multi-principal$ curl http://152.3.145.10:8098/types/safesets/buckets/safe/keys/QZUgdxERCEg7PDX8-4mY78ToPDnpplFZMTuETYpACEg
+cert #'application/slang;charset=ut8;hash=sha256' -> u'QZUgdxERCEg7PDX8-4mY78ToPDnpplFZMTuETYpACEg'(
+  signedData(
+    version('1'),
+    speaker(u'8oF7nS_rrnU3FvzJKt75qcoXgzoH3Dsv3jnzy4dbFXk', nil, nil),
+    subject(u'8oF7nS_rrnU3FvzJKt75qcoXgzoH3Dsv3jnzy4dbFXk', nil),
+    validity('2014-05-11T00:50:00.000-04:00', '2017-05-11T01:00:00.000-04:00', 'PT24H'),
+    cred #'application/slog;charset=utf8;hash=md5' -> 'tagAccess/group0/lsdHylffAfTwlsLyVnHJFg7K4_sFOW2JWCTfmxgZh6k'{
+      link(u'yWYK0PN9ebEymvtWVNWaBYvtsklFqaTu0KELZLt_p9Q').
+      delegateTagAccess(u'group0', u'lsdHylffAfTwlsLyVnHJFg7K4_sFOW2JWCTfmxgZh6k', u'true').
+      delegateTagAccess(u'group0', u'lsdHylffAfTwlsLyVnHJFg7K4_sFOW2JWCTfmxgZh6k', u'true').
+      delegateTagAccess(u'group0', u'lsdHylffAfTwlsLyVnHJFg7K4_sFOW2JWCTfmxgZh6k', u'true').
+    },
+    signatureAlgorithm('SHA256withRSA')
+  ),
+  signature(u'g66_M2Ig9Lj-JqMf9wAPUp5yv_cmUWmlyb32o1hogNZzxczi6keI6Jt0LhGKMSUfJZDH7wiwIh2Hif5YC44OiJwVjPQTIeYNA2HyrYh9XY511HsbDAIELmkGkd0RO-LGg2YXizptRCN6TiTdb0RxQFZueu-vSCyQo5BqT1vC3CdhJDUSH-uqSdKbcUSsiqjjfrDS6_GeOJYnbT0v3gfmAaRIanLUgYWcWBXZGUMvYJyayw4I9qGLIZZTTywGDQ0WJu0uEPDe66U_PvFttl4Vpj5xu02QESYcQkL6galQteY9nEqJ4rZ-2f7oYBS7R5aPKxl78aNc1u_YaWAtNyNJTQ')
+
+
+curl http://152.3.145.10:8098/types/safesets/buckets/safe/keys/yWYK0PN9ebEymvtWVNWaBYvtsklFqaTu0KELZLt_p9Q
+
+
+/* curl request */
+
+curl -v -X POST http://152.3.136.26:7777/tagAccess -H "Content-Type: application/json"  -d "{ \"otherValues\": [] }"
+
+Curl request:
+curl  -v -X POST http://152.3.136.26:7777/postIdSet -H "Content-Type: application/json" -d "{ \"principal\": \"lsdHylffAfTwlsLyVnHJFg7K4_sFOW2JWCTfmxgZh6k\", \"otherValues\": [\"mp_user12.pem\"] }"
+
+Test:
+qiang@qiang-office-desktop:~/Desktop/safe-new-version-benchmark/safe$ curl  -X POST http://152.3.136.26:7777/postIdSet -H "Content-Type: application/json" -d "{ \"principal\": \"lsdHylffAfTwlsLyVnHJFg7K4_sFOW2JWCTfmxgZh6k\", \"otherValues\": [\"mp_user12.pem\"] }"
+{
+  "message": "[u'lsdHylffAfTwlsLyVnHJFg7K4_sFOW2JWCTfmxgZh6k']\n"
+}

@@ -1,0 +1,40 @@
+
+root endorses authorities and aggregates:
+
+defcon endorseIdP(?IdP) :- MA
+defcon endorsePA(?PA) :-
+defcon endorseSA(?SA) :-
+defcon endorseCP(?CP) :- (aggregate)
+
+user registers:
+MA endorseUser(?User) :- 
+
+prof registers:
+MA defcon endorsePI(?PI) :-
+
+prof creates project:
+PA defguard createProject() :-
+PA defcon createProjectSet(?SubjectId, ?ProjectId, ?ProjectMembershipRef) :- [and post it, return scid]
+- ProjectMembershipRef is memberSet
+- ProjectId is scid()
+
+prof delegates project membership to user:
+prof: defcon delegateProjectMembership(?SubjectId, ?ProjectId, ?Delegatable) :- [and post it]
+
+user creates slice in project:
+SA defguard createSlice() :-
+SA defcon createSliceSet(?SubjectId, ?SliceId, ?ProjectId, ?SliceControlRef, ?SlicePrivRef) :- [and post it]
+- ?SlicePrivRef is standardSliceDefaultPrivilegeSet
+- SliceControlRef is standardSliceControlSet
+- SliceId is scid()
+
+user creates sliver in slice:
+Agg/CP defguard createSliver(?SliceId, ?ProjectId) :-
+
+That is all.
+
+
+
+
+
+

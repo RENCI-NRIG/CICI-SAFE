@@ -1,0 +1,1 @@
+-Dakka.remote.port=6015 -Dsafelang.program=/home/qiang/Desktop/safe-new-version-benchmark/safe/safe-apps/difc/registry.slang  -Dhttp.port=3015  -Dsafe.keypair=/home/qiang/Desktop/safe-new-version-benchmark/safe/safe-apps/difc/keys/registry10.pem  -Xmx256m

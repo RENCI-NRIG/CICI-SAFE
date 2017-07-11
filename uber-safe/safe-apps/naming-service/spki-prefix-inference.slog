@@ -1,0 +1,31 @@
+srnPathTo(?UpstreamO, ?DownstreamO) :- 
+  srnToID(?UpstreamO, ?UpstreamScid), 
+  srnToID(?DownstreamO, ?DownstreamScid), 
+  srnIDPathTo(?UpstreamScid, ?DownstreamScid).   (* sriPathTo??? *)
+
+(* ?OName is a string in the form of scid/a/b/c/d *)
+srnToID(?OName, ?Scid) :- singleComponent(?OName), unify(?Scid, ?OName).
+
+srnToID(?OName, ?Scid) :- 
+  splitHead(?OName, ?FirstComponent, ?RestName),
+  srnRelativeNameToID(?FirstComponent, ?RestName, ?Scid).
+
+srnRelativeNameToID(?RootScid, ?Name, ?Scid) :-
+  singleComponent(?Name),
+  ?Root := rootId(?RootScid),
+  ?Root: nameObject(?Name, ?Scid, ?RootScid).
+
+srnRelativeNameToID(?RootScid, ?Name, ?Scid) :-
+  splitHead(?Name, ?FirstComponent, ?RestName),
+  ?Root := rootId(?RootScid),
+  ?Root: nameObject(?FirstComponent, ?ChildScid, ?RootScid),
+  srnRelativeNameToID(?ChildScid, ?RestName, ?Scid).  
+
+srnIDPathTo(?UpstreamScid, ?DownstreamScid) :- 
+  ?UpstreamRoot := rootId(?UpstreamScid),
+  ?UpstreamRoot: nameObject(?Name, ?DownstreamScid, ?UpstreamScid).
+
+srnIDPathTo(?UpstreamScid, ?DownstreamScid) :-
+  ?UpstreamRoot := rootId(?UpstreamScid),
+  ?UpstreamRoot: nameObject(?Name, ?MiddleScid, ?UpstreamScid),
+  srnIDPathTo(?MiddleScid, ?DownstreamScid).                   

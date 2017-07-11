@@ -1,0 +1,103 @@
+You're recommended to generate your own keys to avoid the errors caused by duplicate posts of id sets.
+
+/*
+ * This tests delegation among tags. Tags can be treated as groups.
+ * So this is also a test for group service.
+ */
+
+/*************************************** A simple running example *****************************************/
+=== set up tag_owner1 first
+* post the id set for tag_owner2
+run -f /home/qiang/Desktop/safe-new-version-benchmark/safe/safe-apps/difc/tagOwner2.slang -r safeService
+
+curl --data "?CN=tag_owner_qiang_2"  http://152.3.136.26:7777/postIdSet
+List([u'SakSG4JGhi7Cejx3D9rl06UOb4hk6jAQRJs68DP57RE'])
+
+* post the id set of a tag
+curl --data "?Tag=SakSG4JGhi7Cejx3D9rl06UOb4hk6jAQRJs68DP57RE:TestingTag2"  http://152.3.136.26:7777/postATag
+List([u'mzxZC1BwFRB-6heS4wzQ-_1CCEIbO8au9Qse3lU8akA'])
+
+* let tag_owner2 delegate TestingTag2 to tag_owner1's TestingTag1
+curl --data "?Tag=SakSG4JGhi7Cejx3D9rl06UOb4hk6jAQRJs68DP57RE:TestingTag2" --data "?AnotherTag=48AI7yhm-BmHLj7idjiUMphlk7H1i0dwGTBY3U_zpKE:TestingTag1"  http://152.3.136.26:7777/postTagAccessDelegationToATag
+List([u'xBzyDN0btcvs0OOJMNziVGxNJkGnoJqoxM4QGveM65M'])
+
+* let tag_owner1 add the delegation link to TestingTag1's id set
+run -f /home/qiang/Desktop/safe-new-version-benchmark/safe/safe-apps/difc/tagOwner1.slang -r safeService
+
+curl --data "?LinkRef=xBzyDN0btcvs0OOJMNziVGxNJkGnoJqoxM4QGveM65M" --data "?Tag=48AI7yhm-BmHLj7idjiUMphlk7H1i0dwGTBY3U_zpKE:TestingTag1"  http://152.3.136.26:7777/postALinkToTagIdSet
+List([u'MrQ8Isurj0EjyHlU6VIHeBjxC5HiFeh5_Br-OHV0eAs'])
+
+* tag delegation test
+run -f /home/qiang/Desktop/safe-new-version-benchmark/safe/safe-apps/difc/delegationTest.slang -r safeService
+
+curl --data "?Tag=SakSG4JGhi7Cejx3D9rl06UOb4hk6jAQRJs68DP57RE:TestingTag2" --data "?User=chEC__Zonmem0Oh8lK2t4Wirior8ycQQWJTYuTqzgqQ"  http://152.3.136.26:7777/authorizeTagAccess
+
+List({ u'QPRn9mWntI7e8voHY6An8wD8mVlqaWbpraij5WmVvhE': tagAccess('SakSG4JGhi7Cejx3D9rl06UOb4hk6jAQRJs68DP57RE:TestingTag2', 'chEC__Zonmem0Oh8lK2t4Wirior8ycQQWJTYuTqzgqQ') })
+
+
+
+== set up for tag_owner1
+* post the id set for tag_owner1
+run -f /home/qiang/Desktop/safe-new-version-benchmark/safe/safe-apps/difc/tagOwner1.slang -r safeService
+
+curl --data "?CN=tag_owner_qiang_1"  http://152.3.136.26:7777/postIdSet
+List([u'48AI7yhm-BmHLj7idjiUMphlk7H1i0dwGTBY3U_zpKE'])
+
+* post the id set of a tag
+curl --data "?Tag=48AI7yhm-BmHLj7idjiUMphlk7H1i0dwGTBY3U_zpKE:TestingTag1"  http://152.3.136.26:7777/postATag
+List([u'MrQ8Isurj0EjyHlU6VIHeBjxC5HiFeh5_Br-OHV0eAs'])
+
+* post the id set for a user
+run -f /home/qiang/Desktop/safe-new-version-benchmark/safe/safe-apps/difc/user1.slang -r safeService
+
+curl --data "?CN=user1"  http://152.3.136.26:7777/postIdSet
+List([u'GbK2_F4-7l7XIQnOoa1dccSXurEiPqDWc8VqtTY4TUg'])
+
+* post a tag access delegation to a user
+
+run -f /home/qiang/Desktop/safe-new-version-benchmark/safe/safe-apps/difc/tagOwner1.slang -r safeService
+
+curl --data "?Tag=48AI7yhm-BmHLj7idjiUMphlk7H1i0dwGTBY3U_zpKE:TestingTag1"  --data "?User=GbK2_F4-7l7XIQnOoa1dccSXurEiPqDWc8VqtTY4TUg"  --data "?Delegatable=true"  http://152.3.136.26:7777/postTagAccessDelegation
+List([u'xJMNF_3r-j_y_l0sfYOeqNTucLwnCzBgZ9DHPTeVfJU'])
+
+* add a delegation link to a user's id set
+run -f /home/qiang/Desktop/safe-new-version-benchmark/safe/safe-apps/difc/user1.slang -r safeService
+
+curl --data "?LinkRef=xJMNF_3r-j_y_l0sfYOeqNTucLwnCzBgZ9DHPTeVfJU"  http://152.3.136.26:7777/postALinkToIdSet
+List([u'GbK2_F4-7l7XIQnOoa1dccSXurEiPqDWc8VqtTY4TUg'])
+
+
+* delegation test
+run -f /home/qiang/Desktop/safe-new-version-benchmark/safe/safe-apps/difc/delegationTest.slang -r safeService
+
+curl --data "?Tag=48AI7yhm-BmHLj7idjiUMphlk7H1i0dwGTBY3U_zpKE:TestingTag1" --data "?User=GbK2_F4-7l7XIQnOoa1dccSXurEiPqDWc8VqtTY4TUg"  http://152.3.136.26:7777/authorizeTagAccess
+List({ u'QPRn9mWntI7e8voHY6An8wD8mVlqaWbpraij5WmVvhE': tagAccess('48AI7yhm-BmHLj7idjiUMphlk7H1i0dwGTBY3U_zpKE:TestingTag1', 'GbK2_F4-7l7XIQnOoa1dccSXurEiPqDWc8VqtTY4TUg') })
+
+* cascade delegations
+
+=* post the id set for another user
+run -f /home/qiang/Desktop/safe-new-version-benchmark/safe/safe-apps/difc/user2.slang -r safeService
+
+curl --data "?CN=user2"  http://152.3.136.26:7777/postIdSet
+List([u'chEC__Zonmem0Oh8lK2t4Wirior8ycQQWJTYuTqzgqQ'])
+
+=* let user1 delegate access to user2
+run -f /home/qiang/Desktop/safe-new-version-benchmark/safe/safe-apps/difc/user1.slang -r safeService
+
+curl --data "?Tag=48AI7yhm-BmHLj7idjiUMphlk7H1i0dwGTBY3U_zpKE:TestingTag1"  --data "?User=chEC__Zonmem0Oh8lK2t4Wirior8ycQQWJTYuTqzgqQ"  --data "?Delegatable=true"  http://152.3.136.26:7777/postTagAccessDelegation
+List([u'8c1gmaeCM8LmSvTy4pFpqcXi2TUo3U2sTPq33PqFVZQ'])
+
+=* add the delegation link to user2's id set
+run -f /home/qiang/Desktop/safe-new-version-benchmark/safe/safe-apps/difc/user2.slang -r safeService
+
+curl --data "?LinkRef=8c1gmaeCM8LmSvTy4pFpqcXi2TUo3U2sTPq33PqFVZQ"  http://152.3.136.26:7777/postALinkToIdSet
+List([u'chEC__Zonmem0Oh8lK2t4Wirior8ycQQWJTYuTqzgqQ'])
+
+=* delegation test
+run -f /home/qiang/Desktop/safe-new-version-benchmark/safe/safe-apps/difc/delegationTest.slang -r safeService
+
+curl --data "?Tag=48AI7yhm-BmHLj7idjiUMphlk7H1i0dwGTBY3U_zpKE:TestingTag1" --data "?User=chEC__Zonmem0Oh8lK2t4Wirior8ycQQWJTYuTqzgqQ"  http://152.3.136.26:7777/authorizeTagAccess
+List({ u'QPRn9mWntI7e8voHY6An8wD8mVlqaWbpraij5WmVvhE': tagAccess('48AI7yhm-BmHLj7idjiUMphlk7H1i0dwGTBY3U_zpKE:TestingTag1', 'chEC__Zonmem0Oh8lK2t4Wirior8ycQQWJTYuTqzgqQ') })
+
+
+

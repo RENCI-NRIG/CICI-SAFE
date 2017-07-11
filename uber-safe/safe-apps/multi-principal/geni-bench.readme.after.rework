@@ -1,0 +1,207 @@
+Principals:
+=============
+geniroot.pem    IBpC0ljPorTuO85iJ-9GIxkXyDlOHAfFwcKfGtj-h2U
+
+SERVER:
+run -f /home/qiang/Desktop/safe-new-version-benchmark/safe/safe-apps/multi-principal/geni-test-new.slang  -a src/main/resources/multi-principal-keys/geniroot.pem  -r safeService
+CLIENT:
+curl  -v -X POST http://152.3.136.26:7777/postIdSet -H "Content-Type: application/json" -d "{ \"otherValues\": [\"geniroot\"] }"
+"message": "[u'IBpC0ljPorTuO85iJ-9GIxkXyDlOHAfFwcKfGtj-h2U']"
+
+curl  -v -X POST http://152.3.136.26:7777/postSubjectSet -H "Content-Type: application/json" -d "{ \"otherValues\": [] }"
+"message": "[u'FCD4_w6qBRKELhC9Iyu14M_xApBH8hmd8j0Evd15TVk']"
+
+curl  -v -X POST http://152.3.136.26:7777/postIdSet -H "Content-Type: application/json" -d "{ \"principal\": \"CrKFTKBQdXUhondoTqR0PvxQFLUMBXNH4OLGIHBJw84\", \"otherValues\": [\"ma1\"] }"
+"message": "[u'CrKFTKBQdXUhondoTqR0PvxQFLUMBXNH4OLGIHBJw84']"
+
+curl  -v -X POST http://152.3.136.26:7777/postSubjectSet -H "Content-Type: application/json" -d "{ \"principal\": \"CrKFTKBQdXUhondoTqR0PvxQFLUMBXNH4OLGIHBJw84\", \"otherValues\": [] }"
+  "message": "[u'Ei2VdCe7eJGYc4b_puTINOUJ_sQCeX9bWhw9wO7yZ5Y']"
+
+Principals                        Ids                                         Subject set ids
+============  ===========================================        ===========================================
+geniroot.pem  IBpC0ljPorTuO85iJ-9GIxkXyDlOHAfFwcKfGtj-h2U        FCD4_w6qBRKELhC9Iyu14M_xApBH8hmd8j0Evd15TVk 
+ma1.pem       CrKFTKBQdXUhondoTqR0PvxQFLUMBXNH4OLGIHBJw84        Ei2VdCe7eJGYc4b_puTINOUJ_sQCeX9bWhw9wO7yZ5Y   
+pa1.pem       PeYss3QzTmElDFl2Quv2DCVZffl7g7xzINXvZdJ1ldQ        YHnYCjZZVRCYZ9RQ-XlD2G0QcAzPfORbLtwK7wA7NnU 
+pa2.pem       BSGdAvY1oHmubvGrzQBtqo6xFgfNf7Z8TcjMgxlU5Go        SbCkW0Zdu52PHeOHfvBbf36uE5nbx5fpMLaH1Nj8HeI
+sa1.pem       nb2-6SL_XBHg06xkX02RWhv_0chMPOUYYPFG6CkmsvE        0iFEHVT04vU4p1lVRB6P0mXo3-rTTyAQYCP65ZUS9n0 
+agg1.pem      TJGKnIxfIeV939lczADVkBMg_v_m8Fivb8MTF_0qERY        4aiMlDJrUEX-9XfHPb8VPu7qyECTTgPDucmzlESfvbw 
+prof1.pem     OFVdEb5BKLV1dp7AOpwcHc7sg5skP3IM4P_aGb8COFU        Cf1fy2lfuN2f73XwDrFLQ54ysQwHFCZupQ_KVSE-Joo 
+user1.pem     wzB7RP6JnsEvKuDeAi2U-fn_PsXVArtOv1JfQpYICOg        Dl-VLouY8LCZS2TY9Irp-GHDLiYb4etb3Y9QWRI7yMI 
+prof2.pem     tfRZ3lVKHNKnvzIV869qmAo6Ve2XATQJw9roCnp4nGw        b6QIbSbUQMCvDQ-Le-VoEJOV422wr87fFJrJ92tNHHk 
+user2.pem     dwNeDor4Fan4u8CeFpTK1TxkHn3LHrR-3cVMEwkQoVk        lDCdfWs3XkVaR5rj3FJbNRNzPSQgD51RVzzGqBY6KdY
+user3.pem     i-cFqndPMgl7R9uQULzzHRdoiyuAlH2qVzc1v51wWXE        boTkAzkRzAzsh7LucsLKU9pfh6GyLDptw-zCcG7WQl8
+user4.pem     gZIE7oupQWmG6PpFhA5OWrYIHrEqzc6LIgpwMTVa908        p3KRWy2ZiUIxntOAql5pm4XC4ufnnDhCLtDFvmJ79iM 
+
+user4 and prof2 are used, instead of user1 and prof1
+
+
+root endorses authorities and aggregates:
+==========================================
+
+* defcon endorseIdP(?IdP) :- MA
+
+SERVER: 
+[safe@sbt]> project safe-server
+[info] Set current project to safe-server (in build file:/home/qiang/Desktop/safe-new-version-benchmark/safe/)
+[safe-server@sbt]> run -f /home/qiang/Desktop/safe-new-version-benchmark/safe/safe-apps/multi-principal/geni-test-new.slang  -a src/main/resources/multi-principal-keys/geniroot.pem  -r safeService
+
+CLIENT: 
+qiang@qiang-office-desktop:~/Desktop/safe-new-version-benchmark/safe/safe-apps/multi-principal$ curl  -v -X POST http://152.3.136.26:7777/postMAEndorsement -H "Content-Type: application/json" -d "{ \"otherValues\": [\"CrKFTKBQdXUhondoTqR0PvxQFLUMBXNH4OLGIHBJw84\"] }"
+ "message": "[u'lVOUBE6Lmwta4DPigDJLYHMqxa1i8gHemNHnQrpGbfs']"
+
+
+post the link to MA's id set:
+ curl  -v -X POST http://152.3.136.26:7777/updateSubjectSet -H "Content-Type: application/json" -d "{ \"principal\": \"CrKFTKBQdXUhondoTqR0PvxQFLUMBXNH4OLGIHBJw84\", \"otherValues\": [\"lVOUBE6Lmwta4DPigDJLYHMqxa1i8gHemNHnQrpGbfs\"] }"
+  "message": "[u'Ei2VdCe7eJGYc4b_puTINOUJ_sQCeX9bWhw9wO7yZ5Y']"
+
+
+* defcon endorsePA(?PA) :-
+CLIENT: 
+curl  -v -X POST http://152.3.136.26:7777/postPAEndorsement -H "Content-Type: application/json" -d "{ \"otherValues\": [\"PeYss3QzTmElDFl2Quv2DCVZffl7g7xzINXvZdJ1ldQ\"] }"
+ "message": "[u'R0JJKBfWxlSO0OOl_fUUFQthesSpJLw-JMaDSTBINM0']"
+
+post the link to PA's id set:
+ curl  -v -X POST http://152.3.136.26:7777/updateSubjectSet -H "Content-Type: application/json" -d "{ \"principal\": \"PeYss3QzTmElDFl2Quv2DCVZffl7g7xzINXvZdJ1ldQ\", \"otherValues\": [\"R0JJKBfWxlSO0OOl_fUUFQthesSpJLw-JMaDSTBINM0\"] }"
+  "message": "[u'YHnYCjZZVRCYZ9RQ-XlD2G0QcAzPfORbLtwK7wA7NnU']"
+
+
+* defcon endorseSA(?SA) :-
+
+CLIENT: 
+curl  -v -X POST http://152.3.136.26:7777/postSAEndorsement -H "Content-Type: application/json" -d "{ \"otherValues\": [\"nb2-6SL_XBHg06xkX02RWhv_0chMPOUYYPFG6CkmsvE\"] }"
+  "message": "[u'1kvDMXd-rCkJMY2-QJOmKVLEP9LETN5iiHjVN4XYH-Y']"
+
+post the link to SA's id set:
+ curl  -v -X POST http://152.3.136.26:7777/updateSubjectSet -H "Content-Type: application/json" -d "{ \"principal\": \"nb2-6SL_XBHg06xkX02RWhv_0chMPOUYYPFG6CkmsvE\", \"otherValues\": [\"1kvDMXd-rCkJMY2-QJOmKVLEP9LETN5iiHjVN4XYH-Y\"] }"
+  "message": "[u'0iFEHVT04vU4p1lVRB6P0mXo3-rTTyAQYCP65ZUS9n0']"
+
+* defcon endorseCP(?CP) :- (aggregate)
+
+CLIENT: 
+curl  -v -X POST http://152.3.136.26:7777/postCPEndorsement -H "Content-Type: application/json" -d "{ \"otherValues\": [\"TJGKnIxfIeV939lczADVkBMg_v_m8Fivb8MTF_0qERY\"] }"
+  "message": "[u'hO_gms86uM4mFOeP-ORvhLPcrGPExFZNJsT4o926BCk']"
+
+post the link to SA's id set:
+ curl  -v -X POST http://152.3.136.26:7777/updateSubjectSet -H "Content-Type: application/json" -d "{ \"principal\": \"TJGKnIxfIeV939lczADVkBMg_v_m8Fivb8MTF_0qERY\", \"otherValues\": [\"hO_gms86uM4mFOeP-ORvhLPcrGPExFZNJsT4o926BCk\"] }"
+  "message": "[u'4aiMlDJrUEX-9XfHPb8VPu7qyECTTgPDucmzlESfvbw']"
+
+
+user registers:
+=================
+* MA endorseUser(?User) :- 
+
+SERVER:
+run -f /home/qiang/Desktop/safe-new-version-benchmark/safe/safe-apps/multi-principal/geni-test-new.slang  -a src/main/resources/multi-principal-keys/ma1.pem  -r safeService
+
+CLIENT:
+curl  -v -X POST http://152.3.136.26:7777/postUserEndorsement -H "Content-Type: application/json" -d "{ \"otherValues\": [\"gZIE7oupQWmG6PpFhA5OWrYIHrEqzc6LIgpwMTVa908\"] }"
+  "message": "[u'YlN-Y8qubryW7mmcTB-QIlzEb22sS4JTh28_QF__o9s']"
+
+post the link to user's id set:
+ curl  -v -X POST http://152.3.136.26:7777/updateSubjectSet -H "Content-Type: application/json" -d "{ \"principal\": \"gZIE7oupQWmG6PpFhA5OWrYIHrEqzc6LIgpwMTVa908\", \"otherValues\": [\"YlN-Y8qubryW7mmcTB-QIlzEb22sS4JTh28_QF__o9s\"] }"
+  "message": "[u'p3KRWy2ZiUIxntOAql5pm4XC4ufnnDhCLtDFvmJ79iM']"
+
+
+prof registers:
+=================
+* MA defcon endorsePI(?PI) :-
+
+CLIENT:
+curl  -v -X POST http://152.3.136.26:7777/postPIEndorsement -H "Content-Type: application/json" -d "{ \"otherValues\": [\"tfRZ3lVKHNKnvzIV869qmAo6Ve2XATQJw9roCnp4nGw\"] }"
+  "message": "[u'dEcdR4zraC4Gg03uwFV-UAcBx9WYGZFYIuMIv2UI7YQ']"
+
+post the link to prof's id set:
+ curl  -v -X POST http://152.3.136.26:7777/updateSubjectSet -H "Content-Type: application/json" -d "{ \"principal\": \"tfRZ3lVKHNKnvzIV869qmAo6Ve2XATQJw9roCnp4nGw\", \"otherValues\": [\"dEcdR4zraC4Gg03uwFV-UAcBx9WYGZFYIuMIv2UI7YQ\"] }"
+  "message": "[u'b6QIbSbUQMCvDQ-Le-VoEJOV422wr87fFJrJ92tNHHk']"
+
+
+prof creates a project:
+=======================
+* PA defguard createProject() :-
+
+SERVER: 
+run -f /home/qiang/Desktop/safe-new-version-benchmark/safe/safe-apps/multi-principal/geni-test-new.slang  -a src/main/resources/multi-principal-keys/pa1.pem  -r safeService
+
+CLIENT:
+curl  -v -X POST http://152.3.136.26:7777/createProject -H "Content-Type: application/json" -d "{ \"subject\": \"tfRZ3lVKHNKnvzIV869qmAo6Ve2XATQJw9roCnp4nGw\", \"bearerRef\": \"b6QIbSbUQMCvDQ-Le-VoEJOV422wr87fFJrJ92tNHHk\", \"otherValues\": [] }"
+
+* PA defcon memberSet() :- [post it, and return token] -- added by Qiang 
+curl  -v -X POST http://152.3.136.26:7777/postMemberSet -H "Content-Type: application/json" -d "{ \"otherValues\": [] }"
+
+  "message": "[u'xkqY0pSJcINhX9vtMYgGY13sLtpLoNK7_MplJ1chL-I']"
+
+* PA defcon createProjectSet(?SubjectId, ?ProjectId, ?ProjectMembershipRef) :- [and post it, return scid]
+- ProjectMembershipRef is memberSet
+- ProjectId is scid()
+
+curl  -v -X POST http://152.3.136.26:7777/postProjectSet -H "Content-Type: application/json" -d "{ \"otherValues\": [\"tfRZ3lVKHNKnvzIV869qmAo6Ve2XATQJw9roCnp4nGw\", \"PeYss3QzTmElDFl2Quv2DCVZffl7g7xzINXvZdJ1ldQ:project1\", \"xkqY0pSJcINhX9vtMYgGY13sLtpLoNK7_MplJ1chL-I\"] }"
+
+  "message": "[u'BB90WFF4CFcbcRxhi02qAwzX1klDmW48FwLFf2QmQYo']"
+
+post th link to prof's id set:
+curl  -v -X POST http://152.3.136.26:7777/updateSubjectSet -H "Content-Type: application/json" -d "{ \"principal\": \"tfRZ3lVKHNKnvzIV869qmAo6Ve2XATQJw9roCnp4nGw\", \"otherValues\": [\"BB90WFF4CFcbcRxhi02qAwzX1klDmW48FwLFf2QmQYo\"] }"
+
+  "message": "[u'b6QIbSbUQMCvDQ-Le-VoEJOV422wr87fFJrJ92tNHHk']"
+
+
+* prof delegates project membership to user:
+prof: defcon delegateProjectMembership(?SubjectId, ?ProjectId, ?Delegatable) :- [and post it]
+
+curl  -v -X POST http://152.3.136.26:7777/postProjectMembership -H "Content-Type: application/json" -d "{ \"principal\": \"tfRZ3lVKHNKnvzIV869qmAo6Ve2XATQJw9roCnp4nGw\", \"otherValues\": [\"gZIE7oupQWmG6PpFhA5OWrYIHrEqzc6LIgpwMTVa908\", \"PeYss3QzTmElDFl2Quv2DCVZffl7g7xzINXvZdJ1ldQ:project1\", \"true\"] }"
+
+ "message": "[u'yS9Ve6QL0BefyLPf9uNZqb2CysqoRGxH1WXKTdIXEUg']"
+
+post the link to user's id set:
+ curl  -v -X POST http://152.3.136.26:7777/updateSubjectSet -H "Content-Type: application/json" -d "{ \"principal\": \"gZIE7oupQWmG6PpFhA5OWrYIHrEqzc6LIgpwMTVa908\", \"otherValues\": [\"yS9Ve6QL0BefyLPf9uNZqb2CysqoRGxH1WXKTdIXEUg\"] }"
+
+  "message": "[u'p3KRWy2ZiUIxntOAql5pm4XC4ufnnDhCLtDFvmJ79iM']"
+
+user creates slice in project:
+================================
+* SA defguard createSlice() :-
+SERVER: run -f /home/qiang/Desktop/safe-new-version-benchmark/safe/safe-apps/multi-principal/geni-test.slang  -a src/main/resources/multi-principal-keys/sa1.pem  -r safeService
+
+CLIENT: 
+curl  -v -X POST http://152.3.136.26:7777/createSlice -H "Content-Type: application/json" -d "{ \"subject\": \"gZIE7oupQWmG6PpFhA5OWrYIHrEqzc6LIgpwMTVa908\", \"bearerRef\": \"p3KRWy2ZiUIxntOAql5pm4XC4ufnnDhCLtDFvmJ79iM\", \"otherValues\": [\"PeYss3QzTmElDFl2Quv2DCVZffl7g7xzINXvZdJ1ldQ:project1\"] }"
+
+  "message": "{ u'nb2-6SL_XBHg06xkX02RWhv_0chMPOUYYPFG6CkmsvE': approveSlice(u'gZIE7oupQWmG6PpFhA5OWrYIHrEqzc6LIgpwMTVa908', u'PeYss3QzTmElDFl2Quv2DCVZffl7g7xzINXvZdJ1ldQ:project1') }"
+
+
+* SA post standardSliceDefaultPrivilegeSet [added by Qiang]
+
+curl  -v -X POST http://152.3.136.26:7777/postStandardSliceDefaultPrivilegeSet -H "Content-Type: application/json" -d "{ \"otherValues\": [] }"
+
+  "message": "[u'oXWfZFQ4J42MyZI2Godn5jfIuN2oqQ7zxroAMOZOBO4']"
+
+
+* SA post standardSliceControlSet  [added by Qiang] 
+
+curl  -v -X POST http://152.3.136.26:7777/postStandardSliceControlSet -H "Content-Type: application/json" -d "{ \"otherValues\": [] }"
+
+  "message": "[u'BI9cG2pAd2zAqk5DwYsU4Vk_b9vIWlHWR2Z6j4Ouke8']"
+
+
+* SA defcon createSliceSet(?SubjectId, ?SliceId, ?ProjectId, ?SliceControlRef, ?SlicePrivRef) :- [and post it]
+- ?SlicePrivRef is standardSliceDefaultPrivilegeSet
+- SliceControlRef is standardSliceControlSet
+- SliceId is scid()
+
+curl  -v -X POST http://152.3.136.26:7777/postSliceSet -H "Content-Type: application/json" -d "{ \"otherValues\": [\"gZIE7oupQWmG6PpFhA5OWrYIHrEqzc6LIgpwMTVa908\", \"nb2-6SL_XBHg06xkX02RWhv_0chMPOUYYPFG6CkmsvE:slice1\", \"PeYss3QzTmElDFl2Quv2DCVZffl7g7xzINXvZdJ1ldQ:project1\", \"BI9cG2pAd2zAqk5DwYsU4Vk_b9vIWlHWR2Z6j4Ouke8\", \"oXWfZFQ4J42MyZI2Godn5jfIuN2oqQ7zxroAMOZOBO4\"] }"
+
+  "message": "[u'GkvkWkbpuKSnuwpckWjOH9Sh5HoD8whZJl-TQG1sEB0']"
+
+post the link to user's id set:
+curl  -v -X POST http://152.3.136.26:7777/updateSubjectSet -H "Content-Type: application/json" -d "{ \"principal\": \"gZIE7oupQWmG6PpFhA5OWrYIHrEqzc6LIgpwMTVa908\", \"otherValues\": [\"GkvkWkbpuKSnuwpckWjOH9Sh5HoD8whZJl-TQG1sEB0\"] }"
+
+  "message": "[u'p3KRWy2ZiUIxntOAql5pm4XC4ufnnDhCLtDFvmJ79iM']"
+
+user creates sliver in slice:
+Agg/CP defguard createSliver(?SliceId, ?ProjectId) :-
+
+SERVER: run -f /home/qiang/Desktop/safe-new-version-benchmark/safe/safe-apps/multi-principal/geni-test-new.slang  -a src/main/resources/multi-principal-keys/agg1.pem  -r safeService 
+
+curl  -v -X POST http://152.3.136.26:7777/createSliver -H "Content-Type: application/json" -d "{ \"subject\": \"gZIE7oupQWmG6PpFhA5OWrYIHrEqzc6LIgpwMTVa908\", \"bearerRef\": \"p3KRWy2ZiUIxntOAql5pm4XC4ufnnDhCLtDFvmJ79iM\", \"otherValues\": [\"nb2-6SL_XBHg06xkX02RWhv_0chMPOUYYPFG6CkmsvE:slice1\"] }"
+
+  "message": "{ u'TJGKnIxfIeV939lczADVkBMg_v_m8Fivb8MTF_0qERY': approveSliver(u'gZIE7oupQWmG6PpFhA5OWrYIHrEqzc6LIgpwMTVa908', u'nb2-6SL_XBHg06xkX02RWhv_0chMPOUYYPFG6CkmsvE:slice1') }"
+
+That is all.
