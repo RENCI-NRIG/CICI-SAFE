@@ -218,7 +218,7 @@ public class SdxServer extends UnicastRemoteObject implements ServiceAPI {
     othervalues[1]=srcip;
     othervalues[2]=dsthash;
     othervalues[3]=dstip;
-    String message=SafePost.postSafeStatements(safeserver,"connect",server_keyhash,othervalues);
+    String message=SafePost.postSafeStatements(safeserver,"connectivity",server_keyhash,othervalues);
     if(message !=null && message.contains("Unsatisfied")){
       return false;
     }
