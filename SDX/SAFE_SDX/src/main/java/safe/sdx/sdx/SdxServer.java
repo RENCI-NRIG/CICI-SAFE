@@ -215,8 +215,8 @@ public class SdxServer extends UnicastRemoteObject implements ServiceAPI {
   private boolean authorizePrefix(String srchash, String srcip, String dsthash, String dstip){
     String[] othervalues=new String[4];
     othervalues[0]=srchash;
-    othervalues[1]=srcip;
-    othervalues[2]=dsthash;
+    othervalues[1]=dsthash;
+    othervalues[2]=srcip;
     othervalues[3]=dstip;
     String message=SafePost.postSafeStatements(safeserver,"connectivity",server_keyhash,othervalues);
     if(message !=null && message.contains("Unsatisfied")){

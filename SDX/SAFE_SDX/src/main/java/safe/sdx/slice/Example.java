@@ -127,7 +127,7 @@ public class Example {
           sshkey=args[7];
           copyFile2Slice(carrier, "/home/yaoyj11/project/exo-geni/SAFE_SDX/src/main/resources/scripts/dpid.sh","~/dpid.sh",sshkey);
           copyFile2Slice(carrier, "/home/yaoyj11/project/exo-geni/SAFE_SDX/src/main/resources/scripts/ovsbridge.sh","~/ovsbridge.sh",sshkey);
-          runCmdSlice(carrier,"/bin/bash ~/ovsbridge.sh "+SDNControllerIP+":6633",sshkey);
+          runCmdSlice(carrier,"/bin/bash ~/ovsbridge.sh "+SDNControllerIP+":6633",sshkey,"c");
         }
       }catch (Exception e){
         e.printStackTrace();
@@ -206,6 +206,27 @@ public class Example {
 
   private static void runCmdSlice(Slice s, String cmd, String privkey){
 		for(ComputeNode c : s.getComputeNodes()){
+      String mip=c.getManagementIP();
+      try{
+        System.out.println(mip+" run commands:"+cmd);
+        //ScpTo.Scp(lfile,"root",mip,rfile,privkey);
+        String res=Exec.sshExec("root",mip,cmd,privkey);
+        while(res.startsWith("error")){
+          sleep(5);
+          res=Exec.sshExec("root",mip,cmd,privkey);
+        }
+
+      }catch (Exception e){
+        System.out.println("exception when copying config file");
+      }
+		}
+  }
+
+  private static void runCmdSlice(Slice s, String cmd, String privkey,String pattern){
+		for(ComputeNode c : s.getComputeNodes()){
+      if(!c.getName().contains(pattern)){
+        continue;
+      }
       String mip=c.getManagementIP();
       try{
         System.out.println(mip+" run commands:"+cmd);
