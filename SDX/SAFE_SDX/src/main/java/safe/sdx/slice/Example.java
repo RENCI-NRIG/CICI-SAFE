@@ -78,7 +78,7 @@ public class Example {
   private static String customer_keyhash;
   private static String safeserver;
   private static String sshkey;
-  private static String riakip="153.3.145.36";
+  private static String riakip="152.3.145.36";
 
   private static  void computeIP(String prefix){
     String[] ip_mask=prefix.split("/");
@@ -153,6 +153,12 @@ public class Example {
             computeIP(args[6]);
           }catch(Exception e){
             e.printStackTrace();
+          }
+          if(args.length<8){
+            System.out.print("Using default riak server at 152.3.145.36:8098");
+          }else{
+            riakip=args[7];
+            System.out.print("Using riak server at "+riakip);
           }
           Slice c1=createCustomerSlice(customerName,2,IPPrefix,curip,1000000,true);
           waitTillActive(c1);
@@ -413,8 +419,8 @@ public class Example {
 //			l.add("UAF (Fairbanks, AK, USA) XO Rack");
 		
 //			l.add("UH (Houston, TX USA) XO Rack");
-//			l.add("TAMU (College Station, TX, USA) XO Rack");
-			l.add("RENCI (Chapel Hill, NC USA) XO Rack");
+			l.add("TAMU (College Station, TX, USA) XO Rack");
+//			l.add("RENCI (Chapel Hill, NC USA) XO Rack");
 //			
 //			l.add("SL (Chicago, IL USA) XO Rack");
 //			

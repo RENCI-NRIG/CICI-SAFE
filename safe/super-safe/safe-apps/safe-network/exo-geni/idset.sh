@@ -1,5 +1,5 @@
 echo "IDSet"
-SAFESERVER=152.54.14.38
+SAFESERVER=128.194.6.150
 curl  -v -X POST http://$SAFESERVER:7777/postIdSet -H "Content-Type: application/json" -d "{ \"principal\": \"bphJZn3RJBnNqoCZk6k9SBD8mwSb054PXbwV7HpE80E\", \"otherValues\": [\"carrier\"] }"
 curl  -v -X POST http://$SAFESERVER:7777/postIdSet -H "Content-Type: application/json" -d "{ \"principal\": \"weQ8OFpXWhIB1AMzKX2SDJcxT738VdHCcl7mFlvOD24\", \"otherValues\": [\"alice\"] }"
 curl  -v -X POST http://$SAFESERVER:7777/postIdSet -H "Content-Type: application/json" -d "{ \"principal\": \"iMrcWFMgx6DJeLtVWvBCMzwd8EDtJtZ4L0n3YYn1hi8\", \"otherValues\": [\"bob\"] }"

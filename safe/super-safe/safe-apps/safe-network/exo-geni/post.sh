@@ -14,7 +14,7 @@
 #postIDSet
 #echo "init set"
 #curl  -v -X POST http://$SAFESERVER:7777/postInitNeighbor -H "Content-Type: application/json" -d "{ \"principal\": \"bphJZn3RJBnNqoCZk6k9SBD8mwSb054PXbwV7HpE80E\", \"otherValues\": [] }"
-SAFESERVER=152.54.14.38
+SAFESERVER=128.194.6.154
 
 echo "Policy"
 curl  -v -X POST http://$SAFESERVER:7777/postStitchPolicy -H "Content-Type: application/json" -d "{ \"principal\": \"bphJZn3RJBnNqoCZk6k9SBD8mwSb054PXbwV7HpE80E\", \"otherValues\": [] }"
