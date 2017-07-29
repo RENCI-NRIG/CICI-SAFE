@@ -307,6 +307,7 @@ public class Example {
 		String nodePostBootScript="apt-get update;apt-get -y install quagga\n"
       +"sed -i -- 's/zebra=no/zebra=yes/g' /etc/quagga/daemons\n"
       +"sed -i -- 's/ospfd=no/ospfd=yes/g' /etc/quagga/daemons\n"
+      +"echo \"1\" > /proc/sys/net/ipv4/ip_forward\n"
       +"/etc/init.d/neuca stop\n";
 		String nodeDomain=domains.get(0);
     ArrayList<ComputeNode> nodelist=new ArrayList<ComputeNode>();
