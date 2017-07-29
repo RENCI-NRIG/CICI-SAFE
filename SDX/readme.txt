@@ -128,19 +128,26 @@ To run the demo for SDX, you need to run a safe server first, and then run the a
             * Connection #0 to host 152.54.14.38 left intact
     You should run ./updatess.sh mjpKqF0WsgUKlhCnIYpa4_CrgOo4gIIlGqLjepxJJ5E and ./updatess.sh jkgOKYbQhgQH-uTCkUVqh45Zge8SR_SkOXkvx6chvyA
 
-  8. alice stitch CNode0 to sdx/c0
+  8. alice stitch CNode0 to sdx/c0, in alice's controller, run:
     $>stitch alice sdx CNode0 c0
-    bob stitch CNode0 to sdx/c3
+    bob stitch CNode0 to sdx/c3, in bob's controller run:
     $>stitch bob sdx CNode0 c3
 
   9. route
+    alice tells sdx controller its address space
     $>route 192.168.10.1/24 192.168.33.2 server c0
+    bob tells sdx controller its address space
     $>route 192.168.20.1/24 192.168.34.2 server c3
 
   10. setup routing in client side
     An example command of adding an entry to the routing table is as follows, this only supports dest IP address with /32 netmask
-    $ip route add 192.168.10.1/32 via 192.168.33.2
     Another way to do this is using Quagga with zebra enabled, and add routing entries in zebra.conf, dest ip with any netmask is supported
+    In the demo, to enable communication between CNode1 in alice and CNode1 in bob, the commands are:
+    CNode1-alice$ ip route add 192.168.20.2/32 via 192.168.10.1
+    CNode0-alice$ ip route add 192.168.20.2/32 via 192.168.34.1
+    CNode1-bob$  ip route add 192.168.10.2/32 via 192.168.20.1
+    CNode0-bob$ ip route add 192.168.10.2/32 via 192.168.33.1
+    
 
 
   -----------------For Stitching and Routing Application (Out-Dated)----------------
