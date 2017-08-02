@@ -6,7 +6,7 @@
 #/etc/init.d/neuca stop;
 string=$(ifconfig -a);
 if [[ $string == *"br0"* ]]; then
-    echo "It's there!"
+  echo "br0 is there"
 else
   ovs-vsctl add-br br0
   ovs-vsctl set-controller br0 tcp:$1

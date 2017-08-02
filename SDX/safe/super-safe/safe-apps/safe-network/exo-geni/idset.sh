@@ -1,13 +1,20 @@
 echo "IDSet"
-SAFESERVER=128.194.6.150
-curl  -v -X POST http://$SAFESERVER:7777/postIdSet -H "Content-Type: application/json" -d "{ \"principal\": \"bphJZn3RJBnNqoCZk6k9SBD8mwSb054PXbwV7HpE80E\", \"otherValues\": [\"carrier\"] }"
-curl  -v -X POST http://$SAFESERVER:7777/postIdSet -H "Content-Type: application/json" -d "{ \"principal\": \"weQ8OFpXWhIB1AMzKX2SDJcxT738VdHCcl7mFlvOD24\", \"otherValues\": [\"alice\"] }"
-curl  -v -X POST http://$SAFESERVER:7777/postIdSet -H "Content-Type: application/json" -d "{ \"principal\": \"iMrcWFMgx6DJeLtVWvBCMzwd8EDtJtZ4L0n3YYn1hi8\", \"otherValues\": [\"bob\"] }"
-curl  -v -X POST http://$SAFESERVER:7777/postIdSet -H "Content-Type: application/json" -d "{ \"principal\": \"V1F2853Nq8V304Yb_GInYaWTgVqmBsQwC0tXWuNmmf8\", \"otherValues\": [\"pa\"] }"
-curl  -v -X POST http://$SAFESERVER:7777/postIdSet -H "Content-Type: application/json" -d "{ \"principal\": \"UIz4bXT7accigZ7KNpEyF2igwGOgXb9gne7p13i2bWA\", \"otherValues\": [\"pa\"] }"
 
-curl  -v -X POST http://$SAFESERVER:7777/postSubjectSet -H "Content-Type: application/json" -d "{ \"principal\": \"bphJZn3RJBnNqoCZk6k9SBD8mwSb054PXbwV7HpE80E\", \"otherValues\": [] }"
-curl  -v -X POST http://$SAFESERVER:7777/postSubjectSet -H "Content-Type: application/json" -d "{ \"principal\": \"weQ8OFpXWhIB1AMzKX2SDJcxT738VdHCcl7mFlvOD24\", \"otherValues\": [] }"
-curl  -v -X POST http://$SAFESERVER:7777/postSubjectSet -H "Content-Type: application/json" -d "{ \"principal\": \"iMrcWFMgx6DJeLtVWvBCMzwd8EDtJtZ4L0n3YYn1hi8\", \"otherValues\": [] }"
-curl  -v -X POST http://$SAFESERVER:7777/postSubjectSet -H "Content-Type: application/json" -d "{ \"principal\": \"V1F2853Nq8V304Yb_GInYaWTgVqmBsQwC0tXWuNmmf8\", \"otherValues\": [] }"
-curl  -v -X POST http://$SAFESERVER:7777/postSubjectSet -H "Content-Type: application/json" -d "{ \"principal\": \"UIz4bXT7accigZ7KNpEyF2igwGOgXb9gne7p13i2bWA\", \"otherValues\": [] }"
+SAFESERVER_SDX=152.54.14.33
+SAFESERVER_ALICE=152.54.14.40
+SAFESERVER_BOB=152.54.14.60
+
+curl  -v -X POST http://$SAFESERVER_SDX:7777/postIdSet -H "Content-Type: application/json" -d "{ \"principal\": \"XDIA1RQ6jrJq2Z-SD321s3MeeWnqwCKWE9LdrRnhJ5g\", \"otherValues\": [\"carrier\"] }"
+curl  -v -X POST http://$SAFESERVER_ALICE:7777/postIdSet -H "Content-Type: application/json" -d "{ \"principal\": \"Iq7mxtcMBj5PK8mn4h1gR8BYkwOkoonUiEC_-dWxgAU\", \"otherValues\": [\"alice\"] }"
+curl  -v -X POST http://$SAFESERVER_BOB:7777/postIdSet -H "Content-Type: application/json" -d "{ \"principal\": \"6MK8qmGNcNSUiuhGskUWs689KNANR2sMXA1fMgcNbNQ\", \"otherValues\": [\"bob\"] }"
+
+curl  -v -X POST http://$SAFESERVER_SDX:7777/postSubjectSet -H "Content-Type: application/json" -d "{ \"principal\": \"XDIA1RQ6jrJq2Z-SD321s3MeeWnqwCKWE9LdrRnhJ5g\", \"otherValues\": [] }"
+curl  -v -X POST http://$SAFESERVER_ALICE:7777/postSubjectSet -H "Content-Type: application/json" -d "{ \"principal\": \"Iq7mxtcMBj5PK8mn4h1gR8BYkwOkoonUiEC_-dWxgAU\", \"otherValues\": [] }"
+curl  -v -X POST http://$SAFESERVER_BOB:7777/postSubjectSet -H "Content-Type: application/json" -d "{ \"principal\": \"6MK8qmGNcNSUiuhGskUWs689KNANR2sMXA1fMgcNbNQ\", \"otherValues\": [] }"
+
+
+curl  -v -X POST http://$SAFESERVER_SDX:7777/postIdSet -H "Content-Type: application/json" -d "{ \"principal\": \"Y3it9CtE1e0RVQ3cskjZ0Oys0V9Tj6hs5iQYNP75KVA\", \"otherValues\": [\"carrier\"] }"
+curl  -v -X POST http://$SAFESERVER_SDX:7777/postSubjectSet -H "Content-Type: application/json" -d "{ \"principal\": \"Y3it9CtE1e0RVQ3cskjZ0Oys0V9Tj6hs5iQYNP75KVA\", \"otherValues\": [] }"
+
+curl  -v -X POST http://$SAFESERVER_SDX:7777/postIdSet -H "Content-Type: application/json" -d "{ \"principal\": \"5hgyW8w4NxcRFDfhOt74INq7CmnSGHyzdfyxsH1US6U\", \"otherValues\": [\"carrier\"] }"
+curl  -v -X POST http://$SAFESERVER_SDX:7777/postSubjectSet -H "Content-Type: application/json" -d "{ \"principal\": \"5hgyW8w4NxcRFDfhOt74INq7CmnSGHyzdfyxsH1US6U\", \"otherValues\": [] }"

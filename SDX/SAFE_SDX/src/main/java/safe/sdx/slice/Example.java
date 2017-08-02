@@ -2,8 +2,8 @@
  * 
  */
 package safe.sdx;
-
-
+import java.util.regex.Pattern;
+import java.util.regex.Matcher;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -112,7 +112,7 @@ public class Example {
 		}
 
     if(args[4].equals("server")){
-      SDNControllerIP=args[6];
+//      SDNControllerIP=args[6];
       if(args.length<9){
         System.out.print("Using default riak server at 152.3.145.36:8098");
       }else{
@@ -125,9 +125,10 @@ public class Example {
           Slice carrier=createCarrierSlice(carrierName,4,10,1000000,1);
           waitTillActive(carrier);
           sshkey=args[7];
-          copyFile2Slice(carrier, "/home/yaoyj11/project/exo-geni/SAFE_SDX/src/main/resources/scripts/dpid.sh","~/dpid.sh",sshkey);
-          copyFile2Slice(carrier, "/home/yaoyj11/project/exo-geni/SAFE_SDX/src/main/resources/scripts/ovsbridge.sh","~/ovsbridge.sh",sshkey);
-          runCmdSlice(carrier,"/bin/bash ~/ovsbridge.sh "+SDNControllerIP+":6633",sshkey,"c");
+          copyFile2Slice(carrier, "/home/yaoyj11/safe-sdx/SDX/SAFE_SDX/src/main/resources/scripts/dpid.sh","~/dpid.sh",sshkey);
+          copyFile2Slice(carrier, "/home/yaoyj11/safe-sdx/SDX/SAFE_SDX/src/main/resources/scripts/ovsbridge.sh","~/ovsbridge.sh",sshkey);
+          SDNControllerIP=((ComputeNode)carrier.getResourceByName("plexuscontroller")).getManagementIP();
+          runCmdSlice(carrier,"/bin/bash ~/ovsbridge.sh "+SDNControllerIP+":6633",sshkey,"(c\\d+)");
         }
       }catch (Exception e){
         e.printStackTrace();
@@ -222,11 +223,17 @@ public class Example {
 		}
   }
 
-  private static void runCmdSlice(Slice s, String cmd, String privkey,String pattern){
+  private static void runCmdSlice(Slice s, String cmd, String privkey,String patn){
+    Pattern pattern = Pattern.compile(patn);
 		for(ComputeNode c : s.getComputeNodes()){
-      if(!c.getName().contains(pattern)){
+      Matcher matcher = pattern.matcher(c.getName());
+      if (!matcher.find())
+      {
         continue;
       }
+      //if(!c.getName().contains(pattern)){
+      //  continue;
+      //}
       String mip=c.getManagementIP();
       try{
         System.out.println(mip+" run commands:"+cmd);
@@ -311,6 +318,7 @@ public class Example {
       }
     }
     addSafeServer(s,riakip);
+    addPlexusController(s);
     s.commit();
     return s;
 	}
@@ -374,6 +382,17 @@ public class Example {
     node0.setPostBootScript(getSafeScript(rip));
   }
 
+  private static void addPlexusController(Slice s){
+		String dockerImageShortName="Ubuntu 14.04 Docker";
+		String dockerImageURL ="http://geni-orca.renci.org/owl/5e2190c1-09f1-4c48-8ed6-dacae6b6b435#Ubuntu+14.0.4+Docker";//http://geni-images.renci.org/images/standard/ubuntu/ub1304-ovs-opendaylight-v1.0.0.xml
+		String dockerImageHash ="b4ef61dbd993c72c5ac10b84650b33301bbf6829";
+		String dockerNodeType="XO Large";
+    ComputeNode node0 = s.addComputeNode("plexuscontroller");
+    node0.setImage(dockerImageURL,dockerImageHash,dockerImageShortName);
+    node0.setNodeType(dockerNodeType);
+    node0.setDomain(domains.get(0));
+    node0.setPostBootScript(getPlexusScript());
+  }
 
   private static String getOVSScript(String cip){
 		String script="apt-get update\n"+"apt-get -y install openvswitch-switch\n apt-get -y install iperf\n /etc/init.d/neuca stop\n";
@@ -385,6 +404,14 @@ public class Example {
       +"docker pull yaoyj11/safeserver\n"
       +"docker run -i -t -d -p 7777:7777 -h safe --name safe yaoyj11/safeserver\n"
       +"docker exec -d safe /bin/bash -c  \"cd /root/safe;export SBT_HOME=/opt/sbt-0.13.12;export SCALA_HOME=/opt/scala-2.11.8;sed -i 's/152.3.145.36:8098/"+riakip+":8098/g' safe-server/src/main/resources/application.conf;./sdx.sh\"\n";
+    return script;
+  }
+
+  private static String getPlexusScript(){
+		String script="apt-get update\n"
+      +"docker pull yaoyj11/plexus\n"
+      +"docker run -i -t -d -p 8080:8080 -p 6633:6633 -p 3000:3000 -h plexus --name plexus yaoyj11/plexus\n";
+      //+"docker exec -d plexus /bin/bash -c  \"cd /root/;./sdx.sh\"\n";
     return script;
   }
 
@@ -441,8 +468,8 @@ public class Example {
 //			l.add("UAF (Fairbanks, AK, USA) XO Rack");
 		
 //			l.add("UH (Houston, TX USA) XO Rack");
-			l.add("TAMU (College Station, TX, USA) XO Rack");
-//			l.add("RENCI (Chapel Hill, NC USA) XO Rack");
+//			l.add("TAMU (College Station, TX, USA) XO Rack");
+			l.add("RENCI (Chapel Hill, NC USA) XO Rack");
 //			
 //			l.add("SL (Chicago, IL USA) XO Rack");
 //			
