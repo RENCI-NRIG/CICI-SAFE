@@ -1,6 +1,6 @@
 defenv SetVersion() :- "set12".
 defenv PolicyVersion() :- "policy6".
-defenv RpkiRoot() :- "UIz4bXT7accigZ7KNpEyF2igwGOgXb9gne7p13i2bWA".
+defenv RpkiRoot() :- "iMrcWFMgx6DJeLtVWvBCMzwd8EDtJtZ4L0n3YYn1hi8".
 
 defcon makeMyIdentitySet(?CN) :-
   spec("Construct the identity set for self"),
