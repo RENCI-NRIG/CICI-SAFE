@@ -24,6 +24,8 @@ import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.log4j.SimpleLayout;
+import org.apache.commons.cli.*;
+import org.apache.commons.cli.DefaultParser;
 
 import org.renci.ahab.libndl.LIBNDL;
 import org.renci.ahab.libndl.Slice;
@@ -79,6 +81,7 @@ public class Example {
   private static String safeserver;
   private static String sshkey;
   private static String riakip="152.3.145.36";
+  private static String type;
 
   private static  void computeIP(String prefix){
     String[] ip_mask=prefix.split("/");
@@ -91,10 +94,45 @@ public class Example {
 		//Example usage:   ./target/appassembler/bin/SafeSdxExample  ~/.ssl/geni-pruth1.pem ~/.ssl/geni-pruth1.pem "https://geni.renci.org:11443/orca/xmlrpc" pruth.1 stitch
 		//Example usage:   ./target/appassembler/bin/SafeSdxExample  ~/.ssl/geni-pruth1.pem ~/.ssl/geni-pruth1.pem "https://geni.renci.org:11443/orca/xmlrpc" name fournodes
 		System.out.println("ndllib TestDriver: START");
-		pemLocation = args[0];
-		keyLocation = args[1];
-		controllerUrl = args[2]; //"https://geni.renci.org:11443/orca/xmlrpc";
-		sliceName = args[3]; //"pruth.sdx.1";
+
+    Options options = new Options();
+    Option config = new Option("c", "config", true, "configuration file path");
+    config.setRequired(true);
+    options.addOption(config);
+
+    CommandLineParser parser = new DefaultParser();
+    HelpFormatter formatter = new HelpFormatter();
+    CommandLine cmd;
+
+    try {
+        cmd = parser.parse(options, args);
+    } catch (ParseException e) {
+        System.out.println(e.getMessage());
+        formatter.printHelp("utility-name", options);
+
+        System.exit(1);
+        return;
+    }
+		String configfilepath=cmd.getOptionValue("config");
+
+    SdxConfig sdxconfig=new SdxConfig(configfilepath);
+
+    pemLocation = sdxconfig.exogenipem;
+		keyLocation = sdxconfig.exogenipem;
+		controllerUrl = sdxconfig.exogenism; //"https://geni.renci.org:11443/orca/xmlrpc";
+		sliceName = sdxconfig.slicename;
+    sshkey=sdxconfig.sshkey;
+    //server_keyhash=sdxconfig.safekey;
+    IPPrefix=sdxconfig.ipprefix;
+    type=sdxconfig.type;
+    riakip=sdxconfig.riakserver;
+
+    computeIP(IPPrefix);
+
+		//pemLocation = args[0];
+		//keyLocation = args[1];
+		//controllerUrl = args[2]; //"https://geni.renci.org:11443/orca/xmlrpc";
+		//sliceName = args[3]; //"pruth.sdx.1";
 
 		sliceProxy = Example.getSliceProxy(pemLocation,keyLocation, controllerUrl);		
 
@@ -111,63 +149,55 @@ public class Example {
 			e.printStackTrace();
 		}
 
-    if(args[4].equals("server")){
-//      SDNControllerIP=args[6];
-      if(args.length<9){
-        System.out.print("Using default riak server at 152.3.145.36:8098");
-      }else{
-        riakip=args[8];
-      }
+    if(type.equals("server")){
+      //SDNControllerIP=args[6];
+      //if(args.length<9){
+      //  System.out.print("Using default riak server at 152.3.145.36:8098");
+      //}else{
+      //  riakip=args[8];
+      //}
       try{
-        if(args[5].equals("true")){
+      //  if(args[5].equals("true")){
           String carrierName=sliceName;
           System.setProperty("java.security.policy","~/project/exo-geni/ahabserver/allow.policy");
           Slice carrier=createCarrierSlice(carrierName,4,10,1000000,1);
           waitTillActive(carrier);
-          sshkey=args[7];
           copyFile2Slice(carrier, "/home/yaoyj11/safe-sdx/SDX/SAFE_SDX/src/main/resources/scripts/dpid.sh","~/dpid.sh",sshkey);
           copyFile2Slice(carrier, "/home/yaoyj11/safe-sdx/SDX/SAFE_SDX/src/main/resources/scripts/ovsbridge.sh","~/ovsbridge.sh",sshkey);
-          SDNControllerIP=((ComputeNode)carrier.getResourceByName("plexuscontroller")).getManagementIP();
+//          SDNControllerIP=((ComputeNode)carrier.getResourceByName("plexuscontroller")).getManagementIP();
           runCmdSlice(carrier,"/bin/bash ~/ovsbridge.sh "+SDNControllerIP+":6633",sshkey,"(c\\d+)");
-        }
+        //}
       }catch (Exception e){
         e.printStackTrace();
       }
     }
-    else if (args[4].equals("delete")){
+    else if (type.equals("delete")){
       Slice s2 = null;
       try{
-        s2=Slice.loadManifestFile(sliceProxy, args[3]);
+        s2=Slice.loadManifestFile(sliceProxy, sliceName);
         s2.delete();
       }catch (Exception e){
         e.printStackTrace();
       }
 
     }
-    else if (args[4].equals("client")){
+    else if (type.equals("client")){
       System.out.println("client start");
       String message = "blank";
       String customerName=sliceName;
       try{
-        if(args[5].equals("true")){
           try{
-            computeIP(args[6]);
+            computeIP(IPPrefix);
           }catch(Exception e){
             e.printStackTrace();
           }
-          if(args.length<8){
-            System.out.print("Using default riak server at 152.3.145.36:8098");
-          }else{
-            riakip=args[7];
-            System.out.print("Using riak server at "+riakip);
-          }
+          System.out.print("Using riak server at "+riakip);
           Slice c1=createCustomerSlice(customerName,2,IPPrefix,curip,1000000,true);
           waitTillActive(c1);
           //copyFile2Slice(c1, "/home/yaoyj11/project/exo-geni/SAFE_SDX/src/main/resources/scripts/configospffornewif.sh","~/configospffornewif.sh","~/.ssh/id_rsa");
           //copyFile2Slice(c1, "/home/yaoyj11/project/exo-geni/SAFE_SDX/src/main/resources/scripts/configospffornewif.sh","~/configospffornewif.sh","~/.ssh/id_rsa");
           //runCmdSlice(c1,"/bin/bash ~/ospfautoconfig.sh","~/.ssh/id_rsa");
           return;
-        }
       }catch (Exception e){
         e.printStackTrace();
       }
@@ -468,8 +498,8 @@ public class Example {
 //			l.add("UAF (Fairbanks, AK, USA) XO Rack");
 		
 //			l.add("UH (Houston, TX USA) XO Rack");
-//			l.add("TAMU (College Station, TX, USA) XO Rack");
-			l.add("RENCI (Chapel Hill, NC USA) XO Rack");
+			l.add("TAMU (College Station, TX, USA) XO Rack");
+//		l.add("RENCI (Chapel Hill, NC USA) XO Rack");
 //			
 //			l.add("SL (Chicago, IL USA) XO Rack");
 //			

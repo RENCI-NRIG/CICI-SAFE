@@ -23,6 +23,8 @@ import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.log4j.SimpleLayout;
+import org.apache.commons.cli.*;
+import org.apache.commons.cli.DefaultParser;
 
 import org.renci.ahab.libndl.LIBNDL;
 import org.renci.ahab.libndl.Slice;
@@ -103,6 +105,7 @@ public class SdxServer extends UnicastRemoteObject implements ServiceAPI {
   private static HashMap<String, Link> links=new HashMap<String, Link>();
 	private static String safeserver;
   private static String server_keyhash;
+  //private static String type;
   private static ArrayList<String[]> advertisements=new ArrayList<String[]>();
 
   private void addEntry_HashList(HashMap<String,ArrayList<String>>  map,String key, String entry){
@@ -146,13 +149,44 @@ public class SdxServer extends UnicastRemoteObject implements ServiceAPI {
     //}
     
 		System.out.println("Carrier Slice server with Service API: START");
-		pemLocation = args[0];
-		keyLocation = args[1];
-		controllerUrl = args[2]; //"https://geni.renci.org:11443/orca/xmlrpc";
-		sliceName = args[3]; //"pruth.sdx.1";
-    sshkeyLocation=args[5];
-    server_keyhash=args[6];
-    IPPrefix=args[7];
+		//pemLocation = args[0];
+		//keyLocation = args[1];
+		//controllerUrl = args[2]; //"https://geni.renci.org:11443/orca/xmlrpc";
+		//sliceName = args[3]; //"pruth.sdx.1";
+    //sshkeyLocation=args[5];
+    //server_keyhash=args[6];
+    //IPPrefix=args[7];
+    
+    Options options = new Options();
+    Option config = new Option("c", "config", true, "configuration file path");
+    config.setRequired(true);
+    options.addOption(config);
+
+    CommandLineParser parser = new DefaultParser();
+    HelpFormatter formatter = new HelpFormatter();
+    CommandLine cmd;
+
+    try {
+        cmd = parser.parse(options, args);
+    } catch (ParseException e) {
+        System.out.println(e.getMessage());
+        formatter.printHelp("utility-name", options);
+
+        System.exit(1);
+        return;
+    }
+		String configfilepath=cmd.getOptionValue("config");
+
+    SdxConfig sdxconfig=new SdxConfig(configfilepath);
+
+    pemLocation = sdxconfig.exogenipem;
+		keyLocation = sdxconfig.exogenipem;
+		controllerUrl = sdxconfig.exogenism; //"https://geni.renci.org:11443/orca/xmlrpc";
+		sliceName = sdxconfig.slicename;
+    sshkeyLocation=sdxconfig.sshkey;
+    server_keyhash=sdxconfig.safekey;
+    IPPrefix=sdxconfig.ipprefix;
+    //type=sdxconfig.type;
     computeIP(IPPrefix);
 		sliceProxy = SdxServer.getSliceProxy(pemLocation,keyLocation, controllerUrl);		
 		//SSH context
@@ -179,8 +213,8 @@ public class SdxServer extends UnicastRemoteObject implements ServiceAPI {
       // TODO Auto-generated catch block
       e.printStackTrace();
     }
-    //SDNControllerIP="152.3.136.36";
-    SDNControllerIP=((ComputeNode)server_slice.getResourceByName("plexuscontroller")).getManagementIP();
+    SDNControllerIP="152.3.136.36";
+    //SDNControllerIP=((ComputeNode)server_slice.getResourceByName("plexuscontroller")).getManagementIP();
     SDNController=SDNControllerIP+":8080";
     OVSController=SDNControllerIP+":6633";
     configRouting(server_slice,OVSController,SDNController,"(c\\d+)");

@@ -22,7 +22,8 @@ import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.log4j.SimpleLayout;
-
+import org.apache.commons.cli.*;
+import org.apache.commons.cli.DefaultParser;
 import org.renci.ahab.libndl.LIBNDL;
 import org.renci.ahab.libndl.Slice;
 import org.renci.ahab.libndl.SliceGraph;
@@ -54,6 +55,7 @@ import java.rmi.RMISecurityManager;
 import java.rmi.Naming;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
+
 /**
 
  * @author geni-orca
@@ -74,17 +76,48 @@ public class SdxClient {
   private static String customer_keyhash;
   private static String safeserver=null;
   private static String sshkey;
+  private static String type;
 	
 	public static void main(String [] args){
-		//Example usage:   ./target/appassembler/bin/SafeSdxExample  ~/.ssl/geni-pruth1.pem ~/.ssl/geni-pruth1.pem "https://geni.renci.org:11443/orca/xmlrpc" pruth.1 stitch
-		//Example usage:   ./target/appassembler/bin/SafeSdxExample  ~/.ssl/geni-pruth1.pem ~/.ssl/geni-pruth1.pem "https://geni.renci.org:11443/orca/xmlrpc" name fournodes
+    //Example usage: ./target/appassembler/bin/SafeSdxClient -f alice.conf
 		System.out.println("ndllib TestDriver: START");
-		pemLocation = args[0];
-		keyLocation = args[1];
-		controllerUrl = args[2]; //"https://geni.renci.org:11443/orca/xmlrpc";
-		sliceName = args[3];
-    sshkey=args[6];
-    customer_keyhash=args[7];
+		//pemLocation = args[0];
+		//keyLocation = args[1];
+		//controllerUrl = args[2]; //"https://geni.renci.org:11443/orca/xmlrpc";
+		//sliceName = args[3];
+    //sshkey=args[6];
+    //customer_keyhash=args[7];
+		
+		
+    Options options = new Options();
+    Option config = new Option("c", "config", true, "configuration file path");
+    config.setRequired(true);
+    options.addOption(config);
+
+    CommandLineParser parser = new DefaultParser();
+    HelpFormatter formatter = new HelpFormatter();
+    CommandLine cmd;
+
+    try {
+        cmd = parser.parse(options, args);
+    } catch (ParseException e) {
+        System.out.println(e.getMessage());
+        formatter.printHelp("utility-name", options);
+
+        System.exit(1);
+        return;
+    }
+		String configfilepath=cmd.getOptionValue("config");
+
+    SdxConfig sdxconfig=new SdxConfig(configfilepath);
+    pemLocation = sdxconfig.exogenipem;
+		keyLocation = sdxconfig.exogenipem;
+		controllerUrl = sdxconfig.exogenism; //"https://geni.renci.org:11443/orca/xmlrpc";
+		sliceName = sdxconfig.slicename;
+    sshkey=sdxconfig.sshkey;
+    customer_keyhash=sdxconfig.safekey;
+    type=sdxconfig.type;
+
 
 		sliceProxy = SdxClient.getSliceProxy(pemLocation,keyLocation, controllerUrl);		
 
@@ -92,7 +125,7 @@ public class SdxClient {
 		sctx = new SliceAccessContext<>();
 		try {
 			SSHAccessTokenFileFactory fac;
-			fac = new SSHAccessTokenFileFactory("~/.ssh/id_rsa.pub", false);
+			fac = new SSHAccessTokenFileFactory(sshkey+".pub", false);
 			SSHAccessToken t = fac.getPopulatedToken();			
 			sctx.addToken("root", "root", t);
 			sctx.addToken("root", t);
@@ -101,7 +134,7 @@ public class SdxClient {
 			e.printStackTrace();
 		}
 
-    if (args[4].equals("client")){
+    if (type.equals("client")){
       Slice s2 = null;
       try {
         s2 = Slice.loadManifestFile(sliceProxy, sliceName);
