@@ -7,9 +7,9 @@ alice: V1F2853Nq8V304Yb_GInYaWTgVqmBsQwC0tXWuNmmf8
 key_p6: KXwvxF_rWupThUEAKwmkMTuhV8X-hqZXOAtMkWBFapc
 
 
-SAFESERVER_SDX=128.194.6.132
-SAFESERVER_ALICE=128.194.6.132
-SAFESERVER_BOB=128.194.6.132
+SAFESERVER_SDX=128.194.6.133
+SAFESERVER_ALICE=128.194.6.133
+SAFESERVER_BOB=128.194.6.133
 
 curl  -v -X POST http://$SAFESERVER_SDX:7777/postIdSet -H "Content-Type: application/json" -d "{ \"principal\": \"sdx\", \"otherValues\": [\"sdx\"] }"
 curl  -v -X POST http://$SAFESERVER_ALICE:7777/postIdSet -H "Content-Type: application/json" -d "{ \"principal\": \"alice\", \"otherValues\": [\"alice\"] }"

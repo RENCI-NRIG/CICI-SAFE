@@ -1,7 +1,7 @@
 
-SAFESERVER_SDX=128.194.6.132
-SAFESERVER_ALICE=128.194.6.132
-SAFESERVER_BOB=128.194.6.132
+SAFESERVER_SDX=128.194.6.133
+SAFESERVER_ALICE=128.194.6.133
+SAFESERVER_BOB=128.194.6.133
 #delegate IP prefix
 curl  -v -X POST http://$SAFESERVER_ALICE:7777/updateSubjectSet -H "Content-Type: application/json" -d "{ \"principal\": \"alice\", \"otherValues\": [\"SV51XV5zIlONA255wethUSJRNTxG8Lh-kaYP9PZEOxU\"] }"
 curl -v -X POST http://$SAFESERVER_BOB:7777/updateSubjectSet -H "Content-Type: application/json" -d "{ \"principal\": \"bob\", \"otherValues\": [\"SV51XV5zIlONA255wethUSJRNTxG8Lh-kaYP9PZEOxU\"] }"

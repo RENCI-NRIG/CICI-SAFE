@@ -84,6 +84,7 @@ public class Example {
   private static String type;
 
   private static  void computeIP(String prefix){
+    System.out.println(prefix);
     String[] ip_mask=prefix.split("/");
     String[] ip_segs=ip_mask[0].split("\\.");
     IPPrefix=ip_segs[0]+"."+ip_segs[1]+".";
@@ -186,11 +187,6 @@ public class Example {
       String message = "blank";
       String customerName=sliceName;
       try{
-          try{
-            computeIP(IPPrefix);
-          }catch(Exception e){
-            e.printStackTrace();
-          }
           System.out.print("Using riak server at "+riakip);
           Slice c1=createCustomerSlice(customerName,2,IPPrefix,curip,1000000,true);
           waitTillActive(c1);

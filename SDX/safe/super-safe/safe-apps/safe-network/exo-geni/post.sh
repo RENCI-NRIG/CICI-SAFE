@@ -1,8 +1,8 @@
 #!/bin/sh
 
-SAFESERVER_SDX=128.194.6.132
-SAFESERVER_ALICE=128.194.6.132
-SAFESERVER_BOB=128.194.6.132
+SAFESERVER_SDX=128.194.6.133
+SAFESERVER_ALICE=128.194.6.133
+SAFESERVER_BOB=128.194.6.133
 echo "Policy"
 curl  -v -X POST http://$SAFESERVER_SDX:7777/postStitchPolicy -H "Content-Type: application/json" -d "{ \"principal\": \"sdx\", \"otherValues\": [] }"
 curl  -v -X POST http://$SAFESERVER_ALICE:7777/postStitchPolicy -H "Content-Type: application/json" -d "{ \"principal\": \"alice\", \"otherValues\": [] }"
@@ -18,8 +18,8 @@ curl  -v -X POST http://$SAFESERVER_BOB:7777/postConnectivityPolicy -H "Content-
 #endorsePA <- principal authority
 echo "carrier endorse pa"
 curl  -v -X POST http://$SAFESERVER_SDX:7777/postEndorsePA -H "Content-Type: application/json" -d "{ \"principal\": \"sdx\", \"otherValues\": [\"weQ8OFpXWhIB1AMzKX2SDJcxT738VdHCcl7mFlvOD24\"] }"
-curl  -v -X POST http://$SAFESERVER_ALICE:7777/postEndorsePA -H "Content-Type: application/json" -d "{ \"principal\": \"alice\", \"otherValues\": [\"V1F2853Nq8V304Yb_GInYaWTgVqmBsQwC0tXWuNmmf8\"] }"
-curl  -v -X POST http://$SAFESERVER_BOB:7777/postEndorsePA -H "Content-Type: application/json" -d "{ \"principal\": \"bob\", \"otherValues\": [\"UIz4bXT7accigZ7KNpEyF2igwGOgXb9gne7p13i2bWA\"] }"
+curl  -v -X POST http://$SAFESERVER_ALICE:7777/postEndorsePA -H "Content-Type: application/json" -d "{ \"principal\": \"alice\", \"otherValues\": [\"weQ8OFpXWhIB1AMzKX2SDJcxT738VdHCcl7mFlvOD24\"] }"
+curl  -v -X POST http://$SAFESERVER_BOB:7777/postEndorsePA -H "Content-Type: application/json" -d "{ \"principal\": \"bob\", \"otherValues\": [\"weQ8OFpXWhIB1AMzKX2SDJcxT738VdHCcl7mFlvOD24\"] }"
 
 #stitch request
 #curl  -v -X POST http://$SAFESERVER:7777/postStitchRequest -H "Content-Type: application/json" -d "{ \"principal\": \"Iq7mxtcMBj5PK8mn4h1gR8BYkwOkoonUiEC_-dWxgAU\", \"otherValues\": [\"alice\",\"b688e2db-84a6-4148-9531-a2f588d733f4\",\"server\",\"c0\"] }"

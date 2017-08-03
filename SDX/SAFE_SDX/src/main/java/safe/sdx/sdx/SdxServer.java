@@ -213,8 +213,8 @@ public class SdxServer extends UnicastRemoteObject implements ServiceAPI {
       // TODO Auto-generated catch block
       e.printStackTrace();
     }
-    SDNControllerIP="152.3.136.36";
-    //SDNControllerIP=((ComputeNode)server_slice.getResourceByName("plexuscontroller")).getManagementIP();
+    //SDNControllerIP="152.3.136.36";
+    SDNControllerIP=((ComputeNode)server_slice.getResourceByName("plexuscontroller")).getManagementIP();
     SDNController=SDNControllerIP+":8080";
     OVSController=SDNControllerIP+":6633";
     configRouting(server_slice,OVSController,SDNController,"(c\\d+)");
