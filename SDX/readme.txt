@@ -23,19 +23,18 @@ To run the demo for SDX, you need to run a safe server first, and then run the a
     cd plexus/plexus
     ryu-manager app.py
 
-  4. Create two customer slice and a service slice
-    Launch a sdx slice: ./ahab.sh SliceName server true SDNControllerAddr sshkeypath [riakip]
-    $./ahab.sh server server true 152.3.136.36 "~/.ssh/id_rsa" 152.3.145.36
+  4. Create two customer slice and a service slice: ./ahab.sh ConfigFile
+    Launch a sdx slice: (1) set the ip address of riak server in src/main/resources/sdx.conf; (2) ./ahab.sh sdx
     Launch multiple customer slices: ./ahab.sh Slicename client true [riakip]
-    $./ahab.sh alice client true 192.168.10.1/24 152.3.145.36
-    $./ahab.sh bob client true 192.168.20.1/24 152.3.146.36
+    $./ahab.sh alice
+    $./ahab.sh bob
 
-  5. run slice controller (ahab) for sdx slice :./sdxserver.sh SliceName SDNControllerIP "~/.ssh/id_rsa"  server_keyhash PrivateIPPrefix
-    $./sdxserver.sh server 152.3.136.36 "~/.ssh/id_rsa" bphJZn3RJBnNqoCZk6k9SBD8mwSb054PXbwV7HpE80E 192.168.30.1/20
+  5. run slice controller (ahab) for sdx slice :./sdxserver.sh ConfigFile
+    $./sdxserver.sh sdx
 
-  6. run slice controller(ahab) for sdx client:./sdxclient.sh SliceName client false  "~/.ssh/id_rsa" customerkeyhash
-    $./sdxclient.sh alice client false "~/.ssh/id_rsa" weQ8OFpXWhIB1AMzKX2SDJcxT738VdHCcl7mFlvOD24
-    $./sdxclient.sh bob client false "~/.ssh/id_rsa" iMrcWFMgx6DJeLtVWvBCMzwd8EDtJtZ4L0n3YYn1hi8
+  6. run slice controller(ahab) for sdx client:./sdxclient.sh ConfigFile
+    $./sdxclient.sh alice
+    $./sdxclient.sh bob
 
   7. post SAFE identity sets, make SAFE statements to state the stitching and traffic policies, allocation of IP prefixes and stitching requests.
     $ cd safe/super-safe/safe-apps/safe-network/exo-geni
