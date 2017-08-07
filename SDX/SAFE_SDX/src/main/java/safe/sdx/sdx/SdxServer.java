@@ -105,6 +105,7 @@ public class SdxServer extends UnicastRemoteObject implements ServiceAPI {
   private static HashMap<String, Link> links=new HashMap<String, Link>();
 	private static String safeserver;
   private static String server_keyhash;
+  private static String javasecuritypolicy;
   //private static String type;
   private static ArrayList<String[]> advertisements=new ArrayList<String[]>();
 
@@ -185,6 +186,7 @@ public class SdxServer extends UnicastRemoteObject implements ServiceAPI {
 		sliceName = sdxconfig.slicename;
     sshkeyLocation=sdxconfig.sshkey;
     server_keyhash=sdxconfig.safekey;
+    javasecuritypolicy=sdxconfig.javasecuritypolicy;
     IPPrefix=sdxconfig.ipprefix;
     //type=sdxconfig.type;
     computeIP(IPPrefix);
@@ -234,7 +236,7 @@ public class SdxServer extends UnicastRemoteObject implements ServiceAPI {
 
   public void notifyPrefix(String dest, String gateway, String router,String customer_keyhash) throws RemoteException{
     System.out.println("received notification for ip prefix"+dest);
-    System.setProperty("java.security.policy","~/project/exo-geni/SAFE_SDX/allow.policy");
+    System.setProperty("java.security.policy",javasecuritypolicy);
     for(String[]pair:advertisements){
       if(authorizePrefix(pair[0],pair[1],customer_keyhash,dest)){
         routingmanager.configurePath(dest,router,pair[1],pair[3],gateway,SDNController);
@@ -443,7 +445,7 @@ public class SdxServer extends UnicastRemoteObject implements ServiceAPI {
     //System.out.println("hah");
     sleep(5);
     runCmdSlice(s,"/bin/bash ~/ovsbridge.sh "+ovscontroller,sshkeyLocation,"(c\\d+)");
-    System.setProperty("java.security.policy","~/project/exo-geni/SAFE_SDX/allow.policy");
+    System.setProperty("java.security.policy",javasecuritypolicy);
     try{
       Pattern pattern = Pattern.compile(routerpattern);
       for(ComputeNode node : s.getComputeNodes()){

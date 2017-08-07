@@ -77,6 +77,7 @@ public class SdxClient {
   private static String safeserver=null;
   private static String sshkey;
   private static String type;
+  private static String javasecuritypolicy;
 	
 	public static void main(String [] args){
     //Example usage: ./target/appassembler/bin/SafeSdxClient -f alice.conf
@@ -117,6 +118,7 @@ public class SdxClient {
     sshkey=sdxconfig.sshkey;
     customer_keyhash=sdxconfig.safekey;
     type=sdxconfig.type;
+    javasecuritypolicy=sdxconfig.javasecuritypolicy;
 
 
 		sliceProxy = SdxClient.getSliceProxy(pemLocation,keyLocation, controllerUrl);		
@@ -150,7 +152,7 @@ public class SdxClient {
       System.out.println("client start");
       String message = "";
       String customerName=sliceName;
-      System.setProperty("java.security.policy","~/project/exo-geni/SAFE_SDX/allow1.policy");
+      System.setProperty("java.security.policy",javasecuritypolicy);
       String input = new String();  
 		 try{
 //					System.out.println(obj.sayHello()); 
@@ -228,7 +230,10 @@ public class SdxClient {
         String ip=parts[1];
         System.out.println("set IP address of the stitch interface to "+ip);
         sleep(10);
-        Exec.sshExec("root",node0_s2.getManagementIP(),"ifconfig eth2 "+ip,sshkey);
+        String result=Exec.sshExec("root",node0_s2.getManagementIP(),"ifconfig eth2 "+ip,sshkey);
+        while(!result.contains("exit-status: 0")){
+          result=Exec.sshExec("root",node0_s2.getManagementIP(),"ifconfig eth2 "+ip,sshkey);
+        }
       }
     }
     catch (Exception e){

@@ -10,6 +10,7 @@ class SdxConfig {
   public String slicename;
   public String ipprefix;
   public String riakserver;
+  public String javasecuritypolicy;
  
   public SdxConfig(String configfile){
     System.out.println("config");
@@ -21,6 +22,7 @@ class SdxConfig {
     exogenipem=conf.getString("config.exogenipem");
     slicename=conf.getString("config.slicename");
     ipprefix=conf.getString("config.ipprefix");
+    javasecuritypolicy=conf.getString("config.javasecuritypolicy");
     if(conf.hasPath("config.riakserver")){
       riakserver=conf.getString("config.riakserver");
     }
