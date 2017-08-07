@@ -61,23 +61,9 @@ import java.rmi.server.UnicastRemoteObject;
  * @author geni-orca
  *
  */
-public class SdxClient {
+public class SdxClient extends Sdx {
   public SdxClient()throws RemoteException{}
-	private static final String RequestResource = null;
-	private static String controllerUrl;
-  private static String SDNControllerIP;
-	private static String sliceName;
-	private static String pemLocation;
-	private static String keyLocation;
-  private static ISliceTransportAPIv1 sliceProxy;
-  private static SliceAccessContext<SSHAccessToken> sctx;
-  private static int curip=128;
-  private static HashMap<String, Link> links=new HashMap<String, Link>();
-  private static String customer_keyhash;
-  private static String safeserver=null;
-  private static String sshkey;
   private static String type;
-  private static String javasecuritypolicy;
 	
 	public static void main(String [] args){
     //Example usage: ./target/appassembler/bin/SafeSdxClient -f alice.conf
@@ -87,42 +73,14 @@ public class SdxClient {
 		//controllerUrl = args[2]; //"https://geni.renci.org:11443/orca/xmlrpc";
 		//sliceName = args[3];
     //sshkey=args[6];
-    //customer_keyhash=args[7];
+    //keyhash=args[7];
 		
-		
-    Options options = new Options();
-    Option config = new Option("c", "config", true, "configuration file path");
-    config.setRequired(true);
-    options.addOption(config);
-
-    CommandLineParser parser = new DefaultParser();
-    HelpFormatter formatter = new HelpFormatter();
-    CommandLine cmd;
-
-    try {
-        cmd = parser.parse(options, args);
-    } catch (ParseException e) {
-        System.out.println(e.getMessage());
-        formatter.printHelp("utility-name", options);
-
-        System.exit(1);
-        return;
-    }
+    CommandLine cmd=parseCmd(args);
 		String configfilepath=cmd.getOptionValue("config");
-
-    SdxConfig sdxconfig=new SdxConfig(configfilepath);
-    pemLocation = sdxconfig.exogenipem;
-		keyLocation = sdxconfig.exogenipem;
-		controllerUrl = sdxconfig.exogenism; //"https://geni.renci.org:11443/orca/xmlrpc";
-		sliceName = sdxconfig.slicename;
-    sshkey=sdxconfig.sshkey;
-    customer_keyhash=sdxconfig.safekey;
+    SdxConfig sdxconfig=readConfig(configfilepath);
     type=sdxconfig.type;
-    javasecuritypolicy=sdxconfig.javasecuritypolicy;
-
 
 		sliceProxy = SdxClient.getSliceProxy(pemLocation,keyLocation, controllerUrl);		
-
 		//SSH context
 		sctx = new SliceAccessContext<>();
 		try {
@@ -171,7 +129,7 @@ public class SdxClient {
                ServiceAPI obj = (ServiceAPI) Naming.lookup( "//" + 
                    "localhost" + 
                    "/ServiceServer_"+params[3]);         //objectname in registry 
-               obj.notifyPrefix(params[1],params[2],params[4],customer_keyhash);
+               obj.notifyPrefix(params[1],params[2],params[4],keyhash);
              }
            }
            catch (Exception e){
@@ -219,8 +177,8 @@ public class SdxClient {
       }
       //post stitch request to SAFE
       System.out.println("posting stitch request statements to SAFE Sets");
-      postSafeStitchRequest(customer_keyhash,params[1],node0_s2_stitching_GUID,params[2],params[4]);
-      String res=obj.stitchRequest(params[2],params[4],customer_keyhash,params[1],node0_s2_stitching_GUID,secret);
+      postSafeStitchRequest(keyhash,params[1],node0_s2_stitching_GUID,params[2],params[4]);
+      String res=obj.stitchRequest(params[2],params[4],keyhash,params[1],node0_s2_stitching_GUID,secret);
       System.out.println("Got Stitch Information From Server: "+res);
       if(res.equals("")){
         System.out.println("stitch request declined by server");
@@ -231,7 +189,9 @@ public class SdxClient {
         System.out.println("set IP address of the stitch interface to "+ip);
         sleep(10);
         String result=Exec.sshExec("root",node0_s2.getManagementIP(),"ifconfig eth2 "+ip,sshkey);
-        while(!result.contains("exit-status: 0")){
+        CharSequence seq="0";
+        while(!result.contains(seq)){
+          System.out.println(result);
           result=Exec.sshExec("root",node0_s2.getManagementIP(),"ifconfig eth2 "+ip,sshkey);
         }
       }
@@ -241,14 +201,14 @@ public class SdxClient {
     }
   }
 
-  private static boolean postSafeStitchRequest(String customer_keyhash,String customerName,String ReservID,String slicename, String nodename){
+  private static boolean postSafeStitchRequest(String keyhash,String customerName,String ReservID,String slicename, String nodename){
 		/** Post to remote safesets using apache httpclient */
     String[] othervalues=new String[4];
     othervalues[0]=customerName;
     othervalues[1]=ReservID;
     othervalues[2]=slicename;
     othervalues[3]=nodename;
-    String message=SafePost.postSafeStatements(safeserver,"postStitchRequest",customer_keyhash,othervalues);
+    String message=SafePost.postSafeStatements(safeserver,"postStitchRequest",keyhash,othervalues);
     if(message.contains("fail")){
       return false;
     }
