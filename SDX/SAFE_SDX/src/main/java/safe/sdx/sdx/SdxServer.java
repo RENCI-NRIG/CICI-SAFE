@@ -338,60 +338,7 @@ public class SdxServer extends Sdx implements ServiceAPI {
       return true;
   }
 
-  private static void copyFile2Slice(Slice s, String lfile, String rfile,String privkey){
-		for(ComputeNode c : s.getComputeNodes()){
-      String mip=c.getManagementIP();
-      try{
-        System.out.println("scp config file to "+mip);
-        ScpTo.Scp(lfile,"root",mip,rfile,privkey);
-        //Exec.sshExec("yaoyj11","152.3.136.145","/bin/bash "+rfile,privkey);
 
-      }catch (Exception e){
-        System.out.println("exception when copying config file");
-      }
-		}
-  }
-
-  private static void runCmdSlice(Slice s, String cmd, String privkey){
-		for(ComputeNode c : s.getComputeNodes()){
-      String mip=c.getManagementIP();
-      try{
-        System.out.println(mip+" run commands:"+cmd);
-        //ScpTo.Scp(lfile,"root",mip,rfile,privkey);
-        Exec.sshExec("root",mip,cmd,privkey);
-
-      }catch (Exception e){
-        System.out.println("exception when copying config file");
-      }
-		}
-  }
-
-  private static void runCmdSlice(Slice s, String cmd, String privkey,String patn){
-    Pattern pattern = Pattern.compile(patn);
-		for(ComputeNode c : s.getComputeNodes()){
-      Matcher matcher = pattern.matcher(c.getName());
-      if (!matcher.find())
-      {
-        continue;
-      }
-      //if(!c.getName().contains(pattern)){
-      //  continue;
-      //}
-      String mip=c.getManagementIP();
-      try{
-        System.out.println(mip+" run commands:"+cmd);
-        //ScpTo.Scp(lfile,"root",mip,rfile,privkey);
-        String res=Exec.sshExec("root",mip,cmd,privkey);
-        while(res.startsWith("error")){
-          sleep(5);
-          res=Exec.sshExec("root",mip,cmd,privkey);
-        }
-
-      }catch (Exception e){
-        System.out.println("exception when copying config file");
-      }
-		}
-  }
 
   private static void restartPlexus(String plexusip){
     System.out.println("Restarting Plexus Controller");
@@ -502,26 +449,6 @@ public class SdxServer extends Sdx implements ServiceAPI {
     }
   }
 
-  public static void getNetworkInfo(Slice s){
-    //getLinks
-    for(Network n :s.getLinks()){
-      System.out.println(n.getLabel()+" "+n.getState());
-    }
-    //getInterfaces
-    for(Interface i: s.getInterfaces()){
-      InterfaceNode2Net inode2net=(InterfaceNode2Net)i;
-      System.out.println("MacAddr: "+inode2net.getMacAddress());
-      System.out.println("GUID: "+i.getGUID());
-    }
-    for(ComputeNode node: s.getComputeNodes()){
-      System.out.println(node.getName()+node.getManagementIP());
-      for(Interface i: node.getInterfaces()){
-        InterfaceNode2Net inode2net=(InterfaceNode2Net)i;
-        System.out.println("MacAddr: "+inode2net.getMacAddress());
-        System.out.println("GUID: "+i.getGUID());
-      }
-    }
-  }
 	
 
 	public static void undoStitch(String carrierName, String customerName, String netName, String nodeName){	
@@ -576,78 +503,5 @@ public class SdxServer extends Sdx implements ServiceAPI {
 		
 	}
 
-	public static Slice getSlice(ISliceTransportAPIv1 sliceProxy, String sliceName){
-		Slice s = null;
-		try {
-			s = Slice.loadManifestFile(sliceProxy, sliceName);
-		} catch (ContextTransportException e) {
-			// TODO Auto-generated catch block
-			//e.printStackTrace();
-		} catch (TransportException e) {
-			// TODO Auto-generated catch block
-			//e.printStackTrace();
-		}
-		return s;
-	}
-
-	public static void sleep(int sec){
-		try {
-			Thread.sleep(sec*1000);                 //1000 milliseconds is one second.
-		} catch(InterruptedException ex) {  
-			Thread.currentThread().interrupt();
-		}
-	}
-
-
-	public static ISliceTransportAPIv1 getSliceProxy(String pem, String key, String controllerUrl){
-
-		ISliceTransportAPIv1 sliceProxy = null;
-		try{
-			//ExoGENI controller context
-			ITransportProxyFactory ifac = new XMLRPCProxyFactory();
-			System.out.println("Opening certificate " + pem + " and key " + key);
-			TransportContext ctx = new PEMTransportContext("", pem, key);
-			sliceProxy = ifac.getSliceProxy(ctx, new URL(controllerUrl));
-
-		} catch  (Exception e){
-			e.printStackTrace();
-			System.err.println("Proxy factory test failed");
-			assert(false);
-		}
-
-		return sliceProxy;
-	}
-
-
-
-	public static final ArrayList<String> domains;
-	static {
-		ArrayList<String> l = new ArrayList<String>();
-
-		for (int i = 0; i < 100; i++){
-//			l.add("PSC (Pittsburgh, TX, USA) XO Rack");
-//			l.add("UAF (Fairbanks, AK, USA) XO Rack");
-		
-//			l.add("UH (Houston, TX USA) XO Rack");
-//			l.add("TAMU (College Station, TX, USA) XO Rack");
-//			l.add("RENCI (Chapel Hill, NC USA) XO Rack");
-//			
-//			l.add("SL (Chicago, IL USA) XO Rack");
-//			
-//			
-//			l.add("OSF (Oakland, CA USA) XO Rack");
-//			
-//		l.add("UMass (UMass Amherst, MA, USA) XO Rack");
-			//l.add("WVN (UCS-B series rack in Morgantown, WV, USA)");
-	//		l.add("UAF (Fairbanks, AK, USA) XO Rack");
-    l.add("UNF (Jacksonville, FL) XO Rack");
-		l.add("UFL (Gainesville, FL USA) XO Rack");
-//			l.add("WSU (Detroit, MI, USA) XO Rack");
-//			l.add("BBN/GPO (Boston, MA USA) XO Rack");
-//			l.add("UvA (Amsterdam, The Netherlands) XO Rack");
-
-		}
-		domains = l;
-	}
 }
 
