@@ -187,13 +187,13 @@ public class SdxClient extends Sdx {
         String[] parts=res.split("_");
         String ip=parts[1];
         System.out.println("set IP address of the stitch interface to "+ip);
-        sleep(10);
+        sleep(15);
         String result=Exec.sshExec("root",node0_s2.getManagementIP(),"ifconfig eth2 "+ip,sshkey);
-        CharSequence seq="0";
-        while(!result.contains(seq)){
-          System.out.println(result);
-          result=Exec.sshExec("root",node0_s2.getManagementIP(),"ifconfig eth2 "+ip,sshkey);
-        }
+        //CharSequence seq="0";
+        //while(!result.contains(seq)){
+        //  System.out.println(result);
+        //  result=Exec.sshExec("root",node0_s2.getManagementIP(),"ifconfig eth2 "+ip,sshkey);
+        //}
       }
     }
     catch (Exception e){

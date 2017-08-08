@@ -1,6 +1,3 @@
-/**
- * 
- */
 package safe.sdx;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
@@ -63,23 +60,12 @@ import java.rmi.server.UnicastRemoteObject;
  * @author geni-orca
  *
  */
-public class Example {
+public class Example extends Sdx{
   public Example()throws RemoteException{}
-	private static final String RequestResource = null;
-	private static String controllerUrl;
-  private static String SDNControllerIP;
-	private static String sliceName;
-	private static String pemLocation;
-	private static String keyLocation;
-  private static ISliceTransportAPIv1 sliceProxy;
-  private static SliceAccessContext<SSHAccessToken> sctx;
   private static int curip=128;
   private static String IPPrefix="192.168.";
   private static String mask="/24";
   private static HashMap<String, Link> links=new HashMap<String, Link>();
-  private static String customer_keyhash;
-  private static String safeserver;
-  private static String sshkey;
   private static String riakip="152.3.145.36";
   private static String type;
 
@@ -96,39 +82,12 @@ public class Example {
 		//Example usage:   ./target/appassembler/bin/SafeSdxExample  ~/.ssl/geni-pruth1.pem ~/.ssl/geni-pruth1.pem "https://geni.renci.org:11443/orca/xmlrpc" name fournodes
 		System.out.println("ndllib TestDriver: START");
 
-    Options options = new Options();
-    Option config = new Option("c", "config", true, "configuration file path");
-    config.setRequired(true);
-    options.addOption(config);
+    CommandLine cmd=parseCmd(args);
 
-    CommandLineParser parser = new DefaultParser();
-    HelpFormatter formatter = new HelpFormatter();
-    CommandLine cmd;
-
-    try {
-        cmd = parser.parse(options, args);
-    } catch (ParseException e) {
-        System.out.println(e.getMessage());
-        formatter.printHelp("utility-name", options);
-
-        System.exit(1);
-        return;
-    }
 		String configfilepath=cmd.getOptionValue("config");
+    SdxConfig sdxconfig=readConfig(configfilepath);
 
-    SdxConfig sdxconfig=new SdxConfig(configfilepath);
-
-    pemLocation = sdxconfig.exogenipem;
-		keyLocation = sdxconfig.exogenipem;
-		controllerUrl = sdxconfig.exogenism; //"https://geni.renci.org:11443/orca/xmlrpc";
-		sliceName = sdxconfig.slicename;
-    sshkey=sdxconfig.sshkey;
-    //server_keyhash=sdxconfig.safekey;
-    IPPrefix=sdxconfig.ipprefix;
     type=sdxconfig.type;
-    riakip=sdxconfig.riakserver;
-
-    computeIP(IPPrefix);
 
 		//pemLocation = args[0];
 		//keyLocation = args[1];
@@ -151,21 +110,17 @@ public class Example {
 		}
 
     if(type.equals("server")){
-      //SDNControllerIP=args[6];
-      //if(args.length<9){
-      //  System.out.print("Using default riak server at 152.3.145.36:8098");
-      //}else{
-      //  riakip=args[8];
-      //}
+      IPPrefix=sdxconfig.ipprefix;
+      riakip=sdxconfig.riakserver;
+      computeIP(IPPrefix);
       try{
-      //  if(args[5].equals("true")){
           String carrierName=sliceName;
           System.setProperty("java.security.policy","~/project/exo-geni/ahabserver/allow.policy");
           Slice carrier=createCarrierSlice(carrierName,4,10,1000000,1);
           waitTillActive(carrier);
           copyFile2Slice(carrier, "/home/yaoyj11/safe-sdx/SDX/SAFE_SDX/src/main/resources/scripts/dpid.sh","~/dpid.sh",sshkey);
           copyFile2Slice(carrier, "/home/yaoyj11/safe-sdx/SDX/SAFE_SDX/src/main/resources/scripts/ovsbridge.sh","~/ovsbridge.sh",sshkey);
-//          SDNControllerIP=((ComputeNode)carrier.getResourceByName("plexuscontroller")).getManagementIP();
+          SDNControllerIP=((ComputeNode)carrier.getResourceByName("plexuscontroller")).getManagementIP();
           runCmdSlice(carrier,"/bin/bash ~/ovsbridge.sh "+SDNControllerIP+":6633",sshkey,"(c\\d+)");
         //}
       }catch (Exception e){
@@ -183,8 +138,10 @@ public class Example {
 
     }
     else if (type.equals("client")){
+      IPPrefix=sdxconfig.ipprefix;
+      riakip=sdxconfig.riakserver;
+      computeIP(IPPrefix);
       System.out.println("client start");
-      String message = "blank";
       String customerName=sliceName;
       try{
           System.out.print("Using riak server at "+riakip);
@@ -198,106 +155,14 @@ public class Example {
         e.printStackTrace();
       }
     }
+    else if (type.equals("riak")){
+      createRiakSlice(sliceName);
+
+
+    }
 		System.out.println("XXXXXXXXXX Done XXXXXXXXXXXXXX");
 	}
 
-  private static boolean postStitchRequest(String customer_keyhash,String customerName,String ReservID,String slicename, String nodename){
-		/** Post to remote safesets using apache httpclient */
-    String[] othervalues=new String[4];
-    othervalues[0]=customerName;
-    othervalues[1]=ReservID;
-    othervalues[2]=slicename;
-    othervalues[3]=nodename;
-    String message=SafePost.postSafeStatements(safeserver,"postStitchRequest",customer_keyhash,othervalues);
-    if(message.contains("fail")){
-      return false;
-    }
-    else
-      return true;
-  }
-
-
-  private static void copyFile2Slice(Slice s, String lfile, String rfile,String privkey){
-		for(ComputeNode c : s.getComputeNodes()){
-      String mip=c.getManagementIP();
-      try{
-        System.out.println("scp config file to "+mip);
-        ScpTo.Scp(lfile,"root",mip,rfile,privkey);
-        //Exec.sshExec("yaoyj11","152.3.136.145","/bin/bash "+rfile,privkey);
-
-      }catch (Exception e){
-        System.out.println("exception when copying config file");
-      }
-		}
-  }
-
-  private static void runCmdSlice(Slice s, String cmd, String privkey){
-		for(ComputeNode c : s.getComputeNodes()){
-      String mip=c.getManagementIP();
-      try{
-        System.out.println(mip+" run commands:"+cmd);
-        //ScpTo.Scp(lfile,"root",mip,rfile,privkey);
-        String res=Exec.sshExec("root",mip,cmd,privkey);
-        while(res.startsWith("error")){
-          sleep(5);
-          res=Exec.sshExec("root",mip,cmd,privkey);
-        }
-
-      }catch (Exception e){
-        System.out.println("exception when copying config file");
-      }
-		}
-  }
-
-  private static void runCmdSlice(Slice s, String cmd, String privkey,String patn){
-    Pattern pattern = Pattern.compile(patn);
-		for(ComputeNode c : s.getComputeNodes()){
-      Matcher matcher = pattern.matcher(c.getName());
-      if (!matcher.find())
-      {
-        continue;
-      }
-      //if(!c.getName().contains(pattern)){
-      //  continue;
-      //}
-      String mip=c.getManagementIP();
-      try{
-        System.out.println(mip+" run commands:"+cmd);
-        //ScpTo.Scp(lfile,"root",mip,rfile,privkey);
-        String res=Exec.sshExec("root",mip,cmd,privkey);
-        while(res.startsWith("error")){
-          sleep(5);
-          res=Exec.sshExec("root",mip,cmd,privkey);
-        }
-
-      }catch (Exception e){
-        System.out.println("exception when copying config file");
-      }
-		}
-  }
-
-  public static void getNetworkInfo(Slice s){
-    //getLinks
-    for(Network n :s.getLinks()){
-      System.out.println(n.getLabel());
-    }
-    //getInterfaces
-    for(Interface i: s.getInterfaces()){
-      InterfaceNode2Net inode2net=(InterfaceNode2Net)i;
-      System.out.println("MacAddr: "+inode2net.getMacAddress());
-
-      System.out.println("GUID: "+i.getGUID());
-    }
-    for(ComputeNode node: s.getComputeNodes()){
-      System.out.println(node.getName()+node.getManagementIP());
-      for(Interface i: node.getInterfaces()){
-        InterfaceNode2Net inode2net=(InterfaceNode2Net)i;
-        System.out.println("MacAddr: "+inode2net.getMacAddress());
-        System.out.println("GUID: "+i.getGUID());
-      }
-    }
-  }
-	
 	public static Slice createCarrierSlice(String sliceName,int num,int start, long bw,int numstitches){//,String stitchsubnet="", String slicesubnet="")	
 		System.out.println("ndllib TestDriver: START");
 		
@@ -395,6 +260,33 @@ public class Example {
 		s.commit();
     return s;
 	}
+
+	public static  Slice createRiakSlice(String sliceName){
+		System.out.println("ndllib TestDriver: START");
+		
+		Slice s = Slice.create(sliceProxy, sctx, sliceName);
+		String dockerImageShortName="Ubuntu 14.04 Docker";
+		String dockerImageURL ="http://geni-orca.renci.org/owl/5e2190c1-09f1-4c48-8ed6-dacae6b6b435#Ubuntu+14.0.4+Docker";//http://geni-images.renci.org/images/standard/ubuntu/ub1304-ovs-opendaylight-v1.0.0.xml
+		String dockerImageHash ="b4ef61dbd993c72c5ac10b84650b33301bbf6829";
+		String dockerNodeType="XO Large";
+    ComputeNode node0 = s.addComputeNode("riak");
+    node0.setImage(dockerImageURL,dockerImageHash,dockerImageShortName);
+    node0.setNodeType(dockerNodeType);
+    node0.setDomain(domains.get(0));
+    node0.setPostBootScript(getRiakScript());
+		s.commit();
+    waitTillActive(s);
+    ComputeNode riak=(ComputeNode) s.getResourceByName("riak");
+    String riakip=riak.getManagementIP();
+    Exec.sshExec("root",riakip,"docker run -i -t  -d -p 2122:2122 -p 8098:8098 -p 8087:8087 -h riakserver --name riakserver yaoyj11/riakimg",sshkey);
+    Exec.sshExec("root",riakip,"docker ps",sshkey);
+    Exec.sshExec("root",riakip,"docker exec -i -t -d riakserver sudo riak start",sshkey);
+    Exec.sshExec("root",riakip,"docker exec -i -t -d  riakserver sudo riak-admin bucket-type activate  safesets",sshkey);
+    Exec.sshExec("root",riakip,"docker exec -i -t  -d riakserver sudo riak-admin bucket-type update safesets '{\"props\":{\"allow_mult\":false}}'",sshkey);
+    Exec.sshExec("root",riakip,"docker exec -it -d riakserver sudo riak ping",sshkey);
+    System.out.println("Started riak server at "+riakip);
+    return s;
+	}
 	
   private static void addSafeServer(Slice s, String rip){
 		String dockerImageShortName="Ubuntu 14.04 Docker";
@@ -429,7 +321,12 @@ public class Example {
 		String script="apt-get update\n"
       +"docker pull yaoyj11/safeserver\n"
       +"docker run -i -t -d -p 7777:7777 -h safe --name safe yaoyj11/safeserver\n"
-      +"docker exec -d safe /bin/bash -c  \"cd /root/safe;export SBT_HOME=/opt/sbt-0.13.12;export SCALA_HOME=/opt/scala-2.11.8;sed -i 's/152.3.145.36:8098/"+riakip+":8098/g' safe-server/src/main/resources/application.conf;./sdx.sh\"\n";
+      +"docker exec -d safe /bin/bash -c  \"cd /root/safe;export SBT_HOME=/opt/sbt-0.13.12;export SCALA_HOME=/opt/scala-2.11.8;sed -i 's/128.194.6.136:8098/"+riakip+":8098/g' safe-server/src/main/resources/application.conf;./sdx.sh\"\n";
+    return script;
+  }
+
+  private static String getRiakScript(){
+		String script="docker pull yaoyj11/riakimg\n";
     return script;
   }
 
@@ -441,103 +338,5 @@ public class Example {
     return script;
   }
 
-	public static Slice getSlice(ISliceTransportAPIv1 sliceProxy, String sliceName){
-		Slice s = null;
-		try {
-			s = Slice.loadManifestFile(sliceProxy, sliceName);
-		} catch (ContextTransportException e) {
-			// TODO Auto-generated catch block
-			//e.printStackTrace();
-		} catch (TransportException e) {
-			// TODO Auto-generated catch block
-			//e.printStackTrace();
-		}
-		return s;
-	}
-
-	public static void sleep(int sec){
-		try {
-			Thread.sleep(sec*1000);                 //1000 milliseconds is one second.
-		} catch(InterruptedException ex) {  
-			Thread.currentThread().interrupt();
-		}
-	}
-
-
-	public static ISliceTransportAPIv1 getSliceProxy(String pem, String key, String controllerUrl){
-
-		ISliceTransportAPIv1 sliceProxy = null;
-		try{
-			//ExoGENI controller context
-			ITransportProxyFactory ifac = new XMLRPCProxyFactory();
-			System.out.println("Opening certificate " + pem + " and key " + key);
-			TransportContext ctx = new PEMTransportContext("", pem, key);
-			sliceProxy = ifac.getSliceProxy(ctx, new URL(controllerUrl));
-
-		} catch  (Exception e){
-			e.printStackTrace();
-			System.err.println("Proxy factory test failed");
-			assert(false);
-		}
-
-		return sliceProxy;
-	}
-
-
-
-	public static final ArrayList<String> domains;
-	static {
-		ArrayList<String> l = new ArrayList<String>();
-
-		for (int i = 0; i < 100; i++){
-//			l.add("PSC (Pittsburgh, TX, USA) XO Rack");
-//			l.add("UAF (Fairbanks, AK, USA) XO Rack");
-		
-//			l.add("UH (Houston, TX USA) XO Rack");
-			l.add("TAMU (College Station, TX, USA) XO Rack");
-//		l.add("RENCI (Chapel Hill, NC USA) XO Rack");
-//			
-//			l.add("SL (Chicago, IL USA) XO Rack");
-//			
-//			
-//			l.add("OSF (Oakland, CA USA) XO Rack");
-//			
-//		l.add("UMass (UMass Amherst, MA, USA) XO Rack");
-			//l.add("WVN (UCS-B series rack in Morgantown, WV, USA)");
-	//		l.add("UAF (Fairbanks, AK, USA) XO Rack");
-//   l.add("UNF (Jacksonville, FL) XO Rack");
-//		l.add("UFL (Gainesville, FL USA) XO Rack");
-//			l.add("WSU (Detroit, MI, USA) XO Rack");
-//			l.add("BBN/GPO (Boston, MA USA) XO Rack");
-//			l.add("UvA (Amsterdam, The Netherlands) XO Rack");
-
-		}
-		domains = l;
-	}
-
-  public static void waitTillActive(Slice s){
-		boolean sliceActive = false;
-		while (true){		
-			s.refresh();
-			sliceActive = true;
-			System.out.println("");
-			System.out.println("Slice: " + s.getAllResources());
-			for(ComputeNode c : s.getComputeNodes()){
-				System.out.println("Resource: " + c.getName() + ", state: "  + c.getState());
-				if(c.getState() != "Active") sliceActive = false;
-			}
-			for(Network l: s.getBroadcastLinks()){
-				System.out.println("Resource: " + l.getName() + ", state: "  + l.getState());
-				if(l.getState() != "Active") sliceActive = false;
-			}
-		 	
-		 	if(sliceActive) break;
-		 	sleep(10);
-		}
-		System.out.println("Done");
-		for(ComputeNode n : s.getComputeNodes()){
-			System.out.println("ComputeNode: " + n.getName() + ", Managment IP =  " + n.getManagementIP());
-		}
-  }
 }
 

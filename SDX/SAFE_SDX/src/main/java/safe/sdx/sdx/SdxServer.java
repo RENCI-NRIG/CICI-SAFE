@@ -130,22 +130,8 @@ public class SdxServer extends Sdx implements ServiceAPI {
   }
 	
 	public static void main(String [] args){
-		//Example usage:   ./target/appassembler/bin/SafeSdxExample  ~/.ssl/geni-pruth1.pem ~/.ssl/geni-pruth1.pem "https://geni.renci.org:11443/orca/xmlrpc" sliceName SDN_controllerIP "~/.ssh/id_rsa" safeserver
-    //if(true){
-	  //safeserver=args[6];
-    //authorizeStitchRequest("weQ8OFpXWhIB1AMzKX2SDJcxT738VdHCcl7mFlvOD24","client","4db2b812-39ac-4333-9417-07adef946e68","bphJZn3RJBnNqoCZk6k9SBD8mwSb054PXbwV7HpE80E","server", "c0");
-    //return ;
-    //}
     
 		System.out.println("Carrier Slice server with Service API: START");
-		//pemLocation = args[0];
-		//keyLocation = args[1];
-		//controllerUrl = args[2]; //"https://geni.renci.org:11443/orca/xmlrpc";
-		//sliceName = args[3]; //"pruth.sdx.1";
-    //sshkey=args[5];
-    //keyhash=args[6];
-    //IPPrefix=args[7];
-    
     CommandLine cmd=parseCmd(args);
 		String configfilepath=cmd.getOptionValue("config");
     SdxConfig sdxconfig=readConfig(configfilepath);
@@ -277,14 +263,6 @@ public class SdxServer extends Sdx implements ServiceAPI {
       Exec.sshExec("root",node.getManagementIP(),"ifconfig;ovs-vsctl list port",sshkey);
       String net1_stitching_GUID = net.getStitchingGUID();
       System.out.println("net1_stitching_GUID: " + net1_stitching_GUID);
-//      try {
-//        //s1
-//        sliceProxy.permitSliceStitch(carrierName, net1_stitching_GUID, "mysecret");
-//        res=res+"mysecret";
-//      } catch (TransportException e) {
-//        // TODO Auto-generated catch block
-//        e.printStackTrace();
-//      }
       Link link=new Link();
       link.setName(stitchname);
       link.addNode(nodeName);
@@ -317,8 +295,6 @@ public class SdxServer extends Sdx implements ServiceAPI {
 		}
     Long t2 = System.currentTimeMillis();
     System.out.println("Finished Stitching, set ip address of the new interface to "+newip+"  time elapsed: "+String.valueOf(t2-t1)+"\n");
-    //Run commands to configure ospf on new interface for cusotmer node
-    //Exec.sshExec("root",node0_s2.getManagementIP(),"/bin/bash ~/configospffornewif.sh "+newip,"~/.ssh/id_rsa");
     System.out.println("finished sending reconfiguration command");
 	}
 
@@ -351,8 +327,6 @@ public class SdxServer extends Sdx implements ServiceAPI {
   public static void configRouting(Slice s,String ovscontroller, String httpcontroller, String routerpattern){
     System.out.println("Configurating Routing");
     restartPlexus(SDNControllerIP);
-    //runCmdSlice(s,"/bin/bash ~/ovsbridge.sh "+ovscontroller,sshkey,"(c\\d+)");
-    //System.out.println("hah");
     sleep(5);
     runCmdSlice(s,"/bin/bash ~/ovsbridge.sh "+ovscontroller,sshkey,"(c\\d+)");
     System.setProperty("java.security.policy",javasecuritypolicy);
@@ -491,17 +465,6 @@ public class SdxServer extends Sdx implements ServiceAPI {
 		}
     Long t2 = System.currentTimeMillis();
     System.out.println("Finished UnStitching, time elapsed: "+String.valueOf(t2-t1)+"\n");
-//    try{
-//      java.io.BufferedReader stdin = new java.io.BufferedReader(new java.io.InputStreamReader(System.in));  
-//      String input = new String();  
-//      input = stdin.readLine();  
-//      Long t3=System.currentTimeMillis();
-//      System.out.println("Time after stitching: "+String.valueOf(t3-t2)+"\n");
-//		}catch (java.io.IOException e) {  
-//				System.out.println(e);   
-//		}  
-		
 	}
-
 }
 

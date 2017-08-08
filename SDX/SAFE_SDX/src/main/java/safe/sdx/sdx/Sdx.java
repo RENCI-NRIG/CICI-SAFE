@@ -137,10 +137,10 @@ public class Sdx extends UnicastRemoteObject{
 			s = Slice.loadManifestFile(sliceProxy, sliceName);
 		} catch (ContextTransportException e) {
 			// TODO Auto-generated catch block
-			//e.printStackTrace();
+			e.printStackTrace();
 		} catch (TransportException e) {
 			// TODO Auto-generated catch block
-			//e.printStackTrace();
+			e.printStackTrace();
 		}
 		return s;
 	}
@@ -159,7 +159,6 @@ public class Sdx extends UnicastRemoteObject{
       try{
         System.out.println("scp config file to "+mip);
         ScpTo.Scp(lfile,"root",mip,rfile,privkey);
-        //Exec.sshExec("yaoyj11","152.3.136.145","/bin/bash "+rfile,privkey);
 
       }catch (Exception e){
         System.out.println("exception when copying config file");
@@ -193,13 +192,9 @@ public class Sdx extends UnicastRemoteObject{
       {
         continue;
       }
-      //if(!c.getName().contains(pattern)){
-      //  continue;
-      //}
       String mip=c.getManagementIP();
       try{
         System.out.println(mip+" run commands:"+cmd);
-        //ScpTo.Scp(lfile,"root",mip,rfile,privkey);
         String res=Exec.sshExec("root",mip,cmd,privkey);
         while(res.startsWith("error")){
           sleep(5);
