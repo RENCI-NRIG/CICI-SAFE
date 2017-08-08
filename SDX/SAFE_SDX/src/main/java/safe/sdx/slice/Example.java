@@ -112,14 +112,15 @@ public class Example extends Sdx{
     if(type.equals("server")){
       IPPrefix=sdxconfig.ipprefix;
       riakip=sdxconfig.riakserver;
+      String scriptsdir=sdxconfig.scriptsdir;
       computeIP(IPPrefix);
       try{
           String carrierName=sliceName;
           System.setProperty("java.security.policy","~/project/exo-geni/ahabserver/allow.policy");
           Slice carrier=createCarrierSlice(carrierName,4,10,1000000,1);
           waitTillActive(carrier);
-          copyFile2Slice(carrier, "/home/yaoyj11/safe-sdx/SDX/SAFE_SDX/src/main/resources/scripts/dpid.sh","~/dpid.sh",sshkey);
-          copyFile2Slice(carrier, "/home/yaoyj11/safe-sdx/SDX/SAFE_SDX/src/main/resources/scripts/ovsbridge.sh","~/ovsbridge.sh",sshkey);
+          copyFile2Slice(carrier, scriptsdir+"dpid.sh","~/dpid.sh",sshkey);
+          copyFile2Slice(carrier, scriptsdir+"ovsbridge.sh","~/ovsbridge.sh",sshkey);
           SDNControllerIP=((ComputeNode)carrier.getResourceByName("plexuscontroller")).getManagementIP();
           runCmdSlice(carrier,"/bin/bash ~/ovsbridge.sh "+SDNControllerIP+":6633",sshkey,"(c\\d+)");
         //}
