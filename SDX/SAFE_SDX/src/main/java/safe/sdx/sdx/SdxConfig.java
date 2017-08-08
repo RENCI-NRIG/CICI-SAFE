@@ -11,6 +11,7 @@ class SdxConfig {
   public String ipprefix;
   public String riakserver;
   public String javasecuritypolicy;
+  public String scriptsdir;
  
   public SdxConfig(String configfile){
     System.out.println("config");
@@ -23,6 +24,7 @@ class SdxConfig {
     slicename=conf.getString("config.slicename");
     ipprefix=conf.getString("config.ipprefix");
     javasecuritypolicy=conf.getString("config.javasecuritypolicy");
+    scriptsdir=conf.getString("config.scriptsdir");
     if(conf.hasPath("config.riakserver")){
       riakserver=conf.getString("config.riakserver");
     }
