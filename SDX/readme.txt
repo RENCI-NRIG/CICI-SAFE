@@ -2,7 +2,11 @@
 To run the demo for SDX, you need to run a safe server first, and then run the ahab controller to start the sdx service
 
 [1] run riak-server
-  Deploy a riak server [you can use our riakserver directly 152.3.145.36:8098], or you can deploy a Riak server in Docker container
+  Deploy a riak server in ExoGENI, in SAFE_SDX directory (Configuration file in src/main/resources/riak.conf)
+  ./build.sh
+  ./ahab.sh -c riak
+  
+  Or you can deploy a Riak server in Docker container
   $sudo docker pull yaoyj11/riakimg
   $sudo docker run -i -t  -d -p 2122:2122 -p 8098:8098 -p 8087:8087 -h riakserver --name riakserver yaoyj11/riakimg
   Start riak service
@@ -23,109 +27,26 @@ To run the demo for SDX, you need to run a safe server first, and then run the a
     cd plexus/plexus
     ryu-manager app.py
 
-  4. Create two customer slice and a service slice: ./ahab.sh ConfigFile
-    Launch a sdx slice: (1) set the ip address of riak server in src/main/resources/sdx.conf; (2) ./ahab.sh sdx
+  4. Create two customer slices and a service slice: ./ahab.sh ConfigFile
+    Set riakserver ip address in configuration files for sdx, alice and bob in src/main/resources/
+    Launch a sdx slice: ./ahab.sh sdx
     Launch multiple customer slices: ./ahab.sh Slicename client true [riakip]
-    $./ahab.sh alice
-    $./ahab.sh bob
+    $./ahab.sh -c alice
+    $./ahab.sh -c bob
 
   5. run slice controller (ahab) for sdx slice :./sdxserver.sh ConfigFile
-    $./sdxserver.sh sdx
+    $./sdxserver.sh -c sdx
 
   6. run slice controller(ahab) for sdx client:./sdxclient.sh ConfigFile
-    $./sdxclient.sh alice
-    $./sdxclient.sh bob
+    $./sdxclient.sh -c alice
+    $./sdxclient.sh -c bob
 
   7. post SAFE identity sets, make SAFE statements to state the stitching and traffic policies, allocation of IP prefixes and stitching requests.
     $ cd safe/super-safe/safe-apps/safe-network/exo-geni
     Edit the SAFESERVER ip address to your safe server IP address in idset.sh, post.sh and updatess.sh, and run following scripts to make posts to safesets. Messages with a token in each message are expected.
     $./idset.sh
     $./post.sh
-    $./updatess.sh PROJECTENDORSEMENT_TOKEN
-    Here PROJECTENDORSEMENT_TOKEN is the token for project member endorsement sets, this is the token in last 4th, 5th and 6th messages of the running result post.sh
-    $./updatess.sh IPDELEGATION_TOKEN
-    Here IPDELEGATION_TOKEN is the token for ip deletation sets, this is the token in last, 2nd and 3rd messages of the running result post.sh
-    For example, if the messages of of post.sh are as follows:
-        > POST /postIPAllocate HTTP/1.1
-        > Host: 152.54.14.38:7777
-        > User-Agent: curl/7.47.0
-        > Accept: */*
-        > Content-Type: application/json
-        > Content-Length: 144
-        >
-        * upload completely sent off: 144 out of 144 bytes
-        < HTTP/1.1 200 OK
-        < Server: spray-can/1.3.3
-        < Date: Mon, 10 Jul 2017 23:06:47 GMT
-        < Content-Type: application/json; charset=UTF-8
-        < Content-Length: 66
-        <
-        {
-            "message": "['mjpKqF0WsgUKlhCnIYpa4_CrgOo4gIIlGqLjepxJJ5E']"
-            * Connection #0 to host 152.54.14.38 left intact
-        }pa endorse alice
-        Note: Unnecessary use of -X or --request, POST is already inferred.
-        *   Trying 152.54.14.38...
-        * Connected to 152.54.14.38 (152.54.14.38) port 7777 (#0)
-        > POST /postEndorsePM HTTP/1.1
-        > Host: 152.54.14.38:7777
-        > User-Agent: curl/7.47.0
-        > Accept: */*
-        > Content-Type: application/json
-        > Content-Length: 126
-        >
-        * upload completely sent off: 126 out of 126 bytes
-        < HTTP/1.1 200 OK
-        < Server: spray-can/1.3.3
-        < Date: Mon, 10 Jul 2017 23:06:47 GMT
-        < Content-Type: application/json; charset=UTF-8
-        < Content-Length: 66
-        <
-        {
-            "message": "['jkgOKYbQhgQH-uTCkUVqh45Zge8SR_SkOXkvx6chvyA']"
-            * Connection #0 to host 152.54.14.38 left intact
-        }pa endorse bob
-        Note: Unnecessary use of -X or --request, POST is already inferred.
-        *   Trying 152.54.14.38...
-        * Connected to 152.54.14.38 (152.54.14.38) port 7777 (#0)
-        > POST /postEndorsePM HTTP/1.1
-        > Host: 152.54.14.38:7777
-        > User-Agent: curl/7.47.0
-        > Accept: */*
-        > Content-Type: application/json
-        > Content-Length: 126
-        >
-        * upload completely sent off: 126 out of 126 bytes
-        < HTTP/1.1 200 OK
-        < Server: spray-can/1.3.3
-        < Date: Mon, 10 Jul 2017 23:06:47 GMT
-        < Content-Type: application/json; charset=UTF-8
-        < Content-Length: 66
-        <
-        {
-            "message": "['jkgOKYbQhgQH-uTCkUVqh45Zge8SR_SkOXkvx6chvyA']"
-            * Connection #0 to host 152.54.14.38 left intact
-        }Note: Unnecessary use of -X or --request, POST is already inferred.
-        *   Trying 152.54.14.38...
-        * Connected to 152.54.14.38 (152.54.14.38) port 7777 (#0)
-        > POST /postEndorsePM HTTP/1.1
-        > Host: 152.54.14.38:7777
-        > User-Agent: curl/7.47.0
-        > Accept: */*
-        > Content-Type: application/json
-        > Content-Length: 126
-        >
-        * upload completely sent off: 126 out of 126 bytes
-        < HTTP/1.1 200 OK
-        < Server: spray-can/1.3.3
-        < Date: Mon, 10 Jul 2017 23:06:48 GMT
-        < Content-Type: application/json; charset=UTF-8
-        < Content-Length: 66
-        <
-        {
-            "message": "['jkgOKYbQhgQH-uTCkUVqh45Zge8SR_SkOXkvx6chvyA']"
-            * Connection #0 to host 152.54.14.38 left intact
-    You should run ./updatess.sh mjpKqF0WsgUKlhCnIYpa4_CrgOo4gIIlGqLjepxJJ5E and ./updatess.sh jkgOKYbQhgQH-uTCkUVqh45Zge8SR_SkOXkvx6chvyA
+    $./updatess.sh 
 
   8. alice stitch CNode0 to sdx/c0, in alice's controller, run:
     $>stitch alice sdx CNode0 c0
@@ -134,18 +55,22 @@ To run the demo for SDX, you need to run a safe server first, and then run the a
 
   9. route
     alice tells sdx controller its address space
-    $>route 192.168.10.1/24 192.168.33.2 server c0
+    $>route 192.168.10.1/24 192.168.33.2 sdx c0
     bob tells sdx controller its address space
-    $>route 192.168.20.1/24 192.168.34.2 server c3
+    $>route 192.168.20.1/24 192.168.34.2 sdx c3
 
   10. setup routing in client side
     An example command of adding an entry to the routing table is as follows, this only supports dest IP address with /32 netmask
     Another way to do this is using Quagga with zebra enabled, and add routing entries in zebra.conf, dest ip with any netmask is supported
     In the demo, to enable communication between CNode1 in alice and CNode1 in bob, the commands are:
     CNode1-alice$ ip route add 192.168.20.2/32 via 192.168.10.1
-    CNode0-alice$ ip route add 192.168.20.2/32 via 192.168.34.1
+    CNode0-alice$ ip route add 192.168.20.2/32 via 192.168.33.1
     CNode1-bob$  ip route add 192.168.10.2/32 via 192.168.20.1
-    CNode0-bob$ ip route add 192.168.10.2/32 via 192.168.33.1
+    CNode0-bob$ ip route add 192.168.10.2/32 via 192.168.34.1
+
+  11. Delete a slice
+    we can delete a slice with command: ./ahab.sh -c configFileName -d
+    For exmaple: ./ahab.sh -c alice -d
     
 
 

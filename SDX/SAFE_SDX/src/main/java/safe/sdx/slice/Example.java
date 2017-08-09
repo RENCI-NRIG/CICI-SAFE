@@ -86,8 +86,10 @@ public class Example extends Sdx{
 
 		String configfilepath=cmd.getOptionValue("config");
     SdxConfig sdxconfig=readConfig(configfilepath);
-
     type=sdxconfig.type;
+    if(cmd.hasOption('d')){
+      type="delete";
+    }
 
 		//pemLocation = args[0];
 		//keyLocation = args[1];
@@ -112,7 +114,7 @@ public class Example extends Sdx{
     if(type.equals("server")){
       IPPrefix=sdxconfig.ipprefix;
       riakip=sdxconfig.riakserver;
-      String scriptsdir=sdxconfig.scriptsdir;
+      String scriptsdir=sdxconfig.get("config.scriptsdir");
       computeIP(IPPrefix);
       try{
           String carrierName=sliceName;
@@ -131,6 +133,7 @@ public class Example extends Sdx{
     else if (type.equals("delete")){
       Slice s2 = null;
       try{
+        System.out.println("deleting slice "+sliceName);
         s2=Slice.loadManifestFile(sliceProxy, sliceName);
         s2.delete();
       }catch (Exception e){
@@ -338,6 +341,5 @@ public class Example extends Sdx{
       //+"docker exec -d plexus /bin/bash -c  \"cd /root/;./sdx.sh\"\n";
     return script;
   }
-
 }
 

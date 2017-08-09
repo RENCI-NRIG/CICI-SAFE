@@ -18,6 +18,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.HashSet;
 import java.util.Properties;
+import java.util.concurrent.locks.ReentrantLock;
 
 import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Level;
@@ -94,6 +95,8 @@ public class SdxServer extends Sdx implements ServiceAPI {
   private static String mask="/24";
   private static String SDNController;
   private static String OVSController;
+  private static String scriptsdir;
+  private final ReentrantLock lock=new ReentrantLock();
   //private static String type;
   private static ArrayList<String[]> advertisements=new ArrayList<String[]>();
 
@@ -135,8 +138,9 @@ public class SdxServer extends Sdx implements ServiceAPI {
     CommandLine cmd=parseCmd(args);
 		String configfilepath=cmd.getOptionValue("config");
     SdxConfig sdxconfig=readConfig(configfilepath);
-
     IPPrefix=sdxconfig.ipprefix;
+    scriptsdir=sdxconfig.scriptsdir;
+
     //type=sdxconfig.type;
     computeIP(IPPrefix);
 		sliceProxy = SdxServer.getSliceProxy(pemLocation,keyLocation, controllerUrl);		
@@ -231,12 +235,21 @@ public class SdxServer extends Sdx implements ServiceAPI {
       }
       ComputeNode node = (ComputeNode) s1.getResourceByName(nodeName);
       int interfaceNum=routingmanager.getRouter(nodeName).getInterfaceNum();
-      String stitchname="stitch_"+nodeName+"_"+curip;
+      lock.lock();
+      String stitchname;
+      int ip_to_use=curip;
+      try{
+        stitchname="stitch_"+nodeName+"_"+curip;
+        curip++;
+      }finally{
+        lock.unlock();
+      }
       Network net=s1.addBroadcastLink(stitchname);
       InterfaceNode2Net ifaceNode0 = (InterfaceNode2Net) net.stitch(node);
       ifaceNode0.setIpAddress("192.168.1.1");
       ifaceNode0.setNetmask("255.255.255.0");
       s1.commit();
+
       int N=0;
       net=(Network)s1.getResourceByName(stitchname);
       while(net.getState() != "Active" &&N<10){
@@ -266,11 +279,10 @@ public class SdxServer extends Sdx implements ServiceAPI {
       Link link=new Link();
       link.setName(stitchname);
       link.addNode(nodeName);
-      link.setIP(IPPrefix+String.valueOf(curip));
+      link.setIP(IPPrefix+String.valueOf(ip_to_use));
       link.setMask(mask);
       links.put(stitchname,link);
       routingmanager.newLink(link.getIP(1), link.nodea, SDNController);
-      curip+=1;
       String gw = link.getIP(1);
       String ip=link.getIP(2);
       stitch(customerName,ResrvID,carrierName,net1_stitching_GUID,secret,ip);

@@ -76,8 +76,11 @@ public class Sdx extends UnicastRemoteObject{
   protected static CommandLine parseCmd(String[] args){
     Options options = new Options();
     Option config = new Option("c", "config", true, "configuration file path");
+    Option config1 = new Option("d", "delete", false, "delete the slice");
     config.setRequired(true);
+    config1.setRequired(false);
     options.addOption(config);
+    options.addOption(config1);
     CommandLineParser parser = new DefaultParser();
     HelpFormatter formatter = new HelpFormatter();
     CommandLine cmd=null;
