@@ -1,4 +1,9 @@
 package safe.sdx.sdx;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+
 import com.typesafe.config.*;
 
 class SdxConfig {
@@ -16,7 +21,12 @@ class SdxConfig {
  
   public SdxConfig(String configfile){
     System.out.println("config");
-    conf=ConfigFactory.load(configfile);
+    
+    File myConfigFile = new File(configfile);
+    Config fileConfig = ConfigFactory.parseFile(myConfigFile);
+    conf = ConfigFactory.load(fileConfig);
+    
+    //conf=ConfigFactory.load(configfile);
     sshkey=conf.getString("config.sshkey");
     type=conf.getString("config.type");
     safekey=conf.getString("config.safekey");

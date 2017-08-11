@@ -52,24 +52,8 @@
 							<name>SafeSdxServer</name>
 						</program>
 						<program>
-							<mainClass>safe.sdx.sdx.SdxClient</mainClass>
-							<name>SafeSdxClient</name>
-						</program>
-						<program>
 							<mainClass>safe.sdx.sdx.Example</mainClass>
 							<name>SafeSdxExample</name>
-						</program>
-						<program>
-              <mainClass>safe.sdx.sdx.RoutingServer</mainClass>
-							<name>SafeSdxRouting</name>
-						</program>
-						<program>
-              <mainClass>safe.sdx.sdx.RoutingClient</mainClass>
-							<name>SafeSdxRoutingClient</name>
-						</program>
-						<program>
-              <mainClass>safe.sdx.sdx.RpkiServer</mainClass>
-							<name>SafeSdxRpkiServer</name>
 						</program>
 					</programs>
 				</configuration>
