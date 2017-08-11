@@ -23,43 +23,40 @@ To run the demo for SDX, you need to run a safe server first, and then run the a
   $cd target/classes
   $rmiregistry
 
-  3. Start Plexus SDN controller
-    cd plexus/plexus
-    ryu-manager app.py
 
-  4. Create two customer slices and a service slice: ./ahab.sh ConfigFile
+  3. Create two customer slices and a service slice: ./ahab.sh ConfigFile
     Set riakserver ip address in configuration files for sdx, alice and bob in src/main/resources/
     Launch a sdx slice: ./ahab.sh sdx
     Launch multiple customer slices: ./ahab.sh Slicename client true [riakip]
     $./ahab.sh -c alice
     $./ahab.sh -c bob
 
-  5. run slice controller (ahab) for sdx slice :./sdxserver.sh ConfigFile
+  4. run slice controller (ahab) for sdx slice :./sdxserver.sh ConfigFile
     $./sdxserver.sh -c sdx
 
-  6. run slice controller(ahab) for sdx client:./sdxclient.sh ConfigFile
+  5. run slice controller(ahab) for sdx client:./sdxclient.sh ConfigFile
     $./sdxclient.sh -c alice
     $./sdxclient.sh -c bob
 
-  7. post SAFE identity sets, make SAFE statements to state the stitching and traffic policies, allocation of IP prefixes and stitching requests.
+  6. post SAFE identity sets, make SAFE statements to state the stitching and traffic policies, allocation of IP prefixes and stitching requests.
     $ cd safe/super-safe/safe-apps/safe-network/exo-geni
     Edit the SAFESERVER ip address to your safe server IP address in idset.sh, post.sh and updatess.sh, and run following scripts to make posts to safesets. Messages with a token in each message are expected.
     $./idset.sh
     $./post.sh
     $./updatess.sh 
 
-  8. alice stitch CNode0 to sdx/c0, in alice's controller, run:
+  7. alice stitch CNode0 to sdx/c0, in alice's controller, run:
     $>stitch alice sdx CNode0 c0
     bob stitch CNode0 to sdx/c3, in bob's controller run:
     $>stitch bob sdx CNode0 c3
 
-  9. route
+  8. route
     alice tells sdx controller its address space
     $>route 192.168.10.1/24 192.168.33.2 sdx c0
     bob tells sdx controller its address space
     $>route 192.168.20.1/24 192.168.34.2 sdx c3
 
-  10. setup routing in client side
+  9. setup routing in client side
     An example command of adding an entry to the routing table is as follows, this only supports dest IP address with /32 netmask
     Another way to do this is using Quagga with zebra enabled, and add routing entries in zebra.conf, dest ip with any netmask is supported
     In the demo, to enable communication between CNode1 in alice and CNode1 in bob, the commands are:
@@ -68,7 +65,7 @@ To run the demo for SDX, you need to run a safe server first, and then run the a
     CNode1-bob$  ip route add 192.168.10.2/32 via 192.168.20.1
     CNode0-bob$ ip route add 192.168.10.2/32 via 192.168.34.1
 
-  11. Delete a slice
+  10. Delete a slice
     we can delete a slice with command: ./ahab.sh -c configFileName -d
     For exmaple: ./ahab.sh -c alice -d
     
