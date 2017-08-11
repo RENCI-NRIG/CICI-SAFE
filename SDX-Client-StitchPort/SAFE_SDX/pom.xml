@@ -21,8 +21,8 @@
 
 
 	<groupId>safe</groupId>
-	<artifactId>sdx</artifactId>
-	<name>carreir_server</name>
+	<artifactId>sdx-client-stitchport</artifactId>
+	<name>sdx-client-stitchport</name>
 
 	<build>
 		<plugins>

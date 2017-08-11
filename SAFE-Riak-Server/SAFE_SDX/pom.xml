@@ -21,8 +21,8 @@
 
 
 	<groupId>safe</groupId>
-	<artifactId>sdx</artifactId>
-	<name>carreir_server</name>
+	<artifactId>riak-server</artifactId>
+	<name>riak_server</name>
 
 	<build>
 		<plugins>

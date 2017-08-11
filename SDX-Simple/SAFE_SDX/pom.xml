@@ -21,8 +21,8 @@
 
 
 	<groupId>safe</groupId>
-	<artifactId>sdx</artifactId>
-	<name>carreir_server</name>
+	<artifactId>sdx-simple</artifactId>
+	<name>sdx-simple</name>
 
 	<build>
 		<plugins>

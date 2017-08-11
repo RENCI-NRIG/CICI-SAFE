@@ -21,8 +21,8 @@
 
 
 	<groupId>safe</groupId>
-	<artifactId>sdx</artifactId>
-	<name>carreir_server</name>
+	<artifactId>sdx-client-exogeni</artifactId>
+	<name>sdx-client-exogeni</name>
 
 	<build>
 		<plugins>
