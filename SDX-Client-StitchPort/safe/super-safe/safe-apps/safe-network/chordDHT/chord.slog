@@ -1,0 +1,23 @@
+(*at NI*)
+requestCert(?Key,?CA) :-
+  startNetwork(),
+  publicKey(?Key),
+  myCA(?CA)
+
+nodeID(?Nid) :-
+  ?CA:nodeIDCert($Self,?Nid,?key),
+  myCA(?CA).
+
+
+(*at CA*)
+nodeIDCert(?NI,?Nid,?Key) :-
+  ?NI : requestCert(?NI,?Key),
+  secret(?CA,?NI,?Secret),
+  f_generateID(K,S).
+
+(*at LI)
+
+acceptJoinRequest(?NI):
+  ?CA: nodeIDCert(?NI,?Nid,?Key)
+  landmarkOf(?NI),
+  myCA(?CA).

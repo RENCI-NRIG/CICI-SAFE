@@ -1,0 +1,1 @@
+curl  -v -X POST http://152.3.136.36:7777/postIPAllocate -H "Content-Type: application/json" -d "{ \"principal\": \"XLajumPCpZWScMJUoxrApXMCxRllpAVnFIwzv7CFpsU \", \"otherValues\": [\"GA6A1fkLhsWUB7SKaPSCw8DO_ozLVM-Q8l0NdsqwRiA\",\"ipv4\\\"152.3.1.1/16\\\"\"] }"

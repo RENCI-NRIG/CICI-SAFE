@@ -1,0 +1,38 @@
+"trustroot": allocate("as2",ipv4"152.3.1.1/16").
+"as0":neighbor("as2").
+"as0":acceptRoute("as2",ipv4"152.3.1.1/16").
+"as2":advertise(ipv4"152.3.1.1/16",["as2"],"as0").
+
+
+
+route(Self,Dst, Path) :-
+  Self:neighbor(Nb),
+  Self:acceptRoute(Nb, Dst),
+  authorizedAdvertise(Dst,Path,Self).
+
+authorizedAdvertise(Dst,Path,AS):-
+  eq([Head|Tail],Path),
+  eq(Tail,[]),
+  Head: advertise(Dst,Path,AS),
+  ownPrefix(Head,Dst).
+
+authorizedAdvertise(Dst,Path,AS):-
+  eq([Head|Tail],Path),
+  Head: advertise(Dst,Tail,AS),
+  authorizedAdvertise(Dst,Tail,Head).
+
+
+//advertise(Nb,Dst,Path):-
+//  carryTraffic(Nb,Dst),
+//  neighbor(Nb),
+//  route(Nb,Dst,IPath),
+//  eq([Nb|IPath],Path).
+
+ownPrefix(Org,Prefix):-
+  "trustroot": allocate(Org,Prefix).
+
+ownPrefix(Org,SubPrefix):-
+  UpStream: delegatePrefix(Org,SubPrefix),
+  isInRange(SubPrefix,Prefix),
+  UpStream: ownPrefix(Prefix).
+

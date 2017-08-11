@@ -1,0 +1,20 @@
+neighbor("as0","as1").
+neighbor("as1","as0").
+neighbor("as1","as2").
+neighbor("as2","as1").
+carryTraffic("as1","as0","as2").
+acceptRoute("as0","as1","as2").
+
+route(Z,X,P):-
+  neighbor(Z,X),
+  eq([Z,X],P).
+
+route(Z,Y,P):-
+  X : advertise(Y,P,Z),
+  acceptRoute(Z,X,Y).
+
+advertise(Z,Y,P1,X):-
+  carryTraffic(Z,X,Y),
+  neighbor(Z,X),
+  route(Z,Y,P),
+  eq([X|P],P1).

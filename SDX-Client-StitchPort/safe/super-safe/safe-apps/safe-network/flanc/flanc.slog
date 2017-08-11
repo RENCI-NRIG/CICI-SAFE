@@ -1,0 +1,28 @@
+"p0":ownIP(ipv4"152.2.1.1/24").
+
+delegatedIP(?IP,?P):-
+  ?P: delegate($Self,?IP),
+  ?P: ownIP(?IPSet),
+  ?IP <: ?IPSet.
+
+changeDstIP(?DstIP2):-
+  ?IDS: delegatedIP(?DstIPSet,?P),
+  dstIP(?DstIP1),
+  ?P: potentialAttack(?DstIP1),
+  ?DstIP1 <: ?DstIPSet,
+  ?IDS : ownPrefix(?Prefix),
+  ?DstIP2 <: ?Prefix.
+  
+changeDstPort(?DstPort):-
+  ?DstPort = "DROP",
+  dstIP(?DstIP1),
+  ?P:ownPrefix(?Prefix),
+  ?DstIP1 <: ?Prefix
+  ?P:attack(?DstIP1).
+
+changeDstPort(?DstPort):-
+  ?DstPort = "Port1",
+  srcIP(?SrcIP),
+  ?SrcIP <: ipv4"152.3.1.1/24",
+  ?DstIP <: ipv4"152.3.2.1/24".
+
