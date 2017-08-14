@@ -7,6 +7,8 @@ import org.renci.ahab.libtransport.SSHAccessToken;
 import org.renci.ahab.libtransport.SliceAccessContext;
 import org.renci.ahab.libtransport.util.SSHAccessTokenFileFactory;
 import org.renci.ahab.libtransport.util.UtilTransportException;
+import org.renci.ahab.libtransport.xmlrpc.XMLRPCTransportException;
+
 import safe.utils.Exec;
 
 import java.rmi.RemoteException;
@@ -16,7 +18,7 @@ import java.rmi.RemoteException;
  *
  */
 public class Riak extends SliceCommon{
-	final static Logger logger = Logger.getLogger(Riak.class);
+	final static Logger logger = Logger.getLogger(Riak.class.getCanonicalName());
 	
 	public Riak()throws RemoteException{}
 	private static int curip=128;
@@ -32,7 +34,7 @@ public class Riak extends SliceCommon{
 	public static void main(String [] args){
 		System.out.println("Starting Riak Server");
 		logger.info("this is a test message from pruth");
-		
+
 		//System.exit(0);
 		
 		CommandLine cmd=parseCmd(args);
@@ -75,7 +77,14 @@ public class Riak extends SliceCommon{
 		node0.setDomain(site);
 		node0.setPostBootScript(getRiakScript());
 		
-		s.commit();
+		
+		try {
+			s.commit();
+		} catch (XMLRPCTransportException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
 		
 		waitTillActive(s);
 		
