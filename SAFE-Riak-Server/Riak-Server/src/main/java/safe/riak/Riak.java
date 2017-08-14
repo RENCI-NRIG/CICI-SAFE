@@ -86,7 +86,7 @@ public class Riak extends SliceCommon{
 		CommandLine cmd=parseCmd(args);
 
 		String configfilepath=cmd.getOptionValue("config");
-		SdxConfig sdxconfig=readConfig(configfilepath);
+		SliceConfig sdxconfig=readConfig(configfilepath);
 		type=sdxconfig.type;
 		if(cmd.hasOption('d')){
 			type="delete";

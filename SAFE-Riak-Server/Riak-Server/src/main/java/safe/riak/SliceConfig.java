@@ -3,7 +3,7 @@ import java.io.File;
 
 import com.typesafe.config.*;
 
-class SdxConfig {
+class SliceConfig {
 	public String sshkey;
 	public String type;
 	public String safekey;
@@ -17,7 +17,7 @@ class SdxConfig {
 	public String site;
 	Config conf;
 
-	public SdxConfig(String configfile){
+	public SliceConfig(String configfile){
 		System.out.println("config");
 
 		File myConfigFile = new File(configfile);
