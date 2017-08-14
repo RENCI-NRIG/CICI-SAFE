@@ -107,8 +107,6 @@ public class SliceCommon extends UnicastRemoteObject{
 		controllerUrl = sdxconfig.exogenism; //"https://geni.renci.org:11443/orca/xmlrpc";
 		sliceName = sdxconfig.slicename;
 		sshkey=sdxconfig.sshkey;
-		keyhash=sdxconfig.safekey;
-		javasecuritypolicy=sdxconfig.javasecuritypolicy;
 		return sdxconfig;
 	}
 
