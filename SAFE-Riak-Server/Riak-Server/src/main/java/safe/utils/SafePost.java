@@ -1,4 +1,4 @@
-package  safe.sdx.utils;
+package  safe.utils;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 import java.io.BufferedReader;
