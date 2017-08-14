@@ -86,7 +86,7 @@ public class Riak extends SliceCommon{
 		System.out.println("Starting Riak Server");
 		logger.info("this is a test message from pruth");
 		
-		System.exit(0);
+		//System.exit(0);
 		
 		CommandLine cmd=parseCmd(args);
 
