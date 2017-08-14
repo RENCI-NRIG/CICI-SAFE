@@ -63,6 +63,8 @@ import java.rmi.server.UnicastRemoteObject;
  *
  */
 public class Riak extends SliceCommon{
+	final static Logger logger = Logger.getLogger(Riak.class);
+	
 	public Riak()throws RemoteException{}
 	private static int curip=128;
 	private static String IPPrefix="192.168.";
@@ -82,7 +84,10 @@ public class Riak extends SliceCommon{
 
 	public static void main(String [] args){
 		System.out.println("Starting Riak Server");
-
+		logger.info("this is a test message from pruth");
+		
+		System.exit(0);
+		
 		CommandLine cmd=parseCmd(args);
 
 		String configfilepath=cmd.getOptionValue("config");
