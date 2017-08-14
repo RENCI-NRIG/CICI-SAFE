@@ -3,10 +3,15 @@ package safe.utils;
 import com.jcraft.jsch.*;
 import java.awt.*;
 import javax.swing.*;
+
+import org.apache.log4j.Logger;
+
 import java.io.*;
 import java.util.Properties;
 
 public class ScpTo{
+	  final static Logger logger = Logger.getLogger(ScpTo.class);	
+
   public static void Scp(String lfile,String user, String host,String rfile,String privkey){
     FileInputStream fis=null;
     try{
@@ -18,9 +23,9 @@ public class ScpTo{
       config.put("StrictHostKeyChecking", "no");
       session.setConfig(config);
       // username and password will be given via UserInfo interface.
-      System.out.println("open scp");
+      logger.debug("open scp");
       session.connect();
-      System.out.println("open scp channel");
+      logger.debug("open scp channel");
 
       boolean ptimestamp = true;
 

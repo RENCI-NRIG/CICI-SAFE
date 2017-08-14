@@ -18,14 +18,14 @@ import java.rmi.RemoteException;
  *
  */
 public class Riak extends SliceCommon{
-	final static Logger logger = Logger.getLogger(Riak.class.getCanonicalName());
+	final static Logger logger = Logger.getLogger(Riak.class);
 	
 	public Riak()throws RemoteException{}
 	private static int curip=128;
 	private static String site;
 
 	private static  void computeIP(String prefix){
-		System.out.println(prefix);
+		logger.debug(prefix);
 		String[] ip_mask=prefix.split("/");
 		String[] ip_segs=ip_mask[0].split("\\.");
 		curip=Integer.valueOf(ip_segs[2]);
@@ -33,8 +33,7 @@ public class Riak extends SliceCommon{
 
 	public static void main(String [] args){
 		System.out.println("Starting Riak Server");
-		logger.info("this is a test message from pruth");
-
+		
 		//System.exit(0);
 		
 		CommandLine cmd=parseCmd(args);
@@ -61,6 +60,7 @@ public class Riak extends SliceCommon{
 
 		site=sdxconfig.site;
 		createRiakSlice(sliceName);
+		System.out.println("Done");
 	}
 
 	public static  Slice createRiakSlice(String sliceName){
@@ -96,7 +96,7 @@ public class Riak extends SliceCommon{
 		Exec.sshExec("root",riakip,"docker exec -i -t -d  riakserver sudo riak-admin bucket-type activate  safesets",sshkey);
 		Exec.sshExec("root",riakip,"docker exec -i -t  -d riakserver sudo riak-admin bucket-type update safesets '{\"props\":{\"allow_mult\":false}}'",sshkey);
 		Exec.sshExec("root",riakip,"docker exec -it -d riakserver sudo riak ping",sshkey);
-		System.out.println("Started riak server at "+riakip);
+		logger.debug("Started riak server at "+riakip);
 		return s;
 	}
 

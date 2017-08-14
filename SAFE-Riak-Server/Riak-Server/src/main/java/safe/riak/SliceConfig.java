@@ -1,9 +1,14 @@
 package safe.riak;
 import java.io.File;
 
+import org.apache.log4j.Logger;
+
 import com.typesafe.config.*;
 
 class SliceConfig {
+	final static Logger logger = Logger.getLogger(SliceConfig.class);
+
+	
 	public String sshkey;
 	public String exogenism;
 	public String exogenipem;
@@ -12,7 +17,7 @@ class SliceConfig {
 	Config conf;
 
 	public SliceConfig(String configfile){
-		System.out.println("config");
+		logger.debug("config");
 
 		File myConfigFile = new File(configfile);
 		Config fileConfig = ConfigFactory.parseFile(myConfigFile);

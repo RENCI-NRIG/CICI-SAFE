@@ -3,9 +3,14 @@ package safe.utils;
 import com.jcraft.jsch.*;
 import java.awt.*;
 import javax.swing.*;
+
+import org.apache.log4j.Logger;
+
 import java.util.Properties;
 
 public class UserAuthPubKey{
+	  final static Logger logger = Logger.getLogger(UserAuthPubKey.class);	
+
   public static void auth(String host){
 
     try{
@@ -32,7 +37,7 @@ public class UserAuthPubKey{
       channel.setOutputStream(System.out);
 
       channel.connect();
-      System.out.println("end");
+      logger.debug("end");
     }
     catch(Exception e){
       System.out.println(e);

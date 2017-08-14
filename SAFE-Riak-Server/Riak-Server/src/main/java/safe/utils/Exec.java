@@ -1,23 +1,34 @@
 /* -*-mode:java; c-basic-offset:2; indent-tabs-mode:nil -*- */
 package safe.utils;
 import com.jcraft.jsch.*;
+
+import safe.riak.Riak;
+
 import java.awt.*;
 import javax.swing.*;
+
+import org.apache.log4j.Logger;
+
 import java.io.*;
 import java.util.Properties;
 
 public class Exec{
+  final static Logger logger = Logger.getLogger(Exec.class);	
+	
   public static void exec(String cmd){
-    System.out.println(cmd);
+	 logger.debug(cmd);
     try{
       Runtime run = Runtime. getRuntime();
       Process pr = run.exec(cmd);
       pr. waitFor();
       BufferedReader buf = new BufferedReader(new InputStreamReader(pr. getInputStream()));
       String line = "";
+      String stdout = "";
       while ((line=buf. readLine())!=null) {
-        System.out.println(line);
+        //System.out.println(line);
+        stdout += line;
       }
+      logger.debug(stdout);
     }catch (Exception e){
       System.out.println("Exeption while setting up link"+e);
 
@@ -36,24 +47,38 @@ public class Exec{
       Channel channel=session.openChannel("exec");
       ((ChannelExec)channel).setCommand(command);
       channel.setInputStream(null);
-      ((ChannelExec)channel).setErrStream(System.err);
+      //((ChannelExec)channel).setErrStream(System.out);
       InputStream in=channel.getInputStream();
+      InputStream err=((ChannelExec)channel).getErrStream();
+ 
       channel.connect();
       byte[] tmp=new byte[1024];
+      String output = "";
       while(true){
         while(in.available()>0){
           int i=in.read(tmp, 0, 1024);
           if(i<0)break;
-          result+=new String(tmp,0,i)+"\n";
-          System.out.print(new String(tmp, 0, i));
+          //result+=new String(tmp,0,i)+"\n";
+          //System.out.print(new String(tmp, 0, i));
+          logger.debug(new String(tmp, 0, i));
         }
+        
+        while(err.available()>0){
+            int i=err.read(tmp, 0, 1024);
+            if(i<0)break;
+            //result+=new String(tmp,0,i)+"\n";
+            //System.out.print(new String(tmp, 0, i));
+            logger.debug(new String(tmp, 0, i));
+          }
+        
         if(channel.isClosed()){
           //get status returns int;
-          System.out.println("exit-status: "+channel.getExitStatus());
+           logger.debug("exit-status: "+channel.getExitStatus());
           if (channel.getExitStatus()!=0){
             result="error:"+String.valueOf(channel.getExitStatus());
           }
           break;
+          
         }
         try{Thread.sleep(1000);}catch(Exception ee){}
       }
