@@ -1,4 +1,4 @@
-package safe.sdx.sdx;
+package safe.sdx.sdx.routingmanager;
 
 public class Link{
   public String linkname="";

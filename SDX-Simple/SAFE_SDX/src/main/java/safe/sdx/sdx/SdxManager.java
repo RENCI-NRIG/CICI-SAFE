@@ -1,5 +1,13 @@
-package safe.sdx;
+package safe.sdx.sdx;
 
+import safe.sdx.utils.SafePost;
+import safe.sdx.utils.Exec;
+import safe.sdx.sdx.routingmanager.Link;
+import safe.sdx.sdx.routingmanager.Router;
+import safe.sdx.sdx.routingmanager.RoutingManager;
+
+import java.util.regex.Pattern;
+import java.util.regex.Matcher;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -16,11 +24,14 @@ import java.util.Map;
 import java.util.Set;
 import java.util.HashSet;
 import java.util.Properties;
+import java.util.concurrent.locks.ReentrantLock;
 
 import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.log4j.SimpleLayout;
+import org.apache.commons.cli.*;
+import org.apache.commons.cli.DefaultParser;
 
 import org.renci.ahab.libndl.LIBNDL;
 import org.renci.ahab.libndl.Slice;
@@ -49,11 +60,6 @@ import org.renci.ahab.libtransport.util.UtilTransportException;
 import org.renci.ahab.libtransport.xmlrpc.XMLRPCProxyFactory;
 import org.renci.ahab.ndllib.transport.OrcaSMXMLRPCProxy;
 
-import java.rmi.RMISecurityManager;
-import java.rmi.Naming;
-import java.rmi.RemoteException;
-import java.rmi.server.UnicastRemoteObject;
-
 import java.net.MalformedURLException;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpPost;
@@ -81,26 +87,18 @@ import org.apache.http.impl.client.DefaultHttpClient;
  * 6. Call SDN controller to install the rules
  */
 
-public class SdxServer extends UnicastRemoteObject implements ServiceAPI {
-  public SdxServer()throws RemoteException{}
-	private static final String RequestResource = null;
-	private static String controllerUrl;
-  private static String SDNControllerIP;
-  private static String SDNController;
-  private static String OVSController;
-	private static String sliceName;
-	private static String pemLocation;
-	private static String keyLocation;
-  private static String sshkeyLocation;
+public class SdxManager extends Sdx{
+  public SdxManager(){}
+
   private static RoutingManager routingmanager=new RoutingManager();
-  private static ISliceTransportAPIv1 sliceProxy;
-  private static SliceAccessContext<SSHAccessToken> sctx;
-  private static int curip=128;
+  private static HashMap<String, Link> links=new HashMap<String, Link>();
   private static String IPPrefix="192.168.";
   private static String mask="/24";
-  private static HashMap<String, Link> links=new HashMap<String, Link>();
-	private static String safeserver;
-  private static String server_keyhash;
+  private static String SDNController;
+  private static String OVSController;
+  private static String scriptsdir;
+  private static final ReentrantLock lock=new ReentrantLock();
+  //private static String type;
   private static ArrayList<String[]> advertisements=new ArrayList<String[]>();
 
   private void addEntry_HashList(HashMap<String,ArrayList<String>>  map,String key, String entry){
@@ -129,40 +127,29 @@ public class SdxServer extends UnicastRemoteObject implements ServiceAPI {
   }
 
   private static  void computeIP(String prefix){
-    System.out.println(prefix);
     String[] ip_mask=prefix.split("/");
     String[] ip_segs=ip_mask[0].split("\\.");
-    IPPrefix=ip_segs[0]+"."+ip_segs[1];
+    IPPrefix=ip_segs[0]+"."+ip_segs[1]+".";
     curip=Integer.valueOf(ip_segs[2]);
   }
 	
-	public static void main(String [] args){
-		//Example usage:   ./target/appassembler/bin/SafeSdxExample  ~/.ssl/geni-pruth1.pem ~/.ssl/geni-pruth1.pem "https://geni.renci.org:11443/orca/xmlrpc" sliceName SDN_controllerIP "~/.ssh/id_rsa" safeserver server_keyhash privateIPprefix
-    //if(true){
-	  //safeserver=args[6];
-    //authorizeStitchRequest("weQ8OFpXWhIB1AMzKX2SDJcxT738VdHCcl7mFlvOD24","client","4db2b812-39ac-4333-9417-07adef946e68","bphJZn3RJBnNqoCZk6k9SBD8mwSb054PXbwV7HpE80E","server", "c0");
-    //return ;
-    //}
+	public static void startSdxServer(String [] args){
     
 		System.out.println("Carrier Slice server with Service API: START");
-		pemLocation = args[0];
-		keyLocation = args[1];
-		controllerUrl = args[2]; //"https://geni.renci.org:11443/orca/xmlrpc";
-		sliceName = args[3]; //"pruth.sdx.1";
-    SDNControllerIP=args[4];
-    SDNController=SDNControllerIP+":8080";
-    OVSController=SDNControllerIP+":6633";
-    sshkeyLocation=args[5];
-	  safeserver=args[6];
-    server_keyhash=args[7];
-    IPPrefix=args[8];
+    CommandLine cmd=parseCmd(args);
+		String configfilepath=cmd.getOptionValue("config");
+    SdxConfig sdxconfig=readConfig(configfilepath);
+    IPPrefix=sdxconfig.ipprefix;
+    scriptsdir=sdxconfig.scriptsdir;
+
+    //type=sdxconfig.type;
     computeIP(IPPrefix);
-		sliceProxy = SdxServer.getSliceProxy(pemLocation,keyLocation, controllerUrl);		
+		sliceProxy = getSliceProxy(pemLocation,keyLocation, controllerUrl);		
 		//SSH context
 		sctx = new SliceAccessContext<>();
 		try {
 			SSHAccessTokenFileFactory fac;
-			fac = new SSHAccessTokenFileFactory("~/.ssh/id_rsa.pub", false);
+			fac = new SSHAccessTokenFileFactory(sshkey+".pub", false);
 			SSHAccessToken t = fac.getPopulatedToken();			
 			sctx.addToken("root", "root", t);
 			sctx.addToken("root", t);
@@ -170,9 +157,11 @@ public class SdxServer extends UnicastRemoteObject implements ServiceAPI {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-    Slice server_slice = null;
+    Slice keyhashslice = null;
     try {
-      server_slice = Slice.loadManifestFile(sliceProxy, sliceName);
+      keyhashslice = Slice.loadManifestFile(sliceProxy, sliceName);
+      ComputeNode safe=(ComputeNode)keyhashslice.getResourceByName("safe-server");
+      safeserver=safe.getManagementIP()+":7777";
     } catch (ContextTransportException e) {
       // TODO Auto-generated catch block
       e.printStackTrace();
@@ -180,44 +169,37 @@ public class SdxServer extends UnicastRemoteObject implements ServiceAPI {
       // TODO Auto-generated catch block
       e.printStackTrace();
     }
-    configRouting(server_slice,OVSController,SDNController);
-
-    try
-    {
-      SdxServer obj = new SdxServer(); 
-      // Bind this object instance to the name "HelloServer" 
-      Naming.rebind("ServiceServer_"+sliceName, obj); 
-    }
-    catch (Exception e)
-    {
-      System.out.println("HelloImpl err: " + e.getMessage()); 
-      e.printStackTrace(); 
-    }
+    //SDNControllerIP="152.3.136.36";
+    SDNControllerIP=((ComputeNode)keyhashslice.getResourceByName("plexuscontroller")).getManagementIP();
+    SDNController=SDNControllerIP+":8080";
+    OVSController=SDNControllerIP+":6633";
+    configRouting(keyhashslice,OVSController,SDNController,"(c\\d+)");
 	}
 
-  public void notifyPrefix(String dest, String gateway, String router,String customer_keyhash) throws RemoteException{
-    System.setProperty("java.security.policy","~/project/exo-geni/SAFE_SDX/allow.policy");
+  public static void notifyPrefix(String dest, String gateway, String router,String customer_){
+    System.out.println("received notification for ip prefix"+dest);
+    System.setProperty("java.security.policy",javasecuritypolicy);
     for(String[]pair:advertisements){
-      if(authorizePrefix(pair[0],pair[1],customer_keyhash,dest)){
+      if(authorizePrefix(pair[0],pair[1],customer_,dest)){
         routingmanager.configurePath(dest,router,pair[1],pair[3],gateway,SDNController);
         routingmanager.configurePath(pair[1],pair[3],dest,router,pair[2],SDNController);
       }
     }
     String[] newpair=new String[4];
-    newpair[0]=customer_keyhash;
+    newpair[0]=customer_;
     newpair[1]=dest;
     newpair[2]=gateway;
     newpair[3]=router;
     advertisements.add(newpair);
   }
 
-  private boolean authorizePrefix(String srchash, String srcip, String dsthash, String dstip){
+  private static boolean authorizePrefix(String srchash, String srcip, String dsthash, String dstip){
     String[] othervalues=new String[4];
     othervalues[0]=srchash;
-    othervalues[1]=srcip;
-    othervalues[2]=dsthash;
+    othervalues[1]=dsthash;
+    othervalues[2]=srcip;
     othervalues[3]=dstip;
-    String message=SafePost.postSafeStatements(safeserver,"connect",server_keyhash,othervalues);
+    String message=SafePost.postSafeStatements(safeserver,"connectivity",keyhash,othervalues);
     if(message !=null && message.contains("Unsatisfied")){
       return false;
     }
@@ -225,12 +207,14 @@ public class SdxServer extends UnicastRemoteObject implements ServiceAPI {
       return true;
   }
 
-  public String stitchRequest(String carrierName,String nodeName, String customer_keyhash,String customerName, String ResrvID,String secret) {
-    String res="";
+  public static String[] stitchRequest(String carrierName,String nodeName, String customer_,String customerName, String ResrvID,String secret) {
     System.out.println("new request for"+carrierName +" and "+nodeName+pemLocation+keyLocation); 
-    if(authorizeStitchRequest(customer_keyhash,customerName,ResrvID, server_keyhash,carrierName, nodeName)){
+    String[] res=new String[2];
+    res[0]=null;
+    res[1]=null;
+    if(authorizeStitchRequest(customer_,customerName,ResrvID, keyhash,carrierName, nodeName)){
       Slice s1 = null;
-      ISliceTransportAPIv1 sliceProxy = SdxServer.getSliceProxy(pemLocation,keyLocation, controllerUrl);		
+      ISliceTransportAPIv1 sliceProxy = getSliceProxy(pemLocation,keyLocation, controllerUrl);		
       try {
         s1 = Slice.loadManifestFile(sliceProxy, carrierName);
       } catch (ContextTransportException e) {
@@ -242,12 +226,21 @@ public class SdxServer extends UnicastRemoteObject implements ServiceAPI {
       }
       ComputeNode node = (ComputeNode) s1.getResourceByName(nodeName);
       int interfaceNum=routingmanager.getRouter(nodeName).getInterfaceNum();
-      String stitchname="stitch_"+nodeName+"_"+curip;
+      lock.lock();
+      String stitchname;
+      int ip_to_use=curip;
+      try{
+        stitchname="stitch_"+nodeName+"_"+curip;
+        curip++;
+      }finally{
+        lock.unlock();
+      }
       Network net=s1.addBroadcastLink(stitchname);
       InterfaceNode2Net ifaceNode0 = (InterfaceNode2Net) net.stitch(node);
       ifaceNode0.setIpAddress("192.168.1.1");
       ifaceNode0.setNetmask("255.255.255.0");
       s1.commit();
+
       int N=0;
       net=(Network)s1.getResourceByName(stitchname);
       while(net.getState() != "Active" &&N<10){
@@ -269,31 +262,23 @@ public class SdxServer extends UnicastRemoteObject implements ServiceAPI {
         N++;
       }
       sleep(10);
-      Exec.sshExec("root",node.getManagementIP(),"/bin/bash ~/ovsbridge.sh "+OVSController,sshkeyLocation);
+      Exec.sshExec("root",node.getManagementIP(),"/bin/bash ~/ovsbridge.sh "+OVSController,sshkey);
       routingmanager.replayCmds(routingmanager.getDPID(nodeName));
-      Exec.sshExec("root",node.getManagementIP(),"ifconfig;ovs-vsctl list port",sshkeyLocation);
+      Exec.sshExec("root",node.getManagementIP(),"ifconfig;ovs-vsctl list port",sshkey);
       String net1_stitching_GUID = net.getStitchingGUID();
       System.out.println("net1_stitching_GUID: " + net1_stitching_GUID);
-//      try {
-//        //s1
-//        sliceProxy.permitSliceStitch(carrierName, net1_stitching_GUID, "mysecret");
-//        res=res+"mysecret";
-//      } catch (TransportException e) {
-//        // TODO Auto-generated catch block
-//        e.printStackTrace();
-//      }
       Link link=new Link();
       link.setName(stitchname);
       link.addNode(nodeName);
-      link.setIP(IPPrefix+String.valueOf(curip));
+      link.setIP(IPPrefix+String.valueOf(ip_to_use));
       link.setMask(mask);
       links.put(stitchname,link);
       routingmanager.newLink(link.getIP(1), link.nodea, SDNController);
-      curip+=1;
       String gw = link.getIP(1);
       String ip=link.getIP(2);
       stitch(customerName,ResrvID,carrierName,net1_stitching_GUID,secret,ip);
-      res=res+gw+"_"+ip;
+      res[0]=gw;
+      res[1]=ip;
       routingmanager.configurePath(ip,nodeName,ip.split("/")[0],SDNController);
     }
     return res;
@@ -314,64 +299,53 @@ public class SdxServer extends UnicastRemoteObject implements ServiceAPI {
 		}
     Long t2 = System.currentTimeMillis();
     System.out.println("Finished Stitching, set ip address of the new interface to "+newip+"  time elapsed: "+String.valueOf(t2-t1)+"\n");
-    //Run commands to configure ospf on new interface for cusotmer node
-    //Exec.sshExec("root",node0_s2.getManagementIP(),"/bin/bash ~/configospffornewif.sh "+newip,"~/.ssh/id_rsa");
     System.out.println("finished sending reconfiguration command");
 	}
 
-  public static boolean authorizeStitchRequest(String customer_keyhash,String customerName,String ReservID,String server_keyhash,String slicename, String nodename){
+  public static boolean authorizeStitchRequest(String customer_,String customerName,String ReservID,String keyhash,String slicename, String nodename){
 		/** Post to remote safesets using apache httpclient */
     String[] othervalues=new String[5];
-    othervalues[0]=customer_keyhash;
+    othervalues[0]=customer_;
     othervalues[1]=customerName;
     othervalues[2]=ReservID;
     othervalues[3]=slicename;
     othervalues[4]=nodename;
-    String message=SafePost.postSafeStatements(safeserver,"verifyStitch",server_keyhash,othervalues);
-    if(message !=null && message.contains("Unsatisfied")){
+    String message=SafePost.postSafeStatements(safeserver,"verifyStitch",keyhash,othervalues);
+    if(message ==null || message.contains("Unsatisfied")){
       return false;
     }
     else
       return true;
   }
 
-  private static void copyFile2Slice(Slice s, String lfile, String rfile,String privkey){
-		for(ComputeNode c : s.getComputeNodes()){
-      String mip=c.getManagementIP();
-      try{
-        System.out.println("scp config file to "+mip);
-        ScpTo.Scp(lfile,"root",mip,rfile,privkey);
-        //Exec.sshExec("yaoyj11","152.3.136.145","/bin/bash "+rfile,privkey);
 
-      }catch (Exception e){
-        System.out.println("exception when copying config file");
-      }
-		}
+
+  private static void restartPlexus(String plexusip){
+    System.out.println("Restarting Plexus Controller");
+    String script="docker exec -d plexus /bin/bash -c  \"cd /root/plexus/plexus;pkill ryu-manager;ryu-manager app.py |tee log\"\n";
+    System.out.println(sshkey);
+    System.out.println(plexusip);
+    Exec.sshExec("root",plexusip,script,sshkey);
   }
 
-  private static void runCmdSlice(Slice s, String cmd, String privkey){
-		for(ComputeNode c : s.getComputeNodes()){
-      String mip=c.getManagementIP();
-      try{
-        System.out.println(mip+" run commands:"+cmd);
-        //ScpTo.Scp(lfile,"root",mip,rfile,privkey);
-        Exec.sshExec("root",mip,cmd,privkey);
-
-      }catch (Exception e){
-        System.out.println("exception when copying config file");
-      }
-		}
-  }
-
-  public static void configRouting(Slice s,String ovscontroller, String httpcontroller){
+  public static void configRouting(Slice s,String ovscontroller, String httpcontroller, String routerpattern){
     System.out.println("Configurating Routing");
-    System.setProperty("java.security.policy","~/project/exo-geni/SAFE_SDX/allow.policy");
+    restartPlexus(SDNControllerIP);
+    sleep(5);
+    runCmdSlice(s,"/bin/bash ~/ovsbridge.sh "+ovscontroller,sshkey,"(c\\d+)");
+    System.setProperty("java.security.policy",javasecuritypolicy);
     try{
-      for(ComputeNode node: s.getComputeNodes()){
+      Pattern pattern = Pattern.compile(routerpattern);
+      for(ComputeNode node : s.getComputeNodes()){
+        Matcher matcher = pattern.matcher(node.getName());
+        if (!matcher.find())
+        {
+          continue;
+        }
         String mip= node.getManagementIP();
         System.out.println(node.getName()+" "+mip);
-        Exec.sshExec("root",mip,"/bin/bash ~/ovsbridge.sh "+ ovscontroller,"~/.ssh/id_rsa").split(" ");
-        String[] result=Exec.sshExec("root",mip,"/bin/bash ~/dpid.sh","~/.ssh/id_rsa").split(" ");
+        Exec.sshExec("root",mip,"/bin/bash ~/ovsbridge.sh "+ ovscontroller,sshkey).split(" ");
+        String[] result=Exec.sshExec("root",mip,"/bin/bash ~/dpid.sh",sshkey).split(" ");
         try{
           System.out.println("Get router info "+result[0]+" "+result[1]);
           routingmanager.newRouter(node.getName(),result[1],Integer.valueOf(result[0]));
@@ -405,6 +379,29 @@ public class SdxServer extends UnicastRemoteObject implements ServiceAPI {
 
       Set keyset=links.keySet();
       //System.out.println(keyset);
+      System.out.println("Wait until all ovs bridges have connected to SDN controller");
+
+      boolean flag=true;
+      while(flag){
+        flag=false;
+        for(ComputeNode node : s.getComputeNodes()){
+          Matcher matcher = pattern.matcher(node.getName());
+          if (!matcher.find())
+          {
+            continue;
+          }
+          String mip= node.getManagementIP();
+          String result=Exec.sshExec("root",mip,"ovs-vsctl show",sshkey);
+          if(result.contains("is_connected: true")){
+            System.out.println(node.getName() +" connected");
+          }
+          else{
+            System.out.println(node.getName() +" not connected");
+            flag=true;
+          }
+        }
+      }
+
       for(Object k: keyset){
         Link link=links.get((String)k);
         if(!((String)k).contains("stitch")){
@@ -430,26 +427,6 @@ public class SdxServer extends UnicastRemoteObject implements ServiceAPI {
     }
   }
 
-  public static void getNetworkInfo(Slice s){
-    //getLinks
-    for(Network n :s.getLinks()){
-      System.out.println(n.getLabel()+" "+n.getState());
-    }
-    //getInterfaces
-    for(Interface i: s.getInterfaces()){
-      InterfaceNode2Net inode2net=(InterfaceNode2Net)i;
-      System.out.println("MacAddr: "+inode2net.getMacAddress());
-      System.out.println("GUID: "+i.getGUID());
-    }
-    for(ComputeNode node: s.getComputeNodes()){
-      System.out.println(node.getName()+node.getManagementIP());
-      for(Interface i: node.getInterfaces()){
-        InterfaceNode2Net inode2net=(InterfaceNode2Net)i;
-        System.out.println("MacAddr: "+inode2net.getMacAddress());
-        System.out.println("GUID: "+i.getGUID());
-      }
-    }
-  }
 	
 
 	public static void undoStitch(String carrierName, String customerName, String netName, String nodeName){	
@@ -492,90 +469,6 @@ public class SdxServer extends UnicastRemoteObject implements ServiceAPI {
 		}
     Long t2 = System.currentTimeMillis();
     System.out.println("Finished UnStitching, time elapsed: "+String.valueOf(t2-t1)+"\n");
-//    try{
-//      java.io.BufferedReader stdin = new java.io.BufferedReader(new java.io.InputStreamReader(System.in));  
-//      String input = new String();  
-//      input = stdin.readLine();  
-//      Long t3=System.currentTimeMillis();
-//      System.out.println("Time after stitching: "+String.valueOf(t3-t2)+"\n");
-//		}catch (java.io.IOException e) {  
-//				System.out.println(e);   
-//		}  
-		
-	}
-
-	public static Slice getSlice(ISliceTransportAPIv1 sliceProxy, String sliceName){
-		Slice s = null;
-		try {
-			s = Slice.loadManifestFile(sliceProxy, sliceName);
-		} catch (ContextTransportException e) {
-			// TODO Auto-generated catch block
-			//e.printStackTrace();
-		} catch (TransportException e) {
-			// TODO Auto-generated catch block
-			//e.printStackTrace();
-		}
-		return s;
-	}
-
-	public static void sleep(int sec){
-		try {
-			Thread.sleep(sec*1000);                 //1000 milliseconds is one second.
-		} catch(InterruptedException ex) {  
-			Thread.currentThread().interrupt();
-		}
-	}
-
-
-	public static ISliceTransportAPIv1 getSliceProxy(String pem, String key, String controllerUrl){
-
-		ISliceTransportAPIv1 sliceProxy = null;
-		try{
-			//ExoGENI controller context
-			ITransportProxyFactory ifac = new XMLRPCProxyFactory();
-			System.out.println("Opening certificate " + pem + " and key " + key);
-			TransportContext ctx = new PEMTransportContext("", pem, key);
-			sliceProxy = ifac.getSliceProxy(ctx, new URL(controllerUrl));
-
-		} catch  (Exception e){
-			e.printStackTrace();
-			System.err.println("Proxy factory test failed");
-			assert(false);
-		}
-
-		return sliceProxy;
-	}
-
-
-
-	public static final ArrayList<String> domains;
-	static {
-		ArrayList<String> l = new ArrayList<String>();
-
-		for (int i = 0; i < 100; i++){
-//			l.add("PSC (Pittsburgh, TX, USA) XO Rack");
-//			l.add("UAF (Fairbanks, AK, USA) XO Rack");
-		
-//			l.add("UH (Houston, TX USA) XO Rack");
-//			l.add("TAMU (College Station, TX, USA) XO Rack");
-//			l.add("RENCI (Chapel Hill, NC USA) XO Rack");
-//			
-//			l.add("SL (Chicago, IL USA) XO Rack");
-//			
-//			
-//			l.add("OSF (Oakland, CA USA) XO Rack");
-//			
-//		l.add("UMass (UMass Amherst, MA, USA) XO Rack");
-			//l.add("WVN (UCS-B series rack in Morgantown, WV, USA)");
-	//		l.add("UAF (Fairbanks, AK, USA) XO Rack");
-    l.add("UNF (Jacksonville, FL) XO Rack");
-		l.add("UFL (Gainesville, FL USA) XO Rack");
-//			l.add("WSU (Detroit, MI, USA) XO Rack");
-//			l.add("BBN/GPO (Boston, MA USA) XO Rack");
-//			l.add("UvA (Amsterdam, The Netherlands) XO Rack");
-
-		}
-		domains = l;
 	}
 }
 
