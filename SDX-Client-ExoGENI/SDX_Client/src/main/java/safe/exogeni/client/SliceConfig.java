@@ -1,7 +1,13 @@
-package safe.sdx.sdx;
+package safe.exogeni.client;
+import org.apache.log4j.Logger;
+
 import com.typesafe.config.*;
 
-class SdxConfig {
+import safe.utils.Exec;
+
+class SliceConfig {
+	final static Logger logger = Logger.getLogger(SliceConfig.class);	
+	
   public String sshkey;
   public String type;
   public String safekey;
@@ -14,8 +20,8 @@ class SdxConfig {
   public String scriptsdir;
   Config conf;
  
-  public SdxConfig(String configfile){
-    System.out.println("config");
+  public SliceConfig(String configfile){
+    logger.debug("config");
     conf=ConfigFactory.load(configfile);
     sshkey=conf.getString("config.sshkey");
     type=conf.getString("config.type");

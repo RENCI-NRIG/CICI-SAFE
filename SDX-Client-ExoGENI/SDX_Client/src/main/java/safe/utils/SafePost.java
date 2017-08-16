@@ -1,4 +1,4 @@
-package  safe.sdx.utils;
+package  safe.utils;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 import java.io.BufferedReader;
@@ -9,8 +9,11 @@ import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.log4j.Logger;
 
 public class SafePost{
+	  final static Logger logger = Logger.getLogger(SafePost.class);	
+
   private static String getMessage(String message){
       Pattern pattern = Pattern.compile("\"message\": \"(.*?)\"");
       Matcher matcher = pattern.matcher(message);
@@ -38,12 +41,12 @@ public class SafePost{
     String res=null;
 		try {
 			DefaultHttpClient httpClient = new DefaultHttpClient();
-      System.out.println(safeserver+"/"+requestName);
+      logger.debug(safeserver+"/"+requestName);
 			HttpPost postRequest = new HttpPost("http://"+safeserver+"/"+requestName);
       String params="{\"principal\":\"PRINCIPAL\",\"otherValues\":[OTHER]}";
       params=params.replace("PRINCIPAL",principal);
       String others="";
-      System.out.println(othervalues);
+      logger.debug(othervalues);
       if(othervalues.length>0){
         others=others+"\""+othervalues[0]+"\"";
       }
@@ -75,14 +78,14 @@ public class SafePost{
       return res;
       
 			} catch (MalformedURLException e) {
-				System.out.println("malformedURLExcepto");
+				logger.debug("malformedURLExcepto");
 				e.printStackTrace();
 
 			} catch (IOException e) {
-        System.out.println("ioexception");
+        logger.debug("ioexception");
 				e.printStackTrace();
 		 	} catch (Exception e){
-        System.out.println("normal Exception");
+        logger.debug("normal Exception");
         e.printStackTrace();
       }
     return null;

@@ -1,4 +1,4 @@
-package safe.sdx.sdx;
+package safe.exogeni.client;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 import java.io.BufferedReader;
@@ -51,7 +51,7 @@ import org.renci.ahab.libtransport.util.UtilTransportException;
 import org.renci.ahab.libtransport.xmlrpc.XMLRPCProxyFactory;
 import org.renci.ahab.ndllib.transport.OrcaSMXMLRPCProxy;
 
-import safe.sdx.utils.Exec;
+import safe.utils.Exec;
 
 import java.rmi.RMISecurityManager;
 import java.rmi.Naming;
@@ -62,8 +62,10 @@ import java.rmi.server.UnicastRemoteObject;
  * @author geni-orca
  *
  */
-public class Example extends Sdx{
-  public Example()throws RemoteException{}
+public class ExogeniClient extends SliceCommon{
+	final static Logger logger = Logger.getLogger(ExogeniClient.class);		
+	
+  public ExogeniClient()throws RemoteException{}
   private static int curip=128;
   private static String IPPrefix="192.168.";
   private static String mask="/24";
@@ -86,7 +88,7 @@ public class Example extends Sdx{
     CommandLine cmd=parseCmd(args);
 
 		String configfilepath=cmd.getOptionValue("config");
-    SdxConfig sdxconfig=readConfig(configfilepath);
+    SliceConfig sdxconfig=readConfig(configfilepath);
     type=sdxconfig.type;
     if(cmd.hasOption('d')){
       type="delete";
@@ -97,7 +99,7 @@ public class Example extends Sdx{
 		//controllerUrl = args[2]; //"https://geni.renci.org:11443/orca/xmlrpc";
 		//sliceName = args[3]; //"pruth.sdx.1";
 
-		sliceProxy = Example.getSliceProxy(pemLocation,keyLocation, controllerUrl);		
+		sliceProxy = ExogeniClient.getSliceProxy(pemLocation,keyLocation, controllerUrl);		
 
 		//SSH context
 		sctx = new SliceAccessContext<>();
