@@ -1,4 +1,6 @@
 package safe.exogeni.client;
+import java.io.File;
+
 import org.apache.log4j.Logger;
 
 import com.typesafe.config.*;
@@ -22,7 +24,11 @@ class SliceConfig {
  
   public SliceConfig(String configfile){
     logger.debug("config");
-    conf=ConfigFactory.load(configfile);
+    
+	File myConfigFile = new File(configfile);
+	Config fileConfig = ConfigFactory.parseFile(myConfigFile);
+	conf = ConfigFactory.load(fileConfig);
+
     sshkey=conf.getString("config.sshkey");
     type=conf.getString("config.type");
     safekey=conf.getString("config.safekey");
