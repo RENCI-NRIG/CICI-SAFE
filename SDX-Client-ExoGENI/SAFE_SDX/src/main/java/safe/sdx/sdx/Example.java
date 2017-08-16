@@ -67,7 +67,6 @@ public class Example extends Sdx{
   private static int curip=128;
   private static String IPPrefix="192.168.";
   private static String mask="/24";
-  private static HashMap<String, Link> links=new HashMap<String, Link>();
   private static String riakip="152.3.145.36";
   private static String type;
 

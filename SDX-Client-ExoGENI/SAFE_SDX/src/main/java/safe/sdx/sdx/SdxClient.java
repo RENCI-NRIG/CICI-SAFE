@@ -53,11 +53,7 @@ import org.renci.ahab.ndllib.transport.OrcaSMXMLRPCProxy;
 
 import safe.sdx.utils.Exec;
 import safe.sdx.utils.SafePost;
-
-import java.rmi.RMISecurityManager;
-import java.rmi.Naming;
-import java.rmi.RemoteException;
-import java.rmi.server.UnicastRemoteObject;
+import org.json.JSONObject;
 
 /**
 
@@ -65,7 +61,7 @@ import java.rmi.server.UnicastRemoteObject;
  *
  */
 public class SdxClient extends Sdx {
-  public SdxClient()throws RemoteException{}
+  public SdxClient(){}
   private static String type;
 	
 	public static void main(String [] args){
@@ -129,10 +125,18 @@ public class SdxClient extends Sdx {
              if(params[0].equals("stitch")){
                processStitchCmd(params);
              }else{
-               ServiceAPI obj = (ServiceAPI) Naming.lookup( "//" + 
-                   "localhost" + 
-                   "/ServiceServer_"+params[3]);         //objectname in registry 
-               obj.notifyPrefix(params[1],params[2],params[4],keyhash);
+               JSONObject paramsobj=new JSONObject();
+               paramsobj.put("dest",params[1]);
+               paramsobj.put("gateway",params[2]);
+               paramsobj.put("router", params[4]);
+               paramsobj.put("cusotmer_slice", keyhash);
+               String res=MyHttpClient.notifyPrefix("http://152.3.136.36:8080/sdx/notifyprefix",paramsobj);
+               if(res.equals("")){
+                 System.out.println("Prefix notifcation failed");
+               }
+               else{
+                 System.out.println(res);
+               }
              }
            }
            catch (Exception e){
@@ -152,9 +156,6 @@ public class SdxClient extends Sdx {
 
   private static void processStitchCmd(String[] params){
     try{
-      ServiceAPI obj = (ServiceAPI) Naming.lookup( "//" + 
-          "localhost" + 
-          "/ServiceServer_"+params[2]);         //objectname in registry 
       Slice s2 = null;
       try {
         s2 = Slice.loadManifestFile(sliceProxy, params[1]);
@@ -181,22 +182,23 @@ public class SdxClient extends Sdx {
       //post stitch request to SAFE
       System.out.println("posting stitch request statements to SAFE Sets");
       postSafeStitchRequest(keyhash,params[1],node0_s2_stitching_GUID,params[2],params[4]);
-      String res=obj.stitchRequest(params[2],params[4],keyhash,params[1],node0_s2_stitching_GUID,secret);
-      System.out.println("Got Stitch Information From Server: "+res);
-      if(res.equals("")){
+      JSONObject jsonparams=new JSONObject();
+      jsonparams.put("sdxslice",params[2]);
+      jsonparams.put("sdxnode",params[4]);
+      jsonparams.put("ckeyhash",keyhash);
+      jsonparams.put("clice",params[1]);
+      jsonparams.put("creservid",node0_s2_stitching_GUID);
+      jsonparams.put("secret",secret);
+      JSONObject res=MyHttpClient.tryStitch("http://152.3.136.36:8080/sdx/stitchrequest",jsonparams);
+      System.out.println("Got Stitch Information From Server:\n "+res.toString());
+      if(!res.getBoolean("result")){
         System.out.println("stitch request declined by server");
       } 
       else{
-        String[] parts=res.split("_");
-        String ip=parts[1];
+        String ip=res.getString("address");
         System.out.println("set IP address of the stitch interface to "+ip);
         sleep(15);
         String result=Exec.sshExec("root",node0_s2.getManagementIP(),"ifconfig eth2 "+ip,sshkey);
-        //CharSequence seq="0";
-        //while(!result.contains(seq)){
-        //  System.out.println(result);
-        //  result=Exec.sshExec("root",node0_s2.getManagementIP(),"ifconfig eth2 "+ip,sshkey);
-        //}
       }
     }
     catch (Exception e){

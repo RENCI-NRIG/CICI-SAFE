@@ -54,12 +54,8 @@ import org.renci.ahab.ndllib.transport.OrcaSMXMLRPCProxy;
 import safe.sdx.utils.Exec;
 import safe.sdx.utils.ScpTo;
 
-import java.rmi.RMISecurityManager;
-import java.rmi.Naming;
-import java.rmi.RemoteException;
-import java.rmi.server.UnicastRemoteObject;
 
-public class Sdx extends UnicastRemoteObject{
+public class Sdx {
 	protected static final String RequestResource = null;
 	protected static String controllerUrl;
   protected static String SDNControllerIP;
@@ -74,7 +70,7 @@ public class Sdx extends UnicastRemoteObject{
   protected static String keyhash;
   protected static String javasecuritypolicy;
 
-  public Sdx()throws RemoteException{}
+  public Sdx(){}
 
   protected static CommandLine parseCmd(String[] args){
     Options options = new Options();
