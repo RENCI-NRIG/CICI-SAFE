@@ -73,7 +73,7 @@ import org.apache.http.impl.client.DefaultHttpClient;
  * This is the server for carrier slice. It's run by the carrier_slice owner to do the following things
  * 1. Load carriers slice information from exogeniSM, compute the topology
  * 2. Public: Take stitch request from customer slice
- *    Input: Request(carrier_slicename, nodename/sitename,customer_auth_information)
+ *    Input: Request(carrier_slicename, nodename/sitename,customer_sliceauth_information)
  *    Output: yes or no
  *    Question: Shall carrier slice perform the stitching directly
  * 3. Private: Authorize stitching request:
@@ -176,21 +176,24 @@ public class SdxManager extends Sdx{
     configRouting(keyhashslice,OVSController,SDNController,"(c\\d+)");
 	}
 
-  public static void notifyPrefix(String dest, String gateway, String router,String customer_){
+  public static String notifyPrefix(String dest, String gateway, String router,String customer_slice){
     System.out.println("received notification for ip prefix"+dest);
     System.setProperty("java.security.policy",javasecuritypolicy);
+    String res=sliceName+": notification for "+dest+" received\n";
     for(String[]pair:advertisements){
-      if(authorizePrefix(pair[0],pair[1],customer_,dest)){
+      if(authorizePrefix(pair[0],pair[1],customer_slice,dest)){
+        res=res+pair[1]+"; ";
         routingmanager.configurePath(dest,router,pair[1],pair[3],gateway,SDNController);
         routingmanager.configurePath(pair[1],pair[3],dest,router,pair[2],SDNController);
       }
     }
     String[] newpair=new String[4];
-    newpair[0]=customer_;
+    newpair[0]=customer_slice;
     newpair[1]=dest;
     newpair[2]=gateway;
     newpair[3]=router;
     advertisements.add(newpair);
+    return res;
   }
 
   private static boolean authorizePrefix(String srchash, String srcip, String dsthash, String dstip){
@@ -207,12 +210,12 @@ public class SdxManager extends Sdx{
       return true;
   }
 
-  public static String[] stitchRequest(String carrierName,String nodeName, String customer_,String customerName, String ResrvID,String secret) {
+  public static String[] stitchRequest(String carrierName,String nodeName, String customer_slice,String customerName, String ResrvID,String secret) {
     System.out.println("new request for"+carrierName +" and "+nodeName+pemLocation+keyLocation); 
     String[] res=new String[2];
     res[0]=null;
     res[1]=null;
-    if(authorizeStitchRequest(customer_,customerName,ResrvID, keyhash,carrierName, nodeName)){
+    if(authorizeStitchRequest(customer_slice,customerName,ResrvID, keyhash,carrierName, nodeName)){
       Slice s1 = null;
       ISliceTransportAPIv1 sliceProxy = getSliceProxy(pemLocation,keyLocation, controllerUrl);		
       try {
@@ -302,10 +305,10 @@ public class SdxManager extends Sdx{
     System.out.println("finished sending reconfiguration command");
 	}
 
-  public static boolean authorizeStitchRequest(String customer_,String customerName,String ReservID,String keyhash,String slicename, String nodename){
+  public static boolean authorizeStitchRequest(String customer_slice,String customerName,String ReservID,String keyhash,String slicename, String nodename){
 		/** Post to remote safesets using apache httpclient */
     String[] othervalues=new String[5];
-    othervalues[0]=customer_;
+    othervalues[0]=customer_slice;
     othervalues[1]=customerName;
     othervalues[2]=ReservID;
     othervalues[3]=slicename;

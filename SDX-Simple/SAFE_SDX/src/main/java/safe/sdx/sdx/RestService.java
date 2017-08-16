@@ -19,6 +19,7 @@ public class RestService {
      *
      * @return String that will be returned as a text/plain response.
      */
+    //Test API
     @GET
     @Produces(MediaType.TEXT_PLAIN)
     public String getIt() {
@@ -35,7 +36,6 @@ public class RestService {
         return new StitchRequest("1","2","3","4","5","6");
     }
 
-    //Test API
     @POST
     @Path("/stitchrequest")
     @Consumes(MediaType.APPLICATION_JSON)
@@ -44,6 +44,16 @@ public class RestService {
       System.out.println("got sittch request");
       String[] res=SdxManager.stitchRequest(sr.sdxslice,sr.sdxnode, sr.ckeyhash, sr.cslice, sr.creservid, sr.secret);
       return new StitchResult(res[0],res[1]);
+    }
+
+    @POST
+    @Path("/notifyprefix")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.TEXT_PLAIN)
+    public String stitchRequest(PrefixNotification pn){
+      System.out.println("got sittch request");
+      String res=SdxManager.notifyPrefix(pn.dest, pn.gateway, pn.router, pn.customer_slice);
+      return res;
     }
 }
 
@@ -65,6 +75,20 @@ class StitchRequest{
     this.cslice=cslice;
     this.creservid=creservid;
     this.secret=secret;
+  }
+}
+
+class PrefixNotification{
+  public String dest;
+  public String gateway;
+  public String router;
+  public String customer_slice;
+  public PrefixNotification(){}
+  public PrefixNotification(String dest, String gateway, String router, String customer_slice){
+    this.dest=dest;
+    this.gateway=gateway;
+    this.router=router;
+    this.customer_slice=customer_slice;
   }
 }
 
