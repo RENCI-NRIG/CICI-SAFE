@@ -76,8 +76,7 @@ public class SdxClient extends Sdx {
 		
     CommandLine cmd=parseCmd(args);
 		String configfilepath=cmd.getOptionValue("config");
-    SdxConfig sdxconfig=readConfig(configfilepath);
-    type=sdxconfig.type;
+    readConfig(configfilepath);
 
 		sliceProxy = SdxClient.getSliceProxy(pemLocation,keyLocation, controllerUrl);		
 		//SSH context
@@ -93,64 +92,61 @@ public class SdxClient extends Sdx {
 			e.printStackTrace();
 		}
 
-    if (type.equals("client")){
-      Slice s2 = null;
-      try {
-        s2 = Slice.loadManifestFile(sliceProxy, sliceName);
-        ComputeNode safe=(ComputeNode)s2.getResourceByName("safe-server");
-        safeserver=safe.getManagementIP()+":7777";
-      } catch (ContextTransportException e) {
-        // TODO Auto-generated catch block
-        e.printStackTrace();
-      } catch (TransportException e) {
-        // TODO Auto-generated catch block
-        e.printStackTrace();
-      }
-      System.out.println("client start");
-      String message = "";
-      String customerName=sliceName;
-      System.setProperty("java.security.policy",javasecuritypolicy);
-      String input = new String();  
-		 try{
-//					System.out.println(obj.sayHello()); 
-       java.io.BufferedReader stdin = new java.io.BufferedReader(new java.io.InputStreamReader(System.in));  
-       while(true){
-         System.out.print("Enter Commands:stitch clientslicename, server slice anme, client resource name, server resource name\n Or advertise route: route dest  gateway sdx routername,\n$>");
-         input = stdin.readLine();  
-         String[] params=input.split(" ");
-         System.out.print("continue?[y/n]\n$>"+input);
-         input = stdin.readLine();  
-         if(input.startsWith("y")){
-           try{
-             if(params[0].equals("stitch")){
-               processStitchCmd(params);
-             }else{
-               JSONObject paramsobj=new JSONObject();
-               paramsobj.put("dest",params[1]);
-               paramsobj.put("gateway",params[2]);
-               paramsobj.put("router", params[4]);
-               paramsobj.put("customer_slice", keyhash);
-               String res=MyHttpClient.notifyPrefix("http://152.3.136.36:8080/sdx/notifyprefix",paramsobj);
-               if(res.equals("")){
-                 System.out.println("Prefix notifcation failed");
-               }
-               else{
-                 System.out.println(res);
-               }
-             }
-           }
-           catch (Exception e){
-             e.printStackTrace();
-           }
-         }
-       }
+     Slice s2 = null;
+     try {
+       s2 = Slice.loadManifestFile(sliceProxy, sliceName);
+       ComputeNode safe=(ComputeNode)s2.getResourceByName("safe-server");
+       safeserver=safe.getManagementIP()+":7777";
+     } catch (ContextTransportException e) {
+       // TODO Auto-generated catch block
+       e.printStackTrace();
+     } catch (TransportException e) {
+       // TODO Auto-generated catch block
+       e.printStackTrace();
      }
-     catch (Exception e) 
-     { 
-       System.out.println("HelloClient exception: " + e.getMessage()); 
-       e.printStackTrace(); 
-     } 
+     System.out.println("client start");
+     String message = "";
+     String customerName=sliceName;
+     String input = new String();  
+		try{
+//	 			System.out.println(obj.sayHello()); 
+      java.io.BufferedReader stdin = new java.io.BufferedReader(new java.io.InputStreamReader(System.in));  
+      while(true){
+        System.out.print("Enter Commands:stitch clientslicename, server slice anme, client resource name, server resource name\n Or advertise route: route dest  gateway sdx routername,\n$>");
+        input = stdin.readLine();  
+        String[] params=input.split(" ");
+        System.out.print("continue?[y/n]\n$>"+input);
+        input = stdin.readLine();  
+        if(input.startsWith("y")){
+          try{
+            if(params[0].equals("stitch")){
+              processStitchCmd(params);
+            }else{
+              JSONObject paramsobj=new JSONObject();
+              paramsobj.put("dest",params[1]);
+              paramsobj.put("gateway",params[2]);
+              paramsobj.put("router", params[4]);
+              paramsobj.put("customer", keyhash);
+              String res=MyHttpClient.notifyPrefix("http://152.3.136.36:8080/sdx/notifyprefix",paramsobj);
+              if(res.equals("")){
+                System.out.println("Prefix notifcation failed");
+              }
+              else{
+                System.out.println(res);
+              }
+            }
+          }
+          catch (Exception e){
+            e.printStackTrace();
+          }
+        }
+      }
     }
+    catch (Exception e) 
+    { 
+      System.out.println("HelloClient exception: " + e.getMessage()); 
+      e.printStackTrace(); 
+    } 
 		System.out.println("XXXXXXXXXX Done XXXXXXXXXXXXXX");
 	}
 

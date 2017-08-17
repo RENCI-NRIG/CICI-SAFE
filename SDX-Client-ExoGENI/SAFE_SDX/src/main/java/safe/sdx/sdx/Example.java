@@ -86,8 +86,8 @@ public class Example extends Sdx{
     CommandLine cmd=parseCmd(args);
 
 		String configfilepath=cmd.getOptionValue("config");
-    SdxConfig sdxconfig=readConfig(configfilepath);
-    type=sdxconfig.type;
+    readConfig(configfilepath);
+    type=conf.getString("config.slicename");
     if(cmd.hasOption('d')){
       type="delete";
     }
@@ -112,26 +112,7 @@ public class Example extends Sdx{
 			e.printStackTrace();
 		}
 
-    if(type.equals("server")){
-      IPPrefix=sdxconfig.ipprefix;
-      riakip=sdxconfig.riakserver;
-      String scriptsdir=sdxconfig.get("config.scriptsdir");
-      computeIP(IPPrefix);
-      try{
-          String carrierName=sliceName;
-          System.setProperty("java.security.policy","~/project/exo-geni/ahabserver/allow.policy");
-          Slice carrier=createCarrierSlice(carrierName,4,10,1000000,1);
-          waitTillActive(carrier);
-          copyFile2Slice(carrier, scriptsdir+"dpid.sh","~/dpid.sh",sshkey);
-          copyFile2Slice(carrier, scriptsdir+"ovsbridge.sh","~/ovsbridge.sh",sshkey);
-          SDNControllerIP=((ComputeNode)carrier.getResourceByName("plexuscontroller")).getManagementIP();
-          runCmdSlice(carrier,"/bin/bash ~/ovsbridge.sh "+SDNControllerIP+":6633",sshkey,"(c\\d+)");
-        //}
-      }catch (Exception e){
-        e.printStackTrace();
-      }
-    }
-    else if (type.equals("delete")){
+    if (type.equals("delete")){
       Slice s2 = null;
       try{
         System.out.println("deleting slice "+sliceName);
@@ -143,8 +124,8 @@ public class Example extends Sdx{
 
     }
     else if (type.equals("client")){
-      IPPrefix=sdxconfig.ipprefix;
-      riakip=sdxconfig.riakserver;
+      IPPrefix=conf.getString("config.ipprefix");
+      riakip=conf.getString("config.riakserver");
       computeIP(IPPrefix);
       System.out.println("client start");
       String customerName=sliceName;
