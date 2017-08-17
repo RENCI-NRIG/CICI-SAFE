@@ -91,16 +91,10 @@ public class Example extends Sdx{
 		
 		System.out.println("configfilepath " + configfilepath);
 		
-		SdxConfig sdxconfig=readConfig(configfilepath);
-		type=sdxconfig.type;
+		type=conf.getString("config.type");
 		if(cmd.hasOption('d')){
 			type="delete";
 		}
-
-		//pemLocation = args[0];
-		//keyLocation = args[1];
-		//controllerUrl = args[2]; //"https://geni.renci.org:11443/orca/xmlrpc";
-		//sliceName = args[3]; //"pruth.sdx.1";
 
 		sliceProxy = Example.getSliceProxy(pemLocation,keyLocation, controllerUrl);		
 
@@ -118,9 +112,9 @@ public class Example extends Sdx{
 		}
 
 		if(type.equals("server")){
-			IPPrefix=sdxconfig.ipprefix;
-			riakip=sdxconfig.riakserver;
-			String scriptsdir=sdxconfig.get("config.scriptsdir");
+			IPPrefix=conf.getString("config.ipprefix");
+			riakip=conf.getString("config.riakserver");
+			String scriptsdir=conf.getString("config.scriptsdir");
 			computeIP(IPPrefix);
 			try{
 				String carrierName=sliceName;
@@ -145,29 +139,6 @@ public class Example extends Sdx{
 			}catch (Exception e){
 				e.printStackTrace();
 			}
-
-		}
-		else if (type.equals("client")){
-			IPPrefix=sdxconfig.ipprefix;
-			riakip=sdxconfig.riakserver;
-			computeIP(IPPrefix);
-			System.out.println("client start");
-			String customerName=sliceName;
-			try{
-				System.out.print("Using riak server at "+riakip);
-				Slice c1=createCustomerSlice(customerName,2,IPPrefix,curip,1000000,true);
-				waitTillActive(c1);
-				//copyFile2Slice(c1, "/home/yaoyj11/project/exo-geni/SAFE_SDX/src/main/resources/scripts/configospffornewif.sh","~/configospffornewif.sh","~/.ssh/id_rsa");
-				//copyFile2Slice(c1, "/home/yaoyj11/project/exo-geni/SAFE_SDX/src/main/resources/scripts/configospffornewif.sh","~/configospffornewif.sh","~/.ssh/id_rsa");
-				//runCmdSlice(c1,"/bin/bash ~/ospfautoconfig.sh","~/.ssh/id_rsa");
-				return;
-			}catch (Exception e){
-				e.printStackTrace();
-			}
-		}
-		else if (type.equals("riak")){
-			createRiakSlice(sliceName);
-
 
 		}
 		System.out.println("XXXXXXXXXX Done XXXXXXXXXXXXXX");

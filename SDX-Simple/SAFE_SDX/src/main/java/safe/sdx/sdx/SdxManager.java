@@ -96,7 +96,7 @@ public class SdxManager extends Sdx{
   private static String mask="/24";
   private static String SDNController;
   private static String OVSController;
-  private static String scriptsdir;
+  protected static String serverurl;
   private static final ReentrantLock lock=new ReentrantLock();
   //private static String type;
   private static ArrayList<String[]> advertisements=new ArrayList<String[]>();
@@ -138,9 +138,9 @@ public class SdxManager extends Sdx{
 		System.out.println("Carrier Slice server with Service API: START");
     CommandLine cmd=parseCmd(args);
 		String configfilepath=cmd.getOptionValue("config");
-    SdxConfig sdxconfig=readConfig(configfilepath);
-    IPPrefix=sdxconfig.ipprefix;
-    scriptsdir=sdxconfig.scriptsdir;
+    readConfig(configfilepath);
+    IPPrefix=conf.getString("config.ipprefix");
+    serverurl=conf.getString("config.serverurl");
 
     //type=sdxconfig.type;
     computeIP(IPPrefix);

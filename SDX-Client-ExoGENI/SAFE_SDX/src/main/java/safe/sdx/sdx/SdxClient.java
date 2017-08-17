@@ -129,7 +129,7 @@ public class SdxClient extends Sdx {
                paramsobj.put("dest",params[1]);
                paramsobj.put("gateway",params[2]);
                paramsobj.put("router", params[4]);
-               paramsobj.put("cusotmer_slice", keyhash);
+               paramsobj.put("customer_slice", keyhash);
                String res=MyHttpClient.notifyPrefix("http://152.3.136.36:8080/sdx/notifyprefix",paramsobj);
                if(res.equals("")){
                  System.out.println("Prefix notifcation failed");
@@ -186,7 +186,7 @@ public class SdxClient extends Sdx {
       jsonparams.put("sdxslice",params[2]);
       jsonparams.put("sdxnode",params[4]);
       jsonparams.put("ckeyhash",keyhash);
-      jsonparams.put("clice",params[1]);
+      jsonparams.put("cslice",params[1]);
       jsonparams.put("creservid",node0_s2_stitching_GUID);
       jsonparams.put("secret",secret);
       JSONObject res=MyHttpClient.tryStitch("http://152.3.136.36:8080/sdx/stitchrequest",jsonparams);
@@ -195,7 +195,7 @@ public class SdxClient extends Sdx {
         System.out.println("stitch request declined by server");
       } 
       else{
-        String ip=res.getString("address");
+        String ip=res.getString("ip");
         System.out.println("set IP address of the stitch interface to "+ip);
         sleep(15);
         String result=Exec.sshExec("root",node0_s2.getManagementIP(),"ifconfig eth2 "+ip,sshkey);

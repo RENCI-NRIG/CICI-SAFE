@@ -13,19 +13,17 @@ import java.net.URI;
  */
 public class SdxServer {
     // Base URI the Grizzly HTTP server will listen on
-    public static final String BASE_URI = "http://152.3.136.36:8080/";
-
     /**
      * Starts Grizzly HTTP server exposing JAX-RS resources defined in this application.
      * @return Grizzly HTTP server.
      */
-    public static HttpServer startServer() {
+    public static HttpServer startServer(String url) {
         // create a resource config that scans for JAX-RS resources and providers
         // in com.example package
         final ResourceConfig rc = new ResourceConfig().packages("safe.sdx");
         // create and start a new instance of grizzly http server
         // exposing the Jersey application at BASE_URI
-        return GrizzlyHttpServerFactory.createHttpServer(URI.create(BASE_URI), rc);
+        return GrizzlyHttpServerFactory.createHttpServer(URI.create(url), rc);
     }
 
     /**
@@ -34,11 +32,11 @@ public class SdxServer {
      * @throws IOException
      */
     public static void main(String[] args) throws IOException {
-//        SdxManager.startSdxServer(args);
+        SdxManager.startSdxServer(args);
 
-        final HttpServer server = startServer();
+        final HttpServer server = startServer(SdxManager.serverurl);
         System.out.println(String.format("Jersey app started with WADL available at "
-                + "%sapplication.wadl\nHit enter to stop it...", BASE_URI));
+                + "%sapplication.wadl\nHit enter to stop it...", SdxManager.serverurl));
         System.in.read();
         server.stop();
     }
