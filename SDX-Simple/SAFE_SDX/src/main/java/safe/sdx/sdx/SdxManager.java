@@ -179,7 +179,6 @@ public class SdxManager extends SliceCommon{
 
   public static String notifyPrefix(String dest, String gateway, String router,String customer_slice){
     System.out.println("received notification for ip prefix"+dest);
-    System.setProperty("java.security.policy",javasecuritypolicy);
     String res=sliceName+": notification for "+dest+" received\n";
     for(String[]pair:advertisements){
       if(authorizePrefix(pair[0],pair[1],customer_slice,dest)){
@@ -337,7 +336,6 @@ public class SdxManager extends SliceCommon{
     restartPlexus(SDNControllerIP);
     sleep(5);
     runCmdSlice(s,"/bin/bash ~/ovsbridge.sh "+ovscontroller,sshkey,"(c\\d+)");
-    System.setProperty("java.security.policy",javasecuritypolicy);
     try{
       Pattern pattern = Pattern.compile(routerpattern);
       for(ComputeNode node : s.getComputeNodes()){
