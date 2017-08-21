@@ -53,23 +53,23 @@ import org.renci.ahab.ndllib.transport.OrcaSMXMLRPCProxy;
 
 import safe.utils.Exec;
 import safe.utils.ScpTo;
+import com.typesafe.config.*;
 
 
 public class SliceCommon {
 	final static Logger logger = Logger.getLogger(SliceCommon.class);	
-	protected static final String RequestResource = null;
-	protected static String controllerUrl;
+  protected static final String RequestResource = null;
+  protected static String controllerUrl;
   protected static String SDNControllerIP;
-	protected static String sliceName;
-	protected static String pemLocation;
-	protected static String keyLocation;
+  protected static String sliceName;
+  protected static String pemLocation;
+  protected static String keyLocation;
   protected static String sshkey;
   protected static ISliceTransportAPIv1 sliceProxy;
   protected static SliceAccessContext<SSHAccessToken> sctx;
-  protected static int curip=128;
-	protected static String safeserver;
+  protected static String safeserver;
   protected static String keyhash;
-  protected static String javasecuritypolicy;
+  protected static Config conf;
 
   public SliceCommon(){}
 
@@ -97,23 +97,20 @@ public class SliceCommon {
     return cmd;
   }
 
-  protected static SliceConfig readConfig(String configfilepath){
-    SliceConfig sdxconfig=new SliceConfig(configfilepath);
-    pemLocation = sdxconfig.exogenipem;
-		keyLocation = sdxconfig.exogenipem;
-		controllerUrl = sdxconfig.exogenism; //"https://geni.renci.org:11443/orca/xmlrpc";
-		sliceName = sdxconfig.slicename;
-    sshkey=sdxconfig.sshkey;
-    keyhash=sdxconfig.safekey;
-    javasecuritypolicy=sdxconfig.javasecuritypolicy;
-    return sdxconfig;
+  protected static void readConfig(String configfilepath){
+    File myConfigFile = new File(configfilepath);
+    Config fileConfig = ConfigFactory.parseFile(myConfigFile);
+    conf = ConfigFactory.load(fileConfig);
+    sshkey=conf.getString("config.sshkey");
+    keyhash=conf.getString("config.safekey");
+    pemLocation=conf.getString("config.exogenism");
+    keyLocation=conf.getString("config.exogenism");
+    sliceName=conf.getString("config.slicename");
   }
 
   protected static void waitTillActive(Slice s){
-		boolean sliceActive = false;
-		while (true){		
-			s.refresh();
-			sliceActive = true;
+		boolean sliceActive = true;
+    while(true){
 			logger.debug("");
 			logger.debug("Slice: " + s.getAllResources());
 			for(ComputeNode c : s.getComputeNodes()){

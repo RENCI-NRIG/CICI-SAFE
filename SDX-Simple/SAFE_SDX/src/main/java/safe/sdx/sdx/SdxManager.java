@@ -87,16 +87,17 @@ import org.apache.http.impl.client.DefaultHttpClient;
  * 6. Call SDN controller to install the rules
  */
 
-public class SdxManager extends Sdx{
+public class SdxManager extends SliceCommon{
   public SdxManager(){}
 
   private static RoutingManager routingmanager=new RoutingManager();
   private static HashMap<String, Link> links=new HashMap<String, Link>();
   private static String IPPrefix="192.168.";
+  static int curip=128;
   private static String mask="/24";
   private static String SDNController;
   private static String OVSController;
-  private static String scriptsdir;
+  protected static String serverurl;
   private static final ReentrantLock lock=new ReentrantLock();
   //private static String type;
   private static ArrayList<String[]> advertisements=new ArrayList<String[]>();
@@ -138,9 +139,9 @@ public class SdxManager extends Sdx{
 		System.out.println("Carrier Slice server with Service API: START");
     CommandLine cmd=parseCmd(args);
 		String configfilepath=cmd.getOptionValue("config");
-    SdxConfig sdxconfig=readConfig(configfilepath);
-    IPPrefix=sdxconfig.ipprefix;
-    scriptsdir=sdxconfig.scriptsdir;
+    readConfig(configfilepath);
+    IPPrefix=conf.getString("config.ipprefix");
+    serverurl=conf.getString("config.serverurl");
 
     //type=sdxconfig.type;
     computeIP(IPPrefix);
@@ -178,7 +179,6 @@ public class SdxManager extends Sdx{
 
   public static String notifyPrefix(String dest, String gateway, String router,String customer_slice){
     System.out.println("received notification for ip prefix"+dest);
-    System.setProperty("java.security.policy",javasecuritypolicy);
     String res=sliceName+": notification for "+dest+" received\n";
     for(String[]pair:advertisements){
       if(authorizePrefix(pair[0],pair[1],customer_slice,dest)){
@@ -336,7 +336,6 @@ public class SdxManager extends Sdx{
     restartPlexus(SDNControllerIP);
     sleep(5);
     runCmdSlice(s,"/bin/bash ~/ovsbridge.sh "+ovscontroller,sshkey,"(c\\d+)");
-    System.setProperty("java.security.policy",javasecuritypolicy);
     try{
       Pattern pattern = Pattern.compile(routerpattern);
       for(ComputeNode node : s.getComputeNodes()){

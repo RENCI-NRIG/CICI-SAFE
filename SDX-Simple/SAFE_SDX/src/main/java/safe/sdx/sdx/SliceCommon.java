@@ -53,9 +53,10 @@ import org.renci.ahab.ndllib.transport.OrcaSMXMLRPCProxy;
 
 import safe.sdx.utils.Exec;
 import safe.sdx.utils.ScpTo;
+import com.typesafe.config.*;
 
 
-public class Sdx {
+public class SliceCommon {
 	protected static final String RequestResource = null;
 	protected static String controllerUrl;
   protected static String SDNControllerIP;
@@ -65,12 +66,11 @@ public class Sdx {
   protected static String sshkey;
   protected static ISliceTransportAPIv1 sliceProxy;
   protected static SliceAccessContext<SSHAccessToken> sctx;
-  protected static int curip=128;
 	protected static String safeserver;
   protected static String keyhash;
-  protected static String javasecuritypolicy;
+  protected static Config conf;
 
-  public Sdx(){}
+  public SliceCommon(){}
 
   protected static CommandLine parseCmd(String[] args){
     Options options = new Options();
@@ -96,16 +96,16 @@ public class Sdx {
     return cmd;
   }
 
-  protected static SdxConfig readConfig(String configfilepath){
-    SdxConfig sdxconfig=new SdxConfig(configfilepath);
-    pemLocation = sdxconfig.exogenipem;
-		keyLocation = sdxconfig.exogenipem;
-		controllerUrl = sdxconfig.exogenism; //"https://geni.renci.org:11443/orca/xmlrpc";
-		sliceName = sdxconfig.slicename;
-    sshkey=sdxconfig.sshkey;
-    keyhash=sdxconfig.safekey;
-    javasecuritypolicy=sdxconfig.javasecuritypolicy;
-    return sdxconfig;
+  protected static void readConfig(String configfilepath){
+    File myConfigFile = new File(configfilepath);
+    Config fileConfig = ConfigFactory.parseFile(myConfigFile);
+    conf = ConfigFactory.load(fileConfig);
+
+    sshkey=conf.getString("config.sshkey");
+    keyhash=conf.getString("config.safekey");
+    pemLocation=conf.getString("config.exogenism");
+    keyLocation=conf.getString("config.exogenism");
+    sliceName=conf.getString("config.slicename");
   }
 
   protected static void waitTillActive(Slice s){

@@ -52,7 +52,7 @@ public class RestService {
     @Produces(MediaType.TEXT_PLAIN)
     public String stitchRequest(PrefixNotification pn){
       System.out.println("got sittch request");
-      String res=SdxManager.notifyPrefix(pn.dest, pn.gateway, pn.router, pn.customer_slice);
+      String res=SdxManager.notifyPrefix(pn.dest, pn.gateway, pn.router, pn.customer);
       return res;
     }
 }
@@ -82,13 +82,13 @@ class PrefixNotification{
   public String dest;
   public String gateway;
   public String router;
-  public String customer_slice;
+  public String customer;
   public PrefixNotification(){}
-  public PrefixNotification(String dest, String gateway, String router, String customer_slice){
+  public PrefixNotification(String dest, String gateway, String router, String customer){
     this.dest=dest;
     this.gateway=gateway;
     this.router=router;
-    this.customer_slice=customer_slice;
+    this.customer=customer;
   }
 }
 
