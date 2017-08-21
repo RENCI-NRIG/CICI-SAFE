@@ -87,12 +87,13 @@ import org.apache.http.impl.client.DefaultHttpClient;
  * 6. Call SDN controller to install the rules
  */
 
-public class SdxManager extends Sdx{
+public class SdxManager extends SliceCommon{
   public SdxManager(){}
 
   private static RoutingManager routingmanager=new RoutingManager();
   private static HashMap<String, Link> links=new HashMap<String, Link>();
   private static String IPPrefix="192.168.";
+  static int curip=128;
   private static String mask="/24";
   private static String SDNController;
   private static String OVSController;

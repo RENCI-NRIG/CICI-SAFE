@@ -94,18 +94,18 @@
 			<groupId>org.renci.ahab</groupId>
 			<artifactId>ahab</artifactId>
  			<!--<version>0.1.1</version>  -->
-			 <version>0.1.7-SNAPSHOT</version> 
+			 <version>0.1.1</version> 
 			<type>pom</type>
 		</dependency>
 		<dependency>
 			<groupId>org.renci.ahab</groupId>
 			<artifactId>libndl</artifactId>
- <version>0.1.7-SNAPSHOT</version>
+ <version>0.1.1</version>
 		</dependency>
 		<dependency>
 			<groupId>org.renci.ahab</groupId>
 			<artifactId>libtransport</artifactId>
- <version>0.1.7-SNAPSHOT</version>
+ <version>0.1.1</version>
 		</dependency>
     <!-- https://mvnrepository.com/artifact/com.jcraft/jsch -->
     <dependency>
