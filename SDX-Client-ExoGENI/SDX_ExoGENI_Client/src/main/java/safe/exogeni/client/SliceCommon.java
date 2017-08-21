@@ -104,7 +104,9 @@ public class SliceCommon {
     sliceName=conf.getString("config.slicename");
   }
 
-			sliceActive = true;
+  protected static void waitTillActive(Slice s){
+		sliceActive = true;
+    while(true){
 			logger.debug("");
 			logger.debug("Slice: " + s.getAllResources());
 			for(ComputeNode c : s.getComputeNodes()){

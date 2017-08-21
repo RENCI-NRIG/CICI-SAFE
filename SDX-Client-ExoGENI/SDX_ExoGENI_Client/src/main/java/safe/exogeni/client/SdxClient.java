@@ -1,7 +1,7 @@
 /**
  * 
  */
-package safe.sdx.sdx;
+package safe.exogeni.client;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -51,8 +51,8 @@ import org.renci.ahab.libtransport.util.UtilTransportException;
 import org.renci.ahab.libtransport.xmlrpc.XMLRPCProxyFactory;
 import org.renci.ahab.ndllib.transport.OrcaSMXMLRPCProxy;
 
-import safe.sdx.utils.Exec;
-import safe.sdx.utils.SafePost;
+import safe.utils.Exec;
+import safe.utils.SafePost;
 import org.json.JSONObject;
 
 /**
@@ -127,7 +127,7 @@ public class SdxClient extends SliceCommon {
               paramsobj.put("gateway",params[2]);
               paramsobj.put("router", params[4]);
               paramsobj.put("customer", keyhash);
-              String res=MyHttpClient.notifyPrefix("http://152.3.136.36:8080/sdx/notifyprefix",paramsobj);
+              String res=SdxHttpClient.notifyPrefix("http://152.3.136.36:8080/sdx/notifyprefix",paramsobj);
               if(res.equals("")){
                 System.out.println("Prefix notifcation failed");
               }
@@ -185,7 +185,7 @@ public class SdxClient extends SliceCommon {
       jsonparams.put("cslice",params[1]);
       jsonparams.put("creservid",node0_s2_stitching_GUID);
       jsonparams.put("secret",secret);
-      JSONObject res=MyHttpClient.tryStitch("http://152.3.136.36:8080/sdx/stitchrequest",jsonparams);
+      JSONObject res=SdxHttpClient.tryStitch("http://152.3.136.36:8080/sdx/stitchrequest",jsonparams);
       System.out.println("Got Stitch Information From Server:\n "+res.toString());
       if(!res.getBoolean("result")){
         System.out.println("stitch request declined by server");

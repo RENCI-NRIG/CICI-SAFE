@@ -1,5 +1,5 @@
-package safe.sdx.sdx;
-import safe.sdx.utils.SafePost;
+package safe.exogeni.client;
+import safe.utils.SafePost;
 
 import java.net.URI;
 import java.io.BufferedReader;
@@ -20,86 +20,67 @@ import org.json.JSONObject;
  *
  */
 public class SdxHttpClient {
-    // Base URI the Grizzly HTTP server will listen on
-    public static final String BASE_URI = "http://152.3.136.36:8080/";
-    /**
-     * Starts Grizzly HTTP server exposing JAX-RS resources defined in this application.
-     * @return Grizzly HTTP server.
-     */
-public static void main(String[] args) {
-try {
+  // Base URI the Grizzly HTTP server will listen on
+  /**
+   * Starts Grizzly HTTP server exposing JAX-RS resources defined in this application.
+   * @return Grizzly HTTP server.
+   */
 
-		DefaultHttpClient httpClient = new DefaultHttpClient();
-		HttpGet getRequest = new HttpGet(
-			"http://152.3.136.36:8080/sdx/sr");
-		//getRequest.addHeader("accept", "application/json");
+  public static JSONObject tryStitch(String serverurl, JSONObject paramsobj){
+    JSONObject resobj=new JSONObject();
+    resobj.put("result",false);
+    HttpClient httpClient = HttpClientBuilder.create().build(); //Use this instead 
 
-		HttpResponse response = httpClient.execute(getRequest);
+    try {
 
-		if (response.getStatusLine().getStatusCode() != 200) {
-			throw new RuntimeException("Failed : HTTP error code : "
-			   + response.getStatusLine().getStatusCode());
-		}
-		
-		String output=EntityUtils.toString(response.getEntity());
-		JSONObject jsonobj=new JSONObject(output);
-		System.out.println(jsonobj);
+      HttpPost request = new HttpPost(serverurl);
+      StringEntity params =new StringEntity(paramsobj.toString());
+      //StringEntity params =new StringEntity("{\"sdxslice\":\"sdx\",\"sdxnode\":\"c0\",\"ckeyhash\":\"keyhash\",\"cslice\":\"alice\",\"creservid\":\"cnode0\",\"secret\":\"20\"} ");
+      request.addHeader("content-type", "application/json");
+      request.setEntity(params);
+      HttpResponse response = httpClient.execute(request);
+      //handle response here...
+      String output=EntityUtils.toString(response.getEntity());
+      JSONObject jsonobj=new JSONObject(output);
+      httpClient.getConnectionManager().shutdown(); 
+      return jsonobj;
 
-		//BufferedReader br = new BufferedReader(
-    //                     new InputStreamReader((response.getEntity().getContent())));
+    }catch (Exception ex) {
+      ex.printStackTrace();
+      return resobj;
 
-		//String output;
-		//System.out.println("Output from Server .... \n");
-		//while ((output = br.readLine()) != null) {
-		//	System.out.println(output);
-		//}
+    } finally {
+        //Deprecated
+    }
+  }
 
-		httpClient.getConnectionManager().shutdown();
+  public static String notifyPrefix(String serverurl, JSONObject paramsobj){
+    //JSONObject resobj=new JSONObject();
+    //resobj.put("result",false);
+    String resobj="";
+    HttpClient httpClient = HttpClientBuilder.create().build(); //Use this instead 
+    try {
 
-	  } catch (ClientProtocolException e) {
+      HttpPost request = new HttpPost(serverurl);
+      StringEntity params =new StringEntity(paramsobj.toString());
+      //StringEntity params =new StringEntity("{\"sdxslice\":\"sdx\",\"sdxnode\":\"c0\",\"ckeyhash\":\"keyhash\",\"cslice\":\"alice\",\"creservid\":\"cnode0\",\"secret\":\"20\"} ");
+      request.addHeader("content-type", "application/json");
+      request.setEntity(params);
+      HttpResponse response = httpClient.execute(request);
+      //handle response here...
+      String output=EntityUtils.toString(response.getEntity());
+      resobj=output;
+      //JSONObject jsonobj=new JSONObject(output);
+      //httpClient.getConnectionManager().shutdown(); 
+      return resobj;
 
-		e.printStackTrace();
+    }catch (Exception ex) {
+      ex.printStackTrace();
+      return resobj;
 
-	  } catch (IOException e) {
-
-		e.printStackTrace();
-	  }
-
-		HttpClient httpClient = HttpClientBuilder.create().build(); //Use this instead 
-
-		try {
-      System.out.println("hah");
-
-			HttpPost request = new HttpPost("http://152.3.136.36:8080/sdx/stitchrequest");
-			StringEntity params =new StringEntity("{\"sdxslice\":\"sdx\",\"sdxnode\":\"c0\",\"ckeyhash\":\"keyhash\",\"cslice\":\"alice\",\"creservid\":\"cnode0\",\"secret\":\"20\"} ");
-			request.addHeader("content-type", "application/json");
-			request.setEntity(params);
-			HttpResponse response = httpClient.execute(request);
-		BufferedReader br = new BufferedReader(
-                         new InputStreamReader((response.getEntity().getContent())));
-
-		String output1;
-		System.out.println("Output from Server .... \n");
-		while ((output1 = br.readLine()) != null) {
-			System.out.println(output1);
-		}
-
-			//handle response here...
-		
-			String output=EntityUtils.toString(response.getEntity());
-			JSONObject jsonobj=new JSONObject(output);
-			System.out.println(jsonobj);
-
-		}catch (Exception ex) {
-
-				//handle exception here
-
-		} finally {
-				//Deprecated
-				//httpClient.getConnectionManager().shutdown(); 
-		}
-
-	}
-
+    } finally {
+        //Deprecated
+    }
+  }
 }
 
