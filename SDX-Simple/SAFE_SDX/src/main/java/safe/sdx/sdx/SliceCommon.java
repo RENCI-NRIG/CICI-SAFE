@@ -102,9 +102,10 @@ public class SliceCommon {
     conf = ConfigFactory.load(fileConfig);
 
     sshkey=conf.getString("config.sshkey");
+    controllerUrl=conf.getString("config.exogenism");
     keyhash=conf.getString("config.safekey");
-    pemLocation=conf.getString("config.exogenism");
-    keyLocation=conf.getString("config.exogenism");
+    pemLocation=conf.getString("config.exogenipem");
+    keyLocation=conf.getString("config.exogenipem");
     sliceName=conf.getString("config.slicename");
   }
 

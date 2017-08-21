@@ -145,6 +145,7 @@ public class SdxManager extends SliceCommon{
 
     //type=sdxconfig.type;
     computeIP(IPPrefix);
+    System.out.print(pemLocation);
 		sliceProxy = getSliceProxy(pemLocation,keyLocation, controllerUrl);		
 		//SSH context
 		sctx = new SliceAccessContext<>();
