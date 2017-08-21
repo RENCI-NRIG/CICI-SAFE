@@ -62,7 +62,7 @@ import java.rmi.server.UnicastRemoteObject;
  * @author geni-orca
  *
  */
-public class Example extends Sdx{
+public class Example extends SliceCommon{
 	public Example()throws RemoteException{}
 	private static int curip=128;
 	private static String IPPrefix="192.168.";
