@@ -58,11 +58,16 @@ import com.typesafe.config.*;
 
 public class SliceCommon {
 	final static Logger logger = Logger.getLogger(SliceCommon.class);	
-	protected static final String RequestResource = null;
-	protected static String controllerUrl;
+  protected static final String RequestResource = null;
+  protected static String controllerUrl;
   protected static String SDNControllerIP;
-	protected static String sliceName;
-	protected static String safeserver;
+  protected static String sliceName;
+  protected static String pemLocation;
+  protected static String keyLocation;
+  protected static String sshkey;
+  protected static ISliceTransportAPIv1 sliceProxy;
+  protected static SliceAccessContext<SSHAccessToken> sctx;
+  protected static String safeserver;
   protected static String keyhash;
   protected static Config conf;
 
@@ -96,7 +101,6 @@ public class SliceCommon {
     File myConfigFile = new File(configfilepath);
     Config fileConfig = ConfigFactory.parseFile(myConfigFile);
     conf = ConfigFactory.load(fileConfig);
-
     sshkey=conf.getString("config.sshkey");
     keyhash=conf.getString("config.safekey");
     pemLocation=conf.getString("config.exogenism");
@@ -105,7 +109,7 @@ public class SliceCommon {
   }
 
   protected static void waitTillActive(Slice s){
-		sliceActive = true;
+		boolean sliceActive = true;
     while(true){
 			logger.debug("");
 			logger.debug("Slice: " + s.getAllResources());
