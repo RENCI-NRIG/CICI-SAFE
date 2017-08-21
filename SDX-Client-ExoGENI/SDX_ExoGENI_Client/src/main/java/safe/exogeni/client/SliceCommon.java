@@ -62,12 +62,6 @@ public class SliceCommon {
 	protected static String controllerUrl;
   protected static String SDNControllerIP;
 	protected static String sliceName;
-	protected static String pemLocation;
-	protected static String keyLocation;
-  protected static String sshkey;
-  protected static ISliceTransportAPIv1 sliceProxy;
-  protected static SliceAccessContext<SSHAccessToken> sctx;
-  protected static int curip=128;
 	protected static String safeserver;
   protected static String keyhash;
   protected static Config conf;
@@ -110,10 +104,6 @@ public class SliceCommon {
     sliceName=conf.getString("config.slicename");
   }
 
-  protected static void waitTillActive(Slice s){
-		boolean sliceActive = false;
-		while (true){		
-			s.refresh();
 			sliceActive = true;
 			logger.debug("");
 			logger.debug("Slice: " + s.getAllResources());
