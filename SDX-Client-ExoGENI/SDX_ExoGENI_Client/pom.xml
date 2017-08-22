@@ -48,8 +48,12 @@
 				<configuration>
 					<programs>
 						<program>
-							<mainClass>safe.exogeni.client.ExogeniClient</mainClass>
+							<mainClass>safe.exogeni.client.SdxExogeniClient</mainClass>
 							<name>SafeExoGENIClient</name>
+						</program>
+						<program>
+							<mainClass>safe.exogeni.client.Example</mainClass>
+							<name>SafeSdxExample</name>
 						</program>
 					</programs>
 				</configuration>
