@@ -22,10 +22,10 @@ To run the SDX demo, first we creat a SDX slice and two customer slices on exoge
      $./scripts/createslice.sh -c config/bob.conf
 
 Then we can run ahab controllers for sdx, alice and bob. 
- [4] Run sdx server controller, configure the address and port number that sdx server will listen on.
+ [4] Run sdx server controller, configure the address and port number that sdx server will listen on ("config.serverurl").
      $./scripts/sdxserver.sh -c config/sdx.conf
 
- [5] Configure the address of SDX server controller in configuration files and run controller for alice and bob, 
+ [5] Configure the address of SDX server controller ("config.sdxserver") in configuration files and run controller for alice and bob, 
      $./scripts/sdxclient.sh -c config/alice.conf
      $./scripts/sdxclient.sh -c config/bob.conf
 
