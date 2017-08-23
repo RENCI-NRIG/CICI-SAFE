@@ -124,12 +124,13 @@
 		<dependency>
 				<groupId>org.glassfish.jersey.media</groupId>
 				<artifactId>jersey-media-json-jackson</artifactId>
-				<exclusions>
+			<!--	<exclusions>
 					<exclusion>
 						<artifactId>jackson-core</artifactId>
 						<groupId>com.fasterxml.jackson.core</groupId>
 					</exclusion>
 				</exclusions>
+`			-->
 		</dependency>
     <dependency>
         <groupId>junit</groupId>
