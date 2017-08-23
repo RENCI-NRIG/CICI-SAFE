@@ -68,7 +68,9 @@ public class SliceCommon {
   protected static SliceAccessContext<SSHAccessToken> sctx;
 	protected static String safeserver;
   protected static String keyhash;
+  protected static String type;
   protected static Config conf;
+  
 
   public SliceCommon(){}
 
@@ -93,20 +95,27 @@ public class SliceCommon {
         System.exit(1);
         return cmd;
     }
+  
     return cmd;
   }
 
   protected static void readConfig(String configfilepath){
-    File myConfigFile = new File(configfilepath);
-    Config fileConfig = ConfigFactory.parseFile(myConfigFile);
-    conf = ConfigFactory.load(fileConfig);
+    //File myConfigFile = new File(configfilepath);
+    //Config fileConfig = ConfigFactory.parseFile(myConfigFile);
+    //conf = ConfigFactory.load(fileConfig);
 
+	File myConfigFile = new File(configfilepath);
+	Config fileConfig = ConfigFactory.parseFile(myConfigFile);
+	conf = ConfigFactory.load(fileConfig);
+    
+    type=conf.getString("config.type");
     sshkey=conf.getString("config.sshkey");
     controllerUrl=conf.getString("config.exogenism");
     keyhash=conf.getString("config.safekey");
     pemLocation=conf.getString("config.exogenipem");
     keyLocation=conf.getString("config.exogenipem");
     sliceName=conf.getString("config.slicename");
+    
   }
 
   protected static void waitTillActive(Slice s){
