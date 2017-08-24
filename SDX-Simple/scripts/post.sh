@@ -5,6 +5,15 @@
 #as3 t8UXUgNmiZY8jloIIvCxi9jSjzXUaokqdwtzvyoy95c
 #as4 eQ-b5wEKqzjI1PSCuqZY6EVQdMWyGAZob2JzkW5pLsg
 #as5 XLajumPCpZWScMJUoxrApXMCxRllpAVnFIwzv7CFpsU
+
+if [ "$#" -ne 1 ]; then
+   echo "illegal number of parameters"
+   echo "usage: "$0" SafeServerIP"
+   exit 1
+fi
+
+SAFESERVER_IP=$1
+
 #start server:
 #sbt  "project safe-server" "run -f /home/yaoyj11/project/integration/safe-apps/safe-network/routing/routing.slang  -r safeService  -kd   src/main/resources/key"
 
@@ -13,12 +22,12 @@
 
 #postIDSet
 #echo "init set"
-curl  -v -X POST http://152.3.136.36:7777/postInitNeighbor -H "Content-Type: application/json" -d "{ \"principal\": \"iCqAs3PcsfGWjF3Ywcr47-0Jfd15Z7EQ3v6sSVza8KY\", \"otherValues\": [] }"
-curl  -v -X POST http://152.3.136.36:7777/postInitNeighbor -H "Content-Type: application/json" -d "{ \"principal\": \"eZz9xWGKCwBdf8VjRtuSXYfaO1jLgjwOfrX8N3s14f8\", \"otherValues\": [] }"
-curl  -v -X POST http://152.3.136.36:7777/postInitNeighbor -H "Content-Type: application/json" -d "{ \"principal\": \"GA6A1fkLhsWUB7SKaPSCw8DO_ozLVM-Q8l0NdsqwRiA\", \"otherValues\": [] }"
-curl  -v -X POST http://152.3.136.36:7777/postInitNeighbor -H "Content-Type: application/json" -d "{ \"principal\": \"t8UXUgNmiZY8jloIIvCxi9jSjzXUaokqdwtzvyoy95c\", \"otherValues\": [] }"
-curl  -v -X POST http://152.3.136.36:7777/postInitNeighbor -H "Content-Type: application/json" -d "{ \"principal\": \"eQ-b5wEKqzjI1PSCuqZY6EVQdMWyGAZob2JzkW5pLsg\", \"otherValues\": [] }"
-curl  -v -X POST http://152.3.136.36:7777/postInitNeighbor -H "Content-Type: application/json" -d "{ \"principal\": \"XLajumPCpZWScMJUoxrApXMCxRllpAVnFIwzv7CFpsU\", \"otherValues\": [] }"
+curl  -v -X POST http://${SAFESERVER_IP}:7777/postInitNeighbor -H "Content-Type: application/json" -d "{ \"principal\": \"iCqAs3PcsfGWjF3Ywcr47-0Jfd15Z7EQ3v6sSVza8KY\", \"otherValues\": [] }"
+curl  -v -X POST http://${SAFESERVER_IP}:7777/postInitNeighbor -H "Content-Type: application/json" -d "{ \"principal\": \"eZz9xWGKCwBdf8VjRtuSXYfaO1jLgjwOfrX8N3s14f8\", \"otherValues\": [] }"
+curl  -v -X POST http://${SAFESERVER_IP}:7777/postInitNeighbor -H "Content-Type: application/json" -d "{ \"principal\": \"GA6A1fkLhsWUB7SKaPSCw8DO_ozLVM-Q8l0NdsqwRiA\", \"otherValues\": [] }"
+curl  -v -X POST http://${SAFESERVER_IP}:7777/postInitNeighbor -H "Content-Type: application/json" -d "{ \"principal\": \"t8UXUgNmiZY8jloIIvCxi9jSjzXUaokqdwtzvyoy95c\", \"otherValues\": [] }"
+curl  -v -X POST http://${SAFESERVER_IP}:7777/postInitNeighbor -H "Content-Type: application/json" -d "{ \"principal\": \"eQ-b5wEKqzjI1PSCuqZY6EVQdMWyGAZob2JzkW5pLsg\", \"otherValues\": [] }"
+curl  -v -X POST http://${SAFESERVER_IP}:7777/postInitNeighbor -H "Content-Type: application/json" -d "{ \"principal\": \"XLajumPCpZWScMJUoxrApXMCxRllpAVnFIwzv7CFpsU\", \"otherValues\": [] }"
 
 curl  -v -X POST http://152.3.136.36:7777/postInitCarryTraffic -H "Content-Type: application/json" -d "{ \"principal\": \"iCqAs3PcsfGWjF3Ywcr47-0Jfd15Z7EQ3v6sSVza8KY\", \"otherValues\": [] }"
 curl  -v -X POST http://152.3.136.36:7777/postInitCarryTraffic -H "Content-Type: application/json" -d "{ \"principal\": \"eZz9xWGKCwBdf8VjRtuSXYfaO1jLgjwOfrX8N3s14f8\", \"otherValues\": [] }"

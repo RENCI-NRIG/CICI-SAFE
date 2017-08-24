@@ -68,7 +68,7 @@ public class Example extends SliceCommon{
 	private static String IPPrefix="192.168.";
 	private static String mask="/24";
 	private static String riakip="152.3.145.36";
-	private static String type;
+	//private static String type;
 
 	private static  void computeIP(String prefix){
 		System.out.println(prefix);
@@ -89,10 +89,12 @@ public class Example extends SliceCommon{
 		
 		String configfilepath=cmd.getOptionValue("config");
 		
+		readConfig(configfilepath);
+		
 		System.out.println("configfilepath " + configfilepath);
     readConfig(configfilepath);
 		
-		type=conf.getString("config.type");
+		//type=conf.getString("config.type");
 		if(cmd.hasOption('d')){
 			type="delete";
 		}
