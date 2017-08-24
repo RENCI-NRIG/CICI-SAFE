@@ -90,6 +90,7 @@ public class Example extends SliceCommon{
 		String configfilepath=cmd.getOptionValue("config");
 		
 		System.out.println("configfilepath " + configfilepath);
+    readConfig(configfilepath);
 		
 		type=conf.getString("config.type");
 		if(cmd.hasOption('d')){
