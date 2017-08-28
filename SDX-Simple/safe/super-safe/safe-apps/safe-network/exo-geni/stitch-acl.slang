@@ -113,6 +113,26 @@ defcon ipAllocate(?Prcpl,?Prefix) :-
 
 defpost postIPAllocate(?Prcpl,?Prefix) :-[ipAllocate(?Prcpl,?Prefix)].
 
+defcon ownPrefixPolicy():-
+  spec('own prefix policy'),
+  {
+    ownPrefix(?Customer,?IP):-
+      $RpkiRoot: allocate(?Customer,?IP),
+
+    label("own prefix policy($PolicyVersion)").
+  }.
+
+defpost postOwnPrefixPolicy() :- [ownPrefixPolicy()].
+
+defguard ownPrefix(?Customer,?IP):-
+  ?CustomerSubject  := label(?Customer,"subject($SetVersion)"),
+  ?OwnPrefixPolicy := label("own prefix policy($PolicyVersion)"),
+  {
+    link($CustomerSubject).
+    link($OwnPrefixPolicy).
+    ownPrefix($Customer,$IP)?
+  }.
+
 defguard connectivity(?Alice,?Bob,?IPa,?IPb):-
   ?AliceACLPolicy := label(?Alice,"acl policy($PolicyVersion)"),
   ?BobACLPolicy := label(?Bob,"acl policy($PolicyVersion)"),

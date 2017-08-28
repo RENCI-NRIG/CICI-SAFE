@@ -178,26 +178,52 @@ public class SdxManager extends SliceCommon{
     configRouting(keyhashslice,OVSController,SDNController,"(c\\d+)");
 	}
 
-  public static String notifyPrefix(String dest, String gateway, String router,String customer_slice){
+  public static String notifyPrefix(String dest, String gateway, String router,String customer_keyhash){
     System.out.println("received notification for ip prefix"+dest);
-    String res=sliceName+": notification for "+dest+" received\n";
-    for(String[]pair:advertisements){
-      if(authorizePrefix(pair[0],pair[1],customer_slice,dest)){
-        res=res+pair[1]+"; ";
-        routingmanager.configurePath(dest,router,pair[1],pair[3],gateway,SDNController);
-        routingmanager.configurePath(pair[1],pair[3],dest,router,pair[2],SDNController);
+    String res="received notification for "+dest;
+    if(authorizePrefix(customer_keyhash,dest)){
+      res=res+" [authorization success]";
+      boolean flag=false;
+      for(String[]pair:advertisements){
+        if(pair[0].equals(customer_keyhash)&&pair[1].equals(dest)){
+          flag=true;
+          continue;
+        }
+        if(authorizeConnectivity(pair[0],pair[1],customer_keyhash,dest)){
+    //      res.add(pair[1]);
+          routingmanager.configurePath(dest,router,pair[1],pair[3],gateway,SDNController);
+          routingmanager.configurePath(pair[1],pair[3],dest,router,pair[2],SDNController);
+        }
+      }
+      if(!flag){
+        String[] newpair=new String[4];
+        newpair[0]=customer_keyhash;
+        newpair[1]=dest;
+        newpair[2]=gateway;
+        newpair[3]=router;
+        advertisements.add(newpair);
       }
     }
-    String[] newpair=new String[4];
-    newpair[0]=customer_slice;
-    newpair[1]=dest;
-    newpair[2]=gateway;
-    newpair[3]=router;
-    advertisements.add(newpair);
+    else{
+      res=res+" [authorization failed]";
+    }
     return res;
   }
 
-  private static boolean authorizePrefix(String srchash, String srcip, String dsthash, String dstip){
+  private static boolean authorizePrefix(String cushash, String cusip){
+    String[] othervalues=new String[2];
+    othervalues[0]=cushash;
+    othervalues[1]=cusip;
+    String message=SafePost.postSafeStatements(safeserver,"ownPrefix",keyhash,othervalues);
+    if(message !=null && message.contains("Unsatisfied")){
+      return false;
+    }
+    else
+      return true;
+  }
+
+
+  private static boolean authorizeConnectivity(String srchash, String srcip, String dsthash, String dstip){
     String[] othervalues=new String[4];
     othervalues[0]=srchash;
     othervalues[1]=dsthash;

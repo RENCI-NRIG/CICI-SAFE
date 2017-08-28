@@ -41,6 +41,7 @@ public class SdxHttpClient {
       HttpResponse response = httpClient.execute(request);
       //handle response here...
       String output=EntityUtils.toString(response.getEntity());
+      System.out.println(output);
       JSONObject jsonobj=new JSONObject(output);
       httpClient.getConnectionManager().shutdown(); 
       return jsonobj;
@@ -69,10 +70,9 @@ public class SdxHttpClient {
       HttpResponse response = httpClient.execute(request);
       //handle response here...
       String output=EntityUtils.toString(response.getEntity());
-      resobj=output;
       //JSONObject jsonobj=new JSONObject(output);
-      //httpClient.getConnectionManager().shutdown(); 
-      return resobj;
+      httpClient.getConnectionManager().shutdown(); 
+      return output;
 
     }catch (Exception ex) {
       ex.printStackTrace();
