@@ -117,7 +117,7 @@ defcon ownPrefixPolicy():-
   spec('own prefix policy'),
   {
     ownPrefix(?Customer,?IP):-
-      $RpkiRoot: allocate(?Customer,?IP),
+      $RpkiRoot: allocate(?Customer,?IP).
 
     label("own prefix policy($PolicyVersion)").
   }.
