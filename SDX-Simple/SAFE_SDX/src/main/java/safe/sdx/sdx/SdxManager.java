@@ -187,6 +187,8 @@ public class SdxManager extends SliceCommon{
       for(String[]pair:advertisements){
         if(pair[0].equals(customer_keyhash)&&pair[1].equals(dest)){
           flag=true;
+          pair[2]=gateway;
+          pair[3]=router;
           continue;
         }
         if(authorizeConnectivity(pair[0],pair[1],customer_keyhash,dest)){

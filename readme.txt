@@ -37,9 +37,9 @@ Then we can run ahab controllers for sdx, alice and bob.
     $./updatess.sh 
 
   7. alice stitch CNode0 to sdx/c0, in alice's controller, run:
-    $>stitch alice sdx CNode0 c0
+    $>stitch c0 sdx CNode0
     bob stitch CNode0 to sdx/c3, in bob's controller run:
-    $>stitch bob sdx CNode0 c3
+    $>stitch c3 sdx CNode0
 
   8. route
     alice tells sdx controller its address space
@@ -47,7 +47,9 @@ Then we can run ahab controllers for sdx, alice and bob.
     bob tells sdx controller its address space
     $>route 192.168.20.1/24 192.168.34.2 sdx c3
 
-  9. setup routing in client side
+  9. [OPTIONAL]
+    For sdx demo, I added scripts to automatically configure the routing table with quagga in client slice. These scripts depends on the IP addresses assigned to client slice, the topology of client slice, which node in client slice is stitched to sdx slice, and the gateway in sdx slice.
+    setup routing in client side
     An example command of adding an entry to the routing table is as follows, this only supports dest IP address with /32 netmask
     Another way to do this is using Quagga with zebra enabled, and add routing entries in zebra.conf, dest ip with any netmask is supported
     In the demo, to enable communication between CNode1 in alice and CNode1 in bob, the commands are:
@@ -59,4 +61,3 @@ Then we can run ahab controllers for sdx, alice and bob.
   10. Delete a slice
     we can delete a slice with command: ./scripts/createslice.sh -c configFile -d
     For exmaple: ./scripts/createslice.sh -c config/alice.conf -d
-    

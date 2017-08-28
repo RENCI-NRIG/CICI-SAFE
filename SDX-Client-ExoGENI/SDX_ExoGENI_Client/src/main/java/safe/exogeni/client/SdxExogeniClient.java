@@ -112,7 +112,7 @@ public class SdxExogeniClient extends SliceCommon {
 //	 			System.out.println(obj.sayHello()); 
       java.io.BufferedReader stdin = new java.io.BufferedReader(new java.io.InputStreamReader(System.in));  
       while(true){
-        System.out.print("Enter Commands:stitch clientslicename, server slice anme, client resource name, server resource name\n Or advertise route: route dest  gateway sdx routername,\n$>");
+        System.out.print("Enter Commands:stitch client_resource_name  server_slice_name  server_resource_name\n Or advertise route: route dest gateway sdx_slice_name routername,\n$>");
         input = stdin.readLine();  
         String[] params=input.split(" ");
         System.out.print("continue?[y/n]\n$>"+input);
@@ -154,7 +154,7 @@ public class SdxExogeniClient extends SliceCommon {
     try{
       Slice s2 = null;
       try {
-        s2 = Slice.loadManifestFile(sliceProxy, params[1]);
+        s2 = Slice.loadManifestFile(sliceProxy, sliceName);
       } catch (ContextTransportException e) {
         // TODO Auto-generated catch block
         e.printStackTrace();
@@ -162,13 +162,13 @@ public class SdxExogeniClient extends SliceCommon {
         // TODO Auto-generated catch block
         e.printStackTrace();
       }
-      ComputeNode node0_s2 = (ComputeNode) s2.getResourceByName(params[3]);
+      ComputeNode node0_s2 = (ComputeNode) s2.getResourceByName(params[1]);
       String node0_s2_stitching_GUID = node0_s2.getStitchingGUID();
       String secret="mysecret";
       System.out.println("node0_s2_stitching_GUID: " + node0_s2_stitching_GUID);
       try {
         //s1
-        sliceProxy.permitSliceStitch(params[1],node0_s2_stitching_GUID, secret);
+        sliceProxy.permitSliceStitch(sliceName,node0_s2_stitching_GUID, secret);
       } catch (TransportException e) {
         // TODO Auto-generated catch block
         System.out.println("Failed to permit stitch");
@@ -177,12 +177,12 @@ public class SdxExogeniClient extends SliceCommon {
       }
       //post stitch request to SAFE
       System.out.println("posting stitch request statements to SAFE Sets");
-      postSafeStitchRequest(keyhash,params[1],node0_s2_stitching_GUID,params[2],params[4]);
+      postSafeStitchRequest(keyhash,sliceName,node0_s2_stitching_GUID,params[2],params[3]);
       JSONObject jsonparams=new JSONObject();
       jsonparams.put("sdxslice",params[2]);
-      jsonparams.put("sdxnode",params[4]);
+      jsonparams.put("sdxnode",params[3]);
       jsonparams.put("ckeyhash",keyhash);
-      jsonparams.put("cslice",params[1]);
+      jsonparams.put("cslice",sliceName);
       jsonparams.put("creservid",node0_s2_stitching_GUID);
       jsonparams.put("secret",secret);
       JSONObject res=SdxHttpClient.tryStitch("http://152.3.136.36:8080/sdx/stitchrequest",jsonparams);
