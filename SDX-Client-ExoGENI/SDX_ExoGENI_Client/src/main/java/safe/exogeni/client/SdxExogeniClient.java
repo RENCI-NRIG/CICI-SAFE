@@ -144,7 +144,7 @@ public class SdxExogeniClient extends SliceCommon {
     }
     catch (Exception e) 
     { 
-      System.out.println("HelloClient exception: " + e.getMessage()); 
+      System.out.println("HttpClient exception: " + e.getMessage()); 
       e.printStackTrace(); 
     } 
 		System.out.println("XXXXXXXXXX Done XXXXXXXXXXXXXX");
