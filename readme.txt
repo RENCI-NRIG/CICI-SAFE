@@ -37,9 +37,9 @@ Then we can run ahab controllers for sdx, alice and bob.
     $./updatess.sh 
 
   7. alice stitch CNode0 to sdx/c0, in alice's controller, run:
-    $>stitch c0 sdx CNode0
+    $>stitch CNode0 sdx c0
     bob stitch CNode0 to sdx/c3, in bob's controller run:
-    $>stitch c3 sdx CNode0
+    $>stitch CNode sdx c3
 
   8. route
     alice tells sdx controller its address space
