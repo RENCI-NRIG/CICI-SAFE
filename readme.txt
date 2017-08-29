@@ -32,9 +32,10 @@ Then we can run ahab controllers for sdx, alice and bob.
  [6]. post SAFE identity sets, make SAFE statements to state the stitching and traffic policies, allocation of IP prefixes and stitching requests.
     $ cd safe-scripts 
     Edit the SAFESERVER ip address to your safe server IP address in idset.sh, post.sh and updatess.sh, and run following scripts to make posts to safesets. Messages with a token in each message are expected.
-    $./idset.sh
-    $./post.sh
-    $./updatess.sh 
+    $ ./trustedparty.sh
+    $ ./sdx.sh
+    $ ./alice.sh
+    $ ./bob.sh
 
   7. alice stitch CNode0 to sdx/c0, in alice's controller, run:
     $>stitch CNode0 sdx c0
