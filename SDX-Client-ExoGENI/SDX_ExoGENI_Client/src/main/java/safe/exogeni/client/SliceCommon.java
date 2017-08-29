@@ -112,7 +112,7 @@ public class SliceCommon {
   protected static void waitTillActive(Slice s){
 		boolean sliceActive = true;
     while(true){
-			logger.debug("");
+      sliceActive=true;
 			logger.debug("Slice: " + s.getAllResources());
 			for(ComputeNode c : s.getComputeNodes()){
 				logger.debug("Resource: " + c.getName() + ", state: "  + c.getState());
@@ -128,7 +128,7 @@ public class SliceCommon {
 		}
 		logger.debug("Done");
 		for(ComputeNode n : s.getComputeNodes()){
-			logger.debug("ComputeNode: " + n.getName() + ", Managment IP =  " + n.getManagementIP());
+			System.out.println("ComputeNode: " + n.getName() + ", Managment IP =  " + n.getManagementIP());
 		}
   }
 
