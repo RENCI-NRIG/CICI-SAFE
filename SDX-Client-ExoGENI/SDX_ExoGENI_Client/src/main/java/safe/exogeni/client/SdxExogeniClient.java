@@ -63,6 +63,7 @@ import org.json.JSONObject;
 public class SdxExogeniClient extends SliceCommon {
   public SdxExogeniClient(){}
   private static String type;
+  private static String sdxserver;
 	
 	public static void main(String [] args){
     //Example usage: ./target/appassembler/bin/SafeSdxClient -f alice.conf
@@ -77,6 +78,7 @@ public class SdxExogeniClient extends SliceCommon {
     CommandLine cmd=parseCmd(args);
 		String configfilepath=cmd.getOptionValue("config");
     readConfig(configfilepath);
+    sdxserver=conf.getString("config.sdxserver");
 
 		sliceProxy = getSliceProxy(pemLocation,keyLocation, controllerUrl);		
 		//SSH context
@@ -127,7 +129,7 @@ public class SdxExogeniClient extends SliceCommon {
               paramsobj.put("gateway",params[2]);
               paramsobj.put("router", params[4]);
               paramsobj.put("customer", keyhash);
-              String res=SdxHttpClient.notifyPrefix("http://152.3.136.36:8080/sdx/notifyprefix",paramsobj);
+              String res=SdxHttpClient.notifyPrefix(sdxserver+"sdx/notifyprefix",paramsobj);
               if(res.equals("")){
                 System.out.println("Prefix notifcation failed");
               }
@@ -185,7 +187,7 @@ public class SdxExogeniClient extends SliceCommon {
       jsonparams.put("cslice",sliceName);
       jsonparams.put("creservid",node0_s2_stitching_GUID);
       jsonparams.put("secret",secret);
-      JSONObject res=SdxHttpClient.tryStitch("http://152.3.136.36:8080/sdx/stitchrequest",jsonparams);
+      JSONObject res=SdxHttpClient.tryStitch(sdxserver+"sdx/stitchrequest",jsonparams);
       System.out.println("Got Stitch Information From Server:\n "+res.toString());
       if(!res.getBoolean("result")){
         System.out.println("stitch request declined by server");
