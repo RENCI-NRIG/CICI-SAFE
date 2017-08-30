@@ -4,6 +4,8 @@ To run the SDX demo, first we creat a SDX slice and two customer slices on exoge
 [1] Run riak-server
     Launch a riak server with code and instructions in SAFE-Riak-Server
 
+Configuration: set variables in "SAFE/configure" and run it. It will generate configuration files for sdx, alice and bob and put them in their config directory
+
 [2] Create a SDX slice
   a) $cd SDX-Simple
   b) Edit configuration file for sdx slice "config/sdx.conf"
