@@ -1,0 +1,17 @@
+#!/bin/bash
+SDXSERVER="http://152.3.136.36:8080/"
+RIAKSERVER="128.194.6.136"
+SSHKEY="~/.ssh/id_rsa"
+EXOGENIPEM="~/.ssl/geni-yuanjuny.pem"
+SDXNAME="sdx"
+ALICENAME="alice"
+BOBNAME="bob"
+
+CWD=$(pwd)
+SDX_SCRIPTSDIR="${CWD}/SDX-Simple/SAFE_SDX/src/main/resources/scripts/"
+CLIENT_SCRIPTDIR="${CWD}/SDX-Client-ExoGENI/SDX_ExoGENI_Client/src/main/resources/scripts/"
+
+sed  "s@{SLICENAME}@${SDXNAME}@g;s@{SSHKEY}@${SSHKEY}@g;s@{EXOGENIPEM}@${EXOGENIPEM}@g;s@{RIAKSERVER}@${RIAKSERVER}@g;s@{SDXSERVER}@${SDXSERVER}@g; s@{SDX_SCRIPTSDIR}@${SDX_SCRIPTSDIR}@g" config/sdxconf.txt | tee ${CWD}/SDX-Simple/config/${SDXNAME}.conf
+
+sed  "s@{SLICENAME}@${ALICENAME}@g;s@{SSHKEY}@${SSHKEY}@g;s@{EXOGENIPEM}@${EXOGENIPEM}@g;s@{RIAKSERVER}@${RIAKSERVER}@g;s@{SDXSERVER}@${SDXSERVER}@g; s@{SDX_SCRIPTSDIR}@${SDX_SCRIPTSDIR}@g" config/clientconf.txt | tee ${CWD}/SDX-Simple/config/${ALICENAME}.conf
+sed  "s@{SLICENAME}@${BOBNAME}@g;s@{SSHKEY}@${SSHKEY}@g;s@{EXOGENIPEM}@${EXOGENIPEM}@g;s@{RIAKSERVER}@${RIAKSERVER}@g;s@{SDXSERVER}@${SDXSERVER}@g; s@{SDX_SCRIPTSDIR}@${SDX_SCRIPTSDIR}@g" config/clientconf.txt | tee ${CWD}/SDX-Simple/config/${BOBNAME}.conf

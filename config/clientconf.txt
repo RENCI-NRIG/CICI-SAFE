@@ -1,0 +1,13 @@
+config{
+  slicename="{SLICENAME}"
+  type="client"
+  sshkey="{SSHKEY}"
+  safekey="V1F2853Nq8V304Yb_GInYaWTgVqmBsQwC0tXWuNmmf8"
+  exogenipem="{EXOGENIPEM}"
+  exogenism="https://geni.renci.org:11443/orca/xmlrpc"
+  ipprefix="192.168.10.1/24"
+  riakserver="{RIAKSERVER}"
+  sdxserver="{SDXSERVER}"
+  scriptsdir=""
+}
+
