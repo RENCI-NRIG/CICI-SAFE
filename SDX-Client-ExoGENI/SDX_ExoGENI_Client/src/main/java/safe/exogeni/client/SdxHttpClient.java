@@ -1,4 +1,5 @@
 package safe.exogeni.client;
+import safe.utils.Exec;
 import safe.utils.SafePost;
 
 import java.net.URI;
@@ -13,6 +14,7 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.util.EntityUtils;
+import org.apache.log4j.Logger;
 import org.apache.http.client.HttpClient;
 import org.json.JSONObject;
 /**
@@ -20,7 +22,9 @@ import org.json.JSONObject;
  *
  */
 public class SdxHttpClient {
-  // Base URI the Grizzly HTTP server will listen on
+	  final static Logger logger = Logger.getLogger(Exec.class);	
+
+	// Base URI the Grizzly HTTP server will listen on
   /**
    * Starts Grizzly HTTP server exposing JAX-RS resources defined in this application.
    * @return Grizzly HTTP server.
@@ -41,7 +45,7 @@ public class SdxHttpClient {
       HttpResponse response = httpClient.execute(request);
       //handle response here...
       String output=EntityUtils.toString(response.getEntity());
-      System.out.println(output);
+      logger.debug(output);
       JSONObject jsonobj=new JSONObject(output);
       httpClient.getConnectionManager().shutdown(); 
       return jsonobj;

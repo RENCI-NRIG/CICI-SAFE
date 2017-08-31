@@ -1,4 +1,4 @@
-package safe.sdx.sdx;
+package sdx.core;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -8,6 +8,10 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
+import org.apache.log4j.Logger;
+
+import sdx.utils.Exec;
+
 import java.util.ArrayList;
 
 /**
@@ -15,6 +19,9 @@ import java.util.ArrayList;
  */
 @Path("sdx")
 public class RestService {
+	
+	  final static Logger logger = Logger.getLogger(Exec.class);	
+
 
     /** 
      * Method handling HTTP GET requests. The returned object will be sent
@@ -34,7 +41,7 @@ public class RestService {
     @Path("/sr")
     @Produces(MediaType.APPLICATION_JSON)
     public StitchRequest getJson() {
-      System.out.println("json get");
+      logger.debug("json get");
 
         return new StitchRequest("1","2","3","4","5","6");
     }
@@ -44,7 +51,7 @@ public class RestService {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public StitchResult stitchRequest(StitchRequest sr){
-      System.out.println("got sittch request");
+      logger.debug("got sittch request");
       String[] res=SdxManager.stitchRequest(sr.sdxslice,sr.sdxnode, sr.ckeyhash, sr.cslice, sr.creservid, sr.secret);
       return new StitchResult(res[0],res[1]);
     }
@@ -54,7 +61,7 @@ public class RestService {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.TEXT_PLAIN)
     public String stitchRequest(PrefixNotification pn){
-      System.out.println("got sittch request");
+      logger.debug("got sittch request");
       String res=SdxManager.notifyPrefix(pn.dest, pn.gateway, pn.router, pn.customer);
       return res;
     }

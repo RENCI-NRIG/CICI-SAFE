@@ -1,16 +1,21 @@
-package safe.sdx.sdx.routingmanager;
+package sdx.routingmanager;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import safe.sdx.utils.Exec;
+import org.apache.log4j.Logger;
+
+import sdx.utils.Exec;
 
 import java.util.HashSet;
 import java.lang.System;
 
 public class RoutingManager{
+  final static Logger logger = Logger.getLogger(Exec.class);	
+
+	
   private  ArrayList<Router> routers=new ArrayList<Router>();
   private  ArrayList<String[]>ip_router=new ArrayList<String[]>();
   private  ArrayList<String[]>links=new ArrayList<String[]>();
@@ -46,7 +51,7 @@ public class RoutingManager{
   }
 
   public  void addLink(String ipa, String ra, String ipb,String rb){
-    //System.out.println(ipa+" "+ipb);
+    //logger.debug(ipa+" "+ipb);
     if(!ipa.equals("") && !ipb.equals("")){
       putLink(ipa,ipb);
       putLink(ipb,ipa);
@@ -56,7 +61,7 @@ public class RoutingManager{
       router.addInterface(ipa);
       putPairRouter(ipa, router.getDPID());
       if(!rb.equals("")){
-        //System.out.println("addneighbor"+ipa+" "+ipb);
+        //logger.debug("addneighbor"+ipa+" "+ipb);
         router.addNeighbor(ipb);
         putRouter(router);
         router=getRouter(rb);
@@ -80,12 +85,12 @@ public class RoutingManager{
   }
 
   public void newRouter(String routerid, String dpid, int numInterfaces) {
-    System.out.println("RoutingManager: new router "+routerid+ " "+dpid);
+    logger.debug("RoutingManager: new router "+routerid+ " "+dpid);
     addRouter(routerid, dpid, numInterfaces);
   }
 
   public void newLink(String ipa, String ra, String controller) {
-    System.out.println("RoutingManager: new link "+ra+ipa);
+    logger.debug("RoutingManager: new link "+ra+ipa);
     addLink(ipa,ra);
     String dpid= getRouter(ra).getDPID();
     String cmd = addrCMD(ipa,dpid,controller);
@@ -94,7 +99,7 @@ public class RoutingManager{
   }
 
   public void newLink(String ipa, String ra, String ipb, String rb, String controller){
-    System.out.println("RoutingManager: new link "+ra+ipa+rb+ipb);
+    logger.debug("RoutingManager: new link "+ra+ipa+rb+ipb);
     addLink(ipa,ra,ipb,rb);
     String dpid=getDPID(ra);
     String cmd=addrCMD(ipa,dpid, controller);
@@ -109,7 +114,7 @@ public class RoutingManager{
   public void configurePath(String dest, String nodename, String gateway, String controller) {
     String gwdpid=getRouter(nodename).getDPID();
     if(gwdpid==null){
-      System.out.println("No router named "+nodename+" not found");
+      logger.debug("No router named "+nodename+" not found");
       return;
     }
     ArrayList<String[]>paths=getBroadcastRoutes(gwdpid,gateway);
@@ -117,7 +122,7 @@ public class RoutingManager{
       String cmd=routingCMD(dest, path[1], path[0], controller);
       Exec.exec(cmd);
       addEntry_HashList(sdncmds,path[0],cmd);
-      //System.out.println(path[0]+" "+path[1]);
+      //logger.debug(path[0]+" "+path[1]);
     }
   }
 
@@ -125,7 +130,7 @@ public class RoutingManager{
     String gwdpid=getRouter(nodename).getDPID();
     String targetdpid=getRouter(targetnodename).getDPID();
     if(gwdpid==null ||targetdpid==null){
-      System.out.println("No router named "+nodename+" not found");
+      logger.debug("No router named "+nodename+" not found");
       return;
     }
     ArrayList<String[]>paths=getPairRoutes(gwdpid,targetdpid,gateway);
@@ -133,7 +138,7 @@ public class RoutingManager{
       String cmd=routingCMD(dest,targetIP, path[1], path[0], controller);
       Exec.exec(cmd);
       addEntry_HashList(sdncmds,path[0],cmd);
-      //System.out.println(path[0]+" "+path[1]);
+      //logger.debug(path[0]+" "+path[1]);
     }
   }
   public  Router getRouter(String routername){
@@ -154,7 +159,7 @@ public class RoutingManager{
       }
     }
     else{
-      System.out.println("No cmd to replay");
+      logger.debug("No cmd to replay");
     }
   }
 
@@ -172,7 +177,7 @@ public class RoutingManager{
 
   //TODO: get shortest path for two pairs
   private ArrayList<String[]> getPairRoutes(String srcdpid, String dstdpid, String gateway){
-    System.out.println("shortest path");
+    logger.debug("shortest path");
 
     HashSet<String> knownrouters=new HashSet<String>();
     //path queue: [dpid, path]
@@ -189,14 +194,14 @@ public class RoutingManager{
     int start=0;
     int end=0;
     while(start<=end){
-      //System.out.println("queue[start]"+queue.get(start));
+      //logger.debug("queue[start]"+queue.get(start));
       String rid=queue.get(start);
       start+=1;
       Router router=getRouterByDPID(rid);
       if(router!=null){
         ArrayList<String> nips=getNeighborIPs(rid);
         for (String ip:nips){
-          //System.out.println("neighborIP: "+ip);
+          //logger.debug("neighborIP: "+ip);
           if(!knownrouters.contains(getPairRouter(ip))){
             knownrouters.add(getPairRouter(ip));
             queue.add(getPairRouter(ip));
@@ -215,7 +220,7 @@ public class RoutingManager{
         }
       }
       else{
-        System.out.println("Router null");
+        logger.debug("Router null");
       }
     }
     ArrayList<String[]> spaths=new ArrayList<String[]>();
@@ -231,12 +236,12 @@ public class RoutingManager{
   }
 
   private  ArrayList<String[]> getBroadcastRoutes(String gwdpid, String gateway){
-    //System.out.println("All routers and links");
+    //logger.debug("All routers and links");
     //for(String[] link:links){
-    //  //System.out.println(link[0]+" "+link[1]);
+    //  //logger.debug(link[0]+" "+link[1]);
     //}
     //for(String[] link:ip_router){
-    //  //System.out.println(link[0]+" "+link[1]);
+    //  //logger.debug(link[0]+" "+link[1]);
     //}
 
     HashSet<String> knownrouters=new HashSet<String>();
@@ -254,14 +259,14 @@ public class RoutingManager{
     int start=0;
     int end=0;
     while(start<=end){
-      //System.out.println("queue[start]"+queue.get(start));
+      //logger.debug("queue[start]"+queue.get(start));
       String rid=queue.get(start);
       start+=1;
       Router router=getRouterByDPID(rid);
       if(router!=null){
         ArrayList<String> nips=getNeighborIPs(rid);
         for (String ip:nips){
-          //System.out.println("neighborIP: "+ip);
+          //logger.debug("neighborIP: "+ip);
           if(!knownrouters.contains(getPairRouter(ip))){
             knownrouters.add(getPairRouter(ip));
             queue.add(getPairRouter(ip));
@@ -276,7 +281,7 @@ public class RoutingManager{
         }
       }
       else{
-        System.out.println("Router null");
+        logger.debug("Router null");
       }
     }
     return knownpaths;
@@ -337,7 +342,7 @@ public class RoutingManager{
   }
   private  String getPairRouter(String ip){
     for (String[] link: ip_router){
-      //System.out.println(link[0]+" "+link[1]);
+      //logger.debug(link[0]+" "+link[1]);
       if(link[0].equals(ip))
         return link[1];
     }
@@ -354,7 +359,7 @@ public class RoutingManager{
   }
 
   private  void println(String out){
-    System.out.println(out);
+    logger.debug(out);
   }
 }
 

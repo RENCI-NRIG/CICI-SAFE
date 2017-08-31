@@ -63,6 +63,9 @@ import java.rmi.server.UnicastRemoteObject;
  *
  */
 public class Example extends SliceCommon{
+  final static Logger logger = Logger.getLogger(Exec.class);	
+	
+	
 	public Example()throws RemoteException{}
 	private static int curip=128;
 	private static String IPPrefix="192.168.";
@@ -71,7 +74,7 @@ public class Example extends SliceCommon{
 	private static String type;
 
 	private static  void computeIP(String prefix){
-		System.out.println(prefix);
+		logger.debug(prefix);
 		String[] ip_mask=prefix.split("/");
 		String[] ip_segs=ip_mask[0].split("\\.");
 		IPPrefix=ip_segs[0]+"."+ip_segs[1]+".";
@@ -81,15 +84,15 @@ public class Example extends SliceCommon{
 	public static void main(String [] args){
 		//Example usage:   ./target/appassembler/bin/SafeSdxExample  ~/.ssl/geni-pruth1.pem ~/.ssl/geni-pruth1.pem "https://geni.renci.org:11443/orca/xmlrpc" pruth.1 stitch
 		//Example usage:   ./target/appassembler/bin/SafeSdxExample  ~/.ssl/geni-pruth1.pem ~/.ssl/geni-pruth1.pem "https://geni.renci.org:11443/orca/xmlrpc" name fournodes
-		System.out.println("SDX-Simple " + args[0]);
+		logger.debug("SDX-Simple " + args[0]);
 
 		CommandLine cmd=parseCmd(args);
 
-		System.out.println("cmd " + cmd);
+		logger.debug("cmd " + cmd);
 		
 		String configfilepath=cmd.getOptionValue("config");
 		
-		System.out.println("configfilepath " + configfilepath);
+		logger.debug("configfilepath " + configfilepath);
     readConfig(configfilepath);
 		
 		type=conf.getString("config.type");
@@ -116,7 +119,7 @@ public class Example extends SliceCommon{
       IPPrefix=conf.getString("config.ipprefix");
       riakip=conf.getString("config.riakserver");
       computeIP(IPPrefix);
-      System.out.println("client start");
+      logger.debug("client start");
       String customerName=sliceName;
       try{
           System.out.print("Using riak server at "+riakip);
@@ -125,7 +128,7 @@ public class Example extends SliceCommon{
           //copyFile2Slice(c1, "/home/yaoyj11/project/exo-geni/SAFE_SDX/src/main/resources/scripts/configospffornewif.sh","~/configospffornewif.sh","~/.ssh/id_rsa");
           //copyFile2Slice(c1, "/home/yaoyj11/project/exo-geni/SAFE_SDX/src/main/resources/scripts/configospffornewif.sh","~/configospffornewif.sh","~/.ssh/id_rsa");
           //runCmdSlice(c1,"/bin/bash ~/ospfautoconfig.sh","~/.ssh/id_rsa");
-          System.out.println("Slice active now");
+          logger.debug("Slice active now");
           return;
       }catch (Exception e){
         e.printStackTrace();
@@ -134,7 +137,7 @@ public class Example extends SliceCommon{
 		else if (type.equals("delete")){
 			Slice s2 = null;
 			try{
-				System.out.println("deleting slice "+sliceName);
+				logger.debug("deleting slice "+sliceName);
 				s2=Slice.loadManifestFile(sliceProxy, sliceName);
 				s2.delete();
 			}catch (Exception e){
@@ -142,11 +145,11 @@ public class Example extends SliceCommon{
 			}
 
 		}
-		System.out.println("XXXXXXXXXX Done XXXXXXXXXXXXXX");
+		logger.debug("XXXXXXXXXX Done XXXXXXXXXXXXXX");
 	}
 
 	public static Slice createCarrierSlice(String sliceName,int num,int start, long bw,int numstitches){//,String stitchsubnet="", String slicesubnet="")	
-		System.out.println("ndllib TestDriver: START");
+		logger.debug("ndllib TestDriver: START");
 
 		Slice s = Slice.create(sliceProxy, sctx, sliceName);
 
@@ -197,7 +200,7 @@ public class Example extends SliceCommon{
 	}
 
 	public static  Slice createCustomerSlice(String sliceName, int num,String prefix, int start,long bw,boolean network){//=1, String subnet="")
-		System.out.println("ndllib TestDriver: START");
+		logger.debug("ndllib TestDriver: START");
 		//Main Example Code
 
 		Slice s = Slice.create(sliceProxy, sctx, sliceName);
@@ -244,7 +247,7 @@ public class Example extends SliceCommon{
 	}
 
 	public static  Slice createRiakSlice(String sliceName){
-		System.out.println("ndllib TestDriver: START");
+		logger.debug("ndllib TestDriver: START");
 
 		Slice s = Slice.create(sliceProxy, sctx, sliceName);
 		String dockerImageShortName="Ubuntu 14.04 Docker";
@@ -266,7 +269,7 @@ public class Example extends SliceCommon{
 		Exec.sshExec("root",riakip,"docker exec -i -t -d  riakserver sudo riak-admin bucket-type activate  safesets",sshkey);
 		Exec.sshExec("root",riakip,"docker exec -i -t  -d riakserver sudo riak-admin bucket-type update safesets '{\"props\":{\"allow_mult\":false}}'",sshkey);
 		Exec.sshExec("root",riakip,"docker exec -it -d riakserver sudo riak ping",sshkey);
-		System.out.println("Started riak server at "+riakip);
+		logger.debug("Started riak server at "+riakip);
 		return s;
 	}
 

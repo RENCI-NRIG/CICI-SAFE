@@ -1,4 +1,4 @@
-package safe.sdx.sdx;
+package sdx.core;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 import java.io.BufferedReader;
@@ -51,12 +51,16 @@ import org.renci.ahab.libtransport.util.UtilTransportException;
 import org.renci.ahab.libtransport.xmlrpc.XMLRPCProxyFactory;
 import org.renci.ahab.ndllib.transport.OrcaSMXMLRPCProxy;
 
-import safe.sdx.utils.Exec;
-import safe.sdx.utils.ScpTo;
 import com.typesafe.config.*;
+
+import sdx.utils.Exec;
+import sdx.utils.ScpTo;
 
 
 public class SliceCommon {
+	  final static Logger logger = Logger.getLogger(Exec.class);	
+
+	
 	protected static final String RequestResource = null;
 	protected static String controllerUrl;
   protected static String SDNControllerIP;
@@ -89,7 +93,7 @@ public class SliceCommon {
     try {
         cmd = parser.parse(options, args);
     } catch (ParseException e) {
-        System.out.println(e.getMessage());
+        logger.debug(e.getMessage());
         formatter.printHelp("utility-name", options);
 
         System.exit(1);
@@ -123,23 +127,23 @@ public class SliceCommon {
 		while (true){		
 			s.refresh();
 			sliceActive = true;
-			System.out.println("");
-			System.out.println("Slice: " + s.getAllResources());
+			logger.debug("");
+			logger.debug("Slice: " + s.getAllResources());
 			for(ComputeNode c : s.getComputeNodes()){
-				System.out.println("Resource: " + c.getName() + ", state: "  + c.getState());
+				logger.debug("Resource: " + c.getName() + ", state: "  + c.getState());
 				if(c.getState() != "Active") sliceActive = false;
 			}
 			for(Network l: s.getBroadcastLinks()){
-				System.out.println("Resource: " + l.getName() + ", state: "  + l.getState());
+				logger.debug("Resource: " + l.getName() + ", state: "  + l.getState());
 				if(l.getState() != "Active") sliceActive = false;
 			}
 		 	
 		 	if(sliceActive) break;
 		 	sleep(10);
 		}
-		System.out.println("Done");
+		logger.debug("Done");
 		for(ComputeNode n : s.getComputeNodes()){
-			System.out.println("ComputeNode: " + n.getName() + ", Managment IP =  " + n.getManagementIP());
+			logger.debug("ComputeNode: " + n.getName() + ", Managment IP =  " + n.getManagementIP());
 		}
   }
 
@@ -169,11 +173,11 @@ public class SliceCommon {
 		for(ComputeNode c : s.getComputeNodes()){
       String mip=c.getManagementIP();
       try{
-        System.out.println("scp config file to "+mip);
+        logger.debug("scp config file to "+mip);
         ScpTo.Scp(lfile,"root",mip,rfile,privkey);
 
       }catch (Exception e){
-        System.out.println("exception when copying config file");
+        logger.debug("exception when copying config file");
       }
 		}
   }
@@ -182,7 +186,7 @@ public class SliceCommon {
 		for(ComputeNode c : s.getComputeNodes()){
       String mip=c.getManagementIP();
       try{
-        System.out.println(mip+" run commands:"+cmd);
+        logger.debug(mip+" run commands:"+cmd);
         //ScpTo.Scp(lfile,"root",mip,rfile,privkey);
         String res=Exec.sshExec("root",mip,cmd,privkey);
         while(res.startsWith("error")){
@@ -191,7 +195,7 @@ public class SliceCommon {
         }
 
       }catch (Exception e){
-        System.out.println("exception when copying config file");
+        logger.debug("exception when copying config file");
       }
 		}
   }
@@ -206,7 +210,7 @@ public class SliceCommon {
       }
       String mip=c.getManagementIP();
       try{
-        System.out.println(mip+" run commands:"+cmd);
+        logger.debug(mip+" run commands:"+cmd);
         String res=Exec.sshExec("root",mip,cmd,privkey);
         while(res.startsWith("error")){
           sleep(5);
@@ -214,7 +218,7 @@ public class SliceCommon {
         }
 
       }catch (Exception e){
-        System.out.println("exception when copying config file");
+        logger.debug("exception when copying config file");
       }
 		}
   }
@@ -224,7 +228,7 @@ public class SliceCommon {
 		try{
 			//ExoGENI controller context
 			ITransportProxyFactory ifac = new XMLRPCProxyFactory();
-			System.out.println("Opening certificate " + pem + " and key " + key);
+			logger.debug("Opening certificate " + pem + " and key " + key);
 			TransportContext ctx = new PEMTransportContext("", pem, key);
 			sliceProxy = ifac.getSliceProxy(ctx, new URL(controllerUrl));
 
@@ -240,20 +244,20 @@ public class SliceCommon {
   protected static void getNetworkInfo(Slice s){
     //getLinks
     for(Network n :s.getLinks()){
-      System.out.println(n.getLabel()+" "+n.getState());
+      logger.debug(n.getLabel()+" "+n.getState());
     }
     //getInterfaces
     for(Interface i: s.getInterfaces()){
       InterfaceNode2Net inode2net=(InterfaceNode2Net)i;
-      System.out.println("MacAddr: "+inode2net.getMacAddress());
-      System.out.println("GUID: "+i.getGUID());
+      logger.debug("MacAddr: "+inode2net.getMacAddress());
+      logger.debug("GUID: "+i.getGUID());
     }
     for(ComputeNode node: s.getComputeNodes()){
-      System.out.println(node.getName()+node.getManagementIP());
+      logger.debug(node.getName()+node.getManagementIP());
       for(Interface i: node.getInterfaces()){
         InterfaceNode2Net inode2net=(InterfaceNode2Net)i;
-        System.out.println("MacAddr: "+inode2net.getMacAddress());
-        System.out.println("GUID: "+i.getGUID());
+        logger.debug("MacAddr: "+inode2net.getMacAddress());
+        logger.debug("GUID: "+i.getGUID());
       }
     }
   }

@@ -129,7 +129,7 @@ public class SliceCommon {
 		}
 		logger.debug("Slice active");
 		for(ComputeNode n : s.getComputeNodes()){
-			System.out.println("ComputeNode: " + n.getName() + ", Managment IP =  " + n.getManagementIP());
+			logger.debug("ComputeNode: " + n.getName() + ", Managment IP =  " + n.getManagementIP());
 		}
   }
 

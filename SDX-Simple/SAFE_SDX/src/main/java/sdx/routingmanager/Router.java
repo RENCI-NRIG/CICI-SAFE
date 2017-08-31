@@ -1,8 +1,14 @@
-package safe.sdx.sdx.routingmanager;
+package sdx.routingmanager;
 
 import java.util.HashSet;
 
+import org.apache.log4j.Logger;
+
+import sdx.utils.Exec;
+
 public class Router{
+  final static Logger logger = Logger.getLogger(Exec.class);	
+
     private String routerid="";
     private String dpid="";
     private HashSet<String> interfaces=new HashSet<String>();

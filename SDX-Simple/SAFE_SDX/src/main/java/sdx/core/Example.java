@@ -1,4 +1,4 @@
-package safe.sdx.sdx;
+package sdx.core;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 import java.io.BufferedReader;
@@ -49,9 +49,10 @@ import org.renci.ahab.libtransport.util.SSHAccessTokenFileFactory;
 import org.renci.ahab.libtransport.util.TransportException;
 import org.renci.ahab.libtransport.util.UtilTransportException;
 import org.renci.ahab.libtransport.xmlrpc.XMLRPCProxyFactory;
+import org.renci.ahab.libtransport.xmlrpc.XMLRPCTransportException;
 import org.renci.ahab.ndllib.transport.OrcaSMXMLRPCProxy;
 
-import safe.sdx.utils.Exec;
+import sdx.utils.Exec;
 
 import java.rmi.RMISecurityManager;
 import java.rmi.Naming;
@@ -63,6 +64,9 @@ import java.rmi.server.UnicastRemoteObject;
  *
  */
 public class Example extends SliceCommon{
+  final static Logger logger = Logger.getLogger(Exec.class);	
+
+	
 	public Example()throws RemoteException{}
 	private static int curip=128;
 	private static String IPPrefix="192.168.";
@@ -71,7 +75,7 @@ public class Example extends SliceCommon{
 	//private static String type;
 
 	private static  void computeIP(String prefix){
-		System.out.println(prefix);
+		logger.debug(prefix);
 		String[] ip_mask=prefix.split("/");
 		String[] ip_segs=ip_mask[0].split("\\.");
 		IPPrefix=ip_segs[0]+"."+ip_segs[1]+".";
@@ -85,13 +89,13 @@ public class Example extends SliceCommon{
 
 		CommandLine cmd=parseCmd(args);
 
-		System.out.println("cmd " + cmd);
+		logger.debug("cmd " + cmd);
 		
 		String configfilepath=cmd.getOptionValue("config");
 		
 		readConfig(configfilepath);
 		
-		System.out.println("configfilepath " + configfilepath);
+		logger.debug("configfilepath " + configfilepath);
     readConfig(configfilepath);
 		
 		//type=conf.getString("config.type");
@@ -144,11 +148,11 @@ public class Example extends SliceCommon{
 			}
 
 		}
-		System.out.println("XXXXXXXXXX Done XXXXXXXXXXXXXX");
+		logger.debug("XXXXXXXXXX Done XXXXXXXXXXXXXX");
 	}
 
 	public static Slice createCarrierSlice(String sliceName,int num,int start, long bw,int numstitches){//,String stitchsubnet="", String slicesubnet="")	
-		System.out.println("ndllib TestDriver: START");
+		logger.debug("ndllib TestDriver: START");
 
 		Slice s = Slice.create(sliceProxy, sctx, sliceName);
 
@@ -194,12 +198,17 @@ public class Example extends SliceCommon{
 		}
 		addSafeServer(s,riakip);
 		addPlexusController(s);
-		s.commit();
+		try {
+			s.commit();
+		} catch (XMLRPCTransportException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		return s;
 	}
 
 	public static  Slice createCustomerSlice(String sliceName, int num,String prefix, int start,long bw,boolean network){//=1, String subnet="")
-		System.out.println("ndllib TestDriver: START");
+		logger.debug("ndllib TestDriver: START");
 		//Main Example Code
 
 		Slice s = Slice.create(sliceProxy, sctx, sliceName);
@@ -241,12 +250,17 @@ public class Example extends SliceCommon{
 		}
 		//add safe server
 		addSafeServer(s,riakip);
-		s.commit();
+		try {
+			s.commit();
+		} catch (XMLRPCTransportException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		return s;
 	}
 
 	public static  Slice createRiakSlice(String sliceName){
-		System.out.println("ndllib TestDriver: START");
+		logger.debug("ndllib TestDriver: START");
 
 		Slice s = Slice.create(sliceProxy, sctx, sliceName);
 		String dockerImageShortName="Ubuntu 14.04 Docker";
@@ -258,7 +272,12 @@ public class Example extends SliceCommon{
 		node0.setNodeType(dockerNodeType);
 		node0.setDomain(domains.get(0));
 		node0.setPostBootScript(getRiakScript());
-		s.commit();
+		try {
+			s.commit();
+		} catch (XMLRPCTransportException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		waitTillActive(s);
 		ComputeNode riak=(ComputeNode) s.getResourceByName("riak");
 		String riakip=riak.getManagementIP();
@@ -268,7 +287,7 @@ public class Example extends SliceCommon{
 		Exec.sshExec("root",riakip,"docker exec -i -t -d  riakserver sudo riak-admin bucket-type activate  safesets",sshkey);
 		Exec.sshExec("root",riakip,"docker exec -i -t  -d riakserver sudo riak-admin bucket-type update safesets '{\"props\":{\"allow_mult\":false}}'",sshkey);
 		Exec.sshExec("root",riakip,"docker exec -it -d riakserver sudo riak ping",sshkey);
-		System.out.println("Started riak server at "+riakip);
+		logger.debug("Started riak server at "+riakip);
 		return s;
 	}
 

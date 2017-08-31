@@ -1,6 +1,13 @@
-package safe.sdx.sdx.routingmanager;
+package sdx.routingmanager;
+
+import org.apache.log4j.Logger;
+
+import sdx.utils.Exec;
 
 public class Link{
+  final static Logger logger = Logger.getLogger(Exec.class);	
+
+	
   public String linkname="";
   public String nodea="";
   public String nodeb="";

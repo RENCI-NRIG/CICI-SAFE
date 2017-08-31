@@ -1,8 +1,11 @@
-package safe.sdx.sdx;
+package sdx.core;
 
+import org.apache.log4j.Logger;
 import org.glassfish.grizzly.http.server.HttpServer;
 import org.glassfish.jersey.grizzly2.httpserver.GrizzlyHttpServerFactory;
 import org.glassfish.jersey.server.ResourceConfig;
+
+import sdx.utils.Exec;
 
 import java.io.IOException;
 import java.net.URI;
@@ -12,6 +15,9 @@ import java.net.URI;
  *
  */
 public class SdxServer {
+	  final static Logger logger = Logger.getLogger(Exec.class);	
+
+	
     // Base URI the Grizzly HTTP server will listen on
     /**
      * Starts Grizzly HTTP server exposing JAX-RS resources defined in this application.
@@ -35,7 +41,7 @@ public class SdxServer {
         SdxManager.startSdxServer(args);
 
         final HttpServer server = startServer(SdxManager.serverurl);
-        System.out.println("Sdx server has started, listening on "+SdxManager.serverurl);
+        logger.debug("Sdx server has started, listening on "+SdxManager.serverurl);
     }
 }
 

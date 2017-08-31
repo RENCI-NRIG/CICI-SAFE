@@ -50,15 +50,15 @@
 				<configuration>
 					<programs>
 						<program>
-							<mainClass>safe.sdx.sdx.SdxServer</mainClass>
+							<mainClass>sdx.core.SdxServer</mainClass>
 							<name>SafeSdxServer</name>
 						</program>
 						<program>
-							<mainClass>safe.sdx.sdx.Example</mainClass>
+							<mainClass>sdx.core.Example</mainClass>
 							<name>SafeSdxExample</name>
 						</program>
 						<program>
-              <mainClass>safe.sdx.sdx.MyHttpClient</mainClass>
+              <mainClass>sdx.core.MyHttpClient</mainClass>
 							<name>HttpClient</name>
 						</program>
 					</programs>
@@ -142,14 +142,14 @@
 			<groupId>org.renci.ahab</groupId>
 			<artifactId>ahab</artifactId>
       <!---<version>0.1.7-SNAPSHOT</version>  -->
-      <version>0.1.1</version>  
+      <version>0.1.7-SNAPSHOT</version>  
 			<!-- <version>0.1.1-SNAPSHOT</version> -->
 			<type>pom</type>
 		</dependency>
 		<dependency>
 			<groupId>org.renci.ahab</groupId>
 			<artifactId>libndl</artifactId>
-      <version>0.1.1</version>
+      <version>0.1.7-SNAPSHOT</version>
       <exclusions>
       	<exclusion>
       		<artifactId>jackson-core</artifactId>
@@ -160,7 +160,7 @@
 		<dependency>
 			<groupId>org.renci.ahab</groupId>
 			<artifactId>libtransport</artifactId>
-      <version>0.1.1</version>  
+      <version>0.1.7-SNAPSHOT</version>  
 <!--			<version>0.1.1-SNAPSHOT</version> -->
 		</dependency>
     <!-- https://mvnrepository.com/artifact/com.jcraft/jsch -->

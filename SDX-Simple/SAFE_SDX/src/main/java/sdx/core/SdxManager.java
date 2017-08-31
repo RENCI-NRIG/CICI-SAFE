@@ -1,10 +1,10 @@
-package safe.sdx.sdx;
+package sdx.core;
 
-import safe.sdx.utils.SafePost;
-import safe.sdx.utils.Exec;
-import safe.sdx.sdx.routingmanager.Link;
-import safe.sdx.sdx.routingmanager.Router;
-import safe.sdx.sdx.routingmanager.RoutingManager;
+import sdx.routingmanager.Link;
+import sdx.routingmanager.Router;
+import sdx.routingmanager.RoutingManager;
+import sdx.utils.Exec;
+import sdx.utils.SafePost;
 
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
@@ -58,6 +58,7 @@ import org.renci.ahab.libtransport.util.SSHAccessTokenFileFactory;
 import org.renci.ahab.libtransport.util.TransportException;
 import org.renci.ahab.libtransport.util.UtilTransportException;
 import org.renci.ahab.libtransport.xmlrpc.XMLRPCProxyFactory;
+import org.renci.ahab.libtransport.xmlrpc.XMLRPCTransportException;
 import org.renci.ahab.ndllib.transport.OrcaSMXMLRPCProxy;
 
 import java.net.MalformedURLException;
@@ -90,6 +91,9 @@ import org.apache.http.impl.client.DefaultHttpClient;
 public class SdxManager extends SliceCommon{
   public SdxManager(){}
 
+  final static Logger logger = Logger.getLogger(Exec.class);	
+
+  
   private static RoutingManager routingmanager=new RoutingManager();
   private static HashMap<String, Link> links=new HashMap<String, Link>();
   private static String IPPrefix="192.168.";
@@ -136,7 +140,7 @@ public class SdxManager extends SliceCommon{
 	
 	public static void startSdxServer(String [] args){
     
-		System.out.println("Carrier Slice server with Service API: START");
+		logger.debug("Carrier Slice server with Service API: START");
     CommandLine cmd=parseCmd(args);
 		String configfilepath=cmd.getOptionValue("config");
     readConfig(configfilepath);
@@ -179,7 +183,7 @@ public class SdxManager extends SliceCommon{
 	}
 
   public static String notifyPrefix(String dest, String gateway, String router,String customer_keyhash){
-    System.out.println("received notification for ip prefix"+dest);
+    logger.debug("received notification for ip prefix"+dest);
     String res="received notification for "+dest;
     if(authorizePrefix(customer_keyhash,dest)){
       res=res+" [authorization success]";
@@ -240,7 +244,7 @@ public class SdxManager extends SliceCommon{
   }
 
   public static String[] stitchRequest(String carrierName,String nodeName, String customer_slice,String customerName, String ResrvID,String secret) {
-    System.out.println("new request for"+carrierName +" and "+nodeName+pemLocation+keyLocation); 
+    logger.debug("new request for"+carrierName +" and "+nodeName+pemLocation+keyLocation); 
     String[] res=new String[2];
     res[0]=null;
     res[1]=null;
@@ -271,7 +275,12 @@ public class SdxManager extends SliceCommon{
       InterfaceNode2Net ifaceNode0 = (InterfaceNode2Net) net.stitch(node);
       ifaceNode0.setIpAddress("192.168.1.1");
       ifaceNode0.setNetmask("255.255.255.0");
-      s1.commit();
+      try {
+		s1.commit();
+	} catch (XMLRPCTransportException e1) {
+		// TODO Auto-generated catch block
+		e1.printStackTrace();
+	}
 
       int N=0;
       net=(Network)s1.getResourceByName(stitchname);
@@ -287,9 +296,9 @@ public class SdxManager extends SliceCommon{
         }
         net=(Network)s1.getResourceByName(stitchname);
         for(Network l:s1.getBroadcastLinks()){
-          System.out.println("Resource: " + l.getName() + ", state: "  + l.getState());
+          logger.debug("Resource: " + l.getName() + ", state: "  + l.getState());
         }
-        System.out.println(((Network)s1.getResourceByName(stitchname)).getState());
+        logger.debug(((Network)s1.getResourceByName(stitchname)).getState());
         sleep(5);
         N++;
       }
@@ -298,7 +307,7 @@ public class SdxManager extends SliceCommon{
       routingmanager.replayCmds(routingmanager.getDPID(nodeName));
       Exec.sshExec("root",node.getManagementIP(),"ifconfig;ovs-vsctl list port",sshkey);
       String net1_stitching_GUID = net.getStitchingGUID();
-      System.out.println("net1_stitching_GUID: " + net1_stitching_GUID);
+      logger.debug("net1_stitching_GUID: " + net1_stitching_GUID);
       Link link=new Link();
       link.setName(stitchname);
       link.addNode(nodeName);
@@ -317,7 +326,7 @@ public class SdxManager extends SliceCommon{
   }
 
 	public static void stitch(String carrierName, String RID,String customerName, String CID,String secret,String newip){	
-		System.out.println("ndllib TestDriver: START");
+		logger.debug("ndllib TestDriver: START");
 		//Main Example Code
     Long t1 = System.currentTimeMillis();
 		try {
@@ -330,8 +339,8 @@ public class SdxManager extends SliceCommon{
 			e.printStackTrace();
 		}
     Long t2 = System.currentTimeMillis();
-    System.out.println("Finished Stitching, set ip address of the new interface to "+newip+"  time elapsed: "+String.valueOf(t2-t1)+"\n");
-    System.out.println("finished sending reconfiguration command");
+    logger.debug("Finished Stitching, set ip address of the new interface to "+newip+"  time elapsed: "+String.valueOf(t2-t1)+"\n");
+    logger.debug("finished sending reconfiguration command");
 	}
 
   public static boolean authorizeStitchRequest(String customer_slice,String customerName,String ReservID,String keyhash,String slicename, String nodename){
@@ -353,15 +362,15 @@ public class SdxManager extends SliceCommon{
 
 
   private static void restartPlexus(String plexusip){
-    System.out.println("Restarting Plexus Controller");
+    logger.debug("Restarting Plexus Controller");
     String script="docker exec -d plexus /bin/bash -c  \"cd /root/plexus/plexus;pkill ryu-manager;ryu-manager app.py |tee log\"\n";
-    System.out.println(sshkey);
-    System.out.println(plexusip);
+    logger.debug(sshkey);
+    logger.debug(plexusip);
     Exec.sshExec("root",plexusip,script,sshkey);
   }
 
   public static void configRouting(Slice s,String ovscontroller, String httpcontroller, String routerpattern){
-    System.out.println("Configurating Routing");
+    logger.debug("Configurating Routing");
     restartPlexus(SDNControllerIP);
     sleep(5);
     runCmdSlice(s,"/bin/bash ~/ovsbridge.sh "+ovscontroller,sshkey,"(c\\d+)");
@@ -374,17 +383,17 @@ public class SdxManager extends SliceCommon{
           continue;
         }
         String mip= node.getManagementIP();
-        System.out.println(node.getName()+" "+mip);
+        logger.debug(node.getName()+" "+mip);
         Exec.sshExec("root",mip,"/bin/bash ~/ovsbridge.sh "+ ovscontroller,sshkey).split(" ");
         String[] result=Exec.sshExec("root",mip,"/bin/bash ~/dpid.sh",sshkey).split(" ");
         try{
-          System.out.println("Get router info "+result[0]+" "+result[1]);
+          logger.debug("Get router info "+result[0]+" "+result[1]);
           routingmanager.newRouter(node.getName(),result[1],Integer.valueOf(result[0]));
         }catch(Exception e){
           e.printStackTrace();
         }
       }
-      System.out.println("setting up links)");
+      logger.debug("setting up links)");
       HashSet<Integer> usedip=new HashSet<Integer>();
       for(Interface i: s.getInterfaces()){
         InterfaceNode2Net inode2net=(InterfaceNode2Net)i;
@@ -405,12 +414,12 @@ public class SdxManager extends SliceCommon{
           link.addNode(inode2net.getNode().toString());
         }
         links.put(inode2net.getLink().toString(),link);
-        //System.out.println(inode2net.getNode()+" "+inode2net.getLink());
+        //logger.debug(inode2net.getNode()+" "+inode2net.getLink());
       }
 
       Set keyset=links.keySet();
-      //System.out.println(keyset);
-      System.out.println("Wait until all ovs bridges have connected to SDN controller");
+      //logger.debug(keyset);
+      logger.debug("Wait until all ovs bridges have connected to SDN controller");
 
       boolean flag=true;
       while(flag){
@@ -424,10 +433,10 @@ public class SdxManager extends SliceCommon{
           String mip= node.getManagementIP();
           String result=Exec.sshExec("root",mip,"ovs-vsctl show",sshkey);
           if(result.contains("is_connected: true")){
-            System.out.println(node.getName() +" connected");
+            logger.debug(node.getName() +" connected");
           }
           else{
-            System.out.println(node.getName() +" not connected");
+            logger.debug(node.getName() +" not connected");
             flag=true;
           }
         }
@@ -445,11 +454,11 @@ public class SdxManager extends SliceCommon{
         }
         String param="";
         if(link.nodeb!=""){
-          //System.out.println(link.nodea+":"+link.getIP(1)+" "+link.nodeb+":"+link.getIP(2));
+          //logger.debug(link.nodea+":"+link.getIP(1)+" "+link.nodeb+":"+link.getIP(2));
           routingmanager.newLink(link.getIP(1), link.nodea, link.getIP(2), link.nodeb, httpcontroller);
         }
         else{
-          //System.out.println(link.nodea+" gateway address:"+link.getIP(1));
+          //logger.debug(link.nodea+" gateway address:"+link.getIP(1));
           routingmanager.newLink(link.getIP(1), link.nodea, httpcontroller);
         }
       }
@@ -461,7 +470,7 @@ public class SdxManager extends SliceCommon{
 	
 
 	public static void undoStitch(String carrierName, String customerName, String netName, String nodeName){	
-		System.out.println("ndllib TestDriver: START");
+		logger.debug("ndllib TestDriver: START");
 		
 		//Main Example Code
 		
@@ -485,8 +494,8 @@ public class SdxManager extends SliceCommon{
 		ComputeNode node0_s2 = (ComputeNode) s2.getResourceByName(nodeName);
 		String node0_s2_stitching_GUID = node0_s2.getStitchingGUID();
 		
-		System.out.println("net1_stitching_GUID: " + net1_stitching_GUID);
-		System.out.println("node0_s2_stitching_GUID: " + node0_s2_stitching_GUID);
+		logger.debug("net1_stitching_GUID: " + net1_stitching_GUID);
+		logger.debug("node0_s2_stitching_GUID: " + node0_s2_stitching_GUID);
     Long t1 = System.currentTimeMillis();
 			
 		try {
@@ -499,7 +508,7 @@ public class SdxManager extends SliceCommon{
 			e.printStackTrace();
 		}
     Long t2 = System.currentTimeMillis();
-    System.out.println("Finished UnStitching, time elapsed: "+String.valueOf(t2-t1)+"\n");
+    logger.debug("Finished UnStitching, time elapsed: "+String.valueOf(t2-t1)+"\n");
 	}
 }
 

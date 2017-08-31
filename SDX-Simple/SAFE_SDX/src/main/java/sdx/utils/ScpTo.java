@@ -1,12 +1,21 @@
 /* -*-mode:java; c-basic-offset:2; indent-tabs-mode:nil -*- */
-package safe.sdx.utils;
+package sdx.utils;
 import com.jcraft.jsch.*;
+
+import sdx.utils.Exec;
+
 import java.awt.*;
 import javax.swing.*;
+
+import org.apache.log4j.Logger;
+
 import java.io.*;
 import java.util.Properties;
 
 public class ScpTo{
+  final static Logger logger = Logger.getLogger(Exec.class);	
+
+	
   public static void Scp(String lfile,String user, String host,String rfile,String privkey){
     FileInputStream fis=null;
     try{
@@ -18,9 +27,9 @@ public class ScpTo{
       config.put("StrictHostKeyChecking", "no");
       session.setConfig(config);
       // username and password will be given via UserInfo interface.
-      System.out.println("open scp");
+      logger.debug("open scp");
       session.connect();
-      System.out.println("open scp channel");
+      logger.debug("open scp channel");
 
       boolean ptimestamp = true;
 
@@ -90,7 +99,7 @@ public class ScpTo{
       return;
     }
     catch(Exception e){
-      System.out.println(e);
+      logger.debug(e);
       try{if(fis!=null)fis.close();}catch(Exception ee){}
     }
   }
