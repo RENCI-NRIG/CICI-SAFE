@@ -21,7 +21,6 @@ curl  -v -X POST http://$SAFESERVER_SDX:7777/postSubjectSet -H "Content-Type: ap
 
 echo "Policy"
 curl  -v -X POST http://$SAFESERVER_SDX:7777/postStitchPolicy -H "Content-Type: application/json" -d "{ \"principal\": \"sdx\", \"otherValues\": [] }"
-curl  -v -X POST http://$SAFESERVER_SDX:7777/postACLPolicy -H "Content-Type: application/json" -d "{ \"principal\": \"sdx\", \"otherValues\": [] }"
 curl  -v -X POST http://$SAFESERVER_SDX:7777/postConnectivityPolicy -H "Content-Type: application/json" -d "{ \"principal\": \"sdx\", \"otherValues\": [] }"
 curl  -v -X POST http://$SAFESERVER_SDX:7777/postOwnPrefixPolicy -H "Content-Type: application/json" -d "{ \"principal\": \"sdx\", \"otherValues\": [] }"
 echo "carrier endorse pa"
@@ -36,5 +35,5 @@ echo "pa endorse bob"
 curl  -v -X POST http://$SAFESERVER_BOB:7777/postEndorsePM -H "Content-Type: application/json" -d "{ \"principal\": \"pa\", \"otherValues\": [\"UIz4bXT7accigZ7KNpEyF2igwGOgXb9gne7p13i2bWA\"] }"
 curl  -v -X POST http://$SAFESERVER_SDX:7777/postEndorsePM -H "Content-Type: application/json" -d "{ \"principal\": \"pa\", \"otherValues\": [\"bphJZn3RJBnNqoCZk6k9SBD8mwSb054PXbwV7HpE80E\"] }"
 #endorsePM <- project member
-echo "update subject set of alice and bob"
+echo "update subject set of sdx"
 curl  -v -X POST http://$SAFESERVER_SDX:7777/updateSubjectSet -H "Content-Type: application/json" -d "{ \"principal\": \"sdx\", \"otherValues\": [\"HLSqBJpzAnD42qqmwI2qioNHo_7RDheKy_gS5_mAmM4\"] }"
