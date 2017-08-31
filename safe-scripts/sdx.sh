@@ -7,7 +7,7 @@ echo "IDSet"
 #key_p6: KXwvxF_rWupThUEAKwmkMTuhV8X-hqZXOAtMkWBFapc
 
 
-SAFESERVER_SDX=128.194.6.137
+SAFESERVER_SDX=128.194.6.160
 
 curl  -v -X POST http://$SAFESERVER_SDX:7777/postIdSet -H "Content-Type: application/json" -d "{ \"principal\": \"sdx\", \"otherValues\": [\"sdx\"] }"
 

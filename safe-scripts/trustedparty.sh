@@ -7,7 +7,7 @@ echo "IDSet"
 #key_p6: KXwvxF_rWupThUEAKwmkMTuhV8X-hqZXOAtMkWBFapc
 
 
-SAFESERVER_TRUSTED=128.194.6.137
+SAFESERVER_TRUSTED=128.194.6.160
 
 
 curl  -v -X POST http://$SAFESERVER_TRUSTED:7777/postIdSet -H "Content-Type: application/json" -d "{ \"principal\": \"rpkiroot\", \"otherValues\": [\"rpkiroot\"] }"

@@ -1,13 +1,13 @@
-config{
-  slicename="pruth-bob"
+config {
+  slicename="bob"
   type="client"
   sshkey="~/.ssh/id_rsa"
   safekey="UIz4bXT7accigZ7KNpEyF2igwGOgXb9gne7p13i2bWA"
-  exogenipem="/media/sf_ORCA/ssh/geni-pruth.pem"
+  exogenipem="~/.ssl/geni-yuanjuny.pem"
   exogenism="https://geni.renci.org:11443/orca/xmlrpc"
   ipprefix="192.168.20.1/24"
-  riakserver="147.72.248.6"
-  sdxserver="http://127.0.0.1:8080/"
+  riakserver="128.194.6.132"
+  javasecuritypolicy="src/main/resources/allow.policy"
   scriptsdir=""
 }
 
