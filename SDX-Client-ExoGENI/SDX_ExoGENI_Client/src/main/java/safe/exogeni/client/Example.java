@@ -49,6 +49,7 @@ import org.renci.ahab.libtransport.util.SSHAccessTokenFileFactory;
 import org.renci.ahab.libtransport.util.TransportException;
 import org.renci.ahab.libtransport.util.UtilTransportException;
 import org.renci.ahab.libtransport.xmlrpc.XMLRPCProxyFactory;
+import org.renci.ahab.libtransport.xmlrpc.XMLRPCTransportException;
 import org.renci.ahab.ndllib.transport.OrcaSMXMLRPCProxy;
 
 import safe.utils.Exec;
@@ -195,7 +196,12 @@ public class Example extends SliceCommon{
 		}
 		addSafeServer(s,riakip);
 		addPlexusController(s);
-		s.commit();
+		try {
+			s.commit();
+		} catch (XMLRPCTransportException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		return s;
 	}
 
@@ -242,7 +248,12 @@ public class Example extends SliceCommon{
 		}
 		//add safe server
 		addSafeServer(s,riakip);
-		s.commit();
+		try {
+			s.commit();
+		} catch (XMLRPCTransportException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		return s;
 	}
 
@@ -259,7 +270,12 @@ public class Example extends SliceCommon{
 		node0.setNodeType(dockerNodeType);
 		node0.setDomain(domains.get(0));
 		node0.setPostBootScript(getRiakScript());
-		s.commit();
+		try {
+			s.commit();
+		} catch (XMLRPCTransportException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		waitTillActive(s);
 		ComputeNode riak=(ComputeNode) s.getResourceByName("riak");
 		String riakip=riak.getManagementIP();

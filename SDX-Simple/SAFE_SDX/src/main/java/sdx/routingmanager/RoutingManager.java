@@ -154,7 +154,7 @@ public class RoutingManager{
     if(sdncmds.containsKey(dpid)){
       ArrayList<String> l=sdncmds.get(dpid);
       for(String cmd: l){
-        System.out.print("Replay:"+cmd);
+        logger.debug("Replay:"+cmd);
         Exec.exec(cmd);
       }
     }

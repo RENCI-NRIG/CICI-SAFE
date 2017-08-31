@@ -122,10 +122,10 @@ public class ScpTo{
       }
       while(c!='\n');
       if(b==1){ // error
-	System.out.print(sb.toString());
+	logger.debug(sb.toString());
       }
       if(b==2){ // fatal error
-	System.out.print(sb.toString());
+	logger.debug(sb.toString());
       }
     }
     return b;

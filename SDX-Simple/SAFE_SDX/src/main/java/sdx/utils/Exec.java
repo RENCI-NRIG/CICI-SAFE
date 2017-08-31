@@ -51,7 +51,7 @@ public class Exec{
           int i=in.read(tmp, 0, 1024);
           if(i<0)break;
           result+=new String(tmp,0,i)+"\n";
-          System.out.print(new String(tmp, 0, i));
+          logger.debug(new String(tmp, 0, i));
         }
         if(channel.isClosed()){
           //get status returns int;
