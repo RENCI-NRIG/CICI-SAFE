@@ -35,10 +35,7 @@ public class SdxServer {
         SdxManager.startSdxServer(args);
 
         final HttpServer server = startServer(SdxManager.serverurl);
-        System.out.println(String.format("Jersey app started with WADL available at "
-                + "%sapplication.wadl\nHit enter to stop it...", SdxManager.serverurl));
-        System.in.read();
-        server.stop();
+        System.out.println("Sdx server has started, listening on "+SdxManager.serverurl);
     }
 }
 
