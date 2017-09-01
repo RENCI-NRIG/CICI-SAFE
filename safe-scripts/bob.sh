@@ -5,12 +5,8 @@
 #alice: V1F2853Nq8V304Yb_GInYaWTgVqmBsQwC0tXWuNmmf8
 #key_p6: KXwvxF_rWupThUEAKwmkMTuhV8X-hqZXOAtMkWBFapc
 
-<<<<<<< HEAD
-SAFESERVER_BOB=128.194.6.173
-=======
-SAFESERVER_BOB=128.194.6.137
+SAFESERVER_BOB=$1
 
->>>>>>> c19b5a8d3e91ee4521202558aa555c3cbcc5a3ab
 curl  -v -X POST http://$SAFESERVER_BOB:7777/postIdSet -H "Content-Type: application/json" -d "{ \"principal\": \"bob\", \"otherValues\": [\"bob\"] }"
 
 curl  -v -X POST http://$SAFESERVER_BOB:7777/postSubjectSet -H "Content-Type: application/json" -d "{ \"principal\": \"bob\", \"otherValues\": [] }"

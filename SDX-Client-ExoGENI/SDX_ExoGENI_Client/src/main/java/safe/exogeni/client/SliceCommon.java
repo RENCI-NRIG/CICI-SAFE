@@ -70,7 +70,9 @@ public class SliceCommon {
   protected static String safeserver;
   protected static String keyhash;
   protected static Config conf;
-
+  protected static String serverSite;
+  protected static String routerSite;
+  
   public SliceCommon(){}
 
   protected static CommandLine parseCmd(String[] args){
@@ -107,6 +109,8 @@ public class SliceCommon {
     pemLocation=conf.getString("config.exogenipem");
     keyLocation=conf.getString("config.exogenipem");
     sliceName=conf.getString("config.slicename");
+    serverSite=conf.getString("config.serversite");
+    routerSite=conf.getString("config.routersite");
   }
 
   protected static void waitTillActive(Slice s){
@@ -248,34 +252,34 @@ public class SliceCommon {
     }
   }
 
-	protected static final ArrayList<String> domains;
-	static {
-		ArrayList<String> l = new ArrayList<String>();
-
-		for (int i = 0; i < 100; i++){
-//			l.add("PSC (Pittsburgh, TX, USA) XO Rack");
-//			l.add("UAF (Fairbanks, AK, USA) XO Rack");
-		
-//			l.add("UH (Houston, TX USA) XO Rack");
-			l.add("TAMU (College Station, TX, USA) XO Rack");
-//		l.add("RENCI (Chapel Hill, NC USA) XO Rack");
-//			
-//			l.add("SL (Chicago, IL USA) XO Rack");
-//			
-//			
-//			l.add("OSF (Oakland, CA USA) XO Rack");
-//			
-//		l.add("UMass (UMass Amherst, MA, USA) XO Rack");
-			//l.add("WVN (UCS-B series rack in Morgantown, WV, USA)");
-	//		l.add("UAF (Fairbanks, AK, USA) XO Rack");
-//   l.add("UNF (Jacksonville, FL) XO Rack");
-//		l.add("UFL (Gainesville, FL USA) XO Rack");
-//			l.add("WSU (Detroit, MI, USA) XO Rack");
-//			l.add("BBN/GPO (Boston, MA USA) XO Rack");
-//			l.add("UvA (Amsterdam, The Netherlands) XO Rack");
-
-		}
-		domains = l;
-	}
+//	protected static final ArrayList<String> domains;
+//	static {
+//		ArrayList<String> l = new ArrayList<String>();
+//
+//		for (int i = 0; i < 100; i++){
+////			l.add("PSC (Pittsburgh, TX, USA) XO Rack");
+////			l.add("UAF (Fairbanks, AK, USA) XO Rack");
+//		
+////			l.add("UH (Houston, TX USA) XO Rack");
+//			l.add("TAMU (College Station, TX, USA) XO Rack");
+////		l.add("RENCI (Chapel Hill, NC USA) XO Rack");
+////			
+////			l.add("SL (Chicago, IL USA) XO Rack");
+////			
+////			
+////			l.add("OSF (Oakland, CA USA) XO Rack");
+////			
+////		l.add("UMass (UMass Amherst, MA, USA) XO Rack");
+//			//l.add("WVN (UCS-B series rack in Morgantown, WV, USA)");
+//	//		l.add("UAF (Fairbanks, AK, USA) XO Rack");
+////   l.add("UNF (Jacksonville, FL) XO Rack");
+////		l.add("UFL (Gainesville, FL USA) XO Rack");
+////			l.add("WSU (Detroit, MI, USA) XO Rack");
+////			l.add("BBN/GPO (Boston, MA USA) XO Rack");
+////			l.add("UvA (Amsterdam, The Netherlands) XO Rack");
+//
+//		}
+//		domains = l;
+//	}
 
 }

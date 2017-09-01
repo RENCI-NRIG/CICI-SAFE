@@ -149,7 +149,7 @@ public class SdxManager extends SliceCommon{
 
     //type=sdxconfig.type;
     computeIP(IPPrefix);
-    System.out.print(pemLocation);
+    //System.out.print(pemLocation);
 		sliceProxy = getSliceProxy(pemLocation,keyLocation, controllerUrl);		
 		//SSH context
 		sctx = new SliceAccessContext<>();
@@ -167,6 +167,7 @@ public class SdxManager extends SliceCommon{
     try {
       keyhashslice = Slice.loadManifestFile(sliceProxy, sliceName);
       ComputeNode safe=(ComputeNode)keyhashslice.getResourceByName("safe-server");
+      //System.out.println("safe-server managementIP = " + safe.getManagementIP());
       safeserver=safe.getManagementIP()+":7777";
     } catch (ContextTransportException e) {
       // TODO Auto-generated catch block
@@ -177,6 +178,7 @@ public class SdxManager extends SliceCommon{
     }
     //SDNControllerIP="152.3.136.36";
     SDNControllerIP=((ComputeNode)keyhashslice.getResourceByName("plexuscontroller")).getManagementIP();
+    //System.out.println("plexuscontroler managementIP = " + SDNControllerIP);
     SDNController=SDNControllerIP+":8080";
     OVSController=SDNControllerIP+":6633";
     configRouting(keyhashslice,OVSController,SDNController,"(c\\d+)");
@@ -303,6 +305,7 @@ public class SdxManager extends SliceCommon{
         N++;
       }
       sleep(10);
+      //System.out.println("Node managmentIP: " + node.getManagementIP());
       Exec.sshExec("root",node.getManagementIP(),"/bin/bash ~/ovsbridge.sh "+OVSController,sshkey);
       routingmanager.replayCmds(routingmanager.getDPID(nodeName));
       Exec.sshExec("root",node.getManagementIP(),"ifconfig;ovs-vsctl list port",sshkey);
@@ -382,6 +385,7 @@ public class SdxManager extends SliceCommon{
         {
           continue;
         }
+        //System.out.println("mip node managment: " + node.getManagementIP());
         String mip= node.getManagementIP();
         logger.debug(node.getName()+" "+mip);
         Exec.sshExec("root",mip,"/bin/bash ~/ovsbridge.sh "+ ovscontroller,sshkey).split(" ");
@@ -430,6 +434,8 @@ public class SdxManager extends SliceCommon{
           {
             continue;
           }
+          //System.out.println("mip2 node managment: " + node.getManagementIP());
+
           String mip= node.getManagementIP();
           String result=Exec.sshExec("root",mip,"ovs-vsctl show",sshkey);
           if(result.contains("is_connected: true")){
