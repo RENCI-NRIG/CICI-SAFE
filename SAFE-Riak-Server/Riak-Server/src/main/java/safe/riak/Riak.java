@@ -97,6 +97,7 @@ public class Riak extends SliceCommon{
 		Exec.sshExec("root",riakip,"docker exec -i -t  -d riakserver sudo riak-admin bucket-type update safesets '{\"props\":{\"allow_mult\":false}}'",sshkey);
 		Exec.sshExec("root",riakip,"docker exec -it -d riakserver sudo riak ping",sshkey);
 		logger.debug("Started riak server at "+riakip);
+		System.out.println("Riak Server IP: " + riakip);
 		return s;
 	}
 

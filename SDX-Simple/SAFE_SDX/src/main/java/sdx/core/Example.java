@@ -65,7 +65,6 @@ import java.rmi.server.UnicastRemoteObject;
  */
 public class Example extends SliceCommon{
   final static Logger logger = Logger.getLogger(Exec.class);	
-
 	
 	public Example()throws RemoteException{}
 	private static int curip=128;
@@ -83,6 +82,7 @@ public class Example extends SliceCommon{
 	}
 
 	public static void main(String [] args){
+		
 		//Example usage:   ./target/appassembler/bin/SafeSdxExample  ~/.ssl/geni-pruth1.pem ~/.ssl/geni-pruth1.pem "https://geni.renci.org:11443/orca/xmlrpc" pruth.1 stitch
 		//Example usage:   ./target/appassembler/bin/SafeSdxExample  ~/.ssl/geni-pruth1.pem ~/.ssl/geni-pruth1.pem "https://geni.renci.org:11443/orca/xmlrpc" name fournodes
 		System.out.println("SDX-Simple " + args[0]);
@@ -96,7 +96,7 @@ public class Example extends SliceCommon{
 		readConfig(configfilepath);
 		
 		logger.debug("configfilepath " + configfilepath);
-    readConfig(configfilepath);
+    //readConfig(configfilepath);
 		
 		//type=conf.getString("config.type");
 		if(cmd.hasOption('d')){
@@ -127,11 +127,17 @@ public class Example extends SliceCommon{
 				String carrierName=sliceName;
 				System.setProperty("java.security.policy","~/project/exo-geni/ahabserver/allow.policy");
 				Slice carrier=createCarrierSlice(carrierName,4,10,1000000,1);
+				carrier.refresh();
 				waitTillActive(carrier);
+				carrier.refresh();
 				copyFile2Slice(carrier, scriptsdir+"dpid.sh","~/dpid.sh",sshkey);
 				copyFile2Slice(carrier, scriptsdir+"ovsbridge.sh","~/ovsbridge.sh",sshkey);
 				SDNControllerIP=((ComputeNode)carrier.getResourceByName("plexuscontroller")).getManagementIP();
+				System.out.println("Plexus Controler IP: " + SDNControllerIP);
 				runCmdSlice(carrier,"/bin/bash ~/ovsbridge.sh "+SDNControllerIP+":6633",sshkey,"(c\\d+)");
+				
+				String SAFEServerIP=((ComputeNode)carrier.getResourceByName("safe-server")).getManagementIP();
+				System.out.println("SAFE Server IP: " + SAFEServerIP);
 				//}
 			}catch (Exception e){
 				e.printStackTrace();
@@ -172,7 +178,7 @@ public class Example extends SliceCommon{
 			ComputeNode node0 = s.addComputeNode("c"+String.valueOf(i));
 			node0.setImage(nodeImageURL,nodeImageHash,nodeImageShortName);
 			node0.setNodeType(nodeNodeType);
-			node0.setDomain(domains.get(i));
+			node0.setDomain(clientSites.get(i));
 			node0.setPostBootScript(nodePostBootScript);
 			nodelist.add(node0);
 			//for(int j=0;j<numstitches;j++){
@@ -207,89 +213,7 @@ public class Example extends SliceCommon{
 		return s;
 	}
 
-	public static  Slice createCustomerSlice(String sliceName, int num,String prefix, int start,long bw,boolean network){//=1, String subnet="")
-		logger.debug("ndllib TestDriver: START");
-		//Main Example Code
 
-		Slice s = Slice.create(sliceProxy, sctx, sliceName);
-
-		String nodeImageShortName="Ubuntu 14.04";
-		String nodeImageURL ="http://geni-orca.renci.org/owl/9dfe179d-3736-41bf-8084-f0cd4a520c2f#Ubuntu+14.04";//http://geni-images.renci.org/images/standard/ubuntu/ub1304-ovs-opendaylight-v1.0.0.xml
-		String nodeImageHash ="9394ca154aa35eb55e604503ae7943ddaecc6ca5";
-		String nodeNodeType="XO Medium";
-		String nodePostBootScript="apt-get update;apt-get -y install quagga\n"
-				+"sed -i -- 's/zebra=no/zebra=yes/g' /etc/quagga/daemons\n"
-				+"sed -i -- 's/ospfd=no/ospfd=yes/g' /etc/quagga/daemons\n"
-				+"echo \"1\" > /proc/sys/net/ipv4/ip_forward\n"
-				+"/etc/init.d/neuca stop\n";
-		String nodeDomain=domains.get(0);
-		ArrayList<ComputeNode> nodelist=new ArrayList<ComputeNode>();
-		ArrayList<Network> netlist=new ArrayList<Network>();
-		for(int i=0;i<num;i++){
-			ComputeNode node0 = s.addComputeNode("CNode"+String.valueOf(i));
-			node0.setImage(nodeImageURL,nodeImageHash,nodeImageShortName);
-			node0.setNodeType(nodeNodeType);
-			node0.setDomain(domains.get(0));
-			node0.setPostBootScript(nodePostBootScript);
-			nodelist.add(node0);
-			if(network){
-				if(i!=num-1){
-					Network net2 = s.addBroadcastLink("clink"+String.valueOf(i),bw);
-					InterfaceNode2Net ifaceNode1 = (InterfaceNode2Net) net2.stitch(node0);
-					ifaceNode1.setIpAddress(prefix+String.valueOf(start+i)+".1");
-					ifaceNode1.setNetmask("255.255.255.0");
-					netlist.add(net2);
-				}
-				if(i!=0){
-					Network net=netlist.get(i-1);
-					InterfaceNode2Net ifaceNode1 = (InterfaceNode2Net) net.stitch(node0);
-					ifaceNode1.setIpAddress("192.168."+String.valueOf(start+i-1)+".2");
-					ifaceNode1.setNetmask("255.255.255.0");
-				}
-			}
-		}
-		//add safe server
-		addSafeServer(s,riakip);
-		try {
-			s.commit();
-		} catch (XMLRPCTransportException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		return s;
-	}
-
-	public static  Slice createRiakSlice(String sliceName){
-		logger.debug("ndllib TestDriver: START");
-
-		Slice s = Slice.create(sliceProxy, sctx, sliceName);
-		String dockerImageShortName="Ubuntu 14.04 Docker";
-		String dockerImageURL ="http://geni-orca.renci.org/owl/5e2190c1-09f1-4c48-8ed6-dacae6b6b435#Ubuntu+14.0.4+Docker";//http://geni-images.renci.org/images/standard/ubuntu/ub1304-ovs-opendaylight-v1.0.0.xml
-		String dockerImageHash ="b4ef61dbd993c72c5ac10b84650b33301bbf6829";
-		String dockerNodeType="XO Large";
-		ComputeNode node0 = s.addComputeNode("riak");
-		node0.setImage(dockerImageURL,dockerImageHash,dockerImageShortName);
-		node0.setNodeType(dockerNodeType);
-		node0.setDomain(domains.get(0));
-		node0.setPostBootScript(getRiakScript());
-		try {
-			s.commit();
-		} catch (XMLRPCTransportException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		waitTillActive(s);
-		ComputeNode riak=(ComputeNode) s.getResourceByName("riak");
-		String riakip=riak.getManagementIP();
-		Exec.sshExec("root",riakip,"docker run -i -t  -d -p 2122:2122 -p 8098:8098 -p 8087:8087 -h riakserver --name riakserver yaoyj11/riakimg",sshkey);
-		Exec.sshExec("root",riakip,"docker ps",sshkey);
-		Exec.sshExec("root",riakip,"docker exec -i -t -d riakserver sudo riak start",sshkey);
-		Exec.sshExec("root",riakip,"docker exec -i -t -d  riakserver sudo riak-admin bucket-type activate  safesets",sshkey);
-		Exec.sshExec("root",riakip,"docker exec -i -t  -d riakserver sudo riak-admin bucket-type update safesets '{\"props\":{\"allow_mult\":false}}'",sshkey);
-		Exec.sshExec("root",riakip,"docker exec -it -d riakserver sudo riak ping",sshkey);
-		logger.debug("Started riak server at "+riakip);
-		return s;
-	}
 
 	private static void addSafeServer(Slice s, String rip){
 		String dockerImageShortName="Ubuntu 14.04 Docker";
@@ -299,7 +223,7 @@ public class Example extends SliceCommon{
 		ComputeNode node0 = s.addComputeNode("safe-server");
 		node0.setImage(dockerImageURL,dockerImageHash,dockerImageShortName);
 		node0.setNodeType(dockerNodeType);
-		node0.setDomain(domains.get(0));
+		node0.setDomain(serverSite);
 		node0.setPostBootScript(getSafeScript(rip));
 	}
 
@@ -311,7 +235,7 @@ public class Example extends SliceCommon{
 		ComputeNode node0 = s.addComputeNode("plexuscontroller");
 		node0.setImage(dockerImageURL,dockerImageHash,dockerImageShortName);
 		node0.setNodeType(dockerNodeType);
-		node0.setDomain(domains.get(0));
+		node0.setDomain(controllerSite);
 		node0.setPostBootScript(getPlexusScript());
 	}
 
