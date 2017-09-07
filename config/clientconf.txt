@@ -9,5 +9,7 @@ config{
   riakserver="{RIAKSERVER}"
   sdxserver="{SDXSERVER}"
   scriptsdir=""
+  serversite="RENCI (Chapel Hill, NC USA) XO Rack"
+  routersite="PSC (Pittsburgh, TX, USA) XO Rack"
 }
 
