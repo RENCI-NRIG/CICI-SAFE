@@ -142,7 +142,7 @@ public class SliceCommon {
 			logger.debug("Slice: " + s.getAllResources());
 			for(ComputeNode c : s.getComputeNodes()){
 				logger.debug("Resource: " + c.getName() + ", state: "  + c.getState());
-				if(c.getState() != "Active") sliceActive = false;
+				if(c.getState() != "Active"||c.getManagementIP()==null) sliceActive = false;
 			}
 			for(Network l: s.getBroadcastLinks()){
 				logger.debug("Resource: " + l.getName() + ", state: "  + l.getState());

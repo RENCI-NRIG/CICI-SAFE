@@ -10,6 +10,7 @@ import sdx.utils.Exec;
 import java.io.IOException;
 import java.net.URI;
 
+
 /**
  * Main class.
  *
@@ -40,6 +41,7 @@ public class SdxServer {
     public static void main(String[] args) throws IOException {
         SdxManager.startSdxServer(args);
 
+        logger.debug("Starting on "+SdxManager.serverurl);
         final HttpServer server = startServer(SdxManager.serverurl);
         logger.debug("Sdx server has started, listening on "+SdxManager.serverurl);
     }

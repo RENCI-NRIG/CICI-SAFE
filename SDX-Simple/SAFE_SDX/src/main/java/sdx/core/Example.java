@@ -132,11 +132,18 @@ public class Example extends SliceCommon{
 				carrier.refresh();
 				copyFile2Slice(carrier, scriptsdir+"dpid.sh","~/dpid.sh",sshkey);
 				copyFile2Slice(carrier, scriptsdir+"ovsbridge.sh","~/ovsbridge.sh",sshkey);
+        //Make sure that plexus container is running
 				SDNControllerIP=((ComputeNode)carrier.getResourceByName("plexuscontroller")).getManagementIP();
+        if(!checkPlexus(SDNControllerIP)){
+          System.exit(-1);
+        }
 				System.out.println("Plexus Controler IP: " + SDNControllerIP);
 				runCmdSlice(carrier,"/bin/bash ~/ovsbridge.sh "+SDNControllerIP+":6633",sshkey,"(c\\d+)");
 				
 				String SAFEServerIP=((ComputeNode)carrier.getResourceByName("safe-server")).getManagementIP();
+        if(!checkSafeServer(SAFEServerIP)){
+          System.exit(-1);
+        }
 				System.out.println("SAFE Server IP: " + SAFEServerIP);
 				//}
 			}catch (Exception e){
@@ -156,6 +163,47 @@ public class Example extends SliceCommon{
 		}
 		logger.debug("XXXXXXXXXX Done XXXXXXXXXXXXXX");
 	}
+
+  private static boolean checkSafeServer(String SDNControllerIP){
+    String result=Exec.sshExec("root",SDNControllerIP,"docker ps",sshkey);
+    if(result.contains("safe")){
+      logger.debug("safe server has started");
+    }
+    else{
+      logger.debug("Failed to start plexus controller, exit");
+      return false;
+    }
+    return true;
+  }
+  
+  private static boolean checkPlexus(String SDNControllerIP){
+    String result=Exec.sshExec("root",SDNControllerIP,"docker ps",sshkey);
+    if(result.contains("safeserver")){
+      logger.debug("plexus controller has started");
+    }
+    else{
+      logger.debug("plexus controller hasn't started, restarting it");
+      result=Exec.sshExec("root",SDNControllerIP,"docker images",sshkey);
+      if(result.contains("yaoyj11/plexus")){
+        logger.debug("found plexus image, starting plexus container");
+        Exec.sshExec("root",SDNControllerIP,"docker run -i -t -d -p 8080:8080 -p 6633:6633 -p 3000:3000 -h plexus --name plexus yaoyj11/plexus",sshkey);
+      }else{
+
+        logger.debug("plexus image not found, downloading...");
+        Exec.sshExec("root",SDNControllerIP,"docker pull yaoyj11/plexus",sshkey);
+        Exec.sshExec("root",SDNControllerIP,"docker run -i -t -d -p 8080:8080 -p 6633:6633 -p 3000:3000 -h plexus --name plexus yaoyj11/plexus",sshkey);
+      }
+      result=Exec.sshExec("root",SDNControllerIP,"docker ps",sshkey);
+      if(result.contains("plexus")){
+        logger.debug("plexus controller has started");
+      }
+      else{
+        logger.debug("Failed to start plexus controller, exit");
+        return false;
+      }
+    }
+    return true;
+  }
 
 	public static Slice createCarrierSlice(String sliceName,int num,int start, long bw,int numstitches){//,String stitchsubnet="", String slicesubnet="")	
 		logger.debug("ndllib TestDriver: START");

@@ -400,7 +400,10 @@ public class SdxManager extends SliceCommon{
       logger.debug("setting up links)");
       HashSet<Integer> usedip=new HashSet<Integer>();
       for(Interface i: s.getInterfaces()){
+        System.out.println("s:"+s.getName());
         InterfaceNode2Net inode2net=(InterfaceNode2Net)i;
+        System.out.println(inode2net.getLink().toString());
+
         Link link=links.get(inode2net.getLink().toString());
         if(link==null){
           link=new Link();
