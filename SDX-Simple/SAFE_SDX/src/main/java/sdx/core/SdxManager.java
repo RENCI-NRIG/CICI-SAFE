@@ -266,7 +266,7 @@ public class SdxManager extends SliceCommon{
       StitchPort mysp=s.addStitchPort(stitchname,stitchport,vlan,10000000);
       ComputeNode mynode=(ComputeNode) s.getResourceByName(nodeName);
       mysp.stitch(mynode);
-      routingmanager.newLink(ip, nodename, SDNController);
+      routingmanager.newLink(ip, nodeName, SDNController);
     }
     return res;
   }

@@ -99,7 +99,7 @@ class StitchCommunion{
   }
 
   public String toString(){
-    return "{\"sdxslice\": "+sdxslice+", \"sdxnode\": "+sdxnode+", \"ckeyhash\":"+ckeyhash+", \"stitchport\":"+stitchport+", \"label\":"+label+", \"vlan\":"+vlan+"\"gateway\":"+gateway+"}";
+    return "{\"sdxslice\": "+sdxslice+", \"sdxnode\": "+sdxnode+", \"ckeyhash\":"+ckeyhash+", \"stitchport\":"+stitchport+", \"vlan\":"+vlan+"\"gateway\":"+gateway+"}";
   }
 }
 

@@ -1,0 +1,56 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+!_TAG_PROGRAM_VERSION	5.8	//
+Exec	Exec.java	/^public class Exec{$/;"	c
+MyUserInfo	Exec.java	/^  public static class MyUserInfo implements UserInfo, UIKeyboardInteractive{$/;"	c	class:Exec
+MyUserInfo	ScpTo.java	/^  public static class MyUserInfo implements UserInfo, UIKeyboardInteractive{$/;"	c	class:ScpTo
+MyUserInfo	UserAuthPubKey.java	/^  public static class MyUserInfo implements UserInfo, UIKeyboardInteractive{$/;"	c	class:UserAuthPubKey
+SafePost	SafePost.java	/^public class SafePost{$/;"	c
+Scp	ScpTo.java	/^  public static void Scp(String lfile,String user, String host,String rfile,String privkey){$/;"	m	class:ScpTo	signature:(String lfile,String user, String host,String rfile,String privkey)
+ScpTo	ScpTo.java	/^public class ScpTo{$/;"	c
+UserAuthPubKey	UserAuthPubKey.java	/^public class UserAuthPubKey{$/;"	c
+auth	UserAuthPubKey.java	/^  public static void auth(String host){$/;"	m	class:UserAuthPubKey	signature:(String host)
+checkAck	ScpTo.java	/^  static int checkAck(InputStream in) throws IOException{$/;"	m	class:ScpTo	signature:(InputStream in)
+exec	Exec.java	/^  public static void exec(String cmd){$/;"	m	class:Exec	signature:(String cmd)
+gbc	Exec.java	/^    final GridBagConstraints gbc = $/;"	f	class:Exec.MyUserInfo
+gbc	ScpTo.java	/^    final GridBagConstraints gbc = $/;"	f	class:ScpTo.MyUserInfo
+gbc	UserAuthPubKey.java	/^    final GridBagConstraints gbc = $/;"	f	class:UserAuthPubKey.MyUserInfo
+getPassphrase	Exec.java	/^    public String getPassphrase(){ return null; }$/;"	m	class:Exec.MyUserInfo	signature:()
+getPassphrase	ScpTo.java	/^    public String getPassphrase(){ return null; }$/;"	m	class:ScpTo.MyUserInfo	signature:()
+getPassphrase	UserAuthPubKey.java	/^    public String getPassphrase(){ return passphrase; }$/;"	m	class:UserAuthPubKey.MyUserInfo	signature:()
+getPassword	Exec.java	/^    public String getPassword(){ return passwd; }$/;"	m	class:Exec.MyUserInfo	signature:()
+getPassword	ScpTo.java	/^    public String getPassword(){ return passwd; }$/;"	m	class:ScpTo.MyUserInfo	signature:()
+getPassword	UserAuthPubKey.java	/^    public String getPassword(){ return null; }$/;"	m	class:UserAuthPubKey.MyUserInfo	signature:()
+panel	Exec.java	/^    private Container panel;$/;"	f	class:Exec.MyUserInfo	file:
+panel	ScpTo.java	/^    private Container panel;$/;"	f	class:ScpTo.MyUserInfo	file:
+panel	UserAuthPubKey.java	/^    private Container panel;$/;"	f	class:UserAuthPubKey.MyUserInfo	file:
+passphrase	UserAuthPubKey.java	/^    String passphrase;$/;"	f	class:UserAuthPubKey.MyUserInfo
+passphraseField	UserAuthPubKey.java	/^    JTextField passphraseField=(JTextField)new JPasswordField(20);$/;"	f	class:UserAuthPubKey.MyUserInfo
+passwd	Exec.java	/^    String passwd;$/;"	f	class:Exec.MyUserInfo
+passwd	ScpTo.java	/^    String passwd;$/;"	f	class:ScpTo.MyUserInfo
+passwordField	Exec.java	/^    JTextField passwordField=(JTextField)new JPasswordField(20);$/;"	f	class:Exec.MyUserInfo
+passwordField	ScpTo.java	/^    JTextField passwordField=(JTextField)new JPasswordField(20);$/;"	f	class:ScpTo.MyUserInfo
+postSafeStatements	SafePost.java	/^  public static String postSafeStatements(String safeserver,String requestName,String principal,String[] othervalues){$/;"	m	class:SafePost	signature:(String safeserver,String requestName,String principal,String[] othervalues)
+promptKeyboardInteractive	Exec.java	/^    public String[] promptKeyboardInteractive(String destination,$/;"	m	class:Exec.MyUserInfo	signature:(String destination, String name, String instruction, String[] prompt, boolean[] echo)
+promptKeyboardInteractive	ScpTo.java	/^    public String[] promptKeyboardInteractive(String destination,$/;"	m	class:ScpTo.MyUserInfo	signature:(String destination, String name, String instruction, String[] prompt, boolean[] echo)
+promptKeyboardInteractive	UserAuthPubKey.java	/^    public String[] promptKeyboardInteractive(String destination,$/;"	m	class:UserAuthPubKey.MyUserInfo	signature:(String destination, String name, String instruction, String[] prompt, boolean[] echo)
+promptPassphrase	Exec.java	/^    public boolean promptPassphrase(String message){ return true; }$/;"	m	class:Exec.MyUserInfo	signature:(String message)
+promptPassphrase	ScpTo.java	/^    public boolean promptPassphrase(String message){ return true; }$/;"	m	class:ScpTo.MyUserInfo	signature:(String message)
+promptPassphrase	UserAuthPubKey.java	/^    public boolean promptPassphrase(String message){$/;"	m	class:UserAuthPubKey.MyUserInfo	signature:(String message)
+promptPassword	Exec.java	/^    public boolean promptPassword(String message){$/;"	m	class:Exec.MyUserInfo	signature:(String message)
+promptPassword	ScpTo.java	/^    public boolean promptPassword(String message){$/;"	m	class:ScpTo.MyUserInfo	signature:(String message)
+promptPassword	UserAuthPubKey.java	/^    public boolean promptPassword(String message){ return true; }$/;"	m	class:UserAuthPubKey.MyUserInfo	signature:(String message)
+promptYesNo	Exec.java	/^    public boolean promptYesNo(String str){$/;"	m	class:Exec.MyUserInfo	signature:(String str)
+promptYesNo	ScpTo.java	/^    public boolean promptYesNo(String str){$/;"	m	class:ScpTo.MyUserInfo	signature:(String str)
+promptYesNo	UserAuthPubKey.java	/^    public boolean promptYesNo(String str){$/;"	m	class:UserAuthPubKey.MyUserInfo	signature:(String str)
+safe.sdx	Exec.java	/^package safe.sdx;$/;"	p
+safe.sdx	SafePost.java	/^package  safe.sdx;$/;"	p
+safe.sdx	ScpTo.java	/^package safe.sdx;$/;"	p
+safe.sdx	UserAuthPubKey.java	/^package safe.sdx;$/;"	p
+showMessage	Exec.java	/^    public void showMessage(String message){$/;"	m	class:Exec.MyUserInfo	signature:(String message)
+showMessage	ScpTo.java	/^    public void showMessage(String message){$/;"	m	class:ScpTo.MyUserInfo	signature:(String message)
+showMessage	UserAuthPubKey.java	/^    public void showMessage(String message){$/;"	m	class:UserAuthPubKey.MyUserInfo	signature:(String message)
+sshExec	Exec.java	/^  public static int sshExec(String user, String host,String command, String privkey){$/;"	m	class:Exec	signature:(String user, String host,String command, String privkey)

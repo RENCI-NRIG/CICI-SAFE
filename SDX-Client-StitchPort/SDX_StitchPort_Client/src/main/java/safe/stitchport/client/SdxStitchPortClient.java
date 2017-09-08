@@ -63,7 +63,6 @@ public class SdxStitchPortClient extends SliceCommon {
   public SdxStitchPortClient(){}
   private static String type;
   private static String sdxserver;
-  private static String stitchport;
 	
 	public static void main(String [] args){
     //Example usage: ./target/appassembler/bin/SafeSdxClient -f alice.conf
@@ -80,15 +79,13 @@ public class SdxStitchPortClient extends SliceCommon {
     readConfig(configfilepath);
     sdxserver=conf.getString("config.sdxserver");
     safeserver=conf.getString("config.safeserver");
-    stitchport=conf.getString("config.stitchport");
-    vlan=conf.getString("config.vlan");
 
     logger.debug("client start");
     String input = new String();  
 		try{
       java.io.BufferedReader stdin = new java.io.BufferedReader(new java.io.InputStreamReader(System.in));  
       while(true){
-        System.out.print("Enter Commands:stitch gateway vlan sdx_slice  sdx_node ip\n Or advertise route: route dest gateway sdx_slice_name routername,\n$>");
+        System.out.print("Enter Commands:stitch stitchport vlan sdx_slice  sdx_node gateway ip\n Or advertise route: route dest gateway sdx_slice_name routername,\n$>");
         input = stdin.readLine();  
         String[] params=input.split(" ");
         System.out.print("continue?[y/n]\n$>"+input);
@@ -131,14 +128,14 @@ public class SdxStitchPortClient extends SliceCommon {
       //post stitch request to SAFE
       logger.debug("posting stitch request statements to SAFE Sets");
       JSONObject jsonparams=new JSONObject();
-      jsonparams.put("gateway",params[1]);
+      jsonparams.put("stitchport",params[1]);
       jsonparams.put("vlan",params[2]);
       jsonparams.put("sdxslice",params[3]);
       jsonparams.put("sdxnode",params[4]);
-      jsonparams.put("ip",params[5]);
+      jsonparams.put("gateway",params[5]);
+      jsonparams.put("ip",params[6]);
       jsonparams.put("ckeyhash",keyhash);
-      jsonparams.put("stitchport",stitchport);
-      postSafeStitchRequest(keyhash,jsonparams.getString("gateway"),jsonparams.getString("sdxslice"),jsonparams.getString("sdxnode"));
+      postSafeStitchRequest(keyhash,jsonparams.getString("gateway"),jsonparams.getString("sdxslice"),jsonparams.getString("sdxnode"),jsonparams.getString("stitchport"),jsonparams.getString("vlan"));
       JSONObject res=SdxHttpClient.tryStitch(sdxserver+"sdx/stitchcommunion",jsonparams);
       if(!res.getBoolean("result")){
         logger.debug("stitch request declined by server");
@@ -152,7 +149,7 @@ public class SdxStitchPortClient extends SliceCommon {
     }
   }
 
-  private static boolean postSafeStitchRequest(String keyhash, String gateway,String ip, String slicename, String nodename){
+  private static boolean postSafeStitchRequest(String keyhash, String gateway,String slicename, String nodename,String stitchport, String vlan){
 		/** Post to remote safesets using apache httpclient */
     String[] othervalues=new String[5];
     othervalues[0]=stitchport;
