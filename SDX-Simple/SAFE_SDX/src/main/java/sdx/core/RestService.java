@@ -57,6 +57,16 @@ public class RestService {
     }
 
     @POST
+    @Path("/stitchcommunion")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public StitchResult stitchRequest(StitchCommunion sr){
+      logger.debug("got communion stitch request: \n"+sr.toString());
+      String[] res=SdxManager.stitchCommunion(sr.sdxslice,sr.sdxnode, sr.ckeyhash, sr.stitchport, sr.label, sr.vlan,sr.gateway);
+      return new StitchResult("","");
+    }
+
+    @POST
     @Path("/notifyprefix")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.TEXT_PLAIN)
@@ -65,6 +75,32 @@ public class RestService {
       String res=SdxManager.notifyPrefix(pn.dest, pn.gateway, pn.router, pn.customer);
       return res;
     }
+}
+
+class StitchCommunion{
+  public  String sdxslice;
+  public  String sdxnode;
+  public  String ckeyhash;
+  public  String stitchport;
+  public  String label;
+  public  String vlan;
+  public  String gateway;
+
+  public StitchRequest(){}
+
+  public StitchRequest(String sdxslice, String sdxnode,String ckeyhash, String stitchport, String label, String vlan, String gateway){
+    this.sdxslice=sdxslice;
+    this.sdxnode=sdxnode;
+    this.ckeyhash=ckeyhash;
+    this.stitchport=stitchport;
+    this.label=label;
+    this.vlan=vlan;
+    this.gateway=gateway;
+  }
+
+  public String toString(){
+    return "{\"sdxslice\": "+sdxslice+", \"sdxnode\": "+sdxnode", \"ckeyhash\":"+ckeyhash+", \"stitchport\":"+stitchport+", \"label\":"+label+", \"vlan\":"+vlan+"\"gateway\":"+gateway+"}";
+  }
 }
 
 class StitchRequest{

@@ -48,12 +48,8 @@
 				<configuration>
 					<programs>
 						<program>
-							<mainClass>safe.exogeni.client.SdxExogeniClient</mainClass>
-							<name>SafeExoGENIClient</name>
-						</program>
-						<program>
-							<mainClass>safe.exogeni.client.Example</mainClass>
-							<name>SafeSdxExample</name>
+							<mainClass>safe.stitchport.client.SdxStitchPortClient</mainClass>
+							<name>SafeStitchPortClient</name>
 						</program>
 					</programs>
 				</configuration>

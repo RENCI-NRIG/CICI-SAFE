@@ -1,4 +1,4 @@
-package safe.exogeni.client;
+package safe.stitchport.client;
 import safe.utils.Exec;
 import safe.utils.SafePost;
 
