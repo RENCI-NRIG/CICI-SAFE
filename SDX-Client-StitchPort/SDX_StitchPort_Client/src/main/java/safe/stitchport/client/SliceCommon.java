@@ -90,7 +90,6 @@ public class SliceCommon {
     Config fileConfig = ConfigFactory.parseFile(myConfigFile);
     conf = ConfigFactory.load(fileConfig);
     keyhash=conf.getString("config.safekey");
-    safeserver=conf.getString("config.safeserver");
   }
 
 

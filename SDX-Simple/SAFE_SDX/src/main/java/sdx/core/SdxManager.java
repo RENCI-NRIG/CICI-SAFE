@@ -245,26 +245,28 @@ public class SdxManager extends SliceCommon{
       return true;
   }
 
-  public static String[] stitchCommunion(String carrierName,String nodeName, String customer_keyhash,String stitchport, String label, String vlan, String gateway) {
+  public static String[] stitchCommunion(String carrierName,String nodeName, String customer_keyhash,String stitchport,String vlan, String gateway, String ip) {
     String[] res=new String[2];
     res[0]=null;
     res[1]=null;
-    if(authorizeStitchCommunion(customer_keyhash,stitchport, label, vlan, gateway, carrierName, nodeName)){
+    if(authorizeStitchCommunion(customer_keyhash,stitchport, vlan, gateway, carrierName, nodeName)){
       //FIX ME: do stitching
-      logger.debug("Stitching to communion slice not implemented yet");
-      //Link link=new Link();
-      //link.setName(stitchname);
-      //link.addNode(nodeName);
-      //link.setIP(IPPrefix+String.valueOf(ip_to_use));
-      //link.setMask(mask);
-      //links.put(stitchname,link);
-      //routingmanager.newLink(link.getIP(1), link.nodea, SDNController);
-      //String gw = link.getIP(1);
-      //String ip=link.getIP(2);
-      //stitch(customerName,ResrvID,carrierName,net1_stitching_GUID,secret,ip);
-      //res[0]=gw;
-      //res[1]=ip;
-      //routingmanager.configurePath(ip,nodeName,ip.split("/")[0],SDNController);
+      Slice s = null;
+      ISliceTransportAPIv1 sliceProxy = getSliceProxy(pemLocation,keyLocation, controllerUrl);		
+      try {
+        s = Slice.loadManifestFile(sliceProxy, carrierName);
+      } catch (ContextTransportException e) {
+        // TODO Auto-generated catch block
+        e.printStackTrace();
+      } catch (TransportException e) {
+        // TODO Auto-generated catch block
+        e.printStackTrace();
+      }
+      String stitchname="sp-"+nodeName+"-"+ip;
+      StitchPort mysp=s.addStitchPort(stitchname,stitchport,vlan,10000000);
+      ComputeNode mynode=(ComputeNode) s.getResourceByName(nodeName);
+      mysp.stitch(mynode);
+      routingmanager.newLink(ip, nodename, SDNController);
     }
     return res;
   }

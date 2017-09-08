@@ -54,14 +54,14 @@ defcon stitchRequest(?MySliceName,?ReserveID,?Slice,?Node):-
 
 defpost postStitchRequest(?MySliceName,?ReservID,?Slice,?Node):-[stitchRequest(?MySliceName,?ReservID,?Slice,?Node)].
 
-defcon commuionStitchRequest(?Stitchport,?Label,?Vlan,?Gateway,?Slice,?Node):-
+defcon commuionStitchRequest(?Stitchport,?Vlan,?Gateway,?Slice,?Node):-
   spec('customer post a communion sttich request'),
   {
-    stitch($Stitchport,$Label,$Vlan,$Gateway,$Slice,$Node).
+    stitch($Stitchport,$Vlan,$Gateway,$Slice,$Node).
     label("stitch request($SetVersion)").
   }.
 
-defpost postCommunionStitchRequest(?Stitchport,?Label,?Vlan,?Gateway,?Slice,?Node):-[communionStitchRequest(?Stitchport,?Label,?Vlan,?Gateway,?Slice,?Node)].
+defpost postCommunionStitchRequest(?Stitchport,?Vlan,?Gateway,?Slice,?Node):-[communionStitchRequest(?Stitchport,?Vlan,?Gateway,?Slice,?Node)].
 
 defcon endorsePM(?Member) :-
   spec('Endorse a project member'),

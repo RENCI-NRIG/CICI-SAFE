@@ -62,7 +62,7 @@ public class RestService {
     @Produces(MediaType.APPLICATION_JSON)
     public StitchResult stitchRequest(StitchCommunion sr){
       logger.debug("got communion stitch request: \n"+sr.toString());
-      String[] res=SdxManager.stitchCommunion(sr.sdxslice,sr.sdxnode, sr.ckeyhash, sr.stitchport, sr.label, sr.vlan,sr.gateway);
+      String[] res=SdxManager.stitchCommunion(sr.sdxslice, sr.sdxnode, sr.ckeyhash, sr.stitchport, sr.vlan,sr.gateway, sr.ip);
       return new StitchResult("","");
     }
 
@@ -82,20 +82,20 @@ class StitchCommunion{
   public  String sdxnode;
   public  String ckeyhash;
   public  String stitchport;
-  public  String label;
   public  String vlan;
   public  String gateway;
+  public String ip;
 
   public StitchCommunion(){}
 
-  public StitchCommunion(String sdxslice, String sdxnode,String ckeyhash, String stitchport, String label, String vlan, String gateway){
+  public StitchCommunion(String sdxslice, String sdxnode,String ckeyhash,String stitchport, String vlan, String gateway,String ip){
     this.sdxslice=sdxslice;
     this.sdxnode=sdxnode;
     this.ckeyhash=ckeyhash;
     this.stitchport=stitchport;
-    this.label=label;
     this.vlan=vlan;
     this.gateway=gateway;
+    this.ip=ip;
   }
 
   public String toString(){
