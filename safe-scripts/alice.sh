@@ -3,7 +3,7 @@
 #bob: UIz4bXT7accigZ7KNpEyF2igwGOgXb9gne7p13i2bWA
 #rpkiroot: iMrcWFMgx6DJeLtVWvBCMzwd8EDtJtZ4L0n3YYn1hi8
 #alice: V1F2853Nq8V304Yb_GInYaWTgVqmBsQwC0tXWuNmmf8
-#key_p6: KXwvxF_rWupThUEAKwmkMTuhV8X-hqZXOAtMkWBFapc
+#carrot: KXwvxF_rWupThUEAKwmkMTuhV8X-hqZXOAtMkWBFapc
 
 SAFESERVER_ALICE=$1
 
