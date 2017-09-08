@@ -86,9 +86,9 @@ class StitchCommunion{
   public  String vlan;
   public  String gateway;
 
-  public StitchRequest(){}
+  public StitchCommunion(){}
 
-  public StitchRequest(String sdxslice, String sdxnode,String ckeyhash, String stitchport, String label, String vlan, String gateway){
+  public StitchCommunion(String sdxslice, String sdxnode,String ckeyhash, String stitchport, String label, String vlan, String gateway){
     this.sdxslice=sdxslice;
     this.sdxnode=sdxnode;
     this.ckeyhash=ckeyhash;
@@ -99,7 +99,7 @@ class StitchCommunion{
   }
 
   public String toString(){
-    return "{\"sdxslice\": "+sdxslice+", \"sdxnode\": "+sdxnode", \"ckeyhash\":"+ckeyhash+", \"stitchport\":"+stitchport+", \"label\":"+label+", \"vlan\":"+vlan+"\"gateway\":"+gateway+"}";
+    return "{\"sdxslice\": "+sdxslice+", \"sdxnode\": "+sdxnode+", \"ckeyhash\":"+ckeyhash+", \"stitchport\":"+stitchport+", \"label\":"+label+", \"vlan\":"+vlan+"\"gateway\":"+gateway+"}";
   }
 }
 

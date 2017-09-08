@@ -250,79 +250,21 @@ public class SdxManager extends SliceCommon{
     res[0]=null;
     res[1]=null;
     if(authorizeStitchCommunion(customer_keyhash,stitchport, label, vlan, gateway, carrierName, nodeName)){
-      Slice s1 = null;
-      ISliceTransportAPIv1 sliceProxy = getSliceProxy(pemLocation,keyLocation, controllerUrl);		
-      try {
-        s1 = Slice.loadManifestFile(sliceProxy, carrierName);
-      } catch (ContextTransportException e) {
-        // TODO Auto-generated catch block
-        e.printStackTrace();
-      } catch (TransportException e) {
-        // TODO Auto-generated catch block
-        e.printStackTrace();
-      }
-      ComputeNode node = (ComputeNode) s1.getResourceByName(nodeName);
-      int interfaceNum=routingmanager.getRouter(nodeName).getInterfaceNum();
-      lock.lock();
-      String stitchname;
-      int ip_to_use=curip;
-      try{
-        stitchname="stitch_"+nodeName+"_"+curip;
-        curip++;
-      }finally{
-        lock.unlock();
-      }
-      Network net=s1.addBroadcastLink(stitchname);
-      InterfaceNode2Net ifaceNode0 = (InterfaceNode2Net) net.stitch(node);
-      ifaceNode0.setIpAddress("192.168.1.1");
-      ifaceNode0.setNetmask("255.255.255.0");
-      try {
-		s1.commit();
-	} catch (XMLRPCTransportException e1) {
-		// TODO Auto-generated catch block
-		e1.printStackTrace();
-	}
-
-      int N=0;
-      net=(Network)s1.getResourceByName(stitchname);
-      while(net.getState() != "Active" &&N<10){
-        try {
-          s1 = Slice.loadManifestFile(sliceProxy, carrierName);
-        } catch (ContextTransportException e) {
-          // TODO Auto-generated catch block
-          e.printStackTrace();
-        } catch (TransportException e) {
-          // TODO Auto-generated catch block
-          e.printStackTrace();
-        }
-        net=(Network)s1.getResourceByName(stitchname);
-        for(Network l:s1.getBroadcastLinks()){
-          logger.debug("Resource: " + l.getName() + ", state: "  + l.getState());
-        }
-        logger.debug(((Network)s1.getResourceByName(stitchname)).getState());
-        sleep(5);
-        N++;
-      }
-      sleep(10);
-      //System.out.println("Node managmentIP: " + node.getManagementIP());
-      Exec.sshExec("root",node.getManagementIP(),"/bin/bash ~/ovsbridge.sh "+OVSController,sshkey);
-      routingmanager.replayCmds(routingmanager.getDPID(nodeName));
-      Exec.sshExec("root",node.getManagementIP(),"ifconfig;ovs-vsctl list port",sshkey);
-      String net1_stitching_GUID = net.getStitchingGUID();
-      logger.debug("net1_stitching_GUID: " + net1_stitching_GUID);
-      Link link=new Link();
-      link.setName(stitchname);
-      link.addNode(nodeName);
-      link.setIP(IPPrefix+String.valueOf(ip_to_use));
-      link.setMask(mask);
-      links.put(stitchname,link);
-      routingmanager.newLink(link.getIP(1), link.nodea, SDNController);
-      String gw = link.getIP(1);
-      String ip=link.getIP(2);
-      stitch(customerName,ResrvID,carrierName,net1_stitching_GUID,secret,ip);
-      res[0]=gw;
-      res[1]=ip;
-      routingmanager.configurePath(ip,nodeName,ip.split("/")[0],SDNController);
+      //FIX ME: do stitching
+      logger.debug("Stitching to communion slice not implemented yet");
+      //Link link=new Link();
+      //link.setName(stitchname);
+      //link.addNode(nodeName);
+      //link.setIP(IPPrefix+String.valueOf(ip_to_use));
+      //link.setMask(mask);
+      //links.put(stitchname,link);
+      //routingmanager.newLink(link.getIP(1), link.nodea, SDNController);
+      //String gw = link.getIP(1);
+      //String ip=link.getIP(2);
+      //stitch(customerName,ResrvID,carrierName,net1_stitching_GUID,secret,ip);
+      //res[0]=gw;
+      //res[1]=ip;
+      //routingmanager.configurePath(ip,nodeName,ip.split("/")[0],SDNController);
     }
     return res;
   }
@@ -455,7 +397,7 @@ public class SdxManager extends SliceCommon{
     othervalues[5]=slicename;
     othervalues[6]=nodename;
 
-    String message=SafePost.postSafeStatements(safeserver,"verifyStitchCommunion",keyhash,othervalues);
+    String message=SafePost.postSafeStatements(safeserver,"verifyCommunionStitch",keyhash,othervalues);
     if(message ==null || message.contains("Unsatisfied")){
       return false;
     }
