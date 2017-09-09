@@ -170,7 +170,7 @@ public class Example extends SliceCommon{
       logger.debug("safe server has started");
     }
     else{
-      logger.debug("Failed to start plexus controller, exit");
+      logger.debug("Failed to start safe controller, exit");
       return false;
     }
     return true;

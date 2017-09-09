@@ -107,14 +107,10 @@ public class SliceCommon {
   }
 
   protected static void readConfig(String configfilepath){
-    //File myConfigFile = new File(configfilepath);
-    //Config fileConfig = ConfigFactory.parseFile(myConfigFile);
-    //conf = ConfigFactory.load(fileConfig);
 
-	File myConfigFile = new File(configfilepath);
-	Config fileConfig = ConfigFactory.parseFile(myConfigFile);
-	conf = ConfigFactory.load(fileConfig);
-    
+    File myConfigFile = new File(configfilepath);
+    Config fileConfig = ConfigFactory.parseFile(myConfigFile);
+    conf = ConfigFactory.load(fileConfig);
     type=conf.getString("config.type");
     sshkey=conf.getString("config.sshkey");
     controllerUrl=conf.getString("config.exogenism");

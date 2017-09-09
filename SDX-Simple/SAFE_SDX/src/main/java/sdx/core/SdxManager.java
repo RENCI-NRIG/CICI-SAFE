@@ -181,7 +181,7 @@ public class SdxManager extends SliceCommon{
     //System.out.println("plexuscontroler managementIP = " + SDNControllerIP);
     SDNController=SDNControllerIP+":8080";
     OVSController=SDNControllerIP+":6633";
-    configRouting(keyhashslice,OVSController,SDNController,"(c\\d+)");
+    configRouting(keyhashslice,OVSController,SDNController,"(c\\d+)","(sp-c\\d+.*)");
 	}
 
   public static String notifyPrefix(String dest, String gateway, String router,String customer_keyhash){
@@ -388,16 +388,15 @@ public class SdxManager extends SliceCommon{
       return true;
   }
 
-  public static boolean authorizeStitchCommunion(String customer_keyhash,String stitchport,String label,String vlan,String gateway,String slicename, String nodename){
+  public static boolean authorizeStitchCommunion(String customer_keyhash,String stitchport,String vlan,String gateway,String slicename, String nodename){
 		/** Post to remote safesets using apache httpclient */
     String[] othervalues=new String[7];
     othervalues[0]=customer_keyhash;
     othervalues[1]=stitchport;
-    othervalues[2]=label;
-    othervalues[3]=vlan;
-    othervalues[4]=gateway;
-    othervalues[5]=slicename;
-    othervalues[6]=nodename;
+    othervalues[2]=vlan;
+    othervalues[3]=gateway;
+    othervalues[4]=slicename;
+    othervalues[5]=nodename;
 
     String message=SafePost.postSafeStatements(safeserver,"verifyCommunionStitch",keyhash,othervalues);
     if(message ==null || message.contains("Unsatisfied")){
@@ -416,13 +415,15 @@ public class SdxManager extends SliceCommon{
     Exec.sshExec("root",plexusip,script,sshkey);
   }
 
-  public static void configRouting(Slice s,String ovscontroller, String httpcontroller, String routerpattern){
+  public static void configRouting(Slice s,String ovscontroller, String httpcontroller, String routerpattern,String stitchportpattern){
     logger.debug("Configurating Routing");
     restartPlexus(SDNControllerIP);
     sleep(5);
     runCmdSlice(s,"/bin/bash ~/ovsbridge.sh "+ovscontroller,sshkey,"(c\\d+)");
     try{
       Pattern pattern = Pattern.compile(routerpattern);
+      Pattern stitchpattern = Pattern.compile(stitchportpattern);
+      //Nodes
       for(ComputeNode node : s.getComputeNodes()){
         Matcher matcher = pattern.matcher(node.getName());
         if (!matcher.find())
@@ -441,12 +442,10 @@ public class SdxManager extends SliceCommon{
           e.printStackTrace();
         }
       }
-      logger.debug("setting up links)");
+      logger.debug("setting up links");
       HashSet<Integer> usedip=new HashSet<Integer>();
       for(Interface i: s.getInterfaces()){
-        System.out.println("s:"+s.getName());
         InterfaceNode2Net inode2net=(InterfaceNode2Net)i;
-        System.out.println(inode2net.getLink().toString());
 
         Link link=links.get(inode2net.getLink().toString());
         if(link==null){
@@ -467,6 +466,20 @@ public class SdxManager extends SliceCommon{
         links.put(inode2net.getLink().toString(),link);
         //logger.debug(inode2net.getNode()+" "+inode2net.getLink());
       }
+      //Stitchports
+      logger.debug("setting up sttichports");
+      for(StitchPort sp : s.getStitchPorts()){
+        System.out.println(sp.getName());
+        Matcher matcher = stitchpattern.matcher(sp.getName());
+        if (!matcher.find())
+        {
+          continue;
+        }
+        String[] parts=sp.getName().split("-");
+        String ip=parts[2];
+        String nodeName=parts[1];
+        routingmanager.newLink(ip, nodeName, SDNController);
+      }
 
       Set keyset=links.keySet();
       //logger.debug(keyset);
@@ -482,7 +495,6 @@ public class SdxManager extends SliceCommon{
             continue;
           }
           //System.out.println("mip2 node managment: " + node.getManagementIP());
-
           String mip= node.getManagementIP();
           String result=Exec.sshExec("root",mip,"ovs-vsctl show",sshkey);
           if(result.contains("is_connected: true")){
