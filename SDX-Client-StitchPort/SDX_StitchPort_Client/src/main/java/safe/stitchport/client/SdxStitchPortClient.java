@@ -78,7 +78,7 @@ public class SdxStitchPortClient extends SliceCommon {
 		String configfilepath=cmd.getOptionValue("config");
     readConfig(configfilepath);
     sdxserver=conf.getString("config.sdxserver");
-    safeserver=conf.getString("config.safeserver");
+    safeserver=conf.getString("config.safeserver")+":7777";
 
     logger.debug("client start");
     String input = new String();  
