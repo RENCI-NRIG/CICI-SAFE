@@ -21,8 +21,8 @@
 
 
 	<groupId>safe</groupId>
-	<artifactId>sdx-client-exogeni</artifactId>
-	<name>sdx-client-exogeni</name>
+	<artifactId>sdx-client-stitchport</artifactId>
+	<name>sdx-client-stitchport</name>
 
 	<build>
 		<plugins>
