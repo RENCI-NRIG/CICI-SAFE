@@ -66,7 +66,7 @@ public class Riak extends SliceCommon{
 	public static  Slice createRiakSlice(String sliceName){
 		Slice s = Slice.create(sliceProxy, sctx, sliceName);
 		String dockerImageShortName="Ubuntu 14.04 Docker";
-		String dockerImageURL ="http://geni-orca.renci.org/owl/5e2190c1-09f1-4c48-8ed6-dacae6b6b435#Ubuntu+14.0.4+Docker";//http://geni-images.renci.org/images/standard/ubuntu/ub1304-ovs-opendaylight-v1.0.0.xml
+		String dockerImageURL ="http://geni-images.renci.org/images/standard/docker/ubuntu-14.0.4/ubuntu-14.0.4-docker.xml";//http://geni-images.renci.org/images/standard/ubuntu/ub1304-ovs-opendaylight-v1.0.0.xml
 		String dockerImageHash ="b4ef61dbd993c72c5ac10b84650b33301bbf6829";
 		String dockerNodeType="XO Large";
 		
