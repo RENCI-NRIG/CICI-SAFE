@@ -9,6 +9,8 @@ if [[ $string == *"br0"* ]]; then
   echo "br0 is there"
 else
   ovs-vsctl add-br br0
+  ovs-vsctl set Bridge br0 protocols=OpenFlow10,OpenFlow11,OpenFlow12,OpenFlow13
+  ovs-vsctl set-manager ptcp:6632
   ovs-vsctl set-controller br0 tcp:$1
 fi
 
