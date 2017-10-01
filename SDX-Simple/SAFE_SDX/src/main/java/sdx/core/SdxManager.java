@@ -427,7 +427,7 @@ public class SdxManager extends SliceCommon{
     sleep(5);
     // run ovsbridge scritps to add the all interfaces to the ovsbridge br0, if new interface is added to the ovs bridge, then we reset the controller?
     // FIXME: maybe this is not the best way to do.
-    runCmdSlice(s,"/bin/bash ~/ovsbridge.sh "+ovscontroller,sshkey,"(c\\d+)");
+    runCmdSlice(s,"/bin/bash ~/ovsbridge.sh "+ovscontroller,sshkey,"(c\\d+)",false,true);
     try{
       Pattern pattern = Pattern.compile(routerpattern);
       Pattern stitchpattern = Pattern.compile(stitchportpattern);

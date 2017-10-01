@@ -134,7 +134,7 @@ public class Example extends SliceCommon{
           System.exit(-1);
         }
 				System.out.println("Plexus Controler IP: " + SDNControllerIP);
-				runCmdSlice(carrier,"/bin/bash ~/ovsbridge.sh "+SDNControllerIP+":6633",sshkey,"(c\\d+)");
+				runCmdSlice(carrier,"/bin/bash ~/ovsbridge.sh "+SDNControllerIP+":6633",sshkey,"(c\\d+)",true,true);
 				
 				String SAFEServerIP=((ComputeNode)carrier.getResourceByName("safe-server")).getManagementIP();
         if(!checkSafeServer(SAFEServerIP)){

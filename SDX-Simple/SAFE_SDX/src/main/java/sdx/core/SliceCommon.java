@@ -191,14 +191,14 @@ public class SliceCommon {
 		}
   }
 
-  protected static void runCmdSlice(Slice s, String cmd, String privkey){
+  protected static void runCmdSlice(Slice s, String cmd, String privkey,boolean repeat){
 		for(ComputeNode c : s.getComputeNodes()){
       String mip=c.getManagementIP();
       try{
         logger.debug(mip+" run commands:"+cmd);
         //ScpTo.Scp(lfile,"root",mip,rfile,privkey);
         String res=Exec.sshExec("root",mip,cmd,privkey);
-        while(res.startsWith("error")){
+        while(res.startsWith("error")&&repeat){
           sleep(5);
           res=Exec.sshExec("root",mip,cmd,privkey);
         }
@@ -209,7 +209,7 @@ public class SliceCommon {
 		}
   }
 
-  protected static void runCmdSlice(Slice s, String cmd, String privkey,String patn){
+  protected static void runCmdSlice(Slice s, String cmd, String privkey,String patn, boolean repeat){
     Pattern pattern = Pattern.compile(patn);
 		for(ComputeNode c : s.getComputeNodes()){
       Matcher matcher = pattern.matcher(c.getName());
@@ -221,7 +221,7 @@ public class SliceCommon {
       try{
         logger.debug(mip+" run commands:"+cmd);
         String res=Exec.sshExec("root",mip,cmd,privkey);
-        while(res.startsWith("error")){
+        while(res.startsWith("error")&&repeat){
           sleep(5);
           res=Exec.sshExec("root",mip,cmd,privkey);
         }
@@ -231,6 +231,93 @@ public class SliceCommon {
       }
 		}
   }
+
+  protected static void runCmdSlice(Slice s,final String cmd, final String privkey, final boolean repeat, final boolean parallel){
+    if(parallel){
+      ArrayList<Thread> tlist=new ArrayList<Thread>();
+      for(ComputeNode c : s.getComputeNodes()){
+        String name=c.getName();
+        final String mip=c.getManagementIP();
+        try{
+          System.out.println(mip+" run commands:"+cmd);
+          //ScpTo.Scp(lfile,"root",mip,rfile,privkey);
+          Thread thread=new Thread(){
+            @Override public void run(){
+              try{
+                String res=Exec.sshExec("root",mip,cmd,privkey);
+                while(res.startsWith("error")&&repeat){
+                  sleep(5);
+                  res=Exec.sshExec("root",mip,cmd,privkey);
+                }
+              }catch(Exception e){
+                e.printStackTrace();
+              }
+            }
+          };
+          thread.start();
+          tlist.add(thread);
+        }catch (Exception e){
+          System.out.println("exception when copying config file");
+        }
+      }
+      try{
+        for(Thread t:tlist){
+          t.join();
+        }
+      }catch (Exception e){
+        e.printStackTrace();
+      }
+    }
+    else{
+      runCmdSlice(s,cmd,privkey,repeat);
+    }
+  }
+
+  protected static void runCmdSlice(Slice s,final String cmd, final String privkey,String p, final boolean repeat, final boolean parallel){
+    Pattern pattern = Pattern.compile(p);
+    if(parallel){
+      ArrayList<Thread> tlist=new ArrayList<Thread>();
+      for(ComputeNode c : s.getComputeNodes()){
+        String name=c.getName();
+        Matcher matcher = pattern.matcher(name);
+        if(matcher.matches()){
+          final String mip=c.getManagementIP();
+          try{
+            System.out.println(mip+" run commands:"+cmd);
+            //ScpTo.Scp(lfile,"root",mip,rfile,privkey);
+            Thread thread=new Thread(){
+              @Override public void run(){
+                try{
+                  String res=Exec.sshExec("root",mip,cmd,privkey);
+                  while(res.startsWith("error")&&repeat){
+                    sleep(5);
+                    res=Exec.sshExec("root",mip,cmd,privkey);
+                  }
+                }catch(Exception e){
+                  e.printStackTrace();
+                }
+              }
+            };
+            thread.start();
+            tlist.add(thread);
+          }catch (Exception e){
+            System.out.println("exception when copying config file");
+          }
+        }
+      }
+      try{
+        for(Thread t:tlist){
+          t.join();
+        }
+      }catch (Exception e){
+        e.printStackTrace();
+      }
+    }
+    else{
+      runCmdSlice(s,cmd,privkey,p,repeat);
+    }
+  }
+
 
 	protected static ISliceTransportAPIv1 getSliceProxy(String pem, String key, String controllerUrl){
 		ISliceTransportAPIv1 sliceProxy = null;
