@@ -27,9 +27,7 @@ public class ScpTo{
       config.put("StrictHostKeyChecking", "no");
       session.setConfig(config);
       // username and password will be given via UserInfo interface.
-      logger.debug("open scp");
       session.connect();
-      logger.debug("open scp channel");
 
       boolean ptimestamp = true;
 
