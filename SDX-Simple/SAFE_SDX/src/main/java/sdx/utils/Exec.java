@@ -13,8 +13,9 @@ import java.util.Properties;
 public class Exec{
   final static Logger logger = Logger.getLogger(Exec.class);	
 
-  public static void exec(String cmd){
+  public static String exec(String cmd){
     logger.debug(cmd);
+    String res="";
     try{
       Runtime run = Runtime. getRuntime();
       Process pr = run.exec(cmd);
@@ -22,12 +23,14 @@ public class Exec{
       BufferedReader buf = new BufferedReader(new InputStreamReader(pr. getInputStream()));
       String line = "";
       while ((line=buf. readLine())!=null) {
+        res=res+line;
         logger.debug(line);
       }
     }catch (Exception e){
       logger.debug("Exeption while setting up link"+e);
 
     }
+    return res;
   }
   public static String sshExec(String user, String host,String command, String privkey){
     String result="";
