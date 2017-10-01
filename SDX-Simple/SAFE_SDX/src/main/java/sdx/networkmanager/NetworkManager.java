@@ -1,4 +1,4 @@
-package sdx.routingmanager;
+package sdx.networkmanager;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -12,7 +12,7 @@ import sdx.utils.Exec;
 import java.util.HashSet;
 import java.lang.System;
 
-public class RoutingManager{
+public class NetworkManager{
   final static Logger logger = Logger.getLogger(Exec.class);	
 
 	
