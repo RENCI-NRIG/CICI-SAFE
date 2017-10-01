@@ -1,8 +1,8 @@
 package sdx.core;
 
-import sdx.routingmanager.Link;
-import sdx.routingmanager.Router;
-import sdx.routingmanager.RoutingManager;
+import sdx.networkmanager.Link;
+import sdx.networkmanager.Router;
+import sdx.networkmanager.NetworkManager;
 import sdx.utils.Exec;
 import sdx.utils.SafePost;
 
@@ -94,14 +94,14 @@ public class SdxManager extends SliceCommon{
   final static Logger logger = Logger.getLogger(Exec.class);	
 
   
-  private static RoutingManager routingmanager=new RoutingManager();
+  private static NetworkManager routingmanager=new NetworkManager();
   private static HashMap<String, Link> links=new HashMap<String, Link>();
   private static String IPPrefix="192.168.";
   static int curip=128;
   private static String mask="/24";
   private static String SDNController;
   private static String OVSController;
-  protected static String serverurl;
+  public static String serverurl;
   private static final ReentrantLock lock=new ReentrantLock();
   //private static String type;
   private static ArrayList<String[]> advertisements=new ArrayList<String[]>();
@@ -139,9 +139,15 @@ public class SdxManager extends SliceCommon{
   }
 	
 	public static void startSdxServer(String [] args){
-    
+
 		logger.debug("Carrier Slice server with Service API: START");
     CommandLine cmd=parseCmd(args);
+    if(cmd.hasOption('n')){
+      safeauth=false;
+    }
+    else{
+      safeauth=true;
+    }
 		String configfilepath=cmd.getOptionValue("config");
     readConfig(configfilepath);
     IPPrefix=conf.getString("config.ipprefix");
@@ -150,13 +156,13 @@ public class SdxManager extends SliceCommon{
     //type=sdxconfig.type;
     computeIP(IPPrefix);
     //System.out.print(pemLocation);
-		sliceProxy = getSliceProxy(pemLocation,keyLocation, controllerUrl);		
+		sliceProxy = getSliceProxy(pemLocation,keyLocation, controllerUrl);
 		//SSH context
 		sctx = new SliceAccessContext<>();
 		try {
 			SSHAccessTokenFileFactory fac;
 			fac = new SSHAccessTokenFileFactory(sshkey+".pub", false);
-			SSHAccessToken t = fac.getPopulatedToken();			
+			SSHAccessToken t = fac.getPopulatedToken();
 			sctx.addToken("root", "root", t);
 			sctx.addToken("root", t);
 		} catch (UtilTransportException e) {
@@ -187,7 +193,7 @@ public class SdxManager extends SliceCommon{
   public static String notifyPrefix(String dest, String gateway, String router,String customer_keyhash){
     logger.debug("received notification for ip prefix"+dest);
     String res="received notification for "+dest;
-    if(authorizePrefix(customer_keyhash,dest)){
+    if(!safeauth || authorizePrefix(customer_keyhash,dest)){
       res=res+" [authorization success]";
       boolean flag=false;
       for(String[]pair:advertisements){
@@ -197,7 +203,7 @@ public class SdxManager extends SliceCommon{
           pair[3]=router;
           continue;
         }
-        if(authorizeConnectivity(pair[0],pair[1],customer_keyhash,dest)){
+        if(!safeauth || authorizeConnectivity(pair[0],pair[1],customer_keyhash,dest)){
     //      res.add(pair[1]);
           routingmanager.configurePath(dest,router,pair[1],pair[3],gateway,SDNController);
           routingmanager.configurePath(pair[1],pair[3],dest,router,pair[2],SDNController);
@@ -249,7 +255,7 @@ public class SdxManager extends SliceCommon{
     String[] res=new String[2];
     res[0]=null;
     res[1]=null;
-    if(authorizeStitchCommunion(customer_keyhash,stitchport, vlan, gateway, carrierName, nodeName)){
+    if(!safeauth || authorizeStitchCommunion(customer_keyhash,stitchport, vlan, gateway, carrierName, nodeName)){
       //FIX ME: do stitching
       Slice s = null;
       ISliceTransportAPIv1 sliceProxy = getSliceProxy(pemLocation,keyLocation, controllerUrl);		
@@ -276,7 +282,7 @@ public class SdxManager extends SliceCommon{
     String[] res=new String[2];
     res[0]=null;
     res[1]=null;
-    if(authorizeStitchRequest(customer_slice,customerName,ResrvID, keyhash,carrierName, nodeName)){
+    if(!safeauth || authorizeStitchRequest(customer_slice,customerName,ResrvID, keyhash,carrierName, nodeName)){
       Slice s1 = null;
       ISliceTransportAPIv1 sliceProxy = getSliceProxy(pemLocation,keyLocation, controllerUrl);		
       try {
@@ -419,6 +425,8 @@ public class SdxManager extends SliceCommon{
     logger.debug("Configurating Routing");
     restartPlexus(SDNControllerIP);
     sleep(5);
+    // run ovsbridge scritps to add the all interfaces to the ovsbridge br0, if new interface is added to the ovs bridge, then we reset the controller?
+    // FIXME: maybe this is not the best way to do.
     runCmdSlice(s,"/bin/bash ~/ovsbridge.sh "+ovscontroller,sshkey,"(c\\d+)");
     try{
       Pattern pattern = Pattern.compile(routerpattern);
@@ -446,7 +454,9 @@ public class SdxManager extends SliceCommon{
       HashSet<Integer> usedip=new HashSet<Integer>();
       for(Interface i: s.getInterfaces()){
         InterfaceNode2Net inode2net=(InterfaceNode2Net)i;
-
+        if(routingmanager.getRouter(inode2net.getNode().toString())==null){
+          continue;
+        }
         Link link=links.get(inode2net.getLink().toString());
         if(link==null){
           link=new Link();

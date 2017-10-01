@@ -77,7 +77,7 @@ public class SliceCommon {
   protected static ArrayList<String> clientSites;
   protected static String controllerSite;
   protected static String serverSite;
-  
+  protected static boolean safeauth=false;
 
   public SliceCommon(){}
 
@@ -85,10 +85,13 @@ public class SliceCommon {
     Options options = new Options();
     Option config = new Option("c", "config", true, "configuration file path");
     Option config1 = new Option("d", "delete", false, "delete the slice");
+    Option config2 = new Option("n", "nosafe", false, "use safe authorization");
     config.setRequired(true);
     config1.setRequired(false);
+    config2.setRequired(false);
     options.addOption(config);
     options.addOption(config1);
+    options.addOption(config2);
     CommandLineParser parser = new DefaultParser();
     HelpFormatter formatter = new HelpFormatter();
     CommandLine cmd=null;
@@ -102,7 +105,6 @@ public class SliceCommon {
         System.exit(1);
         return cmd;
     }
-  
     return cmd;
   }
 
