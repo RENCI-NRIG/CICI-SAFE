@@ -94,7 +94,10 @@ public class NetworkManager{
     addLink(ipa,ra);
     String dpid= getRouter(ra).getDPID();
     String cmd = addrCMD(ipa,dpid,controller);
-    Exec.exec(cmd);
+    String res=Exec.exec(cmd);
+    if(res.contains("failuer"){
+      logger.debug("Setting IP address failed");
+    }
     addEntry_HashList(sdncmds,dpid,cmd);
   }
 
@@ -103,11 +106,17 @@ public class NetworkManager{
     addLink(ipa,ra,ipb,rb);
     String dpid=getDPID(ra);
     String cmd=addrCMD(ipa,dpid, controller);
-    Exec.exec(cmd);
+    String res=Exec.exec(cmd);
+    if(res.contains("failuer"){
+      logger.debug("Setting IP address failed");
+    }
     addEntry_HashList(sdncmds,dpid,cmd);
     dpid=getDPID(rb);
     cmd=addrCMD(ipb,dpid, controller);
-    Exec.exec(cmd);
+    String res=Exec.exec(cmd);
+    if(res.contains("failuer"){
+      logger.debug("Setting IP address failed");
+    }
     addEntry_HashList(sdncmds,dpid,cmd);
   }
 
@@ -120,7 +129,10 @@ public class NetworkManager{
     ArrayList<String[]>paths=getBroadcastRoutes(gwdpid,gateway);
     for(String[] path: paths){
       String cmd=routingCMD(dest, path[1], path[0], controller);
-      Exec.exec(cmd);
+      String res=Exec.exec(cmd);
+      if(res.contains("failuer"){
+        logger.debug("Setting routing entry failed");
+      }
       addEntry_HashList(sdncmds,path[0],cmd);
       //logger.debug(path[0]+" "+path[1]);
     }
