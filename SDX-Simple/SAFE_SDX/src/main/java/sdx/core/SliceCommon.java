@@ -239,7 +239,7 @@ public class SliceCommon {
         String name=c.getName();
         final String mip=c.getManagementIP();
         try{
-          System.out.println(mip+" run commands:"+cmd);
+          logger.debug(mip+" run commands:"+cmd);
           //ScpTo.Scp(lfile,"root",mip,rfile,privkey);
           Thread thread=new Thread(){
             @Override public void run(){
@@ -258,6 +258,7 @@ public class SliceCommon {
           tlist.add(thread);
         }catch (Exception e){
           System.out.println("exception when copying config file");
+          logger.error("exception when copying config file");
         }
       }
       try{
@@ -283,7 +284,7 @@ public class SliceCommon {
         if(matcher.matches()){
           final String mip=c.getManagementIP();
           try{
-            System.out.println(mip+" run commands:"+cmd);
+            logger.debug(mip+" run commands:"+cmd);
             //ScpTo.Scp(lfile,"root",mip,rfile,privkey);
             Thread thread=new Thread(){
               @Override public void run(){
@@ -302,6 +303,7 @@ public class SliceCommon {
             tlist.add(thread);
           }catch (Exception e){
             System.out.println("exception when copying config file");
+            logger.error("exception when copying config file");
           }
         }
       }

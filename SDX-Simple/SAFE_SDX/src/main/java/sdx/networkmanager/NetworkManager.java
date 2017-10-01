@@ -189,7 +189,6 @@ public class NetworkManager{
 
   //TODO: get shortest path for two pairs
   private ArrayList<String[]> getPairRoutes(String srcdpid, String dstdpid, String gateway){
-    logger.debug("shortest path");
 
     HashSet<String> knownrouters=new HashSet<String>();
     //path queue: [dpid, path]

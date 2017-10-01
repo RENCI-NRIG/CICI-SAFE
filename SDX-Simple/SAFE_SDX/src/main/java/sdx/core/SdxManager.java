@@ -91,7 +91,7 @@ import org.apache.http.impl.client.DefaultHttpClient;
 public class SdxManager extends SliceCommon{
   public SdxManager(){}
 
-  final static Logger logger = Logger.getLogger(Exec.class);	
+  final static Logger logger = Logger.getLogger(Exec.class);
 
   
   private static NetworkManager routingmanager=new NetworkManager();
@@ -453,10 +453,15 @@ public class SdxManager extends SliceCommon{
       logger.debug("setting up links");
       HashSet<Integer> usedip=new HashSet<Integer>();
       for(Interface i: s.getInterfaces()){
+        System.out.println(i.getName());
+      }
+      HashSet<String> ifs=new HashSet<String>();
+      for(Interface i: s.getInterfaces()){
         InterfaceNode2Net inode2net=(InterfaceNode2Net)i;
-        if(routingmanager.getRouter(inode2net.getNode().toString())==null){
+        if(ifs.contains(i.getName()) || routingmanager.getRouter(inode2net.getNode().toString())==null){
           continue;
         }
+        ifs.add(i.getName());
         Link link=links.get(inode2net.getLink().toString());
         if(link==null){
           link=new Link();
