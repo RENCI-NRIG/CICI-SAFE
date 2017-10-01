@@ -16,7 +16,7 @@ import java.net.URI;
  *
  */
 public class SdxServer {
-	  final static Logger logger = Logger.getLogger(Exec.class);	
+	  final static Logger logger = Logger.getLogger(SdxServer.class);	
 
 	
     // Base URI the Grizzly HTTP server will listen on

@@ -13,7 +13,7 @@ import java.util.HashSet;
 import java.lang.System;
 
 public class NetworkManager{
-  final static Logger logger = Logger.getLogger(Exec.class);	
+  final static Logger logger = Logger.getLogger(NetworkManager.class);	
 
 	
   private  ArrayList<Router> routers=new ArrayList<Router>();

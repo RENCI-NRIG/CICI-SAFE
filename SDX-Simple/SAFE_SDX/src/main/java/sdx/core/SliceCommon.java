@@ -58,7 +58,7 @@ import sdx.utils.ScpTo;
 
 
 public class SliceCommon {
-	  final static Logger logger = Logger.getLogger(Exec.class);	
+	  final static Logger logger = Logger.getLogger(SliceCommon.class);	
 
 	
 	protected static final String RequestResource = null;

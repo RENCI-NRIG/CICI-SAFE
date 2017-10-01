@@ -20,7 +20,7 @@ import java.util.ArrayList;
 @Path("sdx")
 public class RestService {
 	
-	  final static Logger logger = Logger.getLogger(Exec.class);	
+	  final static Logger logger = Logger.getLogger(RestService.class);	
 
 
     /** 
