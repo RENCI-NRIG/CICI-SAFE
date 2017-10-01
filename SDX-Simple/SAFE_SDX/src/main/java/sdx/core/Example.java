@@ -54,10 +54,6 @@ import org.renci.ahab.ndllib.transport.OrcaSMXMLRPCProxy;
 
 import sdx.utils.Exec;
 
-import java.rmi.RMISecurityManager;
-import java.rmi.Naming;
-import java.rmi.RemoteException;
-import java.rmi.server.UnicastRemoteObject;
 /**
 
  * @author geni-orca
@@ -66,7 +62,7 @@ import java.rmi.server.UnicastRemoteObject;
 public class Example extends SliceCommon{
   final static Logger logger = Logger.getLogger(Exec.class);	
 	
-	public Example()throws RemoteException{}
+	public Example(){}
 	private static int curip=128;
 	private static String IPPrefix="192.168.";
 	private static String mask="/24";
@@ -226,7 +222,7 @@ public class Example extends SliceCommon{
 			ComputeNode node0 = s.addComputeNode("c"+String.valueOf(i));
 			node0.setImage(nodeImageURL,nodeImageHash,nodeImageShortName);
 			node0.setNodeType(nodeNodeType);
-			node0.setDomain(clientSites.get(i));
+			node0.setDomain(clientSites.get(i%clientSites.size()));
 			node0.setPostBootScript(nodePostBootScript);
 			nodelist.add(node0);
 			//for(int j=0;j<numstitches;j++){
