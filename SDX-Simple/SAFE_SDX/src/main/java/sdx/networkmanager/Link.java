@@ -1,4 +1,4 @@
-package sdx.routingmanager;
+package sdx.networkmanager;
 
 import org.apache.log4j.Logger;
 
