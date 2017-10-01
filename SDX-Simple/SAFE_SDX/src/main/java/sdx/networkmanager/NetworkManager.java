@@ -113,7 +113,7 @@ public class NetworkManager{
     addEntry_HashList(sdncmds,dpid,cmd);
     dpid=getDPID(rb);
     cmd=addrCMD(ipb,dpid, controller);
-    String res=Exec.exec(cmd);
+    res=Exec.exec(cmd);
     if(res.contains("failuer")){
       logger.debug("Setting IP address failed");
     }
