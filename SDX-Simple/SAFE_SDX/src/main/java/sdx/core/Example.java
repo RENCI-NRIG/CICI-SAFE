@@ -60,7 +60,7 @@ import sdx.utils.Exec;
  *
  */
 public class Example extends SliceCommon{
-  final static Logger logger = Logger.getLogger(Exec.class);	
+  final static Logger logger = Logger.getLogger(Example.class);	
 	
 	public Example(){}
 	private static int curip=128;

@@ -91,7 +91,7 @@ import org.apache.http.impl.client.DefaultHttpClient;
 public class SdxManager extends SliceCommon{
   public SdxManager(){}
 
-  final static Logger logger = Logger.getLogger(Exec.class);
+  final static Logger logger = Logger.getLogger(SdxManager.class);
 
   
   private static NetworkManager routingmanager=new NetworkManager();
