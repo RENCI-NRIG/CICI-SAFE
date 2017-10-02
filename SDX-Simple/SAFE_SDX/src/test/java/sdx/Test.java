@@ -8,7 +8,6 @@ import org.glassfish.jersey.server.ResourceConfig;
 import org.json.JSONObject;
 
 import sdx.utils.Exec;
-import sdx.networkmanager.RestSDN;
 import sdx.utils.HttpUtil;
 
 import java.net.URI;
