@@ -11,6 +11,7 @@ public class Router{
 
     private String routerid="";
     private String dpid="";
+    private String ip="";
     private HashSet<String> interfaces=new HashSet<String>();
     private HashSet<String> neighbors=new HashSet<String>();
     private int numInterfaces=0;
@@ -19,9 +20,10 @@ public class Router{
       return neighbors;
     }
 
-    public Router(String rid, String switch_id,  int numintf){
+    public Router(String rid, String switch_id, int numintf, String ip){
       routerid=rid;
       dpid=switch_id;
+      this.ip=ip;
       numInterfaces=numintf;
     }
 
@@ -48,5 +50,8 @@ public class Router{
 
     public String getRouterID(){
       return routerid;
+    }
+    public String getManagementIP(){
+      return this.ip;
     }
 }

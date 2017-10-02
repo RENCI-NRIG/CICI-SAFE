@@ -12,6 +12,8 @@ import sdx.utils.Exec;
 import java.util.HashSet;
 import java.lang.System;
 
+import sdx.utils.HttpUtil;
+
 public class NetworkManager{
   final static Logger logger = Logger.getLogger(NetworkManager.class);	
 
@@ -74,9 +76,10 @@ public class NetworkManager{
     }
   }
 
-  public  void addRouter(String routerid, String dpid, int numinterfaces){
+  public  void addRouter(String routerid, String dpid, int numinterfaces, String mip){
     if(getRouter(routerid)==null){
-      routers.add(new Router(routerid,dpid,numinterfaces));
+      System.out.println(dpid+":my dpid");
+      routers.add(new Router(routerid,dpid,numinterfaces, mip));
     }
     else{
       Router router=getRouter(routerid);
@@ -84,9 +87,9 @@ public class NetworkManager{
     }
   }
 
-  public void newRouter(String routerid, String dpid, int numInterfaces) {
+  public void newRouter(String routerid, String dpid, int numInterfaces, String mip) {
     logger.debug("RoutingManager: new router "+routerid+ " "+dpid);
-    addRouter(routerid, dpid, numInterfaces);
+    addRouter(routerid, dpid, numInterfaces,mip);
   }
 
   public void newLink(String ipa, String ra, String controller) {
@@ -94,10 +97,7 @@ public class NetworkManager{
     addLink(ipa,ra);
     String dpid= getRouter(ra).getDPID();
     String cmd = addrCMD(ipa,dpid,controller);
-    String res=Exec.exec(cmd);
-    if(res.contains("failuer")){
-      logger.debug("Setting IP address failed");
-    }
+    runSDNCmd(cmd);
     addEntry_HashList(sdncmds,dpid,cmd);
   }
 
@@ -106,17 +106,11 @@ public class NetworkManager{
     addLink(ipa,ra,ipb,rb);
     String dpid=getDPID(ra);
     String cmd=addrCMD(ipa,dpid, controller);
-    String res=Exec.exec(cmd);
-    if(res.contains("failuer")){
-      logger.debug("Setting IP address failed");
-    }
+    runSDNCmd(cmd);
     addEntry_HashList(sdncmds,dpid,cmd);
     dpid=getDPID(rb);
     cmd=addrCMD(ipb,dpid, controller);
-    res=Exec.exec(cmd);
-    if(res.contains("failuer")){
-      logger.debug("Setting IP address failed");
-    }
+    runSDNCmd(cmd);
     addEntry_HashList(sdncmds,dpid,cmd);
   }
 
@@ -129,10 +123,7 @@ public class NetworkManager{
     ArrayList<String[]>paths=getBroadcastRoutes(gwdpid,gateway);
     for(String[] path: paths){
       String cmd=routingCMD(dest, path[1], path[0], controller);
-      String res=Exec.exec(cmd);
-      if(res.contains("failuer")){
-        logger.debug("Setting routing entry failed");
-      }
+      runSDNCmd(cmd);
       addEntry_HashList(sdncmds,path[0],cmd);
       //logger.debug(path[0]+" "+path[1]);
     }
@@ -148,9 +139,16 @@ public class NetworkManager{
     ArrayList<String[]>paths=getPairRoutes(gwdpid,targetdpid,gateway);
     for(String[] path: paths){
       String cmd=routingCMD(dest,targetIP, path[1], path[0], controller);
-      Exec.exec(cmd);
+      runSDNCmd(cmd);
       addEntry_HashList(sdncmds,path[0],cmd);
       //logger.debug(path[0]+" "+path[1]);
+    }
+  }
+
+  private void runSDNCmd(String cmd){
+    String res=Exec.exec(cmd);
+    if(res.contains("failuer")){
+      logger.debug("Setting routing entry failed");
     }
   }
   public  Router getRouter(String routername){
@@ -162,12 +160,20 @@ public class NetworkManager{
     return null;
   }
 
+  public void setOvsdbAddr(String controller){
+    for(Router r:routers){
+      String[] cmd=ovsdbCMD(r,controller);
+      String res=HttpUtil.putString(cmd[0],cmd[1]);
+      logger.debug(res);
+    }
+  }
+
   public void replayCmds(String dpid){
     if(sdncmds.containsKey(dpid)){
       ArrayList<String> l=sdncmds.get(dpid);
       for(String cmd: l){
         logger.debug("Replay:"+cmd);
-        Exec.exec(cmd);
+        runSDNCmd(cmd);
       }
     }
     else{
@@ -311,6 +317,14 @@ public class NetworkManager{
   private  String routingCMD(String dst,String src,String gw, String dpid, String controller){
     String cmd="curl -X POST -d {\"destination\":\""+dst+"\",\"source\":\""+src+"\",\"gateway\":\""+gw+"\"} "+controller+"/router/"+dpid;
     return cmd;
+  }
+
+  private  String[] ovsdbCMD(Router r, String controller){
+    //String cmd="curl -X PUT -d \'\"tcp:"+r.getManagementIP()+":6632\"\' "+controller+"/v1.0/conf/switches/"+r.getDPID()+"/ovsdb_addr";
+    String[]res=new String[2];
+    res[1]="\"tcp:"+r.getManagementIP()+":6632\"";
+    res[0]="http://"+controller+"/v1.0/conf/switches/"+r.getDPID()+"/ovsdb_addr";
+    return res;
   }
 
   private  Router getRouterByDPID(String routername){
