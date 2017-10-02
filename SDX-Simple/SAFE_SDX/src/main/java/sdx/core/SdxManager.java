@@ -447,6 +447,7 @@ public class SdxManager extends SliceCommon{
           System.out.println("1:"+sis);
         }
         try{
+          result[1]=result[1].replace("\n","");
           logger.debug("Get router info "+result[0]+" "+result[1]);
           routingmanager.newRouter(node.getName(),result[1],Integer.valueOf(result[0]),mip);
         }catch(Exception e){
