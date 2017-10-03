@@ -207,6 +207,7 @@ public class SdxManager extends SliceCommon{
         }
         if(!safeauth || authorizeConnectivity(pair[0],pair[1],customer_keyhash,dest)){
     //      res.add(pair[1]);
+          System.out.println("Connection between "+pair[0]+" and "+pair[1]+" allowed");
           routingmanager.configurePath(dest,router,pair[1],pair[3],gateway,SDNController);
           routingmanager.configurePath(pair[1],pair[3],dest,router,pair[2],SDNController);
         }
