@@ -33,7 +33,7 @@ public class SafePost{
       {
         token=matcher.group(1);
       }
-      System.out.print("token:\""+token+"\"");
+      logger.debug("token:\""+token+"\"");
       return token;
   }
   public static String postSafeStatements(String safeserver,String requestName,String principal,String[] othervalues){
@@ -54,7 +54,7 @@ public class SafePost{
         others=others+",\""+othervalues[i]+"\"";
       }
       params=params.replace("OTHER",others);
-      System.out.print(requestName+"  "+params);
+      logger.debug(requestName+"  "+params);
 
 			StringEntity input = new StringEntity(params);
 			input.setContentType("application/json");
@@ -74,7 +74,7 @@ public class SafePost{
         message=message+output;
 			}
       res=getMessage(message);
-      System.out.print("message:\""+res+"\"");
+      logger.debug("message:\""+res+"\"");
       return res;
       
 			} catch (MalformedURLException e) {

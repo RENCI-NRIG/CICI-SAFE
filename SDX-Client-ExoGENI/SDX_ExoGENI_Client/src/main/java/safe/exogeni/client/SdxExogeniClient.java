@@ -133,10 +133,12 @@ public class SdxExogeniClient extends SliceCommon {
               paramsobj.put("customer", keyhash);
               String res=SdxHttpClient.notifyPrefix(sdxserver+"sdx/notifyprefix",paramsobj);
               if(res.equals("")){
-                logger.debug("Prefix notifcation failed");
+                logger.debug("Prefix not accepted (authorization failed)");
+                System.out.println("Prefix not accepted (authorization failed)");
               }
               else{
                 logger.debug(res);
+                System.out.println(res);
               }
             }
           }
@@ -193,6 +195,7 @@ public class SdxExogeniClient extends SliceCommon {
       logger.debug("Got Stitch Information From Server:\n "+res.toString());
       if(!res.getBoolean("result")){
         logger.debug("stitch request declined by server");
+        System.out.println("stitch request declined by server");
       } 
       else{
         String ip=res.getString("ip");
@@ -207,6 +210,7 @@ public class SdxExogeniClient extends SliceCommon {
         mip= node1.getManagementIP();
         Exec.sshExec("root",mip,"echo \"ip route 192.168.1.1/16 "+IPPrefix+"\" >>/etc/quagga/zebra.conf  ",sshkey);
         Exec.sshExec("root",mip,"/etc/init.d/quagga restart",sshkey);
+        System.out.println("stitch completed.");
       }
     }
     catch (Exception e){

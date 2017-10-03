@@ -191,10 +191,12 @@ public class SdxManager extends SliceCommon{
 	}
 
   public static String notifyPrefix(String dest, String gateway, String router,String customer_keyhash){
-    logger.debug("received notification for ip prefix"+dest);
+    logger.debug("received notification for ip prefix "+dest);
     String res="received notification for "+dest;
     if(!safeauth || authorizePrefix(customer_keyhash,dest)){
-      res=res+" [authorization success]";
+      if(safeauth) {
+        res = res + " [authorization success]";
+      }
       boolean flag=false;
       for(String[]pair:advertisements){
         if(pair[0].equals(customer_keyhash)&&pair[1].equals(dest)){
@@ -278,11 +280,15 @@ public class SdxManager extends SliceCommon{
   }
 
   public static String[] stitchRequest(String carrierName,String nodeName, String customer_slice,String customerName, String ResrvID,String secret) {
-    logger.debug("new request for"+carrierName +" and "+nodeName+pemLocation+keyLocation); 
+    logger.debug("new stitch request for"+carrierName +" and "+nodeName);
+    System.out.println("new stitch request for"+carrierName +" and "+nodeName);
     String[] res=new String[2];
     res[0]=null;
     res[1]=null;
     if(!safeauth || authorizeStitchRequest(customer_slice,customerName,ResrvID, keyhash,carrierName, nodeName)){
+      if(safeauth){
+        System.out.println("Authorized: stitch request for"+carrierName +" and "+nodeName);
+      }
       Slice s1 = null;
       ISliceTransportAPIv1 sliceProxy = getSliceProxy(pemLocation,keyLocation, controllerUrl);		
       try {
@@ -310,12 +316,12 @@ public class SdxManager extends SliceCommon{
       ifaceNode0.setIpAddress("192.168.1.1");
       ifaceNode0.setNetmask("255.255.255.0");
       try {
-		s1.commit();
-	} catch (XMLRPCTransportException e1) {
-		// TODO Auto-generated catch block
-		e1.printStackTrace();
-	}
+        s1.commit();
+      } catch (XMLRPCTransportException e1) {
+        // TODO Auto-generated catch block
+        e1.printStackTrace();
 
+      }
       int N=0;
       net=(Network)s1.getResourceByName(stitchname);
       while(net.getState() != "Active" &&N<10){
@@ -356,6 +362,11 @@ public class SdxManager extends SliceCommon{
       res[0]=gw;
       res[1]=ip;
       routingmanager.configurePath(ip,nodeName,ip.split("/")[0],SDNController);
+      System.out.println("stitching operation  completed");
+    }
+    else{
+      System.out.println("Unauthorized: stitch request for"+carrierName +" and "+nodeName);
+      logger.debug("Stitching Authorization Failed");
     }
     return res;
   }
