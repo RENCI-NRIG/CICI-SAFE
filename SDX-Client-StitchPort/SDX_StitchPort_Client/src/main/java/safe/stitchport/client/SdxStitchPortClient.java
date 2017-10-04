@@ -81,37 +81,21 @@ public class SdxStitchPortClient extends SliceCommon {
     safeserver=conf.getString("config.safeserver")+":7777";
 
     logger.debug("client start");
-    String input = new String();  
+    if(cmd.hasOption('e')){
+      String command= cmd.getOptionValue('e');
+      processCmd(command);
+      return;
+    }
+    String input = new String();
 		try{
       java.io.BufferedReader stdin = new java.io.BufferedReader(new java.io.InputStreamReader(System.in));  
       while(true){
         System.out.print("Enter Commands:stitch stitchport vlan sdx_slice  sdx_node gateway ip\n Or advertise route: route dest gateway sdx_slice_name routername,\n$>");
         input = stdin.readLine();  
-        String[] params=input.split(" ");
         System.out.print("continue?[y/n]\n$>"+input);
         input = stdin.readLine();  
         if(input.startsWith("y")){
-          try{
-            if(params[0].equals("stitch")){
-              processStitchCmd(params);
-            }else{
-              JSONObject paramsobj=new JSONObject();
-              paramsobj.put("dest",params[1]);
-              paramsobj.put("gateway",params[2]);
-              paramsobj.put("router", params[4]);
-              paramsobj.put("customer", keyhash);
-              String res=SdxHttpClient.notifyPrefix(sdxserver+"sdx/notifyprefix",paramsobj);
-              if(res.equals("")){
-                logger.debug("Prefix notifcation failed");
-              }
-              else{
-                logger.debug(res);
-              }
-            }
-          }
-          catch (Exception e){
-            e.printStackTrace();
-          }
+          processCmd(input);
         }
       }
     }
@@ -122,6 +106,34 @@ public class SdxStitchPortClient extends SliceCommon {
     } 
 		logger.debug("XXXXXXXXXX Done XXXXXXXXXXXXXX");
 	}
+
+	private static void processCmd(String command){
+    try{
+      String[] params=command.split(" ");
+      if(params[0].equals("stitch")){
+        processStitchCmd(params);
+      }else{
+        JSONObject paramsobj=new JSONObject();
+        paramsobj.put("dest",params[1]);
+        paramsobj.put("gateway",params[2]);
+        paramsobj.put("router", params[4]);
+        paramsobj.put("customer", keyhash);
+        String res=SdxHttpClient.notifyPrefix(sdxserver+"sdx/notifyprefix",paramsobj);
+        if(res.equals("")){
+          logger.debug("Prefix notifcation failed");
+          System.out.println("Prefix notifcation failed");
+        }
+        else{
+          logger.debug(res);
+          System.out.println(res);
+        }
+      }
+    }
+    catch (Exception e){
+      e.printStackTrace();
+    }
+
+  }
 
   private static void processStitchCmd(String[] params){
     try{

@@ -40,10 +40,10 @@ public class SdxServer {
      */
     public static void main(String[] args) throws IOException {
         SdxManager.startSdxServer(args);
-
         logger.debug("Starting on "+SdxManager.serverurl);
         final HttpServer server = startServer(SdxManager.serverurl);
         logger.debug("Sdx server has started, listening on "+SdxManager.serverurl);
+        System.out.println("Sdx server has started, listening on "+SdxManager.serverurl);
     }
 }
 

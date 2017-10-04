@@ -144,6 +144,7 @@ public class SdxManager extends SliceCommon{
     CommandLine cmd=parseCmd(args);
     if(cmd.hasOption('n')){
       safeauth=false;
+      System.out.println("Safe disabled, allowing all requests");
     }
     else{
       safeauth=true;
@@ -258,8 +259,10 @@ public class SdxManager extends SliceCommon{
     String[] res=new String[2];
     res[0]=null;
     res[1]=null;
+    try{
     if(!safeauth || authorizeStitchCommunion(customer_keyhash,stitchport, vlan, gateway, carrierName, nodeName)){
       //FIX ME: do stitching
+      System.out.println("adding nnew stitfhport");
       Slice s = null;
       ISliceTransportAPIv1 sliceProxy = getSliceProxy(pemLocation,keyLocation, controllerUrl);		
       try {
@@ -275,7 +278,13 @@ public class SdxManager extends SliceCommon{
       StitchPort mysp=s.addStitchPort(stitchname,stitchport,vlan,10000000);
       ComputeNode mynode=(ComputeNode) s.getResourceByName(nodeName);
       mysp.stitch(mynode);
+      s.commit();
+      waitTillActive(s);
+      System.out.println("Stitch port is up.");
       routingmanager.newLink(ip, nodeName, SDNController);
+    }
+    }catch(Exception e){
+      e.printStackTrace();
     }
     return res;
   }

@@ -59,11 +59,12 @@ public class RestService {
     @POST
     @Path("/stitchcommunion")
     @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
-    public StitchResult stitchRequest(StitchCommunion sr){
+    @Produces(MediaType.TEXT_PLAIN)
+    public String stitchRequest(StitchCommunion sr){
       logger.debug("got communion stitch request: \n"+sr.toString());
       String[] res=SdxManager.stitchCommunion(sr.sdxslice, sr.sdxnode, sr.ckeyhash, sr.stitchport, sr.vlan,sr.gateway, sr.ip);
-      return new StitchResult("","");
+      //return new StitchResult("ha","ha");
+      return "res";
     }
 
     @POST
@@ -73,6 +74,8 @@ public class RestService {
     public String stitchRequest(PrefixNotification pn){
       logger.debug("got sittch request");
       String res=SdxManager.notifyPrefix(pn.dest, pn.gateway, pn.router, pn.customer);
+      logger.debug(res);
+      System.out.println(res);
       return res;
     }
 }

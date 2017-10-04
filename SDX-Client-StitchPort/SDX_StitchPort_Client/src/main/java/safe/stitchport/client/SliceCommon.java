@@ -68,8 +68,11 @@ public class SliceCommon {
   protected static CommandLine parseCmd(String[] args){
     Options options = new Options();
     Option config = new Option("c", "config", true, "configuration file path");
+    Option config2 = new Option("e", "exec", true, "command to exec");
     config.setRequired(true);
+    config2.setRequired(true);
     options.addOption(config);
+    options.addOption(config2);
     CommandLineParser parser = new DefaultParser();
     HelpFormatter formatter = new HelpFormatter();
     CommandLine cmd=null;

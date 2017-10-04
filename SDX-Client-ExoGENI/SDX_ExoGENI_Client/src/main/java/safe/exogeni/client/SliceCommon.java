@@ -79,10 +79,13 @@ public class SliceCommon {
     Options options = new Options();
     Option config = new Option("c", "config", true, "configuration file path");
     Option config1 = new Option("d", "delete", false, "delete the slice");
+    Option config2 = new Option("e", "exec", true, "command to exec");
     config.setRequired(true);
     config1.setRequired(false);
+    config2.setRequired(true);
     options.addOption(config);
     options.addOption(config1);
+    options.addOption(config2);
     CommandLineParser parser = new DefaultParser();
     HelpFormatter formatter = new HelpFormatter();
     CommandLine cmd=null;
