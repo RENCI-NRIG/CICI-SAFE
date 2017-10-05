@@ -69,9 +69,12 @@ public class SliceCommon {
     Options options = new Options();
     Option config = new Option("c", "config", true, "configuration file path");
     Option config2 = new Option("e", "exec", true, "command to exec");
+    Option config1 = new Option("n", "nosafe", false, "disable safe authorization");
     config.setRequired(true);
-    config2.setRequired(true);
+    config1.setRequired(false);
+    config2.setRequired(false);
     options.addOption(config);
+    options.addOption(config1);
     options.addOption(config2);
     CommandLineParser parser = new DefaultParser();
     HelpFormatter formatter = new HelpFormatter();
