@@ -121,7 +121,6 @@ public class Example extends SliceCommon{
 			computeIP(IPPrefix);
 			try{
 				String carrierName=sliceName;
-				System.setProperty("java.security.policy","~/project/exo-geni/ahabserver/allow.policy");
 				Slice carrier=createCarrierSlice(carrierName,4,10,1000000,1);
 				carrier.refresh();
 				waitTillActive(carrier);
@@ -292,7 +291,7 @@ public class Example extends SliceCommon{
 		String script="apt-get update\n"
 				+"docker pull yaoyj11/safeserver\n"
 				+"docker run -i -t -d -p 7777:7777 -h safe --name safe yaoyj11/safeserver\n"
-				+"docker exec -d safe /bin/bash -c  \"cd /root/safe;export SBT_HOME=/opt/sbt-0.13.12;export SCALA_HOME=/opt/scala-2.11.8;sed -i 's/128.194.6.136:8098/"+riakip+":8098/g' safe-server/src/main/resources/application.conf;./sdx.sh\"\n";
+				+"docker exec -d safe /bin/bash -c  \"cd /root/safe;export SBT_HOME=/opt/sbt-0.13.12;export SCALA_HOME=/opt/scala-2.11.8;sed -i 's/RIAKSERVER/"+riakip+"/g' safe-server/src/main/resources/application.conf;./sdx.sh\"\n";
 		return script;
 	}
 

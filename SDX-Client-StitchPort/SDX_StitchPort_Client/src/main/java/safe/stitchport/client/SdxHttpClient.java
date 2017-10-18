@@ -31,8 +31,8 @@ public class SdxHttpClient {
    */
 
   public static String tryStitch(String serverurl, JSONObject paramsobj){
-    String resobj="fail?";
-    HttpClient httpClient = HttpClientBuilder.create().build(); //Use this instead 
+    String res="stitch failed";
+    HttpClient httpClient = HttpClientBuilder.create().build(); //Use this instead
 
     try {
 
@@ -45,13 +45,12 @@ public class SdxHttpClient {
       //handle response here...
       String output=EntityUtils.toString(response.getEntity());
       logger.debug(output);
-      System.out.println(out);
       httpClient.getConnectionManager().shutdown(); 
       return output;
 
     }catch (Exception ex) {
       ex.printStackTrace();
-      return resobj;
+      return res;
 
     } finally {
         //Deprecated

@@ -43,12 +43,18 @@ Then we can run ahab controllers for sdx, alice and bob.
     $>stitch CNode0 sdx c0
     bob stitch CNode0 to sdx/c3, in bob's controller run:
     $>stitch CNode sdx c3
+    OR:
+    ./scripts/sdxclient.sh -c config/alice.conf -e "stitch CNode0 sdx c0"
+    ./scripts/sdxclient.sh -c config/bob.conf -e "stitch CNode0 sdx c3"
 
   8. route
     alice tells sdx controller its address space
     $>route 192.168.10.1/24 192.168.33.2 sdx c0
     bob tells sdx controller its address space
     $>route 192.168.20.1/24 192.168.34.2 sdx c3
+    OR:
+    ./scripts/sdxclient.sh -c config/alice.conf -e "route 192.168.10.1/24 192.168.33.2 sdx c0"
+    ./scripts/sdxclient.sh -c config/bob.conf -e "route 192.168.20.1/24 192.168.34.2 sdx c3"
 
   9. [OPTIONAL]
     For sdx demo, I added scripts to automatically configure the routing table with quagga in client slice. These scripts depends on the IP addresses assigned to client slice, the topology of client slice, which node in client slice is stitched to sdx slice, and the gateway in sdx slice.
@@ -64,3 +70,16 @@ Then we can run ahab controllers for sdx, alice and bob.
   10. Delete a slice
     we can delete a slice with command: ./scripts/createslice.sh -c configFile -d
     For exmaple: ./scripts/createslice.sh -c config/alice.conf -d
+
+  11. Stitching Chameleon Node to  SDX slice
+    For Chameleon Slice, we need another safe server for it
+      a) build chameleon controller
+      b)$ ./scripts/run.sh -c config/carrot.conf
+        $>stitch http://geni-orca.renci.org/owl/ion.rdf#AL2S/Chameleon/Cisco/6509/GigabitEthernet/1/1 3293 sdx c3 10.32.98.214 10.32.98.200/24
+        OR
+        $./scripts/run.sh -c config/carrot.conf -e "stitch http://geni-orca.renci.org/owl/ion.rdf#AL2S/Chameleon/Cisco/6509/GigabitEthernet/1/1 3298 sdx c3 10.32.98.214 10.32.98.200/24"
+
+      c) Chameleon slice advertises its ip prefixes in the same way as ExoGENI slice does
+
+NOTE: Now we have "-n" option for sdx server, which is DISABLE SAFE AUTHORIZATION
+

@@ -44,6 +44,7 @@ public class SdxServer {
         logger.debug("Starting on "+SdxManager.serverurl);
         final HttpServer server = startServer(SdxManager.serverurl);
         logger.debug("Sdx server has started, listening on "+SdxManager.serverurl);
+        System.out.println("Sdx server has started, listening on "+SdxManager.serverurl);
     }
 }
 

@@ -111,6 +111,11 @@ public class SdxExogeniClient extends SliceCommon {
      logger.debug("client start");
      String message = "";
      String customerName=sliceName;
+     if(cmd.hasOption('e')){
+       String command= cmd.getOptionValue('e');
+       processCmd(command);
+       return;
+     }
      String input = new String();  
 		try{
 //	 			logger.debug(obj.sayHello()); 
@@ -118,31 +123,10 @@ public class SdxExogeniClient extends SliceCommon {
       while(true){
         System.out.print("Enter Commands:stitch client_resource_name  server_slice_name  server_resource_name\n Or advertise route: route dest gateway sdx_slice_name routername,\n$>");
         input = stdin.readLine();  
-        String[] params=input.split(" ");
         System.out.print("continue?[y/n]\n$>"+input);
         input = stdin.readLine();  
         if(input.startsWith("y")){
-          try{
-            if(params[0].equals("stitch")){
-              processStitchCmd(params);
-            }else{
-              JSONObject paramsobj=new JSONObject();
-              paramsobj.put("dest",params[1]);
-              paramsobj.put("gateway",params[2]);
-              paramsobj.put("router", params[4]);
-              paramsobj.put("customer", keyhash);
-              String res=SdxHttpClient.notifyPrefix(sdxserver+"sdx/notifyprefix",paramsobj);
-              if(res.equals("")){
-                logger.debug("Prefix notifcation failed");
-              }
-              else{
-                logger.debug(res);
-              }
-            }
-          }
-          catch (Exception e){
-            e.printStackTrace();
-          }
+          processCmd(input);
         }
       }
     }
@@ -153,6 +137,34 @@ public class SdxExogeniClient extends SliceCommon {
     } 
 		logger.debug("XXXXXXXXXX Done XXXXXXXXXXXXXX");
 	}
+
+	private static void processCmd(String command){
+    try{
+      String[] params=command.split(" ");
+      if(params[0].equals("stitch")){
+        processStitchCmd(params);
+      }else{
+        JSONObject paramsobj=new JSONObject();
+        paramsobj.put("dest",params[1]);
+        paramsobj.put("gateway",params[2]);
+        paramsobj.put("router", params[4]);
+        paramsobj.put("customer", keyhash);
+        String res=SdxHttpClient.notifyPrefix(sdxserver+"sdx/notifyprefix",paramsobj);
+        if(res.equals("")){
+          logger.debug("Prefix not accepted (authorization failed)");
+          System.out.println("Prefix not accepted (authorization failed)");
+        }
+        else{
+          logger.debug(res);
+          System.out.println(res);
+        }
+      }
+    }
+    catch (Exception e){
+      e.printStackTrace();
+    }
+
+  }
 
   private static void processStitchCmd(String[] params){
     try{
@@ -193,6 +205,7 @@ public class SdxExogeniClient extends SliceCommon {
       logger.debug("Got Stitch Information From Server:\n "+res.toString());
       if(!res.getBoolean("result")){
         logger.debug("stitch request declined by server");
+        System.out.println("stitch request declined by server");
       } 
       else{
         String ip=res.getString("ip");
@@ -207,6 +220,7 @@ public class SdxExogeniClient extends SliceCommon {
         mip= node1.getManagementIP();
         Exec.sshExec("root",mip,"echo \"ip route 192.168.1.1/16 "+IPPrefix+"\" >>/etc/quagga/zebra.conf  ",sshkey);
         Exec.sshExec("root",mip,"/etc/init.d/quagga restart",sshkey);
+        System.out.println("stitch completed.");
       }
     }
     catch (Exception e){

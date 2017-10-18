@@ -53,11 +53,6 @@ import org.renci.ahab.libtransport.xmlrpc.XMLRPCTransportException;
 import org.renci.ahab.ndllib.transport.OrcaSMXMLRPCProxy;
 
 import safe.utils.Exec;
-
-import java.rmi.RMISecurityManager;
-import java.rmi.Naming;
-import java.rmi.RemoteException;
-import java.rmi.server.UnicastRemoteObject;
 /**
 
  * @author geni-orca
@@ -67,7 +62,7 @@ public class Example extends SliceCommon{
   final static Logger logger = Logger.getLogger(Exec.class);	
 	
 	
-	public Example()throws RemoteException{}
+	public Example(){}
 	private static int curip=128;
 	private static String IPPrefix="192.168.";
 	private static String mask="/24";
@@ -123,22 +118,20 @@ public class Example extends SliceCommon{
       logger.debug("client start");
       String customerName=sliceName;
       try{
-          System.out.println("Using riak server at "+riakip);
-          Slice c1=createCustomerSlice(customerName,2,IPPrefix,curip,1000000,true);
-          waitTillActive(c1);
-          //copyFile2Slice(c1, "/home/yaoyj11/project/exo-geni/SAFE_SDX/src/main/resources/scripts/configospffornewif.sh","~/configospffornewif.sh","~/.ssh/id_rsa");
-          //copyFile2Slice(c1, "/home/yaoyj11/project/exo-geni/SAFE_SDX/src/main/resources/scripts/configospffornewif.sh","~/configospffornewif.sh","~/.ssh/id_rsa");
-          //runCmdSlice(c1,"/bin/bash ~/ospfautoconfig.sh","~/.ssh/id_rsa");
-          logger.debug("Slice active now");
+        System.out.println("Using riak server at "+riakip);
+        Slice c1=createCustomerSlice(customerName,2,IPPrefix,curip,1000000,true);
+        waitTillActive(c1);
+        //copyFile2Slice(c1, "/home/yaoyj11/project/exo-geni/SAFE_SDX/src/main/resources/scripts/configospffornewif.sh","~/configospffornewif.sh","~/.ssh/id_rsa");
+        //copyFile2Slice(c1, "/home/yaoyj11/project/exo-geni/SAFE_SDX/src/main/resources/scripts/configospffornewif.sh","~/configospffornewif.sh","~/.ssh/id_rsa");
+        //runCmdSlice(c1,"/bin/bash ~/ospfautoconfig.sh","~/.ssh/id_rsa");
+        logger.debug("Slice active now");
           
-			String SAFEServerIP=((ComputeNode)c1.getResourceByName("safe-server")).getManagementIP();
-			System.out.println("SAFE Server IP: " + SAFEServerIP);
+			  String SAFEServerIP=((ComputeNode)c1.getResourceByName("safe-server")).getManagementIP();
+			  System.out.println("SAFE Server IP: " + SAFEServerIP);
 			
-			System.out.println("CNode0 IP: " + ((ComputeNode)c1.getResourceByName("CNode0")).getManagementIP());
-			System.out.println("CNode1 IP: " + ((ComputeNode)c1.getResourceByName("CNode1")).getManagementIP());
-
-			
-          return;
+			  System.out.println("CNode0 IP: " + ((ComputeNode)c1.getResourceByName("CNode0")).getManagementIP());
+			  System.out.println("CNode1 IP: " + ((ComputeNode)c1.getResourceByName("CNode1")).getManagementIP());
+        return;
       }catch (Exception e){
         e.printStackTrace();
       }
@@ -235,7 +228,7 @@ public class Example extends SliceCommon{
 		String script="apt-get update\n"
 				+"docker pull yaoyj11/safeserver\n"
 				+"docker run -i -t -d -p 7777:7777 -h safe --name safe yaoyj11/safeserver\n"
-				+"docker exec -d safe /bin/bash -c  \"cd /root/safe;export SBT_HOME=/opt/sbt-0.13.12;export SCALA_HOME=/opt/scala-2.11.8;sed -i 's/128.194.6.136:8098/"+riakip+":8098/g' safe-server/src/main/resources/application.conf;./sdx.sh\"\n";
+				+"docker exec -d safe /bin/bash -c  \"cd /root/safe;export SBT_HOME=/opt/sbt-0.13.12;export SCALA_HOME=/opt/scala-2.11.8;sed -i 's/RIAKSERVER/"+riakip+"/g' safe-server/src/main/resources/application.conf;./sdx.sh\"\n";
 		return script;
 	}
 

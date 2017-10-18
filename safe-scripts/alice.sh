@@ -21,6 +21,6 @@ curl  -v -X POST http://$SAFESERVER_ALICE:7777/postEndorsePA -H "Content-Type: a
 echo "update subject set of alice"
 
 #Alice put the tocken for ip delegation and project membership delegation in her subject set
-curl  -v -X POST http://$SAFESERVER_ALICE:7777/updateSubjectSet -H "Content-Type: application/json" -d "{ \"principal\": \"alice\", \"otherValues\": [\"HLSqBJpzAnD42qqmwI2qioNHo_7RDheKy_gS5_mAmM4\"] }"
+curl  -v -X POST http://$SAFESERVER_ALICE:7777/updateSubjectSet -H "Content-Type: application/json" -d "{ \"principal\": \"alice\", \"otherValues\": [\"fmK3VtqBFS6vhpxEZjgABOf-ATBDNdtgiOckdiOTmPg\"] }"
 
-curl  -v -X POST http://$SAFESERVER_ALICE:7777/updateSubjectSet -H "Content-Type: application/json" -d "{ \"principal\": \"alice\", \"otherValues\": [\"SV51XV5zIlONA255wethUSJRNTxG8Lh-kaYP9PZEOxU\"] }"
+curl  -v -X POST http://$SAFESERVER_ALICE:7777/updateSubjectSet -H "Content-Type: application/json" -d "{ \"principal\": \"alice\", \"otherValues\": [\"f7qb7S-i7x57SClCEyl_QGujmOWTd6BeWBRQbXQxcII\"] }"

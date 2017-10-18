@@ -144,6 +144,7 @@ public class SdxManager extends SliceCommon{
     CommandLine cmd=parseCmd(args);
     if(cmd.hasOption('n')){
       safeauth=false;
+      System.out.println("Safe disabled, allowing all requests");
     }
     else{
       safeauth=true;
@@ -191,10 +192,12 @@ public class SdxManager extends SliceCommon{
 	}
 
   public static String notifyPrefix(String dest, String gateway, String router,String customer_keyhash){
-    logger.debug("received notification for ip prefix"+dest);
+    logger.debug("received notification for ip prefix "+dest);
     String res="received notification for "+dest;
     if(!safeauth || authorizePrefix(customer_keyhash,dest)){
-      res=res+" [authorization success]";
+      if(safeauth) {
+        res = res + " [authorization success]";
+      }
       boolean flag=false;
       for(String[]pair:advertisements){
         if(pair[0].equals(customer_keyhash)&&pair[1].equals(dest)){
@@ -205,6 +208,7 @@ public class SdxManager extends SliceCommon{
         }
         if(!safeauth || authorizeConnectivity(pair[0],pair[1],customer_keyhash,dest)){
     //      res.add(pair[1]);
+          System.out.println("Connection between "+pair[0]+" and "+pair[1]+" allowed");
           routingmanager.configurePath(dest,router,pair[1],pair[3],gateway,SDNController);
           routingmanager.configurePath(pair[1],pair[3],dest,router,pair[2],SDNController);
         }
@@ -251,38 +255,52 @@ public class SdxManager extends SliceCommon{
       return true;
   }
 
-  public static String[] stitchCommunion(String carrierName,String nodeName, String customer_keyhash,String stitchport,String vlan, String gateway, String ip) {
-    String[] res=new String[2];
-    res[0]=null;
-    res[1]=null;
-    if(!safeauth || authorizeStitchCommunion(customer_keyhash,stitchport, vlan, gateway, carrierName, nodeName)){
-      //FIX ME: do stitching
-      Slice s = null;
-      ISliceTransportAPIv1 sliceProxy = getSliceProxy(pemLocation,keyLocation, controllerUrl);		
-      try {
-        s = Slice.loadManifestFile(sliceProxy, carrierName);
-      } catch (ContextTransportException e) {
-        // TODO Auto-generated catch block
-        e.printStackTrace();
-      } catch (TransportException e) {
-        // TODO Auto-generated catch block
-        e.printStackTrace();
+  public static String stitchChameleon(String carrierName,String nodeName, String customer_keyhash,String stitchport,String vlan, String gateway, String ip) {
+    String res="Stitch request unauthorized";
+    try {
+      if (!safeauth || authorizeStitchChameleon(customer_keyhash, stitchport, vlan, gateway, carrierName, nodeName)) {
+        //FIX ME: do stitching
+        System.out.println("Chameleon Stitch Request from " + customer_keyhash + " Authorized");
+        Slice s = null;
+        ISliceTransportAPIv1 sliceProxy = getSliceProxy(pemLocation, keyLocation, controllerUrl);
+        try {
+          s = Slice.loadManifestFile(sliceProxy, carrierName);
+        } catch (ContextTransportException e) {
+          // TODO Auto-generated catch block
+          e.printStackTrace();
+        } catch (TransportException e) {
+          // TODO Auto-generated catch block
+          e.printStackTrace();
+        }
+        String stitchname = "sp-" + nodeName + "-" + ip.replace("/", "__").replace(".", "_");
+        System.out.println("Stitching to Chameleon {"+"stitchname: " + stitchname + " vlan:" + vlan + " stithport: " + stitchport+"}");
+        StitchPort mysp = s.addStitchPort(stitchname, vlan, stitchport, 100000000l);
+        ComputeNode mynode = (ComputeNode) s.getResourceByName(nodeName);
+        mysp.stitch(mynode);
+        s.commit();
+        waitTillActive(s);
+        routingmanager.newLink(ip, nodeName, SDNController);
+        res="Stitch operation Completed";
+        System.out.println(res);
+      } else {
+        System.out.println("Chameleon Stitch Request from " + customer_keyhash + " Unauthorized");
       }
-      String stitchname="sp-"+nodeName+"-"+ip;
-      StitchPort mysp=s.addStitchPort(stitchname,stitchport,vlan,10000000);
-      ComputeNode mynode=(ComputeNode) s.getResourceByName(nodeName);
-      mysp.stitch(mynode);
-      routingmanager.newLink(ip, nodeName, SDNController);
+    }catch(Exception e){
+      e.printStackTrace();
     }
     return res;
   }
 
   public static String[] stitchRequest(String carrierName,String nodeName, String customer_slice,String customerName, String ResrvID,String secret) {
-    logger.debug("new request for"+carrierName +" and "+nodeName+pemLocation+keyLocation); 
+    logger.debug("new stitch request for"+carrierName +" and "+nodeName);
+    System.out.println("new stitch request for"+carrierName +" and "+nodeName);
     String[] res=new String[2];
     res[0]=null;
     res[1]=null;
     if(!safeauth || authorizeStitchRequest(customer_slice,customerName,ResrvID, keyhash,carrierName, nodeName)){
+      if(safeauth){
+        System.out.println("Authorized: stitch request for"+carrierName +" and "+nodeName);
+      }
       Slice s1 = null;
       ISliceTransportAPIv1 sliceProxy = getSliceProxy(pemLocation,keyLocation, controllerUrl);		
       try {
@@ -310,12 +328,12 @@ public class SdxManager extends SliceCommon{
       ifaceNode0.setIpAddress("192.168.1.1");
       ifaceNode0.setNetmask("255.255.255.0");
       try {
-		s1.commit();
-	} catch (XMLRPCTransportException e1) {
-		// TODO Auto-generated catch block
-		e1.printStackTrace();
-	}
+        s1.commit();
+      } catch (XMLRPCTransportException e1) {
+        // TODO Auto-generated catch block
+        e1.printStackTrace();
 
+      }
       int N=0;
       net=(Network)s1.getResourceByName(stitchname);
       while(net.getState() != "Active" &&N<10){
@@ -356,6 +374,11 @@ public class SdxManager extends SliceCommon{
       res[0]=gw;
       res[1]=ip;
       routingmanager.configurePath(ip,nodeName,ip.split("/")[0],SDNController);
+      System.out.println("stitching operation  completed");
+    }
+    else{
+      System.out.println("Unauthorized: stitch request for"+carrierName +" and "+nodeName);
+      logger.debug("Stitching Authorization Failed");
     }
     return res;
   }
@@ -394,9 +417,9 @@ public class SdxManager extends SliceCommon{
       return true;
   }
 
-  public static boolean authorizeStitchCommunion(String customer_keyhash,String stitchport,String vlan,String gateway,String slicename, String nodename){
+  public static boolean authorizeStitchChameleon(String customer_keyhash,String stitchport,String vlan,String gateway,String slicename, String nodename){
 		/** Post to remote safesets using apache httpclient */
-    String[] othervalues=new String[7];
+    String[] othervalues=new String[6];
     othervalues[0]=customer_keyhash;
     othervalues[1]=stitchport;
     othervalues[2]=vlan;
@@ -404,7 +427,7 @@ public class SdxManager extends SliceCommon{
     othervalues[4]=slicename;
     othervalues[5]=nodename;
 
-    String message=SafePost.postSafeStatements(safeserver,"verifyCommunionStitch",keyhash,othervalues);
+    String message=SafePost.postSafeStatements(safeserver,"verifyChameleonStitch",keyhash,othervalues);
     if(message ==null || message.contains("Unsatisfied")){
       return false;
     }
@@ -492,7 +515,7 @@ public class SdxManager extends SliceCommon{
           continue;
         }
         String[] parts=sp.getName().split("-");
-        String ip=parts[2];
+        String ip=parts[2].replace("_",".").replace("__","/");
         String nodeName=parts[1];
         routingmanager.newLink(ip, nodeName, SDNController);
       }
