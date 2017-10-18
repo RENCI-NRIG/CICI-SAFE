@@ -91,7 +91,7 @@ import org.apache.http.impl.client.DefaultHttpClient;
 public class SdxManager extends SliceCommon{
   public SdxManager(){}
 
-  final static Logger logger = Logger.getLogger(SdxManager.class);	
+  final static Logger logger = Logger.getLogger(SdxManager.class);
 
   
   private static NetworkManager routingmanager=new NetworkManager();
@@ -438,7 +438,7 @@ public class SdxManager extends SliceCommon{
 
   private static void restartPlexus(String plexusip){
     logger.debug("Restarting Plexus Controller");
-    String script="docker exec -d plexus /bin/bash -c  \"cd /root/plexus/plexus;pkill ryu-manager;ryu-manager app.py |tee log\"\n";
+    String script="docker exec -d plexus /bin/bash -c  \"cd /root;pkill ryu-manager;ryu-manager plexus/plexus/app.py ryu/ryu/app/rest_conf_switch.py ryu/ryu/app/rest_qos.py |tee log\"\n";
     logger.debug(sshkey);
     logger.debug(plexusip);
     Exec.sshExec("root",plexusip,script,sshkey);
@@ -466,21 +466,26 @@ public class SdxManager extends SliceCommon{
         logger.debug(node.getName()+" "+mip);
         Exec.sshExec("root",mip,"/bin/bash ~/ovsbridge.sh "+ ovscontroller,sshkey).split(" ");
         String[] result=Exec.sshExec("root",mip,"/bin/bash ~/dpid.sh",sshkey).split(" ");
+        for (String sis:result){
+          System.out.println("1:"+sis);
+        }
         try{
           result[1]=result[1].replace("\n","");
           logger.debug("Get router info "+result[0]+" "+result[1]);
-          routingmanager.newRouter(node.getName(),result[1],Integer.valueOf(result[0]));
+          routingmanager.newRouter(node.getName(),result[1],Integer.valueOf(result[0]),mip);
         }catch(Exception e){
           e.printStackTrace();
         }
       }
       logger.debug("setting up links");
       HashSet<Integer> usedip=new HashSet<Integer>();
+      HashSet<String> ifs=new HashSet<String>();
       for(Interface i: s.getInterfaces()){
         InterfaceNode2Net inode2net=(InterfaceNode2Net)i;
-        if(routingmanager.getRouter(inode2net.getNode().toString())==null){
+        if(ifs.contains(i.getName()) || routingmanager.getRouter(inode2net.getNode().toString())==null){
           continue;
         }
+        ifs.add(i.getName());
         Link link=links.get(inode2net.getLink().toString());
         if(link==null){
           link=new Link();
@@ -518,28 +523,48 @@ public class SdxManager extends SliceCommon{
       Set keyset=links.keySet();
       //logger.debug(keyset);
       logger.debug("Wait until all ovs bridges have connected to SDN controller");
-
-      boolean flag=true;
-      while(flag){
-        flag=false;
-        for(ComputeNode node : s.getComputeNodes()){
-          Matcher matcher = pattern.matcher(node.getName());
-          if (!matcher.find())
-          {
-            continue;
-          }
-          //System.out.println("mip2 node managment: " + node.getManagementIP());
-          String mip= node.getManagementIP();
-          String result=Exec.sshExec("root",mip,"ovs-vsctl show",sshkey);
-          if(result.contains("is_connected: true")){
-            logger.debug(node.getName() +" connected");
-          }
-          else{
-            logger.debug(node.getName() +" not connected");
-            flag=true;
+      ArrayList<Thread> tlist=new ArrayList<Thread>();
+      for(final ComputeNode node : s.getComputeNodes()){
+        Matcher matcher = pattern.matcher(node.getName());
+        if(matcher.matches()){
+          final String mip=node.getManagementIP();
+          try{
+      //      logger.debug(mip+" run commands:"+cmd);
+      //      //ScpTo.Scp(lfile,"root",mip,rfile,privkey);
+            Thread thread=new Thread(){
+              @Override public void run(){
+                try{
+                  String cmd="ovs-vsctl show";
+                  logger.debug(mip+" run commands:"+cmd);
+                  String res=Exec.sshExec("root",mip,"ovs-vsctl show",sshkey);
+                  while(!res.contains("is_connected: true")){
+                    sleep(5);
+                    res=Exec.sshExec("root",mip,cmd,sshkey);
+                  }
+                  logger.debug(node.getName() +" connected");
+                }catch(Exception e){
+                  e.printStackTrace();
+                }
+              }
+            };
+            thread.start();
+            tlist.add(thread);
+          }catch (Exception e){
+            System.out.println("exception when copying config file");
+            logger.error("exception when copying config file");
           }
         }
       }
+      try{
+        for(Thread t:tlist){
+          t.join();
+        }
+      }catch (Exception e){
+        e.printStackTrace();
+      }
+
+      //set ovsdb address
+      routingmanager.setOvsdbAddr(httpcontroller);
 
       for(Object k: keyset){
         Link link=links.get((String)k);
