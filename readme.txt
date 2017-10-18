@@ -44,8 +44,8 @@ Then we can run ahab controllers for sdx, alice and bob.
     bob stitch CNode0 to sdx/c3, in bob's controller run:
     $>stitch CNode sdx c3
     OR:
-    ./scripts/sdxclient.sh -c config/alice.conf -e "stitch CNode sdx c0"
-    ./scripts/sdxclient.sh -c config/bob.conf -e "stitch CNode sdx c3"
+    ./scripts/sdxclient.sh -c config/alice.conf -e "stitch CNode0 sdx c0"
+    ./scripts/sdxclient.sh -c config/bob.conf -e "stitch CNode0 sdx c3"
 
   8. route
     alice tells sdx controller its address space
@@ -75,9 +75,9 @@ Then we can run ahab controllers for sdx, alice and bob.
     For Chameleon Slice, we need another safe server for it
       a) build chameleon controller
       b)$ ./scripts/run.sh -c config/carrot.conf
-        $>stitch http://geni-orca.renci.org/owl/ion.rdf#AL2S/Chameleon/Cisco/6509/GigabitEthernet/1/1 3293 sdx c3 192.168.40.1 192.168.40.2/24
+        $>stitch http://geni-orca.renci.org/owl/ion.rdf#AL2S/Chameleon/Cisco/6509/GigabitEthernet/1/1 3293 sdx c3 10.32.98.214 10.32.98.200/24
         OR
-        $./scripts/run.sh -c config/carrot.conf -e "stitch http://geni-orca.renci.org/owl/ion.rdf#AL2S/Chameleon/Cisco/6509/GigabitEthernet/1/1 3293 sdx c3 192.168.40.1 192.168.40.2/24"
+        $./scripts/run.sh -c config/carrot.conf -e "stitch http://geni-orca.renci.org/owl/ion.rdf#AL2S/Chameleon/Cisco/6509/GigabitEthernet/1/1 3298 sdx c3 10.32.98.214 10.32.98.200/24"
 
       c) Chameleon slice advertises its ip prefixes in the same way as ExoGENI slice does
 
