@@ -459,11 +459,13 @@ public class SdxManager extends SliceCommon{
       HashSet<String> ifs=new HashSet<String>();
       for(Interface i: s.getInterfaces()){
         InterfaceNode2Net inode2net=(InterfaceNode2Net)i;
+        logger.debug("linkname: "+inode2net.getLink().toString()+" bandwidth: "+ inode2net.getLink().getBandwidth());
         if(ifs.contains(i.getName()) || routingmanager.getRouter(inode2net.getNode().toString())==null){
           continue;
         }
         ifs.add(i.getName());
         Link link=links.get(inode2net.getLink().toString());
+
         if(link==null){
           link=new Link();
           link.setName(inode2net.getLink().toString());
@@ -540,8 +542,6 @@ public class SdxManager extends SliceCommon{
         e.printStackTrace();
       }
 
-      //set ovsdb address
-      routingmanager.setOvsdbAddr(httpcontroller);
 
       for(Object k: keyset){
         Link link=links.get((String)k);
@@ -563,6 +563,9 @@ public class SdxManager extends SliceCommon{
           routingmanager.newLink(link.getIP(1), link.nodea, httpcontroller);
         }
       }
+
+      //set ovsdb address
+      routingmanager.setOvsdbAddr(httpcontroller);
     }catch(Exception e){
       e.printStackTrace();
     }
