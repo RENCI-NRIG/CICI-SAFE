@@ -272,8 +272,7 @@ public class SdxManager extends SliceCommon{
           // TODO Auto-generated catch block
           e.printStackTrace();
         }
-        String stitchname = "sp-" + nodeName + "-" + ip.replace("/", "_").replace(".", "000");
-        stitchname = "stitchport0";
+        String stitchname = "sp-" + nodeName + "-" + ip.replace("/", "__").replace(".", "_");
         System.out.println("Stitching to Chameleon {"+"stitchname: " + stitchname + " vlan:" + vlan + " stithport: " + stitchport+"}");
         StitchPort mysp = s.addStitchPort(stitchname, vlan, stitchport, 100000000l);
         ComputeNode mynode = (ComputeNode) s.getResourceByName(nodeName);
@@ -511,7 +510,7 @@ public class SdxManager extends SliceCommon{
           continue;
         }
         String[] parts=sp.getName().split("-");
-        String ip=parts[2].replace("_","/").replace("000",".");
+        String ip=parts[2].replace("_",".").replace("__","/");
         String nodeName=parts[1];
         routingmanager.newLink(ip, nodeName, SDNController);
       }
