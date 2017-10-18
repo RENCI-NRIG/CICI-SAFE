@@ -25,15 +25,6 @@ curl  -v -X POST http://$SAFESERVER_SDX:7777/postConnectivityPolicy -H "Content-
 curl  -v -X POST http://$SAFESERVER_SDX:7777/postOwnPrefixPolicy -H "Content-Type: application/json" -d "{ \"principal\": \"sdx\", \"otherValues\": [] }"
 echo "carrier endorse pa"
 curl  -v -X POST http://$SAFESERVER_SDX:7777/postEndorsePA -H "Content-Type: application/json" -d "{ \"principal\": \"sdx\", \"otherValues\": [\"weQ8OFpXWhIB1AMzKX2SDJcxT738VdHCcl7mFlvOD24\"] }"
-#delegate IP prefix
-curl  -v -X POST http://$SAFESERVER_SDX:7777/postIPAllocate -H "Content-Type: application/json" -d "{ \"principal\": \"rpkiroot\", \"otherValues\": [\"V1F2853Nq8V304Yb_GInYaWTgVqmBsQwC0tXWuNmmf8\",\"192.168.10.1/24\"] }"
-curl  -v -X POST http://$SAFESERVER_SDX:7777/postIPAllocate -H "Content-Type: application/json" -d "{ \"principal\": \"rpkiroot\", \"otherValues\": [\"UIz4bXT7accigZ7KNpEyF2igwGOgXb9gne7p13i2bWA\",\"192.168.20.1/24\"] }"
-#endorsePM <- project member
-echo "pa endorse alice"
-curl  -v -X POST http://$SAFESERVER_ALICE:7777/postEndorsePM -H "Content-Type: application/json" -d "{ \"principal\": \"pa\", \"otherValues\": [\"V1F2853Nq8V304Yb_GInYaWTgVqmBsQwC0tXWuNmmf8\"] }"
-echo "pa endorse bob"
-curl  -v -X POST http://$SAFESERVER_BOB:7777/postEndorsePM -H "Content-Type: application/json" -d "{ \"principal\": \"pa\", \"otherValues\": [\"UIz4bXT7accigZ7KNpEyF2igwGOgXb9gne7p13i2bWA\"] }"
-curl  -v -X POST http://$SAFESERVER_SDX:7777/postEndorsePM -H "Content-Type: application/json" -d "{ \"principal\": \"pa\", \"otherValues\": [\"bphJZn3RJBnNqoCZk6k9SBD8mwSb054PXbwV7HpE80E\"] }"
-#endorsePM <- project member
 echo "update subject set of sdx"
-curl  -v -X POST http://$SAFESERVER_SDX:7777/updateSubjectSet -H "Content-Type: application/json" -d "{ \"principal\": \"sdx\", \"otherValues\": [\"HLSqBJpzAnD42qqmwI2qioNHo_7RDheKy_gS5_mAmM4\"] }"
+curl  -v -X POST http://$SAFESERVER_SDX:7777/updateSubjectSet -H "Content-Type: application/json" -d "{ \"principal\": \"sdx\", \"otherValues\": [\"fmK3VtqBFS6vhpxEZjgABOf-ATBDNdtgiOckdiOTmPg\"] }"
+curl  -v -X POST http://$SAFESERVER_SDX:7777/updateSubjectSet -H "Content-Type: application/json" -d "{ \"principal\": \"sdx\", \"otherValues\": [\"f7qb7S-i7x57SClCEyl_QGujmOWTd6BeWBRQbXQxcII\"] }"

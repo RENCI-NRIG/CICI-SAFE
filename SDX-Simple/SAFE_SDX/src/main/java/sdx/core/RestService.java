@@ -57,13 +57,15 @@ public class RestService {
     }
 
     @POST
-    @Path("/stitchcommunion")
+    @Path("/stitchchameleon")
     @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
-    public StitchResult stitchRequest(StitchCommunion sr){
-      logger.debug("got communion stitch request: \n"+sr.toString());
-      String[] res=SdxManager.stitchCommunion(sr.sdxslice, sr.sdxnode, sr.ckeyhash, sr.stitchport, sr.vlan,sr.gateway, sr.ip);
-      return new StitchResult("","");
+    @Produces(MediaType.TEXT_PLAIN)
+    public String stitchRequest(StitchChameleon sr){
+      logger.debug("got chameleon stitch request: \n"+sr.toString());
+      System.out.println(String.format("got chameleon stitch request from %s", sr.ckeyhash));
+      String res=SdxManager.stitchChameleon(sr.sdxslice, sr.sdxnode, sr.ckeyhash, sr.stitchport, sr.vlan,sr.gateway, sr.ip);
+      //return new StitchResult("ha","ha");
+      return res;
     }
 
     @POST
@@ -73,11 +75,13 @@ public class RestService {
     public String stitchRequest(PrefixNotification pn){
       logger.debug("got sittch request");
       String res=SdxManager.notifyPrefix(pn.dest, pn.gateway, pn.router, pn.customer);
+      logger.debug(res);
+      System.out.println(res);
       return res;
     }
 }
 
-class StitchCommunion{
+class StitchChameleon{
   public  String sdxslice;
   public  String sdxnode;
   public  String ckeyhash;
@@ -86,9 +90,9 @@ class StitchCommunion{
   public  String gateway;
   public String ip;
 
-  public StitchCommunion(){}
+  public StitchChameleon(){}
 
-  public StitchCommunion(String sdxslice, String sdxnode,String ckeyhash,String stitchport, String vlan, String gateway,String ip){
+  public StitchChameleon(String sdxslice, String sdxnode,String ckeyhash,String stitchport, String vlan, String gateway,String ip){
     this.sdxslice=sdxslice;
     this.sdxnode=sdxnode;
     this.ckeyhash=ckeyhash;

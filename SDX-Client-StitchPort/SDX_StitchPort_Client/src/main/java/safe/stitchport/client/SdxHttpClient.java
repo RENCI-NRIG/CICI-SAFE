@@ -30,10 +30,9 @@ public class SdxHttpClient {
    * @return Grizzly HTTP server.
    */
 
-  public static JSONObject tryStitch(String serverurl, JSONObject paramsobj){
-    JSONObject resobj=new JSONObject();
-    resobj.put("result",false);
-    HttpClient httpClient = HttpClientBuilder.create().build(); //Use this instead 
+  public static String tryStitch(String serverurl, JSONObject paramsobj){
+    String res="stitch failed";
+    HttpClient httpClient = HttpClientBuilder.create().build(); //Use this instead
 
     try {
 
@@ -46,13 +45,12 @@ public class SdxHttpClient {
       //handle response here...
       String output=EntityUtils.toString(response.getEntity());
       logger.debug(output);
-      JSONObject jsonobj=new JSONObject(output);
       httpClient.getConnectionManager().shutdown(); 
-      return jsonobj;
+      return output;
 
     }catch (Exception ex) {
       ex.printStackTrace();
-      return resobj;
+      return res;
 
     } finally {
         //Deprecated
