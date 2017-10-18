@@ -1,0 +1,8 @@
+1) SDX-Simple $ ./scripts/createslice.sh -c config/sdx-chi.conf 
+2) SDX-Client-ExoGENI $ ./scripts/createslice.sh -c config/c1-rci.conf 
+3) safe-scritps/trustparty.sh safeserver
+   safe-scritps/sdx.sh safeserver
+   safe-scritps/alice.sh safeserver
+   safe-scritps/bob.sh safeserver
+   safe-scritps/carrot.sh safeserver
+

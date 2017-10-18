@@ -5,22 +5,22 @@
 #alice: V1F2853Nq8V304Yb_GInYaWTgVqmBsQwC0tXWuNmmf8
 #carrot: KXwvxF_rWupThUEAKwmkMTuhV8X-hqZXOAtMkWBFapc
 
-SAFESERVER_ALICE=$1
+SAFESERVER_CARROT=$1
 
-curl  -v -X POST http://$SAFESERVER_ALICE:7777/postIdSet -H "Content-Type: application/json" -d "{ \"principal\": \"carrot\", \"otherValues\": [\"carrot\"] }"
+curl  -v -X POST http://$SAFESERVER_CARROT:7777/postIdSet -H "Content-Type: application/json" -d "{ \"principal\": \"carrot\", \"otherValues\": [\"carrot\"] }"
 
-curl  -v -X POST http://$SAFESERVER_ALICE:7777/postSubjectSet -H "Content-Type: application/json" -d "{ \"principal\": \"carrot\", \"otherValues\": [] }"
+curl  -v -X POST http://$SAFESERVER_CARROT:7777/postSubjectSet -H "Content-Type: application/json" -d "{ \"principal\": \"carrot\", \"otherValues\": [] }"
 
 #Alice post her access control policy, comment it out if we don't allow carrot to talk to any other
-curl  -v -X POST http://$SAFESERVER_ALICE:7777/postACLPolicy -H "Content-Type: application/json" -d "{ \"principal\": \"carrot\", \"otherValues\": [] }"
+curl  -v -X POST http://$SAFESERVER_CARROT:7777/postACLPolicy -H "Content-Type: application/json" -d "{ \"principal\": \"carrot\", \"otherValues\": [] }"
 
 #carrot endorse a project authority
-curl  -v -X POST http://$SAFESERVER_ALICE:7777/postEndorsePA -H "Content-Type: application/json" -d "{ \"principal\": \"carrot\", \"otherValues\": [\"weQ8OFpXWhIB1AMzKX2SDJcxT738VdHCcl7mFlvOD24\"] }"
+curl  -v -X POST http://$SAFESERVER_CARROT:7777/postEndorsePA -H "Content-Type: application/json" -d "{ \"principal\": \"carrot\", \"otherValues\": [\"weQ8OFpXWhIB1AMzKX2SDJcxT738VdHCcl7mFlvOD24\"] }"
 
 
 echo "update subject set of carrot"
 
 #Alice put the tocken for ip delegation and project membership delegation in her subject set
-curl  -v -X POST http://$SAFESERVER_ALICE:7777/updateSubjectSet -H "Content-Type: application/json" -d "{ \"principal\": \"carrot\", \"otherValues\": [\"HLSqBJpzAnD42qqmwI2qioNHo_7RDheKy_gS5_mAmM4\"] }"
+curl  -v -X POST http://$SAFESERVER_CARROT:7777/updateSubjectSet -H "Content-Type: application/json" -d "{ \"principal\": \"carrot\", \"otherValues\": [\"fmK3VtqBFS6vhpxEZjgABOf-ATBDNdtgiOckdiOTmPg\"] }"
 
-curl  -v -X POST http://$SAFESERVER_ALICE:7777/updateSubjectSet -H "Content-Type: application/json" -d "{ \"principal\": \"carrot\", \"otherValues\": [\"SV51XV5zIlONA255wethUSJRNTxG8Lh-kaYP9PZEOxU\"] }"
+curl  -v -X POST http://$SAFESERVER_CARROT:7777/updateSubjectSet -H "Content-Type: application/json" -d "{ \"principal\": \"carrot\", \"otherValues\": [\"f7qb7S-i7x57SClCEyl_QGujmOWTd6BeWBRQbXQxcII\"] }"

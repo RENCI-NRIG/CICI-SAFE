@@ -158,13 +158,10 @@ public class SdxStitchPortClient extends SliceCommon {
       if(auth){
         postSafeStitchRequest(keyhash,jsonparams.getString("gateway"),jsonparams.getString("sdxslice"),jsonparams.getString("sdxnode"),jsonparams.getString("stitchport"),jsonparams.getString("vlan"));
       }
-      JSONObject res=SdxHttpClient.tryStitch(sdxserver+"sdx/stitchcommunion",jsonparams);
-      if(!res.getBoolean("result")){
-        logger.debug("stitch request declined by server");
-      } 
-      else{
-        logger.debug("Stitching successful");
-      }
+      System.out.println("posted stitch request, requesting to sdx server");
+      String res=SdxHttpClient.tryStitch(sdxserver+"sdx/stitchchameleon",jsonparams);
+      logger.debug(res);
+      System.out.println(res);
     }
     catch (Exception e){
       e.printStackTrace();
@@ -179,7 +176,7 @@ public class SdxStitchPortClient extends SliceCommon {
     othervalues[2]=gateway;
     othervalues[3]=slicename;
     othervalues[4]=nodename;
-    String message=SafePost.postSafeStatements(safeserver,"postCommunionStitchRequest",keyhash,othervalues);
+    String message=SafePost.postSafeStatements(safeserver,"postChameleonStitchRequest",keyhash,othervalues);
     if(message.contains("fail")){
       return false;
     }
@@ -214,7 +211,7 @@ public class SdxStitchPortClient extends SliceCommon {
   }
 	
 	public static void undoStitch(String carrierName, String customerName, String netName, String nodeName){	
-		logger.debug("Undo stich in communion client not implemented");
+		logger.debug("Undo stich in chameleon client not implemented");
 	}
 
   private static String getOVSScript(String cip){

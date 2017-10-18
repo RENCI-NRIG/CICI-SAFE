@@ -255,34 +255,37 @@ public class SdxManager extends SliceCommon{
       return true;
   }
 
-  public static String[] stitchCommunion(String carrierName,String nodeName, String customer_keyhash,String stitchport,String vlan, String gateway, String ip) {
-    String[] res=new String[2];
-    res[0]=null;
-    res[1]=null;
-    try{
-    if(!safeauth || authorizeStitchCommunion(customer_keyhash,stitchport, vlan, gateway, carrierName, nodeName)){
-      //FIX ME: do stitching
-      System.out.println("adding nnew stitfhport");
-      Slice s = null;
-      ISliceTransportAPIv1 sliceProxy = getSliceProxy(pemLocation,keyLocation, controllerUrl);		
-      try {
-        s = Slice.loadManifestFile(sliceProxy, carrierName);
-      } catch (ContextTransportException e) {
-        // TODO Auto-generated catch block
-        e.printStackTrace();
-      } catch (TransportException e) {
-        // TODO Auto-generated catch block
-        e.printStackTrace();
+  public static String stitchChameleon(String carrierName,String nodeName, String customer_keyhash,String stitchport,String vlan, String gateway, String ip) {
+    String res="Stitch request unauthorized";
+    try {
+      if (!safeauth || authorizeStitchChameleon(customer_keyhash, stitchport, vlan, gateway, carrierName, nodeName)) {
+        //FIX ME: do stitching
+        System.out.println("Chameleon Stitch Request from " + customer_keyhash + " Authorized");
+        Slice s = null;
+        ISliceTransportAPIv1 sliceProxy = getSliceProxy(pemLocation, keyLocation, controllerUrl);
+        try {
+          s = Slice.loadManifestFile(sliceProxy, carrierName);
+        } catch (ContextTransportException e) {
+          // TODO Auto-generated catch block
+          e.printStackTrace();
+        } catch (TransportException e) {
+          // TODO Auto-generated catch block
+          e.printStackTrace();
+        }
+        String stitchname = "sp-" + nodeName + "-" + ip.replace("/", "_").replace(".", "000");
+        stitchname = "stitchport0";
+        System.out.println("Stitching to Chameleon {"+"stitchname: " + stitchname + " vlan:" + vlan + " stithport: " + stitchport+"}");
+        StitchPort mysp = s.addStitchPort(stitchname, vlan, stitchport, 100000000l);
+        ComputeNode mynode = (ComputeNode) s.getResourceByName(nodeName);
+        mysp.stitch(mynode);
+        s.commit();
+        waitTillActive(s);
+        routingmanager.newLink(ip, nodeName, SDNController);
+        res="Stitch operation Completed";
+        System.out.println(res);
+      } else {
+        System.out.println("Chameleon Stitch Request from " + customer_keyhash + " Unauthorized");
       }
-      String stitchname="sp-"+nodeName+"-"+ip;
-      StitchPort mysp=s.addStitchPort(stitchname,stitchport,vlan,10000000);
-      ComputeNode mynode=(ComputeNode) s.getResourceByName(nodeName);
-      mysp.stitch(mynode);
-      s.commit();
-      waitTillActive(s);
-      System.out.println("Stitch port is up.");
-      routingmanager.newLink(ip, nodeName, SDNController);
-    }
     }catch(Exception e){
       e.printStackTrace();
     }
@@ -415,9 +418,9 @@ public class SdxManager extends SliceCommon{
       return true;
   }
 
-  public static boolean authorizeStitchCommunion(String customer_keyhash,String stitchport,String vlan,String gateway,String slicename, String nodename){
+  public static boolean authorizeStitchChameleon(String customer_keyhash,String stitchport,String vlan,String gateway,String slicename, String nodename){
 		/** Post to remote safesets using apache httpclient */
-    String[] othervalues=new String[7];
+    String[] othervalues=new String[6];
     othervalues[0]=customer_keyhash;
     othervalues[1]=stitchport;
     othervalues[2]=vlan;
@@ -425,7 +428,7 @@ public class SdxManager extends SliceCommon{
     othervalues[4]=slicename;
     othervalues[5]=nodename;
 
-    String message=SafePost.postSafeStatements(safeserver,"verifyCommunionStitch",keyhash,othervalues);
+    String message=SafePost.postSafeStatements(safeserver,"verifyChameleonStitch",keyhash,othervalues);
     if(message ==null || message.contains("Unsatisfied")){
       return false;
     }
@@ -508,7 +511,7 @@ public class SdxManager extends SliceCommon{
           continue;
         }
         String[] parts=sp.getName().split("-");
-        String ip=parts[2];
+        String ip=parts[2].replace("_","/").replace("000",".");
         String nodeName=parts[1];
         routingmanager.newLink(ip, nodeName, SDNController);
       }

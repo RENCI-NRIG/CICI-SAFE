@@ -35,10 +35,10 @@ defcon stitchPolicy():-
       ?PA: endorse(?Bob),
       ?Bob: stitch(?BobSlice,?ReservID, ?Slice, ?Node).
 
-    allowCommunionStitch(?Bob,?Stitchport,?Label,?Vlantag,?Gateway,?Slice,?Node):-
+    allowChameleonStitch(?Bob,?Stitchport,?Vlantag,?Gateway,?Slice,?Node):-
       endorsePA(?PA),
       ?PA: endorse(?Bob),
-      ?Bob: stitchCommunion(?Stitchport,?Label, ?Vlantag, ?Gateway,?Slice,?Node).
+      ?Bob: stitchChameleon(?Stitchport,?Vlantag, ?Gateway,?Slice,?Node).
 
     label("stitch policy($PolicyVersion)").
   }.
@@ -54,14 +54,14 @@ defcon stitchRequest(?MySliceName,?ReserveID,?Slice,?Node):-
 
 defpost postStitchRequest(?MySliceName,?ReservID,?Slice,?Node):-[stitchRequest(?MySliceName,?ReservID,?Slice,?Node)].
 
-defcon commuionStitchRequest(?Stitchport,?Vlan,?Gateway,?Slice,?Node):-
-  spec('customer post a communion sttich request'),
+defcon chameleonStitchRequest(?Stitchport,?Vlan,?Gateway,?Slice,?Node):-
+  spec('customer post a chameleon sttich request'),
   {
-    stitch($Stitchport,$Vlan,$Gateway,$Slice,$Node).
+    stitchChameleon($Stitchport,$Vlan,$Gateway,$Slice,$Node).
     label("stitch request($SetVersion)").
   }.
 
-defpost postCommunionStitchRequest(?Stitchport,?Vlan,?Gateway,?Slice,?Node):-[communionStitchRequest(?Stitchport,?Vlan,?Gateway,?Slice,?Node)].
+defpost postChameleonStitchRequest(?Stitchport,?Vlan,?Gateway,?Slice,?Node):-[chameleonStitchRequest(?Stitchport,?Vlan,?Gateway,?Slice,?Node)].
 
 defcon endorsePM(?Member) :-
   spec('Endorse a project member'),
@@ -94,7 +94,7 @@ defguard verifyStitch(?Bob,?ClientSlice,?ReservID,?Slice,?Node):-
     allowStitch($Bob,$ClientSlice,$ReservID,$Slice,$Node)?
   }.
 
-defguard verifyCommunionStitch(?Bob,?Stitchport,?Label,?Vlan,?Gateway,?Slice,?Node):-
+defguard verifyChameleonStitch(?Bob,?Stitchport,?Vlan,?Gateway,?Slice,?Node):-
   ?StitchPolicy := label("stitch policy($PolicyVersion)"),
   ?PASet := label("my project authorization($SetVersion)"),
   ?SubjectToken := label(?Bob,"subject($SetVersion)"),
@@ -104,7 +104,7 @@ defguard verifyCommunionStitch(?Bob,?Stitchport,?Label,?Vlan,?Gateway,?Slice,?No
     link($PASet).
     link($SubjectToken).
     link($RequestToken).
-    allowCommunionStitch($Bob,$Stitchport,$Label,$Vlan,$Gateway,$Slice,$Node)?
+    allowChameleonStitch($Bob,$Stitchport,$Vlan,$Gateway,$Slice,$Node)?
   }.
 
 defcon aclPolicy():-
