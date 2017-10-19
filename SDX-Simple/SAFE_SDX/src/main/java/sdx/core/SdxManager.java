@@ -322,6 +322,7 @@ public class SdxManager extends SliceCommon{
         //if node not exists, add another node to the slice
         //add a node and configure it as a router.
         //later when a customer requests connection between site a and site b, we add another link to meet the requirments
+        
 
       }
       int interfaceNum=routingmanager.getRouter(node.getName()).getInterfaceNum();
