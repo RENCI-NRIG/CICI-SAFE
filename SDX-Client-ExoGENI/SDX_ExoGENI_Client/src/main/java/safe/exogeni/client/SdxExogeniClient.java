@@ -196,7 +196,7 @@ public class SdxExogeniClient extends SliceCommon {
       postSafeStitchRequest(keyhash,sliceName,node0_s2_stitching_GUID,params[2],params[3]);
       JSONObject jsonparams=new JSONObject();
       jsonparams.put("sdxslice",params[2]);
-      jsonparams.put("sdxnode",params[3]);
+      jsonparams.put("sdxsite",params[3]);
       jsonparams.put("ckeyhash",keyhash);
       jsonparams.put("cslice",sliceName);
       jsonparams.put("creservid",node0_s2_stitching_GUID);
