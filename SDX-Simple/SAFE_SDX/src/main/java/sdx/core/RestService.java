@@ -52,7 +52,7 @@ public class RestService {
     @Produces(MediaType.APPLICATION_JSON)
     public StitchResult stitchRequest(StitchRequest sr){
       logger.debug("got sittch request");
-      String[] res=SdxManager.stitchRequest(sr.sdxslice,sr.sdxnode, sr.ckeyhash, sr.cslice, sr.creservid, sr.secret);
+      String[] res=SdxManager.stitchRequest(sr.sdxslice,sr.sdxsite, sr.ckeyhash, sr.cslice, sr.creservid, sr.secret);
       return new StitchResult(res[0],res[1]);
     }
 
@@ -109,7 +109,7 @@ class StitchChameleon{
 
 class StitchRequest{
   public  String sdxslice;
-  public  String sdxnode;
+  public  String sdxsite;
   //customer Safe key hash
   public  String ckeyhash;
   public  String cslice;
@@ -118,9 +118,9 @@ class StitchRequest{
 
   public StitchRequest(){}
 
-  public StitchRequest(String sdxslice, String sdxnode,String ckeyhash, String cslice, String creserveid, String secret){
+  public StitchRequest(String sdxslice, String sdxsite,String ckeyhash, String cslice, String creserveid, String secret){
     this.sdxslice=sdxslice;
-    this.sdxnode=sdxnode;
+    this.sdxsite=sdxsite;
     this.ckeyhash=ckeyhash;
     this.cslice=cslice;
     this.creservid=creservid;
