@@ -45,7 +45,7 @@ public class SdxHttpClient {
       //handle response here...
       String output=EntityUtils.toString(response.getEntity());
       logger.debug(output);
-      httpClient.getConnectionManager().shutdown();
+      httpClient.getConnectionManager().shutdown(); 
       return output;
 
     }catch (Exception ex) {
