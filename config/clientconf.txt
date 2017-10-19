@@ -1,0 +1,15 @@
+config{
+  slicename="{SLICENAME}"
+  type="client"
+  sshkey="{SSHKEY}"
+  safekey="{SAFEKEY}"
+  exogenipem="{EXOGENIPEM}"
+  exogenism="https://geni.renci.org:11443/orca/xmlrpc"
+  ipprefix="{IPPREFIX}"
+  riakserver="{RIAKSERVER}"
+  sdxserver="{SDXSERVER}"
+  scriptsdir=""
+  serversite="RENCI (Chapel Hill, NC USA) XO Rack"
+  routersite="PSC (Pittsburgh, TX, USA) XO Rack"
+}
+

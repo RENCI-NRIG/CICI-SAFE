@@ -1,0 +1,32 @@
+"rpki": allocate("ir0",ipv4"152.3.1.1/16").
+"ir0" : allocate("as1",ipv4"152.3.1.1/24").
+"ir0" : allocate("as2",ipv4"152.3.2.1/24").
+"ir0" : allocate("as3",ipv4"152.3.3.1/24").
+"as1" :advertise(ipv4"152.3.1.1/26","as1","as0").
+"as0": acceptRoute("as1",ipv4"152.3.1.1/24").
+
+
+route(?AS,?DstIP,?Path) :-
+  ?AS:acceptRoute(?Dst,?IPSet),
+  ?DstIP <: ?IPSet,
+  authorizedAdvertise(?Dst,?DstIP,?Path,?AS).
+
+authorizedAdvertise(?Speaker,?DstIP,?Path,?AS):-
+  ?Speaker: advertise(?DstIP,?Path,?AS),
+  ownPrefix(?Speaker,?IPSet),
+  ?DstIP <: ?IPSet.
+
+authorizedAdvertise(?Speaker,?DstIP,?Path,?AS):-
+  splitHead(?Path,?Head,?Tail),
+  ?Speaker:advertise(?DstIP,?Path,?AS),
+  authorizedAdvertise(?P,?DstIP,?Tail,?Speaker).
+
+ownPrefix(?AS,?Prefix):-
+  "rpki": allocate(?AS,?Prefix).
+
+ownPrefix(?AS,?Prefix):-
+  ?UpStream: allocate(?AS,?Prefix),
+  ownPrefix(?UpStream,?PrefixSet),
+  ?Prefix <: ?PrefixSet.
+
+route("as0",ipv4"152.3.1.1/26","as1")?
