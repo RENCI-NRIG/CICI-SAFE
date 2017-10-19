@@ -173,10 +173,10 @@ public class SdxManager extends SliceCommon{
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-    Slice keyhashslice = null;
+    Slice serverslice = null;
     try {
-      keyhashslice = Slice.loadManifestFile(sliceProxy, sliceName);
-      ComputeNode safe=(ComputeNode)keyhashslice.getResourceByName("safe-server");
+      serverslice = Slice.loadManifestFile(sliceProxy, sliceName);
+      ComputeNode safe=(ComputeNode)serverslice.getResourceByName("safe-server");
       //System.out.println("safe-server managementIP = " + safe.getManagementIP());
       safeserver=safe.getManagementIP()+":7777";
     } catch (ContextTransportException e) {
@@ -187,11 +187,14 @@ public class SdxManager extends SliceCommon{
       e.printStackTrace();
     }
     //SDNControllerIP="152.3.136.36";
-    SDNControllerIP=((ComputeNode)keyhashslice.getResourceByName("plexuscontroller")).getManagementIP();
+    SDNControllerIP=((ComputeNode)serverslice.getResourceByName("plexuscontroller")).getManagementIP();
     //System.out.println("plexuscontroler managementIP = " + SDNControllerIP);
     SDNController=SDNControllerIP+":8080";
     OVSController=SDNControllerIP+":6633";
-    configRouting(keyhashslice,OVSController,SDNController,"(c\\d+)","(sp-c\\d+.*)");
+
+    //configRouting(serverslice,OVSController,SDNController,"(c\\d+)","(sp-c\\d+.*)");
+    loadSdxNetwork(serverslice,"(c\\d+)","(sp-c\\d+.*)");
+    configRouting(serverslice,OVSController,SDNController,"(c\\d+)","(sp-c\\d+.*)");
 	}
 
   public static String notifyPrefix(String dest, String gateway, String router,String customer_keyhash){
@@ -324,6 +327,17 @@ public class SdxManager extends SliceCommon{
         //later when a customer requests connection between site a and site b, we add another link to meet the requirments
         
 
+        int max=-1;
+        for(String key :computenodes.keySet()){
+          for(ComputeNode c:computenodes.get(key)){
+            int number=Integer.valueOf(c.getName().replace("c",""));
+            max=Math.max(max,number);
+          }
+        }
+        SliceManager.addOVSRouter(s1,site,"c"+(max+1));
+        configRouter((ComputeNode)s1.getResourceByName("c"+(max+1)));
+        logger.debug("Configured the new router in RoutingManager");
+
       }
       int interfaceNum=routingmanager.getRouter(node.getName()).getInterfaceNum();
       lock.lock();
@@ -369,13 +383,13 @@ public class SdxManager extends SliceCommon{
       sleep(10);
       //System.out.println("Node managmentIP: " + node.getManagementIP());
       Exec.sshExec("root",node.getManagementIP(),"/bin/bash ~/ovsbridge.sh "+OVSController,sshkey);
-      routingmanager.replayCmds(routingmanager.getDPID(nodeName));
+      routingmanager.replayCmds(routingmanager.getDPID(node.getName()));
       Exec.sshExec("root",node.getManagementIP(),"ifconfig;ovs-vsctl list port",sshkey);
       String net1_stitching_GUID = net.getStitchingGUID();
       logger.debug("net1_stitching_GUID: " + net1_stitching_GUID);
       Link link=new Link();
       link.setName(stitchname);
-      link.addNode(nodeName);
+      link.addNode(node.getName());
       link.setIP(IPPrefix+String.valueOf(ip_to_use));
       link.setMask(mask);
       links.put(stitchname,link);
@@ -385,11 +399,11 @@ public class SdxManager extends SliceCommon{
       stitch(customerName,ResrvID,sdxslice,net1_stitching_GUID,secret,ip);
       res[0]=gw;
       res[1]=ip;
-      routingmanager.configurePath(ip,nodeName,ip.split("/")[0],SDNController);
+      routingmanager.configurePath(ip,node.getName(),ip.split("/")[0],SDNController);
       System.out.println("stitching operation  completed");
     }
     else{
-      System.out.println("Unauthorized: stitch request for"+sdxslice +" and "+nodeName);
+      System.out.println("Unauthorized: stitch request for"+sdxslice +" at "+site);
       logger.debug("Stitching Authorization Failed");
     }
     return res;
@@ -517,7 +531,7 @@ public class SdxManager extends SliceCommon{
         {
           continue;
         }
-        stitchports.add(sp.getName());
+        stitchports.add(sp);
       }
 
     }catch(Exception e){
@@ -525,6 +539,18 @@ public class SdxManager extends SliceCommon{
     }
   }
 
+  private static void configRouter(ComputeNode node){
+    String mip = node.getManagementIP();
+    logger.debug(node.getName() + " " + mip);
+    Exec.sshExec("root", mip, "/bin/bash ~/ovsbridge.sh " + OVSController, sshkey).split(" ");
+    String[] result = Exec.sshExec("root", mip, "/bin/bash ~/dpid.sh", sshkey).split(" ");
+    for (String sis : result) {
+      System.out.println("1:" + sis);
+    }
+    result[1] = result[1].replace("\n", "");
+    logger.debug("Get router info " + result[0] + " " + result[1]);
+    routingmanager.newRouter(node.getName(), result[1], Integer.valueOf(result[0]), mip);
+  }
   public static void configRouting1(Slice s,String ovscontroller, String httpcontroller, String routerpattern,String stitchportpattern) {
     logger.debug("Configurating Routing");
     restartPlexus(SDNControllerIP);
@@ -555,7 +581,7 @@ public class SdxManager extends SliceCommon{
     logger.debug("Wait until all ovs bridges have connected to SDN controller");
     ArrayList<Thread> tlist = new ArrayList<Thread>();
     for (String k : computenodes.keySet()) {
-      for (ComputeNode node : computenodes.get(k)) {
+      for (final ComputeNode node : computenodes.get(k)) {
         final String mip = node.getManagementIP();
         try {
           //      logger.debug(mip+" run commands:"+cmd);

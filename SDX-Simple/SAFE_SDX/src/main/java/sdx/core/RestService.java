@@ -114,6 +114,7 @@ class StitchRequest{
   public  String ckeyhash;
   public  String cslice;
   public  String creservid;
+
   public  String secret;
 
   public StitchRequest(){}

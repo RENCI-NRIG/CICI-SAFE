@@ -197,6 +197,25 @@ public class SliceCommon {
 		}
   }
 
+   protected static void copyFile2Slice(Slice s, String lfile, String rfile,String privkey, String pattn) {
+       Pattern pattern = Pattern.compile(pattn);
+       for (ComputeNode c : s.getComputeNodes()) {
+           Matcher matcher = pattern.matcher(c.getName());
+           if (!matcher.find())
+           {
+               continue;
+           }
+           String mip = c.getManagementIP();
+           try {
+               logger.debug("scp config file to " + mip);
+               ScpTo.Scp(lfile, "root", mip, rfile, privkey);
+
+           } catch (Exception e) {
+               logger.debug("exception when copying config file");
+           }
+       }
+   }
+
   protected static void runCmdSlice(Slice s, String cmd, String privkey,boolean repeat){
 		for(ComputeNode c : s.getComputeNodes()){
       String mip=c.getManagementIP();
