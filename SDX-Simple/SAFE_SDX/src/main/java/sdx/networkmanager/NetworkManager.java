@@ -80,7 +80,7 @@ public class NetworkManager{
 
   public  void addRouter(String routerid, String dpid, int numinterfaces, String mip){
     if(getRouter(routerid)==null){
-      System.out.println(dpid+":my dpid");
+      logger.debug(dpid+": new router");
       routers.add(new Router(routerid,dpid,numinterfaces, mip));
     }
     else{

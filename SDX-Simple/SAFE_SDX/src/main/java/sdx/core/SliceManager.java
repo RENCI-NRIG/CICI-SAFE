@@ -136,7 +136,7 @@ public class SliceManager extends SliceCommon {
 				if (!checkPlexus(SDNControllerIP)) {
 					System.exit(-1);
 				}
-				System.out.println("Plexus Controler IP: " + SDNControllerIP);
+				logger.debug("Plexus Controler IP: " + SDNControllerIP);
 				runCmdSlice(carrier, "/bin/bash ~/ovsbridge.sh " + SDNControllerIP + ":6633", sshkey, "(c\\d+)", true, true);
 
 				String SAFEServerIP = ((ComputeNode) carrier.getResourceByName("safe-server")).getManagementIP();
@@ -175,14 +175,16 @@ public class SliceManager extends SliceCommon {
 		node0.setPostBootScript(nodePostBootScript);
 		commitAndWait(s);
 		logger.debug("the new node on site "+site+" is active now");
+		scriptsdir = conf.getString("config.scriptsdir");
 		copyFile2Slice(s, scriptsdir + "dpid.sh", "~/dpid.sh", sshkey, "("+name+")");
 		copyFile2Slice(s, scriptsdir + "ovsbridge.sh", "~/ovsbridge.sh", sshkey, "("+name+")");
 		//Make sure that plexus container is running
 		if (!checkPlexus(SDNControllerIP)) {
 			System.exit(-1);
 		}
-		System.out.println("Plexus Controler IP: " + SDNControllerIP);
+		logger.debug("Plexus Controler IP: " + SDNControllerIP);
 		runCmdSlice(s, "/bin/bash ~/ovsbridge.sh " + SDNControllerIP + ":6633", sshkey, "("+name+")", true, true);
+		logger.debug("Finished adding new OVS router");
 	}
 
 	private static void commitAndWait(Slice s){

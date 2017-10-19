@@ -97,7 +97,7 @@ public class SdxManager extends SliceCommon{
   
   private static NetworkManager routingmanager=new NetworkManager();
   private static HashMap<String, Link> links=new HashMap<String, Link>();
-  private static HashMap<String, ArrayList<ComputeNode>>computenodes=new HashMap<String,ArrayList<ComputeNode>>();
+  private static HashMap<String, ArrayList<String>>computenodes=new HashMap<String,ArrayList<String>>();
   private static ArrayList<StitchPort>stitchports=new ArrayList<>();
   private static String IPPrefix="192.168.";
   static int curip=128;
@@ -320,24 +320,25 @@ public class SdxManager extends SliceCommon{
       }
       ComputeNode node=null;
       if(computenodes.containsKey(site)&&computenodes.get(site).size()>0) {
-        node=computenodes.get(site).get(0);
+        node=(ComputeNode)s1.getResourceByName( computenodes.get(site).get(0));
       }else{
         //if node not exists, add another node to the slice
         //add a node and configure it as a router.
         //later when a customer requests connection between site a and site b, we add another link to meet the requirments
-        
-
         int max=-1;
         for(String key :computenodes.keySet()){
-          for(ComputeNode c:computenodes.get(key)){
-            int number=Integer.valueOf(c.getName().replace("c",""));
+          for(String cname:computenodes.get(key)){
+            int number=Integer.valueOf(cname.replace("c",""));
             max=Math.max(max,number);
           }
         }
         SliceManager.addOVSRouter(s1,site,"c"+(max+1));
-        configRouter((ComputeNode)s1.getResourceByName("c"+(max+1)));
+        node=(ComputeNode)s1.getResourceByName("c"+(max+1));
+        ArrayList<String>l=new ArrayList<>();
+        l.add(node.getName());
+        computenodes.put(node.getDomain(),l);
+        configRouter(node);
         logger.debug("Configured the new router in RoutingManager");
-
       }
       int interfaceNum=routingmanager.getRouter(node.getName()).getInterfaceNum();
       lock.lock();
@@ -361,30 +362,14 @@ public class SdxManager extends SliceCommon{
 
       }
       int N=0;
-      net=(Network)s1.getResourceByName(stitchname);
-      while(net.getState() != "Active" &&N<10){
-        try {
-          s1 = Slice.loadManifestFile(sliceProxy, sdxslice);
-        } catch (ContextTransportException e) {
-          // TODO Auto-generated catch block
-          e.printStackTrace();
-        } catch (TransportException e) {
-          // TODO Auto-generated catch block
-          e.printStackTrace();
-        }
-        net=(Network)s1.getResourceByName(stitchname);
-        for(Network l:s1.getBroadcastLinks()){
-          logger.debug("Resource: " + l.getName() + ", state: "  + l.getState());
-        }
-        logger.debug(((Network)s1.getResourceByName(stitchname)).getState());
-        sleep(5);
-        N++;
-      }
+      waitTillActive(s1);
       sleep(10);
       //System.out.println("Node managmentIP: " + node.getManagementIP());
       Exec.sshExec("root",node.getManagementIP(),"/bin/bash ~/ovsbridge.sh "+OVSController,sshkey);
       routingmanager.replayCmds(routingmanager.getDPID(node.getName()));
       Exec.sshExec("root",node.getManagementIP(),"ifconfig;ovs-vsctl list port",sshkey);
+      s1.refresh();
+      net=(BroadcastNetwork)s1.getResourceByName(stitchname);
       String net1_stitching_GUID = net.getStitchingGUID();
       logger.debug("net1_stitching_GUID: " + net1_stitching_GUID);
       Link link=new Link();
@@ -399,7 +384,7 @@ public class SdxManager extends SliceCommon{
       stitch(customerName,ResrvID,sdxslice,net1_stitching_GUID,secret,ip);
       res[0]=gw;
       res[1]=ip;
-      routingmanager.configurePath(ip,node.getName(),ip.split("/")[0],SDNController);
+      //routingmanager.configurePath(ip,node.getName(),ip.split("/")[0],SDNController);
       System.out.println("stitching operation  completed");
     }
     else{
@@ -483,11 +468,11 @@ public class SdxManager extends SliceCommon{
           continue;
         }
         if(computenodes.containsKey(node.getDomain())) {
-          computenodes.get(node.getDomain()).add(node);
+          computenodes.get(node.getDomain()).add(node.getName());
         }
         else{
-          ArrayList<ComputeNode> l=new ArrayList<>();
-          l.add(node);
+          ArrayList<String> l=new ArrayList<>();
+          l.add(node.getName());
           computenodes.put(node.getDomain(),l);
         }
       }
@@ -544,9 +529,7 @@ public class SdxManager extends SliceCommon{
     logger.debug(node.getName() + " " + mip);
     Exec.sshExec("root", mip, "/bin/bash ~/ovsbridge.sh " + OVSController, sshkey).split(" ");
     String[] result = Exec.sshExec("root", mip, "/bin/bash ~/dpid.sh", sshkey).split(" ");
-    for (String sis : result) {
-      System.out.println("1:" + sis);
-    }
+
     result[1] = result[1].replace("\n", "");
     logger.debug("Get router info " + result[0] + " " + result[1]);
     routingmanager.newRouter(node.getName(), result[1], Integer.valueOf(result[0]), mip);
@@ -561,15 +544,13 @@ public class SdxManager extends SliceCommon{
     runCmdSlice(s, "/bin/bash ~/ovsbridge.sh " + ovscontroller, sshkey, "(c\\d+)", false, true);
     try {
       for (String k : computenodes.keySet()) {
-        for (ComputeNode node : computenodes.get(k)) {
+        for (String cname : computenodes.get(k)) {
           //System.out.println("mip node managment: " + node.getManagementIP());
+          ComputeNode node=(ComputeNode) s.getResourceByName(cname);
           String mip = node.getManagementIP();
           logger.debug(node.getName() + " " + mip);
           Exec.sshExec("root", mip, "/bin/bash ~/ovsbridge.sh " + ovscontroller, sshkey).split(" ");
           String[] result = Exec.sshExec("root", mip, "/bin/bash ~/dpid.sh", sshkey).split(" ");
-          for (String sis : result) {
-            System.out.println("1:" + sis);
-          }
           result[1] = result[1].replace("\n", "");
           logger.debug("Get router info " + result[0] + " " + result[1]);
           routingmanager.newRouter(node.getName(), result[1], Integer.valueOf(result[0]), mip);
@@ -581,7 +562,8 @@ public class SdxManager extends SliceCommon{
     logger.debug("Wait until all ovs bridges have connected to SDN controller");
     ArrayList<Thread> tlist = new ArrayList<Thread>();
     for (String k : computenodes.keySet()) {
-      for (final ComputeNode node : computenodes.get(k)) {
+      for (final String cname : computenodes.get(k)) {
+        final ComputeNode node=(ComputeNode) s.getResourceByName(cname);
         final String mip = node.getManagementIP();
         try {
           //      logger.debug(mip+" run commands:"+cmd);
@@ -680,9 +662,6 @@ public class SdxManager extends SliceCommon{
         logger.debug(node.getName()+" "+mip);
         Exec.sshExec("root",mip,"/bin/bash ~/ovsbridge.sh "+ ovscontroller,sshkey).split(" ");
         String[] result=Exec.sshExec("root",mip,"/bin/bash ~/dpid.sh",sshkey).split(" ");
-        for (String sis:result){
-          System.out.println("1:"+sis);
-        }
         try{
           result[1]=result[1].replace("\n","");
           logger.debug("Get router info "+result[0]+" "+result[1]);

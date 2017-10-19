@@ -52,8 +52,13 @@ public class RestService {
     @Produces(MediaType.APPLICATION_JSON)
     public StitchResult stitchRequest(StitchRequest sr){
       logger.debug("got sittch request");
-      String[] res=SdxManager.stitchRequest(sr.sdxslice,sr.sdxsite, sr.ckeyhash, sr.cslice, sr.creservid, sr.secret);
-      return new StitchResult(res[0],res[1]);
+      try {
+        String[] res = SdxManager.stitchRequest(sr.sdxslice, sr.sdxsite, sr.ckeyhash, sr.cslice, sr.creservid, sr.secret);
+        return new StitchResult(res[0], res[1]);
+      }catch (Exception e){
+        e.printStackTrace();
+        return new StitchResult(null,null);
+      }
     }
 
     @POST

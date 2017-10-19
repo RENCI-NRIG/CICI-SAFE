@@ -66,6 +66,7 @@ public class SdxExogeniClient extends SliceCommon {
   public SdxExogeniClient(){}
   private static String type;
   private static String sdxserver;
+  private static boolean safeauth=true;
 	
 	public static void main(String [] args){
     //Example usage: ./target/appassembler/bin/SafeSdxClient -f alice.conf
@@ -79,6 +80,13 @@ public class SdxExogeniClient extends SliceCommon {
 		
     CommandLine cmd=parseCmd(args);
 		String configfilepath=cmd.getOptionValue("config");
+		if(cmd.hasOption('n')){
+      safeauth=false;
+      System.out.println("Safe disabled, allowing all requests");
+    }
+    else{
+      safeauth=true;
+    }
     readConfig(configfilepath);
     sdxserver=conf.getString("config.sdxserver");
 
@@ -121,11 +129,11 @@ public class SdxExogeniClient extends SliceCommon {
 //	 			logger.debug(obj.sayHello()); 
       java.io.BufferedReader stdin = new java.io.BufferedReader(new java.io.InputStreamReader(System.in));  
       while(true){
-        System.out.print("Enter Commands:stitch client_resource_name  server_slice_name  server_resource_name\n Or advertise route: route dest gateway sdx_slice_name routername,\n$>");
+        System.out.print("Enter Commands:stitch client_resource_name  server_slice_name\n Or advertise route: route dest gateway sdx_slice_name routername,\n$>");
         input = stdin.readLine();  
         System.out.print("continue?[y/n]\n$>"+input);
-        input = stdin.readLine();  
-        if(input.startsWith("y")){
+
+        if(stdin.readLine().startsWith("y")){
           processCmd(input);
         }
       }
@@ -137,6 +145,7 @@ public class SdxExogeniClient extends SliceCommon {
     } 
 		logger.debug("XXXXXXXXXX Done XXXXXXXXXXXXXX");
 	}
+
 
 	private static void processCmd(String command){
     try{
@@ -193,10 +202,13 @@ public class SdxExogeniClient extends SliceCommon {
       }
       //post stitch request to SAFE
       logger.debug("posting stitch request statements to SAFE Sets");
-      postSafeStitchRequest(keyhash,sliceName,node0_s2_stitching_GUID,params[2],params[3]);
+      String sdxsite=node0_s2.getDomain();
+      if(safeauth) {
+        postSafeStitchRequest(keyhash, sliceName, node0_s2_stitching_GUID, params[2], sdxsite);
+      }
       JSONObject jsonparams=new JSONObject();
       jsonparams.put("sdxslice",params[2]);
-      jsonparams.put("sdxsite",params[3]);
+      jsonparams.put("sdxsite",sdxsite);
       jsonparams.put("ckeyhash",keyhash);
       jsonparams.put("cslice",sliceName);
       jsonparams.put("creservid",node0_s2_stitching_GUID);
