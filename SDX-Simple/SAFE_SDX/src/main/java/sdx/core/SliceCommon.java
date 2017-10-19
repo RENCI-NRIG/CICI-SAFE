@@ -76,6 +76,7 @@ public class SliceCommon {
   protected static Config conf;
   protected static ArrayList<String> clientSites;
   protected static String controllerSite;
+  protected static List<String> sitelist;
   protected static String serverSite;
   protected static boolean safeauth=false;
 
@@ -122,13 +123,18 @@ public class SliceCommon {
     sliceName=conf.getString("config.slicename");
     serverSite=conf.getString("config.serversite");
     controllerSite=conf.getString("config.controllersite");
-    
+
+    if(conf.hasPath("config.sitelist")){
+      String sites=conf.getString("config.sitelist");
+      sitelist=conf.getStringList("config.sitelist");
+    }
+
     String clientSitesStr = conf.getString("config.clientsites");
     clientSites = new ArrayList<String>();
     for(String site : clientSitesStr.split(":")){
     	clientSites.add(site);
     }
-    
+
   }
 
   protected static void waitTillActive(Slice s){
