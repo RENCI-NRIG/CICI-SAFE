@@ -97,8 +97,8 @@ public class SdxStitchPortClient extends SliceCommon {
         System.out.print("Enter Commands:stitch stitchport vlan sdx_slice  sdx_node gateway ip\n Or advertise route: route dest gateway sdx_slice_name routername,\n$>");
         input = stdin.readLine();  
         System.out.print("continue?[y/n]\n$>"+input);
-        input = stdin.readLine();  
-        if(input.startsWith("y")){
+          
+        if(stdin.readLine().startsWith("y")){
           processCmd(input);
         }
       }
