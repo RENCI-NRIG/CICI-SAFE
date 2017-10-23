@@ -466,9 +466,6 @@ public class SdxManager extends SliceCommon{
         logger.debug(node.getName()+" "+mip);
         Exec.sshExec("root",mip,"/bin/bash ~/ovsbridge.sh "+ ovscontroller,sshkey).split(" ");
         String[] result=Exec.sshExec("root",mip,"/bin/bash ~/dpid.sh",sshkey).split(" ");
-        for (String sis:result){
-          System.out.println("1:"+sis);
-        }
         try{
           result[1]=result[1].replace("\n","");
           logger.debug("Get router info "+result[0]+" "+result[1]);
