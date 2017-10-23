@@ -72,14 +72,21 @@ Then we can run ahab controllers for sdx, alice and bob.
     For exmaple: ./scripts/createslice.sh -c config/alice.conf -d
 
   11. Stitching Chameleon Node to  SDX slice
-    For Chameleon Slice, we need another safe server for it
+    1) First, create a chemeleon node, using vlan tag "3298"
+    2) For Chameleon Slice, we need another safe server for it
       a) build chameleon controller
       b)$ ./scripts/run.sh -c config/carrot.conf
-        $>stitch http://geni-orca.renci.org/owl/ion.rdf#AL2S/Chameleon/Cisco/6509/GigabitEthernet/1/1 3293 sdx c3 10.32.98.214 10.32.98.200/24
+        >stitch http://geni-orca.renci.org/owl/ion.rdf#AL2S/Chameleon/Cisco/6509/GigabitEthernet/1/1 3293 sdx c3 10.32.98.214 10.32.98.200/24
         OR
-        $./scripts/run.sh -c config/carrot.conf -e "stitch http://geni-orca.renci.org/owl/ion.rdf#AL2S/Chameleon/Cisco/6509/GigabitEthernet/1/1 3298 sdx c3 10.32.98.214 10.32.98.200/24"
+        $./scripts/run.sh -c config/carrot.conf -e "stitch http://geni-orca.renci.org/owl/ion.rdf#AL2S/Chameleon/Cisco/6509/GigabitEthernet/1/1 3298 sdx c3 10.32.98.204 10.32.98.200/24"
+
+        When stitching a chameleon node to exogeni node, we know the ip address of the chameleon node, say "10.32.98.204". In the stitching request, we tell the sdx controller what IP address it should use for the new interface on c3 to the stitchport, we can specify any address in the same subnet as the chameleon node, say "10.32.98.200"
+        The topology is like this. 
+        c0-c1-c2-c3 (10.32.98.200/24)----stitchport----(10.32.98.204/24)ChameleonNode
+        Note that in sdx server, we use SDN controller to configure the ip address. The ip address is not configured for the physical interface, so we can't ping from exogeni node to chameleon node. But we can ping from the Chameleon node to the exogeni node.
 
       c) Chameleon slice advertises its ip prefixes in the same way as ExoGENI slice does
+      d) Chameleon node set up routing table when it wants to talk with exogeni slices in different subnets
 
 NOTE: Now we have "-n" option for sdx server, which is DISABLE SAFE AUTHORIZATION
 
