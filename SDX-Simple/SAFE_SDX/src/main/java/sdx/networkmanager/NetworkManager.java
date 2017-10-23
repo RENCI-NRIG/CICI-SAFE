@@ -78,7 +78,7 @@ public class NetworkManager{
 
   public  void addRouter(String routerid, String dpid, int numinterfaces, String mip){
     if(getRouter(routerid)==null){
-      logger.debug(dpid+":my dpid");
+//      logger.debug(dpid+":my dpid");
       routers.add(new Router(routerid,dpid,numinterfaces, mip));
     }
     else{
