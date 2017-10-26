@@ -72,7 +72,7 @@ Then we can run ahab controllers for sdx, alice and bob.
     For exmaple: ./scripts/createslice.sh -c config/alice.conf -d
 
 
-    ============stitching chameleon to exogeni=============
+    ============Stitching External Sites (Chameleon, Duke, ESNet...) to Exogeni=============
 
 [1] Run riak-server
     Launch a riak server with code and instructions in SAFE-Riak-Server
@@ -87,29 +87,33 @@ Configuration: set variables in "SAFE/configure" and run it. It will generate co
   d) create SDX slice
      $./scritps/createslice.sh -c config/sdx.conf
 
- [4] Run sdx server controller, configure the address and port number that sdx server will listen on ("config.serverurl").
+[3] Run sdx server controller, configure the address and port number that sdx server will listen on ("config.serverurl").
      $./scripts/sdxserver.sh -c config/sdx.conf
+     
+     NOTE: when running HTTP server on ExoGENI, use serverurl=0.0.0.0:8080.
 
- [6]. post SAFE identity sets, make SAFE statements to state the stitching and traffic policies, allocation of IP prefixes and stitching requests.
+[4] post SAFE identity sets, make SAFE statements to state the stitching and traffic policies, allocation of IP prefixes and stitching requests.
     $ cd safe-scripts 
     $ ./trustedparty.sh SAFEServerIP
     $ ./sdx.sh SAFEServerIP
     $ ./carrot.sh SAFEServerIP
 
-  Specify the ip address of safe server for Chameleon controller in config/carrot.conf
-  Configure the address of SDX server controller ("config.sdxserver") in config/carrot.conf 
+[5] Specify the ip address of safe server for Chameleon controller in SDX-Client-StitchPort/config/carrot.conf
+    Configure the address of SDX server controller ("config.sdxserver") in SDX-Client-StitchPort/config/carrot.conf 
 
-  11. Stitching Chameleon Node to  SDX slice
-    1) First, create a chemeleon node, using vlan tag "3298"
-    2) For Chameleon Slice, we need another safe server for it
-      a) build chameleon controller
-      b)$ ./scripts/run.sh -c config/carrot.conf
-        >stitch http://geni-orca.renci.org/owl/ion.rdf#AL2S/Chameleon/Cisco/6509/GigabitEthernet/1/1 3293 sdx c3 10.32.98.214 10.32.98.200/24
+[6] Stitching Chameleon Node to  SDX slice
+    1) First, create a Chameleon node, using vlan tag "3298"
+    2) For Chameleon slice, we need another safe server for it (In this demo, we use the SAFE server in SDX slice for everything, therefore, this step is skipped). 
+    3) Build chameleon controller:
+       a) ./scripts/build.sh
+       b) $ ./scripts/run.sh -c config/carrot.conf
+        >stitch http://geni-orca.renci.org/owl/ion.rdf#AL2S/Chameleon/Cisco/6509/GigabitEthernet/1/1 3293 cwang-sdx c3 [Cameleon_Node_IP] 10.32.98.200/24
         OR
         $./scripts/run.sh -c config/carrot.conf -e "stitch http://geni-orca.renci.org/owl/ion.rdf#AL2S/Chameleon/Cisco/6509/GigabitEthernet/1/1 3298 sdx c3 10.32.98.204 10.32.98.200/24"
 
-        When stitching a chameleon node to exogeni node, we know the ip address of the chameleon node, say "10.32.98.204". In the stitching request, we tell the sdx controller what IP address it should use for the new interface on c3 to the stitchport, we can specify any address in the same subnet as the chameleon node, say "10.32.98.200"
-        The topology is like this. 
+[7] When stitching a chameleon node to exogeni node, we know the ip address of the chameleon node, say "10.32.98.204". 
+    In the stitching request, we tell the sdx controller what IP address it should use for the new interface on c3 to the stitchport, we can specify any address in the same subnet as the chameleon node, say "10.32.98.200"
+        The topology is like this:
         c0-c1-c2-c3 (10.32.98.200/24)----stitchport----(10.32.98.204/24)ChameleonNode
         Note that in sdx server, we use SDN controller to configure the ip address. The ip address is not configured for the physical interface, so we can't ping from exogeni node to chameleon node. But we can ping from the Chameleon node to the exogeni node.
 
