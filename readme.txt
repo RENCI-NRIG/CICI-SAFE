@@ -118,6 +118,7 @@ Configuration: set variables in "SAFE/configure" and run it. It will generate co
         Note that in sdx server, we use SDN controller to configure the ip address. The ip address is not configured for the physical interface, so we can't ping from exogeni node to chameleon node. But we can ping from the Chameleon node to the exogeni node.
 
       c) Chameleon slice advertises its ip prefixes in the same way as ExoGENI slice does
+        $./scripts/run.sh -c config/carrot.conf -e "route 10.32.98.1/24 10.32.98.204 sdx c3"
       d) Chameleon node set up routing table when it wants to talk with exogeni slices in different subnets
 
 NOTE: Now we have "-n" option for sdx server and both clients, which can be used to DISABLE SAFE AUTHORIZATION
