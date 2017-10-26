@@ -267,8 +267,10 @@ public class SdxManager extends SliceCommon{
           s = Slice.loadManifestFile(sliceProxy, carrierName);
         } catch (ContextTransportException e) {
           // TODO Auto-generated catch block
+          res ="Stitch request failed.\n SdxServer exception in loadManiFestFile";
           e.printStackTrace();
         } catch (TransportException e) {
+          res ="Stitch request failed.\n SdxServer exception in loadManiFestFile";
           // TODO Auto-generated catch block
           e.printStackTrace();
         }
@@ -286,6 +288,7 @@ public class SdxManager extends SliceCommon{
         System.out.println("Chameleon Stitch Request from " + customer_keyhash + " Unauthorized");
       }
     }catch(Exception e){
+      res ="Stitch request failed.\n SdxServer exception in commiting stitching opoeration";
       e.printStackTrace();
     }
     return res;
@@ -524,7 +527,7 @@ public class SdxManager extends SliceCommon{
       for(final ComputeNode node : s.getComputeNodes()){
         Matcher matcher = pattern.matcher(node.getName());
         if(matcher.matches()){
-          final String mip=node.getManagementIP();
+          fu/inal String mip=node.getManagementIP();
           try{
       //      logger.debug(mip+" run commands:"+cmd);
       //      //ScpTo.Scp(lfile,"root",mip,rfile,privkey);
