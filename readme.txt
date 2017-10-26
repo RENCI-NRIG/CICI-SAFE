@@ -71,6 +71,34 @@ Then we can run ahab controllers for sdx, alice and bob.
     we can delete a slice with command: ./scripts/createslice.sh -c configFile -d
     For exmaple: ./scripts/createslice.sh -c config/alice.conf -d
 
+
+    ============stitching chameleon to exogeni=============
+
+[1] Run riak-server
+    Launch a riak server with code and instructions in SAFE-Riak-Server
+
+Configuration: set variables in "SAFE/configure" and run it. It will generate configuration files for sdx, alice and bob and put them in their config directory
+
+[2] Create a SDX slice
+  a) $cd SDX-Simple
+  b) Edit configuration file for sdx slice "config/sdx.conf"
+  c) build
+     $./scripts/build.sh
+  d) create SDX slice
+     $./scritps/createslice.sh -c config/sdx.conf
+
+ [4] Run sdx server controller, configure the address and port number that sdx server will listen on ("config.serverurl").
+     $./scripts/sdxserver.sh -c config/sdx.conf
+
+ [6]. post SAFE identity sets, make SAFE statements to state the stitching and traffic policies, allocation of IP prefixes and stitching requests.
+    $ cd safe-scripts 
+    $ ./trustedparty.sh SAFEServerIP
+    $ ./sdx.sh SAFEServerIP
+    $ ./carrot.sh SAFEServerIP
+
+  Specify the ip address of safe server for Chameleon controller in config/carrot.conf
+  Configure the address of SDX server controller ("config.sdxserver") in config/carrot.conf 
+
   11. Stitching Chameleon Node to  SDX slice
     1) First, create a chemeleon node, using vlan tag "3298"
     2) For Chameleon Slice, we need another safe server for it
@@ -88,5 +116,6 @@ Then we can run ahab controllers for sdx, alice and bob.
       c) Chameleon slice advertises its ip prefixes in the same way as ExoGENI slice does
       d) Chameleon node set up routing table when it wants to talk with exogeni slices in different subnets
 
-NOTE: Now we have "-n" option for sdx server, which is DISABLE SAFE AUTHORIZATION
+NOTE: Now we have "-n" option for sdx server and both clients, which can be used to DISABLE SAFE AUTHORIZATION
+
 
