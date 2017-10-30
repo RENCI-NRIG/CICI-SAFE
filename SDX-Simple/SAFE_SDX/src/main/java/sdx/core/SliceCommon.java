@@ -125,7 +125,6 @@ public class SliceCommon {
     controllerSite=conf.getString("config.controllersite");
 
     if(conf.hasPath("config.sitelist")){
-      String sites=conf.getString("config.sitelist");
       sitelist=conf.getStringList("config.sitelist");
     }
 
@@ -162,9 +161,53 @@ public class SliceCommon {
 		}
   }
 
-	protected static Slice getSlice(ISliceTransportAPIv1 sliceProxy, String sliceName){
+  protected static void waitTillActive(Slice s,List<String> resources){
+    boolean sliceActive = false;
+    while (true){
+      s.refresh();
+      sliceActive = true;
+      logger.debug("");
+      logger.debug("Slice: " + s.getAllResources());
+      for(ComputeNode c : s.getComputeNodes()){
+        logger.debug("Resource: " + c.getName() + ", state: "  + c.getState());
+        if(resources.contains(c.getName())) {
+          if (c.getState() != "Active" || c.getManagementIP() == null) sliceActive = false;
+        }
+      }
+      for(Network l: s.getBroadcastLinks()){
+        logger.debug("Resource: " + l.getName() + ", state: "  + l.getState());
+        if(resources.contains(l.getName())) {
+          if (l.getState() != "Active") sliceActive = false;
+        }
+      }
+
+      if(sliceActive) break;
+      sleep(10);
+    }
+    logger.debug("Done");
+    for(ComputeNode n : s.getComputeNodes()){
+      logger.debug("ComputeNode: " + n.getName() + ", Managment IP =  " + n.getManagementIP());
+    }
+  }
+
+  protected static Slice getSlice(ISliceTransportAPIv1 sliceProxy, String sliceName){
+    Slice s = null;
+    try {
+      s = Slice.loadManifestFile(sliceProxy, sliceName);
+    } catch (ContextTransportException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+    } catch (TransportException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+    }
+    return s;
+  }
+
+	protected static Slice getSlice(){
 		Slice s = null;
 		try {
+      ISliceTransportAPIv1 sliceProxy = getSliceProxy(pemLocation, keyLocation, controllerUrl);
 			s = Slice.loadManifestFile(sliceProxy, sliceName);
 		} catch (ContextTransportException e) {
 			// TODO Auto-generated catch block

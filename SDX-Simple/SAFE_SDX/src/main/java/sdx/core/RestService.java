@@ -61,6 +61,22 @@ public class RestService {
       }
     }
 
+  @POST
+  @Path("/connectionrequest")
+  @Consumes(MediaType.APPLICATION_JSON)
+  @Produces(MediaType.TEXT_PLAIN)
+  public String connectionRequest(ConnectionRequest sr){
+    logger.debug("got link request between "+sr.site1+" and "+sr.site2);
+    System.out.println("got link request between "+sr.site1+" and "+sr.site2);
+    try {
+      String res = SdxManager.connectionRequest(sr.site1,sr.site2);
+      return res;
+    }catch (Exception e){
+      e.printStackTrace();
+      return e.getMessage();
+    }
+  }
+
     @POST
     @Path("/stitchchameleon")
     @Consumes(MediaType.APPLICATION_JSON)
@@ -78,7 +94,7 @@ public class RestService {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.TEXT_PLAIN)
     public String stitchRequest(PrefixNotification pn){
-      logger.debug("got sittch request");
+      logger.debug("got notifyprefix");
       String res=SdxManager.notifyPrefix(pn.dest, pn.gateway, pn.router, pn.customer);
       logger.debug(res);
       System.out.println(res);
@@ -131,6 +147,19 @@ class StitchRequest{
     this.cslice=cslice;
     this.creservid=creservid;
     this.secret=secret;
+  }
+}
+
+class ConnectionRequest{
+  public  String ckeyhash;
+  public String site1;
+  public String site2;
+
+  public ConnectionRequest(){}
+
+  public ConnectionRequest(String site1, String site2){
+    this.site1=site1;
+    this.site2=site2;
   }
 }
 

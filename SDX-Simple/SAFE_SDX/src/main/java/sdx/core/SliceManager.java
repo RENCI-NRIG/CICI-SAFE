@@ -1,4 +1,5 @@
 package sdx.core;
+import java.util.*;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 import java.io.BufferedReader;
@@ -9,13 +10,6 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.Properties;
 
 import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Level;
@@ -94,6 +88,12 @@ public class SliceManager extends SliceCommon {
 		String configfilepath = cmd.getOptionValue("config");
 
 		readConfig(configfilepath);
+		int routerNum=4;
+		try {
+			routerNum = conf.getInt("config.routernum");
+		}catch (Exception e){
+			logger.debug("No router number specified, launching default 4 routers");
+		}
 
 		logger.debug("configfilepath " + configfilepath);
 		//readConfig(configfilepath);
@@ -125,7 +125,7 @@ public class SliceManager extends SliceCommon {
 			computeIP(IPPrefix);
 			try {
 				String carrierName = sliceName;
-				Slice carrier = createCarrierSlice(carrierName, 4, 10, 1000000, 1);
+				Slice carrier = createCarrierSlice(carrierName, routerNum, 10, 1000000, 1);
 				carrier.refresh();
 				waitTillActive(carrier);
 				carrier.refresh();
@@ -163,6 +163,7 @@ public class SliceManager extends SliceCommon {
 	}
 
 	public static void addOVSRouter(Slice s, String site, String name) {
+		logger.debug("Adding new OVS router to slice "+s.getName());
 		String nodeImageShortName = "Ubuntu 14.04";
 		String nodeImageURL = "http://geni-orca.renci.org/owl/9dfe179d-3736-41bf-8084-f0cd4a520c2f#Ubuntu+14.04";//http://geni-images.renci.org/images/standard/ubuntu/ub1304-ovs-opendaylight-v1.0.0.xml
 		String nodeImageHash = "9394ca154aa35eb55e604503ae7943ddaecc6ca5";
@@ -173,7 +174,12 @@ public class SliceManager extends SliceCommon {
 		node0.setNodeType(nodeNodeType);
 		node0.setDomain(site);
 		node0.setPostBootScript(nodePostBootScript);
-		commitAndWait(s);
+		try{
+			s.commit();
+			waitTillActive(s, Arrays.asList(name));
+		}catch (Exception e){
+			e.printStackTrace();
+		}
 		logger.debug("the new node on site "+site+" is active now");
 		scriptsdir = conf.getString("config.scriptsdir");
 		copyFile2Slice(s, scriptsdir + "dpid.sh", "~/dpid.sh", sshkey, "("+name+")");
