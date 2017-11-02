@@ -527,7 +527,7 @@ public class SdxManager extends SliceCommon{
       for(final ComputeNode node : s.getComputeNodes()){
         Matcher matcher = pattern.matcher(node.getName());
         if(matcher.matches()){
-          fu/inal String mip=node.getManagementIP();
+          final String mip=node.getManagementIP();
           try{
       //      logger.debug(mip+" run commands:"+cmd);
       //      //ScpTo.Scp(lfile,"root",mip,rfile,privkey);
