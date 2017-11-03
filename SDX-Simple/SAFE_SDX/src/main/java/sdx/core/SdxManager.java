@@ -257,6 +257,12 @@ public class SdxManager extends SliceCommon{
       iplock.unlock();
     }
     String param="";
+    Exec.sshExec("root",node1.getManagementIP(),"/bin/bash ~/ovsbridge.sh "+OVSController,sshkey);
+    routingmanager.replayCmds(routingmanager.getDPID(node1.getName()));
+    Exec.sshExec("root",node1.getManagementIP(),"ifconfig;ovs-vsctl list port",sshkey);
+    Exec.sshExec("root",node2.getManagementIP(),"/bin/bash ~/ovsbridge.sh "+OVSController,sshkey);
+    routingmanager.replayCmds(routingmanager.getDPID(node2.getName()));
+    Exec.sshExec("root",node2.getManagementIP(),"ifconfig;ovs-vsctl list port",sshkey);
     routingmanager.newLink(link.getIP(1), link.nodea, link.getIP(2), link.nodeb, SDNController);
     //set ip address
     //add link to links
