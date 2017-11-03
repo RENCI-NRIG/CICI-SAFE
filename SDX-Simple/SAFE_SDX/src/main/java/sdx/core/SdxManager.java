@@ -11,11 +11,15 @@ import java.util.*;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileReader;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.net.URL;
 import java.util.concurrent.locks.ReentrantLock;
@@ -232,7 +236,29 @@ public class SdxManager extends SliceCommon{
       // TODO Auto-generated catch block
       e1.printStackTrace();
     }
-    waitTillActive(s,new ArrayList<String>(Arrays.asList(linkname)));
+    waitTillActive(s);
+    Link link=new Link();
+    link.setName(linkname);
+    link.addNode(node1.getName());
+    link.addNode(node2.getName());
+    links.put(linkname,link);
+
+    int ip_to_use=0;
+    iplock.lock();
+    try {
+      while (usedip.contains(curip)) {
+        curip++;
+      }
+      ip_to_use = curip;
+      link.setIP(IPPrefix + String.valueOf(ip_to_use));
+      link.setMask(mask);
+      curip++;
+    }finally {
+      iplock.unlock();
+    }
+    String param="";
+    routingmanager.newLink(link.getIP(1), link.nodea, link.getIP(2), link.nodeb, SDNController);
+    //set ip address
     //add link to links
 	  return "link added";
   }
@@ -688,6 +714,25 @@ public class SdxManager extends SliceCommon{
     routingmanager.setOvsdbAddr(httpcontroller);
   }
 
+  private static ArrayList<Link> readLinks(String file) {
+    ArrayList<Link>res=new ArrayList<>();
+    try (BufferedReader br = new BufferedReader(new FileReader(file))) {
+      String line;
+      while ((line = br.readLine()) != null) {
+        // process the line.
+        String[] params=line.replace("\n","").split(" ");
+        Link link=new Link();
+        link.setName(params[0]);
+        link.addNode(params[1]);
+        link.addNode(params[2]);
+        res.add(link);
+      }
+    }catch (Exception e){
+      e.printStackTrace();
+    }
+    return res;
+  }
+
 
   public static void configRouting(Slice s,String ovscontroller, String httpcontroller, String routerpattern,String stitchportpattern){
     logger.debug("Configurating Routing");
@@ -728,6 +773,10 @@ public class SdxManager extends SliceCommon{
       Collection<ModelResource> ress=s.getAllResources();
       for(Interface i: s.getInterfaces()){
         InterfaceNode2Net inode2net=(InterfaceNode2Net)i;
+        if(inode2net.getLink().toString().contains("link")){
+          logger.debug("Ignoring links, will read the information from file.");
+          continue;
+        }
         logger.debug("linkname: "+inode2net.getLink().toString()+" bandwidth: "+ inode2net.getLink().getBandwidth());
         if(ifs.contains(i.getName()) || routingmanager.getRouter(inode2net.getNode().toString())==null){
           continue;
@@ -752,6 +801,10 @@ public class SdxManager extends SliceCommon{
         }
         links.put(inode2net.getLink().toString(),link);
         //logger.debug(inode2net.getNode()+" "+inode2net.getLink());
+      }
+
+      for(Link link:readLinks("links.txt")){
+        links.put(link.linkname,link);
       }
       //Stitchports
       logger.debug("setting up sttichports");

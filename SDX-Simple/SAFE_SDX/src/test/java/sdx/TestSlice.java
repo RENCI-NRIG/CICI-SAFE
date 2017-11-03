@@ -111,7 +111,9 @@ public class TestSlice extends SliceCommon {
       sctx.addToken("root", t);
     } catch (UtilTransportException e) {
       // TODO Auto-generated catch block
-      e.printStackTrace();
+      e.printStackTrace();    String dockerImageShortName = "ubuntu16.04";
+    String dockerImageURL = "http://geni-images.renci.org/images/standard/ubuntu/ub1604-v1.0.4dev.xml";//http://geni-images.renci.org/images/standard/ubuntu/ub1304-ovs-opendaylight-v1.0.0.xml
+    String dockerImageHash = "b8e6c544296dce5f91400974326d619d2910967f";
     }
 
     if (type.equals("server")) {
@@ -282,6 +284,9 @@ public class TestSlice extends SliceCommon {
   }
 
   private static void addPlexusController(Slice s) {
+    //String dockerImageShortName = "ubuntu16.04";
+    //String dockerImageURL = "http://geni-images.renci.org/images/standard/ubuntu/ub1604-v1.0.4dev.xml";//http://geni-images.renci.org/images/standard/ubuntu/ub1304-ovs-opendaylight-v1.0.0.xml
+    //String dockerImageHash = "b8e6c544296dce5f91400974326d619d2910967f";
     String dockerImageShortName = "Ubuntu 14.04 Docker";
     String dockerImageURL = "http://geni-orca.renci.org/owl/5e2190c1-09f1-4c48-8ed6-dacae6b6b435#Ubuntu+14.0.4+Docker";//http://geni-images.renci.org/images/standard/ubuntu/ub1304-ovs-opendaylight-v1.0.0.xml
     String dockerImageHash = "b4ef61dbd993c72c5ac10b84650b33301bbf6829";
@@ -289,8 +294,7 @@ public class TestSlice extends SliceCommon {
     ComputeNode node0 = s.addComputeNode("plexuscontroller");
     node0.setImage(dockerImageURL, dockerImageHash, dockerImageShortName);
     node0.setNodeType(dockerNodeType);
-    node0.setDomain(controllerSite);
-    node0.setPostBootScript(getPlexusScript());
+    node0.setDomain("RENCI (Chapel Hill, NC USA) XO Rack");
   }
 
   private static String getOVSScript(String cip) {
