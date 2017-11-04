@@ -319,12 +319,13 @@ public class SdxManager extends SliceCommon{
       ComputeNode node = (ComputeNode) s1.getResourceByName(nodeName);
       int interfaceNum=routingmanager.getRouter(nodeName).getInterfaceNum();
       lock.lock();
+      int ip_to_use = 0;
       String stitchname;
       try {
         while (usedip.contains(curip)) {
           curip++;
         }
-        int ip_to_use = curip;
+        ip_to_use=curip;
         usedip.add(ip_to_use);
         stitchname = "stitch_" + nodeName + "_" + curip;
         curip++;
