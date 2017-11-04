@@ -66,6 +66,7 @@ public class SdxExogeniClient extends SliceCommon {
   public SdxExogeniClient(){}
   private static String type;
   private static String sdxserver;
+  private static boolean safeauth=true;
 	
 	public static void main(String [] args){
     //Example usage: ./target/appassembler/bin/SafeSdxClient -f alice.conf
@@ -115,6 +116,9 @@ public class SdxExogeniClient extends SliceCommon {
        String command= cmd.getOptionValue('e');
        processCmd(command);
        return;
+     }
+     if(cmd.hasOption('n')){
+       safeauth=false;
      }
      String input = new String();  
 		try{
@@ -193,7 +197,9 @@ public class SdxExogeniClient extends SliceCommon {
       }
       //post stitch request to SAFE
       logger.debug("posting stitch request statements to SAFE Sets");
-      postSafeStitchRequest(keyhash,sliceName,node0_s2_stitching_GUID,params[2],params[3]);
+      if(safeauth) {
+        postSafeStitchRequest(keyhash, sliceName, node0_s2_stitching_GUID, params[2], params[3]);
+      }
       JSONObject jsonparams=new JSONObject();
       jsonparams.put("sdxslice",params[2]);
       jsonparams.put("sdxnode",params[3]);
