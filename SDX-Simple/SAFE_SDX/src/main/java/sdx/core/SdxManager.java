@@ -345,8 +345,10 @@ public class SdxManager extends SliceCommon{
           s = Slice.loadManifestFile(sliceProxy, sdxslice);
         } catch (ContextTransportException e) {
           // TODO Auto-generated catch block
+          res ="Stitch request failed.\n SdxServer exception in loadManiFestFile";
           e.printStackTrace();
         } catch (TransportException e) {
+          res ="Stitch request failed.\n SdxServer exception in loadManiFestFile";
           // TODO Auto-generated catch block
           e.printStackTrace();
         }
@@ -364,6 +366,7 @@ public class SdxManager extends SliceCommon{
         System.out.println("Chameleon Stitch Request from " + customer_keyhash + " Unauthorized");
       }
     }catch(Exception e){
+      res ="Stitch request failed.\n SdxServer exception in commiting stitching opoeration";
       e.printStackTrace();
     }
     return res;
@@ -424,10 +427,11 @@ public class SdxManager extends SliceCommon{
       int ip_to_use=0;
       iplock.lock();
       String stitchname;
-      while(usedip.contains(curip))curip++;
-      try{
-        stitchname="stitch_"+node.getName()+"_"+curip;
-        ip_to_use=curip;
+      try {
+        while (usedip.contains(curip)) curip++;
+        stitchname = "stitch_" + node.getName() + "_" + curip;
+        ip_to_use = curip;
+        usedip.add(ip_to_use);
         curip++;
       }finally{
         iplock.unlock();
@@ -877,6 +881,7 @@ public class SdxManager extends SliceCommon{
           while(usedip.contains(curip)){
             curip++;
           }
+          usedip.add(curip);
           link.setIP(IPPrefix+String.valueOf(curip));
           link.setMask(mask);
           curip++;

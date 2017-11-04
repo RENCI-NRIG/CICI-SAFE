@@ -126,6 +126,9 @@ public class SdxExogeniClient extends SliceCommon {
      }
      String input = new String();
      String cmdprefix=sliceName+"$>";
+     if(cmd.hasOption('n')){
+       safeauth=false;
+     }
 		try{
 //	 			logger.debug(obj.sayHello()); 
       java.io.BufferedReader stdin = new java.io.BufferedReader(new java.io.InputStreamReader(System.in));  
@@ -247,6 +250,7 @@ public class SdxExogeniClient extends SliceCommon {
       else{
         String ip=res.getString("ip");
         logger.debug("set IP address of the stitch interface to "+ip);
+        System.out.println("set IP address of the stitch interface to "+ip);
         sleep(15);
         String mip= node0_s2.getManagementIP();
         String result=Exec.sshExec("root",mip,"ifconfig eth2 "+ip,sshkey);

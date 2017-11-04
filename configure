@@ -1,12 +1,11 @@
 #!/bin/bash
 SDXSERVER="http://152.3.136.36:8080/"
-RIAKSERVER="128.194.6.136"
+RIAKSERVER="147.72.248.6"
 SSHKEY="~/.ssh/id_rsa"
 EXOGENIPEM="~/.ssl/geni-yuanjuny.pem"
 SDXNAME="sdx"
 ALICENAME="c1"
 BOBNAME="c2"
-COMMUION="carrot"
 SDXSAFEKEY="bphJZn3RJBnNqoCZk6k9SBD8mwSb054PXbwV7HpE80E"
 ALICESAFEKEY="V1F2853Nq8V304Yb_GInYaWTgVqmBsQwC0tXWuNmmf8"
 BOBSAFEKEY="UIz4bXT7accigZ7KNpEyF2igwGOgXb9gne7p13i2bWA"
@@ -14,10 +13,16 @@ CARROTSAFEKEY="KXwvxF_rWupThUEAKwmkMTuhV8X-hqZXOAtMkWBFapc"
 SDXPREFIX="192.168.30.1/20"
 ALICEPREFIX="192.168.10.1/24"
 BOBPREFIX="192.168.20.1/24"
-CARROTPREFIX="192.168.40.1/24"
 CWD=$(pwd)
 SDX_SCRIPTSDIR="${CWD}/SDX-Simple/SAFE_SDX/src/main/resources/scripts/"
 CLIENT_SCRIPTDIR="${CWD}/SDX-Client-ExoGENI/SDX_ExoGENI_Client/src/main/resources/scripts/"
+
+#safe server for communion slice
+SAFESERVER="152.54.14.12"
+CARROETNAME="carrot"
+CARROTPREFIX="192.168.40.1/24"
+STITCHPORT="http://geni-orca.renci.org/owl/ion.rdf#AL2S/Chameleon/Cisco/6509/GigabitEthernet/1/1"
+VLAN="3297"
 
 sed  "s@{SLICENAME}@${SDXNAME}@g;s@{SSHKEY}@${SSHKEY}@g;s@{EXOGENIPEM}@${EXOGENIPEM}@g;s@{RIAKSERVER}@${RIAKSERVER}@g;s@{SDXSERVER}@${SDXSERVER}@g; s@{SDX_SCRIPTSDIR}@${SDX_SCRIPTSDIR}@g; s@{SAFEKEY}@${SDXSAFEKEY}@g;s@{IPPREFIX}@${SDXPREFIX}@g" config/sdxconf.txt | tee ${CWD}/SDX-Simple/config/${SDXNAME}.conf
 
@@ -25,4 +30,4 @@ sed  "s@{SLICENAME}@${ALICENAME}@g;s@{SSHKEY}@${SSHKEY}@g;s@{EXOGENIPEM}@${EXOGE
 
 sed  "s@{SLICENAME}@${BOBNAME}@g;s@{SSHKEY}@${SSHKEY}@g;s@{EXOGENIPEM}@${EXOGENIPEM}@g;s@{RIAKSERVER}@${RIAKSERVER}@g;s@{SDXSERVER}@${SDXSERVER}@g; s@{SDX_SCRIPTSDIR}@${SDX_SCRIPTSDIR}@g; s@{SAFEKEY}@${BOBSAFEKEY}@g;s@{IPPREFIX}@${BOBPREFIX}@g" config/clientconf.txt | tee ${CWD}/SDX-Client-ExoGENI/config/${BOBNAME}.conf
 
-sed  "s@{SAFESERVER}@${SAFESERVER}@g;s@{SDXSERVER}@${SDXSERVER}@g; s@{SAFEKEY}@${CARROTSAFEKEY}@g;s@{IPPREFIX}@${CARROTPREFIX}@g" config/communionconf.txt | tee ${CWD}/SDX-Client-StitchPort/config/${CARROTNAME}.conf
+sed  "s@{STITCHPORT}@${STITCHPORT}@g;s@{VLAN}@${VLAN}@g;s@{SAFESERVER}@${SAFESERVER}@g;s@{SDXSERVER}@${SDXSERVER}@g; s@{SAFEKEY}@${CARROTSAFEKEY}@g;s@{IPPREFIX}@${CARROTPREFIX}@g" config/communionconf.txt | tee ${CWD}/SDX-Client-StitchPort/config/${CARROTNAME}.conf
