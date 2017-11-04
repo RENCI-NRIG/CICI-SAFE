@@ -102,6 +102,7 @@ public class SdxManager extends SliceCommon{
   private static String SDNController;
   private static String OVSController;
   public static String serverurl;
+  private static HashSet<Integer> usedip=new HashSet<Integer>();
   private static final ReentrantLock lock=new ReentrantLock();
   //private static String type;
   private static ArrayList<String[]> advertisements=new ArrayList<String[]>();
@@ -267,8 +268,10 @@ public class SdxManager extends SliceCommon{
           s = Slice.loadManifestFile(sliceProxy, carrierName);
         } catch (ContextTransportException e) {
           // TODO Auto-generated catch block
+          res ="Stitch request failed.\n SdxServer exception in loadManiFestFile";
           e.printStackTrace();
         } catch (TransportException e) {
+          res ="Stitch request failed.\n SdxServer exception in loadManiFestFile";
           // TODO Auto-generated catch block
           e.printStackTrace();
         }
@@ -286,6 +289,7 @@ public class SdxManager extends SliceCommon{
         System.out.println("Chameleon Stitch Request from " + customer_keyhash + " Unauthorized");
       }
     }catch(Exception e){
+      res ="Stitch request failed.\n SdxServer exception in commiting stitching opoeration";
       e.printStackTrace();
     }
     return res;
@@ -316,9 +320,13 @@ public class SdxManager extends SliceCommon{
       int interfaceNum=routingmanager.getRouter(nodeName).getInterfaceNum();
       lock.lock();
       String stitchname;
-      int ip_to_use=curip;
-      try{
-        stitchname="stitch_"+nodeName+"_"+curip;
+      try {
+        while (usedip.contains(curip)) {
+          curip++;
+        }
+        int ip_to_use = curip;
+        usedip.add(ip_to_use);
+        stitchname = "stitch_" + nodeName + "_" + curip;
         curip++;
       }finally{
         lock.unlock();
@@ -466,9 +474,6 @@ public class SdxManager extends SliceCommon{
         logger.debug(node.getName()+" "+mip);
         Exec.sshExec("root",mip,"/bin/bash ~/ovsbridge.sh "+ ovscontroller,sshkey).split(" ");
         String[] result=Exec.sshExec("root",mip,"/bin/bash ~/dpid.sh",sshkey).split(" ");
-        for (String sis:result){
-          System.out.println("1:"+sis);
-        }
         try{
           result[1]=result[1].replace("\n","");
           logger.debug("Get router info "+result[0]+" "+result[1]);
@@ -478,7 +483,6 @@ public class SdxManager extends SliceCommon{
         }
       }
       logger.debug("setting up links");
-      HashSet<Integer> usedip=new HashSet<Integer>();
       HashSet<String> ifs=new HashSet<String>();
       for(Interface i: s.getInterfaces()){
         InterfaceNode2Net inode2net=(InterfaceNode2Net)i;
@@ -572,6 +576,7 @@ public class SdxManager extends SliceCommon{
           while(usedip.contains(curip)){
             curip++;
           }
+          usedip.add(curip);
           link.setIP(IPPrefix+String.valueOf(curip));
           link.setMask(mask);
           curip++;
