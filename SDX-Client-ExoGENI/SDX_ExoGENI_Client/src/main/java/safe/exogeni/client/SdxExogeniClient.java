@@ -216,6 +216,7 @@ public class SdxExogeniClient extends SliceCommon {
       else{
         String ip=res.getString("ip");
         logger.debug("set IP address of the stitch interface to "+ip);
+        System.out.println("set IP address of the stitch interface to "+ip);
         sleep(15);
         String mip= node0_s2.getManagementIP();
         String result=Exec.sshExec("root",mip,"ifconfig eth2 "+ip,sshkey);
