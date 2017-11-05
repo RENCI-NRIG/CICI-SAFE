@@ -286,7 +286,7 @@ public class SdxManager extends SliceCommon{
         }
         if(!safeauth || authorizeConnectivity(pair[0],pair[1],customer_keyhash,dest)){
     //      res.add(pair[1]);
-          System.out.println("Connection between "+pair[0]+" and "+pair[1]+" allowed");
+          System.out.println("Connection between "+pair[1]+" and "+dest+" allowed");
           routingmanager.configurePath(dest,router,pair[1],pair[3],gateway,SDNController);
           routingmanager.configurePath(pair[1],pair[3],dest,router,pair[2],SDNController);
         }
@@ -535,7 +535,8 @@ public class SdxManager extends SliceCommon{
 
   private static void restartPlexus(String plexusip){
     logger.debug("Restarting Plexus Controller");
-    String script="docker exec -d plexus /bin/bash -c  \"cd /root;pkill ryu-manager;ryu-manager plexus/plexus/app.py ryu/ryu/app/rest_conf_switch.py ryu/ryu/app/rest_qos.py |tee log\"\n";
+    String script="docker exec -d plexus /bin/bash -c  \"cd /root;pkill ryu-manager;ryu-manager ryu/ryu/app/rest_router.py |tee log\"\n";
+    //String script="docker exec -d plexus /bin/bash -c  \"cd /root;pkill ryu-manager;ryu-manager plexus/plexus/app.py ryu/ryu/app/rest_conf_switch.py ryu/ryu/app/rest_qos.py |tee log\"\n";
     logger.debug(sshkey);
     logger.debug(plexusip);
     Exec.sshExec("root",plexusip,script,sshkey);
@@ -828,6 +829,8 @@ public class SdxManager extends SliceCommon{
         String[] parts=sp.getName().split("-");
         String ip=parts[2].replace("_",".").replace("__","/");
         String nodeName=parts[1];
+        logger.debug("new link:"+nodeName+ " "+ip);
+        System.out.println("new link:"+nodeName+ " "+ip);
         routingmanager.newLink(ip, nodeName, SDNController);
       }
 
@@ -888,11 +891,13 @@ public class SdxManager extends SliceCommon{
         }
         String param="";
         if(link.nodeb!=""){
-          //logger.debug(link.nodea+":"+link.getIP(1)+" "+link.nodeb+":"+link.getIP(2));
+          logger.debug(link.nodea+":"+link.getIP(1)+" "+link.nodeb+":"+link.getIP(2));
+          System.out.println(link.nodea+":"+link.getIP(1)+" "+link.nodeb+":"+link.getIP(2));
           routingmanager.newLink(link.getIP(1), link.nodea, link.getIP(2), link.nodeb, httpcontroller);
         }
         else{
-          //logger.debug(link.nodea+" gateway address:"+link.getIP(1));
+          logger.debug(link.nodea+" gateway address:"+link.getIP(1));
+          System.out.println(link.nodea+" gateway address:"+link.getIP(1));
           routingmanager.newLink(link.getIP(1), link.nodea, httpcontroller);
         }
       }
