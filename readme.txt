@@ -129,3 +129,4 @@ Configuration: set variables in "SAFE/configure" and run it. It will generate co
 NOTE: Now we have "-n" option for sdx server and both clients, which can be used to DISABLE SAFE AUTHORIZATION
 
 
+
