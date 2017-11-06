@@ -133,7 +133,7 @@ public class SdxExogeniClient extends SliceCommon {
 //	 			logger.debug(obj.sayHello()); 
       java.io.BufferedReader stdin = new java.io.BufferedReader(new java.io.InputStreamReader(System.in));  
       while(true){
-        System.out.print("Enter Commands:stitch client_resource_name  server_slice_name\n Or advertise route: route dest gateway sdx_slice_name routername,\n"+cmdprefix);
+        System.out.print("Enter Commands:stitch client_resource_name  server_slice_name\n\t advertise route: route dest gateway sdx_slice_name routername,\n\t link site1[RENCI] site2[SL] "+cmdprefix);
         input = stdin.readLine();  
         System.out.print("continue?[y/n]\n"+cmdprefix+input);
 
