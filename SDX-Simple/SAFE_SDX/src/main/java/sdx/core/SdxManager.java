@@ -523,7 +523,6 @@ public class SdxManager extends SliceCommon{
         String ip=parts[2].replace("_",".").replace("__","/");
         String nodeName=parts[1];
         logger.debug("new link:"+nodeName+ " "+ip);
-        System.out.println("new link:"+nodeName+ " "+ip);
         routingmanager.newLink(ip, nodeName, SDNController);
       }
 
@@ -587,12 +586,10 @@ public class SdxManager extends SliceCommon{
         String param="";
         if(link.nodeb!=""){
           logger.debug(link.nodea+":"+link.getIP(1)+" "+link.nodeb+":"+link.getIP(2));
-          System.out.println(link.nodea+":"+link.getIP(1)+" "+link.nodeb+":"+link.getIP(2));
           routingmanager.newLink(link.getIP(1), link.nodea, link.getIP(2), link.nodeb, httpcontroller);
         }
         else{
           logger.debug(link.nodea+" gateway address:"+link.getIP(1));
-          System.out.println(link.nodea+" gateway address:"+link.getIP(1));
           routingmanager.newLink(link.getIP(1), link.nodea, httpcontroller);
         }
       }
