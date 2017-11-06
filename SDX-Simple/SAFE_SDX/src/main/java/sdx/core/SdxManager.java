@@ -457,7 +457,6 @@ public class SdxManager extends SliceCommon{
   public static void configRouting(Slice s,String ovscontroller, String httpcontroller, String routerpattern,String stitchportpattern){
     logger.debug("Configurating Routing");
     restartPlexus(SDNControllerIP);
-    sleep(5);
     // run ovsbridge scritps to add the all interfaces to the ovsbridge br0, if new interface is added to the ovs bridge, then we reset the controller?
     // FIXME: maybe this is not the best way to do.
     runCmdSlice(s,"/bin/bash ~/ovsbridge.sh "+ovscontroller,sshkey,"(c\\d+)",false,true);

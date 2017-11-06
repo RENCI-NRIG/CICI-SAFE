@@ -130,6 +130,7 @@ public class NetworkManager{
   }
 
   public void configurePath(String dest, String nodename,String targetIP,String targetnodename, String gateway, String controller) {
+    logger.debug("Network Manager: Configuring path for "+dest+" "+nodename+" "+targetIP+" "+targetnodename+" "+gateway);
     String gwdpid=getRouter(nodename).getDPID();
     String targetdpid=getRouter(targetnodename).getDPID();
     if(gwdpid==null ||targetdpid==null){
@@ -210,7 +211,8 @@ public class NetworkManager{
     knownpaths.add(initroute);
     int start=0;
     int end=0;
-    while(start<=end){
+    boolean foundpath=false;
+    while(start<=end &&!foundpath){
       //logger.debug("queue[start]"+queue.get(start));
       String rid=queue.get(start);
       start+=1;
@@ -219,21 +221,25 @@ public class NetworkManager{
         ArrayList<String> nips=getNeighborIPs(rid);
         for (String ip:nips){
           //logger.debug("neighborIP: "+ip);
-          if(!knownrouters.contains(getPairRouter(ip))){
-            knownrouters.add(getPairRouter(ip));
-            queue.add(getPairRouter(ip));
+          String pairrouter=getPairRouter(ip);
+          if(!knownrouters.contains(pairrouter)){
+            knownrouters.add(pairrouter);
             end+=1;
             String[]path=new String[3];
             path[0]=getPairRouter(ip);
-            println(ip);
+            logger.debug(ip);
             path[1]=getPairIP(ip).split("/")[0];
             path[2]=getPairIP(ip);
-            println(path[1]);
+            logger.debug(path[1]);
             knownpaths.add(path);
+            if(pairrouter.equals(dstdpid)){
+              foundpath=true;
+              break;
+            }
+            else {
+              queue.add(pairrouter);
+            }
           }
-        }
-        if(rid.equals(dstdpid)){
-          break;
         }
       }
       else{
@@ -252,6 +258,7 @@ public class NetworkManager{
     return spaths;
   }
 
+  //FIXME: There might be bug, but haven't got the chance to look into it.
   private  ArrayList<String[]> getBroadcastRoutes(String gwdpid, String gateway){
     //logger.debug("All routers and links");
     //for(String[] link:links){
