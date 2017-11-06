@@ -269,7 +269,7 @@ public class SdxManager extends SliceCommon{
 	  return "link added";
   }
 
-  public static String notifyPrefix(String dest, String gateway, String router,String customer_keyhash){
+  public static String notifyPrefix(String dest, String gateway, String customer_keyhash){
     logger.debug("received notification for ip prefix "+dest);
     String res="received notification for "+dest;
     if(!safeauth || authorizePrefix(customer_keyhash,dest)){
@@ -277,6 +277,12 @@ public class SdxManager extends SliceCommon{
         res = res + " [authorization success]";
       }
       boolean flag=false;
+      String router=routingmanager.findRouterbyGateway(gateway);
+      if(router==null){
+        logger.debug("Cannot find a router with cusotmer gateway"+gateway);
+        res=res+" Cannot find a router with customer gateway "+gateway;
+        return res;
+      }
       for(String[]pair:advertisements){
         if(pair[0].equals(customer_keyhash)&&pair[1].equals(dest)){
           flag=true;
@@ -359,7 +365,7 @@ public class SdxManager extends SliceCommon{
         mysp.stitch(mynode);
         s.commit();
         waitTillActive(s);
-        routingmanager.newLink(ip, nodeName, SDNController);
+        routingmanager.newLink(ip, nodeName, gateway, SDNController);
         res="Stitch operation Completed";
         System.out.println(res);
       } else {
@@ -464,12 +470,12 @@ public class SdxManager extends SliceCommon{
       link.setIP(IPPrefix+String.valueOf(ip_to_use));
       link.setMask(mask);
       links.put(stitchname,link);
-      routingmanager.newLink(link.getIP(1), link.nodea, SDNController);
       String gw = link.getIP(1);
       String ip=link.getIP(2);
       stitch(customerName,ResrvID,sdxslice,net1_stitching_GUID,secret,ip);
       res[0]=gw;
       res[1]=ip;
+      routingmanager.newLink(link.getIP(1), link.nodea,ip, SDNController);
       //routingmanager.configurePath(ip,node.getName(),ip.split("/")[0],SDNController);
       System.out.println("stitching operation  completed");
     }
@@ -621,6 +627,8 @@ public class SdxManager extends SliceCommon{
     logger.debug("Get router info " + result[0] + " " + result[1]);
     routingmanager.newRouter(node.getName(), result[1], Integer.valueOf(result[0]), mip);
   }
+
+  /*
   public static void configRouting1(Slice s,String ovscontroller, String httpcontroller, String routerpattern,String stitchportpattern) {
     logger.debug("Configurating Routing");
     restartPlexus(SDNControllerIP);
@@ -724,6 +732,7 @@ public class SdxManager extends SliceCommon{
     //set ovsdb address
     routingmanager.setOvsdbAddr(httpcontroller);
   }
+  */
 
   private static ArrayList<Link> readLinks(String file) {
     ArrayList<Link>res=new ArrayList<>();
@@ -829,10 +838,12 @@ public class SdxManager extends SliceCommon{
         String ip=parts[2].replace("_",".").replace("__","/");
         String nodeName=parts[1];
         logger.debug("new link:"+nodeName+ " "+ip);
-        routingmanager.newLink(ip, nodeName, SDNController);
+        String[] ipseg=ip.split("\\.");
+        String gw=ipseg[0]+"."+ipseg[1]+"."+ipseg[2]+"."+"2";
+
+        routingmanager.newLink(ip, nodeName,gw, SDNController);
       }
 
-      Set keyset=links.keySet();
       //logger.debug(keyset);
       logger.debug("Wait until all ovs bridges have connected to SDN controller");
       ArrayList<Thread> tlist=new ArrayList<Thread>();
@@ -876,6 +887,7 @@ public class SdxManager extends SliceCommon{
       }
 
 
+      Set keyset=links.keySet();
       for(Object k: keyset){
         Link link=links.get((String)k);
         if(!((String)k).contains("stitch")){
@@ -894,7 +906,8 @@ public class SdxManager extends SliceCommon{
         }
         else{
           logger.debug(link.nodea+" gateway address:"+link.getIP(1));
-          routingmanager.newLink(link.getIP(1), link.nodea, httpcontroller);
+
+          routingmanager.newLink(link.getIP(1), link.nodea, link.getIP(2).split("/")[0],httpcontroller);
         }
       }
 

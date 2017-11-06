@@ -14,6 +14,7 @@ public class Router{
     private String ip="";
     private HashSet<String> interfaces=new HashSet<String>();
     private HashSet<String> neighbors=new HashSet<String>();
+    private HashSet<String> customergateways=new HashSet<>();
     private int numInterfaces=0;
 
     public HashSet<String> getNeighbors(){
@@ -29,6 +30,13 @@ public class Router{
 
     public void addInterface(String interfaceIP){
       interfaces.add(interfaceIP);
+    }
+    public void addGateway(String gw){
+      customergateways.add(gw);
+    }
+
+    public boolean hasGateway(String gw){
+      return customergateways.contains(gw);
     }
 
     public void addNeighbor(String neighborIP){
