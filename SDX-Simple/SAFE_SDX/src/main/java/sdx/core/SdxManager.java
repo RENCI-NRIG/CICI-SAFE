@@ -705,6 +705,7 @@ public class SdxManager extends SliceCommon{
     HashSet<Integer> usedip=new HashSet<Integer>();
     HashSet<String> ifs=new HashSet<String>();
     for (StitchPort sp : stitchports) {
+      logger.debug("Setting up stitchport "+sp.getName());
       String[] parts = sp.getName().split("-");
       String ip = parts[2].replace("_", ".").replace("__", "/");
       String nodeName = parts[1];
@@ -719,6 +720,7 @@ public class SdxManager extends SliceCommon{
     for (Object k : keyset) {
       Link link = links.get((String) k);
       if (!((String) k).contains("stitch")) {
+        logger.debug("Setting up link "+link.linkname);
         while (usedip.contains(curip)) {
           curip++;
         }
