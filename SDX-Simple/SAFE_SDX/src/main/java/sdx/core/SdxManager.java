@@ -582,9 +582,9 @@ public class SdxManager extends SliceCommon{
           if(link.linkname.contains("stitch")){
             String[] parts=link.linkname.split("_");
             String ip=parts[2];
+            usedip.add(Integer.valueOf(ip));
             link.setIP(IPPrefix+ip);
             link.setMask(mask);
-            usedip.add(Integer.valueOf(parts[2]));
           }
         }
         else{
@@ -704,34 +704,40 @@ public class SdxManager extends SliceCommon{
       String nodeName = parts[1];
       String[] ipseg=ip.split("\\.");
       String gw=ipseg[0]+"."+ipseg[1]+"."+ipseg[2]+"."+"2";
+      usedip.add(Integer.valueOf(ipseg[2]));
       routingmanager.newLink(ip, nodeName,gw, SDNController);
     }
 
     Set keyset = links.keySet();
     //logger.debug(keyset);
+    for (Object k : keyset) {
+      Link link = links.get((String) k);
+      logger.debug("Setting up stitch "+link.linkname);
+      if (((String) k).contains("stitch")) {
+        usedip.add(Integer.valueOf(link.getIP(1).split("\\.")[2]));
+        routingmanager.newLink(link.getIP(1), link.nodea, link.getIP(2), link.nodeb, httpcontroller);
+      }
+    }
 
     for (Object k : keyset) {
       Link link = links.get((String) k);
       logger.debug("Setting up link "+link.linkname);
       if (!((String) k).contains("stitch")) {
-        logger.debug("Setting up link "+link.linkname);
+        logger.debug("Setting up link " + link.linkname);
+        int ip_to_use = 0;
+        iplock.lock();
         while (usedip.contains(curip)) {
           curip++;
         }
-        link.setIP(IPPrefix + String.valueOf(curip));
-        link.setMask(mask);
+        ip_to_use = curip;
         curip++;
-      }
-      String param = "";
-      if (link.nodeb != "") {
+        iplock.unlock();
+        link.setIP(IPPrefix + String.valueOf(ip_to_use));
+        link.setMask(mask);
         //logger.debug(link.nodea+":"+link.getIP(1)+" "+link.nodeb+":"+link.getIP(2));
         routingmanager.newLink(link.getIP(1), link.nodea, link.getIP(2), link.nodeb, httpcontroller);
-      } else {
-        //logger.debug(link.nodea+" gateway address:"+link.getIP(1));
-        routingmanager.newLink(link.getIP(1), link.nodea, link.getIP(2).split("/")[0], httpcontroller);
       }
     }
-
     //set ovsdb address
     routingmanager.setOvsdbAddr(httpcontroller);
   }
