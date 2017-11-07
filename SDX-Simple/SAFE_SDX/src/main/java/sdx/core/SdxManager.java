@@ -777,8 +777,8 @@ public class SdxManager extends SliceCommon{
     try (BufferedWriter br = new BufferedWriter(new FileWriter(file))) {
       Set<String> keyset=links.keySet();
       for(String key:keyset){
-        Link link=links.get(key);
-        if(link.nodeb!=null) {
+        if(!key.contains("stitch")){
+          Link link=links.get(key);
           br.write(link.linkname + " " + link.nodea + " " + link.nodeb + "\n");
         }
       }

@@ -25,6 +25,8 @@ public class HttpUtil {
   final static Logger logger = Logger.getLogger(HttpUtil.class);
 
   public static JSONObject postJSON(String serverurl, JSONObject paramsobj){
+    logger.debug("postJson: "+serverurl);
+    logger.debug(paramsobj.toString());
     JSONObject resobj=new JSONObject();
     resobj.put("result",false);
     HttpClient httpClient = HttpClientBuilder.create().build(); //Use this instead
@@ -54,6 +56,8 @@ public class HttpUtil {
   }
 
   public static String putString(String serverurl, String data){
+    logger.debug("putString: "+serverurl);
+    logger.debug(data);
     CloseableHttpClient httpClient = HttpClientBuilder.create().build();
     try {
       HttpPut request = new HttpPut(serverurl);

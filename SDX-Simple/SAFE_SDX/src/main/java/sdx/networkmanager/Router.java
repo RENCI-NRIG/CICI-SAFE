@@ -31,7 +31,9 @@ public class Router{
     public void addInterface(String interfaceIP){
       interfaces.add(interfaceIP);
     }
+
     public void addGateway(String gw){
+      logger.debug("Gateway "+gw +" added to "+routerid);
       customergateways.add(gw);
     }
 

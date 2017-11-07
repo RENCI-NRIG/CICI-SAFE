@@ -33,8 +33,8 @@ public class Test {
     SdxManager.startSdxServer(args);
     System.out.println("configured ip addresses in sdx network");
     //notify prefixes for node0 and node1
-    SdxManager.notifyPrefix("192.168.10.2/24","192.168.10.2","c1","notused");
-    SdxManager.notifyPrefix("192.168.20.2/24","192.168.20.2","c2","notused");
+    SdxManager.notifyPrefix("192.168.10.2/24","192.168.10.2","notused");
+    SdxManager.notifyPrefix("192.168.20.2/24","192.168.20.2","notused");
     System.out.println("IP prefix is set up, the two nodes should be able to talk now");
   }
 
