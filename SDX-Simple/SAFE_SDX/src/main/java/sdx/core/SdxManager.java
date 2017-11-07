@@ -712,6 +712,7 @@ public class SdxManager extends SliceCommon{
 
     for (Object k : keyset) {
       Link link = links.get((String) k);
+      logger.debug("Setting up link "+link.linkname);
       if (!((String) k).contains("stitch")) {
         logger.debug("Setting up link "+link.linkname);
         while (usedip.contains(curip)) {
