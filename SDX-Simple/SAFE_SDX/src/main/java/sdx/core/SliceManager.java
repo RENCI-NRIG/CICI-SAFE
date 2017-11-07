@@ -271,6 +271,7 @@ public class SliceManager extends SliceCommon {
 			//  ifaceNode0.setNetmask("255.255.255.0");
 			//  stitchlist.add(net1);
 			//}
+			/*
 			if (i != num - 1) {
 				Network net2 = s.addBroadcastLink("clink" + String.valueOf(i), bw);
 				InterfaceNode2Net ifaceNode1 = (InterfaceNode2Net) net2.stitch(node0);
@@ -284,6 +285,7 @@ public class SliceManager extends SliceCommon {
 				ifaceNode1.setIpAddress("192.168." + String.valueOf(start + i - 1) + ".2");
 				ifaceNode1.setNetmask("255.255.255.0");
 			}
+			*/
 		}
 		addSafeServer(s, riakip);
 		addPlexusController(s);

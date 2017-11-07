@@ -235,6 +235,9 @@ public class SdxManager extends SliceCommon{
     } catch (XMLRPCTransportException e1) {
       // TODO Auto-generated catch block
       e1.printStackTrace();
+      System.out.println("Link addition failed.");
+      logger.debug("Link addition failed");
+      return "Link addition failed";
     }
     waitTillActive(s);
     Link link=new Link();
@@ -266,6 +269,7 @@ public class SdxManager extends SliceCommon{
     routingmanager.newLink(link.getIP(1), link.nodea, link.getIP(2), link.nodeb, SDNController);
     //set ip address
     //add link to links
+    System.out.println("Link added");
 	  return "link added";
   }
 
@@ -429,7 +433,6 @@ public class SdxManager extends SliceCommon{
         configRouter(node);
         logger.debug("Configured the new router in RoutingManager");
       }
-      int interfaceNum=routingmanager.getRouter(node.getName()).getInterfaceNum();
       int ip_to_use=0;
       iplock.lock();
       String stitchname;
@@ -475,7 +478,7 @@ public class SdxManager extends SliceCommon{
       stitch(customerName,ResrvID,sdxslice,net1_stitching_GUID,secret,ip);
       res[0]=gw;
       res[1]=ip;
-      routingmanager.newLink(link.getIP(1), link.nodea,ip, SDNController);
+      routingmanager.newLink(link.getIP(1), link.nodea,ip.split("/")[0], SDNController);
       //routingmanager.configurePath(ip,node.getName(),ip.split("/")[0],SDNController);
       System.out.println("stitching operation  completed");
     }
@@ -541,7 +544,7 @@ public class SdxManager extends SliceCommon{
 
   private static void restartPlexus(String plexusip){
     logger.debug("Restarting Plexus Controller");
-    String script="docker exec -d plexus /bin/bash -c  \"cd /root;pkill ryu-manager;ryu-manager ryu/ryu/app/rest_router.py |tee log\"\n";
+    String script="docker exec -d plexus /bin/bash -c  \"cd /root;pkill ryu-manager;ryu-manager ryu/ryu/app/rest_router.py ryu/ryu/app/rest_conf_switch.py ryu/ryu/app/rest_qos.py |tee log\"\n";
     //String script="docker exec -d plexus /bin/bash -c  \"cd /root;pkill ryu-manager;ryu-manager plexus/plexus/app.py ryu/ryu/app/rest_conf_switch.py ryu/ryu/app/rest_qos.py |tee log\"\n";
     logger.debug(sshkey);
     logger.debug(plexusip);
@@ -621,9 +624,14 @@ public class SdxManager extends SliceCommon{
     String mip = node.getManagementIP();
     logger.debug(node.getName() + " " + mip);
     Exec.sshExec("root", mip, "/bin/bash ~/ovsbridge.sh " + OVSController, sshkey).split(" ");
-    String[] result = Exec.sshExec("root", mip, "/bin/bash ~/dpid.sh", sshkey).split(" ");
+    String []result=null;
+    logger.debug("Trying to get DPID of the router "+node.getName());
+    while(result==null || result[1].equals("")||result[1]==null) {
 
-    result[1] = result[1].replace("\n", "");
+      result = Exec.sshExec("root", mip, "/bin/bash ~/dpid.sh", sshkey).split(" ");
+
+      result[1] = result[1].replace("\n", "");
+    }
     logger.debug("Get router info " + result[0] + " " + result[1]);
     routingmanager.newRouter(node.getName(), result[1], Integer.valueOf(result[0]), mip);
   }
@@ -912,7 +920,7 @@ public class SdxManager extends SliceCommon{
       }
 
       //set ovsdb address
-      routingmanager.setOvsdbAddr(httpcontroller);
+      //routingmanager.setOvsdbAddr(httpcontroller);
     }catch(Exception e){
       e.printStackTrace();
     }
