@@ -1,0 +1,36 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+!_TAG_PROGRAM_VERSION	5.8	//
+SdxHttpClient	SdxHttpClient.java	/^public class SdxHttpClient {$/;"	c
+SdxStitchPortClient	SdxStitchPortClient.java	/^  public SdxStitchPortClient(){}$/;"	m	class:SdxStitchPortClient	signature:()
+SdxStitchPortClient	SdxStitchPortClient.java	/^public class SdxStitchPortClient extends SliceCommon {$/;"	c
+SliceCommon	SliceCommon.java	/^  public SliceCommon(){}$/;"	m	class:SliceCommon	signature:()
+SliceCommon	SliceCommon.java	/^public class SliceCommon {$/;"	c
+conf	SliceCommon.java	/^  protected static Config conf;$/;"	f	class:SliceCommon
+configOSPFForNewInterface	SdxStitchPortClient.java	/^  private static void configOSPFForNewInterface(ComputeNode c, String newip){$/;"	m	class:SdxStitchPortClient	file:	signature:(ComputeNode c, String newip)
+getNetworkInfo	SdxStitchPortClient.java	/^  public static void getNetworkInfo(Slice s){$/;"	m	class:SdxStitchPortClient	signature:(Slice s)
+getOVSScript	SdxStitchPortClient.java	/^  private static String getOVSScript(String cip){$/;"	m	class:SdxStitchPortClient	file:	signature:(String cip)
+getQuaggaScript	SdxStitchPortClient.java	/^  private static  String getQuaggaScript(){$/;"	m	class:SdxStitchPortClient	file:	signature:()
+keyhash	SliceCommon.java	/^  protected static String keyhash;$/;"	f	class:SliceCommon
+logger	SdxHttpClient.java	/^	  final static Logger logger = Logger.getLogger(Exec.class);	$/;"	f	class:SdxHttpClient
+logger	SdxStitchPortClient.java	/^  final static Logger logger = Logger.getLogger(Exec.class);	$/;"	f	class:SdxStitchPortClient
+logger	SliceCommon.java	/^	final static Logger logger = Logger.getLogger(SliceCommon.class);	$/;"	f	class:SliceCommon
+main	SdxStitchPortClient.java	/^	public static void main(String [] args){$/;"	m	class:SdxStitchPortClient	signature:(String [] args)
+notifyPrefix	SdxHttpClient.java	/^  public static String notifyPrefix(String serverurl, JSONObject paramsobj){$/;"	m	class:SdxHttpClient	signature:(String serverurl, JSONObject paramsobj)
+parseCmd	SliceCommon.java	/^  protected static CommandLine parseCmd(String[] args){$/;"	m	class:SliceCommon	signature:(String[] args)
+postSafeStitchRequest	SdxStitchPortClient.java	/^  private static boolean postSafeStitchRequest(String keyhash, String gateway,String slicename, String nodename,String stitchport, String vlan){$/;"	m	class:SdxStitchPortClient	file:	signature:(String keyhash, String gateway,String slicename, String nodename,String stitchport, String vlan)
+processStitchCmd	SdxStitchPortClient.java	/^  private static void processStitchCmd(String[] params){$/;"	m	class:SdxStitchPortClient	file:	signature:(String[] params)
+readConfig	SliceCommon.java	/^  protected static void readConfig(String configfilepath){$/;"	m	class:SliceCommon	signature:(String configfilepath)
+safe.stitchport.client	SdxHttpClient.java	/^package safe.stitchport.client;$/;"	p
+safe.stitchport.client	SdxStitchPortClient.java	/^package safe.stitchport.client;$/;"	p
+safe.stitchport.client	SliceCommon.java	/^package safe.stitchport.client;$/;"	p
+safeserver	SliceCommon.java	/^  protected static String safeserver;$/;"	f	class:SliceCommon
+sdxserver	SdxStitchPortClient.java	/^  private static String sdxserver;$/;"	f	class:SdxStitchPortClient	file:
+sleep	SliceCommon.java	/^	protected static void sleep(int sec){$/;"	m	class:SliceCommon	signature:(int sec)
+sliceName	SliceCommon.java	/^  protected static String sliceName;$/;"	f	class:SliceCommon
+tryStitch	SdxHttpClient.java	/^  public static JSONObject tryStitch(String serverurl, JSONObject paramsobj){$/;"	m	class:SdxHttpClient	signature:(String serverurl, JSONObject paramsobj)
+type	SdxStitchPortClient.java	/^  private static String type;$/;"	f	class:SdxStitchPortClient	file:
+undoStitch	SdxStitchPortClient.java	/^	public static void undoStitch(String carrierName, String customerName, String netName, String nodeName){	$/;"	m	class:SdxStitchPortClient	signature:(String carrierName, String customerName, String netName, String nodeName)

@@ -1,0 +1,136 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+!_TAG_PROGRAM_VERSION	5.8	//
+Example	Example.java	/^	public Example()throws RemoteException{}$/;"	m	class:Example	signature:()
+Example	Example.java	/^public class Example extends SliceCommon{$/;"	c
+IPPrefix	Example.java	/^	private static String IPPrefix="192.168.";$/;"	f	class:Example	file:
+IPPrefix	SdxManager.java	/^  private static String IPPrefix="192.168.";$/;"	f	class:SdxManager	file:
+MyExceptionMapper	MyExceptionMapper.java	/^public class MyExceptionMapper  implements$/;"	c
+OVSController	SdxManager.java	/^  private static String OVSController;$/;"	f	class:SdxManager	file:
+PrefixNotification	RestService.java	/^  public PrefixNotification(){}$/;"	m	class:PrefixNotification	signature:()
+PrefixNotification	RestService.java	/^  public PrefixNotification(String dest, String gateway, String router, String customer){$/;"	m	class:PrefixNotification	signature:(String dest, String gateway, String router, String customer)
+PrefixNotification	RestService.java	/^class PrefixNotification{$/;"	c
+RequestResource	SliceCommon.java	/^	protected static final String RequestResource = null;$/;"	f	class:SliceCommon
+RestService	RestService.java	/^public class RestService {$/;"	c
+SDNController	SdxManager.java	/^  private static String SDNController;$/;"	f	class:SdxManager	file:
+SDNControllerIP	SliceCommon.java	/^  protected static String SDNControllerIP;$/;"	f	class:SliceCommon
+SdxManager	SdxManager.java	/^  public SdxManager(){}$/;"	m	class:SdxManager	signature:()
+SdxManager	SdxManager.java	/^public class SdxManager extends SliceCommon{$/;"	c
+SdxServer	SdxServer.java	/^public class SdxServer {$/;"	c
+SliceCommon	SliceCommon.java	/^  public SliceCommon(){}$/;"	m	class:SliceCommon	signature:()
+SliceCommon	SliceCommon.java	/^public class SliceCommon {$/;"	c
+StitchChameleon	RestService.java	/^  public StitchChameleon(){}$/;"	m	class:StitchChameleon	signature:()
+StitchChameleon	RestService.java	/^  public StitchChameleon(String sdxslice, String sdxnode,String ckeyhash,String stitchport, String vlan, String gateway,String ip){$/;"	m	class:StitchChameleon	signature:(String sdxslice, String sdxnode,String ckeyhash,String stitchport, String vlan, String gateway,String ip)
+StitchChameleon	RestService.java	/^class StitchChameleon{$/;"	c
+StitchRequest	RestService.java	/^  public StitchRequest(){}$/;"	m	class:StitchRequest	signature:()
+StitchRequest	RestService.java	/^  public StitchRequest(String sdxslice, String sdxnode,String ckeyhash, String cslice, String creserveid, String secret){$/;"	m	class:StitchRequest	signature:(String sdxslice, String sdxnode,String ckeyhash, String cslice, String creserveid, String secret)
+StitchRequest	RestService.java	/^class StitchRequest{$/;"	c
+StitchResult	RestService.java	/^  public StitchResult(){}$/;"	m	class:StitchResult	signature:()
+StitchResult	RestService.java	/^  public StitchResult(String gw, String ip){$/;"	m	class:StitchResult	signature:(String gw, String ip)
+StitchResult	RestService.java	/^class StitchResult{$/;"	c
+addEntry_HashList	SdxManager.java	/^  private void addEntry_HashList(HashMap<String,ArrayList<String>>  map,String key, String entry){$/;"	m	class:SdxManager	file:	signature:(HashMap<String,ArrayList<String>> map,String key, String entry)
+addPlexusController	Example.java	/^	private static void addPlexusController(Slice s){$/;"	m	class:Example	file:	signature:(Slice s)
+addSafeServer	Example.java	/^	private static void addSafeServer(Slice s, String rip){$/;"	m	class:Example	file:	signature:(Slice s, String rip)
+advertisements	SdxManager.java	/^  private static ArrayList<String[]> advertisements=new ArrayList<String[]>();$/;"	f	class:SdxManager	file:
+authorizeConnectivity	SdxManager.java	/^  private static boolean authorizeConnectivity(String srchash, String srcip, String dsthash, String dstip){$/;"	m	class:SdxManager	file:	signature:(String srchash, String srcip, String dsthash, String dstip)
+authorizePrefix	SdxManager.java	/^  private static boolean authorizePrefix(String cushash, String cusip){$/;"	m	class:SdxManager	file:	signature:(String cushash, String cusip)
+authorizeStitchChameleon	SdxManager.java	/^  public static boolean authorizeStitchChameleon(String customer_keyhash,String stitchport,String vlan,String gateway,String slicename, String nodename){$/;"	m	class:SdxManager	signature:(String customer_keyhash,String stitchport,String vlan,String gateway,String slicename, String nodename)
+authorizeStitchRequest	SdxManager.java	/^  public static boolean authorizeStitchRequest(String customer_slice,String customerName,String ReservID,String keyhash,String slicename, String nodename){$/;"	m	class:SdxManager	signature:(String customer_slice,String customerName,String ReservID,String keyhash,String slicename, String nodename)
+checkPlexus	Example.java	/^  private static boolean checkPlexus(String SDNControllerIP){$/;"	m	class:Example	file:	signature:(String SDNControllerIP)
+checkSafeServer	Example.java	/^  private static boolean checkSafeServer(String SDNControllerIP){$/;"	m	class:Example	file:	signature:(String SDNControllerIP)
+ckeyhash	RestService.java	/^  public  String ckeyhash;$/;"	f	class:StitchChameleon
+ckeyhash	RestService.java	/^  public  String ckeyhash;$/;"	f	class:StitchRequest
+clientSites	SliceCommon.java	/^  protected static ArrayList<String> clientSites;$/;"	f	class:SliceCommon
+computeIP	Example.java	/^	private static  void computeIP(String prefix){$/;"	m	class:Example	file:	signature:(String prefix)
+computeIP	SdxManager.java	/^  private static  void computeIP(String prefix){$/;"	m	class:SdxManager	file:	signature:(String prefix)
+conf	SliceCommon.java	/^  protected static Config conf;$/;"	f	class:SliceCommon
+configRouting	SdxManager.java	/^  public static void configRouting(Slice s,String ovscontroller, String httpcontroller, String routerpattern,String stitchportpattern){$/;"	m	class:SdxManager	signature:(Slice s,String ovscontroller, String httpcontroller, String routerpattern,String stitchportpattern)
+controllerSite	SliceCommon.java	/^  protected static String controllerSite;$/;"	f	class:SliceCommon
+controllerUrl	SliceCommon.java	/^	protected static String controllerUrl;$/;"	f	class:SliceCommon
+copyFile2Slice	SliceCommon.java	/^  protected static void copyFile2Slice(Slice s, String lfile, String rfile,String privkey){$/;"	m	class:SliceCommon	signature:(Slice s, String lfile, String rfile,String privkey)
+createCarrierSlice	Example.java	/^	public static Slice createCarrierSlice(String sliceName,int num,int start, long bw,int numstitches){\/\/,String stitchsubnet="", String slicesubnet="")	$/;"	m	class:Example	signature:(String sliceName,int num,int start, long bw,int numstitches)
+creservid	RestService.java	/^  public  String creservid;$/;"	f	class:StitchRequest
+cslice	RestService.java	/^  public  String cslice;$/;"	f	class:StitchRequest
+curip	Example.java	/^	private static int curip=128;$/;"	f	class:Example	file:
+curip	SdxManager.java	/^  static int curip=128;$/;"	f	class:SdxManager
+customer	RestService.java	/^  public String customer;$/;"	f	class:PrefixNotification
+dest	RestService.java	/^  public String dest;$/;"	f	class:PrefixNotification
+gateway	RestService.java	/^  public  String gateway;$/;"	f	class:StitchChameleon
+gateway	RestService.java	/^  public String gateway;$/;"	f	class:PrefixNotification
+gateway	RestService.java	/^  public String gateway;$/;"	f	class:StitchResult
+getAllElments_HashList	SdxManager.java	/^  private ArrayList<String[]> getAllElments_HashList(HashMap<String,ArrayList<String>>  map){$/;"	m	class:SdxManager	file:	signature:(HashMap<String,ArrayList<String>> map)
+getIt	RestService.java	/^    public String getIt() {$/;"	m	class:RestService	signature:()
+getJson	RestService.java	/^    public StitchRequest getJson() {$/;"	m	class:RestService	signature:()
+getNetworkInfo	SliceCommon.java	/^  protected static void getNetworkInfo(Slice s){$/;"	m	class:SliceCommon	signature:(Slice s)
+getOVSScript	Example.java	/^	private static String getOVSScript(String cip){$/;"	m	class:Example	file:	signature:(String cip)
+getPlexusScript	Example.java	/^	private static String getPlexusScript(){$/;"	m	class:Example	file:	signature:()
+getRiakScript	Example.java	/^	private static String getRiakScript(){$/;"	m	class:Example	file:	signature:()
+getSafeScript	Example.java	/^	private static String getSafeScript(String riakip){$/;"	m	class:Example	file:	signature:(String riakip)
+getSlice	SliceCommon.java	/^	protected static Slice getSlice(ISliceTransportAPIv1 sliceProxy, String sliceName){$/;"	m	class:SliceCommon	signature:(ISliceTransportAPIv1 sliceProxy, String sliceName)
+getSliceProxy	SliceCommon.java	/^	protected static ISliceTransportAPIv1 getSliceProxy(String pem, String key, String controllerUrl){$/;"	m	class:SliceCommon	signature:(String pem, String key, String controllerUrl)
+ip	RestService.java	/^  public String ip;$/;"	f	class:StitchChameleon
+ip	RestService.java	/^  public String ip;$/;"	f	class:StitchResult
+keyLocation	SliceCommon.java	/^	protected static String keyLocation;$/;"	f	class:SliceCommon
+keyhash	SliceCommon.java	/^  protected static String keyhash;$/;"	f	class:SliceCommon
+links	SdxManager.java	/^  private static HashMap<String, Link> links=new HashMap<String, Link>();$/;"	f	class:SdxManager	file:
+lock	SdxManager.java	/^  private static final ReentrantLock lock=new ReentrantLock();$/;"	f	class:SdxManager	file:
+logger	Example.java	/^  final static Logger logger = Logger.getLogger(Example.class);	$/;"	f	class:Example
+logger	RestService.java	/^	  final static Logger logger = Logger.getLogger(RestService.class);	$/;"	f	class:RestService
+logger	SdxManager.java	/^  final static Logger logger = Logger.getLogger(SdxManager.class);	$/;"	f	class:SdxManager
+logger	SdxServer.java	/^	  final static Logger logger = Logger.getLogger(SdxServer.class);	$/;"	f	class:SdxServer
+logger	SliceCommon.java	/^	  final static Logger logger = Logger.getLogger(SliceCommon.class);	$/;"	f	class:SliceCommon
+main	Example.java	/^	public static void main(String [] args){$/;"	m	class:Example	signature:(String [] args)
+main	SdxServer.java	/^    public static void main(String[] args) throws IOException {$/;"	m	class:SdxServer	signature:(String[] args)
+mask	Example.java	/^	private static String mask="\/24";$/;"	f	class:Example	file:
+mask	SdxManager.java	/^  private static String mask="\/24";$/;"	f	class:SdxManager	file:
+notifyPrefix	SdxManager.java	/^  public static String notifyPrefix(String dest, String gateway, String router,String customer_keyhash){$/;"	m	class:SdxManager	signature:(String dest, String gateway, String router,String customer_keyhash)
+parseCmd	SliceCommon.java	/^  protected static CommandLine parseCmd(String[] args){$/;"	m	class:SliceCommon	signature:(String[] args)
+pemLocation	SliceCommon.java	/^	protected static String pemLocation;$/;"	f	class:SliceCommon
+readConfig	SliceCommon.java	/^  protected static void readConfig(String configfilepath){$/;"	m	class:SliceCommon	signature:(String configfilepath)
+restartPlexus	SdxManager.java	/^  private static void restartPlexus(String plexusip){$/;"	m	class:SdxManager	file:	signature:(String plexusip)
+result	RestService.java	/^  public boolean result;$/;"	f	class:StitchResult
+riakip	Example.java	/^	private static String riakip="152.3.145.36";$/;"	f	class:Example	file:
+router	RestService.java	/^  public String router;$/;"	f	class:PrefixNotification
+routingmanager	SdxManager.java	/^  private static NetworkManager routingmanager=new NetworkManager();$/;"	f	class:SdxManager	file:
+runCmdSlice	SliceCommon.java	/^  protected static void runCmdSlice(Slice s, String cmd, String privkey,String patn, boolean repeat){$/;"	m	class:SliceCommon	signature:(Slice s, String cmd, String privkey,String patn, boolean repeat)
+runCmdSlice	SliceCommon.java	/^  protected static void runCmdSlice(Slice s, String cmd, String privkey,boolean repeat){$/;"	m	class:SliceCommon	signature:(Slice s, String cmd, String privkey,boolean repeat)
+runCmdSlice	SliceCommon.java	/^  protected static void runCmdSlice(Slice s,final String cmd, final String privkey, final boolean repeat, final boolean parallel){$/;"	m	class:SliceCommon	signature:(Slice s,final String cmd, final String privkey, final boolean repeat, final boolean parallel)
+runCmdSlice	SliceCommon.java	/^  protected static void runCmdSlice(Slice s,final String cmd, final String privkey,String p, final boolean repeat, final boolean parallel){$/;"	m	class:SliceCommon	signature:(Slice s,final String cmd, final String privkey,String p, final boolean repeat, final boolean parallel)
+safeauth	SliceCommon.java	/^  protected static boolean safeauth=false;$/;"	f	class:SliceCommon
+safeserver	SliceCommon.java	/^	protected static String safeserver;$/;"	f	class:SliceCommon
+sctx	SliceCommon.java	/^  protected static SliceAccessContext<SSHAccessToken> sctx;$/;"	f	class:SliceCommon
+sdx.core	Example.java	/^package sdx.core;$/;"	p
+sdx.core	MyExceptionMapper.java	/^package sdx.core;$/;"	p
+sdx.core	RestService.java	/^package sdx.core;$/;"	p
+sdx.core	SdxManager.java	/^package sdx.core;$/;"	p
+sdx.core	SdxServer.java	/^package sdx.core;$/;"	p
+sdx.core	SliceCommon.java	/^package sdx.core;$/;"	p
+sdxnode	RestService.java	/^  public  String sdxnode;$/;"	f	class:StitchChameleon
+sdxnode	RestService.java	/^  public  String sdxnode;$/;"	f	class:StitchRequest
+sdxslice	RestService.java	/^  public  String sdxslice;$/;"	f	class:StitchChameleon
+sdxslice	RestService.java	/^  public  String sdxslice;$/;"	f	class:StitchRequest
+secret	RestService.java	/^  public  String secret;$/;"	f	class:StitchRequest
+serverSite	SliceCommon.java	/^  protected static String serverSite;$/;"	f	class:SliceCommon
+serverurl	SdxManager.java	/^  public static String serverurl;$/;"	f	class:SdxManager
+sleep	SliceCommon.java	/^	protected static void sleep(int sec){$/;"	m	class:SliceCommon	signature:(int sec)
+sliceName	SliceCommon.java	/^	protected static String sliceName;$/;"	f	class:SliceCommon
+sliceProxy	SliceCommon.java	/^  protected static ISliceTransportAPIv1 sliceProxy;$/;"	f	class:SliceCommon
+sshkey	SliceCommon.java	/^  protected static String sshkey;$/;"	f	class:SliceCommon
+startSdxServer	SdxManager.java	/^	public static void startSdxServer(String [] args){$/;"	m	class:SdxManager	signature:(String [] args)
+startServer	SdxServer.java	/^    public static HttpServer startServer(String url) {$/;"	m	class:SdxServer	signature:(String url)
+stitch	SdxManager.java	/^	public static void stitch(String carrierName, String RID,String customerName, String CID,String secret,String newip){	$/;"	m	class:SdxManager	signature:(String carrierName, String RID,String customerName, String CID,String secret,String newip)
+stitchChameleon	SdxManager.java	/^  public static String[] stitchChameleon(String carrierName,String nodeName, String customer_keyhash,String stitchport,String vlan, String gateway, String ip) {$/;"	m	class:SdxManager	signature:(String carrierName,String nodeName, String customer_keyhash,String stitchport,String vlan, String gateway, String ip)
+stitchRequest	RestService.java	/^    public StitchResult stitchRequest(StitchRequest sr){$/;"	m	class:RestService	signature:(StitchRequest sr)
+stitchRequest	RestService.java	/^    public String stitchRequest(PrefixNotification pn){$/;"	m	class:RestService	signature:(PrefixNotification pn)
+stitchRequest	RestService.java	/^    public String stitchRequest(StitchChameleon sr){$/;"	m	class:RestService	signature:(StitchChameleon sr)
+stitchRequest	SdxManager.java	/^  public static String[] stitchRequest(String carrierName,String nodeName, String customer_slice,String customerName, String ResrvID,String secret) {$/;"	m	class:SdxManager	signature:(String carrierName,String nodeName, String customer_slice,String customerName, String ResrvID,String secret)
+stitchport	RestService.java	/^  public  String stitchport;$/;"	f	class:StitchChameleon
+toResponse	MyExceptionMapper.java	/^                  public Response toResponse(WebApplicationException ex) {$/;"	m	class:MyExceptionMapper	signature:(WebApplicationException ex)
+toString	RestService.java	/^  public String toString(){$/;"	m	class:StitchChameleon	signature:()
+type	SliceCommon.java	/^  protected static String type;$/;"	f	class:SliceCommon
+undoStitch	SdxManager.java	/^	public static void undoStitch(String carrierName, String customerName, String netName, String nodeName){	$/;"	m	class:SdxManager	signature:(String carrierName, String customerName, String netName, String nodeName)
+vlan	RestService.java	/^  public  String vlan;$/;"	f	class:StitchChameleon
+waitTillActive	SliceCommon.java	/^  protected static void waitTillActive(Slice s){$/;"	m	class:SliceCommon	signature:(Slice s)
