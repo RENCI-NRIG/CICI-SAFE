@@ -76,6 +76,7 @@ public class SliceCommon {
   protected static Config conf;
   protected static ArrayList<String> clientSites;
   protected static String controllerSite;
+  protected static List<String> sitelist;
   protected static String serverSite;
   protected static boolean safeauth=false;
 
@@ -122,13 +123,17 @@ public class SliceCommon {
     sliceName=conf.getString("config.slicename");
     serverSite=conf.getString("config.serversite");
     controllerSite=conf.getString("config.controllersite");
-    
+
+    if(conf.hasPath("config.sitelist")){
+      sitelist=conf.getStringList("config.sitelist");
+    }
+
     String clientSitesStr = conf.getString("config.clientsites");
     clientSites = new ArrayList<String>();
     for(String site : clientSitesStr.split(":")){
     	clientSites.add(site);
     }
-    
+
   }
 
   protected static void waitTillActive(Slice s){
@@ -156,9 +161,53 @@ public class SliceCommon {
 		}
   }
 
-	protected static Slice getSlice(ISliceTransportAPIv1 sliceProxy, String sliceName){
+  protected static void waitTillActive(Slice s,List<String> resources){
+    boolean sliceActive = false;
+    while (true){
+      s.refresh();
+      sliceActive = true;
+      logger.debug("");
+      logger.debug("Slice: " + s.getAllResources());
+      for(ComputeNode c : s.getComputeNodes()){
+        logger.debug("Resource: " + c.getName() + ", state: "  + c.getState());
+        if(resources.contains(c.getName())) {
+          if (c.getState() != "Active" || c.getManagementIP() == null) sliceActive = false;
+        }
+      }
+      for(Network l: s.getBroadcastLinks()){
+        logger.debug("Resource: " + l.getName() + ", state: "  + l.getState());
+        if(resources.contains(l.getName())) {
+          if (l.getState() != "Active") sliceActive = false;
+        }
+      }
+
+      if(sliceActive) break;
+      sleep(10);
+    }
+    logger.debug("Done");
+    for(ComputeNode n : s.getComputeNodes()){
+      logger.debug("ComputeNode: " + n.getName() + ", Managment IP =  " + n.getManagementIP());
+    }
+  }
+
+  protected static Slice getSlice(ISliceTransportAPIv1 sliceProxy, String sliceName){
+    Slice s = null;
+    try {
+      s = Slice.loadManifestFile(sliceProxy, sliceName);
+    } catch (ContextTransportException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+    } catch (TransportException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+    }
+    return s;
+  }
+
+	protected static Slice getSlice(){
 		Slice s = null;
 		try {
+      ISliceTransportAPIv1 sliceProxy = getSliceProxy(pemLocation, keyLocation, controllerUrl);
 			s = Slice.loadManifestFile(sliceProxy, sliceName);
 		} catch (ContextTransportException e) {
 			// TODO Auto-generated catch block
@@ -190,6 +239,25 @@ public class SliceCommon {
       }
 		}
   }
+
+   protected static void copyFile2Slice(Slice s, String lfile, String rfile,String privkey, String pattn) {
+       Pattern pattern = Pattern.compile(pattn);
+       for (ComputeNode c : s.getComputeNodes()) {
+           Matcher matcher = pattern.matcher(c.getName());
+           if (!matcher.find())
+           {
+               continue;
+           }
+           String mip = c.getManagementIP();
+           try {
+               logger.debug("scp config file to " + mip);
+               ScpTo.Scp(lfile, "root", mip, rfile, privkey);
+
+           } catch (Exception e) {
+               logger.debug("exception when copying config file");
+           }
+       }
+   }
 
   protected static void runCmdSlice(Slice s, String cmd, String privkey,boolean repeat){
 		for(ComputeNode c : s.getComputeNodes()){

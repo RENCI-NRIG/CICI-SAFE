@@ -7,6 +7,8 @@ import java.util.Map;
 
 import org.apache.log4j.Logger;
 
+import org.json.HTTP;
+import org.json.JSONObject;
 import sdx.utils.Exec;
 
 import java.util.HashSet;
@@ -21,7 +23,7 @@ public class NetworkManager{
   private  ArrayList<Router> routers=new ArrayList<Router>();
   private  ArrayList<String[]>ip_router=new ArrayList<String[]>();
   private  ArrayList<String[]>links=new ArrayList<String[]>();
-  private HashMap<String, ArrayList<String>> sdncmds=new HashMap<String,ArrayList<String>>();
+  private HashMap<String, ArrayList<String[]>> sdncmds=new HashMap<String,ArrayList<String[]>>();
 
   public  String getDPID(String routerid){
     Router router=getRouter(routerid);
@@ -96,8 +98,8 @@ public class NetworkManager{
     logger.debug("RoutingManager: new link "+ra+ipa);
     addLink(ipa,ra);
     String dpid= getRouter(ra).getDPID();
-    String cmd = addrCMD(ipa,dpid,controller);
-    runSDNCmd(cmd);
+    String cmd[] = addrCMD(ipa,dpid,controller);
+    HttpUtil.postJSON(cmd[0],new JSONObject(cmd[1]));
     addEntry_HashList(sdncmds,dpid,cmd);
   }
 
@@ -105,12 +107,12 @@ public class NetworkManager{
     logger.debug("RoutingManager: new link "+ra+ipa+rb+ipb);
     addLink(ipa,ra,ipb,rb);
     String dpid=getDPID(ra);
-    String cmd=addrCMD(ipa,dpid, controller);
-    runSDNCmd(cmd);
+    String[] cmd = addrCMD(ipa,dpid,controller);
+    HttpUtil.postJSON(cmd[0],new JSONObject(cmd[1]));
     addEntry_HashList(sdncmds,dpid,cmd);
     dpid=getDPID(rb);
-    cmd=addrCMD(ipb,dpid, controller);
-    runSDNCmd(cmd);
+    cmd = addrCMD(ipb,dpid,controller);
+    HttpUtil.postJSON(cmd[0],new JSONObject(cmd[1]));
     addEntry_HashList(sdncmds,dpid,cmd);
   }
 
@@ -122,8 +124,8 @@ public class NetworkManager{
     }
     ArrayList<String[]>paths=getBroadcastRoutes(gwdpid,gateway);
     for(String[] path: paths){
-      String cmd=routingCMD(dest, path[1], path[0], controller);
-      runSDNCmd(cmd);
+      String []cmd=routingCMD(dest, path[1], path[0], controller);
+      HttpUtil.postJSON(cmd[0],new JSONObject(cmd[1]));
       addEntry_HashList(sdncmds,path[0],cmd);
       //logger.debug(path[0]+" "+path[1]);
     }
@@ -139,8 +141,8 @@ public class NetworkManager{
     }
     ArrayList<String[]>paths=getPairRoutes(gwdpid,targetdpid,gateway);
     for(String[] path: paths){
-      String cmd=routingCMD(dest,targetIP, path[1], path[0], controller);
-      runSDNCmd(cmd);
+      String []cmd=routingCMD(dest,targetIP, path[1], path[0], controller);
+      HttpUtil.postJSON(cmd[0],new JSONObject(cmd[1]));
       addEntry_HashList(sdncmds,path[0],cmd);
       //logger.debug(path[0]+" "+path[1]);
     }
@@ -165,16 +167,22 @@ public class NetworkManager{
     for(Router r:routers){
       String[] cmd=ovsdbCMD(r,controller);
       String res=HttpUtil.putString(cmd[0],cmd[1]);
+      addEntry_HashList(sdncmds,r.getDPID(),cmd);
       logger.debug(res);
     }
   }
 
   public void replayCmds(String dpid){
     if(sdncmds.containsKey(dpid)){
-      ArrayList<String> l=sdncmds.get(dpid);
-      for(String cmd: l){
+      ArrayList<String[]> l=sdncmds.get(dpid);
+      for(String[] cmd: l){
         logger.debug("Replay:"+cmd);
-        runSDNCmd(cmd);
+        if(cmd[2]=="postJSON"){
+          HttpUtil.postJSON(cmd[0],new JSONObject(cmd[1]));
+        }
+        else{
+          HttpUtil.putString(cmd[0],cmd[1]);
+        }
       }
     }
     else{
@@ -182,13 +190,13 @@ public class NetworkManager{
     }
   }
 
-  private void addEntry_HashList(HashMap<String,ArrayList<String>>  map,String key, String entry){
+  private void addEntry_HashList(HashMap<String,ArrayList<String[]>> map,String key, String[] entry){
     if(map.containsKey(key)){
-      ArrayList<String> l=map.get(key);
+      ArrayList<String[]> l=map.get(key);
       l.add(entry);
     }
     else{
-      ArrayList<String> l=new ArrayList<String>();
+      ArrayList<String[]> l=new ArrayList<String[]>();
       l.add(entry);
       map.put(key,l);
     }
@@ -311,26 +319,39 @@ public class NetworkManager{
     return knownpaths;
   }
 
-  private  String addrCMD(String addr, String dpid, String controller){
-    String cmd="curl -X POST -d {\"address\":\""+addr+"\"} "+controller+"/router/"+dpid;
-    return cmd;
+  private  String[] addrCMD(String addr, String dpid, String controller){
+    //String cmd="curl -X POST -d {\"address\":\""+addr+"\"} "+controller+"/router/"+dpid;
+    String[]res=new String[3];
+    res[0]="http://"+controller+"/router/"+dpid;
+    res[1]="{\"address\":\""+addr+"\"} ";
+    res[2]="postJSON";
+    return res;
   }
 
-  private  String routingCMD(String dst,String gw, String dpid, String controller){
-    String cmd="curl -X POST -d {\"destination\":\""+dst+"\",\"gateway\":\""+gw+"\"} "+controller+"/router/"+dpid;
-    return cmd;
+  private  String[] routingCMD(String dst,String gw, String dpid, String controller){
+    //String cmd="curl -X POST -d {\"destination\":\""+dst+"\",\"gateway\":\""+gw+"\"} "+controller+"/router/"+dpid;
+    String[] res=new String[3];
+    res[0]="http://"+controller+"/router/"+dpid;
+    res[1]="{\"destination\":"+dst+"\",\"gateway\":\""+gw+"\"}";
+    res[2]="postJSON";
+    return res;
   }
 
-  private  String routingCMD(String dst,String src,String gw, String dpid, String controller){
-    String cmd="curl -X POST -d {\"destination\":\""+dst+"\",\"source\":\""+src+"\",\"gateway\":\""+gw+"\"} "+controller+"/router/"+dpid;
+  private  String[] routingCMD(String dst,String src,String gw, String dpid, String controller){
+    //String cmd="curl -X POST -d {\"destination\":\""+dst+"\",\"source\":\""+src+"\",\"gateway\":\""+gw+"\"} "+controller+"/router/"+dpid;
+    String[] cmd= new String[3];
+    cmd[0]="http://"+controller+"/router/"+dpid;
+    cmd[1]="{\"destination\":\""+dst+"\",\"source\":\""+src+"\",\"gateway\":\""+gw+"\"}";
+    cmd[2]="postJSON";
     return cmd;
   }
 
   private  String[] ovsdbCMD(Router r, String controller){
     //String cmd="curl -X PUT -d \'\"tcp:"+r.getManagementIP()+":6632\"\' "+controller+"/v1.0/conf/switches/"+r.getDPID()+"/ovsdb_addr";
-    String[]res=new String[2];
+    String[]res=new String[3];
     res[1]="\"tcp:"+r.getManagementIP()+":6632\"";
     res[0]="http://"+controller+"/v1.0/conf/switches/"+r.getDPID()+"/ovsdb_addr";
+    res[2]="putString";
     return res;
   }
 

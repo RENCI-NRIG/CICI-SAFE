@@ -1,4 +1,6 @@
 package safe.exogeni.client;
+import org.apache.http.HttpEntity;
+import org.apache.jena.atlas.json.JSON;
 import safe.utils.Exec;
 import safe.utils.SafePost;
 
@@ -30,11 +32,9 @@ public class SdxHttpClient {
    * @return Grizzly HTTP server.
    */
 
-  public static JSONObject tryStitch(String serverurl, JSONObject paramsobj){
-    JSONObject resobj=new JSONObject();
-    resobj.put("result",false);
-    HttpClient httpClient = HttpClientBuilder.create().build(); //Use this instead 
-
+  public static String httpRequest(String serverurl, JSONObject paramsobj){
+    String resobj="{\"result\":\"Failed\"}";
+    HttpClient httpClient = HttpClientBuilder.create().build(); //Use this instead
     try {
 
       HttpPost request = new HttpPost(serverurl);
@@ -44,11 +44,16 @@ public class SdxHttpClient {
       request.setEntity(params);
       HttpResponse response = httpClient.execute(request);
       //handle response here...
-      String output=EntityUtils.toString(response.getEntity());
-      logger.debug(output);
-      JSONObject jsonobj=new JSONObject(output);
-      httpClient.getConnectionManager().shutdown(); 
-      return jsonobj;
+      HttpEntity entity=response.getEntity();
+      if(entity !=null) {
+        String output = EntityUtils.toString(entity);
+        logger.debug(output);
+        httpClient.getConnectionManager().shutdown();
+        return output;
+      }
+      else{
+        return "http response entity null";
+      }
 
     }catch (Exception ex) {
       ex.printStackTrace();
@@ -59,32 +64,5 @@ public class SdxHttpClient {
     }
   }
 
-  public static String notifyPrefix(String serverurl, JSONObject paramsobj){
-    //JSONObject resobj=new JSONObject();
-    //resobj.put("result",false);
-    String resobj="";
-    HttpClient httpClient = HttpClientBuilder.create().build(); //Use this instead 
-    try {
-
-      HttpPost request = new HttpPost(serverurl);
-      StringEntity params =new StringEntity(paramsobj.toString());
-      //StringEntity params =new StringEntity("{\"sdxslice\":\"sdx\",\"sdxnode\":\"c0\",\"ckeyhash\":\"keyhash\",\"cslice\":\"alice\",\"creservid\":\"cnode0\",\"secret\":\"20\"} ");
-      request.addHeader("content-type", "application/json");
-      request.setEntity(params);
-      HttpResponse response = httpClient.execute(request);
-      //handle response here...
-      String output=EntityUtils.toString(response.getEntity());
-      //JSONObject jsonobj=new JSONObject(output);
-      httpClient.getConnectionManager().shutdown(); 
-      return output;
-
-    }catch (Exception ex) {
-      ex.printStackTrace();
-      return resobj;
-
-    } finally {
-        //Deprecated
-    }
-  }
 }
 
