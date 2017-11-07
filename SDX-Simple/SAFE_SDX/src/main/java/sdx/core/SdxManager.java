@@ -568,7 +568,7 @@ public class SdxManager extends SliceCommon{
       for(Interface i: s.getInterfaces()){
         InterfaceNode2Net inode2net=(InterfaceNode2Net)i;
         logger.debug("linkname: "+inode2net.getLink().toString()+" bandwidth: "+ inode2net.getLink().getBandwidth());
-        if(ifs.contains(i.getName()) || !computenodes.containsKey(inode2net.getNode().toString())|| computenodes.get(inode2net.getNode().toString()).size()==0){
+        if(ifs.contains(i.getName())){
           logger.debug("continue");
           continue;
         }
