@@ -262,6 +262,7 @@ public class SdxManager extends SliceCommon{
     //set ip address
     //add link to links
     System.out.println("Link added");
+    writeLinks(topofile);
 	  return "link added";
   }
 
@@ -723,7 +724,7 @@ public class SdxManager extends SliceCommon{
       logger.debug("Setting up stitch "+link.linkname);
       if (((String) k).contains("stitch")) {
         usedip.add(Integer.valueOf(link.getIP(1).split("\\.")[2]));
-        routingmanager.newLink(link.getIP(1), link.nodea, link.getIP(2), link.nodeb, httpcontroller);
+        routingmanager.newLink(link.getIP(1), link.nodea, link.getIP(2).split("/")[0], httpcontroller);
       }
     }
 
@@ -777,7 +778,9 @@ public class SdxManager extends SliceCommon{
       Set<String> keyset=links.keySet();
       for(String key:keyset){
         Link link=links.get(key);
-        br.write(link.linkname+ " "+link.nodea+" "+link.nodeb+"\n");
+        if(link.nodeb!=null) {
+          br.write(link.linkname + " " + link.nodea + " " + link.nodeb + "\n");
+        }
       }
       br.close();
     }catch (Exception e){
