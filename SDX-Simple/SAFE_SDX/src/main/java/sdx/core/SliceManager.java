@@ -60,6 +60,7 @@ public class SliceManager extends SliceCommon {
 	private static String mask = "/24";
 	private static String riakip = "152.3.145.36";
 	private static String scriptsdir;
+	private static boolean safeauth=true;
 	//private static String type;
 
 	private static void computeIP(String prefix) {
@@ -98,6 +99,9 @@ public class SliceManager extends SliceCommon {
 		if (cmd.hasOption('d')) {
 			type = "delete";
 		}
+		if (cmd.hasOption('n')) {
+		  safeauth=false;
+		}
 
 		sliceProxy = SliceManager.getSliceProxy(pemLocation, keyLocation, controllerUrl);
 
@@ -134,12 +138,13 @@ public class SliceManager extends SliceCommon {
 				}
 				logger.debug("Plexus Controler IP: " + SDNControllerIP);
 				runCmdSlice(carrier, "/bin/bash ~/ovsbridge.sh " + SDNControllerIP + ":6633", sshkey, "(c\\d+)", true, true);
-
-				String SAFEServerIP = ((ComputeNode) carrier.getResourceByName("safe-server")).getManagementIP();
-				if (!checkSafeServer(SAFEServerIP)) {
-					System.exit(-1);
+				if(safeauth) {
+					String SAFEServerIP = ((ComputeNode) carrier.getResourceByName("safe-server")).getManagementIP();
+					if (!checkSafeServer(SAFEServerIP)) {
+						System.exit(-1);
+					}
+					System.out.println("SAFE Server IP: " + SAFEServerIP);
 				}
-				System.out.println("SAFE Server IP: " + SAFEServerIP);
 				clearLinks(topofile);
 				//}
 			} catch (Exception e) {
@@ -159,7 +164,7 @@ public class SliceManager extends SliceCommon {
 		logger.debug("XXXXXXXXXX Done XXXXXXXXXXXXXX");
 	}
 
-	public static void addOVSRouter(Slice s, String site, String name) {
+	public static ComputeNode addOVSRouter(Slice s, String site, String name) {
 		logger.debug("Adding new OVS router to slice "+s.getName());
 		String nodeImageShortName = "Ubuntu 14.04";
 		String nodeImageURL = "http://geni-orca.renci.org/owl/9dfe179d-3736-41bf-8084-f0cd4a520c2f#Ubuntu+14.04";//http://geni-images.renci.org/images/standard/ubuntu/ub1304-ovs-opendaylight-v1.0.0.xml
@@ -171,23 +176,15 @@ public class SliceManager extends SliceCommon {
 		node0.setNodeType(nodeNodeType);
 		node0.setDomain(site);
 		node0.setPostBootScript(nodePostBootScript);
-		try{
-			s.commit();
-			waitTillActive(s, Arrays.asList(name));
-		}catch (Exception e){
-			e.printStackTrace();
-		}
-		logger.debug("the new node on site "+site+" is active now");
+		return node0;
+	}
+
+	public static void copyRouterScript(Slice s,ComputeNode node){
 		scriptsdir = conf.getString("config.scriptsdir");
-		copyFile2Slice(s, scriptsdir + "dpid.sh", "~/dpid.sh", sshkey, "("+name+")");
-		copyFile2Slice(s, scriptsdir + "ovsbridge.sh", "~/ovsbridge.sh", sshkey, "("+name+")");
+		copyFile2Slice(s, scriptsdir + "dpid.sh", "~/dpid.sh", sshkey, "("+node.getName()+")");
+		copyFile2Slice(s, scriptsdir + "ovsbridge.sh", "~/ovsbridge.sh", sshkey, "("+node.getName()+")");
 		//Make sure that plexus container is running
-		if (!checkPlexus(SDNControllerIP)) {
-			System.exit(-1);
-		}
-		logger.debug("Plexus Controler IP: " + SDNControllerIP);
-		runCmdSlice(s, "/bin/bash ~/ovsbridge.sh " + SDNControllerIP + ":6633", sshkey, "("+name+")", true, true);
-		logger.debug("Finished adding new OVS router");
+		logger.debug("Finished copying ovs scripts");
 	}
 
 	private static void commitAndWait(Slice s){
@@ -292,7 +289,9 @@ public class SliceManager extends SliceCommon {
 			}
 			*/
 		}
-		addSafeServer(s, riakip);
+		if(safeauth) {
+			addSafeServer(s, riakip);
+		}
 		addPlexusController(s);
 		try {
 			s.commit();
