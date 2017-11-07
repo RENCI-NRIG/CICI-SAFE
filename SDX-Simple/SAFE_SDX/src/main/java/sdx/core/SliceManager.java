@@ -76,7 +76,7 @@ public class SliceManager extends SliceCommon {
 
 		//SliceManager usage:   ./target/appassembler/bin/SafeSdxSliceManager  ~/.ssl/geni-pruth1.pem ~/.ssl/geni-pruth1.pem "https://geni.renci.org:11443/orca/xmlrpc" pruth.1 stitch
 		//SliceManager usage:   ./target/appassembler/bin/SafeSdxSliceManager  ~/.ssl/geni-pruth1.pem ~/.ssl/geni-pruth1.pem "https://geni.renci.org:11443/orca/xmlrpc" name fournodes
-		System.out.println("SDX-Simple " + args[0]);
+		System.out.println("starting sdx server");
 
 		CommandLine cmd = parseCmd(args);
 
