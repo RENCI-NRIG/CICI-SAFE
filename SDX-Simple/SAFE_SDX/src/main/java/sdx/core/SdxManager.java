@@ -763,7 +763,6 @@ public class SdxManager extends SliceCommon{
         link.addNode(params[1]);
         link.addNode(params[2]);
         res.add(link);
-        line=br.readLine();
       }
       br.close();
     }catch (Exception e){
