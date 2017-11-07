@@ -316,30 +316,7 @@ public class SdxManager extends SliceCommon{
 	  ComputeNode node2=(ComputeNode)s.getResourceByName(n2);
 	  //find name for the new two nodes
     String name1=null,name2=null;
-	  String linkname;
-    int max=-1;
-    nodelock.lock();
-    try {
-      for (String key : computenodes.keySet()) {
-        for (String cname : computenodes.get(key)) {
-          int number = Integer.valueOf(cname.replace("c", ""));
-          max = Math.max(max, number);
-        }
-      }
-      ArrayList<String> l = computenodes.get(site1);
-      name1="c"+(++max);
-      l.add(name1);
-      logger.debug("Name of new router: "+name1);
-      computenodes.put(site1, l);
-      ArrayList<String> l2 = computenodes.get(site2);
-      name2="c"+(++max);
-      l2.add(name2);
-      logger.debug("Name of new router: "+name2);
-      computenodes.put(site2, l2);
-    }finally {
-      nodelock.unlock();
-    }
-    String link1=null,link2=null,link3=null;
+    String link1=null;
 
 	  linklock.lock();
 	  try {
@@ -347,31 +324,13 @@ public class SdxManager extends SliceCommon{
       Link l1 = new Link();
       l1.setName(link1);
       links.put(link1, l1);
-      link2 = allocateLinkName();
-      Link l2 = new Link();
-      l2.setName(link2);
-      links.put(link2, l2);
-      link3 = allocateLinkName();
-      Link l3 = new Link();
-      l3.setName(link3);
-      links.put(link3, l3);
     }finally {
       linklock.unlock();
     }
     logger.debug("Add link: " +link1);
-    logger.debug("Add link: " +link2);
-    logger.debug("Add link: " +link3);
     Network net1=s.addBroadcastLink(link1);
-    Network net2=s.addBroadcastLink(link2);
-    Network net3=s.addBroadcastLink(link3);
-    ComputeNode newnode1=SliceManager.addOVSRouter(s,site1,name1);
-    ComputeNode newnode2=SliceManager.addOVSRouter(s,site2,name2);
     net1.stitch(node1);
-    net1.stitch(newnode1);
-    net2.stitch(newnode1);
-    net2.stitch(newnode2);
-    net3.stitch(newnode2);
-    net3.stitch(node2);
+    net1.stitch(node2);
 
     try {
       s.commit();
@@ -385,31 +344,12 @@ public class SdxManager extends SliceCommon{
     waitTillActive(s);
     s=getSlice();
     //add routers first
-    /*
-    newnode1=(ComputeNode)s.getResourceByName(name1) ;
-    newnode2=(ComputeNode)s.getResourceByName(name2);
-    SliceManager.copyRouterScript(s,newnode1);
-    SliceManager.copyRouterScript(s,newnode2);
-    configRouter(newnode1);
-    configRouter(newnode2);
-    putComputeNode(newnode1);
-    putComputeNode(newnode2);
 
     Link l1 = links.get(link1);
     l1.setName(link1);
     l1.addNode(node1.getName());
-    l1.addNode(newnode1.getName());
+    l1.addNode(node2.getName());
     links.put(link1, l1);
-    Link l2 = links.get(link2);
-    l2.setName(link2);
-    l2.addNode(newnode1.getName());
-    l2.addNode(newnode2.getName());
-    links.put(link2, l2);
-    Link l3 = links.get(link3);
-    l3.setName(link3);
-    l3.addNode(newnode2.getName());
-    l3.addNode(node2.getName());
-    links.put(link3, l3);
 
     int ip_to_use=0;
     iplock.lock();
@@ -420,20 +360,6 @@ public class SdxManager extends SliceCommon{
       ip_to_use = curip;
       l1.setIP(IPPrefix + String.valueOf(ip_to_use));
       l1.setMask(mask);
-      curip++;
-      while (usedip.contains(curip)) {
-        curip++;
-      }
-      ip_to_use = curip;
-      l2.setIP(IPPrefix + String.valueOf(ip_to_use));
-      l2.setMask(mask);
-      curip++;
-      while (usedip.contains(curip)) {
-        curip++;
-      }
-      ip_to_use = curip;
-      l3.setIP(IPPrefix + String.valueOf(ip_to_use));
-      l3.setMask(mask);
       curip++;
     }finally {
       iplock.unlock();
@@ -447,10 +373,7 @@ public class SdxManager extends SliceCommon{
     Exec.sshExec("root",node2.getManagementIP(),"ifconfig;ovs-vsctl list port",sshkey);
 
     routingmanager.newLink(l1.getIP(1), l1.nodea, l1.getIP(2), l1.nodeb, SDNController);
-    routingmanager.newLink(l2.getIP(1), l2.nodea, l2.getIP(2), l2.nodeb, SDNController);
-    routingmanager.newLink(l3.getIP(1), l3.nodea, l3.getIP(2), l3.nodeb, SDNController);
     //set ip address
-    */
     //add link to links
     System.out.println("Link added");
     writeLinks(topofile);
