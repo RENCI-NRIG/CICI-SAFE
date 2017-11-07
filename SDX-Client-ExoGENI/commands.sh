@@ -1,5 +1,4 @@
 #!/bin/bash
-
 ./scripts/sdxclient.sh -c config/c1.conf -n -e "stitch CNode0 sdx"
 #30.2
 ./scripts/sdxclient.sh -c config/c2-ufl.conf -n -e "stitch CNode0 sdx"
