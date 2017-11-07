@@ -3,13 +3,9 @@ import java.util.*;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
-import java.net.URL;
+import java.io.BufferedWriter;
+import java.io.FileReader;
+import java.io.FileWriter;
 
 import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Level;
@@ -144,6 +140,7 @@ public class SliceManager extends SliceCommon {
 					System.exit(-1);
 				}
 				System.out.println("SAFE Server IP: " + SAFEServerIP);
+				clearLinks(topofile);
 				//}
 			} catch (Exception e) {
 				e.printStackTrace();
@@ -238,6 +235,14 @@ public class SliceManager extends SliceCommon {
 			}
 		}
 		return true;
+	}
+
+	private static void clearLinks(String file) {
+		try (BufferedWriter br = new BufferedWriter(new FileWriter(file))) {
+			br.close();
+		}catch (Exception e){
+			e.printStackTrace();
+		}
 	}
 
 	public static Slice createCarrierSlice(String sliceName, int num, int start, long bw, int numstitches) {//,String stitchsubnet="", String slicesubnet="")

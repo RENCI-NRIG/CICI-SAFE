@@ -73,6 +73,8 @@ public class SliceCommon {
 	protected static String safeserver;
   protected static String keyhash;
   protected static String type;
+  private static String topodir;
+  protected static String topofile;
   protected static Config conf;
   protected static ArrayList<String> clientSites;
   protected static String controllerSite;
@@ -123,6 +125,8 @@ public class SliceCommon {
     sliceName=conf.getString("config.slicename");
     serverSite=conf.getString("config.serversite");
     controllerSite=conf.getString("config.controllersite");
+    topodir=conf.getString("config.topodir");
+    topofile=topodir+sliceName+".topo";
 
     if(conf.hasPath("config.sitelist")){
       sitelist=conf.getStringList("config.sitelist");

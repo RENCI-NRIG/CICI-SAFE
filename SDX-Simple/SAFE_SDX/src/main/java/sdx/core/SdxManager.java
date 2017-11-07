@@ -12,16 +12,8 @@ import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
-import java.io.File;
 import java.io.FileReader;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
-import java.net.URL;
+import java.io.FileWriter;
 import java.util.concurrent.locks.ReentrantLock;
 
 import org.apache.log4j.ConsoleAppender;
@@ -194,7 +186,7 @@ public class SdxManager extends SliceCommon{
 
     //configRouting(serverslice,OVSController,SDNController,"(c\\d+)","(sp-c\\d+.*)");
     loadSdxNetwork(serverslice,"(c\\d+)","(sp-c\\d+.*)");
-    configRouting(serverslice,OVSController,SDNController,"(c\\d+)","(sp-c\\d+.*)");
+    configRouting1(serverslice,OVSController,SDNController,"(c\\d+)","(sp-c\\d+.*)");
 	}
 
 
@@ -600,6 +592,12 @@ public class SdxManager extends SliceCommon{
         links.put(inode2net.getLink().toString(),link);
         //logger.debug(inode2net.getNode()+" "+inode2net.getLink());
       }
+      //read crosssite links
+      for(Link link:readLinks(topofile)){
+        if(!links.containsKey(link.linkname)){
+          links.put(link.linkname,link);
+        }
+      }
       //Stitchports
       logger.debug("setting up sttichports");
       for(StitchPort sp : s.getStitchPorts()){
@@ -628,7 +626,6 @@ public class SdxManager extends SliceCommon{
     routingmanager.newRouter(node.getName(), result[1], Integer.valueOf(result[0]), mip);
   }
 
-  /*
   public static void configRouting1(Slice s,String ovscontroller, String httpcontroller, String routerpattern,String stitchportpattern) {
     logger.debug("Configurating Routing");
     restartPlexus(SDNControllerIP);
@@ -703,7 +700,9 @@ public class SdxManager extends SliceCommon{
       String[] parts = sp.getName().split("-");
       String ip = parts[2].replace("_", ".").replace("__", "/");
       String nodeName = parts[1];
-      routingmanager.newLink(ip, nodeName, SDNController);
+      String[] ipseg=ip.split("\\.");
+      String gw=ipseg[0]+"."+ipseg[1]+"."+ipseg[2]+"."+"2";
+      routingmanager.newLink(ip, nodeName,gw, SDNController);
     }
 
     Set keyset = links.keySet();
@@ -725,14 +724,13 @@ public class SdxManager extends SliceCommon{
         routingmanager.newLink(link.getIP(1), link.nodea, link.getIP(2), link.nodeb, httpcontroller);
       } else {
         //logger.debug(link.nodea+" gateway address:"+link.getIP(1));
-        routingmanager.newLink(link.getIP(1), link.nodea, httpcontroller);
+        routingmanager.newLink(link.getIP(1), link.nodea, link.getIP(2).split("/")[0], httpcontroller);
       }
     }
 
     //set ovsdb address
     routingmanager.setOvsdbAddr(httpcontroller);
   }
-  */
 
   private static ArrayList<Link> readLinks(String file) {
     ArrayList<Link>res=new ArrayList<>();
@@ -746,13 +744,28 @@ public class SdxManager extends SliceCommon{
         link.addNode(params[1]);
         link.addNode(params[2]);
         res.add(link);
+        line=br.readLine();
       }
+      br.close();
     }catch (Exception e){
       e.printStackTrace();
     }
     return res;
   }
 
+  private static void writeLinks(String file) {
+    ArrayList<Link>res=new ArrayList<>();
+    try (BufferedWriter br = new BufferedWriter(new FileWriter(file))) {
+      Set<String> keyset=links.keySet();
+      for(String key:keyset){
+        Link link=links.get(key);
+        br.write(link.linkname+ " "+link.nodea+" "+link.nodeb+"\n");
+      }
+      br.close();
+    }catch (Exception e){
+      e.printStackTrace();
+    }
+  }
 
   public static void configRouting(Slice s,String ovscontroller, String httpcontroller, String routerpattern,String stitchportpattern){
     logger.debug("Configurating Routing");
