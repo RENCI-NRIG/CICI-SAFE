@@ -365,6 +365,15 @@ public class SdxManager extends SliceCommon{
       }
       String net1_stitching_GUID = net.getStitchingGUID();
       logger.debug("net1_stitching_GUID: " + net1_stitching_GUID);
+      Link link=new Link();
+      link.setName(stitchname);
+      link.addNode(nodeName);
+      link.setIP(IPPrefix+String.valueOf(ip_to_use));
+      link.setMask(mask);
+      String gw = link.getIP(1);
+      String ip=link.getIP(2);
+      res[0]=gw;
+      res[1]=ip;
       stitch(customerName,ResrvID,carrierName,net1_stitching_GUID,secret,ip);
       sleep(10);
 
@@ -372,17 +381,8 @@ public class SdxManager extends SliceCommon{
       Exec.sshExec("root",node.getManagementIP(),"/bin/bash ~/ovsbridge.sh "+OVSController,sshkey);
       routingmanager.replayCmds(routingmanager.getDPID(nodeName));
       Exec.sshExec("root",node.getManagementIP(),"ifconfig;ovs-vsctl list port",sshkey);
-      Link link=new Link();
-      link.setName(stitchname);
-      link.addNode(nodeName);
-      link.setIP(IPPrefix+String.valueOf(ip_to_use));
-      link.setMask(mask);
       links.put(stitchname,link);
       routingmanager.newLink(link.getIP(1), link.nodea, SDNController);
-      String gw = link.getIP(1);
-      String ip=link.getIP(2);
-      res[0]=gw;
-      res[1]=ip;
       routingmanager.configurePath(ip,nodeName,ip.split("/")[0],SDNController);
       System.out.println("stitching operation  completed");
     }
