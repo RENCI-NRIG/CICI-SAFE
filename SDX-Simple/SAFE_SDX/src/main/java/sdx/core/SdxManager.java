@@ -258,6 +258,7 @@ public class SdxManager extends SliceCommon{
     routingmanager.newLink(link.getIP(1), link.nodea, link.getIP(2), link.nodeb, SDNController);
     //set ip address
     //add link to links
+    writeLinks(topofile);
 	  return "link added";
   }
 
@@ -769,7 +770,9 @@ public class SdxManager extends SliceCommon{
       Set<String> keyset=links.keySet();
       for(String key:keyset){
         Link link=links.get(key);
-        br.write(link.linkname+ " "+link.nodea+" "+link.nodeb+"\n");
+        if(link.nodeb!=null) {
+          br.write(link.linkname + " " + link.nodea + " " + link.nodeb + "\n");
+        }
       }
       br.close();
     }catch (Exception e){
