@@ -716,7 +716,7 @@ public class SdxManager extends SliceCommon{
       logger.debug("Setting up stitch "+link.linkname);
       if (((String) k).contains("stitch")) {
         usedip.add(Integer.valueOf(link.getIP(1).split("\\.")[2]));
-        routingmanager.newLink(link.getIP(1), link.nodea, link.getIP(2), link.nodeb, httpcontroller);
+        routingmanager.newLink(link.getIP(1), link.nodea, link.getIP(2).split("/")[0], httpcontroller);
       }
     }
 
