@@ -95,7 +95,7 @@ public class RestService {
     @Produces(MediaType.TEXT_PLAIN)
     public String stitchRequest(PrefixNotification pn){
       logger.debug("got notifyprefix");
-      String res=SdxManager.notifyPrefix(pn.dest, pn.gateway, pn.router, pn.customer);
+      String res=SdxManager.notifyPrefix(pn.dest, pn.gateway,  pn.customer);
       logger.debug(res);
       System.out.println(res);
       return res;
@@ -166,13 +166,11 @@ class ConnectionRequest{
 class PrefixNotification{
   public String dest;
   public String gateway;
-  public String router;
   public String customer;
   public PrefixNotification(){}
-  public PrefixNotification(String dest, String gateway, String router, String customer){
+  public PrefixNotification(String dest, String gateway, String customer){
     this.dest=dest;
     this.gateway=gateway;
-    this.router=router;
     this.customer=customer;
   }
 }

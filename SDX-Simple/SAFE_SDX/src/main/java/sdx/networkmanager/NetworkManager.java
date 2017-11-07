@@ -33,9 +33,18 @@ public class NetworkManager{
       return null;
   }
 
-  public  void addLink(String ipa, String ra){
+  public String findRouterbyGateway(String gw){
+    for(Router r:routers){
+      if(r.hasGateway(gw)){
+        return r.getRouterID();
+      }
+    }
+    return null;
+  }
+  public  void addLink(String ipa, String ra, String gw){
     Router router=getRouter(ra);
     if(router!=null){
+      router.addGateway(gw);
       router.addInterface(ipa);
       putPairRouter(ipa, router.getDPID());
       //routers.put(ra,router);
@@ -94,9 +103,9 @@ public class NetworkManager{
     addRouter(routerid, dpid, numInterfaces,mip);
   }
 
-  public void newLink(String ipa, String ra, String controller) {
+  public void newLink(String ipa, String ra, String gw,String controller) {
     logger.debug("RoutingManager: new link "+ra+ipa);
-    addLink(ipa,ra);
+    addLink(ipa,ra, gw);
     String dpid= getRouter(ra).getDPID();
     String cmd[] = addrCMD(ipa,dpid,controller);
     HttpUtil.postJSON(cmd[0],new JSONObject(cmd[1]));
