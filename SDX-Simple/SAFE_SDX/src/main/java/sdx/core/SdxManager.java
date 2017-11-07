@@ -178,6 +178,9 @@ public class SdxManager extends SliceCommon{
       // TODO Auto-generated catch block
       e.printStackTrace();
     }
+    catch (Exception e){
+      e.printStackTrace();
+    }
     //SDNControllerIP="152.3.136.36";
     SDNControllerIP=((ComputeNode)serverslice.getResourceByName("plexuscontroller")).getManagementIP();
     //System.out.println("plexuscontroler managementIP = " + SDNControllerIP);
@@ -359,17 +362,16 @@ public class SdxManager extends SliceCommon{
     logger.debug("Add link: " +link2);
     logger.debug("Add link: " +link3);
     Network net1=s.addBroadcastLink(link1);
-    //Network net2=s.addBroadcastLink(link2);
-    //Network net3=s.addBroadcastLink(link3);
-    //ComputeNode newnode1=SliceManager.addOVSRouter(s,site1,name1);
-    //ComputeNode newnode2=SliceManager.addOVSRouter(s,site2,name2);
+    Network net2=s.addBroadcastLink(link2);
+    Network net3=s.addBroadcastLink(link3);
+    ComputeNode newnode1=SliceManager.addOVSRouter(s,site1,name1);
+    ComputeNode newnode2=SliceManager.addOVSRouter(s,site2,name2);
     net1.stitch(node1);
-    net1.stitch(node2);
-    //net1.stitch(newnode1);
-    //net2.stitch(newnode1);
-    //net2.stitch(newnode2);
-    //net3.stitch(newnode2);
-    //net3.stitch(node2);
+    net1.stitch(newnode1);
+    net2.stitch(newnode1);
+    net2.stitch(newnode2);
+    net3.stitch(newnode2);
+    net3.stitch(node2);
 
     try {
       s.commit();
