@@ -52,9 +52,30 @@ public class RestService {
     @Produces(MediaType.APPLICATION_JSON)
     public StitchResult stitchRequest(StitchRequest sr){
       logger.debug("got sittch request");
-      String[] res=SdxManager.stitchRequest(sr.sdxslice,sr.sdxnode, sr.ckeyhash, sr.cslice, sr.creservid, sr.secret);
-      return new StitchResult(res[0],res[1]);
+      try {
+        String[] res = SdxManager.stitchRequest(sr.sdxslice, sr.sdxsite, sr.ckeyhash, sr.cslice, sr.creservid, sr.secret);
+        return new StitchResult(res[0], res[1]);
+      }catch (Exception e){
+        e.printStackTrace();
+        return new StitchResult(null,null);
+      }
     }
+
+  @POST
+  @Path("/connectionrequest")
+  @Consumes(MediaType.APPLICATION_JSON)
+  @Produces(MediaType.TEXT_PLAIN)
+  public String connectionRequest(ConnectionRequest sr){
+    logger.debug("got link request between "+sr.site1+" and "+sr.site2);
+    System.out.println("got link request between "+sr.site1+" and "+sr.site2);
+    try {
+      String res = SdxManager.connectionRequest(sr.site1,sr.site2);
+      return res;
+    }catch (Exception e){
+      e.printStackTrace();
+      return e.getMessage();
+    }
+  }
 
     @POST
     @Path("/stitchchameleon")
@@ -73,8 +94,8 @@ public class RestService {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.TEXT_PLAIN)
     public String stitchRequest(PrefixNotification pn){
-      logger.debug("got sittch request");
-      String res=SdxManager.notifyPrefix(pn.dest, pn.gateway, pn.router, pn.customer);
+      logger.debug("got notifyprefix");
+      String res=SdxManager.notifyPrefix(pn.dest, pn.gateway,  pn.customer);
       logger.debug(res);
       System.out.println(res);
       return res;
@@ -109,18 +130,19 @@ class StitchChameleon{
 
 class StitchRequest{
   public  String sdxslice;
-  public  String sdxnode;
+  public  String sdxsite;
   //customer Safe key hash
   public  String ckeyhash;
   public  String cslice;
   public  String creservid;
+
   public  String secret;
 
   public StitchRequest(){}
 
-  public StitchRequest(String sdxslice, String sdxnode,String ckeyhash, String cslice, String creserveid, String secret){
+  public StitchRequest(String sdxslice, String sdxsite,String ckeyhash, String cslice, String creserveid, String secret){
     this.sdxslice=sdxslice;
-    this.sdxnode=sdxnode;
+    this.sdxsite=sdxsite;
     this.ckeyhash=ckeyhash;
     this.cslice=cslice;
     this.creservid=creservid;
@@ -128,16 +150,27 @@ class StitchRequest{
   }
 }
 
+class ConnectionRequest{
+  public  String ckeyhash;
+  public String site1;
+  public String site2;
+
+  public ConnectionRequest(){}
+
+  public ConnectionRequest(String site1, String site2){
+    this.site1=site1;
+    this.site2=site2;
+  }
+}
+
 class PrefixNotification{
   public String dest;
   public String gateway;
-  public String router;
   public String customer;
   public PrefixNotification(){}
-  public PrefixNotification(String dest, String gateway, String router, String customer){
+  public PrefixNotification(String dest, String gateway, String customer){
     this.dest=dest;
     this.gateway=gateway;
-    this.router=router;
     this.customer=customer;
   }
 }

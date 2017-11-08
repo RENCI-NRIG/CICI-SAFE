@@ -72,7 +72,8 @@ public class SliceCommon {
   protected static Config conf;
   protected static String serverSite;
   protected static String routerSite;
-  
+  protected static List<String> sitelist;
+
   public SliceCommon(){}
 
   protected static CommandLine parseCmd(String[] args){
@@ -117,6 +118,10 @@ public class SliceCommon {
     sliceName=conf.getString("config.slicename");
     serverSite=conf.getString("config.serversite");
     routerSite=conf.getString("config.routersite");
+
+    if(conf.hasPath("config.sitelist")){
+      sitelist=conf.getStringList("config.sitelist");
+    }
   }
 
   protected static void waitTillActive(Slice s){
@@ -156,6 +161,21 @@ public class SliceCommon {
 		}
 		return s;
 	}
+
+  protected static Slice getSlice(){
+    Slice s = null;
+    ISliceTransportAPIv1 sliceProxy = getSliceProxy(pemLocation, keyLocation, controllerUrl);
+    try {
+      s = Slice.loadManifestFile(sliceProxy, sliceName);
+    } catch (ContextTransportException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+    } catch (TransportException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+    }
+    return s;
+  }
 
 	protected static void sleep(int sec){
 		try {
