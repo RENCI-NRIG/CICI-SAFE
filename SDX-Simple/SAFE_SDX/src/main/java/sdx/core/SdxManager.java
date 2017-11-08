@@ -778,7 +778,7 @@ public class SdxManager extends SliceCommon{
       Set<String> keyset=links.keySet();
       for(String key:keyset){
         Link link=links.get(key);
-        if(link.nodeb!=null) {
+        if(link.nodeb!=null &&link.nodea!=null) {
           br.write(link.linkname + " " + link.nodea + " " + link.nodeb + "\n");
         }
       }
