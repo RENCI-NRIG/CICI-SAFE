@@ -132,8 +132,9 @@ public class Example extends SliceCommon{
         if(!checkPlexus(SDNControllerIP)){
           System.exit(-1);
         }
-				System.out.println("Plexus Controler IP: " + SDNControllerIP);
+				System.out.println("Plexus Controller IP: " + SDNControllerIP);
 				runCmdSlice(carrier,"/bin/bash ~/ovsbridge.sh "+SDNControllerIP+":6633",sshkey,"(c\\d+)",true,true);
+				runCmdSlice(carrier,"mkdir report && cd report\n/opt/bro/bin/bro -i &\ndisown -h `jobs -l | grep -E '[0-9]{2,4}' -o`\n",sshkey,"(b\\d+)",true,false);
 				
 				String SAFEServerIP=((ComputeNode)carrier.getResourceByName("safe-server")).getManagementIP();
         if(!checkSafeServer(SAFEServerIP)){
@@ -209,6 +210,11 @@ public class Example extends SliceCommon{
 		String nodeImageURL ="http://geni-orca.renci.org/owl/9dfe179d-3736-41bf-8084-f0cd4a520c2f#Ubuntu+14.04";//http://geni-images.renci.org/images/standard/ubuntu/ub1304-ovs-opendaylight-v1.0.0.xml
 		String nodeImageHash ="9394ca154aa35eb55e604503ae7943ddaecc6ca5";
 		String nodeNodeType="XO Medium";
+
+		String broN = "Centos 7.4 Bro";
+		String broURL = "http://geni-images.renci.org/images/standard/centos/centos7.4-bro-v1.0.4/centos7.4-bro-v1.0.4.xml";
+		String broHash = "50c973571fc6da95c3f70d0f71c9aea1659ff780";
+		String broType = "XO Medium";
 		//String nodePostBootScript="apt-get update;apt-get -y  install quagga\n"
 		//  +"sed -i -- 's/zebra=no/zebra=yes/g' /etc/quagga/daemons\n"
 		//  +"sed -i -- 's/ospfd=no/ospfd=yes/g' /etc/quagga/daemons\n";
@@ -224,6 +230,7 @@ public class Example extends SliceCommon{
 			node0.setDomain(clientSites.get(i%clientSites.size()));
 			node0.setPostBootScript(nodePostBootScript);
 			nodelist.add(node0);
+
 			//for(int j=0;j<numstitches;j++){
 			//  Network net1 = s.addBroadcastLink("stitch"+String.valueOf(i)+ String.valueOf(j),bw);
 			//  InterfaceNode2Net ifaceNode0 = (InterfaceNode2Net) net1.stitch(node0);
@@ -244,6 +251,24 @@ public class Example extends SliceCommon{
 				ifaceNode1.setIpAddress("192.168."+String.valueOf(start+i-1)+".2");
 				ifaceNode1.setNetmask("255.255.255.0");
 			}
+
+			if (i == 0 || i == num-1) {
+				ComputeNode bro = s.addComputeNode("b" + String.valueOf(i));
+				bro.setImage(broURL, broHash, broN);
+				bro.setDomain(clientSites.get(i%clientSites.size()));
+				bro.setNodeType(broType);
+
+				Network bronet = s.addBroadcastLink("brolink"+String.valueOf(i),bw);
+
+				InterfaceNode2Net ifaceNode1 = (InterfaceNode2Net) bronet.stitch(node0);
+				ifaceNode1.setIpAddress("192.168."+String.valueOf(start+i+10)+".1");
+				ifaceNode1.setNetmask("255.255.255.0");
+
+				InterfaceNode2Net ifaceNode2 = (InterfaceNode2Net) bronet.stitch(bro);
+				ifaceNode2.setIpAddress("192.168."+String.valueOf(start+i+10)+".2");
+				ifaceNode2.setNetmask("255.255.255.0");
+      }
+
 		}
 		addSafeServer(s,riakip);
 		addPlexusController(s);
