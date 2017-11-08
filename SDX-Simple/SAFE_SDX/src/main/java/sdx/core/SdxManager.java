@@ -223,14 +223,17 @@ public class SdxManager extends SliceCommon{
         e.printStackTrace();
       }
       ComputeNode node=null;
+      boolean newrouter=false;
       if(computenodes.containsKey(site)&&computenodes.get(site).size()>0) {
         node=(ComputeNode)s1.getResourceByName( computenodes.get(site).get(0));
       }else{
         //if node not exists, add another node to the slice
         //add a node and configure it as a router.
         //later when a customer requests connection between site a and site b, we add another link to meet the requirments
+        newrouter=true;
         logger.debug("No existing router at requested site, adding new router");
         int max=-1;
+        String routername=null;
         nodelock.lock();
         try {
           for (String key : computenodes.keySet()) {
@@ -240,15 +243,23 @@ public class SdxManager extends SliceCommon{
             }
           }
           ArrayList<String> l = new ArrayList<>();
-          String routername="c"+(max+1);
+          routername="c"+(max+1);
           l.add(routername);
           logger.debug("Name of new router: "+routername);
           computenodes.put(site, l);
         }finally {
           nodelock.unlock();
         }
-        SliceManager.addOVSRouter(s1,site,"c"+(max+1));
-        node = (ComputeNode) s1.getResourceByName("c" + (max + 1));
+        SliceManager.addOVSRouter(s1,site,routername);
+        try{
+          s1.commit();
+          waitTillActive(s1);
+        }catch (Exception e){
+          e.printStackTrace();
+        }
+        s1=getSlice();
+        node = (ComputeNode) s1.getResourceByName(routername);
+        SliceManager.copyRouterScript(s1,node);
         configRouter(node);
         logger.debug("Configured the new router in RoutingManager");
       }
@@ -279,8 +290,10 @@ public class SdxManager extends SliceCommon{
       waitTillActive(s1,Arrays.asList(stitchname));
       sleep(10);
       //System.out.println("Node managmentIP: " + node.getManagementIP());
-      Exec.sshExec("root",node.getManagementIP(),"/bin/bash ~/ovsbridge.sh "+OVSController,sshkey);
-      routingmanager.replayCmds(routingmanager.getDPID(node.getName()));
+      if(!newrouter) {
+        Exec.sshExec("root", node.getManagementIP(), "/bin/bash ~/ovsbridge.sh " + OVSController, sshkey);
+        routingmanager.replayCmds(routingmanager.getDPID(node.getName()));
+      }
       Exec.sshExec("root",node.getManagementIP(),"ifconfig;ovs-vsctl list port",sshkey);
       s1.refresh();
       net=(BroadcastNetwork)s1.getResourceByName(stitchname);
@@ -328,18 +341,26 @@ public class SdxManager extends SliceCommon{
       linklock.unlock();
     }
     logger.debug("Add link: " +link1);
-    Network net1=s.addBroadcastLink(link1);
-    net1.stitch(node1);
-    net1.stitch(node2);
+    //Network net1=s.addBroadcastLink(link1);
+    //net1.stitch(node1);
+    //net1.stitch(node2);
 
+    //try {
+    //  s.commit();
+    //} catch (XMLRPCTransportException e1) {
+    //  // TODO Auto-generated catch block
+    //  e1.printStackTrace();
+    //  System.out.println("Link addition failed.");
+    //  logger.debug("Link addition failed");
+    //  return "Link addition failed";
+    //}
+
+    System.out.println("Now add a link named \""+link1+"\" between "+n1 +" and "+n2);
     try {
-      s.commit();
-    } catch (XMLRPCTransportException e1) {
-      // TODO Auto-generated catch block
-      e1.printStackTrace();
-      System.out.println("Link addition failed.");
-      logger.debug("Link addition failed");
-      return "Link addition failed";
+      java.io.BufferedReader stdin = new java.io.BufferedReader(new java.io.InputStreamReader(System.in));
+      stdin.readLine();
+    }catch (Exception e){
+      e.printStackTrace();
     }
     waitTillActive(s);
     s=getSlice();
