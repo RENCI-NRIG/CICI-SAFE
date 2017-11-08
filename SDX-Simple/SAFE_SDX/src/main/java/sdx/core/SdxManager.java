@@ -639,9 +639,11 @@ public class SdxManager extends SliceCommon{
         //logger.debug(inode2net.getNode()+" "+inode2net.getLink());
       }
       //read crosssite links
-      for(Link link:readLinks(topofile)){
-        if(!links.containsKey(link.linkname)){
-          links.put(link.linkname,link);
+      if(topofile!=null) {
+        for (Link link : readLinks(topofile)) {
+          if (!links.containsKey(link.linkname)) {
+            links.put(link.linkname, link);
+          }
         }
       }
       //Stitchports

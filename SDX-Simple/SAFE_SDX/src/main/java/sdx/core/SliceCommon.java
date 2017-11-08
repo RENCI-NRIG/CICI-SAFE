@@ -73,8 +73,8 @@ public class SliceCommon {
 	protected static String safeserver;
   protected static String keyhash;
   protected static String type;
-  private static String topodir;
-  protected static String topofile;
+  private static String topodir=null;
+  protected static String topofile=null;
   protected static Config conf;
   protected static ArrayList<String> clientSites;
   protected static String controllerSite;
