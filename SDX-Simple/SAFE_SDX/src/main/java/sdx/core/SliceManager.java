@@ -272,21 +272,15 @@ public class SliceManager extends SliceCommon {
 			//  ifaceNode0.setNetmask("255.255.255.0");
 			//  stitchlist.add(net1);
 			//}
-			/*
 			if (i != num - 1) {
 				Network net2 = s.addBroadcastLink("clink" + String.valueOf(i), bw);
 				InterfaceNode2Net ifaceNode1 = (InterfaceNode2Net) net2.stitch(node0);
-				ifaceNode1.setIpAddress("192.168." + String.valueOf(start + i) + ".1");
-				ifaceNode1.setNetmask("255.255.255.0");
 				netlist.add(net2);
 			}
 			if (i != 0) {
 				Network net = netlist.get(i - 1);
 				InterfaceNode2Net ifaceNode1 = (InterfaceNode2Net) net.stitch(node0);
-				ifaceNode1.setIpAddress("192.168." + String.valueOf(start + i - 1) + ".2");
-				ifaceNode1.setNetmask("255.255.255.0");
 			}
-			*/
 		}
 		if(safeauth) {
 			addSafeServer(s, riakip);

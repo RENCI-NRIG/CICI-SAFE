@@ -61,9 +61,9 @@ public class Test {
   }
 
   private static void testPerFlowQOS(){
-    String dpid1="00000628a4daa642";
-    String dpid2="00004621982f9b41";
-    String controller="152.54.14.12";
+    String dpid1=SdxManager.getDPID("c1");
+    String dpid2=SdxManager.getDPID("c2");
+    String controller=SdxManager.getSDNControllerIP();
     String[] queuecmd=queueCMD(controller,dpid1);
     HttpUtil.postJSON(queuecmd[0], new JSONObject(queuecmd[1]));
     HttpUtil.get(queuecmd[0]);
