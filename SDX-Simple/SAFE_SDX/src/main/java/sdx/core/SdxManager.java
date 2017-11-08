@@ -101,6 +101,14 @@ public class SdxManager extends SliceCommon{
   private static ArrayList<String[]> advertisements=new ArrayList<String[]>();
   private static HashSet<Integer> usedip=new HashSet<Integer>();
 
+  public static String getDPID(String nodename){
+    return routingmanager.getDPID(nodename);
+  }
+
+  public static String getSDNControllerIP(){
+    return SDNControllerIP;
+  }
+
   private void addEntry_HashList(HashMap<String,ArrayList<String>>  map,String key, String entry){
     if(map.containsKey(key)){
       ArrayList<String> l=map.get(key);
@@ -902,7 +910,7 @@ public class SdxManager extends SliceCommon{
         //logger.debug(inode2net.getNode()+" "+inode2net.getLink());
       }
 
-      for(Link link:readLinks("links.txt")){
+      for(Link link:readLinks(topofile)){
         links.put(link.linkname,link);
       }
       //Stitchports
