@@ -667,12 +667,12 @@ public class SdxManager extends SliceCommon{
     String mip = node.getManagementIP();
     logger.debug(node.getName() + " " + mip);
     Exec.sshExec("root", mip, "/bin/bash ~/ovsbridge.sh " + OVSController, sshkey).split(" ");
-    String []result=null;
+    String []result=Exec.sshExec("root", mip, "/bin/bash ~/dpid.sh", sshkey).split(" ");
     logger.debug("Trying to get DPID of the router "+node.getName());
     while(result==null || result[1].equals("")||result[1]==null) {
-
+      Exec.sshExec("root", mip, "/bin/bash ~/ovsbridge.sh " + OVSController, sshkey).split(" ");
+      sleep(1);
       result = Exec.sshExec("root", mip, "/bin/bash ~/dpid.sh", sshkey).split(" ");
-
       result[1] = result[1].replace("\n", "");
     }
     logger.debug("Get router info " + result[0] + " " + result[1]);
