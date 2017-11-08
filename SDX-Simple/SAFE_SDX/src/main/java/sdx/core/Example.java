@@ -121,7 +121,7 @@ public class Example extends SliceCommon{
 			computeIP(IPPrefix);
 			try{
 				String carrierName=sliceName;
-				Slice carrier=createCarrierSlice(carrierName,4,10,1000000,1);
+				Slice carrier=createCarrierSlice(carrierName,4,1000000,1);
 				carrier.refresh();
 				waitTillActive(carrier);
 				carrier.refresh();
@@ -201,7 +201,29 @@ public class Example extends SliceCommon{
     return true;
   }
 
-	public static Slice createCarrierSlice(String sliceName,int num,int start, long bw,int numstitches){//,String stitchsubnet="", String slicesubnet="")	
+  //We always add the bro when we add the edge router
+  private static ComputeNode addBro(Slice s, String broname, ComputeNode edgerouter,int ip_to_use){
+		String broN = "Centos 7.4 Bro";
+		String broURL = "http://geni-images.renci.org/images/standard/centos/centos7.4-bro-v1.0.4/centos7.4-bro-v1.0.4.xml";
+		String broHash = "50c973571fc6da95c3f70d0f71c9aea1659ff780";
+		String broType = "XO Medium";
+		ComputeNode bro = s.addComputeNode(broname);
+		bro.setImage(broURL, broHash, broN);
+		bro.setDomain(edgerouter.getDomain());
+		bro.setNodeType(broType);
+
+		Network bronet = s.addBroadcastLink("brolink_"+ip_to_use);
+		InterfaceNode2Net ifaceNode1 = (InterfaceNode2Net) bronet.stitch(edgerouter);
+		ifaceNode1.setIpAddress("192.168."+String.valueOf(ip_to_use)+".1");
+		ifaceNode1.setNetmask("255.255.255.0");
+
+		InterfaceNode2Net ifaceNode2 = (InterfaceNode2Net) bronet.stitch(bro);
+		ifaceNode2.setIpAddress("192.168."+String.valueOf(ip_to_use)+".2");
+		ifaceNode2.setNetmask("255.255.255.0");
+		return bro;
+	}
+
+	public static Slice createCarrierSlice(String sliceName,int num, long bw,int numstitches){//,String stitchsubnet="", String slicesubnet="")
 		logger.debug("ndllib TestDriver: START");
 
 		Slice s = Slice.create(sliceProxy, sctx, sliceName);
@@ -211,10 +233,6 @@ public class Example extends SliceCommon{
 		String nodeImageHash ="9394ca154aa35eb55e604503ae7943ddaecc6ca5";
 		String nodeNodeType="XO Medium";
 
-		String broN = "Centos 7.4 Bro";
-		String broURL = "http://geni-images.renci.org/images/standard/centos/centos7.4-bro-v1.0.4/centos7.4-bro-v1.0.4.xml";
-		String broHash = "50c973571fc6da95c3f70d0f71c9aea1659ff780";
-		String broType = "XO Medium";
 		//String nodePostBootScript="apt-get update;apt-get -y  install quagga\n"
 		//  +"sed -i -- 's/zebra=no/zebra=yes/g' /etc/quagga/daemons\n"
 		//  +"sed -i -- 's/ospfd=no/ospfd=yes/g' /etc/quagga/daemons\n";
@@ -238,35 +256,23 @@ public class Example extends SliceCommon{
 			//  ifaceNode0.setNetmask("255.255.255.0");
 			//  stitchlist.add(net1);
 			//}
+      int tmp=curip++;
 			if(i!=num-1){
 				Network net2 = s.addBroadcastLink("clink"+String.valueOf(i),bw);
 				InterfaceNode2Net ifaceNode1 = (InterfaceNode2Net) net2.stitch(node0);
-				ifaceNode1.setIpAddress("192.168."+String.valueOf(start+i)+".1");
-				ifaceNode1.setNetmask("255.255.255.0");
+				//ifaceNode1.setIpAddress("192.168."+String.valueOf(tmp)+".1");
+				//ifaceNode1.setNetmask("255.255.255.0");
 				netlist.add(net2);
 			}
 			if(i!=0){
 				Network net=netlist.get(i-1);
 				InterfaceNode2Net ifaceNode1 = (InterfaceNode2Net) net.stitch(node0);
-				ifaceNode1.setIpAddress("192.168."+String.valueOf(start+i-1)+".2");
-				ifaceNode1.setNetmask("255.255.255.0");
+				//ifaceNode1.setIpAddress("192.168."+String.valueOf(tmp-1)+".2");
+				//ifaceNode1.setNetmask("255.255.255.0");
 			}
 
 			if (i == 0 || i == num-1) {
-				ComputeNode bro = s.addComputeNode("b" + String.valueOf(i));
-				bro.setImage(broURL, broHash, broN);
-				bro.setDomain(clientSites.get(i%clientSites.size()));
-				bro.setNodeType(broType);
-
-				Network bronet = s.addBroadcastLink("brolink"+String.valueOf(i),bw);
-
-				InterfaceNode2Net ifaceNode1 = (InterfaceNode2Net) bronet.stitch(node0);
-				ifaceNode1.setIpAddress("192.168."+String.valueOf(start+i+10)+".1");
-				ifaceNode1.setNetmask("255.255.255.0");
-
-				InterfaceNode2Net ifaceNode2 = (InterfaceNode2Net) bronet.stitch(bro);
-				ifaceNode2.setIpAddress("192.168."+String.valueOf(start+i+10)+".2");
-				ifaceNode2.setNetmask("255.255.255.0");
+			  addBro(s,"bro"+i,node0,curip++);
       }
 
 		}
