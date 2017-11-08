@@ -1,11 +1,8 @@
 package sdx.core;
+import java.io.*;
 import java.util.*;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.FileReader;
-import java.io.FileWriter;
 
 import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Level;
@@ -235,9 +232,11 @@ public class SliceManager extends SliceCommon {
 	}
 
 	private static void clearLinks(String file) {
-		try (BufferedWriter br = new BufferedWriter(new FileWriter(file))) {
-			br.close();
-		}catch (Exception e){
+		try {
+			FileOutputStream writer = new FileOutputStream(file);
+			writer.write(("").getBytes());
+			writer.close();
+		}catch (IOException e){
 			e.printStackTrace();
 		}
 	}

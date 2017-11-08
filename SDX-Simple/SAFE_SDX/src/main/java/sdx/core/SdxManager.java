@@ -277,8 +277,6 @@ public class SdxManager extends SliceCommon{
       }
       Network net=s1.addBroadcastLink(stitchname);
       InterfaceNode2Net ifaceNode0 = (InterfaceNode2Net) net.stitch(node);
-      ifaceNode0.setIpAddress("192.168.1.1");
-      ifaceNode0.setNetmask("255.255.255.0");
       try {
         s1.commit();
       } catch (XMLRPCTransportException e1) {
@@ -359,6 +357,7 @@ public class SdxManager extends SliceCommon{
     try {
       java.io.BufferedReader stdin = new java.io.BufferedReader(new java.io.InputStreamReader(System.in));
       stdin.readLine();
+      System.out.println("Continue");
     }catch (Exception e){
       e.printStackTrace();
     }
