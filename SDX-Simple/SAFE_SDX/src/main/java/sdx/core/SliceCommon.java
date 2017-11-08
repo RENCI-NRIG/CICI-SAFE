@@ -125,8 +125,10 @@ public class SliceCommon {
     sliceName=conf.getString("config.slicename");
     serverSite=conf.getString("config.serversite");
     controllerSite=conf.getString("config.controllersite");
-    topodir=conf.getString("config.topodir");
-    topofile=topodir+sliceName+".topo";
+    if(conf.hasPath("config.topodir")) {
+      topodir = conf.getString("config.topodir");
+      topofile = topodir + sliceName + ".topo";
+    }
 
     if(conf.hasPath("config.sitelist")){
       sitelist=conf.getStringList("config.sitelist");

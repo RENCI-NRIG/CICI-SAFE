@@ -28,7 +28,6 @@ public class Exec{
       }
     }catch (Exception e){
       logger.debug("Exeption while setting up link"+e);
-
     }
     return res;
   }
