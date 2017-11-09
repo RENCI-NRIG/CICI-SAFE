@@ -1,12 +1,9 @@
 package sdx.core;
 
-import sdx.networkmanager.Link;
-import sdx.networkmanager.Router;
 import sdx.networkmanager.NetworkManager;
 import sdx.utils.Exec;
 import sdx.utils.SafePost;
 
-import java.lang.reflect.Array;
 import java.util.*;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
@@ -16,46 +13,25 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.util.concurrent.locks.ReentrantLock;
 
-import org.apache.log4j.ConsoleAppender;
-import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
-import org.apache.log4j.SimpleLayout;
 import org.apache.commons.cli.*;
-import org.apache.commons.cli.DefaultParser;
 
-import org.renci.ahab.libndl.LIBNDL;
 import org.renci.ahab.libndl.Slice;
-import org.renci.ahab.libndl.SliceGraph;
-import org.renci.ahab.libndl.extras.PriorityNetwork;
 import org.renci.ahab.libndl.resources.common.ModelResource;
 import org.renci.ahab.libndl.resources.request.BroadcastNetwork;
 import org.renci.ahab.libndl.resources.request.ComputeNode;
 import org.renci.ahab.libndl.resources.request.Interface;
 import org.renci.ahab.libndl.resources.request.InterfaceNode2Net;
 import org.renci.ahab.libndl.resources.request.Network;
-import org.renci.ahab.libndl.resources.request.Node;
 import org.renci.ahab.libndl.resources.request.StitchPort;
-import org.renci.ahab.libndl.resources.request.StorageNode;
 import org.renci.ahab.libtransport.ISliceTransportAPIv1;
-import org.renci.ahab.libtransport.ITransportProxyFactory;
-import org.renci.ahab.libtransport.JKSTransportContext;
-import org.renci.ahab.libtransport.PEMTransportContext;
 import org.renci.ahab.libtransport.SSHAccessToken;
 import org.renci.ahab.libtransport.SliceAccessContext;
-import org.renci.ahab.libtransport.TransportContext;
 import org.renci.ahab.libtransport.util.ContextTransportException;
 import org.renci.ahab.libtransport.util.SSHAccessTokenFileFactory;
 import org.renci.ahab.libtransport.util.TransportException;
 import org.renci.ahab.libtransport.util.UtilTransportException;
-import org.renci.ahab.libtransport.xmlrpc.XMLRPCProxyFactory;
 import org.renci.ahab.libtransport.xmlrpc.XMLRPCTransportException;
-import org.renci.ahab.ndllib.transport.OrcaSMXMLRPCProxy;
-
-import java.net.MalformedURLException;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.DefaultHttpClient;
 
 /*
 
@@ -341,7 +317,7 @@ public class SdxManager extends SliceCommon{
 	  ComputeNode node1=(ComputeNode)s.getResourceByName(n1);
 	  ComputeNode node2=(ComputeNode)s.getResourceByName(n2);
 	  boolean res=true;
-	  if(!routingmanager.findPath(n1,n2)) {
+	  if(!routingmanager.findPath(n1,n2,0)) {
       //find name for the new two nodes
       String name1 = null, name2 = null;
       String link1 = null;
@@ -410,7 +386,7 @@ public class SdxManager extends SliceCommon{
       routingmanager.replayCmds(routingmanager.getDPID(node2.getName()));
       Exec.sshExec("root", node2.getManagementIP(), "ifconfig;ovs-vsctl list port", sshkey);
 
-      res = routingmanager.newLink(l1.getIP(1), l1.nodea, l1.getIP(2), l1.nodeb, SDNController);
+      res = routingmanager.newLink(l1.getIP(1), l1.nodea, l1.getIP(2), l1.nodeb, SDNController,0);
       //set ip address
       //add link to links
     }
@@ -418,8 +394,8 @@ public class SdxManager extends SliceCommon{
     if(res){
       writeLinks(topofile);
       System.out.println("Link added successfully, configuring routes");
-      routingmanager.configurePath(self_prefix,n1,target_prefix,n2,prefixgateway.get(self_prefix),SDNController);
-      routingmanager.configurePath(target_prefix,n2,self_prefix,n1,prefixgateway.get(target_prefix),SDNController);
+      routingmanager.configurePath(self_prefix,n1,target_prefix,n2,prefixgateway.get(self_prefix),SDNController,0);
+      routingmanager.configurePath(target_prefix,n2,self_prefix,n1,prefixgateway.get(target_prefix),SDNController,0);
       System.out.println("Routing set up for "+self_prefix+" and "+target_prefix);
       routingmanager.setQos(SDNController,routingmanager.getDPID(n1),self_prefix,target_prefix,500000);
       routingmanager.setQos(SDNController,routingmanager.getDPID(n2),target_prefix,self_prefix,500000);
@@ -818,7 +794,7 @@ public class SdxManager extends SliceCommon{
         link.setIP(IPPrefix + String.valueOf(ip_to_use));
         link.setMask(mask);
         //logger.debug(link.nodea+":"+link.getIP(1)+" "+link.nodeb+":"+link.getIP(2));
-        routingmanager.newLink(link.getIP(1), link.nodea, link.getIP(2), link.nodeb, httpcontroller);
+        routingmanager.newLink(link.getIP(1), link.nodea, link.getIP(2), link.nodeb, httpcontroller,0);
       }
     }
     //set ovsdb address
@@ -1009,7 +985,7 @@ public class SdxManager extends SliceCommon{
         String param="";
         if(link.nodeb!=""){
           logger.debug(link.nodea+":"+link.getIP(1)+" "+link.nodeb+":"+link.getIP(2));
-          routingmanager.newLink(link.getIP(1), link.nodea, link.getIP(2), link.nodeb, httpcontroller);
+          routingmanager.newLink(link.getIP(1), link.nodea, link.getIP(2), link.nodeb, httpcontroller,0);
         }
         else{
           logger.debug(link.nodea+" gateway address:"+link.getIP(1));
@@ -1070,3 +1046,33 @@ public class SdxManager extends SliceCommon{
 	}
 }
 
+class Link{
+  public String linkname="";
+  public String nodea="";
+  public String nodeb="";
+  public String ipprefix="";
+  public String mask="";
+  public Link(){}
+  public void addNode(String node){
+    if(nodea=="")
+      nodea=node;
+    else
+      nodeb=node;
+  }
+
+  public void setName(String name){
+    linkname=name;
+  }
+
+  public void setIP(String ip){
+    ipprefix=ip;
+  }
+
+  public void setMask(String m){
+    mask=m;
+  }
+
+  public String  getIP(int i){
+    return ipprefix+"."+String.valueOf(i)+mask;
+  }
+}

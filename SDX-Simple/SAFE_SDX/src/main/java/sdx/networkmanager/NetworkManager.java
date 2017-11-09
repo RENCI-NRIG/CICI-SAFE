@@ -16,7 +16,112 @@ import java.lang.System;
 import sdx.utils.HttpUtil;
 
 public class NetworkManager{
-  final static Logger logger = Logger.getLogger(NetworkManager.class);	
+  final static Logger logger = Logger.getLogger(NetworkManager.class);
+
+  class Link{
+    private String ifa="";
+    private String ifb="";
+    private String ra="";
+    private String rb="";
+    private int capacity;
+
+    private int usedbw;
+    public Link(String ia, String ib, String routera, String routerb, int capacity){
+      this.ifa=ia;
+      this.ifb=ib;
+      this.ra=routera;
+      this.rb=routerb;
+      this.capacity=capacity;
+      this.usedbw=0;
+    }
+
+    public String pair_ip(String ip){
+      if(ip.equals(ifa))
+        return ifb;
+      else if(ip.equals(ifb))
+        return ifa;
+      else
+        return "";
+    }
+
+    public int getAvailableBW(){
+      return this.capacity-this.usedbw;
+    }
+
+    public void useBW(int bw){
+      this.usedbw+=bw;
+    }
+
+    public void releaseBW(int bw){
+      this.usedbw-=bw;
+    }
+
+    public boolean equals(Link link){
+      if(ifa==link.ifa && ifb==link.ifb  || ifa==link.ifb && ifb==link.ifa){
+        if(ra==link.ra && rb==link.rb  || ra==link.rb && rb==link.ra){
+          return true;
+        }
+      }
+      return false;
+    }
+
+  }
+
+  class Router{
+    private String routerid="";
+    private String dpid="";
+    private String ip="";
+    private HashSet<String> interfaces=new HashSet<String>();
+    private HashMap<String,Link> neighbors=new HashMap<String,Link>();
+    private HashSet<String> customergateways=new HashSet<>();
+    private int numInterfaces=0;
+
+    public HashMap<String,Link> getNeighbors(){
+      return neighbors;
+    }
+
+    public Router(String rid, String switch_id, int numintf, String ip){
+      routerid=rid;
+      dpid=switch_id;
+      this.ip=ip;
+      numInterfaces=numintf;
+    }
+
+    public void addInterface(String interfaceIP){
+      interfaces.add(interfaceIP);
+    }
+
+    public void addGateway(String gw){
+      logger.debug("Gateway "+gw +" added to "+routerid);
+      customergateways.add(gw);
+    }
+
+    public boolean hasGateway(String gw){
+      return customergateways.contains(gw);
+    }
+
+    public void addNeighbor(String neighborIP,Link link){
+      neighbors.put(neighborIP,link);
+    }
+
+    public void updateInterfaceNum(int newnum){
+      numInterfaces=newnum;
+    }
+
+    public int getInterfaceNum(){
+      return numInterfaces;
+    }
+    public String getDPID(){
+      return dpid;
+    }
+
+    public String getRouterID(){
+      return routerid;
+    }
+    public String getManagementIP(){
+      return this.ip;
+    }
+  }
 
   private HashMap<String,ArrayList<Integer>> router_queues=new HashMap<>();
   private HashMap<String, ArrayList<JSONObject>>router_matches=new HashMap<>();
@@ -87,23 +192,24 @@ public class NetworkManager{
     return ips;
   }
 
-  public  void addLink(String ipa, String ra, String ipb,String rb){
+  public  void addLink(String ipa, String ra, String ipb,String rb,int cap){
     //logger.debug(ipa+" "+ipb);
     if(!ipa.equals("") && !ipb.equals("")){
       putLink(ipa,ipb);
       putLink(ipb,ipa);
     }
     Router router=getRouter(ra);
+    Link link =new Link(ipa,ipb,ra,rb,cap);
     if(router!=null){
       router.addInterface(ipa);
       putPairRouter(ipa, router.getDPID());
       if(!rb.equals("")){
         //logger.debug("addneighbor"+ipa+" "+ipb);
-        router.addNeighbor(ipb);
+        router.addNeighbor(ipb,link);
         putRouter(router);
         router=getRouter(rb);
         router.addInterface(ipb);
-        router.addNeighbor(ipa);
+        router.addNeighbor(ipa,link);
         putRouter(router);
         putPairRouter(ipb, router.getDPID());
       }
@@ -147,10 +253,10 @@ public class NetworkManager{
     return result;
   }
 
-  public boolean newLink(String ipa, String ra, String ipb, String rb, String controller){
+  public boolean newLink(String ipa, String ra, String ipb, String rb, String controller,int capacity){
     logger.debug("RoutingManager: new link "+ra+ipa+rb+ipb);
     System.out.println("new link  ra "+ra+" ipa "+ipa+ " rb "+rb +" ipb "+ipb);
-    addLink(ipa,ra,ipb,rb);
+    addLink(ipa,ra,ipb,rb,capacity);
     String dpid=getDPID(ra);
     String[] cmd = addrCMD(ipa,dpid,controller);
     boolean result=true;
@@ -188,7 +294,7 @@ public class NetworkManager{
   }
 
   //gateway is the gateway for nodename
-  public void configurePath(String dest, String nodename,String targetIP,String targetnodename, String gateway, String controller) {
+  public void configurePath(String dest, String nodename,String targetIP,String targetnodename, String gateway, String controller,int bw) {
     logger.debug("Network Manager: Configuring path for "+dest+" "+nodename+" "+targetIP+" "+targetnodename+" "+gateway);
     String gwdpid=getRouter(nodename).getDPID();
     String targetdpid=getRouter(targetnodename).getDPID();
@@ -196,8 +302,13 @@ public class NetworkManager{
       logger.debug("No router named "+nodename+" not found");
       return;
     }
-    ArrayList<String[]>paths=getPairRoutes(gwdpid,targetdpid,gateway);
+    ArrayList<String[]>paths=getPairRoutes(gwdpid,targetdpid,gateway,bw);
     for(String[] path: paths){
+      //Path [dpid,gateway,neighborip]
+      Router router=getRouter(path[0]);
+      if(path[2]!=null) {
+        router.getNeighbors().get(path[2]).useBW(bw);
+      }
       String []cmd=routingCMD(dest,targetIP, path[1], path[0], controller);
       HttpUtil.postJSON(cmd[0],new JSONObject(cmd[1]));
       addEntry_HashList(sdncmds,path[0],cmd);
@@ -205,8 +316,8 @@ public class NetworkManager{
     }
   }
 
-  public boolean findPath(String node1, String node2){
-      ArrayList<String[]>paths=getPairRoutes(getDPID(node1),getDPID(node2),"test");
+  public boolean findPath(String node1, String node2,int bw){
+      ArrayList<String[]>paths=getPairRoutes(getDPID(node1),getDPID(node2),"test",bw);
       return paths.size()>0;
   }
 
@@ -298,7 +409,7 @@ public class NetworkManager{
   }
 
   //TODO: get shortest path for two pairs
-  private ArrayList<String[]> getPairRoutes(String srcdpid, String dstdpid, String gateway){
+  private ArrayList<String[]> getPairRoutes(String srcdpid, String dstdpid, String gateway,int bw){
 
     HashSet<String> knownrouters=new HashSet<String>();
     //path queue: [dpid, path]
@@ -308,9 +419,10 @@ public class NetworkManager{
     knownrouters.add(srcdpid);
     //{router-id:gateway}
     ArrayList<String[]>knownpaths=new ArrayList<String[]>();
-    String[] initroute=new String[2];
+    String[] initroute=new String[3];
     initroute[0]=srcdpid;
     initroute[1]=gateway;
+    initroute[2]=null;
     knownpaths.add(initroute);
     if(srcdpid.equals(dstdpid)){
       return knownpaths;
@@ -324,9 +436,13 @@ public class NetworkManager{
       start+=1;
       Router router=getRouterByDPID(rid);
       if(router!=null){
-        ArrayList<String> nips=getNeighborIPs(rid);
-        for (String ip:nips){
+        HashMap<String,Link> nbs=router.getNeighbors();
+        //ArrayList<String> nips=getNeighborIPs(rid);
+        for (String ip:nbs.keySet()){
           //logger.debug("neighborIP: "+ip);
+          if(nbs.get(ip).getAvailableBW()<bw){
+            continue;
+          }
           String pairrouter=getPairRouter(ip);
           if(!knownrouters.contains(pairrouter)){
             knownrouters.add(pairrouter);
@@ -334,8 +450,9 @@ public class NetworkManager{
             String[]path=new String[3];
             path[0]=getPairRouter(ip);
             logger.debug(ip);
-            path[1]=getPairIP(ip).split("/")[0];
-            path[2]=getPairIP(ip);
+            String pairip=getPairIP(ip);
+            path[1]=pairip.split("/")[0];
+            path[2]=pairip;
             logger.debug(path[1]);
             knownpaths.add(path);
             if(pairrouter.equals(dstdpid)){
@@ -375,7 +492,6 @@ public class NetworkManager{
     //for(String[] link:ip_router){
     //  //logger.debug(link[0]+" "+link[1]);
     //}
-
     HashSet<String> knownrouters=new HashSet<String>();
     //path queue: [dpid, path]
     //format of path:Arraylist([router_id,gateway])
@@ -517,6 +633,7 @@ public class NetworkManager{
 }
 
 
+/*
 class RLink{
   private String ifa="";
   private String ifb="";
@@ -546,5 +663,5 @@ class RLink{
     }
     return false;
   }
-}
+}*/
 
