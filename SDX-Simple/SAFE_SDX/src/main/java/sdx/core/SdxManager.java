@@ -189,8 +189,8 @@ public class SdxManager extends SliceCommon{
     catch (Exception e){
       e.printStackTrace();
     }
-    //SDNControllerIP="152.3.136.36";
-    SDNControllerIP=((ComputeNode)serverslice.getResourceByName("plexuscontroller")).getManagementIP();
+    SDNControllerIP="152.3.136.36";
+    //SDNControllerIP=((ComputeNode)serverslice.getResourceByName("plexuscontroller")).getManagementIP();
     //System.out.println("plexuscontroler managementIP = " + SDNControllerIP);
     SDNController=SDNControllerIP+":8080";
     OVSController=SDNControllerIP+":6633";
@@ -430,6 +430,7 @@ public class SdxManager extends SliceCommon{
           continue;
         }
         if(!safeauth || authorizeConnectivity(pair[0],pair[1],customer_keyhash,dest)){
+
     //      res.add(pair[1]);
           System.out.println("Connection between "+pair[1]+" and "+dest+" allowed");
           routingmanager.configurePath(dest,router,pair[1],pair[3],gateway,SDNController);
@@ -573,6 +574,7 @@ public class SdxManager extends SliceCommon{
 
   private static void restartPlexus(String plexusip){
     logger.debug("Restarting Plexus Controller");
+    //String script="docker exec -d plexus /bin/bash -c  \"cd /root;pkill ryu-manager;ryu-manager ryu/ryu/app/rest_router.py  |tee log\"\n";
     String script="docker exec -d plexus /bin/bash -c  \"cd /root;pkill ryu-manager;ryu-manager ryu/ryu/app/rest_router.py ryu/ryu/app/rest_conf_switch.py ryu/ryu/app/rest_qos.py |tee log\"\n";
     //String script="docker exec -d plexus /bin/bash -c  \"cd /root;pkill ryu-manager;ryu-manager plexus/plexus/app.py ryu/ryu/app/rest_conf_switch.py ryu/ryu/app/rest_qos.py |tee log\"\n";
     logger.debug(sshkey);
@@ -621,7 +623,7 @@ public class SdxManager extends SliceCommon{
       for(Interface i: s.getInterfaces()){
         InterfaceNode2Net inode2net=(InterfaceNode2Net)i;
         logger.debug("linkname: "+inode2net.getLink().toString()+" bandwidth: "+ inode2net.getLink().getBandwidth());
-        if(ifs.contains(i.getName())){
+        if(ifs.contains(i.getName())||!pattern.matcher(inode2net.getNode().getName()).find()){
           logger.debug("continue");
           continue;
         }
@@ -682,8 +684,8 @@ public class SdxManager extends SliceCommon{
       Exec.sshExec("root", mip, "/bin/bash ~/ovsbridge.sh " + OVSController, sshkey).split(" ");
       sleep(1);
       result = Exec.sshExec("root", mip, "/bin/bash ~/dpid.sh", sshkey).split(" ");
-      result[1] = result[1].replace("\n", "");
     }
+    result[1] = result[1].replace("\n", "");
     logger.debug("Get router info " + result[0] + " " + result[1]);
     routingmanager.newRouter(node.getName(), result[1], Integer.valueOf(result[0]), mip);
   }
@@ -701,13 +703,7 @@ public class SdxManager extends SliceCommon{
         for (String cname : computenodes.get(k)) {
           //System.out.println("mip node managment: " + node.getManagementIP());
           ComputeNode node=(ComputeNode) s.getResourceByName(cname);
-          String mip = node.getManagementIP();
-          logger.debug(node.getName() + " " + mip);
-          Exec.sshExec("root", mip, "/bin/bash ~/ovsbridge.sh " + ovscontroller, sshkey).split(" ");
-          String[] result = Exec.sshExec("root", mip, "/bin/bash ~/dpid.sh", sshkey).split(" ");
-          result[1] = result[1].replace("\n", "");
-          logger.debug("Get router info " + result[0] + " " + result[1]);
-          routingmanager.newRouter(node.getName(), result[1], Integer.valueOf(result[0]), mip);
+          configRouter(node);
         }
       }
     } catch (Exception e) {

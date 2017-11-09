@@ -104,7 +104,7 @@ public class NetworkManager{
   }
 
   public void newLink(String ipa, String ra, String gw,String controller) {
-    logger.debug("RoutingManager: new link "+ra+ipa);
+    logger.debug("RoutingManager: new link "+ra+" "+ipa);
     System.out.println("new stitch "+ra +" gateway:"+ipa);
     addLink(ipa,ra, gw);
     String dpid= getRouter(ra).getDPID();
