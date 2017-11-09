@@ -100,13 +100,13 @@ public class SliceManager extends SliceCommon {
 		  safeauth=false;
 		}
 
-		sliceProxy = SliceManager.getSliceProxy(pemLocation, keyLocation, controllerUrl);
+		sliceProxy = SliceCommon.getSliceProxy(pemLocation, keyLocation, controllerUrl);
 
 		//SSH context
 		sctx = new SliceAccessContext<>();
 		try {
 			SSHAccessTokenFileFactory fac;
-			fac = new SSHAccessTokenFileFactory("~/.ssh/id_rsa.pub", false);
+			fac = new SSHAccessTokenFileFactory(sshkey+".ssh", false);
 			SSHAccessToken t = fac.getPopulatedToken();
 			sctx.addToken("root", "root", t);
 			sctx.addToken("root", t);
@@ -272,6 +272,7 @@ public class SliceManager extends SliceCommon {
 			//  ifaceNode0.setNetmask("255.255.255.0");
 			//  stitchlist.add(net1);
 			//}
+			/*
 			if (i != num - 1) {
 				Network net2 = s.addBroadcastLink("clink" + String.valueOf(i), bw);
 				InterfaceNode2Net ifaceNode1 = (InterfaceNode2Net) net2.stitch(node0);
@@ -280,7 +281,7 @@ public class SliceManager extends SliceCommon {
 			if (i != 0) {
 				Network net = netlist.get(i - 1);
 				InterfaceNode2Net ifaceNode1 = (InterfaceNode2Net) net.stitch(node0);
-			}
+			}*/
 		}
 		if(safeauth) {
 			addSafeServer(s, riakip);

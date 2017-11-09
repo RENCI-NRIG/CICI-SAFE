@@ -90,45 +90,33 @@ public class SdxExogeniClient extends SliceCommon {
     readConfig(configfilepath);
     sdxserver=conf.getString("config.sdxserver");
 
-		sliceProxy = getSliceProxy(pemLocation,keyLocation, controllerUrl);		
-		//SSH context
-		sctx = new SliceAccessContext<>();
-		try {
-			SSHAccessTokenFileFactory fac;
-			fac = new SSHAccessTokenFileFactory(sshkey+".pub", false);
-			SSHAccessToken t = fac.getPopulatedToken();			
-			sctx.addToken("root", "root", t);
-			sctx.addToken("root", t);
-		} catch (UtilTransportException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+    sliceProxy = SliceCommon.getSliceProxy(pemLocation, keyLocation, controllerUrl);
 
-     Slice s2 = null;
-     try {
-       s2 = Slice.loadManifestFile(sliceProxy, sliceName);
-       ComputeNode safe=(ComputeNode)s2.getResourceByName("safe-server");
-       safeserver=safe.getManagementIP()+":7777";
-     } catch (ContextTransportException e) {
-       // TODO Auto-generated catch block
-       e.printStackTrace();
-     } catch (TransportException e) {
-       // TODO Auto-generated catch block
-       e.printStackTrace();
-     }
-     logger.debug("client start");
-     String message = "";
-     String customerName=sliceName;
-     if(cmd.hasOption('e')){
-       String command= cmd.getOptionValue('e');
-       processCmd(command);
-       return;
-     }
-     String input = new String();
-     String cmdprefix=sliceName+"$>";
-     if(cmd.hasOption('n')){
-       safeauth=false;
-     }
+    //SSH context
+    sctx = new SliceAccessContext<>();
+    try {
+      SSHAccessTokenFileFactory fac;
+      fac = new SSHAccessTokenFileFactory(sshkey+".ssh", false);
+      SSHAccessToken t = fac.getPopulatedToken();
+      sctx.addToken("root", "root", t);
+      sctx.addToken("root", t);
+    } catch (UtilTransportException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+    }
+    logger.debug("client start");
+    String message = "";
+    String customerName=sliceName;
+    if(cmd.hasOption('e')){
+      String command= cmd.getOptionValue('e');
+      processCmd(command);
+      return;
+    }
+    String input = new String();
+    String cmdprefix=sliceName+"$>";
+    if(cmd.hasOption('n')){
+      safeauth=false;
+    }
 		try{
 //	 			logger.debug(obj.sayHello()); 
       java.io.BufferedReader stdin = new java.io.BufferedReader(new java.io.InputStreamReader(System.in));  
@@ -142,11 +130,11 @@ public class SdxExogeniClient extends SliceCommon {
         }
       }
     }
-    catch (Exception e) 
-    { 
-      logger.debug("HttpClient exception: " + e.getMessage()); 
-      e.printStackTrace(); 
-    } 
+    catch (Exception e)
+    {
+      logger.debug("HttpClient exception: " + e.getMessage());
+      e.printStackTrace();
+    }
 		logger.debug("XXXXXXXXXX Done XXXXXXXXXXXXXX");
 	}
 
@@ -185,6 +173,7 @@ public class SdxExogeniClient extends SliceCommon {
 	  try{
       JSONObject jsonparams=new JSONObject();
       String site1=null,site2=null;
+      /*
       for(String site:sitelist){
         if(site.contains(params[1])){
           site1=site;
@@ -203,6 +192,10 @@ public class SdxExogeniClient extends SliceCommon {
       }
       jsonparams.put("site1",site1);
       jsonparams.put("site2",site2);
+      */
+      jsonparams.put("self_prefix",params[1]);
+      jsonparams.put("target_prefix",params[2]);
+      jsonparams.put("ckeyhash",keyhash);
       String res=SdxHttpClient.httpRequest(sdxserver+"sdx/connectionrequest",jsonparams);
       logger.debug("get connection result from server:\n"+ res);
       System.out.println(res);
