@@ -96,7 +96,7 @@ public class SdxExogeniClient extends SliceCommon {
     sctx = new SliceAccessContext<>();
     try {
       SSHAccessTokenFileFactory fac;
-      fac = new SSHAccessTokenFileFactory(sshkey+".ssh", false);
+      fac = new SSHAccessTokenFileFactory(sshkey+".pub", false);
       SSHAccessToken t = fac.getPopulatedToken();
       sctx.addToken("root", "root", t);
       sctx.addToken("root", t);
