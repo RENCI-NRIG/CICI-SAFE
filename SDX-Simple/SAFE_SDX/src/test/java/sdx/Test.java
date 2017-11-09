@@ -73,17 +73,26 @@ public class Test {
     //String getcmd="curl -X GET http://"+controller+":8080/qos/rules/"+dpid1;
     //String[] qoscmd="curl -X POST -d \'{\"match\":{\"nw_dst\":\"192.168.10.2\",\"nw_proto\":\"TCP\",\"tp_dst\":\"5002\"},\"actions\":{\"queue\":\"0\"}}\' http://"+controller+":8080/qos/rules/"+dpid1;
     String[]qoscmd=qosCMD(controller,dpid1);
-    HttpUtil.postJSON(qoscmd[0], new JSONObject(qoscmd[1]));
-    HttpUtil.get(qoscmd[0]);
+    JSONObject res=HttpUtil.postJSON(qoscmd[0], new JSONObject(qoscmd[1]));
+    System.out.println(res.toString());
+    System.out.println(HttpUtil.get(qoscmd[0]));
     qoscmd=qosCMD_1(controller,dpid1);
-    HttpUtil.postJSON(qoscmd[0], new JSONObject(qoscmd[1]));
-    HttpUtil.get(qoscmd[0]);
+    res=HttpUtil.postJSON(qoscmd[0], new JSONObject(qoscmd[1]));
+    System.out.println(res.toString());
+
+    String output=HttpUtil.get(qoscmd[0]);
+    System.out.println(output);
     qoscmd=qosCMD(controller,dpid2);
-    HttpUtil.postJSON(qoscmd[0], new JSONObject(qoscmd[1]));
-    HttpUtil.get(qoscmd[0]);
+    res=HttpUtil.postJSON(qoscmd[0], new JSONObject(qoscmd[1]));
+    System.out.println(res.toString());
+
+    output=HttpUtil.get(qoscmd[0]);
+    System.out.println(output);
     qoscmd=qosCMD_1(controller,dpid2);
-    HttpUtil.postJSON(qoscmd[0], new JSONObject(qoscmd[1]));
-    HttpUtil.get(qoscmd[0]);
+    res=HttpUtil.postJSON(qoscmd[0], new JSONObject(qoscmd[1]));
+    System.out.println(res.toString());
+    output=HttpUtil.get(qoscmd[0]);
+    System.out.println(output);
 
   }
 }
