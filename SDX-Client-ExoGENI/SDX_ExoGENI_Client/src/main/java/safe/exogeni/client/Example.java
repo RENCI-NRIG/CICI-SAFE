@@ -120,6 +120,12 @@ public class Example extends SliceCommon{
       try{
         System.out.println("Using riak server at "+riakip);
         Slice c1=createCustomerSlice(customerName,2,IPPrefix,curip,1000000,true);
+				try {
+					c1.commit();
+				} catch (XMLRPCTransportException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
         waitTillActive(c1);
         //copyFile2Slice(c1, "/home/yaoyj11/project/exo-geni/SAFE_SDX/src/main/resources/scripts/configospffornewif.sh","~/configospffornewif.sh","~/.ssh/id_rsa");
         //copyFile2Slice(c1, "/home/yaoyj11/project/exo-geni/SAFE_SDX/src/main/resources/scripts/configospffornewif.sh","~/configospffornewif.sh","~/.ssh/id_rsa");
@@ -195,12 +201,6 @@ public class Example extends SliceCommon{
 		}
 		//add safe server
 		addSafeServer(s,riakip);
-		try {
-			s.commit();
-		} catch (XMLRPCTransportException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
 		return s;
 	}
 

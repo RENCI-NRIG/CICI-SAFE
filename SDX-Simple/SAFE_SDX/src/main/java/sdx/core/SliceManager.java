@@ -100,13 +100,13 @@ public class SliceManager extends SliceCommon {
 		  safeauth=false;
 		}
 
-		sliceProxy = SliceManager.getSliceProxy(pemLocation, keyLocation, controllerUrl);
+		sliceProxy = SliceCommon.getSliceProxy(pemLocation, keyLocation, controllerUrl);
 
 		//SSH context
 		sctx = new SliceAccessContext<>();
 		try {
 			SSHAccessTokenFileFactory fac;
-			fac = new SSHAccessTokenFileFactory("~/.ssh/id_rsa.pub", false);
+			fac = new SSHAccessTokenFileFactory(sshkey+".ssh", false);
 			SSHAccessToken t = fac.getPopulatedToken();
 			sctx.addToken("root", "root", t);
 			sctx.addToken("root", t);

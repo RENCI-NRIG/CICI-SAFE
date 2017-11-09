@@ -90,6 +90,20 @@ public class SdxExogeniClient extends SliceCommon {
     readConfig(configfilepath);
     sdxserver=conf.getString("config.sdxserver");
 
+    sliceProxy = SliceCommon.getSliceProxy(pemLocation, keyLocation, controllerUrl);
+
+    //SSH context
+    sctx = new SliceAccessContext<>();
+    try {
+      SSHAccessTokenFileFactory fac;
+      fac = new SSHAccessTokenFileFactory(sshkey+".ssh", false);
+      SSHAccessToken t = fac.getPopulatedToken();
+      sctx.addToken("root", "root", t);
+      sctx.addToken("root", t);
+    } catch (UtilTransportException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+    }
     logger.debug("client start");
     String message = "";
     String customerName=sliceName;
