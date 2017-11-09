@@ -304,7 +304,7 @@ public class SdxManager extends SliceCommon{
     return res;
   }
 
-	public static String connectionRequest(String ckeyhash, String self_prefix, String target_prefix){
+	public static String connectionRequest(String ckeyhash, String self_prefix, String target_prefix,long bandwidth){
 
 	  //String n1=computenodes.get(site1).get(0);
 	  //String n2=computenodes.get(site2).get(0);
@@ -313,12 +313,12 @@ public class SdxManager extends SliceCommon{
     if(n1==null ||n2==null){
       return "Prefix unrecognized.";
     }
-    Slice s=getSlice();
-	  ComputeNode node1=(ComputeNode)s.getResourceByName(n1);
-	  ComputeNode node2=(ComputeNode)s.getResourceByName(n2);
 	  boolean res=true;
-	  if(!routingmanager.findPath(n1,n2,0)) {
+	  if(!routingmanager.findPath(n1,n2,bandwidth)) {
       //find name for the new two nodes
+      Slice s=getSlice();
+      ComputeNode node1=(ComputeNode)s.getResourceByName(n1);
+      ComputeNode node2=(ComputeNode)s.getResourceByName(n2);
       String name1 = null, name2 = null;
       String link1 = null;
       //FIXME: if we can't find path bewteen the requested prefix, allcoate new links to meet the requirements
@@ -346,8 +346,8 @@ public class SdxManager extends SliceCommon{
       //  logger.debug("Link addition failed");
       //  return "Link addition failed";
       //}
-
-      System.out.println("Now add a link named \"" + link1 + "\" between " + n1 + " and " + n2);
+      long linkbw=2*bandwidth;
+      System.out.println("Now add a link named \"" + link1 + "\" between " + n1 + " and " + n2 +" with bandwidht "+linkbw);
       try {
         java.io.BufferedReader stdin = new java.io.BufferedReader(new java.io.InputStreamReader(System.in));
         stdin.readLine();
@@ -363,6 +363,7 @@ public class SdxManager extends SliceCommon{
       l1.setName(link1);
       l1.addNode(node1.getName());
       l1.addNode(node2.getName());
+      l1.setCapacity(linkbw);
       links.put(link1, l1);
 
       int ip_to_use = 0;
@@ -386,7 +387,8 @@ public class SdxManager extends SliceCommon{
       routingmanager.replayCmds(routingmanager.getDPID(node2.getName()));
       Exec.sshExec("root", node2.getManagementIP(), "ifconfig;ovs-vsctl list port", sshkey);
 
-      res = routingmanager.newLink(l1.getIP(1), l1.nodea, l1.getIP(2), l1.nodeb, SDNController,0);
+      //TODO: why nodeb dpid could be null
+      res = routingmanager.newLink(l1.getIP(1), l1.nodea, l1.getIP(2), l1.nodeb, SDNController,linkbw);
       //set ip address
       //add link to links
     }
@@ -394,12 +396,13 @@ public class SdxManager extends SliceCommon{
     if(res){
       writeLinks(topofile);
       System.out.println("Link added successfully, configuring routes");
-      routingmanager.configurePath(self_prefix,n1,target_prefix,n2,prefixgateway.get(self_prefix),SDNController,0);
-      routingmanager.configurePath(target_prefix,n2,self_prefix,n1,prefixgateway.get(target_prefix),SDNController,0);
+      routingmanager.configurePath(self_prefix,n1,target_prefix,n2,prefixgateway.get(self_prefix),SDNController,bandwidth);
+      routingmanager.configurePath(target_prefix,n2,self_prefix,n1,prefixgateway.get(target_prefix),SDNController,bandwidth);
       System.out.println("Routing set up for "+self_prefix+" and "+target_prefix);
-      routingmanager.setQos(SDNController,routingmanager.getDPID(n1),self_prefix,target_prefix,500000);
-      routingmanager.setQos(SDNController,routingmanager.getDPID(n2),target_prefix,self_prefix,500000);
-
+      if(bandwidth>0) {
+        routingmanager.setQos(SDNController, routingmanager.getDPID(n1), self_prefix, target_prefix, bandwidth);
+        routingmanager.setQos(SDNController, routingmanager.getDPID(n2), target_prefix, self_prefix, bandwidth);
+      }
     }
 
 	  return "link added and route configured: "+res;
@@ -639,6 +642,9 @@ public class SdxManager extends SliceCommon{
             link.setIP(IPPrefix+ip);
             link.setMask(mask);
           }
+          else{
+            link.setCapacity(inode2net.getLink().getBandwidth());
+          }
         }
         else{
           link.addNode(inode2net.getNode().toString());
@@ -794,7 +800,7 @@ public class SdxManager extends SliceCommon{
         link.setIP(IPPrefix + String.valueOf(ip_to_use));
         link.setMask(mask);
         //logger.debug(link.nodea+":"+link.getIP(1)+" "+link.nodeb+":"+link.getIP(2));
-        routingmanager.newLink(link.getIP(1), link.nodea, link.getIP(2), link.nodeb, httpcontroller,0);
+        routingmanager.newLink(link.getIP(1), link.nodea, link.getIP(2), link.nodeb, httpcontroller,link.capacity);
       }
     }
     //set ovsdb address
@@ -812,6 +818,7 @@ public class SdxManager extends SliceCommon{
         link.setName(params[0]);
         link.addNode(params[1]);
         link.addNode(params[2]);
+        link.setCapacity(Long.valueOf(params[3]));
         res.add(link);
       }
       br.close();
@@ -828,7 +835,7 @@ public class SdxManager extends SliceCommon{
       for(String key:keyset){
         if(!key.contains("stitch")){
           Link link=links.get(key);
-          br.write(link.linkname + " " + link.nodea + " " + link.nodeb + "\n");
+          br.write(link.linkname + " " + link.nodea + " " + link.nodeb +" "+link.capacity+"\n");
         }
       }
       br.close();
@@ -837,6 +844,7 @@ public class SdxManager extends SliceCommon{
     }
   }
 
+  /*
   public static void configRouting(Slice s,String ovscontroller, String httpcontroller, String routerpattern,String stitchportpattern){
     logger.debug("Configurating Routing");
     restartPlexus(SDNControllerIP);
@@ -1001,6 +1009,7 @@ public class SdxManager extends SliceCommon{
     }
   }
 
+*/
 	
 
 	public static void undoStitch(String sdxslice, String customerName, String netName, String nodeName){
@@ -1052,6 +1061,7 @@ class Link{
   public String nodeb="";
   public String ipprefix="";
   public String mask="";
+  public long capacity=0;
   public Link(){}
   public void addNode(String node){
     if(nodea=="")
@@ -1070,6 +1080,9 @@ class Link{
 
   public void setMask(String m){
     mask=m;
+  }
+  public void setCapacity(long cap){
+    this.capacity=cap;
   }
 
   public String  getIP(int i){

@@ -69,7 +69,7 @@ public class RestService {
     logger.debug("got link request between "+sr.self_prefix+" and "+sr.target_prefix);
     System.out.println("got link request between "+sr.self_prefix+" and "+sr.target_prefix);
     try {
-      String res = SdxManager.connectionRequest(sr.ckeyhash,sr.self_prefix,sr.target_prefix);
+      String res = SdxManager.connectionRequest(sr.ckeyhash,sr.self_prefix,sr.target_prefix,sr.bandwidth);
       return res;
     }catch (Exception e){
       e.printStackTrace();
@@ -154,13 +154,22 @@ class ConnectionRequest{
   public  String ckeyhash;
   public String self_prefix;
   public String target_prefix;
+  public long bandwidth;
 
   public ConnectionRequest(){}
 
   public ConnectionRequest(String self_prefix, String target_prefix){
     this.self_prefix=self_prefix;
     this.target_prefix=target_prefix;
+    this.bandwidth=0;
   }
+
+  public ConnectionRequest(String self_prefix, String target_prefix,long bandwidth){
+    this.self_prefix=self_prefix;
+    this.target_prefix=target_prefix;
+    this.bandwidth=bandwidth;
+  }
+
 }
 
 class PrefixNotification{

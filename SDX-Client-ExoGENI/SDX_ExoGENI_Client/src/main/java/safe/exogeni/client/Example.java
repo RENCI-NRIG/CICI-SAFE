@@ -119,6 +119,7 @@ public class Example extends SliceCommon{
       String customerName=sliceName;
       try{
         System.out.println("Using riak server at "+riakip);
+				System.out.println("IP prefix "+IPPrefix);
         Slice c1=createCustomerSlice(customerName,2,IPPrefix,curip,1000000,true);
 				try {
 					c1.commit();

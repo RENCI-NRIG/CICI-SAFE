@@ -23,10 +23,9 @@ public class NetworkManager{
     private String ifb="";
     private String ra="";
     private String rb="";
-    private int capacity;
-
-    private int usedbw;
-    public Link(String ia, String ib, String routera, String routerb, int capacity){
+    private long capacity;
+    private long usedbw;
+    public Link(String ia, String ib, String routera, String routerb, long capacity){
       this.ifa=ia;
       this.ifb=ib;
       this.ra=routera;
@@ -44,15 +43,15 @@ public class NetworkManager{
         return "";
     }
 
-    public int getAvailableBW(){
+    public long getAvailableBW(){
       return this.capacity-this.usedbw;
     }
 
-    public void useBW(int bw){
+    public void useBW(long bw){
       this.usedbw+=bw;
     }
 
-    public void releaseBW(int bw){
+    public void releaseBW(long bw){
       this.usedbw-=bw;
     }
 
@@ -123,7 +122,7 @@ public class NetworkManager{
     }
   }
 
-  private HashMap<String,ArrayList<Integer>> router_queues=new HashMap<>();
+  private HashMap<String,ArrayList<Long>> router_queues=new HashMap<>();
   private HashMap<String, ArrayList<JSONObject>>router_matches=new HashMap<>();
   private  ArrayList<Router> routers=new ArrayList<Router>();
   private  ArrayList<String[]>ip_router=new ArrayList<String[]>();
@@ -147,7 +146,7 @@ public class NetworkManager{
     return null;
   }
 
-  public void setQos(String controller,String dpid, String srcip, String destip,int bw){
+  public void setQos(String controller,String dpid, String srcip, String destip,long bw){
     JSONObject match=new JSONObject();
     match.put("nw_src",srcip);
     match.put("nw_dst",destip);
@@ -161,7 +160,7 @@ public class NetworkManager{
     }
     router_queues.get(dpid).add(bw);
     String qurl=queueURL(controller,dpid);
-    JSONObject qdata=queueData(10000000,router_queues.get(dpid));
+    JSONObject qdata=queueData(1000000,router_queues.get(dpid));
     String res=HttpUtil.postJSON(qurl,qdata);
     logger.debug(res.toString());
     String qosurl=qosRuleURL(controller,dpid);
@@ -192,7 +191,7 @@ public class NetworkManager{
     return ips;
   }
 
-  public  void addLink(String ipa, String ra, String ipb,String rb,int cap){
+  public  void addLink(String ipa, String ra, String ipb,String rb,long cap){
     //logger.debug(ipa+" "+ipb);
     if(!ipa.equals("") && !ipb.equals("")){
       putLink(ipa,ipb);
@@ -221,8 +220,8 @@ public class NetworkManager{
     if(getRouter(routerid)==null){
 //      logger.debug(dpid+":my dpid");
       routers.add(new Router(routerid,dpid,numinterfaces, mip));
-      ArrayList<Integer> newqueue=new ArrayList<>();
-      newqueue.add(1000000);
+      ArrayList<Long> newqueue=new ArrayList<>();
+      newqueue.add(Long.valueOf(1000000));
       router_queues.put(dpid, newqueue);
     }
     else{
@@ -237,7 +236,7 @@ public class NetworkManager{
   }
 
   public boolean newLink(String ipa, String ra, String gw,String controller) {
-    logger.debug("RoutingManager: new link "+ra+" "+ipa);
+    logger.debug("RoutingManager: new stitchpoint "+ra+" "+ipa);
     System.out.println("new stitch "+ra +" gateway:"+ipa);
     addLink(ipa,ra, gw);
     String dpid= getRouter(ra).getDPID();
@@ -253,9 +252,9 @@ public class NetworkManager{
     return result;
   }
 
-  public boolean newLink(String ipa, String ra, String ipb, String rb, String controller,int capacity){
-    logger.debug("RoutingManager: new link "+ra+ipa+rb+ipb);
-    System.out.println("new link  ra "+ra+" ipa "+ipa+ " rb "+rb +" ipb "+ipb);
+  public boolean newLink(String ipa, String ra, String ipb, String rb, String controller,long capacity){
+    logger.debug("RoutingManager: new link "+ra+" "+ipa+" "+rb+" "+ipb);
+    System.out.println("new link  ra "+ra+" ipa "+ipa+ " rb "+rb +" ipb "+ipb+" cap:"+capacity);
     addLink(ipa,ra,ipb,rb,capacity);
     String dpid=getDPID(ra);
     String[] cmd = addrCMD(ipa,dpid,controller);
@@ -294,7 +293,7 @@ public class NetworkManager{
   }
 
   //gateway is the gateway for nodename
-  public void configurePath(String dest, String nodename,String targetIP,String targetnodename, String gateway, String controller,int bw) {
+  public void configurePath(String dest, String nodename,String targetIP,String targetnodename, String gateway, String controller,long bw) {
     logger.debug("Network Manager: Configuring path for "+dest+" "+nodename+" "+targetIP+" "+targetnodename+" "+gateway);
     String gwdpid=getRouter(nodename).getDPID();
     String targetdpid=getRouter(targetnodename).getDPID();
@@ -305,7 +304,7 @@ public class NetworkManager{
     ArrayList<String[]>paths=getPairRoutes(gwdpid,targetdpid,gateway,bw);
     for(String[] path: paths){
       //Path [dpid,gateway,neighborip]
-      Router router=getRouter(path[0]);
+      Router router=getRouterByDPID(path[0]);
       if(path[2]!=null) {
         router.getNeighbors().get(path[2]).useBW(bw);
       }
@@ -316,7 +315,7 @@ public class NetworkManager{
     }
   }
 
-  public boolean findPath(String node1, String node2,int bw){
+  public boolean findPath(String node1, String node2,long bw){
       ArrayList<String[]>paths=getPairRoutes(getDPID(node1),getDPID(node2),"test",bw);
       return paths.size()>0;
   }
@@ -340,12 +339,12 @@ public class NetworkManager{
     return  "http://"+controller+"/qos/queue/"+dpid;
   }
 
-  private JSONObject queueData(int maxrate, List<Integer> queuerate){
+  private JSONObject queueData(int maxrate, List<Long> queuerate){
     JSONObject params=new JSONObject();
     params.put("type","linux-htb");
     params.put("max_rate",String.valueOf(maxrate));
     JSONArray queues=new JSONArray();
-    for(Integer r:queuerate){
+    for(Long r:queuerate){
       JSONObject q=new JSONObject();
       q.put("max_rate",String.valueOf(r));
       queues.put(q);
@@ -409,7 +408,7 @@ public class NetworkManager{
   }
 
   //TODO: get shortest path for two pairs
-  private ArrayList<String[]> getPairRoutes(String srcdpid, String dstdpid, String gateway,int bw){
+  private ArrayList<String[]> getPairRoutes(String srcdpid, String dstdpid, String gateway,long bw){
 
     HashSet<String> knownrouters=new HashSet<String>();
     //path queue: [dpid, path]

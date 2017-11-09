@@ -196,6 +196,11 @@ public class SdxExogeniClient extends SliceCommon {
       jsonparams.put("self_prefix",params[1]);
       jsonparams.put("target_prefix",params[2]);
       jsonparams.put("ckeyhash",keyhash);
+      try {
+        jsonparams.put("bandwidth",Long.valueOf(params[3]));
+      }catch (Exception e){
+        ;
+      }
       String res=SdxHttpClient.httpRequest(sdxserver+"sdx/connectionrequest",jsonparams);
       logger.debug("get connection result from server:\n"+ res);
       System.out.println(res);
