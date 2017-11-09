@@ -33,7 +33,7 @@ public class NetworkManager{
       return null;
   }
 
-  public String findRouterbyGateway(String gw){
+  public String getRouterbyGateway(String gw){
     for(Router r:routers){
       if(r.hasGateway(gw)){
         return r.getRouterID();
@@ -103,28 +103,46 @@ public class NetworkManager{
     addRouter(routerid, dpid, numInterfaces,mip);
   }
 
-  public void newLink(String ipa, String ra, String gw,String controller) {
+  public boolean newLink(String ipa, String ra, String gw,String controller) {
     logger.debug("RoutingManager: new link "+ra+" "+ipa);
     System.out.println("new stitch "+ra +" gateway:"+ipa);
     addLink(ipa,ra, gw);
     String dpid= getRouter(ra).getDPID();
     String cmd[] = addrCMD(ipa,dpid,controller);
-    HttpUtil.postJSON(cmd[0],new JSONObject(cmd[1]));
-    addEntry_HashList(sdncmds,dpid,cmd);
+    boolean result=true;
+    JSONObject res=HttpUtil.postJSON(cmd[0],new JSONObject(cmd[1]));
+    if(res.toString().contains("success")){
+      addEntry_HashList(sdncmds,dpid,cmd);
+    }
+    else{
+      result=false;
+    }
+    return result;
   }
 
-  public void newLink(String ipa, String ra, String ipb, String rb, String controller){
+  public boolean newLink(String ipa, String ra, String ipb, String rb, String controller){
     logger.debug("RoutingManager: new link "+ra+ipa+rb+ipb);
     System.out.println("new link  ra "+ra+" ipa "+ipa+ " rb "+rb +" ipb "+ipb);
     addLink(ipa,ra,ipb,rb);
     String dpid=getDPID(ra);
     String[] cmd = addrCMD(ipa,dpid,controller);
-    HttpUtil.postJSON(cmd[0],new JSONObject(cmd[1]));
-    addEntry_HashList(sdncmds,dpid,cmd);
+    boolean result=true;
+    JSONObject res=HttpUtil.postJSON(cmd[0],new JSONObject(cmd[1]));
+    if(res.toString().contains("success")) {
+      addEntry_HashList(sdncmds, dpid, cmd);
+    }
+    else{
+      result=false;
+    }
     dpid=getDPID(rb);
     cmd = addrCMD(ipb,dpid,controller);
-    HttpUtil.postJSON(cmd[0],new JSONObject(cmd[1]));
-    addEntry_HashList(sdncmds,dpid,cmd);
+    res=HttpUtil.postJSON(cmd[0],new JSONObject(cmd[1]));
+    if(res.toString().contains("success")) {
+      addEntry_HashList(sdncmds, dpid, cmd);
+    }else{
+      result=false;
+    }
+    return result;
   }
 
   public void configurePath(String dest, String nodename, String gateway, String controller) {
@@ -142,6 +160,7 @@ public class NetworkManager{
     }
   }
 
+  //gateway is the gateway for nodename
   public void configurePath(String dest, String nodename,String targetIP,String targetnodename, String gateway, String controller) {
     logger.debug("Network Manager: Configuring path for "+dest+" "+nodename+" "+targetIP+" "+targetnodename+" "+gateway);
     String gwdpid=getRouter(nodename).getDPID();

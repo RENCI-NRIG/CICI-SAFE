@@ -97,6 +97,7 @@ public class SdxManager extends SliceCommon{
   private static final ReentrantLock iplock=new ReentrantLock();
   private static final ReentrantLock nodelock=new ReentrantLock();
   private static final ReentrantLock linklock=new ReentrantLock();
+  private static HashMap<String,String>prefixgateway=new HashMap<String,String>();
   //private static String type;
   private static ArrayList<String[]> advertisements=new ArrayList<String[]>();
   private static HashSet<Integer> usedip=new HashSet<Integer>();
@@ -327,15 +328,21 @@ public class SdxManager extends SliceCommon{
     return res;
   }
 
-	public static String connectionRequest(String site1, String site2){
-	  Slice s=getSlice();
-	  String n1=computenodes.get(site1).get(0);
-	  String n2=computenodes.get(site2).get(0);
+	public static String connectionRequest(String ckeyhash, String self_prefix, String target_prefix){
+	  //String n1=computenodes.get(site1).get(0);
+	  //String n2=computenodes.get(site2).get(0);
+    String n1=routingmanager.getRouterbyGateway(prefixgateway.get(self_prefix));
+    String n2=routingmanager.getRouterbyGateway(prefixgateway.get(target_prefix));
+    if(n1==null ||n2==null){
+      return "Prefix unrecognized.";
+    }
+    Slice s=getSlice();
 	  ComputeNode node1=(ComputeNode)s.getResourceByName(n1);
 	  ComputeNode node2=(ComputeNode)s.getResourceByName(n2);
 	  //find name for the new two nodes
     String name1=null,name2=null;
     String link1=null;
+    //FIXME: if we can't find path bewteen the requested prefix, allcoate new links to meet the requirements
 
 	  linklock.lock();
 	  try {
@@ -400,12 +407,19 @@ public class SdxManager extends SliceCommon{
     routingmanager.replayCmds(routingmanager.getDPID(node2.getName()));
     Exec.sshExec("root",node2.getManagementIP(),"ifconfig;ovs-vsctl list port",sshkey);
 
-    routingmanager.newLink(l1.getIP(1), l1.nodea, l1.getIP(2), l1.nodeb, SDNController);
+    boolean res=routingmanager.newLink(l1.getIP(1), l1.nodea, l1.getIP(2), l1.nodeb, SDNController);
     //set ip address
     //add link to links
-    System.out.println("Link added");
-    writeLinks(topofile);
-	  return "link added";
+
+    //configure routing
+    if(res){
+      writeLinks(topofile);
+      System.out.println("Link added successfully, configuring routes");
+      routingmanager.configurePath(self_prefix,n1,target_prefix,n2,prefixgateway.get(self_prefix),SDNController);
+      routingmanager.configurePath(target_prefix,n2,self_prefix,n1,prefixgateway.get(target_prefix),SDNController);
+    }
+
+	  return "link added and route configured: "+res;
   }
 
   public static String notifyPrefix(String dest, String gateway, String customer_keyhash){
@@ -416,12 +430,14 @@ public class SdxManager extends SliceCommon{
         res = res + " [authorization success]";
       }
       boolean flag=false;
-      String router=routingmanager.findRouterbyGateway(gateway);
+      String router=routingmanager.getRouterbyGateway(gateway);
+      prefixgateway.put(dest,gateway);
       if(router==null){
         logger.debug("Cannot find a router with cusotmer gateway"+gateway);
         res=res+" Cannot find a router with customer gateway "+gateway;
         return res;
       }
+      /*
       for(String[]pair:advertisements){
         if(pair[0].equals(customer_keyhash)&&pair[1].equals(dest)){
           flag=true;
@@ -430,13 +446,12 @@ public class SdxManager extends SliceCommon{
           continue;
         }
         if(!safeauth || authorizeConnectivity(pair[0],pair[1],customer_keyhash,dest)){
-
-    //      res.add(pair[1]);
           System.out.println("Connection between "+pair[1]+" and "+dest+" allowed");
           routingmanager.configurePath(dest,router,pair[1],pair[3],gateway,SDNController);
           routingmanager.configurePath(pair[1],pair[3],dest,router,pair[2],SDNController);
         }
       }
+      */
       if(!flag){
         String[] newpair=new String[4];
         newpair[0]=customer_keyhash;

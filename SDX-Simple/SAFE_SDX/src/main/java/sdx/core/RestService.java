@@ -66,10 +66,10 @@ public class RestService {
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.TEXT_PLAIN)
   public String connectionRequest(ConnectionRequest sr){
-    logger.debug("got link request between "+sr.site1+" and "+sr.site2);
-    System.out.println("got link request between "+sr.site1+" and "+sr.site2);
+    logger.debug("got link request between "+sr.self_prefix+" and "+sr.target_prefix);
+    System.out.println("got link request between "+sr.self_prefix+" and "+sr.target_prefix);
     try {
-      String res = SdxManager.connectionRequest(sr.site1,sr.site2);
+      String res = SdxManager.connectionRequest(sr.ckeyhash,sr.self_prefix,sr.target_prefix);
       return res;
     }catch (Exception e){
       e.printStackTrace();
@@ -152,14 +152,14 @@ class StitchRequest{
 
 class ConnectionRequest{
   public  String ckeyhash;
-  public String site1;
-  public String site2;
+  public String self_prefix;
+  public String target_prefix;
 
   public ConnectionRequest(){}
 
-  public ConnectionRequest(String site1, String site2){
-    this.site1=site1;
-    this.site2=site2;
+  public ConnectionRequest(String self_prefix, String target_prefix){
+    this.self_prefix=self_prefix;
+    this.target_prefix=target_prefix;
   }
 }
 
