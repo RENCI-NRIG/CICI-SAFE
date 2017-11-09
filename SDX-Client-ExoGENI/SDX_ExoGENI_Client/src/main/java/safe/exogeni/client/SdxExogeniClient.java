@@ -90,45 +90,19 @@ public class SdxExogeniClient extends SliceCommon {
     readConfig(configfilepath);
     sdxserver=conf.getString("config.sdxserver");
 
-		sliceProxy = getSliceProxy(pemLocation,keyLocation, controllerUrl);		
-		//SSH context
-		sctx = new SliceAccessContext<>();
-		try {
-			SSHAccessTokenFileFactory fac;
-			fac = new SSHAccessTokenFileFactory(sshkey+".pub", false);
-			SSHAccessToken t = fac.getPopulatedToken();			
-			sctx.addToken("root", "root", t);
-			sctx.addToken("root", t);
-		} catch (UtilTransportException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-
-     Slice s2 = null;
-     try {
-       s2 = Slice.loadManifestFile(sliceProxy, sliceName);
-       ComputeNode safe=(ComputeNode)s2.getResourceByName("safe-server");
-       safeserver=safe.getManagementIP()+":7777";
-     } catch (ContextTransportException e) {
-       // TODO Auto-generated catch block
-       e.printStackTrace();
-     } catch (TransportException e) {
-       // TODO Auto-generated catch block
-       e.printStackTrace();
-     }
-     logger.debug("client start");
-     String message = "";
-     String customerName=sliceName;
-     if(cmd.hasOption('e')){
-       String command= cmd.getOptionValue('e');
-       processCmd(command);
-       return;
-     }
-     String input = new String();
-     String cmdprefix=sliceName+"$>";
-     if(cmd.hasOption('n')){
-       safeauth=false;
-     }
+    logger.debug("client start");
+    String message = "";
+    String customerName=sliceName;
+    if(cmd.hasOption('e')){
+      String command= cmd.getOptionValue('e');
+      processCmd(command);
+      return;
+    }
+    String input = new String();
+    String cmdprefix=sliceName+"$>";
+    if(cmd.hasOption('n')){
+      safeauth=false;
+    }
 		try{
 //	 			logger.debug(obj.sayHello()); 
       java.io.BufferedReader stdin = new java.io.BufferedReader(new java.io.InputStreamReader(System.in));  

@@ -190,8 +190,8 @@ public class SdxManager extends SliceCommon{
     catch (Exception e){
       e.printStackTrace();
     }
-    SDNControllerIP="152.3.136.36";
-    //SDNControllerIP=((ComputeNode)serverslice.getResourceByName("plexuscontroller")).getManagementIP();
+    //SDNControllerIP="152.3.136.36";
+    SDNControllerIP=((ComputeNode)serverslice.getResourceByName("plexuscontroller")).getManagementIP();
     //System.out.println("plexuscontroler managementIP = " + SDNControllerIP);
     SDNController=SDNControllerIP+":8080";
     OVSController=SDNControllerIP+":6633";
@@ -451,7 +451,6 @@ public class SdxManager extends SliceCommon{
           routingmanager.configurePath(pair[1],pair[3],dest,router,pair[2],SDNController);
         }
       }
-      */
       if(!flag){
         String[] newpair=new String[4];
         newpair[0]=customer_keyhash;
@@ -460,6 +459,7 @@ public class SdxManager extends SliceCommon{
         newpair[3]=router;
         advertisements.add(newpair);
       }
+      */
     }
     else{
       res=res+" [authorization failed]";
@@ -632,7 +632,7 @@ public class SdxManager extends SliceCommon{
         }
       }
       logger.debug("setting up links");
-      HashSet<Integer> usedip=new HashSet<Integer>();
+      usedip=new HashSet<Integer>();
       HashSet<String> ifs=new HashSet<String>();
       // get all links, and then
       for(Interface i: s.getInterfaces()){
@@ -803,6 +803,7 @@ public class SdxManager extends SliceCommon{
             curip++;
           }
           ip_to_use = curip;
+          usedip.add(ip_to_use);
           curip++;
         }finally {
           iplock.unlock();
