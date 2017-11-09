@@ -123,14 +123,15 @@ public class TestSlice extends SliceCommon {
       computeIP(IPPrefix);
       try {
         String carrierName = sliceName;
-        Slice carrier = createCarrierSlice(carrierName, 4, 10, 1000000, 1);
+        Slice carrier = createCarrierSlice(carrierName, 4, 10, 100000000, 1);
         carrier.refresh();
         waitTillActive(carrier);
         carrier.refresh();
         copyFile2Slice(carrier, scriptsdir + "dpid.sh", "~/dpid.sh", sshkey);
         copyFile2Slice(carrier, scriptsdir + "ovsbridge.sh", "~/ovsbridge.sh", sshkey);
         //Make sure that plexus container is running
-        SDNControllerIP = ((ComputeNode) carrier.getResourceByName("plexuscontroller")).getManagementIP();
+        //SDNControllerIP = ((ComputeNode) carrier.getResourceByName("plexuscontroller")).getManagementIP();
+        SDNControllerIP="152.3.136.36";
         if (!checkPlexus(SDNControllerIP)) {
           System.exit(-1);
         }
