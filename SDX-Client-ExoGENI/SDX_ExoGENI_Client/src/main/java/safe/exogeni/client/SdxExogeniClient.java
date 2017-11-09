@@ -142,11 +142,11 @@ public class SdxExogeniClient extends SliceCommon {
         }
       }
     }
-    catch (Exception e) 
-    { 
-      logger.debug("HttpClient exception: " + e.getMessage()); 
-      e.printStackTrace(); 
-    } 
+    catch (Exception e)
+    {
+      logger.debug("HttpClient exception: " + e.getMessage());
+      e.printStackTrace();
+    }
 		logger.debug("XXXXXXXXXX Done XXXXXXXXXXXXXX");
 	}
 
@@ -185,6 +185,7 @@ public class SdxExogeniClient extends SliceCommon {
 	  try{
       JSONObject jsonparams=new JSONObject();
       String site1=null,site2=null;
+      /*
       for(String site:sitelist){
         if(site.contains(params[1])){
           site1=site;
@@ -203,6 +204,10 @@ public class SdxExogeniClient extends SliceCommon {
       }
       jsonparams.put("site1",site1);
       jsonparams.put("site2",site2);
+      */
+      jsonparams.put("self_prefix",params[1]);
+      jsonparams.put("target_prefix",params[2]);
+      jsonparams.put("ckeyhash",keyhash);
       String res=SdxHttpClient.httpRequest(sdxserver+"sdx/connectionrequest",jsonparams);
       logger.debug("get connection result from server:\n"+ res);
       System.out.println(res);
