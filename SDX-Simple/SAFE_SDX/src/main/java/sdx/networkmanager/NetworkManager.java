@@ -57,11 +57,11 @@ public class NetworkManager{
     router_queues.get(dpid).add(bw);
     String qurl=queueURL(controller,dpid);
     JSONObject qdata=queueData(10000000,router_queues.get(dpid));
-    JSONObject res=HttpUtil.postJSON(qurl,qdata);
+    String res=HttpUtil.postJSON(qurl,qdata);
     logger.debug(res.toString());
     String qosurl=qosRuleURL(controller,dpid);
-    JSONObject qosdata=qosRuleData(match,router_queues.size()-1);
-    JSONObject qosres=HttpUtil.postJSON(qosurl,qosdata);
+    JSONObject qosdata=qosRuleData(match,router_queues.get(dpid).size()-1);
+    String qosres=HttpUtil.postJSON(qosurl,qosdata);
     logger.debug(qosres.toString());
   }
 
@@ -137,7 +137,7 @@ public class NetworkManager{
     String dpid= getRouter(ra).getDPID();
     String cmd[] = addrCMD(ipa,dpid,controller);
     boolean result=true;
-    JSONObject res=HttpUtil.postJSON(cmd[0],new JSONObject(cmd[1]));
+    String res=HttpUtil.postJSON(cmd[0],new JSONObject(cmd[1]));
     if(res.toString().contains("success")){
       addEntry_HashList(sdncmds,dpid,cmd);
     }
@@ -154,7 +154,7 @@ public class NetworkManager{
     String dpid=getDPID(ra);
     String[] cmd = addrCMD(ipa,dpid,controller);
     boolean result=true;
-    JSONObject res=HttpUtil.postJSON(cmd[0],new JSONObject(cmd[1]));
+    String res=HttpUtil.postJSON(cmd[0],new JSONObject(cmd[1]));
     if(res.toString().contains("success")) {
       addEntry_HashList(sdncmds, dpid, cmd);
     }
@@ -203,6 +203,11 @@ public class NetworkManager{
       addEntry_HashList(sdncmds,path[0],cmd);
       //logger.debug(path[0]+" "+path[1]);
     }
+  }
+
+  public boolean findPath(String node1, String node2){
+      ArrayList<String[]>paths=getPairRoutes(getDPID(node1),getDPID(node2),"test");
+      return paths.size()>0;
   }
 
   private void runSDNCmd(String cmd){
@@ -307,6 +312,9 @@ public class NetworkManager{
     initroute[0]=srcdpid;
     initroute[1]=gateway;
     knownpaths.add(initroute);
+    if(srcdpid.equals(dstdpid)){
+      return knownpaths;
+    }
     int start=0;
     int end=0;
     boolean foundpath=false;
@@ -345,12 +353,14 @@ public class NetworkManager{
       }
     }
     ArrayList<String[]> spaths=new ArrayList<String[]>();
-    String[] curpath=knownpaths.get(knownpaths.size()-1);
-    spaths.add(curpath);
-    for(int i=knownpaths.size()-2;i>=0;i--){
-      if(knownpaths.get(i)[0].equals(getPairRouter(curpath[2]))){
-        spaths.add(knownpaths.get(i));
-        curpath=knownpaths.get(i);
+    if(foundpath) {
+      String[] curpath = knownpaths.get(knownpaths.size() - 1);
+      spaths.add(curpath);
+      for (int i = knownpaths.size() - 2; i >= 0; i--) {
+        if (knownpaths.get(i)[0].equals(getPairRouter(curpath[2]))) {
+          spaths.add(knownpaths.get(i));
+          curpath = knownpaths.get(i);
+        }
       }
     }
     return spaths;

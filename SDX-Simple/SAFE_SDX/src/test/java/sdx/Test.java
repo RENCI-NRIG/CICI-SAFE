@@ -76,7 +76,7 @@ public class Test {
     //String getcmd="curl -X GET http://"+controller+":8080/qos/rules/"+dpid1;
     //String[] qoscmd="curl -X POST -d \'{\"match\":{\"nw_dst\":\"192.168.10.2\",\"nw_proto\":\"TCP\",\"tp_dst\":\"5002\"},\"actions\":{\"queue\":\"0\"}}\' http://"+controller+":8080/qos/rules/"+dpid1;
     String[]qoscmd=qosCMD(controller,dpid1);
-    JSONObject res=HttpUtil.postJSON(qoscmd[0], new JSONObject(qoscmd[1]));
+    String res=HttpUtil.postJSON(qoscmd[0], new JSONObject(qoscmd[1]));
     System.out.println(res.toString());
     System.out.println(HttpUtil.get(qoscmd[0]));
     HttpUtil.postJSON(qoscmd[0], new JSONObject(qoscmd[1]));

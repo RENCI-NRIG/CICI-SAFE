@@ -329,6 +329,7 @@ public class SdxManager extends SliceCommon{
   }
 
 	public static String connectionRequest(String ckeyhash, String self_prefix, String target_prefix){
+
 	  //String n1=computenodes.get(site1).get(0);
 	  //String n2=computenodes.get(site2).get(0);
     String n1=routingmanager.getRouterbyGateway(prefixgateway.get(self_prefix));
@@ -339,84 +340,90 @@ public class SdxManager extends SliceCommon{
     Slice s=getSlice();
 	  ComputeNode node1=(ComputeNode)s.getResourceByName(n1);
 	  ComputeNode node2=(ComputeNode)s.getResourceByName(n2);
-	  //find name for the new two nodes
-    String name1=null,name2=null;
-    String link1=null;
-    //FIXME: if we can't find path bewteen the requested prefix, allcoate new links to meet the requirements
+	  boolean res=true;
+	  if(!routingmanager.findPath(n1,n2)) {
+      //find name for the new two nodes
+      String name1 = null, name2 = null;
+      String link1 = null;
+      //FIXME: if we can't find path bewteen the requested prefix, allcoate new links to meet the requirements
 
-	  linklock.lock();
-	  try {
-      link1 = allocateLinkName();
-      Link l1 = new Link();
-      l1.setName(link1);
-      links.put(link1, l1);
-    }finally {
-      linklock.unlock();
-    }
-    logger.debug("Add link: " +link1);
-    //Network net1=s.addBroadcastLink(link1);
-    //net1.stitch(node1);
-    //net1.stitch(node2);
-
-    //try {
-    //  s.commit();
-    //} catch (XMLRPCTransportException e1) {
-    //  // TODO Auto-generated catch block
-    //  e1.printStackTrace();
-    //  System.out.println("Link addition failed.");
-    //  logger.debug("Link addition failed");
-    //  return "Link addition failed";
-    //}
-
-    System.out.println("Now add a link named \""+link1+"\" between "+n1 +" and "+n2);
-    try {
-      java.io.BufferedReader stdin = new java.io.BufferedReader(new java.io.InputStreamReader(System.in));
-      stdin.readLine();
-      System.out.println("Continue");
-    }catch (Exception e){
-      e.printStackTrace();
-    }
-    waitTillActive(s);
-    s=getSlice();
-    //add routers first
-
-    Link l1 = links.get(link1);
-    l1.setName(link1);
-    l1.addNode(node1.getName());
-    l1.addNode(node2.getName());
-    links.put(link1, l1);
-
-    int ip_to_use=0;
-    iplock.lock();
-    try {
-      while (usedip.contains(curip)) {
-        curip++;
+      linklock.lock();
+      try {
+        link1 = allocateLinkName();
+        Link l1 = new Link();
+        l1.setName(link1);
+        links.put(link1, l1);
+      } finally {
+        linklock.unlock();
       }
-      ip_to_use = curip;
-      l1.setIP(IPPrefix + String.valueOf(ip_to_use));
-      l1.setMask(mask);
-      curip++;
-    }finally {
-      iplock.unlock();
+      logger.debug("Add link: " + link1);
+      //Network net1=s.addBroadcastLink(link1);
+      //net1.stitch(node1);
+      //net1.stitch(node2);
+
+      //try {
+      //  s.commit();
+      //} catch (XMLRPCTransportException e1) {
+      //  // TODO Auto-generated catch block
+      //  e1.printStackTrace();
+      //  System.out.println("Link addition failed.");
+      //  logger.debug("Link addition failed");
+      //  return "Link addition failed";
+      //}
+
+      System.out.println("Now add a link named \"" + link1 + "\" between " + n1 + " and " + n2);
+      try {
+        java.io.BufferedReader stdin = new java.io.BufferedReader(new java.io.InputStreamReader(System.in));
+        stdin.readLine();
+        System.out.println("Continue");
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
+      waitTillActive(s);
+      s = getSlice();
+      //add routers first
+
+      Link l1 = links.get(link1);
+      l1.setName(link1);
+      l1.addNode(node1.getName());
+      l1.addNode(node2.getName());
+      links.put(link1, l1);
+
+      int ip_to_use = 0;
+      iplock.lock();
+      try {
+        while (usedip.contains(curip)) {
+          curip++;
+        }
+        ip_to_use = curip;
+        l1.setIP(IPPrefix + String.valueOf(ip_to_use));
+        l1.setMask(mask);
+        curip++;
+      } finally {
+        iplock.unlock();
+      }
+      String param = "";
+      Exec.sshExec("root", node1.getManagementIP(), "/bin/bash ~/ovsbridge.sh " + OVSController, sshkey);
+      routingmanager.replayCmds(routingmanager.getDPID(node1.getName()));
+      Exec.sshExec("root", node1.getManagementIP(), "ifconfig;ovs-vsctl list port", sshkey);
+      Exec.sshExec("root", node2.getManagementIP(), "/bin/bash ~/ovsbridge.sh " + OVSController, sshkey);
+      routingmanager.replayCmds(routingmanager.getDPID(node2.getName()));
+      Exec.sshExec("root", node2.getManagementIP(), "ifconfig;ovs-vsctl list port", sshkey);
+
+      res = routingmanager.newLink(l1.getIP(1), l1.nodea, l1.getIP(2), l1.nodeb, SDNController);
+      //set ip address
+      //add link to links
     }
-    String param="";
-    Exec.sshExec("root",node1.getManagementIP(),"/bin/bash ~/ovsbridge.sh "+OVSController,sshkey);
-    routingmanager.replayCmds(routingmanager.getDPID(node1.getName()));
-    Exec.sshExec("root",node1.getManagementIP(),"ifconfig;ovs-vsctl list port",sshkey);
-    Exec.sshExec("root",node2.getManagementIP(),"/bin/bash ~/ovsbridge.sh "+OVSController,sshkey);
-    routingmanager.replayCmds(routingmanager.getDPID(node2.getName()));
-    Exec.sshExec("root",node2.getManagementIP(),"ifconfig;ovs-vsctl list port",sshkey);
-
-    boolean res=routingmanager.newLink(l1.getIP(1), l1.nodea, l1.getIP(2), l1.nodeb, SDNController);
-    //set ip address
-    //add link to links
-
     //configure routing
     if(res){
       writeLinks(topofile);
       System.out.println("Link added successfully, configuring routes");
       routingmanager.configurePath(self_prefix,n1,target_prefix,n2,prefixgateway.get(self_prefix),SDNController);
       routingmanager.configurePath(target_prefix,n2,self_prefix,n1,prefixgateway.get(target_prefix),SDNController);
+      System.out.println("Routing set up for "+self_prefix+" and "+target_prefix);
+      routingmanager.setQos(SDNController,routingmanager.getDPID(n1),self_prefix,target_prefix,500000);
+      routingmanager.setQos(SDNController,routingmanager.getDPID(n2),target_prefix,self_prefix,500000);
+
     }
 
 	  return "link added and route configured: "+res;
