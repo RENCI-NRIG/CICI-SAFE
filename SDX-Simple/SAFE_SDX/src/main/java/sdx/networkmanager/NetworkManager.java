@@ -1,17 +1,16 @@
 package sdx.networkmanager;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.lang.reflect.Array;
+import java.util.*;
 
+import com.hp.hpl.jena.tdb.store.Hash;
+import org.apache.jena.atlas.json.JSON;
 import org.apache.log4j.Logger;
 
 import org.json.HTTP;
+import org.json.JSONArray;
 import org.json.JSONObject;
 import sdx.utils.Exec;
 
-import java.util.HashSet;
 import java.lang.System;
 
 import sdx.utils.HttpUtil;
@@ -19,7 +18,8 @@ import sdx.utils.HttpUtil;
 public class NetworkManager{
   final static Logger logger = Logger.getLogger(NetworkManager.class);	
 
-	
+  private HashMap<String,ArrayList<Integer>> router_queues=new HashMap<>();
+  private HashMap<String, ArrayList<JSONObject>>router_matches=new HashMap<>();
   private  ArrayList<Router> routers=new ArrayList<Router>();
   private  ArrayList<String[]>ip_router=new ArrayList<String[]>();
   private  ArrayList<String[]>links=new ArrayList<String[]>();
@@ -41,6 +41,30 @@ public class NetworkManager{
     }
     return null;
   }
+
+  public void setQos(String controller,String dpid, String srcip, String destip,int bw){
+    JSONObject match=new JSONObject();
+    match.put("nw_src",srcip);
+    match.put("nw_dst",destip);
+    if(router_matches.containsKey(dpid)){
+      router_matches.get(dpid).add(match);
+    }
+    else{
+      ArrayList<JSONObject>m=new ArrayList<>();
+      m.add(match);
+      router_matches.put(dpid,m);
+    }
+    router_queues.get(dpid).add(bw);
+    String qurl=queueURL(controller,dpid);
+    JSONObject qdata=queueData(10000000,router_queues.get(dpid));
+    JSONObject res=HttpUtil.postJSON(qurl,qdata);
+    logger.debug(res.toString());
+    String qosurl=qosRuleURL(controller,dpid);
+    JSONObject qosdata=qosRuleData(match,router_queues.size()-1);
+    JSONObject qosres=HttpUtil.postJSON(qosurl,qosdata);
+    logger.debug(qosres.toString());
+  }
+
   public  void addLink(String ipa, String ra, String gw){
     Router router=getRouter(ra);
     if(router!=null){
@@ -91,6 +115,9 @@ public class NetworkManager{
     if(getRouter(routerid)==null){
 //      logger.debug(dpid+":my dpid");
       routers.add(new Router(routerid,dpid,numinterfaces, mip));
+      ArrayList<Integer> newqueue=new ArrayList<>();
+      newqueue.add(1000000);
+      router_queues.put(dpid, newqueue);
     }
     else{
       Router router=getRouter(routerid);
@@ -191,6 +218,39 @@ public class NetworkManager{
       }
     }
     return null;
+  }
+
+  private String queueURL(String controller,String dpid){
+    return  "http://"+controller+"/qos/queue/"+dpid;
+  }
+
+  private JSONObject queueData(int maxrate, List<Integer> queuerate){
+    JSONObject params=new JSONObject();
+    params.put("type","linux-htb");
+    params.put("max_rate",String.valueOf(maxrate));
+    JSONArray queues=new JSONArray();
+    for(Integer r:queuerate){
+      JSONObject q=new JSONObject();
+      q.put("max_rate",String.valueOf(r));
+      queues.put(q);
+    }
+    params.put("queues",queues);
+    logger.debug("queueData"+params.toString());
+    return params;
+  }
+
+  private String qosRuleURL(String controller, String dpid){
+    return "http://"+controller+"/qos/rules/"+dpid;
+  }
+
+  private JSONObject qosRuleData(JSONObject match,int queue_id){
+    JSONObject params=new JSONObject();
+    params.put("match",match);
+    JSONObject actionjson=new JSONObject();
+    actionjson.put("queue",String.valueOf(queue_id));
+    params.put("actions",actionjson);
+    logger.debug("qosRuleData: "+params.toString());
+    return params;
   }
 
   public void setOvsdbAddr(String controller){
