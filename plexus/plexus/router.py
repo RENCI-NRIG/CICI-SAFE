@@ -868,8 +868,8 @@ class VlanRouter(object):
         else:
             if header_list[ARP].opcode == arp.ARP_REQUEST:
                 # ARP request to router port -> send ARP reply
-                src_mac = header_list[ARP].src_mac
-                dst_mac = self.port_data[in_port].mac
+                src_mac = self.port_data[in_port].mac
+                dst_mac = header_list[ARP].src_mac
                 arp_target_mac = dst_mac
                 output = in_port
                 in_port = self.ofctl.dp.ofproto.OFPP_CONTROLLER
@@ -877,7 +877,7 @@ class VlanRouter(object):
                 dst_vlan = self.vlan_id
 
                 self.ofctl.send_arp(arp.ARP_REPLY, self.vlan_id,
-                                    dst_mac, src_mac, dst_ip, src_ip,
+                                    src_mac, dst_mac, dst_ip, src_ip,
                                     arp_target_mac, in_port, output)
 
                 self.logger.info(('Received ARP request from [%s] ' +
