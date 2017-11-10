@@ -14,6 +14,7 @@ import sdx.utils.Exec;
 import java.lang.System;
 
 import sdx.utils.HttpUtil;
+import sun.awt.image.ImageWatched;
 
 public class NetworkManager{
   final static Logger logger = Logger.getLogger(NetworkManager.class);
@@ -64,6 +65,9 @@ public class NetworkManager{
       return false;
     }
 
+    public String toString(){
+      return ra+":"+ifa+", "+rb+":"+ifb+", cap"+getAvailableBW();
+    }
   }
 
   class Router{
@@ -126,8 +130,10 @@ public class NetworkManager{
   private HashMap<String, ArrayList<JSONObject>>router_matches=new HashMap<>();
   private  ArrayList<Router> routers=new ArrayList<Router>();
   private  ArrayList<String[]>ip_router=new ArrayList<String[]>();
-  private  ArrayList<String[]>links=new ArrayList<String[]>();
+  private  ArrayList<Link>links=new ArrayList<Link>();
   private HashMap<String, ArrayList<String[]>> sdncmds=new HashMap<String,ArrayList<String[]>>();
+  private HashMap<String,Integer>route_id=new HashMap<>();
+  private HashMap<String,ArrayList<String>>routes=new HashMap<>();
 
   public  String getDPID(String routerid){
     Router router=getRouter(routerid);
@@ -160,7 +166,7 @@ public class NetworkManager{
     }
     router_queues.get(dpid).add(bw);
     String qurl=queueURL(controller,dpid);
-    JSONObject qdata=queueData(1000000,router_queues.get(dpid));
+    JSONObject qdata=queueData(2000000,router_queues.get(dpid));
     String res=HttpUtil.postJSON(qurl,qdata);
     logger.debug(res.toString());
     String qosurl=qosRuleURL(controller,dpid);
@@ -193,12 +199,11 @@ public class NetworkManager{
 
   public  void addLink(String ipa, String ra, String ipb,String rb,long cap){
     //logger.debug(ipa+" "+ipb);
-    if(!ipa.equals("") && !ipb.equals("")){
-      putLink(ipa,ipb);
-      putLink(ipb,ipa);
-    }
     Router router=getRouter(ra);
     Link link =new Link(ipa,ipb,ra,rb,cap);
+    if(!ipa.equals("") && !ipb.equals("")){
+      putLink(link);
+    }
     if(router!=null){
       router.addInterface(ipa);
       putPairRouter(ipa, router.getDPID());
@@ -243,8 +248,8 @@ public class NetworkManager{
     String cmd[] = addrCMD(ipa,dpid,controller);
     boolean result=true;
     String res=HttpUtil.postJSON(cmd[0],new JSONObject(cmd[1]));
+    System.out.println(res);
     if(res.toString().contains("success")){
-      System.out.println(res);
       addEntry_HashList(sdncmds,dpid,cmd);
     }
     else{
@@ -296,6 +301,8 @@ public class NetworkManager{
     }
   }
 
+  private void deleteRoute(String dpid, String routeid,String controller){
+  }
   //gateway is the gateway for nodename
   public void configurePath(String dest, String nodename,String targetIP,String targetnodename, String gateway, String controller,long bw) {
     logger.debug("Network Manager: Configuring path for "+dest+" "+nodename+" "+targetIP+" "+targetnodename+" "+gateway);
@@ -306,6 +313,7 @@ public class NetworkManager{
       return;
     }
     ArrayList<String[]>paths=getPairRoutes(gwdpid,targetdpid,gateway,bw);
+    ArrayList<String> dpids=new ArrayList<String>();
     for(String[] path: paths){
       //Path [dpid,gateway,neighborip]
       Router router=getRouterByDPID(path[0]);
@@ -313,8 +321,17 @@ public class NetworkManager{
         router.getNeighbors().get(path[2]).useBW(bw);
       }
       String []cmd=routingCMD(dest,targetIP, path[1], path[0], controller);
-      System.out.println(HttpUtil.postJSON(cmd[0],new JSONObject(cmd[1])));
-      addEntry_HashList(sdncmds,path[0],cmd);
+      String res=HttpUtil.postJSON(cmd[0],new JSONObject(cmd[1]));
+      if(res.contains("success")){
+        int id=Integer.valueOf(res.split("route_id=")[1].split("]")[0]);
+        route_id.put(dest+targetIP+path[0],id);
+        dpids.add(path[0]);
+        addEntry_HashList(sdncmds,path[0],cmd);
+      }
+      else{
+        //revoke all previous routes
+        //TODO
+      }
       //logger.debug(path[0]+" "+path[1]);
     }
   }
@@ -324,12 +341,6 @@ public class NetworkManager{
       return paths.size()>0;
   }
 
-  private void runSDNCmd(String cmd){
-    String res=Exec.exec(cmd);
-    if(res.contains("failuer")){
-      logger.debug("Setting routing entry failed");
-    }
-  }
   public  Router getRouter(String routername){
     for (Router r: routers){
       if(r.getRouterID().equals(routername)){
@@ -486,6 +497,11 @@ public class NetworkManager{
     return spaths;
   }
 
+  public void printLinks(){
+    for(Link l :links){
+      logger.debug(l.toString());
+    }
+  }
   //FIXME: There might be bug, but haven't got the chance to look into it.
   private  ArrayList<String[]> getBroadcastRoutes(String gwdpid, String gateway){
     //logger.debug("All routers and links");
@@ -565,6 +581,15 @@ public class NetworkManager{
     return cmd;
   }
 
+  //TODO
+  private  String[] del_routingCMD(String dpid,String routeid, String controller){
+    //String cmd="curl -X POST -d {\"destination\":\""+dst+"\",\"source\":\""+src+"\",\"gateway\":\""+gw+"\"} "+controller+"/router/"+dpid;
+    String[] cmd= new String[3];
+    cmd[0]="http://"+controller+"/router/"+dpid;
+    cmd[2]="DELETE";
+    return cmd;
+  }
+
   private  String[] ovsdbCMD(Router r, String controller){
     //String cmd="curl -X PUT -d \'\"tcp:"+r.getManagementIP()+":6632\"\' "+controller+"/v1.0/conf/switches/"+r.getDPID()+"/ovsdb_addr";
     String[]res=new String[3];
@@ -593,22 +618,17 @@ public class NetworkManager{
     routers.add(router);
   }
 
-  private  void putLink(String linka, String linkb){
-    for(String[] link:links){
-      if(link[0].equals(linka) && link[1].equals(linkb)){
-        return;
-      }
-    }
-    String[] link=new String[2];
-    link[0]=linka;
-    link[1]=linkb;
-    links.add(link);
+  private  void putLink(Link l){
+    links.add(l);
   }
 
   private  String getPairIP(String ip){
-    for (String[] link: links){
-      if(link[0].equals(ip))
-        return link[1];
+    for (Link link: links){
+      if(link.ifa.equals(ip))
+        return link.ifb;
+      else if(link.ifb.equals(ip)){
+        return link.ifa;
+      }
     }
     return null;
   }

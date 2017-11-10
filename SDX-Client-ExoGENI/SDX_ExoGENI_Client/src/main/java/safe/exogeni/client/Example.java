@@ -68,6 +68,7 @@ public class Example extends SliceCommon{
 	private static String mask="/24";
 	private static String riakip="152.3.145.36";
 	private static String type;
+	private static long bandwidth=100000000;
 
 	private static  void computeIP(String prefix){
 		logger.debug(prefix);
@@ -114,13 +115,16 @@ public class Example extends SliceCommon{
 		if(type.equals("client")){
       IPPrefix=conf.getString("config.ipprefix");
       riakip=conf.getString("config.riakserver");
+      if(conf.hasPath("config.bandwidth")){
+      	bandwidth=conf.getLong("config.bandwdith");
+			}
       computeIP(IPPrefix);
       logger.debug("client start");
       String customerName=sliceName;
       try{
         System.out.println("Using riak server at "+riakip);
 				System.out.println("IP prefix "+IPPrefix);
-        Slice c1=createCustomerSlice(customerName,2,IPPrefix,curip,1000000,true);
+        Slice c1=createCustomerSlice(customerName,2,IPPrefix,curip,1000000000,true);
 				try {
 					c1.commit();
 				} catch (XMLRPCTransportException e) {
@@ -169,7 +173,7 @@ public class Example extends SliceCommon{
 		String nodeImageURL ="http://geni-images.renci.org/images/standard/ubuntu/ub1404-v1.0.4.xml";//http://geni-images.renci.org/images/standard/ubuntu/ub1304-ovs-opendaylight-v1.0.0.xml
 		String nodeImageHash ="9394ca154aa35eb55e604503ae7943ddaecc6ca5";
 		String nodeNodeType="XO Medium";
-		String nodePostBootScript="apt-get update;apt-get -y install quagga\n"
+		String nodePostBootScript="apt-get update;apt-get -y install quagga iperf\n"
 				+"sed -i -- 's/zebra=no/zebra=yes/g' /etc/quagga/daemons\n"
 				+"sed -i -- 's/ospfd=no/ospfd=yes/g' /etc/quagga/daemons\n"
 				+"echo \"1\" > /proc/sys/net/ipv4/ip_forward\n"

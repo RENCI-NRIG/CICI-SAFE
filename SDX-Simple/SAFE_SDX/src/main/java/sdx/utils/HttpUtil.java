@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
@@ -74,6 +75,12 @@ public class HttpUtil {
       ex.printStackTrace();
       return "Exception when setting ovsdb addr";
     }
+  }
+
+  public static String delete(String serverurl, String data){
+    logger.debug("putString: "+serverurl);
+    logger.debug(data);
+    return ("TODO");
   }
 
   public static String get(String serverurl){

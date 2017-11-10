@@ -279,8 +279,9 @@ public class SdxManager extends SliceCommon{
       sleep(10);
       //System.out.println("Node managmentIP: " + node.getManagementIP());
       if(!newrouter) {
-        Exec.sshExec("root", node.getManagementIP(), "/bin/bash ~/ovsbridge.sh " + OVSController, sshkey);
         routingmanager.replayCmds(routingmanager.getDPID(node.getName()));
+      }else {
+        configRouter(node);
       }
       Exec.sshExec("root",node.getManagementIP(),"ifconfig;ovs-vsctl list port",sshkey);
       s1.refresh();
@@ -319,6 +320,7 @@ public class SdxManager extends SliceCommon{
       return "Prefix unrecognized.";
     }
 	  boolean res=true;
+    routingmanager.printLinks();
 	  if(!routingmanager.findPath(n1,n2,bandwidth)) {
       //find name for the new two nodes
       Slice s=getSlice();
@@ -338,28 +340,30 @@ public class SdxManager extends SliceCommon{
         linklock.unlock();
       }
       logger.debug("Add link: " + link1);
-      //Network net1=s.addBroadcastLink(link1);
-      //net1.stitch(node1);
-      //net1.stitch(node2);
-
-      //try {
-      //  s.commit();
-      //} catch (XMLRPCTransportException e1) {
-      //  // TODO Auto-generated catch block
-      //  e1.printStackTrace();
-      //  System.out.println("Link addition failed.");
-      //  logger.debug("Link addition failed");
-      //  return "Link addition failed";
-      //}
       long linkbw=2*bandwidth;
-      System.out.println("Now add a link named \"" + link1 + "\" between " + n1 + " and " + n2 +" with bandwidht "+linkbw);
-      try {
-        java.io.BufferedReader stdin = new java.io.BufferedReader(new java.io.InputStreamReader(System.in));
-        stdin.readLine();
-        System.out.println("Continue");
-      } catch (Exception e) {
-        e.printStackTrace();
-      }
+      if(node1.getDomain().equals(node2.getDomain())){
+        Network net1=s.addBroadcastLink(link1);
+        net1.stitch(node1);
+        net1.stitch(node2);
+
+        try {
+          s.commit();
+        } catch (XMLRPCTransportException e1) {
+          // TODO Auto-generated catch block
+          e1.printStackTrace();
+          System.out.println("Link addition failed.");
+          logger.debug("Link addition failed");
+        }
+      }else{
+          System.out.println("Now add a link named \"" + link1 + "\" between " + n1 + " and " + n2 + " with bandwidht " + linkbw);
+          try {
+            java.io.BufferedReader stdin = new java.io.BufferedReader(new java.io.InputStreamReader(System.in));
+            stdin.readLine();
+            System.out.println("Continue");
+          } catch (Exception e) {
+            e.printStackTrace();
+          }
+        }
       waitTillActive(s);
       s = getSlice();
       //add routers first
@@ -402,7 +406,7 @@ public class SdxManager extends SliceCommon{
       writeLinks(topofile);
       System.out.println("Link added successfully, configuring routes");
       routingmanager.configurePath(self_prefix,n1,target_prefix,n2,prefixgateway.get(self_prefix),SDNController,bandwidth);
-      routingmanager.configurePath(target_prefix,n2,self_prefix,n1,prefixgateway.get(target_prefix),SDNController,bandwidth);
+      routingmanager.configurePath(target_prefix,n2,self_prefix,n1,prefixgateway.get(target_prefix),SDNController,0);
       System.out.println("Routing set up for "+self_prefix+" and "+target_prefix);
       if(bandwidth>0) {
         routingmanager.setQos(SDNController, routingmanager.getDPID(n1), self_prefix, target_prefix, bandwidth);
