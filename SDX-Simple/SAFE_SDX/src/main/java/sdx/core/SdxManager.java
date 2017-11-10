@@ -452,7 +452,7 @@ public class SdxManager extends SliceCommon{
     logger.debug("Restarting Plexus Controller");
     if(checkPlexus(plexusip)){
       //String script="docker exec -d plexus /bin/bash -c  \"cd /root;pkill ryu-manager;ryu-manager plexus/plexus/app.py ryu/ryu/app/rest_conf_switch.py ryu/ryu/app/rest_qos.py |tee log\"\n";
-      String script="docker exec -d plexus /bin/bash -c  \"cd /root;pkill ryu-manager;ryu-manager plexus/plexus/app.py|tee log\"\n";
+      String script="docker exec -d plexus /bin/bash -c  \"cd /root;pkill ryu-manager;ryu-manager ryu/ryu/app/rest_router.py|tee log\"\n";
       logger.debug(sshkey);
       logger.debug(plexusip);
       Exec.sshExec("root",plexusip,script,sshkey);
