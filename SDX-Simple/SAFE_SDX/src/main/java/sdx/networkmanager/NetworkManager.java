@@ -244,6 +244,7 @@ public class NetworkManager{
     boolean result=true;
     String res=HttpUtil.postJSON(cmd[0],new JSONObject(cmd[1]));
     if(res.toString().contains("success")){
+      System.out.println(res);
       addEntry_HashList(sdncmds,dpid,cmd);
     }
     else{
@@ -260,6 +261,7 @@ public class NetworkManager{
     String[] cmd = addrCMD(ipa,dpid,controller);
     boolean result=true;
     String res=HttpUtil.postJSON(cmd[0],new JSONObject(cmd[1]));
+    System.out.println(res);
     if(res.toString().contains("success")) {
       addEntry_HashList(sdncmds, dpid, cmd);
     }
@@ -269,6 +271,7 @@ public class NetworkManager{
     dpid=getDPID(rb);
     cmd = addrCMD(ipb,dpid,controller);
     res=HttpUtil.postJSON(cmd[0],new JSONObject(cmd[1]));
+    System.out.println(res);
     if(res.toString().contains("success")) {
       addEntry_HashList(sdncmds, dpid, cmd);
     }else{
@@ -286,7 +289,8 @@ public class NetworkManager{
     ArrayList<String[]>paths=getBroadcastRoutes(gwdpid,gateway);
     for(String[] path: paths){
       String []cmd=routingCMD(dest, path[1], path[0], controller);
-      HttpUtil.postJSON(cmd[0],new JSONObject(cmd[1]));
+      String res=HttpUtil.postJSON(cmd[0],new JSONObject(cmd[1]));
+      System.out.println(res);
       addEntry_HashList(sdncmds,path[0],cmd);
       //logger.debug(path[0]+" "+path[1]);
     }
@@ -309,7 +313,7 @@ public class NetworkManager{
         router.getNeighbors().get(path[2]).useBW(bw);
       }
       String []cmd=routingCMD(dest,targetIP, path[1], path[0], controller);
-      HttpUtil.postJSON(cmd[0],new JSONObject(cmd[1]));
+      System.out.println(HttpUtil.postJSON(cmd[0],new JSONObject(cmd[1])));
       addEntry_HashList(sdncmds,path[0],cmd);
       //logger.debug(path[0]+" "+path[1]);
     }

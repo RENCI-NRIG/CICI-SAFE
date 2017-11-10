@@ -186,7 +186,7 @@ public class SdxManager extends SliceCommon{
     }
   }
 
-  public static String[] stitchRequest(String sdxslice, String site, String customer_slice,String customerName, String ResrvID,String secret) {
+  public static String[] stitchRequest(String sdxslice, String site, String customer_slice,String customerName, String ResrvID,String secret,String sdxnode) {
     logger.debug("new stitch request from "+customerName+" for "+sdxslice +" at "+site);
     System.out.println("new stitch request for "+sdxslice +" at "+site);
     String[] res=new String[2];
@@ -209,16 +209,20 @@ public class SdxManager extends SliceCommon{
       }
       ComputeNode node=null;
       boolean newrouter=false;
-      if(computenodes.containsKey(site)&&computenodes.get(site).size()>0) {
-        node=(ComputeNode)s1.getResourceByName( computenodes.get(site).get(0));
-      }else{
+      if(sdxnode!=null){
+        node=(ComputeNode)s1.getResourceByName(sdxnode);
+      }
+      if (sdxnode==null &&computenodes.containsKey(site) && computenodes.get(site).size() > 0) {
+        node = (ComputeNode) s1.getResourceByName(computenodes.get(site).get(0));
+      }
+      else if(node==null){
         //if node not exists, add another node to the slice
         //add a node and configure it as a router.
         //later when a customer requests connection between site a and site b, we add another link to meet the requirments
-        newrouter=true;
+        newrouter = true;
         logger.debug("No existing router at requested site, adding new router");
-        int max=-1;
-        String routername=null;
+        int max = -1;
+        String routername = null;
         nodelock.lock();
         try {
           for (String key : computenodes.keySet()) {
@@ -228,26 +232,27 @@ public class SdxManager extends SliceCommon{
             }
           }
           ArrayList<String> l = new ArrayList<>();
-          routername="c"+(max+1);
+          routername = "c" + (max + 1);
           l.add(routername);
-          logger.debug("Name of new router: "+routername);
+          logger.debug("Name of new router: " + routername);
           computenodes.put(site, l);
-        }finally {
+        } finally {
           nodelock.unlock();
         }
-        SliceManager.addOVSRouter(s1,site,routername);
-        try{
+        SliceManager.addOVSRouter(s1, site, routername);
+        try {
           s1.commit();
           waitTillActive(s1);
-        }catch (Exception e){
+        } catch (Exception e) {
           e.printStackTrace();
         }
-        s1=getSlice();
+        s1 = getSlice();
         node = (ComputeNode) s1.getResourceByName(routername);
-        SliceManager.copyRouterScript(s1,node);
+        SliceManager.copyRouterScript(s1, node);
         configRouter(node);
         logger.debug("Configured the new router in RoutingManager");
       }
+
       int ip_to_use=0;
       iplock.lock();
       String stitchname;
@@ -728,7 +733,7 @@ public class SdxManager extends SliceCommon{
               try {
                 String cmd = "ovs-vsctl show";
                 logger.debug(mip + " run commands:" + cmd);
-                String res = Exec.sshExec("root", mip, "ovs-vsctl show", sshkey);
+                String res = Exec.sshExec("root", mip, cmd, sshkey);
                 while (!res.contains("is_connected: true")) {
                   sleep(5);
                   res = Exec.sshExec("root", mip, cmd, sshkey);

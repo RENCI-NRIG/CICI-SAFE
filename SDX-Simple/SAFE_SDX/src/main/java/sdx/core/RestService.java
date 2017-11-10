@@ -53,7 +53,7 @@ public class RestService {
     public StitchResult stitchRequest(StitchRequest sr){
       logger.debug("got sittch request");
       try {
-        String[] res = SdxManager.stitchRequest(sr.sdxslice, sr.sdxsite, sr.ckeyhash, sr.cslice, sr.creservid, sr.secret);
+        String[] res = SdxManager.stitchRequest(sr.sdxslice, sr.sdxsite, sr.ckeyhash, sr.cslice, sr.creservid, sr.secret,sr.sdxnode);
         return new StitchResult(res[0], res[1]);
       }catch (Exception e){
         e.printStackTrace();
@@ -135,6 +135,7 @@ class StitchRequest{
   public  String ckeyhash;
   public  String cslice;
   public  String creservid;
+  public String sdxnode;
 
   public  String secret;
 
@@ -147,6 +148,16 @@ class StitchRequest{
     this.cslice=cslice;
     this.creservid=creservid;
     this.secret=secret;
+    this.sdxnode=null;
+  }
+  public StitchRequest(String sdxslice, String sdxsite,String ckeyhash, String cslice, String creserveid, String secret,String sdxnode){
+    this.sdxslice=sdxslice;
+    this.sdxsite=sdxsite;
+    this.ckeyhash=ckeyhash;
+    this.cslice=cslice;
+    this.creservid=creservid;
+    this.secret=secret;
+    this.sdxnode=sdxnode;
   }
 }
 

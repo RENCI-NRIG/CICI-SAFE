@@ -238,6 +238,9 @@ public class SdxExogeniClient extends SliceCommon {
       jsonparams.put("cslice",sliceName);
       jsonparams.put("creservid",node0_s2_stitching_GUID);
       jsonparams.put("secret",secret);
+      if(params.length ==4){
+        jsonparams.put("sdxnode",params[3]);
+      }
       logger.debug("Sending stitch request to sdx server");
       JSONObject res=new JSONObject(SdxHttpClient.httpRequest(sdxserver+"sdx/stitchrequest",jsonparams));
       logger.debug("Got Stitch Information From Server:\n "+res.toString());
