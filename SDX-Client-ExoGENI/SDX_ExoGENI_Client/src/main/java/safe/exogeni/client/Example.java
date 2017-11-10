@@ -165,7 +165,7 @@ public class Example extends SliceCommon{
 		Slice s = Slice.create(sliceProxy, sctx, sliceName);
 
 		String nodeImageShortName="Ubuntu 14.04";
-		String nodeImageURL ="http://geni-orca.renci.org/owl/9dfe179d-3736-41bf-8084-f0cd4a520c2f#Ubuntu+14.04";//http://geni-images.renci.org/images/standard/ubuntu/ub1304-ovs-opendaylight-v1.0.0.xml
+		String nodeImageURL ="http://geni-images.renci.org/images/standard/ubuntu/ub1404-v1.0.4.xml";//http://geni-images.renci.org/images/standard/ubuntu/ub1304-ovs-opendaylight-v1.0.0.xml
 		String nodeImageHash ="9394ca154aa35eb55e604503ae7943ddaecc6ca5";
 		String nodeNodeType="XO Medium";
 		String nodePostBootScript="apt-get update;apt-get -y install quagga\n"
@@ -207,7 +207,7 @@ public class Example extends SliceCommon{
 
 	private static void addSafeServer(Slice s, String rip){
 		String dockerImageShortName="Ubuntu 14.04 Docker";
-		String dockerImageURL ="http://geni-orca.renci.org/owl/5e2190c1-09f1-4c48-8ed6-dacae6b6b435#Ubuntu+14.0.4+Docker";//http://geni-images.renci.org/images/standard/ubuntu/ub1304-ovs-opendaylight-v1.0.0.xml
+		String dockerImageURL ="http://geni-images.renci.org/images/standard/docker/ubuntu-14.0.4/ubuntu-14.0.4-docker.xml";//http://geni-images.renci.org/images/standard/ubuntu/ub1304-ovs-opendaylight-v1.0.0.xml
 		String dockerImageHash ="b4ef61dbd993c72c5ac10b84650b33301bbf6829";
 		String dockerNodeType="XO Large";
 		ComputeNode node0 = s.addComputeNode("safe-server");
