@@ -585,7 +585,9 @@ public class SdxManager extends SliceCommon{
     logger.debug("Restarting Plexus Controller");
     if(checkPlexus(plexusip)){
       //String script="docker exec -d plexus /bin/bash -c  \"cd /root;pkill ryu-manager;ryu-manager plexus/plexus/app.py ryu/ryu/app/rest_conf_switch.py ryu/ryu/app/rest_qos.py |tee log\"\n";
-      String script="docker exec -d plexus /bin/bash -c  \"cd /root;pkill ryu-manager;ryu-manager plexus/plexus/app.py ryu/ryu/app/rest_conf_switch.py ryu/ryu/app/rest_qos.py|tee log\"\n";
+      //String script="docker exec -d plexus /bin/bash -c  \"cd /root;pkill ryu-manager;ryu-manager plexus/plexus/app.py ryu/ryu/app/rest_conf_switch.py ryu/ryu/app/rest_qos.py|tee log\"\n";
+      //String script="docker exec -d plexus /bin/bash -c  \"cd /root;pkill ryu-manager;ryu-manager plexus/plexus/app.py\"\n";
+      String script="docker exec -d plexus /bin/bash -c  \"cd /root;pkill ryu-manager;ryu-manager ryu/ryu/app/qos_rest_router.py ryu/ryu/app/rest_qos.py ryu/ryu/app/rest_conf_switch.py\"\n";
       logger.debug(sshkey);
       logger.debug(plexusip);
       Exec.sshExec("root",plexusip,script,sshkey);
@@ -680,9 +682,6 @@ public class SdxManager extends SliceCommon{
             link.setIP(IPPrefix+ip);
             link.setMask(mask);
           }
-          else{
-            link.setCapacity(inode2net.getLink().getBandwidth());
-          }
         }
         else{
           link.addNode(inode2net.getNode().toString());
@@ -693,9 +692,7 @@ public class SdxManager extends SliceCommon{
       //read crosssite links
       if(topofile!=null) {
         for (Link link : readLinks(topofile)) {
-          if (!links.containsKey(link.linkname)) {
-            links.put(link.linkname, link);
-          }
+          links.put(link.linkname, link);
         }
       }
       //Stitchports
@@ -735,7 +732,7 @@ public class SdxManager extends SliceCommon{
   public static void configRouting1(Slice s,String ovscontroller, String httpcontroller, String routerpattern,String stitchportpattern) {
     logger.debug("Configurating Routing");
     restartPlexus(SDNControllerIP);
-    sleep(5);
+    //sleep(5);
     // run ovsbridge scritps to add the all interfaces to the ovsbridge br0, if new interface is added to the ovs bridge, then we reset the controller?
     // FIXME: maybe this is not the best way to do.
     //add all interfaces other than eth0 to ovs bridge br0
