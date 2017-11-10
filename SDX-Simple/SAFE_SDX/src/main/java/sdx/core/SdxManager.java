@@ -450,11 +450,42 @@ public class SdxManager extends SliceCommon{
 
   private static void restartPlexus(String plexusip){
     logger.debug("Restarting Plexus Controller");
-    String script="docker exec -d plexus /bin/bash -c  \"cd /root;pkill ryu-manager;ryu-manager ryu/ryu/app/rest_router.py |tee log\"\n";
-    //String script="docker exec -d plexus /bin/bash -c  \"cd /root;pkill ryu-manager;ryu-manager plexus/plexus/app.py ryu/ryu/app/rest_conf_switch.py ryu/ryu/app/rest_qos.py |tee log\"\n";
-    logger.debug(sshkey);
-    logger.debug(plexusip);
-    Exec.sshExec("root",plexusip,script,sshkey);
+    if(checkPlexus(plexusip)){
+      String script="docker exec -d plexus /bin/bash -c  \"cd /root;pkill ryu-manager;ryu-manager ryu/ryu/app/rest_router.py |tee log\"\n";
+      //String script="docker exec -d plexus /bin/bash -c  \"cd /root;pkill ryu-manager;ryu-manager plexus/plexus/app.py ryu/ryu/app/rest_conf_switch.py ryu/ryu/app/rest_qos.py |tee log\"\n";
+      logger.debug(sshkey);
+      logger.debug(plexusip);
+      Exec.sshExec("root",plexusip,script,sshkey);
+    }
+  }
+
+  private static boolean checkPlexus(String SDNControllerIP){
+    String result=Exec.sshExec("root",SDNControllerIP,"docker ps",sshkey);
+    if(result.contains("plexus")){
+      logger.debug("plexus controller has started");
+    }
+    else{
+      logger.debug("plexus controller hasn't started, restarting it");
+      result=Exec.sshExec("root",SDNControllerIP,"docker images",sshkey);
+      if(result.contains("yaoyj11/plexus")){
+        logger.debug("found plexus image, starting plexus container");
+        Exec.sshExec("root",SDNControllerIP,"docker run -i -t -d -p 8080:8080 -p 6633:6633 -p 3000:3000 -h plexus --name plexus yaoyj11/plexus",sshkey);
+      }else{
+
+        logger.debug("plexus image not found, downloading...");
+        Exec.sshExec("root",SDNControllerIP,"docker pull yaoyj11/plexus",sshkey);
+        Exec.sshExec("root",SDNControllerIP,"docker run -i -t -d -p 8080:8080 -p 6633:6633 -p 3000:3000 -h plexus --name plexus yaoyj11/plexus",sshkey);
+      }
+      result=Exec.sshExec("root",SDNControllerIP,"docker ps",sshkey);
+      if(result.contains("plexus")){
+        logger.debug("plexus controller has started");
+      }
+      else{
+        logger.debug("Failed to start plexus controller, exit");
+        return false;
+      }
+    }
+    return true;
   }
 
   public static void configRouting(Slice s,String ovscontroller, String httpcontroller, String routerpattern,String stitchportpattern){
