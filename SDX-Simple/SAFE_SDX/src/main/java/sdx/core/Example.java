@@ -134,7 +134,7 @@ public class Example extends SliceCommon{
         }
 				System.out.println("Plexus Controller IP: " + SDNControllerIP);
 				runCmdSlice(carrier,"/bin/bash ~/ovsbridge.sh "+SDNControllerIP+":6633",sshkey,"(c\\d+)",true,true);
-				runCmdSlice(carrier,"mkdir report && cd report\n/opt/bro/bin/bro -i &\ndisown -h `jobs -l | grep -E '[0-9]{2,4}' -o`\n",sshkey,"(b\\d+)",true,false);
+				//runCmdSlice(carrier,"mkdir report && cd report\n/opt/bro/bin/bro -i &\ndisown -h `jobs -l | grep -E '[0-9]{2,4}' -o`\n",sshkey,"(b\\d+)",true,false);
 				
 				String SAFEServerIP=((ComputeNode)carrier.getResourceByName("safe-server")).getManagementIP();
         if(!checkSafeServer(SAFEServerIP)){
@@ -271,9 +271,9 @@ public class Example extends SliceCommon{
 				//ifaceNode1.setNetmask("255.255.255.0");
 			}
 
-			if (i == 0 || i == num-1) {
-			  addBro(s,"bro"+i,node0,curip++);
-      }
+			//if (i == 0 || i == num-1) {
+			//  addBro(s,"bro"+i,node0,curip++);
+      //}
 
 		}
 		addSafeServer(s,riakip);
