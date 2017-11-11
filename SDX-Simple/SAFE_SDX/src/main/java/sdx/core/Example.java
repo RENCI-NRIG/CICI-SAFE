@@ -167,7 +167,7 @@ public class Example extends SliceCommon{
     }
     else{
       String script=getSafeScript(riakip);
-      logger.debug("safe server image not found, downloading...");
+      logger.debug("safe server hasn't started, retrying...");
       Exec.sshExec("root",SDNControllerIP,"docker pull yaoyj11/safeserver",sshkey);
       Exec.sshExec("root",SDNControllerIP,script,sshkey);
       result=Exec.sshExec("root",SDNControllerIP,"docker ps",sshkey);
@@ -177,6 +177,7 @@ public class Example extends SliceCommon{
         System.exit(-1);
         return false;
       }
+      logger.debug("safe server has started");
     }
     return true;
   }
