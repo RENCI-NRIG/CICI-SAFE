@@ -173,6 +173,8 @@ public class Example extends SliceCommon{
       result=Exec.sshExec("root",SDNControllerIP,"docker ps",sshkey);
       if(!result.contains("safe")){
         logger.debug("Failed to start safe controller, exit");
+        System.out.println("Failed to start safe controller, exit");
+        System.exit(-1);
         return false;
       }
     }
