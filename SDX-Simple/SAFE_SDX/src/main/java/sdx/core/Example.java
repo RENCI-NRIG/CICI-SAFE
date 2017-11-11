@@ -166,15 +166,22 @@ public class Example extends SliceCommon{
       logger.debug("safe server has started");
     }
     else{
-      logger.debug("Failed to start safe controller, exit");
-      return false;
+      String script=getSafeScript(riakip);
+      logger.debug("safe server image not found, downloading...");
+      Exec.sshExec("root",SDNControllerIP,"docker pull yaoyj11/safeserver",sshkey);
+      Exec.sshExec("root",SDNControllerIP,script,sshkey);
+      result=Exec.sshExec("root",SDNControllerIP,"docker ps",sshkey);
+      if(!result.contains("safe")){
+        logger.debug("Failed to start safe controller, exit");
+        return false;
+      }
     }
     return true;
   }
   
   private static boolean checkPlexus(String SDNControllerIP){
     String result=Exec.sshExec("root",SDNControllerIP,"docker ps",sshkey);
-    if(result.contains("safeserver")){
+    if(result.contains("plexus")){
       logger.debug("plexus controller has started");
     }
     else{
