@@ -208,6 +208,69 @@ public class TestSlice extends SliceCommon {
     return true;
   }
 
+  public static Slice createBroSlice(String sliceName, int num, int start, long bw, int numstitches) {//,String stitchsubnet="", String slicesubnet="")
+    logger.debug("ndllib TestDriver: START");
+
+    Slice s = Slice.create(sliceProxy, sctx, sliceName);
+
+    String nodeImageShortName = "Ubuntu 14.04";
+    String nodeImageURL = "http://geni-orca.renci.org/owl/9dfe179d-3736-41bf-8084-f0cd4a520c2f#Ubuntu+14.04";//http://geni-images.renci.org/images/standard/ubuntu/ub1304-ovs-opendaylight-v1.0.0.xml
+    String nodeImageHash = "9394ca154aa35eb55e604503ae7943ddaecc6ca5";
+    String nodeNodeType = "XO Medium";
+    //String nodePostBootScript="apt-get update;apt-get -y  install quagga\n"
+    //  +"sed -i -- 's/zebra=no/zebra=yes/g' /etc/quagga/daemons\n"
+    //  +"sed -i -- 's/ospfd=no/ospfd=yes/g' /etc/quagga/daemons\n";
+    String nodePostBootScript = getOVSScript(SDNControllerIP);
+    ArrayList<ComputeNode> nodelist = new ArrayList<ComputeNode>();
+    ArrayList<Network> netlist = new ArrayList<Network>();
+    ArrayList<Network> stitchlist = new ArrayList<Network>();
+    for (int i = 0; i < num; i++) {
+
+      ComputeNode node0 = s.addComputeNode(((i==0||i==(num-1))?"node":"c") + String.valueOf(i));
+      node0.setImage(nodeImageURL, nodeImageHash, nodeImageShortName);
+      node0.setNodeType(nodeNodeType);
+      node0.setDomain(clientSites.get(i % clientSites.size()));
+      node0.setPostBootScript(nodePostBootScript);
+      nodelist.add(node0);
+      //for(int j=0;j<numstitches;j++){
+      //  Network net1 = s.addBroadcastLink("stitch"+String.valueOf(i)+ String.valueOf(j),bw);
+      //  InterfaceNode2Net ifaceNode0 = (InterfaceNode2Net) net1.stitch(node0);
+      //  ifaceNode0.setIpAddress("192.168."+String.valueOf(100+i*10+j)+".1");
+      //  ifaceNode0.setNetmask("255.255.255.0");
+      //  stitchlist.add(net1);
+      //}
+      if (i != num - 1) {
+        String linkname="clink"+String.valueOf(i);
+        if(i==0){
+          linkname="stitch_c1_10";
+        }
+        else if(i==2){
+          linkname="stitch_c2_20";
+        }
+        Network net2 = s.addBroadcastLink(linkname, bw);
+        InterfaceNode2Net ifaceNode1 = (InterfaceNode2Net) net2.stitch(node0);
+        ifaceNode1.setIpAddress("192.168." + String.valueOf(start + i) + ".1");
+        ifaceNode1.setNetmask("255.255.255.0");
+        netlist.add(net2);
+      }
+      if (i != 0) {
+        Network net = netlist.get(i - 1);
+        InterfaceNode2Net ifaceNode1 = (InterfaceNode2Net) net.stitch(node0);
+        ifaceNode1.setIpAddress("192.168." + String.valueOf(start + i - 1) + ".2");
+        ifaceNode1.setNetmask("255.255.255.0");
+      }
+    }
+    addSafeServer(s, riakip);
+    addPlexusController(s);
+    try {
+      s.commit();
+    } catch (XMLRPCTransportException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+    }
+    return s;
+  }
+
   public static Slice createCarrierSlice(String sliceName, int num, int start, long bw, int numstitches) {//,String stitchsubnet="", String slicesubnet="")
     logger.debug("ndllib TestDriver: START");
 
