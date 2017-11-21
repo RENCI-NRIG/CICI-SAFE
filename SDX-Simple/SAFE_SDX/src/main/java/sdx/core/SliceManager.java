@@ -296,6 +296,26 @@ public class SliceManager extends SliceCommon {
 		return s;
 	}
 
+	private static ComputeNode addBro(Slice s, String broname, ComputeNode edgerouter,int ip_to_use){
+		String broN = "Centos 7.4 Bro";
+		String broURL = "http://geni-images.renci.org/images/standard/centos/centos7.4-bro-v1.0.4/centos7.4-bro-v1.0.4.xml";
+		String broHash = "50c973571fc6da95c3f70d0f71c9aea1659ff780";
+		String broType = "XO Medium";
+		ComputeNode bro = s.addComputeNode(broname);
+		bro.setImage(broURL, broHash, broN);
+		bro.setDomain(edgerouter.getDomain());
+		bro.setNodeType(broType);
+
+		Network bronet = s.addBroadcastLink("brolink_"+ip_to_use);
+		InterfaceNode2Net ifaceNode1 = (InterfaceNode2Net) bronet.stitch(edgerouter);
+		ifaceNode1.setIpAddress("192.168."+String.valueOf(ip_to_use)+".1");
+		ifaceNode1.setNetmask("255.255.255.0");
+
+		InterfaceNode2Net ifaceNode2 = (InterfaceNode2Net) bronet.stitch(bro);
+		ifaceNode2.setIpAddress("192.168."+String.valueOf(ip_to_use)+".2");
+		ifaceNode2.setNetmask("255.255.255.0");
+		return bro;
+	}
 
 	private static void addSafeServer(Slice s, String rip) {
 		String dockerImageShortName = "Ubuntu 14.04 Docker";

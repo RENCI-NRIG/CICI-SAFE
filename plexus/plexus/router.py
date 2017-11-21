@@ -32,17 +32,26 @@ class Router(dict):
         ofctl = OfCtl.factory(dp, logger)
         cookie = COOKIE_DEFAULT_ID
 
+        # Set SW config: TTL error packet in (for OFPv1.2/1.3)
+        ofctl.set_sw_config_for_ttl()
+
         # Clear existing flows:
-        ofctl.clear_flows()
-        self.logger.info('Clearing pre-existing flows [cookie=0x%x]', cookie)
+        #ofctl.clear_flows()
+        #self.logger.info('Clearing pre-existing flows [cookie=0x%x]', cookie)
 
         # Set flow: ARP handling (packet in)
         priority = get_priority(PRIORITY_ARP_HANDLING)
         ofctl.set_packetin_flow(cookie, priority, dl_type=ether.ETH_TYPE_ARP)
         self.logger.info('Set ARP handling (packet in) flow [cookie=0x%x]', cookie)
 
+        # Set flow: L2 switching (normal)
+        priority = get_priority(PRIORITY_NORMAL)
+        ofctl.set_normal_flow(cookie, priority)
+        self.logger.info('Set L2 switching (normal) flow [cookie=0x%x]',
+                         cookie, extra=self.sw_id)
+
         # Set VlanRouter for vid=None.
-        vlan_router = VlanRouter(VLANID_NONE, self)
+        vlan_router = VlanRouter(VLANID_NONE, dp, self.port_data, logger)
         self[VLANID_NONE] = vlan_router
 
         # Start cyclic routing table check.
@@ -53,8 +62,6 @@ class Router(dict):
         hub.kill(self.thread)
         self.thread.wait()
         self.logger.info('Stop cyclic routing table update.')
-        for vlan_router in self.values():
-            vlan_router.shutdown()
 
     def _get_vlan_router(self, vlan_id):
         vlan_routers = []
@@ -849,22 +856,22 @@ class VlanRouter(object):
             # FIXME: Is there anything that can be done to mitigate a malicious GARP?
             # Answer: check proteus before sending it - but that only works if someone isn't MAC spoofing too...
             # That said - in the MAC spoofing case - the grat ARP is *not* a problem.
-            output = self.ofctl.dp.ofproto.OFPP_ALL
+            output = self.ofctl.dp.ofproto.OFPP_NORMAL
             self.ofctl.send_packet_out(in_port, output, msg.data)
 
             self.logger.info('Received GARP from [%s].', src_ip_str)
-            self.logger.info('Sending GARP (flood)')
+            self.logger.info('Sending GARP (normal)')
 
         elif dst_ip not in rt_ports:
             dst_addr = self.address_data.get_data(ip=dst_ip)
             if (dst_addr is not None and
                     src_addr.address_id == dst_addr.address_id) or self.bare:
                 # ARP from internal host -> ALL (in the same address range, which must be defined)
-                output = self.ofctl.dp.ofproto.OFPP_ALL
+                output = self.ofctl.dp.ofproto.OFPP_NORMAL
                 self.ofctl.send_packet_out(in_port, output, msg.data)
 
                 self.logger.info('Received ARP from an internal host [%s].', src_ip_str)
-                self.logger.info('Sending ARP (flood)')
+                self.logger.info('Sending ARP (normal)')
         else:
             if header_list[ARP].opcode == arp.ARP_REQUEST:
                 # ARP request to router port -> send ARP reply
