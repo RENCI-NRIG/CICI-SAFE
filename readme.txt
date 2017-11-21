@@ -112,7 +112,7 @@ Configuration: set variables in "SAFE/configure" and run it. It will generate co
     3) Build chameleon controller:
        a) ./scripts/build.sh
        b) $ ./scripts/run.sh -c config/carol.conf
-        >stitch http://geni-orca.renci.org/owl/ion.rdf#AL2S/Chameleon/Cisco/6509/GigabitEthernet/1/1 3293 cwang-sdx c3 [Cameleon_Node_IP] 10.32.98.200/24
+        >stitch http://geni-orca.renci.org/owl/ion.rdf#AL2S/Chameleon/Cisco/6509/GigabitEthernet/1/1 3298 [SDX_SLICE_NAME, e.g., sdx] c3 [Cameleon_Node_IP] 10.32.98.200/24
         OR
         $./scripts/run.sh -c config/carol.conf -e "stitch http://geni-orca.renci.org/owl/ion.rdf#AL2S/Chameleon/Cisco/6509/GigabitEthernet/1/1 3298 [SDX_SLICE_NAME, e.g., sdx] [STITCH_POINT, e.g., c3] 10.32.98.204 10.32.98.200/24"
 
