@@ -2,6 +2,7 @@ package sdx;
 
 import org.renci.ahab.libndl.Slice;
 import sdx.core.SliceCommon;
+import sdx.core.SliceManager;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 import java.io.BufferedReader;
@@ -55,6 +56,7 @@ import org.renci.ahab.libtransport.xmlrpc.XMLRPCProxyFactory;
 import org.renci.ahab.libtransport.xmlrpc.XMLRPCTransportException;
 import org.renci.ahab.ndllib.transport.OrcaSMXMLRPCProxy;
 
+import sdx.core.SliceManager;
 import sdx.utils.Exec;
 
 public class TestSlice extends SliceCommon {
@@ -123,7 +125,7 @@ public class TestSlice extends SliceCommon {
       computeIP(IPPrefix);
       try {
         String carrierName = sliceName;
-        Slice carrier = createCarrierSlice(carrierName, 4, 10, 100000000, 1);
+        Slice carrier = createBroSlice(carrierName, 4, 10, 100000000, 1);
         carrier.refresh();
         waitTillActive(carrier);
         carrier.refresh();
@@ -232,6 +234,9 @@ public class TestSlice extends SliceCommon {
       node0.setDomain(clientSites.get(i % clientSites.size()));
       node0.setPostBootScript(nodePostBootScript);
       nodelist.add(node0);
+      if(i==1){
+        SliceManager.addBro(s,"bro0",node0,50);
+      }
       //for(int j=0;j<numstitches;j++){
       //  Network net1 = s.addBroadcastLink("stitch"+String.valueOf(i)+ String.valueOf(j),bw);
       //  InterfaceNode2Net ifaceNode0 = (InterfaceNode2Net) net1.stitch(node0);
