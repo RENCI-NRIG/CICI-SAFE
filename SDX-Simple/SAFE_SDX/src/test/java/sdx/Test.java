@@ -29,7 +29,8 @@ public class Test {
     Logger.getLogger("log4j.logger.org.apache.http").setLevel(Level.OFF);
     Logger.getLogger("log4j.logger.org.apache.http.wire").setLevel(Level.OFF);
     testRouting(args);
-    testPerFlowQOS();
+    //testPerFlowQOS();
+
   }
 
   private static void testRouting(String[] args){
@@ -38,6 +39,7 @@ public class Test {
     //notify prefixes for node0 and node1
     SdxManager.notifyPrefix("192.168.10.2/24","192.168.10.2","notused");
     SdxManager.notifyPrefix("192.168.20.2/24","192.168.20.2","notused");
+    SdxManager.connectionRequest("not used","192.168.20.2/24","192.168.10.2/24",0);
     System.out.println("IP prefix is set up, the two nodes should be able to talk now");
   }
 

@@ -134,17 +134,18 @@ public class TestSlice extends SliceCommon {
         //Make sure that plexus container is running
         //SDNControllerIP = ((ComputeNode) carrier.getResourceByName("plexuscontroller")).getManagementIP();
         SDNControllerIP="152.3.136.36";
+        /*
         if (!checkPlexus(SDNControllerIP)) {
           System.exit(-1);
-        }
+        }*/
         System.out.println("Plexus Controler IP: " + SDNControllerIP);
         runCmdSlice(carrier, "/bin/bash ~/ovsbridge.sh " + SDNControllerIP + ":6633", sshkey, "(c\\d+)",true,true);
         runCmdSlice(carrier, "apt-get -y install quagga", sshkey, "(node\\d+)",true,true);
         runCmdSlice(carrier, "sed -i -- 's/zebra=no/zebra=yes/g' /etc/quagga/daemons", sshkey, "(node\\d+)",true,true);
         runCmdSlice(carrier, "sed -i -- 's/ospfd=no/ospfd=yes/g' /etc/quagga/daemons" , sshkey, "(node\\d+)",true,true);
         runCmdSlice(carrier, "echo \"1\" > /proc/sys/net/ipv4/ip_forward", sshkey, "(node\\d+)",true,true);
-        runCmdSlice(carrier, "ifconfig eth1 192.168.10.2/24 up" , sshkey, "(node0)",true,true);
-        runCmdSlice(carrier, "ifconfig eth1 192.168.20.2/24 up" , sshkey, "(node3)",true,true);
+        runCmdSlice(carrier, "/etc/init.d/neuca stop\nifconfig eth1 192.168.10.2/24 up" , sshkey, "(node0)",true,true);
+        runCmdSlice(carrier, "/etc/init.d/neuca stop\nifconfig eth1 192.168.20.2/24 up" , sshkey, "(node3)",true,true);
         runCmdSlice(carrier, "echo \"ip route 192.168.1.1/16 192.168.10.1\" >>/etc/quagga/zebra.conf", sshkey, "(node0)",true,true);
         runCmdSlice(carrier, "echo \"ip route 192.168.1.1/16 192.168.20.1\" >>/etc/quagga/zebra.conf", sshkey, "(node3)",true,true);
         runCmdSlice(carrier, "/etc/init.d/quagga restart", sshkey, "(node\\d+)",true,true);
@@ -363,7 +364,7 @@ public class TestSlice extends SliceCommon {
     ComputeNode node0 = s.addComputeNode("plexuscontroller");
     node0.setImage(dockerImageURL, dockerImageHash, dockerImageShortName);
     node0.setNodeType(dockerNodeType);
-    node0.setDomain("RENCI (Chapel Hill, NC USA) XO Rack");
+    node0.setDomain(controllerSite);
   }
 
   private static String getOVSScript(String cip) {
