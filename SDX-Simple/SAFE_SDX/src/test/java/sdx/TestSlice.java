@@ -188,12 +188,17 @@ public class TestSlice extends SliceCommon {
       result = Exec.sshExec("root", SDNControllerIP, "docker images", sshkey);
       if (result.contains("yaoyj11/plexus")) {
         logger.debug("found plexus image, starting plexus container");
-        Exec.sshExec("root", SDNControllerIP, "docker run -i -t -d -p 8080:8080 -p 6633:6633 -p 3000:3000 -h plexus --name plexus yaoyj11/plexus", sshkey);
+        Exec.sshExec("root", SDNControllerIP,
+          "docker run -i -t -d -p 8080:8080 -p 6633:6633 -p 3000:3000 -h plexus --name plexus yaoyj11/plexus",
+          sshkey);
       } else {
 
         logger.debug("plexus image not found, downloading...");
-        Exec.sshExec("root", SDNControllerIP, "docker pull yaoyj11/plexus", sshkey);
-        Exec.sshExec("root", SDNControllerIP, "docker run -i -t -d -p 8080:8080 -p 6633:6633 -p 3000:3000 -h plexus --name plexus yaoyj11/plexus", sshkey);
+        Exec.sshExec("root", SDNControllerIP,
+          "docker pull yaoyj11/plexus", sshkey);
+        Exec.sshExec("root", SDNControllerIP,
+          "docker run -i -t -d -p 8080:8080 -p 6633:6633 " +
+          "-p 3000:3000 -h plexus --name plexus yaoyj11/plexus", sshkey);
       }
       result = Exec.sshExec("root", SDNControllerIP, "docker ps", sshkey);
       if (result.contains("plexus")) {
@@ -302,7 +307,8 @@ public class TestSlice extends SliceCommon {
     String script = "apt-get update\n"
       + "docker pull yaoyj11/safeserver\n"
       + "docker run -i -t -d -p 7777:7777 -h safe --name safe yaoyj11/safeserver\n"
-      + "docker exec -d safe /bin/bash -c  \"cd /root/safe;export SBT_HOME=/opt/sbt-0.13.12;export SCALA_HOME=/opt/scala-2.11.8;sed -i 's/128.194.6.136:8098/" + riakip + ":8098/g' safe-server/src/main/resources/application.conf;./sdx.sh\"\n";
+      + "docker exec -d safe /bin/bash -c  \"cd /root/safe;export SBT_HOME=/opt/sbt-0.13.12;export SCALA_HOME=/opt/scala-2.11.8;sed -i 's/128.194.6.136:8098/"
+      + riakip + ":8098/g' safe-server/src/main/resources/application.conf;./sdx.sh\"\n";
     return script;
   }
 

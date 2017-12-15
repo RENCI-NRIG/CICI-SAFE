@@ -1,4 +1,4 @@
-package slice;
+package sdx;
 
 import sdx.core.NodeBase;
 import sdx.core.SliceBase;
