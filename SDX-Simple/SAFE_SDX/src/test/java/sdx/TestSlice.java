@@ -234,9 +234,12 @@ public class TestSlice extends SliceCommon {
       node0.setDomain(clientSites.get(i % clientSites.size()));
       node0.setPostBootScript(nodePostBootScript);
       nodelist.add(node0);
+      /*
+      TODO: add bro
       if(i==1){
         SliceManager.addBro(s,"bro0",node0,50);
       }
+      */
       //for(int j=0;j<numstitches;j++){
       //  Network net1 = s.addBroadcastLink("stitch"+String.valueOf(i)+ String.valueOf(j),bw);
       //  InterfaceNode2Net ifaceNode0 = (InterfaceNode2Net) net1.stitch(node0);

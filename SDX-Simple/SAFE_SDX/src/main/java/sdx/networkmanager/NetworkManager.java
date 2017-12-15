@@ -249,6 +249,7 @@ public class NetworkManager{
     boolean result=true;
     String res=HttpUtil.postJSON(cmd[0],new JSONObject(cmd[1]));
     System.out.println(res);
+    cmd[cmd.length-1] = res;
     if(res.toString().contains("success")){
       addEntry_HashList(sdncmds,dpid,cmd);
     }
@@ -267,6 +268,7 @@ public class NetworkManager{
     boolean result=true;
     String res=HttpUtil.postJSON(cmd[0],new JSONObject(cmd[1]));
     System.out.println(res);
+    cmd[cmd.length-1] = res;
     if(res.toString().contains("success")) {
       addEntry_HashList(sdncmds, dpid, cmd);
     }
@@ -296,6 +298,7 @@ public class NetworkManager{
       String []cmd=routingCMD(dest, path[1], path[0], controller);
       String res=HttpUtil.postJSON(cmd[0],new JSONObject(cmd[1]));
       System.out.println(res);
+      cmd[cmd.length-1] = res;
       addEntry_HashList(sdncmds,path[0],cmd);
       //logger.debug(path[0]+" "+path[1]);
     }
@@ -327,6 +330,7 @@ public class NetworkManager{
         int id=Integer.valueOf(res.split("route_id=")[1].split("]")[0]);
         route_id.put(dest+targetIP+path[0],id);
         dpids.add(path[0]);
+        cmd[cmd.length-1] = res;
         addEntry_HashList(sdncmds,path[0],cmd);
       }
       else{
@@ -557,28 +561,32 @@ public class NetworkManager{
 
   private  String[] addrCMD(String addr, String dpid, String controller){
     //String cmd="curl -X POST -d {\"address\":\""+addr+"\"} "+controller+"/router/"+dpid;
-    String[]res=new String[3];
+    String[]res=new String[4];
     res[0]="http://"+controller+"/router/"+dpid;
     res[1]="{\"address\":\""+addr+"\"} ";
     res[2]="postJSON";
+    //res[3] will be replaced with command result
+    res[3] = "resultHolder";
     return res;
   }
 
   private  String[] routingCMD(String dst,String gw, String dpid, String controller){
     //String cmd="curl -X POST -d {\"destination\":\""+dst+"\",\"gateway\":\""+gw+"\"} "+controller+"/router/"+dpid;
-    String[] res=new String[3];
+    String[] res=new String[4];
     res[0]="http://"+controller+"/router/"+dpid;
     res[1]="{\"destination\":"+dst+"\",\"gateway\":\""+gw+"\"}";
     res[2]="postJSON";
+    res[3] = "resultHolder";
     return res;
   }
 
   private  String[] routingCMD(String dst,String src,String gw, String dpid, String controller){
     //String cmd="curl -X POST -d {\"destination\":\""+dst+"\",\"source\":\""+src+"\",\"gateway\":\""+gw+"\"} "+controller+"/router/"+dpid;
-    String[] cmd= new String[3];
+    String[] cmd= new String[4];
     cmd[0]="http://"+controller+"/router/"+dpid;
     cmd[1]="{\"destination\":\""+dst+"\",\"source\":\""+src+"\",\"gateway\":\""+gw+"\"}";
     cmd[2]="postJSON";
+    cmd[3] = "resultHolder";
     return cmd;
   }
 
@@ -656,36 +664,4 @@ public class NetworkManager{
   }
 }
 
-
-/*
-class RLink{
-  private String ifa="";
-  private String ifb="";
-  private String ra="";
-  private String rb="";
-  public RLink(String ia, String ib, String routera, String routerb){
-    ifa=ia;
-    ifb=ib;
-    ra=routera;
-    rb=routerb;
-  }
-
-  public String pair_ip(String ip){
-    if(ip.equals(ifa))
-      return ifb;
-    else if(ip.equals(ifb))
-      return ifa;
-    else
-      return "";
-  }
-
-  public boolean equals(RLink link){
-    if(ifa==link.ifa && ifb==link.ifb  || ifa==link.ifb && ifb==link.ifa){
-        if(ra==link.ra && rb==link.rb  || ra==link.rb && rb==link.ra){
-            return true;
-        }
-    }
-    return false;
-  }
-}*/
 
