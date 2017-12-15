@@ -195,7 +195,6 @@ public class TestSlice extends SliceCommon {
         logger.debug("found plexus image, starting plexus container");
         Exec.sshExec("root", SDNControllerIP, "docker run -i -t -d -p 8080:8080 -p 6633:6633 -p 3000:3000 -h plexus --name plexus yaoyj11/plexus", sshkey);
       } else {
-
         logger.debug("plexus image not found, downloading...");
         Exec.sshExec("root", SDNControllerIP, "docker pull yaoyj11/plexus", sshkey);
         Exec.sshExec("root", SDNControllerIP, "docker run -i -t -d -p 8080:8080 -p 6633:6633 -p 3000:3000 -h plexus --name plexus yaoyj11/plexus", sshkey);

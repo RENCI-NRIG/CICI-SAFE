@@ -166,8 +166,8 @@ public class SdxManager extends SliceCommon{
     catch (Exception e){
       e.printStackTrace();
     }
-    //SDNControllerIP="152.3.136.36";
-    SDNControllerIP=((ComputeNode)serverslice.getResourceByName("plexuscontroller")).getManagementIP();
+    SDNControllerIP="152.3.136.36";
+    //SDNControllerIP=((ComputeNode)serverslice.getResourceByName("plexuscontroller")).getManagementIP();
     //System.out.println("plexuscontroler managementIP = " + SDNControllerIP);
     SDNController=SDNControllerIP+":8080";
     OVSController=SDNControllerIP+":6633";

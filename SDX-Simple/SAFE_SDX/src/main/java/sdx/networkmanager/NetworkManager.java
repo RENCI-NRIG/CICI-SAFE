@@ -322,6 +322,7 @@ public class NetworkManager{
       }
       String []cmd=routingCMD(dest,targetIP, path[1], path[0], controller);
       String res=HttpUtil.postJSON(cmd[0],new JSONObject(cmd[1]));
+      System.out.println(res);
       if(res.contains("success")){
         int id=Integer.valueOf(res.split("route_id=")[1].split("]")[0]);
         route_id.put(dest+targetIP+path[0],id);
