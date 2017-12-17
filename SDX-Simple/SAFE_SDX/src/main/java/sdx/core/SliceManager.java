@@ -289,10 +289,6 @@ public class SliceManager extends SliceCommon {
 			if(BRO) {
 				addBro(s, "bro" + i, node0, curip++);
 			}
-<<<<<<< HEAD
-=======
-
->>>>>>> qos
 		}
 		if(safeauth) {
 			addSafeServer(s, riakip);
