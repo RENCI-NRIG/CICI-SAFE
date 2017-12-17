@@ -1,6 +1,8 @@
 package sdx;
 
 import org.renci.ahab.libndl.Slice;
+import sdx.core.SliceCommon;
+
 import java.util.ArrayList;
 import org.apache.log4j.Logger;
 import org.apache.commons.cli.*;
@@ -192,7 +194,7 @@ public class TestSlice extends SliceCommon {
     ArrayList<Network> stitchlist = new ArrayList<Network>();
     for (int i = 0; i < num; i++) {
 
-      ComputeNode node0 = s.addComputeNode(((i==0||i==(num-1))?"node":"c") + String.valueOf(i));
+      ComputeNode node0 = s.addComputeNode(((i == 0 || i == (num - 1)) ? "node" : "c") + String.valueOf(i));
       node0.setImage(nodeImageURL, nodeImageHash, nodeImageShortName);
       node0.setNodeType(nodeNodeType);
       node0.setDomain(clientSites.get(i % clientSites.size()));
@@ -212,12 +214,11 @@ public class TestSlice extends SliceCommon {
       //  stitchlist.add(net1);
       //}
       if (i != num - 1) {
-        String linkname="clink"+String.valueOf(i);
-        if(i==0){
-          linkname="stitch_c1_10";
-        }
-        else if(i==2){
-          linkname="stitch_c2_20";
+        String linkname = "clink" + String.valueOf(i);
+        if (i == 0) {
+          linkname = "stitch_c1_10";
+        } else if (i == 2) {
+          linkname = "stitch_c2_20";
         }
         Network net2 = s.addBroadcastLink(linkname, bw);
         InterfaceNode2Net ifaceNode1 = (InterfaceNode2Net) net2.stitch(node0);
