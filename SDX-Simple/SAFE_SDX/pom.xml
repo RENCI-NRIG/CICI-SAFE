@@ -54,7 +54,7 @@
 							<name>SafeSdxServer</name>
 						</program>
 						<program>
-							<mainClass>sdx.core.Example</mainClass>
+							<mainClass>sdx.core.SliceManager</mainClass>
 							<name>SafeSdxExample</name>
 						</program>
 						<program>

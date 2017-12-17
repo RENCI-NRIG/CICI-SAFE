@@ -1,31 +1,33 @@
 package sdx;
 
 import sdx.core.NodeBase;
-import sdx.core.SliceBase;
-import sdx.core.SliceBaseException;
-
-import java.io.FileNotFoundException;
-import java.io.PrintStream;
-import java.io.IOException;
+import com.jcraft.jsch.Session;
 
 import java.util.Arrays;
 import java.util.Set;
 import java.util.HashSet;
+import java.util.Map;
+import java.util.HashMap;
 
 import org.renci.ahab.libndl.Slice;
 import org.renci.ahab.libndl.resources.request.ComputeNode;
 import org.renci.ahab.libndl.resources.request.InterfaceNode2Net;
 import org.renci.ahab.libndl.resources.request.Network;
 
-import org.apache.log4j.Logger;
-
 public class TestBroSlice extends SliceBase {
-  public TestBroSlice(String configPath) throws SliceBaseException {
+  private String resource_dir;
+  private Slice thisSlice;
+  private Map<String, String> resourceIPs = new HashMap<>();
+  private Map<String, Session> sessions = new HashMap<>();
+
+  public TestBroSlice(String configPath) throws SampleSlice.SliceBaseException {
     super(configPath);
+    resource_dir = conf.getString("config.resource_dir");
   }
 
-  public TestBroSlice(String configPath, String name) throws SliceBaseException {
+  public TestBroSlice(String configPath, String name) throws SampleSlice.SliceBaseException {
     super(configPath, name);
+    resource_dir = conf.getString("config.resource_dir");
   }
 
   ComputeNode control, flow, cs, c1, c2, c3;
@@ -80,28 +82,30 @@ public class TestBroSlice extends SliceBase {
     ifsn.setIpAddress("192.168.40.1");
   }
 
-  public void setUpFlow() throws SliceBaseException {
+  public void setUpFlow() throws SampleSlice.SliceBaseException {
     Set<Thread> threads = new HashSet<>();
+    //skip this
     threads.add(new Thread(() -> {
         try {
           execOnNode(control, "echo 'export DEBIAN_FRONTEND=\"noninteractive\"' >> ~/.bashrc");
           execOnNode(control, "while [ \"`fuser /var/lib/dpkg/lock`\" != \"\" ]; do sleep 1; done"); // Make sure apt install is available
           execOnNode(control, "rm -f /var/lib/dpkg/lock\ndpkg --configure -a\napt-get install -y python-pip");
           execOnNode(control, "pip install ryu");
-          sftpToNode(control, "/scripts/ryu.py");
-          sftpToNode(control, "/scripts/simple_switch.py");
-          sftpToNode(control, "/scripts/rest_router.py");
-          sftpToNode(control, "/scripts/rest_router_mirror.py");
-          sftpToNode(control, "/scripts/rest_qos.py");
-          sftpToNode(control, "/scripts/rest_conf_switch.py");
-          sftpToNode(control, "/scripts/ofctl_rest.py");
-          sftpToNode(control, "/scripts/simple_switch_13.py");
-          sftpToNode(control, "/scripts/mirror.sh");
-        } catch (SliceBaseException e) {
+          sftpToNode(control, resource_dir + "scripts/ryu.py");
+          sftpToNode(control, resource_dir + "scripts/simple_switch.py");
+          sftpToNode(control, resource_dir + "scripts/rest_router.py");
+          sftpToNode(control, resource_dir + "scripts/rest_router_mirror.py");
+          sftpToNode(control, resource_dir + "scripts/rest_qos.py");
+          sftpToNode(control, resource_dir + "scripts/rest_conf_switch.py");
+          sftpToNode(control, resource_dir + "scripts/ofctl_rest.py");
+          sftpToNode(control, resource_dir + "scripts/simple_switch_13.py");
+          sftpToNode(control, resource_dir + "scripts/mirror.sh");
+        } catch (SampleSlice.SliceBaseException e) {
           throw new RuntimeException(e);
         }
     }));
 
+    //skip this
     threads.add(new Thread(() -> {
         try {
           execOnNode(flow, "echo 'export DEBIAN_FRONTEND=\"noninteractive\"' >> ~/.bashrc");
@@ -136,7 +140,7 @@ public class TestBroSlice extends SliceBase {
                            "do\n" +
                            "ovs-vsctl add-port br0 $i\n" +
                            "done\n");
-        } catch (SliceBaseException e) {
+        } catch (SampleSlice.SliceBaseException e) {
           throw new RuntimeException(e);
         }
     }));
@@ -148,8 +152,8 @@ public class TestBroSlice extends SliceBase {
             execOnNode(n, "while [ \"`fuser /var/lib/dpkg/lock`\" != \"\" ]; do sleep 1; done"); // Make sure apt install is available
             execTillSuccess(n, "apt install -y iperf3");
             execTillSuccess(n, "apt install -y vsftpd");
-            sftpToNode(n, "/evil.txt");
-          } catch (SliceBaseException e) {
+            sftpToNode(n, resource_dir + "scripts/evil.txt");
+          } catch (SampleSlice.SliceBaseException e) {
             throw new RuntimeException(e);
           }
       }));
@@ -164,7 +168,7 @@ public class TestBroSlice extends SliceBase {
           execOnNode(c2, "ip route add 192.168.0.0/16 via 192.168.20.2");
           execOnNode(c3, "ip route add 192.168.0.0/16 via 192.168.30.2");
           execOnNode(cs, "ip route add 192.168.0.0/16 via 192.168.40.2");
-        } catch (SliceBaseException e) {
+        } catch (SampleSlice.SliceBaseException e) {
           throw new RuntimeException(e);
         }
     }));
@@ -190,7 +194,7 @@ public class TestBroSlice extends SliceBase {
 
           execOnNode(control, "curl -X POST -d '{\"source\": \"192.168.10.1/24\", \"destination\": \"192.168.20.1\", \"mirror\": \"192.168.40.1\"}' http://127.0.0.1:8080/router/" + dpid);
           execOnNode(control, "curl -X POST -d '{\"source\": \"192.168.20.1/24\", \"destination\": \"192.168.10.1\", \"mirror\": \"192.168.40.1\"}' http://127.0.0.1:8080/router/" + dpid);
-        } catch (SliceBaseException e) {
+        } catch (SampleSlice.SliceBaseException e) {
           throw new RuntimeException(e);
         }
     }));
@@ -205,14 +209,14 @@ public class TestBroSlice extends SliceBase {
           execOnNode(flow, "sed -i 's/eth0/" + ports + "/' /opt/bro/etc/node.cfg"); // This VM uses ports for the server
           execOnNode(cs, "sed -i 's/eth0/eth1/' /opt/bro/etc/node.cfg"); // This VM uses eth1 for the flow
 
-          sftpToNode(cs, "/scripts/destroy_conn.bro");
-          sftpToNode(cs, "/evil.txt");
+          sftpToNode(cs, resource_dir + "sdnctrl/destroy_conn.bro");
+          sftpToNode(cs, resource_dir + "scripts/evil.txt");
           String sha1 = execOnNode(cs, "sha1sum evil.txt | cut -d' ' -f1", true);
           execOnNode(cs, "sed -i 's/bogus_dpid/" + Long.parseLong(dpid, 16) + "/' destroy_conn.bro");
           execOnNode(cs, "sed -i 's/bogus_addr/" + retrieveIP(control) + "/' destroy_conn.bro");
           execOnNode(cs, "sed -i 's/bogus_sha1/" + sha1 + "/' destroy_conn.bro");
           // execOnNode(cs, "/opt/bro/bin/broctl deploy");
-        } catch (SliceBaseException e) {
+        } catch (SampleSlice.SliceBaseException e) {
           throw new RuntimeException(e);
         }
     }));

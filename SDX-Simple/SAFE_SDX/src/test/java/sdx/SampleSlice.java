@@ -1,18 +1,11 @@
 package sdx;
-import java.io.FileNotFoundException;
-import java.io.PrintStream;
-import java.io.IOException;
-import java.util.Arrays;
 import java.util.Set;
 import java.util.HashSet;
 import org.renci.ahab.libndl.Slice;
 import org.renci.ahab.libndl.resources.request.ComputeNode;
 import org.renci.ahab.libndl.resources.request.InterfaceNode2Net;
 import org.renci.ahab.libndl.resources.request.Network;
-import org.apache.log4j.Logger;
-import sdx.core.SliceBase;
 import sdx.core.NodeBase;
-import sdx.core.SliceBaseException;
 
 
 public class SampleSlice extends SliceBase {
@@ -125,6 +118,21 @@ public class SampleSlice extends SliceBase {
 
   protected String sliceName() {
     return "BroControlNew";
+  }
+
+  public static class SliceBaseException extends Exception {
+    private static final long serialVersionUID = 1;
+    public SliceBaseException(String message) {
+      super(message);
+    }
+
+    public SliceBaseException(String message, Throwable t) {
+      super(message, t);
+    }
+
+    public SliceBaseException(Throwable t) {
+      super(t);
+    }
   }
 }
 

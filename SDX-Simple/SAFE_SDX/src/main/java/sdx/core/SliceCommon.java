@@ -56,9 +56,16 @@ import com.typesafe.config.*;
 
 import sdx.utils.Exec;
 import sdx.utils.ScpTo;
+import com.jcraft.jsch.Channel;
+import com.jcraft.jsch.ChannelExec;
+import com.jcraft.jsch.ChannelSftp;
+import com.jcraft.jsch.JSch;
+import com.jcraft.jsch.JSchException;
+import com.jcraft.jsch.Session;
+import com.jcraft.jsch.SftpException;
 
 
-public class SliceCommon {
+public abstract class SliceCommon {
   final static Logger logger = Logger.getLogger(SliceCommon.class);
 
 
@@ -79,6 +86,7 @@ public class SliceCommon {
   protected static String controllerSite;
   protected static String serverSite;
   protected static boolean safeauth = false;
+
 
   public SliceCommon() {
   }
@@ -115,22 +123,32 @@ public class SliceCommon {
     File myConfigFile = new File(configfilepath);
     Config fileConfig = ConfigFactory.parseFile(myConfigFile);
     conf = ConfigFactory.load(fileConfig);
-    type = conf.getString("config.type");
     sshkey = conf.getString("config.sshkey");
     controllerUrl = conf.getString("config.exogenism");
-    keyhash = conf.getString("config.safekey");
     pemLocation = conf.getString("config.exogenipem");
     keyLocation = conf.getString("config.exogenipem");
-    sliceName = conf.getString("config.slicename");
-    serverSite = conf.getString("config.serversite");
-    controllerSite = conf.getString("config.controllersite");
-
-    String clientSitesStr = conf.getString("config.clientsites");
-    clientSites = new ArrayList<String>();
-    for (String site : clientSitesStr.split(":")) {
-      clientSites.add(site);
+    if (conf.hasPath("config.type")) {
+      type = conf.getString("config.type");
     }
-
+    if (conf.hasPath("config.safekey")) {
+      keyhash = conf.getString("config.safekey");
+    }
+    if (conf.hasPath("config.slicename")) {
+      sliceName = conf.getString("config.slicename");
+    }
+    if(conf.hasPath("config.serversite")) {
+      serverSite = conf.getString("config.serversite");
+    }
+    if(conf.hasPath("config.controllersite")) {
+      controllerSite = conf.getString("config.controllersite");
+    }
+    if(conf.hasPath("config.clientsites")) {
+      String clientSitesStr = conf.getString("config.clientsites");
+      clientSites = new ArrayList<String>();
+      for (String site : clientSitesStr.split(":")) {
+        clientSites.add(site);
+      }
+    }
   }
 
   protected static void waitTillActive(Slice s) {

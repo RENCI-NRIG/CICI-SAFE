@@ -1,34 +1,27 @@
-package sdx.core;
+package sdx;
 
-import com.jcraft.jsch.Channel;
+import sdx.core.SliceCommon;
+import sdx.utils.ScpTo;
+
 import com.jcraft.jsch.ChannelExec;
-import com.jcraft.jsch.ChannelSftp;
 import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.Session;
-import com.jcraft.jsch.SftpException;
 
 import java.io.FileInputStream;
 import java.io.InputStreamReader;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.Properties;
 
-import org.apache.commons.io.IOUtils;
-
 import org.renci.ahab.libndl.Slice;
 import org.renci.ahab.libndl.resources.request.ComputeNode;
 import org.renci.ahab.libndl.resources.request.Network;
-import org.renci.ahab.libtransport.ISliceTransportAPIv1;
-import org.renci.ahab.libtransport.PEMTransportContext;
 import org.renci.ahab.libtransport.SSHAccessToken;
 import org.renci.ahab.libtransport.SliceAccessContext;
-import org.renci.ahab.libtransport.TransportContext;
-import org.renci.ahab.libtransport.xmlrpc.XMLRPCProxyFactory;
 import org.renci.ahab.libtransport.util.ContextTransportException;
 import org.renci.ahab.libtransport.util.SSHAccessTokenFileFactory;
 import org.renci.ahab.libtransport.util.TransportException;
@@ -36,54 +29,55 @@ import org.renci.ahab.libtransport.util.UtilTransportException;
 
 import org.apache.log4j.Logger;
 
-public abstract class SliceBase {
+public abstract class SliceBase extends SliceCommon {
   private final static Logger logger = Logger.getLogger(SliceBase.class);
-  private ISliceTransportAPIv1 sliceProxy;
-  private SliceAccessContext<SSHAccessToken> sliceAccess;
 
-  private String pemFile;
-  private String sshKey;
-  private String controllerUrl;
 
   private Slice thisSlice;
   private Map<String, String> resourceIPs = new HashMap<>();
   private Map<String, Session> sessions = new HashMap<>();
 
-  public SliceBase(String configPath) throws SliceBaseException {
+  public SliceBase(String configPath) throws SampleSlice.SliceBaseException {
     try {
       System.out.println("Reading properties...");
-      readProperties(configPath);
+      readConfig(configPath);
       System.out.println("Making proxy...");
       loadProxy();
       System.out.println("Setting access context...");
       loadSliceSSHAccess();
-    } catch(Exception e) {
-      throw new SliceBaseException(e);
+    } catch (Exception e) {
+      throw new SampleSlice.SliceBaseException(e);
     }
   }
 
-  public SliceBase(String configPath, String sliceName) throws SliceBaseException {
+  public SliceBase(String configPath, String sliceName) throws SampleSlice.SliceBaseException {
     try {
       System.out.println("Reading properties...");
-      readProperties(configPath);
+      readConfig(configPath);
       System.out.println("Making proxy...");
       loadProxy();
       System.out.println("Setting access context...");
-      loadSliceSSHAccess();
-      System.out.println("Accessing slice...");
-      thisSlice = Slice.loadManifestFile(sliceProxy, sliceName);
-      for(ComputeNode c : thisSlice.getComputeNodes()){
-        resourceIPs.put(c.getName(), c.getManagementIP());
+      boolean flag = true;
+      while(flag) {
+        flag = false;
+        thisSlice = Slice.loadManifestFile(sliceProxy, sliceName);
+        for (ComputeNode c : thisSlice.getComputeNodes()) {
+          if (c.getManagementIP() == null){
+            flag = true;
+            break;
+          }
+          resourceIPs.put(c.getName(), c.getManagementIP());
+        }
       }
-    } catch(Exception e) {
-      throw new SliceBaseException(e);
+    } catch (Exception e) {
+      throw new SampleSlice.SliceBaseException(e);
     }
   }
 
-  public void createSlice() throws SliceBaseException {
+  public void createSlice() throws SampleSlice.SliceBaseException {
     try {
       System.out.println("Creating slice!!...");
-      thisSlice = Slice.create(sliceProxy, sliceAccess, sliceName());
+      thisSlice = Slice.create(sliceProxy, sctx, sliceName());
       createSlice(thisSlice);
       // TODO Add the option to ignore this? idk
       try {
@@ -93,7 +87,7 @@ public abstract class SliceBase {
       }
       waitTillActive();
     } catch (Exception e) {
-      throw new SliceBaseException(e);
+      throw new SampleSlice.SliceBaseException(e);
     }
   }
 
@@ -109,24 +103,26 @@ public abstract class SliceBase {
     return resourceIPs.get(c.getName());
   }
 
-  public void execTillSuccess(String name, String command) throws SliceBaseException {
+  public void execTillSuccess(String name, String command) throws SampleSlice.SliceBaseException {
     execTillSuccess(retrieveNode(name), command);
   }
 
-  public void execTillSuccess(ComputeNode c, String command) throws SliceBaseException {
+  public void execTillSuccess(ComputeNode c, String command) throws SampleSlice.SliceBaseException {
     boolean ret;
-    do { ret = execOnNode(c, command); } while (!ret);
+    do {
+      ret = execOnNode(c, command);
+    } while (!ret);
   }
 
-  public boolean execOnNode(String name, String command) throws SliceBaseException {
+  public boolean execOnNode(String name, String command) throws SampleSlice.SliceBaseException {
     return execOnNode(retrieveNode(name), command);
   }
 
-  public boolean execOnNode(ComputeNode c, String command) throws SliceBaseException {
+  public boolean execOnNode(ComputeNode c, String command) throws SampleSlice.SliceBaseException {
     return execOnNode(c, command, false) != null;
   }
 
-  public String execOnNode(ComputeNode c, String command, boolean readOut) throws SliceBaseException {
+  public String execOnNode(ComputeNode c, String command, boolean readOut) throws SampleSlice.SliceBaseException {
     System.out.println("Running " + command);
     ChannelExec channel;
     String output = "";
@@ -153,7 +149,8 @@ public abstract class SliceBase {
         output = outp.toString();
       }
 
-      while (channel.getExitStatus() == -1) {}
+      while (channel.getExitStatus() == -1) {
+      }
       if (channel.getExitStatus() != 0) {
         System.out.println("Error exec!");
         String line;
@@ -162,17 +159,22 @@ public abstract class SliceBase {
         return null;
       }
     } catch (IOException | JSchException e) {
-      throw new SliceBaseException(e);
+      throw new SampleSlice.SliceBaseException(e);
     }
     channel.disconnect();
     return output;
   }
 
-  public void sftpToNode(String name, String path) throws SliceBaseException {
+  public void sftpToNode(String name, String path) throws SampleSlice.SliceBaseException {
     sftpToNode(retrieveNode(name), path);
   }
 
-  public void sftpToNode(ComputeNode c, String path) throws SliceBaseException {
+  public void sftpToNode(ComputeNode c, String path) throws SampleSlice.SliceBaseException {
+    String[] pathParts = path.split("/");
+    String dstPath = "/root/" + pathParts[pathParts.length - 1];
+    ScpTo.Scp(path,"root", c.getManagementIP(),  dstPath, sshkey);
+
+    /*
     ChannelSftp channel;
     try {
       Session session = makeSshSession(c);
@@ -187,6 +189,7 @@ public abstract class SliceBase {
       throw new SliceBaseException(e);
     }
     channel.disconnect();
+    */
   }
 
   public void releaseSshChannels() {
@@ -196,30 +199,35 @@ public abstract class SliceBase {
   }
 
   protected abstract void createSlice(Slice s);
+
   protected abstract String sliceName();
 
   private void readProperties(String configPath) throws IOException {
     Properties prop = new Properties();
     prop.load(new FileInputStream(configPath));
-    pemFile = prop.getProperty("pemFile");
-    sshKey = prop.getProperty("sshKey");
+    pemLocation = prop.getProperty("pemLocation");
+    sshkey = prop.getProperty("sshkey");
     controllerUrl = prop.getProperty("controllerUrl");
   }
 
   private void loadProxy() throws MalformedURLException,
-                                  ContextTransportException,
-                                  TransportException {
-    sliceProxy =
-        (new XMLRPCProxyFactory()).getSliceProxy(new PEMTransportContext("", pemFile, pemFile),
-                                                 new URL(controllerUrl));
+    ContextTransportException,
+    TransportException {
+    sliceProxy = getSliceProxy(pemLocation, keyLocation, controllerUrl);
   }
 
   private void loadSliceSSHAccess() throws UtilTransportException {
-    sliceAccess = new SliceAccessContext<>();
-    sliceAccess.addToken("root",
-                         (new SSHAccessTokenFileFactory(sshKey + ".pub", false))
-                              .getPopulatedToken());
-
+    sctx = new SliceAccessContext<>();
+    try {
+      SSHAccessTokenFileFactory fac;
+      fac = new SSHAccessTokenFileFactory(sshkey + ".pub", false);
+      SSHAccessToken t = fac.getPopulatedToken();
+      sctx.addToken("root", "root", t);
+      sctx.addToken("root", t);
+    } catch (UtilTransportException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+    }
   }
 
   private void waitTillActive() {
@@ -231,13 +239,13 @@ public abstract class SliceBase {
 
       System.out.println("Slice: " + thisSlice.getAllResources());
       for (ComputeNode c : thisSlice.getComputeNodes()) {
-        System.out.println("Resource: " + c.getName() + ", state: "  + c.getState());
+        System.out.println("Resource: " + c.getName() + ", state: " + c.getState());
         if (c.getState() != "Active" || c.getManagementIP() == null)
           sliceActive = false;
       }
 
       for (Network l : thisSlice.getBroadcastLinks()) {
-        System.out.println("Resource: " + l.getName() + ", state: "  + l.getState());
+        System.out.println("Resource: " + l.getName() + ", state: " + l.getState());
         if (l.getState() != "Active")
           sliceActive = false;
       }
@@ -253,24 +261,16 @@ public abstract class SliceBase {
     }
   }
 
-  private void sleep(int ms) {
-    try {
-      Thread.sleep(ms*1000);
-    } catch (InterruptedException ex) {
-      Thread.currentThread().interrupt();
-    }
-  }
-
   private Session makeSshSession(ComputeNode c) throws JSchException {
     String name = c.getName();
     if (!sessions.containsKey(name) ||
-        !sessions.get(name).isConnected()) {
+      !sessions.get(name).isConnected()) {
       String cnodeIp = resourceIPs.get(name);
       System.out.println("Creating session for " + name + ": " + cnodeIp);
 
-      JSch jsch=new JSch();
-      jsch.addIdentity(sshKey);
-      Session session=jsch.getSession("root", cnodeIp, 22);
+      JSch jsch = new JSch();
+      jsch.addIdentity(sshkey);
+      Session session = jsch.getSession("root", cnodeIp, 22);
 
       Properties config = new Properties();
       config.put("StrictHostKeyChecking", "no");
