@@ -129,25 +129,30 @@ public abstract class SliceCommon {
     type = conf.getString("config.type");
     sshkey = conf.getString("config.sshkey");
     controllerUrl = conf.getString("config.exogenism");
-    keyhash = conf.getString("config.safekey");
     pemLocation = conf.getString("config.exogenipem");
     keyLocation = conf.getString("config.exogenipem");
-    sliceName = conf.getString("config.slicename");
-    serverSite = conf.getString("config.serversite");
-    controllerSite = conf.getString("config.controllersite");
     if (conf.hasPath("config.topodir")) {
       topodir = conf.getString("config.topodir");
       topofile = topodir + sliceName + ".topo";
     }
-
-    if (conf.hasPath("config.sitelist")) {
-      sitelist = conf.getStringList("config.sitelist");
+    if (conf.hasPath("config.safekey")) {
+      keyhash = conf.getString("config.safekey");
     }
-
-    String clientSitesStr = conf.getString("config.clientsites");
-    clientSites = new ArrayList<String>();
-    for (String site : clientSitesStr.split(":")) {
-      clientSites.add(site);
+    if (conf.hasPath("config.slicename")) {
+      sliceName = conf.getString("config.slicename");
+    }
+    if (conf.hasPath("config.serversite")) {
+      serverSite = conf.getString("config.serversite");
+    }
+    if (conf.hasPath("config.controllersite")) {
+      controllerSite = conf.getString("config.controllersite");
+    }
+    if (conf.hasPath("config.clientsites")) {
+      String clientSitesStr = conf.getString("config.clientsites");
+      clientSites = new ArrayList<String>();
+      for (String site : clientSitesStr.split(":")) {
+        clientSites.add(site);
+      }
     }
 
   }

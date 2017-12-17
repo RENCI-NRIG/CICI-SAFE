@@ -1,8 +1,10 @@
 package sdx.utils;
+
 import java.net.URI;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+
 import org.apache.http.HttpResponse;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.methods.HttpGet;
@@ -20,33 +22,30 @@ import org.json.JSONObject;
 public class HttpUtil {
   /**
    * Main class.
-   *
    */
   final static Logger logger = Logger.getLogger(HttpUtil.class);
 
-  public static JSONObject postJSON(String serverurl, JSONObject paramsobj){
-    logger.debug("postJson: "+serverurl);
-    logger.debug(paramsobj.toString());
-    JSONObject resobj=new JSONObject();
-    resobj.put("result",false);
+  public static JSONObject postJSON(String serverurl, JSONObject paramsobj) {
+    JSONObject resobj = new JSONObject();
+    resobj.put("result", false);
     HttpClient httpClient = HttpClientBuilder.create().build(); //Use this instead
 
     try {
 
       HttpPost request = new HttpPost(serverurl);
-      StringEntity params =new StringEntity(paramsobj.toString());
+      StringEntity params = new StringEntity(paramsobj.toString());
       //StringEntity params =new StringEntity("{\"sdxslice\":\"sdx\",\"sdxnode\":\"c0\",\"ckeyhash\":\"keyhash\",\"cslice\":\"alice\",\"creservid\":\"cnode0\",\"secret\":\"20\"} ");
       request.addHeader("content-type", "application/json");
       request.setEntity(params);
       HttpResponse response = httpClient.execute(request);
       //handle response here...
-      String output=EntityUtils.toString(response.getEntity());
+      String output = EntityUtils.toString(response.getEntity());
       logger.debug(output);
-      JSONObject jsonobj=new JSONObject(output);
+      JSONObject jsonobj = new JSONObject(output);
       httpClient.getConnectionManager().shutdown();
       return jsonobj;
 
-    }catch (Exception ex) {
+    } catch (Exception ex) {
       ex.printStackTrace();
       return resobj;
 
@@ -55,39 +54,37 @@ public class HttpUtil {
     }
   }
 
-  public static String putString(String serverurl, String data){
-    logger.debug("putString: "+serverurl);
-    logger.debug(data);
+  public static String putString(String serverurl, String data) {
     CloseableHttpClient httpClient = HttpClientBuilder.create().build();
     try {
       HttpPut request = new HttpPut(serverurl);
-      StringEntity params =new StringEntity(data,"UTF-8");
+      StringEntity params = new StringEntity(data, "UTF-8");
       //StringEntity params =new StringEntity("{\"sdxslice\":\"sdx\",\"sdxnode\":\"c0\",\"ckeyhash\":\"keyhash\",\"cslice\":\"alice\",\"creservid\":\"cnode0\",\"secret\":\"20\"} ");
       request.setEntity(params);
       HttpResponse response = httpClient.execute(request);
       //handle response here...
-      String output=EntityUtils.toString(response.getEntity());
+      String output = EntityUtils.toString(response.getEntity());
       logger.debug(output);
       httpClient.close();
       return output;
-    }catch (Exception ex) {
+    } catch (Exception ex) {
       ex.printStackTrace();
       return "Exception when setting ovsdb addr";
     }
   }
 
-  public static String get(String serverurl){
+  public static String get(String serverurl) {
     CloseableHttpClient httpClient = HttpClientBuilder.create().build();
     try {
       HttpGet request = new HttpGet(serverurl);
       //StringEntity params =new StringEntity("{\"sdxslice\":\"sdx\",\"sdxnode\":\"c0\",\"ckeyhash\":\"keyhash\",\"cslice\":\"alice\",\"creservid\":\"cnode0\",\"secret\":\"20\"} ");
       HttpResponse response = httpClient.execute(request);
       //handle response here...
-      String output=EntityUtils.toString(response.getEntity());
+      String output = EntityUtils.toString(response.getEntity());
       logger.debug(output);
       httpClient.close();
       return output;
-    }catch (Exception ex) {
+    } catch (Exception ex) {
       ex.printStackTrace();
       return "Exception when setting ovsdb addr";
     }
