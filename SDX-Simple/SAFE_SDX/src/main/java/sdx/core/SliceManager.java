@@ -257,22 +257,25 @@ public class SliceManager extends SliceCommon {
 		ArrayList<ComputeNode> nodelist = new ArrayList<ComputeNode>();
 		ArrayList<Network> netlist = new ArrayList<Network>();
 		ArrayList<Network> stitchlist = new ArrayList<Network>();
+		boolean BRO = false;
+		if(conf.hasPath("config.bro")){
+			BRO = conf.getBoolean("config.bro");
+		}
 		for (int i = 0; i < num; i++) {
-
 			ComputeNode node0 = s.addComputeNode("c" + String.valueOf(i));
 			node0.setImage(nodeImageURL, nodeImageHash, nodeImageShortName);
 			node0.setNodeType(nodeNodeType);
 			node0.setDomain(clientSites.get(i % clientSites.size()));
 			node0.setPostBootScript(nodePostBootScript);
 			nodelist.add(node0);
-			//for(int j=0;j<numstitches;j++){
-			//  Network net1 = s.addBroadcastLink("stitch"+String.valueOf(i)+ String.valueOf(j),bw);
-			//  InterfaceNode2Net ifaceNode0 = (InterfaceNode2Net) net1.stitch(node0);
-			//  ifaceNode0.setIpAddress("192.168."+String.valueOf(100+i*10+j)+".1");
-			//  ifaceNode0.setNetmask("255.255.255.0");
-			//  stitchlist.add(net1);
-			//}
-			/*
+			for(int j=0;j<numstitches;j++){
+			  Network net1 = s.addBroadcastLink("stitch"+String.valueOf(i)+ String.valueOf(j),bw);
+			  InterfaceNode2Net ifaceNode0 = (InterfaceNode2Net) net1.stitch(node0);
+			  ifaceNode0.setIpAddress("192.168."+String.valueOf(100+i*10+j)+".1");
+			  ifaceNode0.setNetmask("255.255.255.0");
+			  stitchlist.add(net1);
+			}
+
 			if (i != num - 1) {
 				Network net2 = s.addBroadcastLink("clink" + String.valueOf(i), bw);
 				InterfaceNode2Net ifaceNode1 = (InterfaceNode2Net) net2.stitch(node0);
@@ -281,7 +284,10 @@ public class SliceManager extends SliceCommon {
 			if (i != 0) {
 				Network net = netlist.get(i - 1);
 				InterfaceNode2Net ifaceNode1 = (InterfaceNode2Net) net.stitch(node0);
-			}*/
+			}
+			if(BRO) {
+				addBro(s, "bro" + i, node0, curip++);
+			}
 		}
 		if(safeauth) {
 			addSafeServer(s, riakip);

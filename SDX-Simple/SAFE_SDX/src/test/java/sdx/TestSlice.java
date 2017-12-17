@@ -2,7 +2,11 @@ package sdx;
 
 import org.renci.ahab.libndl.Slice;
 import sdx.core.SliceCommon;
+<<<<<<< HEAD
 import sdx.core.SliceManager;
+=======
+
+>>>>>>> qos
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 import java.io.BufferedReader;
@@ -113,9 +117,10 @@ public class TestSlice extends SliceCommon {
       sctx.addToken("root", t);
     } catch (UtilTransportException e) {
       // TODO Auto-generated catch block
-      e.printStackTrace();    String dockerImageShortName = "ubuntu16.04";
-    String dockerImageURL = "http://geni-images.renci.org/images/standard/ubuntu/ub1604-v1.0.4dev.xml";//http://geni-images.renci.org/images/standard/ubuntu/ub1304-ovs-opendaylight-v1.0.0.xml
-    String dockerImageHash = "b8e6c544296dce5f91400974326d619d2910967f";
+      e.printStackTrace();
+      String dockerImageShortName = "ubuntu16.04";
+      String dockerImageURL = "http://geni-images.renci.org/images/standard/ubuntu/ub1604-v1.0.4dev.xml";//http://geni-images.renci.org/images/standard/ubuntu/ub1304-ovs-opendaylight-v1.0.0.xml
+      String dockerImageHash = "b8e6c544296dce5f91400974326d619d2910967f";
     }
 
     if (type.equals("server")) {
@@ -193,11 +198,16 @@ public class TestSlice extends SliceCommon {
       result = Exec.sshExec("root", SDNControllerIP, "docker images", sshkey);
       if (result.contains("yaoyj11/plexus")) {
         logger.debug("found plexus image, starting plexus container");
-        Exec.sshExec("root", SDNControllerIP, "docker run -i -t -d -p 8080:8080 -p 6633:6633 -p 3000:3000 -h plexus --name plexus yaoyj11/plexus", sshkey);
+        Exec.sshExec("root", SDNControllerIP,
+          "docker run -i -t -d -p 8080:8080 -p 6633:6633 -p 3000:3000 -h plexus --name plexus yaoyj11/plexus",
+          sshkey);
       } else {
         logger.debug("plexus image not found, downloading...");
-        Exec.sshExec("root", SDNControllerIP, "docker pull yaoyj11/plexus", sshkey);
-        Exec.sshExec("root", SDNControllerIP, "docker run -i -t -d -p 8080:8080 -p 6633:6633 -p 3000:3000 -h plexus --name plexus yaoyj11/plexus", sshkey);
+        Exec.sshExec("root", SDNControllerIP,
+          "docker pull yaoyj11/plexus", sshkey);
+        Exec.sshExec("root", SDNControllerIP,
+          "docker run -i -t -d -p 8080:8080 -p 6633:6633 " +
+            "-p 3000:3000 -h plexus --name plexus yaoyj11/plexus", sshkey);
       }
       result = Exec.sshExec("root", SDNControllerIP, "docker ps", sshkey);
       if (result.contains("plexus")) {
@@ -294,7 +304,7 @@ public class TestSlice extends SliceCommon {
     ArrayList<Network> stitchlist = new ArrayList<Network>();
     for (int i = 0; i < num; i++) {
 
-      ComputeNode node0 = s.addComputeNode(((i==0||i==(num-1))?"node":"c") + String.valueOf(i));
+      ComputeNode node0 = s.addComputeNode(((i == 0 || i == (num - 1)) ? "node" : "c") + String.valueOf(i));
       node0.setImage(nodeImageURL, nodeImageHash, nodeImageShortName);
       node0.setNodeType(nodeNodeType);
       node0.setDomain(clientSites.get(i % clientSites.size()));
@@ -308,12 +318,11 @@ public class TestSlice extends SliceCommon {
       //  stitchlist.add(net1);
       //}
       if (i != num - 1) {
-        String linkname="clink"+String.valueOf(i);
-        if(i==0){
-          linkname="stitch_c1_10";
-        }
-        else if(i==2){
-          linkname="stitch_c2_20";
+        String linkname = "clink" + String.valueOf(i);
+        if (i == 0) {
+          linkname = "stitch_c1_10";
+        } else if (i == 2) {
+          linkname = "stitch_c2_20";
         }
         Network net2 = s.addBroadcastLink(linkname, bw);
         InterfaceNode2Net ifaceNode1 = (InterfaceNode2Net) net2.stitch(node0);
@@ -373,9 +382,10 @@ public class TestSlice extends SliceCommon {
 
   private static String getSafeScript(String riakip) {
     String script = "apt-get update\n"
-        + "docker pull yaoyj11/safeserver\n"
-        + "docker run -i -t -d -p 7777:7777 -h safe --name safe yaoyj11/safeserver\n"
-        + "docker exec -d safe /bin/bash -c  \"cd /root/safe;export SBT_HOME=/opt/sbt-0.13.12;export SCALA_HOME=/opt/scala-2.11.8;sed -i 's/128.194.6.136:8098/" + riakip + ":8098/g' safe-server/src/main/resources/application.conf;./sdx.sh\"\n";
+      + "docker pull yaoyj11/safeserver\n"
+      + "docker run -i -t -d -p 7777:7777 -h safe --name safe yaoyj11/safeserver\n"
+      + "docker exec -d safe /bin/bash -c  \"cd /root/safe;export SBT_HOME=/opt/sbt-0.13.12;export SCALA_HOME=/opt/scala-2.11.8;sed -i 's/128.194.6.136:8098/"
+      + riakip + ":8098/g' safe-server/src/main/resources/application.conf;./sdx.sh\"\n";
     return script;
   }
 
@@ -386,8 +396,8 @@ public class TestSlice extends SliceCommon {
 
   private static String getPlexusScript() {
     String script = "apt-get update\n"
-        + "docker pull yaoyj11/plexus\n"
-        + "docker run -i -t -d -p 8080:8080 -p 6633:6633 -p 3000:3000 -h plexus --name plexus yaoyj11/plexus\n";
+      + "docker pull yaoyj11/plexus\n"
+      + "docker run -i -t -d -p 8080:8080 -p 6633:6633 -p 3000:3000 -h plexus --name plexus yaoyj11/plexus\n";
     //+"docker exec -d plexus /bin/bash -c  \"cd /root/;./sdx.sh\"\n";
     return script;
   }

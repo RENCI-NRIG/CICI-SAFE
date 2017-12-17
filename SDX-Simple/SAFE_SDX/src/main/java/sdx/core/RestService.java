@@ -19,7 +19,7 @@ import java.util.ArrayList;
  */
 @Path("sdx")
 public class RestService {
-	
+
 	  final static Logger logger = Logger.getLogger(RestService.class);	
 
 
@@ -102,29 +102,30 @@ public class RestService {
     }
 }
 
-class StitchChameleon{
-  public  String sdxslice;
-  public  String sdxnode;
-  public  String ckeyhash;
-  public  String stitchport;
-  public  String vlan;
-  public  String gateway;
+class StitchChameleon {
+  public String sdxslice;
+  public String sdxnode;
+  public String ckeyhash;
+  public String stitchport;
+  public String vlan;
+  public String gateway;
   public String ip;
 
-  public StitchChameleon(){}
-
-  public StitchChameleon(String sdxslice, String sdxnode,String ckeyhash,String stitchport, String vlan, String gateway,String ip){
-    this.sdxslice=sdxslice;
-    this.sdxnode=sdxnode;
-    this.ckeyhash=ckeyhash;
-    this.stitchport=stitchport;
-    this.vlan=vlan;
-    this.gateway=gateway;
-    this.ip=ip;
+  public StitchChameleon() {
   }
 
-  public String toString(){
-    return "{\"sdxslice\": "+sdxslice+", \"sdxnode\": "+sdxnode+", \"ckeyhash\":"+ckeyhash+", \"stitchport\":"+stitchport+", \"vlan\":"+vlan+"\"gateway\":"+gateway+"}";
+  public StitchChameleon(String sdxslice, String sdxnode, String ckeyhash, String stitchport, String vlan, String gateway, String ip) {
+    this.sdxslice = sdxslice;
+    this.sdxnode = sdxnode;
+    this.ckeyhash = ckeyhash;
+    this.stitchport = stitchport;
+    this.vlan = vlan;
+    this.gateway = gateway;
+    this.ip = ip;
+  }
+
+  public String toString() {
+    return "{\"sdxslice\": " + sdxslice + ", \"sdxnode\": " + sdxnode + ", \"ckeyhash\":" + ckeyhash + ", \"stitchport\":" + stitchport + ", \"vlan\":" + vlan + "\"gateway\":" + gateway + "}";
   }
 }
 
@@ -195,18 +196,21 @@ class PrefixNotification{
   }
 }
 
-class StitchResult{
+class StitchResult {
   public boolean result;
   public String gateway;
   public String ip;
-  public StitchResult(){}
-  public StitchResult(String gw, String ip){
-    this.gateway=gw;
-    this.ip=ip;
-    if(gateway!=null && ip !=null)
-      result=true;
+
+  public StitchResult() {
+  }
+
+  public StitchResult(String gw, String ip) {
+    this.gateway = gw;
+    this.ip = ip;
+    if (gateway != null && ip != null)
+      result = true;
     else
-      result=false;
+      result = false;
   }
 }
 

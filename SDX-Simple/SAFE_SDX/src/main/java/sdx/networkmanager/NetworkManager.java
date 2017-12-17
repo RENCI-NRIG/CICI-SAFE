@@ -1,9 +1,9 @@
 package sdx.networkmanager;
-import java.lang.reflect.Array;
 import java.util.*;
 
-import com.hp.hpl.jena.tdb.store.Hash;
-import org.apache.jena.atlas.json.JSON;
+import java.util.ArrayList;
+import java.util.HashMap;
+
 import org.apache.log4j.Logger;
 
 import org.json.HTTP;
@@ -135,9 +135,9 @@ public class NetworkManager{
   private HashMap<String,Integer>route_id=new HashMap<>();
   private HashMap<String,ArrayList<String>>routes=new HashMap<>();
 
-  public  String getDPID(String routerid){
-    Router router=getRouter(routerid);
-    if(router!=null)
+  public String getDPID(String routerid) {
+    Router router = getRouter(routerid);
+    if (router != null)
       return router.getDPID();
     else
       return null;
@@ -185,12 +185,12 @@ public class NetworkManager{
     }
   }
 
-  private  ArrayList<String> getNeighborIPs(String routerid){
-    ArrayList<String> ips=new ArrayList<String>();
-    for(String [] intf:ip_router){
-      if(intf[1].equals(routerid)){
-        String pairip=getPairIP(intf[0]);
-        if(pairip!=null)
+  private ArrayList<String> getNeighborIPs(String routerid) {
+    ArrayList<String> ips = new ArrayList<String>();
+    for (String[] intf : ip_router) {
+      if (intf[1].equals(routerid)) {
+        String pairip = getPairIP(intf[0]);
+        if (pairip != null)
           ips.add(pairip);
       }
     }
@@ -207,22 +207,22 @@ public class NetworkManager{
     if(router!=null){
       router.addInterface(ipa);
       putPairRouter(ipa, router.getDPID());
-      if(!rb.equals("")){
+      if (!rb.equals("")) {
         //logger.debug("addneighbor"+ipa+" "+ipb);
         router.addNeighbor(ipb,link);
         putRouter(router);
-        router=getRouter(rb);
+        router = getRouter(rb);
         router.addInterface(ipb);
         router.addNeighbor(ipa,link);
         putRouter(router);
         putPairRouter(ipb, router.getDPID());
       }
-     // routers.put(ra,router);
+      // routers.put(ra,router);
     }
   }
 
-  public  void addRouter(String routerid, String dpid, int numinterfaces, String mip){
-    if(getRouter(routerid)==null){
+  public void addRouter(String routerid, String dpid, int numinterfaces, String mip) {
+    if (getRouter(routerid) == null) {
 //      logger.debug(dpid+":my dpid");
       routers.add(new Router(routerid,dpid,numinterfaces, mip));
       ArrayList<Long> newqueue=new ArrayList<>();
@@ -236,8 +236,8 @@ public class NetworkManager{
   }
 
   public void newRouter(String routerid, String dpid, int numInterfaces, String mip) {
-    logger.debug("RoutingManager: new router "+routerid+ " "+dpid);
-    addRouter(routerid, dpid, numInterfaces,mip);
+    logger.debug("RoutingManager: new router " + routerid + " " + dpid);
+    addRouter(routerid, dpid, numInterfaces, mip);
   }
 
   public boolean newLink(String ipa, String ra, String gw,String controller) {
@@ -286,9 +286,9 @@ public class NetworkManager{
   }
 
   public void configurePath(String dest, String nodename, String gateway, String controller) {
-    String gwdpid=getRouter(nodename).getDPID();
-    if(gwdpid==null){
-      logger.debug("No router named "+nodename+" not found");
+    String gwdpid = getRouter(nodename).getDPID();
+    if (gwdpid == null) {
+      logger.debug("No router named " + nodename + " not found");
       return;
     }
     ArrayList<String[]>paths=getBroadcastRoutes(gwdpid,gateway);
@@ -405,8 +405,7 @@ public class NetworkManager{
           HttpUtil.putString(cmd[0],cmd[1]);
         }
       }
-    }
-    else{
+    } else {
       logger.debug("No cmd to replay");
     }
   }
@@ -419,17 +418,16 @@ public class NetworkManager{
     else{
       ArrayList<String[]> l=new ArrayList<String[]>();
       l.add(entry);
-      map.put(key,l);
+      map.put(key, l);
     }
   }
 
   //TODO: get shortest path for two pairs
   private ArrayList<String[]> getPairRoutes(String srcdpid, String dstdpid, String gateway,long bw){
-
-    HashSet<String> knownrouters=new HashSet<String>();
+    HashSet<String> knownrouters = new HashSet<String>();
     //path queue: [dpid, path]
     //format of path:Arraylist([router_id,gateway])
-    ArrayList<String>queue=new ArrayList<String>();
+    ArrayList<String> queue = new ArrayList<String>();
     queue.add(srcdpid);
     knownrouters.add(srcdpid);
     //{router-id:gateway}
@@ -461,26 +459,24 @@ public class NetworkManager{
           String pairrouter=getPairRouter(ip);
           if(!knownrouters.contains(pairrouter)){
             knownrouters.add(pairrouter);
-            end+=1;
-            String[]path=new String[3];
-            path[0]=getPairRouter(ip);
+            end += 1;
+            String[] path = new String[3];
+            path[0] = getPairRouter(ip);
             logger.debug(ip);
             String pairip=getPairIP(ip);
             path[1]=pairip.split("/")[0];
             path[2]=pairip;
             logger.debug(path[1]);
             knownpaths.add(path);
-            if(pairrouter.equals(dstdpid)){
-              foundpath=true;
+            if (pairrouter.equals(dstdpid)) {
+              foundpath = true;
               break;
-            }
-            else {
+            } else {
               queue.add(pairrouter);
             }
           }
         }
-      }
-      else{
+      } else {
         logger.debug("Router null");
       }
     }
@@ -504,7 +500,7 @@ public class NetworkManager{
     }
   }
   //FIXME: There might be bug, but haven't got the chance to look into it.
-  private  ArrayList<String[]> getBroadcastRoutes(String gwdpid, String gateway){
+  private ArrayList<String[]> getBroadcastRoutes(String gwdpid, String gateway) {
     //logger.debug("All routers and links");
     //for(String[] link:links){
     //  //logger.debug(link[0]+" "+link[1]);
@@ -515,40 +511,39 @@ public class NetworkManager{
     HashSet<String> knownrouters=new HashSet<String>();
     //path queue: [dpid, path]
     //format of path:Arraylist([router_id,gateway])
-    ArrayList<String>queue=new ArrayList<String>();
+    ArrayList<String> queue = new ArrayList<String>();
     queue.add(gwdpid);
     knownrouters.add(gwdpid);
     //{router-id:gateway}
-    ArrayList<String[]>knownpaths=new ArrayList<String[]>();
-    String[] initroute=new String[2];
-    initroute[0]=gwdpid;
-    initroute[1]=gateway;
+    ArrayList<String[]> knownpaths = new ArrayList<String[]>();
+    String[] initroute = new String[2];
+    initroute[0] = gwdpid;
+    initroute[1] = gateway;
     knownpaths.add(initroute);
-    int start=0;
-    int end=0;
-    while(start<=end){
+    int start = 0;
+    int end = 0;
+    while (start <= end) {
       //logger.debug("queue[start]"+queue.get(start));
-      String rid=queue.get(start);
-      start+=1;
-      Router router=getRouterByDPID(rid);
-      if(router!=null){
-        ArrayList<String> nips=getNeighborIPs(rid);
-        for (String ip:nips){
+      String rid = queue.get(start);
+      start += 1;
+      Router router = getRouterByDPID(rid);
+      if (router != null) {
+        ArrayList<String> nips = getNeighborIPs(rid);
+        for (String ip : nips) {
           //logger.debug("neighborIP: "+ip);
-          if(!knownrouters.contains(getPairRouter(ip))){
+          if (!knownrouters.contains(getPairRouter(ip))) {
             knownrouters.add(getPairRouter(ip));
             queue.add(getPairRouter(ip));
-            end+=1;
-            String[]path=new String[2];
-            path[0]=getPairRouter(ip);
+            end += 1;
+            String[] path = new String[2];
+            path[0] = getPairRouter(ip);
             println(ip);
-            path[1]=getPairIP(ip).split("/")[0];
+            path[1] = getPairIP(ip).split("/")[0];
             println(path[1]);
             knownpaths.add(path);
           }
         }
-      }
-      else{
+      } else {
         logger.debug("Router null");
       }
     }
@@ -600,19 +595,19 @@ public class NetworkManager{
     return res;
   }
 
-  private  Router getRouterByDPID(String routername){
-    for (Router r: routers){
-      if(r.getDPID().equals(routername)){
+  private Router getRouterByDPID(String routername) {
+    for (Router r : routers) {
+      if (r.getDPID().equals(routername)) {
         return r;
       }
     }
     return null;
   }
 
-  private  void putRouter(Router router){
-    for(int i=0;i<routers.size();i++){
-      if(routers.get(i).getDPID().equals(router.getDPID())){
-        routers.set(i,router);
+  private void putRouter(Router router) {
+    for (int i = 0; i < routers.size(); i++) {
+      if (routers.get(i).getDPID().equals(router.getDPID())) {
+        routers.set(i, router);
         return;
       }
     }
@@ -633,25 +628,26 @@ public class NetworkManager{
     }
     return null;
   }
-  private  String getPairRouter(String ip){
-    for (String[] link: ip_router){
+
+  private String getPairRouter(String ip) {
+    for (String[] link : ip_router) {
       //logger.debug(link[0]+" "+link[1]);
-      if(link[0].equals(ip))
+      if (link[0].equals(ip))
         return link[1];
     }
     return null;
   }
 
-  private  void putPairRouter(String ip,String dpid){
-    if(getPairRouter(ip)==null){
-      String[] iprouter=new String[2];
-      iprouter[0]=ip;
-      iprouter[1]=dpid;
+  private void putPairRouter(String ip, String dpid) {
+    if (getPairRouter(ip) == null) {
+      String[] iprouter = new String[2];
+      iprouter[0] = ip;
+      iprouter[1] = dpid;
       ip_router.add(iprouter);
     }
   }
 
-  private  void println(String out){
+  private void println(String out) {
     logger.debug(out);
   }
 }
@@ -670,20 +666,20 @@ class RLink{
     rb=routerb;
   }
 
-  public String pair_ip(String ip){
-    if(ip.equals(ifa))
+  public String pair_ip(String ip) {
+    if (ip.equals(ifa))
       return ifb;
-    else if(ip.equals(ifb))
+    else if (ip.equals(ifb))
       return ifa;
     else
       return "";
   }
 
-  public boolean equals(RLink link){
-    if(ifa==link.ifa && ifb==link.ifb  || ifa==link.ifb && ifb==link.ifa){
-        if(ra==link.ra && rb==link.rb  || ra==link.rb && rb==link.ra){
-            return true;
-        }
+  public boolean equals(RLink link) {
+    if (ifa == link.ifa && ifb == link.ifb || ifa == link.ifb && ifb == link.ifa) {
+      if (ra == link.ra && rb == link.rb || ra == link.rb && rb == link.ra) {
+        return true;
+      }
     }
     return false;
   }
