@@ -2,11 +2,7 @@ package sdx;
 
 import org.renci.ahab.libndl.Slice;
 import sdx.core.SliceCommon;
-<<<<<<< HEAD
 import sdx.core.SliceManager;
-=======
-
->>>>>>> qos
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 import java.io.BufferedReader;
