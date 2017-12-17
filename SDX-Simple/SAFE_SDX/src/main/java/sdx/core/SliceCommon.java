@@ -126,87 +126,87 @@ public abstract class SliceCommon {
     File myConfigFile = new File(configfilepath);
     Config fileConfig = ConfigFactory.parseFile(myConfigFile);
     conf = ConfigFactory.load(fileConfig);
-    type=conf.getString("config.type");
-    sshkey=conf.getString("config.sshkey");
-    controllerUrl=conf.getString("config.exogenism");
-    keyhash=conf.getString("config.safekey");
-    pemLocation=conf.getString("config.exogenipem");
-    keyLocation=conf.getString("config.exogenipem");
-    sliceName=conf.getString("config.slicename");
-    serverSite=conf.getString("config.serversite");
-    controllerSite=conf.getString("config.controllersite");
-    if(conf.hasPath("config.topodir")) {
+    type = conf.getString("config.type");
+    sshkey = conf.getString("config.sshkey");
+    controllerUrl = conf.getString("config.exogenism");
+    keyhash = conf.getString("config.safekey");
+    pemLocation = conf.getString("config.exogenipem");
+    keyLocation = conf.getString("config.exogenipem");
+    sliceName = conf.getString("config.slicename");
+    serverSite = conf.getString("config.serversite");
+    controllerSite = conf.getString("config.controllersite");
+    if (conf.hasPath("config.topodir")) {
       topodir = conf.getString("config.topodir");
       topofile = topodir + sliceName + ".topo";
     }
 
-    if(conf.hasPath("config.sitelist")){
-      sitelist=conf.getStringList("config.sitelist");
+    if (conf.hasPath("config.sitelist")) {
+      sitelist = conf.getStringList("config.sitelist");
     }
 
     String clientSitesStr = conf.getString("config.clientsites");
     clientSites = new ArrayList<String>();
-    for(String site : clientSitesStr.split(":")){
-    	clientSites.add(site);
+    for (String site : clientSitesStr.split(":")) {
+      clientSites.add(site);
     }
 
   }
 
-  protected static void waitTillActive(Slice s){
+  protected static void waitTillActive(Slice s) {
     boolean sliceActive = false;
-    while (true){
+    while (true) {
       s.refresh();
       sliceActive = true;
       logger.debug("");
       logger.debug("Slice: " + s.getAllResources());
-      for(ComputeNode c : s.getComputeNodes()) {
+      for (ComputeNode c : s.getComputeNodes()) {
         logger.debug("Resource: " + c.getName() + ", state: " + c.getState());
         if (c.getState() != "Active" || c.getManagementIP() == null) sliceActive = false;
       }
-      for(Network l: s.getBroadcastLinks()) {
+      for (Network l : s.getBroadcastLinks()) {
         logger.debug("Resource: " + l.getName() + ", state: " + l.getState());
         if (l.getState() != "Active") sliceActive = false;
       }
 
-      if(sliceActive) break;
+      if (sliceActive) break;
       sleep(10);
     }
     logger.debug("Done");
-    for(ComputeNode n : s.getComputeNodes()){
+    for (ComputeNode n : s.getComputeNodes()) {
       logger.debug("ComputeNode: " + n.getName() + ", Managment IP =  " + n.getManagementIP());
     }
   }
 
-  protected static void waitTillActive(Slice s,List<String> resources){
+  protected static void waitTillActive(Slice s, List<String> resources) {
     boolean sliceActive = false;
-    while (true){
+    while (true) {
       s.refresh();
       sliceActive = true;
       logger.debug("");
       logger.debug("Slice: " + s.getAllResources());
-      for(ComputeNode c : s.getComputeNodes()){
-        logger.debug("Resource: " + c.getName() + ", state: "  + c.getState());
-        if(resources.contains(c.getName())) {
+      for (ComputeNode c : s.getComputeNodes()) {
+        logger.debug("Resource: " + c.getName() + ", state: " + c.getState());
+        if (resources.contains(c.getName())) {
           if (c.getState() != "Active" || c.getManagementIP() == null) sliceActive = false;
         }
       }
-      for(Network l: s.getBroadcastLinks()){
-        logger.debug("Resource: " + l.getName() + ", state: "  + l.getState());
-        if(resources.contains(l.getName())) {
+      for (Network l : s.getBroadcastLinks()) {
+        logger.debug("Resource: " + l.getName() + ", state: " + l.getState());
+        if (resources.contains(l.getName())) {
           if (l.getState() != "Active") sliceActive = false;
         }
       }
 
-      if(sliceActive) break;
+      if (sliceActive) break;
       sleep(10);
     }
     logger.debug("Done");
-    for(ComputeNode n : s.getComputeNodes()){
+    for (ComputeNode n : s.getComputeNodes()) {
       logger.debug("ComputeNode: " + n.getName() + ", Managment IP =  " + n.getManagementIP());
     }
   }
 
-  protected static Slice getSlice(ISliceTransportAPIv1 sliceProxy, String sliceName){
+  protected static Slice getSlice(ISliceTransportAPIv1 sliceProxy, String sliceName) {
     Slice s = null;
     try {
       s = Slice.loadManifestFile(sliceProxy, sliceName);
@@ -220,66 +220,65 @@ public abstract class SliceCommon {
     return s;
   }
 
-	protected static Slice getSlice(){
-		Slice s = null;
-		try {
+  protected static Slice getSlice() {
+    Slice s = null;
+    try {
       ISliceTransportAPIv1 sliceProxy = getSliceProxy(pemLocation, keyLocation, controllerUrl);
-			s = Slice.loadManifestFile(sliceProxy, sliceName);
-		} catch (ContextTransportException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (TransportException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		return s;
-	}
+      s = Slice.loadManifestFile(sliceProxy, sliceName);
+    } catch (ContextTransportException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+    } catch (TransportException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+    }
+    return s;
+  }
 
-	protected static void sleep(int sec){
-		try {
-			Thread.sleep(sec*1000);                 //1000 milliseconds is one second.
-		} catch(InterruptedException ex) {  
-			Thread.currentThread().interrupt();
-		}
-	}
+  protected static void sleep(int sec) {
+    try {
+      Thread.sleep(sec * 1000);                 //1000 milliseconds is one second.
+    } catch (InterruptedException ex) {
+      Thread.currentThread().interrupt();
+    }
+  }
 
-  protected static void copyFile2Slice(Slice s, String lfile, String rfile,String privkey){
-		for(ComputeNode c : s.getComputeNodes()){
-      String mip=c.getManagementIP();
-      try{
-        logger.debug("scp config file to "+mip);
-        ScpTo.Scp(lfile,"root",mip,rfile,privkey);
+  protected static void copyFile2Slice(Slice s, String lfile, String rfile, String privkey) {
+    for (ComputeNode c : s.getComputeNodes()) {
+      String mip = c.getManagementIP();
+      try {
+        logger.debug("scp config file to " + mip);
+        ScpTo.Scp(lfile, "root", mip, rfile, privkey);
 
-      }catch (Exception e){
+      } catch (Exception e) {
         logger.debug("exception when copying config file");
       }
     }
   }
 
-   protected static void copyFile2Slice(Slice s, String lfile, String rfile,String privkey, String pattn) {
-       Pattern pattern = Pattern.compile(pattn);
-       for (ComputeNode c : s.getComputeNodes()) {
-           Matcher matcher = pattern.matcher(c.getName());
-           if (!matcher.find())
-           {
-               continue;
-           }
-           String mip = c.getManagementIP();
-           try {
-               logger.debug("scp config file to " + mip);
-               ScpTo.Scp(lfile, "root", mip, rfile, privkey);
+  protected static void copyFile2Slice(Slice s, String lfile, String rfile, String privkey, String pattn) {
+    Pattern pattern = Pattern.compile(pattn);
+    for (ComputeNode c : s.getComputeNodes()) {
+      Matcher matcher = pattern.matcher(c.getName());
+      if (!matcher.find()) {
+        continue;
+      }
+      String mip = c.getManagementIP();
+      try {
+        logger.debug("scp config file to " + mip);
+        ScpTo.Scp(lfile, "root", mip, rfile, privkey);
 
-           } catch (Exception e) {
-               logger.debug("exception when copying config file");
-           }
-       }
-   }
+      } catch (Exception e) {
+        logger.debug("exception when copying config file");
+      }
+    }
+  }
 
-  protected static void runCmdSlice(Slice s, String cmd, String privkey,boolean repeat){
-		for(ComputeNode c : s.getComputeNodes()){
-      String mip=c.getManagementIP();
-      try{
-        logger.debug(mip+" run commands:"+cmd);
+  protected static void runCmdSlice(Slice s, String cmd, String privkey, boolean repeat) {
+    for (ComputeNode c : s.getComputeNodes()) {
+      String mip = c.getManagementIP();
+      try {
+        logger.debug(mip + " run commands:" + cmd);
         //ScpTo.Scp(lfile,"root",mip,rfile,privkey);
         String res = Exec.sshExec("root", mip, cmd, privkey);
         while (res.startsWith("error") && repeat) {
