@@ -29,7 +29,7 @@ public class HttpUtil {
   public static String postJSON(String serverurl, JSONObject paramsobj) {
     JSONObject resobj = new JSONObject();
     resobj.put("result", false);
-    resobj.put("info","Exception when make http request");
+    resobj.put("info", "Exception when make http request");
     HttpClient httpClient = HttpClientBuilder.create().build(); //Use this instead
 
     try {
@@ -74,13 +74,13 @@ public class HttpUtil {
     }
   }
 
-  public static String delete(String serverurl, String data){
-    logger.debug("putString: "+serverurl);
+  public static String delete(String serverurl, String data) {
+    logger.debug("putString: " + serverurl);
     logger.debug(data);
     return ("TODO");
   }
 
-  public static String get(String serverurl){
+  public static String get(String serverurl) {
     CloseableHttpClient httpClient = HttpClientBuilder.create().build();
     try {
       HttpGet request = new HttpGet(serverurl);
