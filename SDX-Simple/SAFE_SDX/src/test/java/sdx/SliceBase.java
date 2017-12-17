@@ -58,11 +58,11 @@ public abstract class SliceBase extends SliceCommon {
       loadProxy();
       System.out.println("Setting access context...");
       boolean flag = true;
-      while(flag) {
+      while (flag) {
         flag = false;
         thisSlice = Slice.loadManifestFile(sliceProxy, sliceName);
         for (ComputeNode c : thisSlice.getComputeNodes()) {
-          if (c.getManagementIP() == null){
+          if (c.getManagementIP() == null) {
             flag = true;
             break;
           }
@@ -172,7 +172,7 @@ public abstract class SliceBase extends SliceCommon {
   public void sftpToNode(ComputeNode c, String path) throws SampleSlice.SliceBaseException {
     String[] pathParts = path.split("/");
     String dstPath = "/root/" + pathParts[pathParts.length - 1];
-    ScpTo.Scp(path,"root", c.getManagementIP(),  dstPath, sshkey);
+    ScpTo.Scp(path, "root", c.getManagementIP(), dstPath, sshkey);
 
     /*
     ChannelSftp channel;

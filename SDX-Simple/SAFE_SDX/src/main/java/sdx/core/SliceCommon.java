@@ -136,13 +136,13 @@ public abstract class SliceCommon {
     if (conf.hasPath("config.slicename")) {
       sliceName = conf.getString("config.slicename");
     }
-    if(conf.hasPath("config.serversite")) {
+    if (conf.hasPath("config.serversite")) {
       serverSite = conf.getString("config.serversite");
     }
-    if(conf.hasPath("config.controllersite")) {
+    if (conf.hasPath("config.controllersite")) {
       controllerSite = conf.getString("config.controllersite");
     }
-    if(conf.hasPath("config.clientsites")) {
+    if (conf.hasPath("config.clientsites")) {
       String clientSitesStr = conf.getString("config.clientsites");
       clientSites = new ArrayList<String>();
       for (String site : clientSitesStr.split(":")) {

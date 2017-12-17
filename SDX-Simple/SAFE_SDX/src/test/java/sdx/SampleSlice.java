@@ -1,6 +1,8 @@
 package sdx;
+
 import java.util.Set;
 import java.util.HashSet;
+
 import org.renci.ahab.libndl.Slice;
 import org.renci.ahab.libndl.resources.request.ComputeNode;
 import org.renci.ahab.libndl.resources.request.InterfaceNode2Net;
@@ -58,55 +60,60 @@ public class SampleSlice extends SliceBase {
   public void setUpFlow() throws SliceBaseException {
     Set<Thread> threads = new HashSet<>();
     threads.add(new Thread(() -> {
-        try {
-          execOnNode(control, "echo 'export DEBIAN_FRONTEND=\"noninteractive\"' >> ~/.bashrc");
-          execOnNode(control, "while [ \"`fuser /var/lib/dpkg/lock`\" != \"\" ]; do sleep 1; done"); // Make sure apt install is available
-          execOnNode(control, "rm -f /var/lib/dpkg/lock\ndpkg --configure -a\napt-get install -y python-pip");
-          execOnNode(control, "pip install ryu");
-          sftpToNode(control, "/scripts/ryu.py");
-          sftpToNode(control, "/scripts/simple_switch.py");
-          sftpToNode(control, "/scripts/rest_router.py");
-          //execOnNode(control, "ryu-manager ryu.py &\ndisown -h `jobs -l | grep -E '[0-9]{2,5}' -o`");
-        } catch (SliceBaseException e) {
-          throw new RuntimeException(e);
-        }
+      try {
+        execOnNode(control, "echo 'export DEBIAN_FRONTEND=\"noninteractive\"' >> ~/.bashrc");
+        execOnNode(control, "while [ \"`fuser /var/lib/dpkg/lock`\" != \"\" ]; do sleep 1; done"); // Make sure apt install is available
+        execOnNode(control, "rm -f /var/lib/dpkg/lock\ndpkg --configure -a\napt-get install -y python-pip");
+        execOnNode(control, "pip install ryu");
+        sftpToNode(control, "/scripts/ryu.py");
+        sftpToNode(control, "/scripts/simple_switch.py");
+        sftpToNode(control, "/scripts/rest_router.py");
+        //execOnNode(control, "ryu-manager ryu.py &\ndisown -h `jobs -l | grep -E '[0-9]{2,5}' -o`");
+      } catch (SliceBaseException e) {
+        throw new RuntimeException(e);
+      }
     }));
 
     threads.add(new Thread(() -> {
-        try {
-          execOnNode(bro, "echo 'export DEBIAN_FRONTEND=\"noninteractive\"' >> ~/.bashrc");
-          execOnNode(bro, "sed -i 's/eth0/eth1/' /opt/bro/etc/node.cfg"); // This VM uses eth1
-          execOnNode(bro, "/opt/bro/bin/broctl deploy");
-        } catch (SliceBaseException e) {
-          throw new RuntimeException(e);
-        }
+      try {
+        execOnNode(bro, "echo 'export DEBIAN_FRONTEND=\"noninteractive\"' >> ~/.bashrc");
+        execOnNode(bro, "sed -i 's/eth0/eth1/' /opt/bro/etc/node.cfg"); // This VM uses eth1
+        execOnNode(bro, "/opt/bro/bin/broctl deploy");
+      } catch (SliceBaseException e) {
+        throw new RuntimeException(e);
+      }
     }));
 
     threads.add(new Thread(() -> {
-        try {
-          execOnNode(flow, "echo 'export DEBIAN_FRONTEND=\"noninteractive\"' >> ~/.bashrc");
-          execOnNode(flow, "echo 'export mainint=`ifconfig | grep -B1 \"10.103.*\" | awk '\\''$1!=\"inet\" && $1!=\"--\"'\\'' | cut -d' ' -f1`' >> ~/.bashrc");
-          execOnNode(flow, "echo 'export others=`ifconfig | grep -B1 \"192.168.*\" | awk '\\''$1!=\"inet\" && $1!=\"--\"'\\'' | cut -d' ' -f1`' >> ~/.bashrc");
-          execOnNode(flow, "while [ \"`fuser /var/lib/dpkg/lock`\" != \"\" ]; do sleep 1; done"); // Make sure apt install is available
-          boolean ret;
-          do {
-            ret = execOnNode(flow, "apt-get install -y openvswitch-switch");
-          } while (!ret);
-          execOnNode(flow, "ovs-vsctl add-br br0");
-          execOnNode(flow, "ovs-vsctl set bridge br0 protocols=OpenFlow10");
-          execOnNode(flow, "ovs-vsctl set-fail-mode br0 secure");
-          execOnNode(flow, "ovs-vsctl set-controller br0 tcp:" + retrieveIP(control) + ":6633");
-          execOnNode(flow, "for i in `ifconfig | grep -B1 \"192.168.*\" | awk '$1!=\"inet\" && $1!=\"--\"' | cut -d' ' -f1`\n" +
-                           "do\n" +
-                           "ovs-vsctl add-port br0 $i\n" +
-                           "done\n");
-        } catch (SliceBaseException e) {
-          throw new RuntimeException(e);
-        }
+      try {
+        execOnNode(flow, "echo 'export DEBIAN_FRONTEND=\"noninteractive\"' >> ~/.bashrc");
+        execOnNode(flow, "echo 'export mainint=`ifconfig | grep -B1 \"10.103.*\" | awk '\\''$1!=\"inet\" && $1!=\"--\"'\\'' | cut -d' ' -f1`' >> ~/.bashrc");
+        execOnNode(flow, "echo 'export others=`ifconfig | grep -B1 \"192.168.*\" | awk '\\''$1!=\"inet\" && $1!=\"--\"'\\'' | cut -d' ' -f1`' >> ~/.bashrc");
+        execOnNode(flow, "while [ \"`fuser /var/lib/dpkg/lock`\" != \"\" ]; do sleep 1; done"); // Make sure apt install is available
+        boolean ret;
+        do {
+          ret = execOnNode(flow, "apt-get install -y openvswitch-switch");
+        } while (!ret);
+        execOnNode(flow, "ovs-vsctl add-br br0");
+        execOnNode(flow, "ovs-vsctl set bridge br0 protocols=OpenFlow10");
+        execOnNode(flow, "ovs-vsctl set-fail-mode br0 secure");
+        execOnNode(flow, "ovs-vsctl set-controller br0 tcp:" + retrieveIP(control) + ":6633");
+        execOnNode(flow, "for i in `ifconfig | grep -B1 \"192.168.*\" | awk '$1!=\"inet\" && $1!=\"--\"' | cut -d' ' -f1`\n" +
+          "do\n" +
+          "ovs-vsctl add-port br0 $i\n" +
+          "done\n");
+      } catch (SliceBaseException e) {
+        throw new RuntimeException(e);
+      }
     }));
 
     threads.forEach(t -> t.start());
-    threads.forEach(t -> { try { t.join(); } catch (InterruptedException e) {} } );
+    threads.forEach(t -> {
+      try {
+        t.join();
+      } catch (InterruptedException e) {
+      }
+    });
 
     String broPort = execOnNode(flow, "ifconfig | grep -B1 \"192.168.1.103\" | awk '$1!=\"inet\" && $1!=\"--\"' | cut -d' ' -f1\n", true);
     String broMac = execOnNode(bro, "ifconfig | grep -A2 eth1 | grep -E '([0-9a-f]{2}:){5}[0-9a-f]{2}' -o", true);
@@ -122,6 +129,7 @@ public class SampleSlice extends SliceBase {
 
   public static class SliceBaseException extends Exception {
     private static final long serialVersionUID = 1;
+
     public SliceBaseException(String message) {
       super(message);
     }
