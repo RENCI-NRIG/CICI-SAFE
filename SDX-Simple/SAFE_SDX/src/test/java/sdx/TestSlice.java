@@ -2,6 +2,7 @@ package sdx;
 
 import org.renci.ahab.libndl.Slice;
 import sdx.core.SliceCommon;
+
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 import java.io.BufferedReader;
@@ -135,16 +136,16 @@ public class TestSlice extends SliceCommon {
           System.exit(-1);
         }
         System.out.println("Plexus Controler IP: " + SDNControllerIP);
-        runCmdSlice(carrier, "/bin/bash ~/ovsbridge.sh " + SDNControllerIP + ":6633", sshkey, "(c\\d+)",true,true);
-        runCmdSlice(carrier, "apt-get -y install quagga", sshkey, "(node\\d+)",true,true);
-        runCmdSlice(carrier, "sed -i -- 's/zebra=no/zebra=yes/g' /etc/quagga/daemons", sshkey, "(node\\d+)",true,true);
-        runCmdSlice(carrier, "sed -i -- 's/ospfd=no/ospfd=yes/g' /etc/quagga/daemons" , sshkey, "(node\\d+)",true,true);
-        runCmdSlice(carrier, "echo \"1\" > /proc/sys/net/ipv4/ip_forward", sshkey, "(node\\d+)",true,true);
-        runCmdSlice(carrier, "ifconfig eth1 192.168.10.2/24 up" , sshkey, "(node0)",true,true);
-        runCmdSlice(carrier, "ifconfig eth1 192.168.20.2/24 up" , sshkey, "(node3)",true,true);
-        runCmdSlice(carrier, "echo \"ip route 192.168.1.1/16 192.168.10.1\" >>/etc/quagga/zebra.conf", sshkey, "(node0)",true,true);
-        runCmdSlice(carrier, "echo \"ip route 192.168.1.1/16 192.168.20.1\" >>/etc/quagga/zebra.conf", sshkey, "(node3)",true,true);
-        runCmdSlice(carrier, "/etc/init.d/quagga restart", sshkey, "(node\\d+)",true,true);
+        runCmdSlice(carrier, "/bin/bash ~/ovsbridge.sh " + SDNControllerIP + ":6633", sshkey, "(c\\d+)", true, true);
+        runCmdSlice(carrier, "apt-get -y install quagga", sshkey, "(node\\d+)", true, true);
+        runCmdSlice(carrier, "sed -i -- 's/zebra=no/zebra=yes/g' /etc/quagga/daemons", sshkey, "(node\\d+)", true, true);
+        runCmdSlice(carrier, "sed -i -- 's/ospfd=no/ospfd=yes/g' /etc/quagga/daemons", sshkey, "(node\\d+)", true, true);
+        runCmdSlice(carrier, "echo \"1\" > /proc/sys/net/ipv4/ip_forward", sshkey, "(node\\d+)", true, true);
+        runCmdSlice(carrier, "ifconfig eth1 192.168.10.2/24 up", sshkey, "(node0)", true, true);
+        runCmdSlice(carrier, "ifconfig eth1 192.168.20.2/24 up", sshkey, "(node3)", true, true);
+        runCmdSlice(carrier, "echo \"ip route 192.168.1.1/16 192.168.10.1\" >>/etc/quagga/zebra.conf", sshkey, "(node0)", true, true);
+        runCmdSlice(carrier, "echo \"ip route 192.168.1.1/16 192.168.20.1\" >>/etc/quagga/zebra.conf", sshkey, "(node3)", true, true);
+        runCmdSlice(carrier, "/etc/init.d/quagga restart", sshkey, "(node\\d+)", true, true);
 
         String SAFEServerIP = ((ComputeNode) carrier.getResourceByName("safe-server")).getManagementIP();
         if (!checkSafeServer(SAFEServerIP)) {
@@ -189,12 +190,17 @@ public class TestSlice extends SliceCommon {
       result = Exec.sshExec("root", SDNControllerIP, "docker images", sshkey);
       if (result.contains("yaoyj11/plexus")) {
         logger.debug("found plexus image, starting plexus container");
-        Exec.sshExec("root", SDNControllerIP, "docker run -i -t -d -p 8080:8080 -p 6633:6633 -p 3000:3000 -h plexus --name plexus yaoyj11/plexus", sshkey);
+        Exec.sshExec("root", SDNControllerIP,
+          "docker run -i -t -d -p 8080:8080 -p 6633:6633 -p 3000:3000 -h plexus --name plexus yaoyj11/plexus",
+          sshkey);
       } else {
 
         logger.debug("plexus image not found, downloading...");
-        Exec.sshExec("root", SDNControllerIP, "docker pull yaoyj11/plexus", sshkey);
-        Exec.sshExec("root", SDNControllerIP, "docker run -i -t -d -p 8080:8080 -p 6633:6633 -p 3000:3000 -h plexus --name plexus yaoyj11/plexus", sshkey);
+        Exec.sshExec("root", SDNControllerIP,
+          "docker pull yaoyj11/plexus", sshkey);
+        Exec.sshExec("root", SDNControllerIP,
+          "docker run -i -t -d -p 8080:8080 -p 6633:6633 " +
+          "-p 3000:3000 -h plexus --name plexus yaoyj11/plexus", sshkey);
       }
       result = Exec.sshExec("root", SDNControllerIP, "docker ps", sshkey);
       if (result.contains("plexus")) {
@@ -225,7 +231,7 @@ public class TestSlice extends SliceCommon {
     ArrayList<Network> stitchlist = new ArrayList<Network>();
     for (int i = 0; i < num; i++) {
 
-      ComputeNode node0 = s.addComputeNode(((i==0||i==(num-1))?"node":"c") + String.valueOf(i));
+      ComputeNode node0 = s.addComputeNode(((i == 0 || i == (num - 1)) ? "node" : "c") + String.valueOf(i));
       node0.setImage(nodeImageURL, nodeImageHash, nodeImageShortName);
       node0.setNodeType(nodeNodeType);
       node0.setDomain(clientSites.get(i % clientSites.size()));
@@ -239,12 +245,11 @@ public class TestSlice extends SliceCommon {
       //  stitchlist.add(net1);
       //}
       if (i != num - 1) {
-        String linkname="clink"+String.valueOf(i);
-        if(i==0){
-          linkname="stitch_c1_10";
-        }
-        else if(i==2){
-          linkname="stitch_c2_20";
+        String linkname = "clink" + String.valueOf(i);
+        if (i == 0) {
+          linkname = "stitch_c1_10";
+        } else if (i == 2) {
+          linkname = "stitch_c2_20";
         }
         Network net2 = s.addBroadcastLink(linkname, bw);
         InterfaceNode2Net ifaceNode1 = (InterfaceNode2Net) net2.stitch(node0);
@@ -304,9 +309,10 @@ public class TestSlice extends SliceCommon {
 
   private static String getSafeScript(String riakip) {
     String script = "apt-get update\n"
-        + "docker pull yaoyj11/safeserver\n"
-        + "docker run -i -t -d -p 7777:7777 -h safe --name safe yaoyj11/safeserver\n"
-        + "docker exec -d safe /bin/bash -c  \"cd /root/safe;export SBT_HOME=/opt/sbt-0.13.12;export SCALA_HOME=/opt/scala-2.11.8;sed -i 's/128.194.6.136:8098/" + riakip + ":8098/g' safe-server/src/main/resources/application.conf;./sdx.sh\"\n";
+      + "docker pull yaoyj11/safeserver\n"
+      + "docker run -i -t -d -p 7777:7777 -h safe --name safe yaoyj11/safeserver\n"
+      + "docker exec -d safe /bin/bash -c  \"cd /root/safe;export SBT_HOME=/opt/sbt-0.13.12;export SCALA_HOME=/opt/scala-2.11.8;sed -i 's/128.194.6.136:8098/"
+      + riakip + ":8098/g' safe-server/src/main/resources/application.conf;./sdx.sh\"\n";
     return script;
   }
 
@@ -317,8 +323,8 @@ public class TestSlice extends SliceCommon {
 
   private static String getPlexusScript() {
     String script = "apt-get update\n"
-        + "docker pull yaoyj11/plexus\n"
-        + "docker run -i -t -d -p 8080:8080 -p 6633:6633 -p 3000:3000 -h plexus --name plexus yaoyj11/plexus\n";
+      + "docker pull yaoyj11/plexus\n"
+      + "docker run -i -t -d -p 8080:8080 -p 6633:6633 -p 3000:3000 -h plexus --name plexus yaoyj11/plexus\n";
     //+"docker exec -d plexus /bin/bash -c  \"cd /root/;./sdx.sh\"\n";
     return script;
   }

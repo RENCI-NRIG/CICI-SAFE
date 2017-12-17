@@ -1,4 +1,5 @@
 package sdx.core;
+
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 import java.io.BufferedReader;
@@ -55,22 +56,29 @@ import com.typesafe.config.*;
 
 import sdx.utils.Exec;
 import sdx.utils.ScpTo;
+import com.jcraft.jsch.Channel;
+import com.jcraft.jsch.ChannelExec;
+import com.jcraft.jsch.ChannelSftp;
+import com.jcraft.jsch.JSch;
+import com.jcraft.jsch.JSchException;
+import com.jcraft.jsch.Session;
+import com.jcraft.jsch.SftpException;
 
 
-public class SliceCommon {
-	  final static Logger logger = Logger.getLogger(SliceCommon.class);	
+public abstract class SliceCommon {
+  final static Logger logger = Logger.getLogger(SliceCommon.class);
 
-	
-	protected static final String RequestResource = null;
-	protected static String controllerUrl;
+
+  protected static final String RequestResource = null;
+  protected static String controllerUrl;
   protected static String SDNControllerIP;
-	protected static String sliceName;
-	protected static String pemLocation;
-	protected static String keyLocation;
+  protected static String sliceName;
+  protected static String pemLocation;
+  protected static String keyLocation;
   protected static String sshkey;
   protected static ISliceTransportAPIv1 sliceProxy;
   protected static SliceAccessContext<SSHAccessToken> sctx;
-	protected static String safeserver;
+  protected static String safeserver;
   protected static String keyhash;
   protected static String type;
   private static String topodir;
@@ -80,11 +88,13 @@ public class SliceCommon {
   protected static String controllerSite;
   protected static List<String> sitelist;
   protected static String serverSite;
-  protected static boolean safeauth=false;
+  protected static boolean safeauth = false;
 
-  public SliceCommon(){}
 
-  protected static CommandLine parseCmd(String[] args){
+  public SliceCommon() {
+  }
+
+  protected static CommandLine parseCmd(String[] args) {
     Options options = new Options();
     Option config = new Option("c", "config", true, "configuration file path");
     Option config1 = new Option("d", "delete", false, "delete the slice");
@@ -97,21 +107,21 @@ public class SliceCommon {
     options.addOption(config2);
     CommandLineParser parser = new DefaultParser();
     HelpFormatter formatter = new HelpFormatter();
-    CommandLine cmd=null;
+    CommandLine cmd = null;
 
     try {
-        cmd = parser.parse(options, args);
+      cmd = parser.parse(options, args);
     } catch (ParseException e) {
-        logger.debug(e.getMessage());
-        formatter.printHelp("utility-name", options);
+      logger.debug(e.getMessage());
+      formatter.printHelp("utility-name", options);
 
-        System.exit(1);
-        return cmd;
+      System.exit(1);
+      return cmd;
     }
     return cmd;
   }
 
-  protected static void readConfig(String configfilepath){
+  protected static void readConfig(String configfilepath) {
 
     File myConfigFile = new File(configfilepath);
     Config fileConfig = ConfigFactory.parseFile(myConfigFile);
@@ -143,28 +153,28 @@ public class SliceCommon {
   }
 
   protected static void waitTillActive(Slice s){
-		boolean sliceActive = false;
-		while (true){		
-			s.refresh();
-			sliceActive = true;
-			logger.debug("");
-			logger.debug("Slice: " + s.getAllResources());
-			for(ComputeNode c : s.getComputeNodes()){
-				logger.debug("Resource: " + c.getName() + ", state: "  + c.getState());
-				if(c.getState() != "Active"||c.getManagementIP()==null) sliceActive = false;
-			}
-			for(Network l: s.getBroadcastLinks()){
-				logger.debug("Resource: " + l.getName() + ", state: "  + l.getState());
-				if(l.getState() != "Active") sliceActive = false;
-			}
-		 	
-		 	if(sliceActive) break;
-		 	sleep(10);
-		}
-		logger.debug("Done");
-		for(ComputeNode n : s.getComputeNodes()){
-			logger.debug("ComputeNode: " + n.getName() + ", Managment IP =  " + n.getManagementIP());
-		}
+    boolean sliceActive = false;
+    while (true){
+      s.refresh();
+      sliceActive = true;
+      logger.debug("");
+      logger.debug("Slice: " + s.getAllResources());
+      for(ComputeNode c : s.getComputeNodes()) {
+        logger.debug("Resource: " + c.getName() + ", state: " + c.getState());
+        if (c.getState() != "Active" || c.getManagementIP() == null) sliceActive = false;
+      }
+      for(Network l: s.getBroadcastLinks()) {
+        logger.debug("Resource: " + l.getName() + ", state: " + l.getState());
+        if (l.getState() != "Active") sliceActive = false;
+      }
+
+      if(sliceActive) break;
+      sleep(10);
+    }
+    logger.debug("Done");
+    for(ComputeNode n : s.getComputeNodes()){
+      logger.debug("ComputeNode: " + n.getName() + ", Managment IP =  " + n.getManagementIP());
+    }
   }
 
   protected static void waitTillActive(Slice s,List<String> resources){
@@ -243,7 +253,7 @@ public class SliceCommon {
       }catch (Exception e){
         logger.debug("exception when copying config file");
       }
-		}
+    }
   }
 
    protected static void copyFile2Slice(Slice s, String lfile, String rfile,String privkey, String pattn) {
@@ -271,165 +281,165 @@ public class SliceCommon {
       try{
         logger.debug(mip+" run commands:"+cmd);
         //ScpTo.Scp(lfile,"root",mip,rfile,privkey);
-        String res=Exec.sshExec("root",mip,cmd,privkey);
-        while(res.startsWith("error")&&repeat){
+        String res = Exec.sshExec("root", mip, cmd, privkey);
+        while (res.startsWith("error") && repeat) {
           sleep(5);
-          res=Exec.sshExec("root",mip,cmd,privkey);
+          res = Exec.sshExec("root", mip, cmd, privkey);
         }
 
-      }catch (Exception e){
+      } catch (Exception e) {
         logger.debug("exception when copying config file");
       }
-		}
+    }
   }
 
-  protected static void runCmdSlice(Slice s, String cmd, String privkey,String patn, boolean repeat){
+  protected static void runCmdSlice(Slice s, String cmd, String privkey, String patn, boolean repeat) {
     Pattern pattern = Pattern.compile(patn);
-		for(ComputeNode c : s.getComputeNodes()){
+    for (ComputeNode c : s.getComputeNodes()) {
       Matcher matcher = pattern.matcher(c.getName());
-      if (!matcher.find())
-      {
+      if (!matcher.find()) {
         continue;
       }
-      String mip=c.getManagementIP();
-      try{
-        logger.debug(mip+" run commands:"+cmd);
-        String res=Exec.sshExec("root",mip,cmd,privkey);
-        while(res.startsWith("error")&&repeat){
+      String mip = c.getManagementIP();
+      try {
+        logger.debug(mip + " run commands:" + cmd);
+        String res = Exec.sshExec("root", mip, cmd, privkey);
+        while (res.startsWith("error") && repeat) {
           sleep(5);
-          res=Exec.sshExec("root",mip,cmd,privkey);
+          res = Exec.sshExec("root", mip, cmd, privkey);
         }
 
-      }catch (Exception e){
+      } catch (Exception e) {
         logger.debug("exception when copying config file");
       }
-		}
+    }
   }
 
-  protected static void runCmdSlice(Slice s,final String cmd, final String privkey, final boolean repeat, final boolean parallel){
-    if(parallel){
-      ArrayList<Thread> tlist=new ArrayList<Thread>();
-      for(ComputeNode c : s.getComputeNodes()){
-        String name=c.getName();
-        final String mip=c.getManagementIP();
-        try{
-          logger.debug(mip+" run commands:"+cmd);
+  protected static void runCmdSlice(Slice s, final String cmd, final String privkey,
+                                    final boolean repeat, final boolean parallel) {
+    if (parallel) {
+      ArrayList<Thread> tlist = new ArrayList<Thread>();
+      for (ComputeNode c : s.getComputeNodes()) {
+        String name = c.getName();
+        final String mip = c.getManagementIP();
+        try {
+          logger.debug(mip + " run commands:" + cmd);
           //ScpTo.Scp(lfile,"root",mip,rfile,privkey);
-          Thread thread=new Thread(){
-            @Override public void run(){
-              try{
-                String res=Exec.sshExec("root",mip,cmd,privkey);
-                while(res.startsWith("error")&&repeat){
+          Thread thread = new Thread() {
+            @Override
+            public void run() {
+              try {
+                String res = Exec.sshExec("root", mip, cmd, privkey);
+                while (res.startsWith("error") && repeat) {
                   sleep(5);
-                  res=Exec.sshExec("root",mip,cmd,privkey);
+                  res = Exec.sshExec("root", mip, cmd, privkey);
                 }
-              }catch(Exception e){
+              } catch (Exception e) {
                 e.printStackTrace();
               }
             }
           };
           thread.start();
           tlist.add(thread);
-        }catch (Exception e){
+        } catch (Exception e) {
           System.out.println("exception when copying config file");
           logger.error("exception when copying config file");
         }
       }
-      try{
-        for(Thread t:tlist){
+      try {
+        for (Thread t : tlist) {
           t.join();
         }
-      }catch (Exception e){
+      } catch (Exception e) {
         e.printStackTrace();
       }
-    }
-    else{
-      runCmdSlice(s,cmd,privkey,repeat);
+    } else {
+      runCmdSlice(s, cmd, privkey, repeat);
     }
   }
 
-  protected static void runCmdSlice(Slice s,final String cmd, final String privkey,String p, final boolean repeat, final boolean parallel){
+  protected static void runCmdSlice(Slice s, final String cmd, final String privkey, String p, final boolean repeat, final boolean parallel) {
     Pattern pattern = Pattern.compile(p);
-    if(parallel){
-      ArrayList<Thread> tlist=new ArrayList<Thread>();
-      for(ComputeNode c : s.getComputeNodes()){
-        String name=c.getName();
+    if (parallel) {
+      ArrayList<Thread> tlist = new ArrayList<Thread>();
+      for (ComputeNode c : s.getComputeNodes()) {
+        String name = c.getName();
         Matcher matcher = pattern.matcher(name);
-        if(matcher.matches()){
-          final String mip=c.getManagementIP();
-          try{
-            logger.debug(mip+" run commands:"+cmd);
+        if (matcher.matches()) {
+          final String mip = c.getManagementIP();
+          try {
+            logger.debug(mip + " run commands:" + cmd);
             //ScpTo.Scp(lfile,"root",mip,rfile,privkey);
-            Thread thread=new Thread(){
-              @Override public void run(){
-                try{
-                  String res=Exec.sshExec("root",mip,cmd,privkey);
-                  while(res.startsWith("error")&&repeat){
+            Thread thread = new Thread() {
+              @Override
+              public void run() {
+                try {
+                  String res = Exec.sshExec("root", mip, cmd, privkey);
+                  while (res.startsWith("error") && repeat) {
                     sleep(5);
-                    res=Exec.sshExec("root",mip,cmd,privkey);
+                    res = Exec.sshExec("root", mip, cmd, privkey);
                   }
-                }catch(Exception e){
+                } catch (Exception e) {
                   e.printStackTrace();
                 }
               }
             };
             thread.start();
             tlist.add(thread);
-          }catch (Exception e){
+          } catch (Exception e) {
             System.out.println("exception when copying config file");
             logger.error("exception when copying config file");
           }
         }
       }
-      try{
-        for(Thread t:tlist){
+      try {
+        for (Thread t : tlist) {
           t.join();
         }
-      }catch (Exception e){
+      } catch (Exception e) {
         e.printStackTrace();
       }
-    }
-    else{
-      runCmdSlice(s,cmd,privkey,p,repeat);
+    } else {
+      runCmdSlice(s, cmd, privkey, p, repeat);
     }
   }
 
 
-	protected static ISliceTransportAPIv1 getSliceProxy(String pem, String key, String controllerUrl){
-		ISliceTransportAPIv1 sliceProxy = null;
-		try{
-			//ExoGENI controller context
-			ITransportProxyFactory ifac = new XMLRPCProxyFactory();
-			logger.debug("Opening certificate " + pem + " and key " + key);
-			TransportContext ctx = new PEMTransportContext("", pem, key);
-			sliceProxy = ifac.getSliceProxy(ctx, new URL(controllerUrl));
+  protected static ISliceTransportAPIv1 getSliceProxy(String pem, String key, String controllerUrl) {
+    ISliceTransportAPIv1 sliceProxy = null;
+    try {
+      //ExoGENI controller context
+      ITransportProxyFactory ifac = new XMLRPCProxyFactory();
+      logger.debug("Opening certificate " + pem + " and key " + key);
+      TransportContext ctx = new PEMTransportContext("", pem, key);
+      sliceProxy = ifac.getSliceProxy(ctx, new URL(controllerUrl));
 
-		} catch  (Exception e){
-			e.printStackTrace();
-			System.err.println("Proxy factory test failed");
-			assert(false);
-		}
+    } catch (Exception e) {
+      e.printStackTrace();
+      System.err.println("Proxy factory test failed");
+      assert (false);
+    }
 
-		return sliceProxy;
-	}
+    return sliceProxy;
+  }
 
-  protected static void getNetworkInfo(Slice s){
+  protected static void getNetworkInfo(Slice s) {
     //getLinks
-    for(Network n :s.getLinks()){
-      logger.debug(n.getLabel()+" "+n.getState());
+    for (Network n : s.getLinks()) {
+      logger.debug(n.getLabel() + " " + n.getState());
     }
     //getInterfaces
-    for(Interface i: s.getInterfaces()){
-      InterfaceNode2Net inode2net=(InterfaceNode2Net)i;
-      logger.debug("MacAddr: "+inode2net.getMacAddress());
-      logger.debug("GUID: "+i.getGUID());
+    for (Interface i : s.getInterfaces()) {
+      InterfaceNode2Net inode2net = (InterfaceNode2Net) i;
+      logger.debug("MacAddr: " + inode2net.getMacAddress());
+      logger.debug("GUID: " + i.getGUID());
     }
-    for(ComputeNode node: s.getComputeNodes()){
-      logger.debug(node.getName()+node.getManagementIP());
-      for(Interface i: node.getInterfaces()){
-        InterfaceNode2Net inode2net=(InterfaceNode2Net)i;
-        logger.debug("MacAddr: "+inode2net.getMacAddress());
-        logger.debug("GUID: "+i.getGUID());
+    for (ComputeNode node : s.getComputeNodes()) {
+      logger.debug(node.getName() + node.getManagementIP());
+      for (Interface i : node.getInterfaces()) {
+        InterfaceNode2Net inode2net = (InterfaceNode2Net) i;
+        logger.debug("MacAddr: " + inode2net.getMacAddress());
+        logger.debug("GUID: " + i.getGUID());
       }
     }
   }
