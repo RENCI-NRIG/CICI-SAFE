@@ -1,5 +1,7 @@
-package sdx;
+package sdx.bro;
 
+import sdx.bro.SampleSlice;
+import sdx.bro.SliceBase;
 import sdx.core.NodeBase;
 import com.jcraft.jsch.Session;
 
