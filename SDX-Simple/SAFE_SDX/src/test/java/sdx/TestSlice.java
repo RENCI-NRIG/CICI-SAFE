@@ -112,9 +112,10 @@ public class TestSlice extends SliceCommon {
       sctx.addToken("root", t);
     } catch (UtilTransportException e) {
       // TODO Auto-generated catch block
-      e.printStackTrace();    String dockerImageShortName = "ubuntu16.04";
-    String dockerImageURL = "http://geni-images.renci.org/images/standard/ubuntu/ub1604-v1.0.4dev.xml";//http://geni-images.renci.org/images/standard/ubuntu/ub1304-ovs-opendaylight-v1.0.0.xml
-    String dockerImageHash = "b8e6c544296dce5f91400974326d619d2910967f";
+      e.printStackTrace();
+      String dockerImageShortName = "ubuntu16.04";
+      String dockerImageURL = "http://geni-images.renci.org/images/standard/ubuntu/ub1604-v1.0.4dev.xml";//http://geni-images.renci.org/images/standard/ubuntu/ub1304-ovs-opendaylight-v1.0.0.xml
+      String dockerImageHash = "b8e6c544296dce5f91400974326d619d2910967f";
     }
 
     if (type.equals("server")) {
@@ -200,7 +201,7 @@ public class TestSlice extends SliceCommon {
           "docker pull yaoyj11/plexus", sshkey);
         Exec.sshExec("root", SDNControllerIP,
           "docker run -i -t -d -p 8080:8080 -p 6633:6633 " +
-          "-p 3000:3000 -h plexus --name plexus yaoyj11/plexus", sshkey);
+            "-p 3000:3000 -h plexus --name plexus yaoyj11/plexus", sshkey);
       }
       result = Exec.sshExec("root", SDNControllerIP, "docker ps", sshkey);
       if (result.contains("plexus")) {
