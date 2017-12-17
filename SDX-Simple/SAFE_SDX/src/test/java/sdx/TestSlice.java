@@ -2,7 +2,6 @@ package sdx;
 
 import org.renci.ahab.libndl.Slice;
 import sdx.core.SliceCommon;
-
 import java.util.ArrayList;
 import org.apache.log4j.Logger;
 import org.apache.commons.cli.*;

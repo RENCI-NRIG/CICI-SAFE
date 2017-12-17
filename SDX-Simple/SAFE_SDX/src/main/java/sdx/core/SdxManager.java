@@ -444,9 +444,8 @@ public class SdxManager extends SliceCommon {
         res=res+" Cannot find a router with customer gateway "+gateway;
         return res;
       }
-    }
-    else{
-      res=res+" [authorization failed]";
+    } else {
+      res = res + " [authorization failed]";
     }
     return res;
   }
@@ -886,8 +885,8 @@ public class SdxManager extends SliceCommon {
     }
   }
 
-	public static void undoStitch(String sdxslice, String customerName, String netName,
-                                String nodeName){
+
+	public static void undoStitch(String sdxslice, String customerName, String netName, String nodeName){
 		logger.debug("ndllib TestDriver: START");
 		
 		//Main Example Code

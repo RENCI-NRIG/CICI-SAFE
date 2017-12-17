@@ -285,7 +285,6 @@ public class SliceManager extends SliceCommon {
 				Network net = netlist.get(i - 1);
 				InterfaceNode2Net ifaceNode1 = (InterfaceNode2Net) net.stitch(node0);
 			}
-
 			if(BRO) {
 				addBro(s, "bro" + i, node0, curip++);
 			}
