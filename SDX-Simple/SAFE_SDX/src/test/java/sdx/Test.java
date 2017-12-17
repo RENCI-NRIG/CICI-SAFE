@@ -33,7 +33,7 @@ public class Test {
 
   }
 
-  private static void testRouting(String[] args){
+  private static void testRouting(String[] args) {
     SdxManager.startSdxServer(args);
     System.out.println("configured ip addresses in sdx network");
     //notify prefixes for node0 and node1
@@ -72,7 +72,7 @@ public class Test {
     String[] queuecmd=queueCMD(controller,dpid1);
     HttpUtil.postJSON(queuecmd[0], new JSONObject(queuecmd[1]));
     HttpUtil.get(queuecmd[0]);
-    queuecmd=queueCMD(controller,dpid2);
+    queuecmd = queueCMD(controller, dpid2);
     HttpUtil.postJSON(queuecmd[0], new JSONObject(queuecmd[1]));
     HttpUtil.get(queuecmd[0]);
     //String getcmd="curl -X GET http://"+controller+":8080/qos/rules/"+dpid1;

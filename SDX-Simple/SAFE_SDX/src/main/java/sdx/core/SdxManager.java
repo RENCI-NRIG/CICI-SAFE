@@ -55,12 +55,13 @@ import org.renci.ahab.libtransport.xmlrpc.XMLRPCTransportException;
  * 6. Call SDN controller to install the rules
  */
 
-public class SdxManager extends SliceCommon{
-  public SdxManager(){}
+public class SdxManager extends SliceCommon {
+  public SdxManager() {
+  }
 
   final static Logger logger = Logger.getLogger(SdxManager.class);
 
-  
+
   private static NetworkManager routingmanager=new NetworkManager();
   private static HashMap<String, Link> links=new HashMap<String, Link>();
   private static HashMap<String, ArrayList<String>>computenodes=new HashMap<String,ArrayList<String>>();
@@ -91,49 +92,47 @@ public class SdxManager extends SliceCommon{
     if(map.containsKey(key)){
       ArrayList<String> l=map.get(key);
       l.add(entry);
-    }
-    else{
-      ArrayList<String> l=new ArrayList<String>();
+    } else {
+      ArrayList<String> l = new ArrayList<String>();
       l.add(entry);
-      map.put(key,l);
+      map.put(key, l);
     }
   }
 
-  private ArrayList<String[]> getAllElments_HashList(HashMap<String,ArrayList<String>>  map){
-    ArrayList<String[]> res=new ArrayList<String[]>();
-    for(String key:map.keySet()){
-        for(String ip:map.get(key)){
-          String[] pair=new String[2];
-          pair[0]=key;
-          pair[1]=ip;
-          res.add(pair);
-        }
+  private ArrayList<String[]> getAllElments_HashList(HashMap<String, ArrayList<String>> map) {
+    ArrayList<String[]> res = new ArrayList<String[]>();
+    for (String key : map.keySet()) {
+      for (String ip : map.get(key)) {
+        String[] pair = new String[2];
+        pair[0] = key;
+        pair[1] = ip;
+        res.add(pair);
+      }
     }
     return res;
   }
 
-  private static  void computeIP(String prefix){
-    String[] ip_mask=prefix.split("/");
-    String[] ip_segs=ip_mask[0].split("\\.");
-    IPPrefix=ip_segs[0]+"."+ip_segs[1]+".";
-    curip=Integer.valueOf(ip_segs[2]);
+  private static void computeIP(String prefix) {
+    String[] ip_mask = prefix.split("/");
+    String[] ip_segs = ip_mask[0].split("\\.");
+    IPPrefix = ip_segs[0] + "." + ip_segs[1] + ".";
+    curip = Integer.valueOf(ip_segs[2]);
   }
-	
-	public static void startSdxServer(String [] args){
 
-		logger.debug("Carrier Slice server with Service API: START");
-    CommandLine cmd=parseCmd(args);
-    if(cmd.hasOption('n')){
-      safeauth=false;
+  public static void startSdxServer(String[] args) {
+
+    logger.debug("Carrier Slice server with Service API: START");
+    CommandLine cmd = parseCmd(args);
+    if (cmd.hasOption('n')) {
+      safeauth = false;
       System.out.println("Safe disabled, allowing all requests");
+    } else {
+      safeauth = true;
     }
-    else{
-      safeauth=true;
-    }
-		String configfilepath=cmd.getOptionValue("config");
+    String configfilepath = cmd.getOptionValue("config");
     readConfig(configfilepath);
-    IPPrefix=conf.getString("config.ipprefix");
-    serverurl=conf.getString("config.serverurl");
+    IPPrefix = conf.getString("config.ipprefix");
+    serverurl = conf.getString("config.serverurl");
 
     //type=sdxconfig.type;
     computeIP(IPPrefix);
@@ -156,7 +155,7 @@ public class SdxManager extends SliceCommon{
       serverslice = Slice.loadManifestFile(sliceProxy, sliceName);
       ComputeNode safe=(ComputeNode)serverslice.getResourceByName("safe-server");
       //System.out.println("safe-server managementIP = " + safe.getManagementIP());
-      safeserver=safe.getManagementIP()+":7777";
+      safeserver = safe.getManagementIP() + ":7777";
     } catch (ContextTransportException e) {
       // TODO Auto-generated catch block
       e.printStackTrace();
@@ -452,30 +451,28 @@ public class SdxManager extends SliceCommon{
     return res;
   }
 
-  private static boolean authorizePrefix(String cushash, String cusip){
-    String[] othervalues=new String[2];
-    othervalues[0]=cushash;
-    othervalues[1]=cusip;
-    String message=SafePost.postSafeStatements(safeserver,"ownPrefix",keyhash,othervalues);
-    if(message !=null && message.contains("Unsatisfied")){
+  private static boolean authorizePrefix(String cushash, String cusip) {
+    String[] othervalues = new String[2];
+    othervalues[0] = cushash;
+    othervalues[1] = cusip;
+    String message = SafePost.postSafeStatements(safeserver, "ownPrefix", keyhash, othervalues);
+    if (message != null && message.contains("Unsatisfied")) {
       return false;
-    }
-    else
+    } else
       return true;
   }
 
 
-  private static boolean authorizeConnectivity(String srchash, String srcip, String dsthash, String dstip){
-    String[] othervalues=new String[4];
-    othervalues[0]=srchash;
-    othervalues[1]=dsthash;
-    othervalues[2]=srcip;
-    othervalues[3]=dstip;
-    String message=SafePost.postSafeStatements(safeserver,"connectivity",keyhash,othervalues);
-    if(message !=null && message.contains("Unsatisfied")){
+  private static boolean authorizeConnectivity(String srchash, String srcip, String dsthash, String dstip) {
+    String[] othervalues = new String[4];
+    othervalues[0] = srchash;
+    othervalues[1] = dsthash;
+    othervalues[2] = srcip;
+    othervalues[3] = dstip;
+    String message = SafePost.postSafeStatements(safeserver, "connectivity", keyhash, othervalues);
+    if (message != null && message.contains("Unsatisfied")) {
       return false;
-    }
-    else
+    } else
       return true;
   }
 
@@ -492,21 +489,21 @@ public class SdxManager extends SliceCommon{
           s = Slice.loadManifestFile(sliceProxy, sdxslice);
         } catch (ContextTransportException e) {
           // TODO Auto-generated catch block
-          res ="Stitch request failed.\n SdxServer exception in loadManiFestFile";
+          res = "Stitch request failed.\n SdxServer exception in loadManiFestFile";
           e.printStackTrace();
         } catch (TransportException e) {
-          res ="Stitch request failed.\n SdxServer exception in loadManiFestFile";
+          res = "Stitch request failed.\n SdxServer exception in loadManiFestFile";
           // TODO Auto-generated catch block
           e.printStackTrace();
         }
         String stitchname = "sp-" + nodeName + "-" + ip.replace("/", "__").replace(".", "_");
-        System.out.println("Stitching to Chameleon {"+"stitchname: " + stitchname + " vlan:" + vlan + " stithport: " + stitchport+"}");
+        System.out.println("Stitching to Chameleon {" + "stitchname: " + stitchname + " vlan:" + vlan + " stithport: " + stitchport + "}");
         StitchPort mysp = s.addStitchPort(stitchname, vlan, stitchport, 100000000l);
         ComputeNode mynode = (ComputeNode) s.getResourceByName(nodeName);
         mysp.stitch(mynode);
         s.commit();
         waitTillActive(s);
-        Exec.sshExec("root",mynode.getManagementIP(),"/bin/bash ~/ovsbridge.sh "+OVSController,sshkey);
+        Exec.sshExec("root", mynode.getManagementIP(), "/bin/bash ~/ovsbridge.sh " + OVSController, sshkey);
         routingmanager.replayCmds(routingmanager.getDPID(nodeName));
         Exec.sshExec("root",mynode.getManagementIP(),"ifconfig;ovs-vsctl list port",sshkey);
         routingmanager.newLink(ip, nodeName, gateway,SDNController);
@@ -515,8 +512,8 @@ public class SdxManager extends SliceCommon{
       } else {
         System.out.println("Chameleon Stitch Request from " + customer_keyhash + " Unauthorized");
       }
-    }catch(Exception e){
-      res ="Stitch request failed.\n SdxServer exception in commiting stitching opoeration";
+    } catch (Exception e) {
+      res = "Stitch request failed.\n SdxServer exception in commiting stitching opoeration";
       e.printStackTrace();
     }
     return res;
@@ -541,7 +538,7 @@ public class SdxManager extends SliceCommon{
     logger.debug("Finished Stitching, set ip address of the new interface to "+newip+"  time elapsed: "
       +String.valueOf(t2-t1)+"\n");
     logger.debug("finished sending reconfiguration command");
-	}
+  }
 
   public static boolean authorizeStitchRequest(String customer_slice,String customerName,String ReservID,
                                                String keyhash,String slicename, String nodename){
@@ -555,8 +552,7 @@ public class SdxManager extends SliceCommon{
     String message=SafePost.postSafeStatements(safeserver,"verifyStitch",keyhash,othervalues);
     if(message ==null || message.contains("Unsatisfied")){
       return false;
-    }
-    else
+    } else
       return true;
   }
 
@@ -574,15 +570,14 @@ public class SdxManager extends SliceCommon{
     String message=SafePost.postSafeStatements(safeserver,"verifyChameleonStitch",keyhash,othervalues);
     if(message ==null || message.contains("Unsatisfied")){
       return false;
-    }
-    else
+    } else
       return true;
   }
 
 
-  private static void restartPlexus(String plexusip){
+  private static void restartPlexus(String plexusip) {
     logger.debug("Restarting Plexus Controller");
-    if(checkPlexus(plexusip)){
+    if (checkPlexus(plexusip)) {
       //String script="docker exec -d plexus /bin/bash -c  \"cd /root;pkill ryu-manager;ryu-manager plexus/plexus/app.py ryu/ryu/app/rest_conf_switch.py ryu/ryu/app/rest_qos.py |tee log\"\n";
       //String script="docker exec -d plexus /bin/bash -c  \"cd /root;pkill ryu-manager;ryu-manager plexus/plexus/app.py ryu/ryu/app/rest_conf_switch.py ryu/ryu/app/rest_qos.py|tee log\"\n";
       //String script="docker exec -d plexus /bin/bash -c  \"cd /root;pkill ryu-manager;ryu-manager plexus/plexus/app.py\"\n";
@@ -590,19 +585,18 @@ public class SdxManager extends SliceCommon{
         +"ryu/ryu/app/rest_qos.py ryu/ryu/app/rest_conf_switch.py\"\n";
       logger.debug(sshkey);
       logger.debug(plexusip);
-      Exec.sshExec("root",plexusip,script,sshkey);
+      Exec.sshExec("root", plexusip, script, sshkey);
     }
   }
 
-  private static boolean checkPlexus(String SDNControllerIP){
-    String result=Exec.sshExec("root",SDNControllerIP,"docker ps",sshkey);
-    if(result.contains("plexus")){
+  private static boolean checkPlexus(String SDNControllerIP) {
+    String result = Exec.sshExec("root", SDNControllerIP, "docker ps", sshkey);
+    if (result.contains("plexus")) {
       logger.debug("plexus controller has started");
-    }
-    else{
+    } else {
       logger.debug("plexus controller hasn't started, restarting it");
-      result=Exec.sshExec("root",SDNControllerIP,"docker images",sshkey);
-      if(result.contains("yaoyj11/plexus")){
+      result = Exec.sshExec("root", SDNControllerIP, "docker images", sshkey);
+      if (result.contains("yaoyj11/plexus")) {
         logger.debug("found plexus image, starting plexus container");
         Exec.sshExec("root",SDNControllerIP,"docker run -i -t -d " +
           "-p 8080:8080 -p 6633:6633 -p 3000:3000 -h plexus --name plexus yaoyj11/plexus",sshkey);
@@ -613,11 +607,10 @@ public class SdxManager extends SliceCommon{
         Exec.sshExec("root",SDNControllerIP,"docker run -i -t -d -p 8080:8080 -p 6633:6633 -p 3000:3000 "+
           " -h plexus --name plexus yaoyj11/plexus",sshkey);
       }
-      result=Exec.sshExec("root",SDNControllerIP,"docker ps",sshkey);
-      if(result.contains("plexus")){
+      result = Exec.sshExec("root", SDNControllerIP, "docker ps", sshkey);
+      if (result.contains("plexus")) {
         logger.debug("plexus controller has started");
-      }
-      else{
+      } else {
         logger.debug("Failed to start plexus controller, exit");
         return false;
       }
@@ -912,17 +905,17 @@ public class SdxManager extends SliceCommon{
 			// TODO Auto-generated catch block
 			e.printStackTrace();
     }
-				
-		Network net1 = (Network) s1.getResourceByName(netName);
-		String net1_stitching_GUID = net1.getStitchingGUID();
-		
-		ComputeNode node0_s2 = (ComputeNode) s2.getResourceByName(nodeName);
-		String node0_s2_stitching_GUID = node0_s2.getStitchingGUID();
-		
-		logger.debug("net1_stitching_GUID: " + net1_stitching_GUID);
-		logger.debug("node0_s2_stitching_GUID: " + node0_s2_stitching_GUID);
+
+    Network net1 = (Network) s1.getResourceByName(netName);
+    String net1_stitching_GUID = net1.getStitchingGUID();
+
+    ComputeNode node0_s2 = (ComputeNode) s2.getResourceByName(nodeName);
+    String node0_s2_stitching_GUID = node0_s2.getStitchingGUID();
+
+    logger.debug("net1_stitching_GUID: " + net1_stitching_GUID);
+    logger.debug("node0_s2_stitching_GUID: " + node0_s2_stitching_GUID);
     Long t1 = System.currentTimeMillis();
-			
+
 		try {
 			//s1
 			//sliceProxy.permitSliceStitch(sdxslice, net1_stitching_GUID, "stitchSecret");
@@ -934,8 +927,8 @@ public class SdxManager extends SliceCommon{
 			e.printStackTrace();
 		}
     Long t2 = System.currentTimeMillis();
-    logger.debug("Finished UnStitching, time elapsed: "+String.valueOf(t2-t1)+"\n");
-	}
+    logger.debug("Finished UnStitching, time elapsed: " + String.valueOf(t2 - t1) + "\n");
+  }
 }
 
 
