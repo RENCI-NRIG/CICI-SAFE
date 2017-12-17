@@ -1,5 +1,6 @@
 /* -*-mode:java; c-basic-offset:2; indent-tabs-mode:nil -*- */
 package sdx.utils;
+
 import com.jcraft.jsch.*;
 
 import sdx.utils.Exec;
@@ -11,21 +12,21 @@ import org.apache.log4j.Logger;
 
 import java.util.Properties;
 
-public class UserAuthPubKey{
-  final static Logger logger = Logger.getLogger(Exec.class);	
+public class UserAuthPubKey {
+  final static Logger logger = Logger.getLogger(Exec.class);
 
-  public static void auth(String host){
+  public static void auth(String host) {
 
-    try{
-      JSch jsch=new JSch();
+    try {
+      JSch jsch = new JSch();
       jsch.addIdentity("~/.ssh/id_rsa");
 //			 , "passphrase"
 
-      String user=host.substring(0, host.indexOf('@'));
-      host=host.substring(host.indexOf('@')+1);
+      String user = host.substring(0, host.indexOf('@'));
+      host = host.substring(host.indexOf('@') + 1);
 
-      Session session=jsch.getSession(user, host, 22);
-      Properties config = new Properties(); 
+      Session session = jsch.getSession(user, host, 22);
+      Properties config = new Properties();
       config.put("StrictHostKeyChecking", "no");
       session.setConfig(config);
 
@@ -34,63 +35,75 @@ public class UserAuthPubKey{
 //      session.setUserInfo(ui);
       session.connect();
 
-      Channel channel=session.openChannel("shell");
+      Channel channel = session.openChannel("shell");
 
       channel.setInputStream(System.in);
       channel.setOutputStream(System.out);
 
       channel.connect();
       logger.debug("end");
-    }
-    catch(Exception e){
+    } catch (Exception e) {
       logger.debug(e);
     }
   }
 
 
-  public static class MyUserInfo implements UserInfo, UIKeyboardInteractive{
-    public String getPassword(){ return null; }
-    public boolean promptYesNo(String str){
-      Object[] options={ "yes", "no" };
-      int foo=JOptionPane.showOptionDialog(null, 
-             str,
-             "Warning", 
-             JOptionPane.DEFAULT_OPTION, 
-             JOptionPane.WARNING_MESSAGE,
-             null, options, options[0]);
-       return foo==0;
+  public static class MyUserInfo implements UserInfo, UIKeyboardInteractive {
+    public String getPassword() {
+      return null;
     }
-  
-    String passphrase;
-    JTextField passphraseField=(JTextField)new JPasswordField(20);
 
-    public String getPassphrase(){ return passphrase; }
-    public boolean promptPassphrase(String message){
-      Object[] ob={passphraseField};
-      int result=
-	JOptionPane.showConfirmDialog(null, ob, message,
-				      JOptionPane.OK_CANCEL_OPTION);
-      if(result==JOptionPane.OK_OPTION){
-        passphrase=passphraseField.getText();
-        return true;
-      }
-      else{ return false; }
+    public boolean promptYesNo(String str) {
+      Object[] options = {"yes", "no"};
+      int foo = JOptionPane.showOptionDialog(null,
+        str,
+        "Warning",
+        JOptionPane.DEFAULT_OPTION,
+        JOptionPane.WARNING_MESSAGE,
+        null, options, options[0]);
+      return foo == 0;
     }
-    public boolean promptPassword(String message){ return true; }
-    public void showMessage(String message){
+
+    String passphrase;
+    JTextField passphraseField = (JTextField) new JPasswordField(20);
+
+    public String getPassphrase() {
+      return passphrase;
+    }
+
+    public boolean promptPassphrase(String message) {
+      Object[] ob = {passphraseField};
+      int result =
+        JOptionPane.showConfirmDialog(null, ob, message,
+          JOptionPane.OK_CANCEL_OPTION);
+      if (result == JOptionPane.OK_OPTION) {
+        passphrase = passphraseField.getText();
+        return true;
+      } else {
+        return false;
+      }
+    }
+
+    public boolean promptPassword(String message) {
+      return true;
+    }
+
+    public void showMessage(String message) {
       JOptionPane.showMessageDialog(null, message);
     }
-    final GridBagConstraints gbc = 
-      new GridBagConstraints(0,0,1,1,1,1,
-                             GridBagConstraints.NORTHWEST,
-                             GridBagConstraints.NONE,
-                             new Insets(0,0,0,0),0,0);
+
+    final GridBagConstraints gbc =
+      new GridBagConstraints(0, 0, 1, 1, 1, 1,
+        GridBagConstraints.NORTHWEST,
+        GridBagConstraints.NONE,
+        new Insets(0, 0, 0, 0), 0, 0);
     private Container panel;
+
     public String[] promptKeyboardInteractive(String destination,
                                               String name,
                                               String instruction,
                                               String[] prompt,
-                                              boolean[] echo){
+                                              boolean[] echo) {
       panel = new JPanel();
       panel.setLayout(new GridBagLayout());
 
@@ -102,38 +115,36 @@ public class UserAuthPubKey{
 
       gbc.gridwidth = GridBagConstraints.RELATIVE;
 
-      JTextField[] texts=new JTextField[prompt.length];
-      for(int i=0; i<prompt.length; i++){
+      JTextField[] texts = new JTextField[prompt.length];
+      for (int i = 0; i < prompt.length; i++) {
         gbc.fill = GridBagConstraints.NONE;
         gbc.gridx = 0;
         gbc.weightx = 1;
-        panel.add(new JLabel(prompt[i]),gbc);
+        panel.add(new JLabel(prompt[i]), gbc);
 
         gbc.gridx = 1;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.weighty = 1;
-        if(echo[i]){
-          texts[i]=new JTextField(20);
-        }
-        else{
-          texts[i]=new JPasswordField(20);
+        if (echo[i]) {
+          texts[i] = new JTextField(20);
+        } else {
+          texts[i] = new JPasswordField(20);
         }
         panel.add(texts[i], gbc);
         gbc.gridy++;
       }
 
-      if(JOptionPane.showConfirmDialog(null, panel, 
-                                       destination+": "+name,
-                                       JOptionPane.OK_CANCEL_OPTION,
-                                       JOptionPane.QUESTION_MESSAGE)
-         ==JOptionPane.OK_OPTION){
-        String[] response=new String[prompt.length];
-        for(int i=0; i<prompt.length; i++){
-          response[i]=texts[i].getText();
+      if (JOptionPane.showConfirmDialog(null, panel,
+        destination + ": " + name,
+        JOptionPane.OK_CANCEL_OPTION,
+        JOptionPane.QUESTION_MESSAGE)
+        == JOptionPane.OK_OPTION) {
+        String[] response = new String[prompt.length];
+        for (int i = 0; i < prompt.length; i++) {
+          response[i] = texts[i].getText();
         }
-	return response;
-      }
-      else{
+        return response;
+      } else {
         return null;  // cancel
       }
     }
