@@ -26,7 +26,7 @@ public class Test {
 
   public static void main(String[] args) {
     testRouting(args);
-    testPerFlowQOS();
+    //testPerFlowQOS();
   }
 
   private static void testRouting(String[] args) {
