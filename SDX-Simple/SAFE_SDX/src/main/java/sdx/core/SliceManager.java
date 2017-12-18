@@ -30,6 +30,7 @@ public class SliceManager extends SliceCommon {
   private static String IPPrefix = "192.168.";
   private static String mask = "/24";
   private static String riakip = "152.3.145.36";
+  private static boolean BRO = false;
   //private static String type;
 
   private static void computeIP(String prefix) {
@@ -96,8 +97,6 @@ public class SliceManager extends SliceCommon {
         System.out.println("Plexus Controller IP: " + SDNControllerIP);
         runCmdSlice(carrier, "/bin/bash ~/ovsbridge.sh " + SDNControllerIP + ":6633", sshkey,
           "(c\\d+)", true, true);
-        //runCmdSlice(carrier,"mkdir report && cd report\n/opt/bro/bin/bro -i &\ndisown -h `jobs -l
-        // | grep -E '[0-9]{2,4}' -o`\n",sshkey,"(b\\d+)",true,false);
 
         String SAFEServerIP =
           ((ComputeNode) carrier.getResourceByName("safe-server")).getManagementIP();
@@ -106,6 +105,8 @@ public class SliceManager extends SliceCommon {
         }
         System.out.println("SAFE Server IP: " + SAFEServerIP);
         //}
+        configBroNodes(carrier);
+        System.out.println("Set up bro nodes");
       } catch (Exception e) {
         e.printStackTrace();
       }
@@ -122,6 +123,31 @@ public class SliceManager extends SliceCommon {
     }
     logger.debug("XXXXXXXXXX Done XXXXXXXXXXXXXX");
   }
+
+  private static void configBroNodes(Slice carrier) {
+    // Bro uses 'eth1"
+    runCmdSlice(carrier, "sed -i 's/eth0/eth1/' /opt/bro/etc/node.cfg", sshkey, "(bro\\d+)" +
+      "", true, true);
+
+    String resource_dir = conf.getString("config.resourcedir");
+    copyFile2Slice(carrier, resource_dir + "sdnctrl/destroy_conn.bro", "/root/destroy_conn" +
+      ".bro", sshkey, "(bro\\d+)");
+    copyFile2Slice(carrier, resource_dir + "bro/evil.txt", "/root/evil.txt", sshkey,
+      "(bro\\d+)");
+
+    runCmdSlice(carrier, "sed -i 's/bogus_addr/" + SDNControllerIP + "/' destroy_conn.bro",
+      sshkey, "(bro\\d+)", true, true);
+    for (ComputeNode c : carrier.getComputeNodes()){
+      if (c.getName().contains("bro")){
+        String routername = c.getName().replace("bro", "c");
+        ComputeNode router = (ComputeNode) carrier.getResourceByName(routername);
+        String mip = router.getManagementIP();
+        String dpid = Exec.sshExec("root", mip, "/bin/bash ~/dpid.sh", sshkey).split(" ")[1];
+        Exec.sshExec("root", c.getManagementIP(), "sed -i 's/bogus_dpid/" + Long.parseLong(dpid, 16) + "/' destroy_conn.bro", sshkey);
+      }
+    }
+  }
+
 
   private static boolean checkSafeServer(String SDNControllerIP) {
     String result = Exec.sshExec("root", SDNControllerIP, "docker ps", sshkey);
