@@ -187,16 +187,6 @@ public class NetworkManager {
     }
   }
 
-  private void addEntry_HashList(HashMap<String, ArrayList<String>> map, String key, String entry) {
-    if (map.containsKey(key)) {
-      ArrayList<String> l = map.get(key);
-      l.add(entry);
-    } else {
-      ArrayList<String> l = new ArrayList<String>();
-      l.add(entry);
-      map.put(key, l);
-    }
-  }
 
   //TODO: get shortest path for two pairs
   private ArrayList<String[]> getPairRoutes(String srcdpid, String dstdpid, String gateway) {
