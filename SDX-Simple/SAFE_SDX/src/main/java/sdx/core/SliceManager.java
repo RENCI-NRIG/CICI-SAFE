@@ -121,8 +121,6 @@ public class SliceManager extends SliceCommon {
         Slice carrier = createCarrierSlice(carrierName, routerNum, 1000000, 1);
         commitAndWait(carrier);
         carrier.refresh();
-        waitTillActive(carrier);
-        carrier.refresh();
         copyFile2Slice(carrier, scriptsdir + "dpid.sh", "~/dpid.sh", sshkey, "(c\\d+)");
         copyFile2Slice(carrier, scriptsdir + "ovsbridge.sh", "~/ovsbridge.sh", sshkey, "(c\\d+)");
         //Make sure that plexus container is running
@@ -188,6 +186,7 @@ public class SliceManager extends SliceCommon {
     }
   }
 
+<<<<<<< HEAD
   public static ComputeNode addOVSRouter(Slice s, String site, String name) {
     logger.debug("Adding new OVS router to slice " + s.getName());
     String nodeImageShortName = "Ubuntu 14.04";
@@ -211,6 +210,8 @@ public class SliceManager extends SliceCommon {
     logger.debug("Finished copying ovs scripts");
   }
 
+=======
+>>>>>>> master
   private static void commitAndWait(Slice s) {
     try {
       s.commit();
