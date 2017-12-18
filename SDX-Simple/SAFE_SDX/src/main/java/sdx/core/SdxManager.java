@@ -285,7 +285,7 @@ public class SdxManager extends SliceCommon {
         Exec.sshExec("root", mynode.getManagementIP(), "/bin/bash ~/ovsbridge.sh " + OVSController, sshkey);
         routingmanager.replayCmds(routingmanager.getDPID(nodeName));
         Exec.sshExec("root", mynode.getManagementIP(), "ifconfig;ovs-vsctl list port", sshkey);
-        routingmanager.newLink(ip, nodeName, SDNController);
+        routingmanager.newLink(ip, nodeName, gateway, SDNController);
         res = "Stitch operation Completed";
         System.out.println(res);
       } else {
