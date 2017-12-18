@@ -124,50 +124,6 @@ public class NetworkManager {
     addEntry_HashList(sdncmds, dpid, cmd);
   }
 
-  public void newLink(String ipa, String ra, String ipb, String rb, String controller) {
-    logger.debug("RoutingManager: new link " + ra + ipa + rb + ipb);
-    addLink(ipa, ra, ipb, rb);
-    String dpid = getDPID(ra);
-    String cmd = addrCMD(ipa, dpid, controller);
-    runSDNCmd(cmd);
-    addEntry_HashList(sdncmds, dpid, cmd);
-    dpid = getDPID(rb);
-    cmd = addrCMD(ipb, dpid, controller);
-    runSDNCmd(cmd);
-    addEntry_HashList(sdncmds, dpid, cmd);
-  }
-
-  public void configurePath(String dest, String nodename, String gateway, String controller) {
-    String gwdpid = getRouter(nodename).getDPID();
-    if (gwdpid == null) {
-      logger.debug("No router named " + nodename + " not found");
-      return;
-    }
-    ArrayList<String[]> paths = getBroadcastRoutes(gwdpid, gateway);
-    for (String[] path : paths) {
-      String cmd = routingCMD(dest, path[1], path[0], controller);
-      runSDNCmd(cmd);
-      addEntry_HashList(sdncmds, path[0], cmd);
-      //logger.debug(path[0]+" "+path[1]);
-    }
-  }
-
-  public void configurePath(String dest, String nodename, String targetIP, String targetnodename, String gateway, String controller) {
-    logger.debug("Network Manager: Configuring path for " + dest + " " + nodename + " " + targetIP + " " + targetnodename + " " + gateway);
-    String gwdpid = getRouter(nodename).getDPID();
-    String targetdpid = getRouter(targetnodename).getDPID();
-    if (gwdpid == null || targetdpid == null) {
-      logger.debug("No router named " + nodename + " not found");
-      return;
-    }
-    ArrayList<String[]> paths = getPairRoutes(gwdpid, targetdpid, gateway);
-    for (String[] path : paths) {
-      String cmd = routingCMD(dest, targetIP, path[1], path[0], controller);
-      runSDNCmd(cmd);
-      addEntry_HashList(sdncmds, path[0], cmd);
-      //logger.debug(path[0]+" "+path[1]);
-    }
-  }
 
   private void runSDNCmd(String cmd) {
     String res = Exec.exec(cmd);
@@ -280,14 +236,6 @@ public class NetworkManager {
 
   //FIXME: There might be bug, but haven't got the chance to look into it.
   private ArrayList<String[]> getBroadcastRoutes(String gwdpid, String gateway) {
-    //logger.debug("All routers and links");
-    //for(String[] link:links){
-    //  //logger.debug(link[0]+" "+link[1]);
-    //}
-    //for(String[] link:ip_router){
-    //  //logger.debug(link[0]+" "+link[1]);
-    //}
-
     HashSet<String> knownrouters = new HashSet<String>();
     //path queue: [dpid, path]
     //format of path:Arraylist([router_id,gateway])
@@ -330,18 +278,30 @@ public class NetworkManager {
     return knownpaths;
   }
 
-  private String addrCMD(String addr, String dpid, String controller) {
-    String cmd = "curl -X POST -d {\"address\":\"" + addr + "\"} " + controller + "/router/" + dpid;
-    return cmd;
+  private  String[] addrCMD(String addr, String dpid, String controller){
+    //String cmd="curl -X POST -d {\"address\":\""+addr+"\"} "+controller+"/router/"+dpid;
+    String[]res=new String[3];
+    res[0]="http://"+controller+"/router/"+dpid;
+    res[1]="{\"address\":\""+addr+"\"} ";
+    res[2]="postJSON";
+    return res;
   }
 
-  private String routingCMD(String dst, String gw, String dpid, String controller) {
-    String cmd = "curl -X POST -d {\"destination\":\"" + dst + "\",\"gateway\":\"" + gw + "\"} " + controller + "/router/" + dpid;
-    return cmd;
+  private  String[] routingCMD(String dst,String gw, String dpid, String controller){
+    //String cmd="curl -X POST -d {\"destination\":\""+dst+"\",\"gateway\":\""+gw+"\"} "+controller+"/router/"+dpid;
+    String[] res=new String[3];
+    res[0]="http://"+controller+"/router/"+dpid;
+    res[1]="{\"destination\":"+dst+"\",\"gateway\":\""+gw+"\"}";
+    res[2]="postJSON";
+    return res;
   }
 
-  private String routingCMD(String dst, String src, String gw, String dpid, String controller) {
-    String cmd = "curl -X POST -d {\"destination\":\"" + dst + "\",\"source\":\"" + src + "\",\"gateway\":\"" + gw + "\"} " + controller + "/router/" + dpid;
+  private  String[] routingCMD(String dst,String src,String gw, String dpid, String controller){
+    //String cmd="curl -X POST -d {\"destination\":\""+dst+"\",\"source\":\""+src+"\",\"gateway\":\""+gw+"\"} "+controller+"/router/"+dpid;
+    String[] cmd= new String[3];
+    cmd[0]="http://"+controller+"/router/"+dpid;
+    cmd[1]="{\"destination\":\""+dst+"\",\"source\":\""+src+"\",\"gateway\":\""+gw+"\"}";
+    cmd[2]="postJSON";
     return cmd;
   }
 
