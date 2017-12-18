@@ -173,10 +173,10 @@ public class SdxManager extends SliceCommon {
       // TODO Auto-generated catch block
       e.printStackTrace();
     }
-    Slice keyhashslice = null;
+    Slice serverslice = null;
     try {
-      keyhashslice = Slice.loadManifestFile(sliceProxy, sliceName);
-      ComputeNode safe = (ComputeNode) keyhashslice.getResourceByName("safe-server");
+      serverslice = Slice.loadManifestFile(sliceProxy, sliceName);
+      ComputeNode safe = (ComputeNode) serverslice.getResourceByName("safe-server");
       //System.out.println("safe-server managementIP = " + safe.getManagementIP());
       safeserver = safe.getManagementIP() + ":7777";
     } catch (ContextTransportException e) {
@@ -187,11 +187,12 @@ public class SdxManager extends SliceCommon {
       e.printStackTrace();
     }
     //SDNControllerIP="152.3.136.36";
-    SDNControllerIP = ((ComputeNode) keyhashslice.getResourceByName("plexuscontroller")).getManagementIP();
+    SDNControllerIP = ((ComputeNode) serverslice.getResourceByName("plexuscontroller")).getManagementIP();
     //System.out.println("plexuscontroler managementIP = " + SDNControllerIP);
     SDNController = SDNControllerIP + ":8080";
     OVSController = SDNControllerIP + ":6633";
-    configRouting(keyhashslice, OVSController, SDNController, "(c\\d+)", "(sp-c\\d+.*)");
+    loadSdxNetwork(serverslice,"(c\\d+)","(sp-c\\d+.*)");
+    configRouting1(serverslice,OVSController,SDNController,"(c\\d+)","(sp-c\\d+.*)");
   }
 
   public static String notifyPrefix(String dest, String gateway, String router, String customer_keyhash) {
