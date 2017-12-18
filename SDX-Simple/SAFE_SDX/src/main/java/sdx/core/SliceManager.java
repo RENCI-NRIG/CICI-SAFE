@@ -415,5 +415,14 @@ public class SliceManager extends SliceCommon {
     //+"docker exec -d plexus /bin/bash -c  \"cd /root/;./sdx.sh\"\n";
     return script;
   }
+
+  protected static String getCustomerScript() {
+    String nodePostBootScript="apt-get update;apt-get -y install quagga\n"
+      +"sed -i -- 's/zebra=no/zebra=yes/g' /etc/quagga/daemons\n"
+      +"sed -i -- 's/ospfd=no/ospfd=yes/g' /etc/quagga/daemons\n"
+      +"echo \"1\" > /proc/sys/net/ipv4/ip_forward\n"
+      +"/etc/init.d/neuca stop\n";
+    return nodePostBootScript;
+  }
 }
 
