@@ -135,6 +135,9 @@ public class SdxManager extends SliceCommon {
     return res;
   }
 
+  public static String getDPID(String rname){
+    return routingmanager.getDPID(rname);
+  }
   private static void computeIP(String prefix) {
     String[] ip_mask = prefix.split("/");
     String[] ip_segs = ip_mask[0].split("\\.");
@@ -186,8 +189,8 @@ public class SdxManager extends SliceCommon {
       // TODO Auto-generated catch block
       e.printStackTrace();
     }
-    //SDNControllerIP="152.3.136.36";
-    SDNControllerIP = ((ComputeNode) serverslice.getResourceByName("plexuscontroller")).getManagementIP();
+    SDNControllerIP="152.3.136.36";
+    //SDNControllerIP = ((ComputeNode) serverslice.getResourceByName("plexuscontroller")).getManagementIP();
     //System.out.println("plexuscontroler managementIP = " + SDNControllerIP);
     SDNController = SDNControllerIP + ":8080";
     OVSController = SDNControllerIP + ":6633";
@@ -447,9 +450,11 @@ public class SdxManager extends SliceCommon {
 
   private static void restartPlexus(String plexusip) {
     logger.debug("Restarting Plexus Controller");
+    System.out.println("Restarting Plexus Controller");
     if (checkPlexus(plexusip)) {
       //String script="docker exec -d plexus /bin/bash -c  \"cd /root;pkill ryu-manager;ryu-manager plexus/plexus/app.py ryu/ryu/app/rest_conf_switch.py ryu/ryu/app/rest_qos.py |tee log\"\n";
-      String script = "docker exec -d plexus /bin/bash -c  \"cd /root;pkill ryu-manager;ryu-manager ryu/ryu/app/rest_router.py|tee log\"\n";
+      String script="docker exec -d plexus /bin/bash -c  \"cd /root;pkill ryu-manager;ryu-manager ryu/ryu/app/rest_conf_switch.py ryu/ryu/app/rest_qos.py ryu/ryu/app/rest_router_mirror.py |tee log\"\n";
+      //String script = "docker exec -d plexus /bin/bash -c  \"cd /root;pkill ryu-manager;ryu-manager ryu/ryu/app/rest_router.py|tee log\"\n";
       logger.debug(sshkey);
       logger.debug(plexusip);
       Exec.sshExec("root", plexusip, script, sshkey);
@@ -586,8 +591,8 @@ public class SdxManager extends SliceCommon {
 
   public static void configRouting1(Slice s,String ovscontroller, String httpcontroller, String routerpattern,String stitchportpattern) {
     logger.debug("Configurating Routing");
-    restartPlexus(SDNControllerIP);
-    sleep(5);
+    //restartPlexus(SDNControllerIP);
+    //sleep(5);
     // run ovsbridge scritps to add the all interfaces to the ovsbridge br0, if new interface is added to the ovs bridge, then we reset the controller?
     // FIXME: maybe this is not the best way to do.
     //add all interfaces other than eth0 to ovs bridge br0
@@ -670,7 +675,7 @@ public class SdxManager extends SliceCommon {
     for (Object k : keyset) {
       Link link = links.get((String) k);
       logger.debug("Setting up stitch "+link.linkname);
-      if(((String) k).contains("stitch") || ((String) k).contains("brolink")){
+      if(((String) k).contains("stitch") || ((String) k).contains("blink")){
         usedip.add(Integer.valueOf(link.getIP(1).split("\\.")[2]));
         routingmanager.newLink(link.getIP(1), link.nodea, link.getIP(2).split("/")[0], httpcontroller);
       }
@@ -679,7 +684,7 @@ public class SdxManager extends SliceCommon {
     for (Object k : keyset) {
       Link link = links.get((String) k);
       logger.debug("Setting up link "+link.linkname);
-      if (!((String) k).contains("stitch")) {
+      if (!((String) k).contains("stitch") && !((String )k).contains("blink")) {
         logger.debug("Setting up link " + link.linkname);
         int ip_to_use = 0;
         iplock.lock();

@@ -33,9 +33,24 @@ public class Test {
     SdxManager.startSdxServer(args);
     System.out.println("configured ip addresses in sdx network");
     //notify prefixes for node0 and node1
-    SdxManager.notifyPrefix("192.168.10.2/24", "192.168.10.2", "c1", "notused");
-    SdxManager.notifyPrefix("192.168.20.2/24", "192.168.20.2", "c2", "notused");
+    SdxManager.notifyPrefix("192.168.10.2/24", "192.168.10.2", "c0", "notused");
+    SdxManager.notifyPrefix("192.168.20.2/24", "192.168.20.2", "c3", "notused");
+    String[] cmd = mirrorCMD(SdxManager.getSDNControllerIP(), SdxManager.getDPID("c0"), "192.168.20.1/24",
+        "192.168.10.1/24", "192.168.101.2");
+    String dpid = SdxManager.getDPID("c0");
+    System.out.println(Long.parseLong(dpid, 16));
+    String res = HttpUtil.postJSON(cmd[0], new JSONObject(cmd[1]));
+    System.out.println(res);
+    System.out.println(cmd[0]);
+    System.out.println(cmd[1]);
     System.out.println("IP prefix is set up, the two nodes should be able to talk now");
+  }
+
+  private static String[] mirrorCMD(String controller, String dpid, String source, String dst, String gw) {
+    String[] res = new String[2];
+    res[0] = "http://" + controller + ":8080/router/" + dpid;
+    res[1] = "{\"source\":\"" + source + "\", \"destination\": \"" + dst + "\", \"mirror\":\"" + gw + "\"}";
+    return res;
   }
 
   private static String[] queueCMD(String controller, String dpid) {

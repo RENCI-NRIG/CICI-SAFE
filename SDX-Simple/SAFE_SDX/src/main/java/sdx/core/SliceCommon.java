@@ -91,6 +91,9 @@ public abstract class SliceCommon {
   public SliceCommon() {
   }
 
+  public static  String getSDNControllerIP(){
+    return SDNControllerIP;
+  }
   protected static CommandLine parseCmd(String[] args) {
     Options options = new Options();
     Option config = new Option("c", "config", true, "configuration file path");

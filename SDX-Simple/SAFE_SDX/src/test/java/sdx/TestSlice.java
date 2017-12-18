@@ -75,10 +75,11 @@ public class TestSlice extends SliceManager {
         copyFile2Slice(carrier, scriptsdir + "dpid.sh", "~/dpid.sh", sshkey);
         copyFile2Slice(carrier, scriptsdir + "ovsbridge.sh", "~/ovsbridge.sh", sshkey);
         //Make sure that plexus container is running
-        SDNControllerIP = ((ComputeNode) carrier.getResourceByName("plexuscontroller")).getManagementIP();
-        if (!checkPlexus(SDNControllerIP)) {
-          System.exit(-1);
-        }
+        //SDNControllerIP = ((ComputeNode) carrier.getResourceByName("plexuscontroller")).getManagementIP();
+        SDNControllerIP = "152.3.136.36";
+        //if (!checkPlexus(SDNControllerIP)) {
+        //  System.exit(-1);
+        //}
         System.out.println("Plexus Controler IP: " + SDNControllerIP);
         runCmdSlice(carrier, "/bin/bash ~/ovsbridge.sh " + SDNControllerIP + ":6633", sshkey, "(c\\d+)", true, true);
         runCmdSlice(carrier, "apt-get -y install quagga", sshkey, "(node\\d+)", true, true);
@@ -96,6 +97,9 @@ public class TestSlice extends SliceManager {
           System.exit(-1);
         }
         System.out.println("SAFE Server IP: " + SAFEServerIP);
+        if(BRO){
+          configBroNodes(carrier);
+        }
         //}
       } catch (Exception e) {
         e.printStackTrace();

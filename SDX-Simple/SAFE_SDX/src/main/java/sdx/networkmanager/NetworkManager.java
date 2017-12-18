@@ -110,7 +110,10 @@ public class NetworkManager {
     addLink(ipa,ra, gw);
     String dpid= getRouter(ra).getDPID();
     String cmd[] = addrCMD(ipa,dpid,controller);
-    HttpUtil.postJSON(cmd[0],new JSONObject(cmd[1]));
+    String res = HttpUtil.postJSON(cmd[0],new JSONObject(cmd[1]));
+    System.out.println(res);
+    System.out.println(cmd[0]);
+    System.out.println(cmd[1]);
     addEntry_HashList(sdncmds,dpid,cmd);
   }
 
@@ -120,11 +123,17 @@ public class NetworkManager {
     addLink(ipa,ra,ipb,rb);
     String dpid=getDPID(ra);
     String[] cmd = addrCMD(ipa,dpid,controller);
-    HttpUtil.postJSON(cmd[0],new JSONObject(cmd[1]));
+    String res = HttpUtil.postJSON(cmd[0],new JSONObject(cmd[1]));
+    System.out.println(res);
+    System.out.println(cmd[0]);
+    System.out.println(cmd[1]);
     addEntry_HashList(sdncmds,dpid,cmd);
     dpid=getDPID(rb);
     cmd = addrCMD(ipb,dpid,controller);
-    HttpUtil.postJSON(cmd[0],new JSONObject(cmd[1]));
+    res = HttpUtil.postJSON(cmd[0],new JSONObject(cmd[1]));
+    System.out.println(cmd[0]);
+    System.out.println(cmd[1]);
+    System.out.println(res);
     addEntry_HashList(sdncmds,dpid,cmd);
   }
 
@@ -154,7 +163,10 @@ public class NetworkManager {
     ArrayList<String[]>paths=getPairRoutes(gwdpid,targetdpid,gateway);
     for(String[] path: paths){
       String []cmd=routingCMD(dest,targetIP, path[1], path[0], controller);
-      HttpUtil.postJSON(cmd[0],new JSONObject(cmd[1]));
+      String res = HttpUtil.postJSON(cmd[0],new JSONObject(cmd[1]));
+      System.out.println(cmd[0]);
+      System.out.println(cmd[1]);
+      System.out.println(res);
       addEntry_HashList(sdncmds,path[0],cmd);
       //logger.debug(path[0]+" "+path[1]);
     }
