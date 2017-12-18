@@ -483,6 +483,14 @@ public class SdxManager extends SliceCommon {
     return true;
   }
 
+  /*
+   * Load the topology information from exogeni with ahab, put the links, stitch_ports, and
+   * normal stitches connecting nodes in other slices.
+   * By default, routers has the pattern "c\\d+"
+   * stitches: stitch_c0_20
+   * brolink:
+   */
+
   public static void loadSdxNetwork(Slice s, String routerpattern, String stitchportpattern){
     logger.debug("Loading Sdx Network Topology");
     try{
@@ -511,10 +519,11 @@ public class SdxManager extends SliceCommon {
       // get all links, and then
       for(Interface i: s.getInterfaces()){
         InterfaceNode2Net inode2net=(InterfaceNode2Net)i;
-        if (i.getName().contains("node"))
+        if (i.getName().contains("node") || i.getName().contains("bro"))
         {
           continue;
         }
+        System.out.println(i.getName());
         logger.debug("linkname: "+inode2net.getLink().toString()+" bandwidth: "+ inode2net.getLink().getBandwidth());
         if(ifs.contains(i.getName())){
           logger.debug("continue");
@@ -527,7 +536,7 @@ public class SdxManager extends SliceCommon {
           link=new Link();
           link.setName(inode2net.getLink().toString());
           link.addNode(inode2net.getNode().toString());
-          if(link.linkname.contains("stitch") || link.linkname.contains("brolink")){
+          if(link.linkname.contains("stitch") || link.linkname.contains("blink")){
             String[] parts=link.linkname.split("_");
             String ip=parts[parts.length-1];
             usedip.add(Integer.valueOf(ip));

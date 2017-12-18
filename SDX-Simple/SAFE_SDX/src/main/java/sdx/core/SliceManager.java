@@ -224,7 +224,7 @@ public class SliceManager extends SliceCommon {
     bro.setDomain(edgerouter.getDomain());
     bro.setNodeType(broType);
 
-    Network bronet = s.addBroadcastLink("brolink_" + ip_to_use);
+    Network bronet = s.addBroadcastLink("blink_" + ip_to_use);
     InterfaceNode2Net ifaceNode1 = (InterfaceNode2Net) bronet.stitch(edgerouter);
     ifaceNode1.setIpAddress("192.168." + String.valueOf(ip_to_use) + ".1");
     ifaceNode1.setNetmask("255.255.255.0");
