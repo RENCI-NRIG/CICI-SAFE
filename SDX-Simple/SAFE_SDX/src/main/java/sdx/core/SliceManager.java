@@ -186,7 +186,6 @@ public class SliceManager extends SliceCommon {
     }
   }
 
-<<<<<<< HEAD
   public static ComputeNode addOVSRouter(Slice s, String site, String name) {
     logger.debug("Adding new OVS router to slice " + s.getName());
     String nodeImageShortName = "Ubuntu 14.04";
@@ -210,8 +209,6 @@ public class SliceManager extends SliceCommon {
     logger.debug("Finished copying ovs scripts");
   }
 
-=======
->>>>>>> master
   private static void commitAndWait(Slice s) {
     try {
       s.commit();
