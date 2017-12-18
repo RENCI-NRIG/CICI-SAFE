@@ -58,6 +58,14 @@
 							<name>SafeSdxExample</name>
 						</program>
 						<program>
+							<mainClass>sdx.core.Test</mainClass>
+							<name>SafeSdxTest</name>
+						</program>
+						<program>
+							<mainClass>sdx.core.TestSlice</mainClass>
+							<name>SafeSdxTestSlice</name>
+						</program>
+						<program>
               <mainClass>sdx.core.MyHttpClient</mainClass>
 							<name>HttpClient</name>
 						</program>
