@@ -7,8 +7,9 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.log4j.Logger;
-import org.json.JSONObject;
 
+import org.json.HTTP;
+import org.json.JSONObject;
 import sdx.utils.Exec;
 
 import java.util.HashSet;
@@ -20,9 +21,10 @@ public class NetworkManager {
   final static Logger logger = Logger.getLogger(NetworkManager.class);
 
 
-  private ArrayList<Router> routers = new ArrayList<Router>();
-  private ArrayList<String[]> ip_router = new ArrayList<String[]>();
-  private ArrayList<String[]> links = new ArrayList<String[]>();
+
+  private  ArrayList<Router> routers=new ArrayList<Router>();
+  private  ArrayList<String[]>ip_router=new ArrayList<String[]>();
+  private  ArrayList<String[]>links=new ArrayList<String[]>();
   private HashMap<String, ArrayList<String[]>> sdncmds=new HashMap<String,ArrayList<String[]>>();
 
   public String getDPID(String routerid) {
@@ -33,6 +35,14 @@ public class NetworkManager {
       return null;
   }
 
+  public String findRouterbyGateway(String gw){
+    for(Router r:routers){
+      if(r.hasGateway(gw)){
+        return r.getRouterID();
+      }
+    }
+    return null;
+  }
   public  void addLink(String ipa, String ra, String gw){
     Router router=getRouter(ra);
     if(router!=null){
@@ -78,7 +88,6 @@ public class NetworkManager {
       // routers.put(ra,router);
     }
   }
-
 
   public void addRouter(String routerid, String dpid, int numinterfaces, String mip) {
     if (getRouter(routerid) == null) {
@@ -167,20 +176,26 @@ public class NetworkManager {
     return null;
   }
 
-  public void setOvsdbAddr(String controller) {
-    for (Router r : routers) {
-      String[] cmd = ovsdbCMD(r, controller);
-      String res = HttpUtil.putString(cmd[0], cmd[1]);
+  public void setOvsdbAddr(String controller){
+    for(Router r:routers){
+      String[] cmd=ovsdbCMD(r,controller);
+      String res=HttpUtil.putString(cmd[0],cmd[1]);
+      addEntry_HashList(sdncmds,r.getDPID(),cmd);
       logger.debug(res);
     }
   }
 
-  public void replayCmds(String dpid) {
-    if (sdncmds.containsKey(dpid)) {
-      ArrayList<String> l = sdncmds.get(dpid);
-      for (String cmd : l) {
-        logger.debug("Replay:" + cmd);
-        runSDNCmd(cmd);
+  public void replayCmds(String dpid){
+    if(sdncmds.containsKey(dpid)){
+      ArrayList<String[]> l=sdncmds.get(dpid);
+      for(String[] cmd: l){
+        logger.debug("Replay:"+cmd);
+        if(cmd[2]=="postJSON"){
+          HttpUtil.postJSON(cmd[0],new JSONObject(cmd[1]));
+        }
+        else{
+          HttpUtil.putString(cmd[0],cmd[1]);
+        }
       }
     } else {
       logger.debug("No cmd to replay");
@@ -198,7 +213,6 @@ public class NetworkManager {
       map.put(key, l);
     }
   }
-
 
   //TODO: get shortest path for two pairs
   private ArrayList<String[]> getPairRoutes(String srcdpid, String dstdpid, String gateway) {
@@ -264,6 +278,14 @@ public class NetworkManager {
 
   //FIXME: There might be bug, but haven't got the chance to look into it.
   private ArrayList<String[]> getBroadcastRoutes(String gwdpid, String gateway) {
+    //logger.debug("All routers and links");
+    //for(String[] link:links){
+    //  //logger.debug(link[0]+" "+link[1]);
+    //}
+    //for(String[] link:ip_router){
+    //  //logger.debug(link[0]+" "+link[1]);
+    //}
+
     HashSet<String> knownrouters = new HashSet<String>();
     //path queue: [dpid, path]
     //format of path:Arraylist([router_id,gateway])
@@ -335,9 +357,10 @@ public class NetworkManager {
 
   private String[] ovsdbCMD(Router r, String controller) {
     //String cmd="curl -X PUT -d \'\"tcp:"+r.getManagementIP()+":6632\"\' "+controller+"/v1.0/conf/switches/"+r.getDPID()+"/ovsdb_addr";
-    String[] res = new String[2];
-    res[1] = "\"tcp:" + r.getManagementIP() + ":6632\"";
-    res[0] = "http://" + controller + "/v1.0/conf/switches/" + r.getDPID() + "/ovsdb_addr";
+    String[]res=new String[3];
+    res[1]="\"tcp:"+r.getManagementIP()+":6632\"";
+    res[0]="http://"+controller+"/v1.0/conf/switches/"+r.getDPID()+"/ovsdb_addr";
+    res[2]="putString";
     return res;
   }
 
