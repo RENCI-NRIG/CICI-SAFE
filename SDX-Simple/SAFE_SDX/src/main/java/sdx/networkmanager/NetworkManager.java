@@ -124,6 +124,37 @@ public class NetworkManager {
     addEntry_HashList(sdncmds, dpid, cmd);
   }
 
+  public void configurePath(String dest, String nodename, String gateway, String controller) {
+    String gwdpid = getRouter(nodename).getDPID();
+    if (gwdpid == null) {
+      logger.debug("No router named " + nodename + " not found");
+      return;
+    }
+    ArrayList<String[]>paths=getBroadcastRoutes(gwdpid,gateway);
+    for(String[] path: paths){
+      String []cmd=routingCMD(dest, path[1], path[0], controller);
+      HttpUtil.postJSON(cmd[0],new JSONObject(cmd[1]));
+      addEntry_HashList(sdncmds,path[0],cmd);
+      //logger.debug(path[0]+" "+path[1]);
+    }
+  }
+
+  public void configurePath(String dest, String nodename, String targetIP, String targetnodename, String gateway, String controller) {
+    logger.debug("Network Manager: Configuring path for " + dest + " " + nodename + " " + targetIP + " " + targetnodename + " " + gateway);
+    String gwdpid = getRouter(nodename).getDPID();
+    String targetdpid = getRouter(targetnodename).getDPID();
+    if (gwdpid == null || targetdpid == null) {
+      logger.debug("No router named " + nodename + " not found");
+      return;
+    }
+    ArrayList<String[]>paths=getPairRoutes(gwdpid,targetdpid,gateway);
+    for(String[] path: paths){
+      String []cmd=routingCMD(dest,targetIP, path[1], path[0], controller);
+      HttpUtil.postJSON(cmd[0],new JSONObject(cmd[1]));
+      addEntry_HashList(sdncmds,path[0],cmd);
+      //logger.debug(path[0]+" "+path[1]);
+    }
+  }
 
   private void runSDNCmd(String cmd) {
     String res = Exec.exec(cmd);
