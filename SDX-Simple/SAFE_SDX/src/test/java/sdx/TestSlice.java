@@ -1,23 +1,7 @@
 package sdx;
 
 import org.renci.ahab.libndl.Slice;
-<<<<<<< HEAD
-import sdx.core.SliceCommon;
 import sdx.core.SliceManager;
-import java.util.regex.Pattern;
-import java.util.regex.Matcher;
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
-import java.net.URL;
-=======
-import sdx.core.SliceManager;
-
->>>>>>> qos
 import java.util.ArrayList;
 import org.apache.log4j.Logger;
 import org.apache.commons.cli.*;
@@ -133,39 +117,6 @@ public class TestSlice extends SliceManager {
 
     }
     logger.debug("XXXXXXXXXX Done XXXXXXXXXXXXXX");
-  }
-
-
-<<<<<<< HEAD
-  private static boolean checkPlexus(String SDNControllerIP) {
-    String result = Exec.sshExec("root", SDNControllerIP, "docker ps", sshkey);
-    if (result.contains("safeserver")) {
-      logger.debug("plexus controller has started");
-    } else {
-      logger.debug("plexus controller hasn't started, restarting it");
-      result = Exec.sshExec("root", SDNControllerIP, "docker images", sshkey);
-      if (result.contains("yaoyj11/plexus")) {
-        logger.debug("found plexus image, starting plexus container");
-        Exec.sshExec("root", SDNControllerIP,
-          "docker run -i -t -d -p 8080:8080 -p 6633:6633 -p 3000:3000 -h plexus --name plexus yaoyj11/plexus",
-          sshkey);
-      } else {
-        logger.debug("plexus image not found, downloading...");
-        Exec.sshExec("root", SDNControllerIP,
-          "docker pull yaoyj11/plexus", sshkey);
-        Exec.sshExec("root", SDNControllerIP,
-          "docker run -i -t -d -p 8080:8080 -p 6633:6633 " +
-            "-p 3000:3000 -h plexus --name plexus yaoyj11/plexus", sshkey);
-      }
-      result = Exec.sshExec("root", SDNControllerIP, "docker ps", sshkey);
-      if (result.contains("plexus")) {
-        logger.debug("plexus controller has started");
-      } else {
-        logger.debug("Failed to start plexus controller, exit");
-        return false;
-      }
-    }
-    return true;
   }
 
   public static Slice createBroSlice(String sliceName, int num, int start, long bw, int numstitches) {//,String stitchsubnet="", String slicesubnet="")
