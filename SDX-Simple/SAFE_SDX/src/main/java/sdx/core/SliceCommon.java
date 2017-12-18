@@ -249,20 +249,42 @@ public abstract class SliceCommon {
   }
 
   protected static void copyFile2Slice(Slice s, String lfile, String rfile, String privkey) {
+    ArrayList<Thread> tlist = new ArrayList<Thread>();
     for (ComputeNode c : s.getComputeNodes()) {
       String mip = c.getManagementIP();
       try {
-        logger.debug("scp config file to " + mip);
-        ScpTo.Scp(lfile, "root", mip, rfile, privkey);
-
+        Thread thread = new Thread() {
+          @Override
+          public void run() {
+            try {
+              logger.debug("scp config file to " + mip);
+              ScpTo.Scp(lfile, "root", mip, rfile, privkey);
+            } catch (Exception e) {
+              e.printStackTrace();
+            }
+          }
+        };
+        thread.start();
+        tlist.add(thread);
       } catch (Exception e) {
-        logger.debug("exception when copying config file");
+        System.out.println("exception when copying config file");
+        logger.error("exception when copying config file");
       }
+    }
+    try {
+      for (Thread t : tlist) {
+        t.join();
+      }
+    } catch (Exception e) {
+      e.printStackTrace();
     }
   }
 
-  protected static void copyFile2Slice(Slice s, String lfile, String rfile, String privkey, String pattn) {
-    Pattern pattern = Pattern.compile(pattn);
+
+  protected static void copyFile2Slice(Slice s, String lfile, String rfile, String privkey,
+                                       String patn) {
+    Pattern pattern = Pattern.compile(patn);
+    ArrayList<Thread> tlist = new ArrayList<Thread>();
     for (ComputeNode c : s.getComputeNodes()) {
       Matcher matcher = pattern.matcher(c.getName());
       if (!matcher.find()) {
@@ -270,12 +292,30 @@ public abstract class SliceCommon {
       }
       String mip = c.getManagementIP();
       try {
-        logger.debug("scp config file to " + mip);
-        ScpTo.Scp(lfile, "root", mip, rfile, privkey);
-
+        Thread thread = new Thread() {
+          @Override
+          public void run() {
+            try {
+              logger.debug("scp config file to " + mip);
+              ScpTo.Scp(lfile, "root", mip, rfile, privkey);
+            } catch (Exception e) {
+              e.printStackTrace();
+            }
+          }
+        };
+        thread.start();
+        tlist.add(thread);
       } catch (Exception e) {
-        logger.debug("exception when copying config file");
+        System.out.println("exception when copying config file");
+        logger.error("exception when copying config file");
       }
+    }
+    try {
+      for (Thread t : tlist) {
+        t.join();
+      }
+    } catch (Exception e) {
+      e.printStackTrace();
     }
   }
 

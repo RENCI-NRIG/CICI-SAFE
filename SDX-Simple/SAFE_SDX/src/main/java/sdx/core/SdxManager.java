@@ -885,7 +885,6 @@ public class SdxManager extends SliceCommon {
     }
   }
 
-
 	public static void undoStitch(String sdxslice, String customerName, String netName, String nodeName){
 		logger.debug("ndllib TestDriver: START");
 		

@@ -58,6 +58,7 @@ public class SliceManager extends SliceCommon {
 	private static String riakip = "152.3.145.36";
 	private static String scriptsdir;
 	private static boolean safeauth=true;
+	private static boolean BRO = false;
 	//private static String type;
 
 	private static void computeIP(String prefix) {
@@ -87,6 +88,10 @@ public class SliceManager extends SliceCommon {
 			routerNum = conf.getInt("config.routernum");
 		}catch (Exception e){
 			logger.debug("No router number specified, launching default 4 routers");
+		}
+
+		if(conf.hasPath("config.bro")){
+			BRO = conf.getBoolean("config.bro");
 		}
 
 		logger.debug("configfilepath " + configfilepath);
@@ -143,6 +148,9 @@ public class SliceManager extends SliceCommon {
 					System.out.println("SAFE Server IP: " + SAFEServerIP);
 				}
 				clearLinks(topofile);
+				if(BRO){
+					configBroNodes(carrier);
+				}
 				//}
 			} catch (Exception e) {
 				e.printStackTrace();
@@ -372,5 +380,28 @@ public class SliceManager extends SliceCommon {
 		//+"docker exec -d plexus /bin/bash -c  \"cd /root/;./sdx.sh\"\n";
 		return script;
 	}
+  private static void configBroNodes(Slice carrier) {
+    // Bro uses 'eth1"
+    runCmdSlice(carrier, "sed -i 's/eth0/eth1/' /opt/bro/etc/node.cfg", sshkey, "(bro\\d+)" +
+      "", true, true);
+
+    String resource_dir = conf.getString("config.resourcedir");
+    copyFile2Slice(carrier, resource_dir + "sdnctrl/destroy_conn.bro", "/root/destroy_conn" +
+      ".bro", sshkey, "(bro\\d+)");
+    copyFile2Slice(carrier, resource_dir + "bro/evil.txt", "/root/evil.txt", sshkey,
+      "(bro\\d+)");
+
+    runCmdSlice(carrier, "sed -i 's/bogus_addr/" + SDNControllerIP + "/' destroy_conn.bro",
+      sshkey, "(bro\\d+)", true, true);
+    for (ComputeNode c : carrier.getComputeNodes()){
+      if (c.getName().contains("bro")){
+        String routername = c.getName().replace("bro", "c");
+        ComputeNode router = (ComputeNode) carrier.getResourceByName(routername);
+        String mip = router.getManagementIP();
+        String dpid = Exec.sshExec("root", mip, "/bin/bash ~/dpid.sh", sshkey).split(" ")[1];
+        Exec.sshExec("root", c.getManagementIP(), "sed -i 's/bogus_dpid/" + Long.parseLong(dpid, 16) + "/' destroy_conn.bro", sshkey);
+      }
+    }
+  }
 }
 
