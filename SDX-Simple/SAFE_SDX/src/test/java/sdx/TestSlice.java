@@ -1,6 +1,7 @@
 package sdx;
 
 import org.renci.ahab.libndl.Slice;
+<<<<<<< HEAD
 import sdx.core.SliceCommon;
 import sdx.core.SliceManager;
 import java.util.regex.Pattern;
@@ -13,71 +14,31 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.URL;
+=======
+import sdx.core.SliceManager;
+
+>>>>>>> qos
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.Properties;
-
-import org.apache.log4j.ConsoleAppender;
-import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
-import org.apache.log4j.SimpleLayout;
 import org.apache.commons.cli.*;
-import org.apache.commons.cli.DefaultParser;
-
-import org.renci.ahab.libndl.LIBNDL;
-import org.renci.ahab.libndl.Slice;
-import org.renci.ahab.libndl.SliceGraph;
-import org.renci.ahab.libndl.extras.PriorityNetwork;
-import org.renci.ahab.libndl.resources.common.ModelResource;
-import org.renci.ahab.libndl.resources.request.BroadcastNetwork;
 import org.renci.ahab.libndl.resources.request.ComputeNode;
-import org.renci.ahab.libndl.resources.request.Interface;
 import org.renci.ahab.libndl.resources.request.InterfaceNode2Net;
 import org.renci.ahab.libndl.resources.request.Network;
-import org.renci.ahab.libndl.resources.request.Node;
-import org.renci.ahab.libndl.resources.request.StitchPort;
-import org.renci.ahab.libndl.resources.request.StorageNode;
-import org.renci.ahab.libtransport.ISliceTransportAPIv1;
-import org.renci.ahab.libtransport.ITransportProxyFactory;
-import org.renci.ahab.libtransport.JKSTransportContext;
-import org.renci.ahab.libtransport.PEMTransportContext;
 import org.renci.ahab.libtransport.SSHAccessToken;
 import org.renci.ahab.libtransport.SliceAccessContext;
-import org.renci.ahab.libtransport.TransportContext;
-import org.renci.ahab.libtransport.util.ContextTransportException;
 import org.renci.ahab.libtransport.util.SSHAccessTokenFileFactory;
-import org.renci.ahab.libtransport.util.TransportException;
 import org.renci.ahab.libtransport.util.UtilTransportException;
-import org.renci.ahab.libtransport.xmlrpc.XMLRPCProxyFactory;
 import org.renci.ahab.libtransport.xmlrpc.XMLRPCTransportException;
-import org.renci.ahab.ndllib.transport.OrcaSMXMLRPCProxy;
 
 import sdx.core.SliceManager;
 import sdx.utils.Exec;
 
-public class TestSlice extends SliceCommon {
+public class TestSlice extends SliceManager {
   final static Logger logger = Logger.getLogger(Exec.class);
 
   public TestSlice() {
   }
 
-  private static int curip = 128;
-  private static String IPPrefix = "192.168.";
-  private static String mask = "/24";
-  private static String riakip = "152.3.145.36";
-  //private static String type;
-
-  private static void computeIP(String prefix) {
-    logger.debug(prefix);
-    String[] ip_mask = prefix.split("/");
-    String[] ip_segs = ip_mask[0].split("\\.");
-    IPPrefix = ip_segs[0] + "." + ip_segs[1] + ".";
-    curip = Integer.valueOf(ip_segs[2]);
-  }
 
   public static void main(String[] args) {
 
@@ -126,9 +87,9 @@ public class TestSlice extends SliceCommon {
       computeIP(IPPrefix);
       try {
         String carrierName = sliceName;
-        Slice carrier = createBroSlice(carrierName, 4, 10, 100000000, 1);
-        carrier.refresh();
-        waitTillActive(carrier);
+        Slice carrier = createTestSliceWithBroAndCNode(carrierName, 4, 1000000);
+        //Slice carrier = createCarrierSliceWithCustomerNodes(carrierName, 4, 10, 1000000, 1);
+        commitAndWait(carrier);
         carrier.refresh();
         copyFile2Slice(carrier, scriptsdir + "dpid.sh", "~/dpid.sh", sshkey);
         copyFile2Slice(carrier, scriptsdir + "ovsbridge.sh", "~/ovsbridge.sh", sshkey);
@@ -174,17 +135,8 @@ public class TestSlice extends SliceCommon {
     logger.debug("XXXXXXXXXX Done XXXXXXXXXXXXXX");
   }
 
-  private static boolean checkSafeServer(String SDNControllerIP) {
-    String result = Exec.sshExec("root", SDNControllerIP, "docker ps", sshkey);
-    if (result.contains("safe")) {
-      logger.debug("safe server has started");
-    } else {
-      logger.debug("Failed to start safe controller, exit");
-      return false;
-    }
-    return true;
-  }
 
+<<<<<<< HEAD
   private static boolean checkPlexus(String SDNControllerIP) {
     String result = Exec.sshExec("root", SDNControllerIP, "docker ps", sshkey);
     if (result.contains("safeserver")) {
@@ -282,7 +234,39 @@ public class TestSlice extends SliceCommon {
     return s;
   }
 
-  public static Slice createCarrierSlice(String sliceName, int num, int start, long bw, int numstitches) {//,String stitchsubnet="", String slicesubnet="")
+  public static Slice createTestSliceWithBroAndCNode(String sliceName, int num, long bw) {
+    String nodeImageShortName = "Ubuntu 14.04";
+    String nodeImageURL = "http://geni-orca.renci.org/owl/9dfe179d-3736-41bf-8084-f0cd4a520c2f#Ubuntu+14.04";//http://geni-images.renci.org/images/standard/ubuntu/ub1304-ovs-opendaylight-v1.0.0.xml
+    String nodeImageHash = "9394ca154aa35eb55e604503ae7943ddaecc6ca5";
+    String nodeNodeType = "XO Medium";
+    Slice s = createCarrierSlice(sliceName, num, 1000000);
+    //Now add two customer node to c0 and c3
+    ComputeNode c0 = (ComputeNode) s.getResourceByName("c0");
+    ComputeNode c3 = (ComputeNode) s.getResourceByName("c3");
+    ComputeNode cnode0 = s.addComputeNode("node0");
+    cnode0.setImage(nodeImageURL, nodeImageHash, nodeImageShortName);
+    cnode0.setNodeType(nodeNodeType);
+    cnode0.setDomain(clientSites.get(0));
+    Network net1 = s.addBroadcastLink("stitch_c0_10",bw);
+    InterfaceNode2Net ifaceNode0 = (InterfaceNode2Net) net1.stitch(cnode0);
+    ifaceNode0.setIpAddress("192.168.10.2");
+    ifaceNode0.setNetmask("255.255.255.0");
+    net1.stitch(c0);
+
+    ComputeNode cnode1 = s.addComputeNode("node3");
+    cnode1.setImage(nodeImageURL, nodeImageHash, nodeImageShortName);
+    cnode1.setNodeType(nodeNodeType);
+    cnode1.setDomain(clientSites.get(3%clientSites.size()));
+    Network net2 = s.addBroadcastLink("stitch_c3_20",bw);
+    InterfaceNode2Net ifaceNode1 = (InterfaceNode2Net) net2.stitch(cnode1);
+    ifaceNode1.setIpAddress("192.168.20.2");
+    ifaceNode1.setNetmask("255.255.255.0");
+    net2.stitch(c3);
+    return s;
+  }
+
+  public static Slice createCarrierSliceWithCustomerNodes(String sliceName, int num, int start,
+                                                          long bw, int numstitches) {//,String stitchsubnet="", String slicesubnet="")
     logger.debug("ndllib TestDriver: START");
 
     Slice s = Slice.create(sliceProxy, sctx, sliceName);
@@ -342,59 +326,5 @@ public class TestSlice extends SliceCommon {
       e.printStackTrace();
     }
     return s;
-  }
-
-
-  private static void addSafeServer(Slice s, String rip) {
-    String dockerImageShortName = "Ubuntu 14.04 Docker";
-    String dockerImageURL = "http://geni-orca.renci.org/owl/5e2190c1-09f1-4c48-8ed6-dacae6b6b435#Ubuntu+14.0.4+Docker";//http://geni-images.renci.org/images/standard/ubuntu/ub1304-ovs-opendaylight-v1.0.0.xml
-    String dockerImageHash = "b4ef61dbd993c72c5ac10b84650b33301bbf6829";
-    String dockerNodeType = "XO Large";
-    ComputeNode node0 = s.addComputeNode("safe-server");
-    node0.setImage(dockerImageURL, dockerImageHash, dockerImageShortName);
-    node0.setNodeType(dockerNodeType);
-    node0.setDomain(serverSite);
-    node0.setPostBootScript(getSafeScript(rip));
-  }
-
-  private static void addPlexusController(Slice s) {
-    //String dockerImageShortName = "ubuntu16.04";
-    //String dockerImageURL = "http://geni-images.renci.org/images/standard/ubuntu/ub1604-v1.0.4dev.xml";//http://geni-images.renci.org/images/standard/ubuntu/ub1304-ovs-opendaylight-v1.0.0.xml
-    //String dockerImageHash = "b8e6c544296dce5f91400974326d619d2910967f";
-    String dockerImageShortName = "Ubuntu 14.04 Docker";
-    String dockerImageURL = "http://geni-orca.renci.org/owl/5e2190c1-09f1-4c48-8ed6-dacae6b6b435#Ubuntu+14.0.4+Docker";//http://geni-images.renci.org/images/standard/ubuntu/ub1304-ovs-opendaylight-v1.0.0.xml
-    String dockerImageHash = "b4ef61dbd993c72c5ac10b84650b33301bbf6829";
-    String dockerNodeType = "XO Large";
-    ComputeNode node0 = s.addComputeNode("plexuscontroller");
-    node0.setImage(dockerImageURL, dockerImageHash, dockerImageShortName);
-    node0.setNodeType(dockerNodeType);
-    node0.setDomain(controllerSite);
-  }
-
-  private static String getOVSScript(String cip) {
-    String script = "apt-get update\n" + "apt-get -y install openvswitch-switch \n apt-get -y install iperf\n /etc/init.d/neuca stop\n";
-    return script;
-  }
-
-  private static String getSafeScript(String riakip) {
-    String script = "apt-get update\n"
-      + "docker pull yaoyj11/safeserver\n"
-      + "docker run -i -t -d -p 7777:7777 -h safe --name safe yaoyj11/safeserver\n"
-      + "docker exec -d safe /bin/bash -c  \"cd /root/safe;export SBT_HOME=/opt/sbt-0.13.12;export SCALA_HOME=/opt/scala-2.11.8;sed -i 's/128.194.6.136:8098/"
-      + riakip + ":8098/g' safe-server/src/main/resources/application.conf;./sdx.sh\"\n";
-    return script;
-  }
-
-  private static String getRiakScript() {
-    String script = "docker pull yaoyj11/riakimg\n";
-    return script;
-  }
-
-  private static String getPlexusScript() {
-    String script = "apt-get update\n"
-      + "docker pull yaoyj11/plexus\n"
-      + "docker run -i -t -d -p 8080:8080 -p 6633:6633 -p 3000:3000 -h plexus --name plexus yaoyj11/plexus\n";
-    //+"docker exec -d plexus /bin/bash -c  \"cd /root/;./sdx.sh\"\n";
-    return script;
   }
 }
