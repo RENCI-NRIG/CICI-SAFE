@@ -511,6 +511,10 @@ public class SdxManager extends SliceCommon {
       // get all links, and then
       for(Interface i: s.getInterfaces()){
         InterfaceNode2Net inode2net=(InterfaceNode2Net)i;
+        if (i.getName().contains("node"))
+        {
+          continue;
+        }
         logger.debug("linkname: "+inode2net.getLink().toString()+" bandwidth: "+ inode2net.getLink().getBandwidth());
         if(ifs.contains(i.getName())){
           logger.debug("continue");
@@ -523,9 +527,9 @@ public class SdxManager extends SliceCommon {
           link=new Link();
           link.setName(inode2net.getLink().toString());
           link.addNode(inode2net.getNode().toString());
-          if(link.linkname.contains("stitch")){
+          if(link.linkname.contains("stitch") || link.linkname.contains("brolink")){
             String[] parts=link.linkname.split("_");
-            String ip=parts[2];
+            String ip=parts[parts.length-1];
             usedip.add(Integer.valueOf(ip));
             link.setIP(IPPrefix+ip);
             link.setMask(mask);
@@ -657,7 +661,7 @@ public class SdxManager extends SliceCommon {
     for (Object k : keyset) {
       Link link = links.get((String) k);
       logger.debug("Setting up stitch "+link.linkname);
-      if (((String) k).contains("stitch")) {
+      if(((String) k).contains("stitch") || ((String) k).contains("brolink")){
         usedip.add(Integer.valueOf(link.getIP(1).split("\\.")[2]));
         routingmanager.newLink(link.getIP(1), link.nodea, link.getIP(2).split("/")[0], httpcontroller);
       }
