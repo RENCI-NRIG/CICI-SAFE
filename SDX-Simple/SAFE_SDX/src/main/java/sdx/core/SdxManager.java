@@ -98,6 +98,8 @@ public class SdxManager extends SliceCommon {
 
   private static NetworkManager routingmanager = new NetworkManager();
   private static HashMap<String, Link> links = new HashMap<String, Link>();
+  private static HashMap<String, ArrayList<String>>computenodes=new HashMap<String,ArrayList<String>>();
+  private static ArrayList<StitchPort>stitchports=new ArrayList<>();
   private static String IPPrefix = "192.168.";
   static int curip = 128;
   private static String mask = "/24";
@@ -105,7 +107,7 @@ public class SdxManager extends SliceCommon {
   private static String OVSController;
   public static String serverurl;
   private static HashSet<Integer> usedip = new HashSet<Integer>();
-  private static final ReentrantLock lock = new ReentrantLock();
+  private static final ReentrantLock iplock=new ReentrantLock();
   //private static String type;
   private static ArrayList<String[]> advertisements = new ArrayList<String[]>();
 
@@ -318,7 +320,7 @@ public class SdxManager extends SliceCommon {
       }
       ComputeNode node = (ComputeNode) s1.getResourceByName(nodeName);
       int interfaceNum = routingmanager.getRouter(nodeName).getInterfaceNum();
-      lock.lock();
+      iplock.lock();
       int ip_to_use = 0;
       String stitchname;
       try {
@@ -330,7 +332,7 @@ public class SdxManager extends SliceCommon {
         stitchname = "stitch_" + nodeName + "_" + curip;
         curip++;
       } finally {
-        lock.unlock();
+        iplock.unlock();
       }
       Network net = s1.addBroadcastLink(stitchname);
       InterfaceNode2Net ifaceNode0 = (InterfaceNode2Net) net.stitch(node);
