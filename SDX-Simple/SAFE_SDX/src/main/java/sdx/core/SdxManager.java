@@ -85,23 +85,22 @@ public class SdxManager extends SliceCommon {
 
   final static Logger logger = Logger.getLogger(SdxManager.class);
 
-
-  private static NetworkManager routingmanager=new NetworkManager();
-  private static HashMap<String, Link> links=new HashMap<String, Link>();
+  private static NetworkManager routingmanager = new NetworkManager();
+  private static HashMap<String, Link> links = new HashMap<String, Link>();
   private static HashMap<String, ArrayList<String>>computenodes=new HashMap<String,ArrayList<String>>();
   private static ArrayList<StitchPort>stitchports=new ArrayList<>();
-  private static String IPPrefix="192.168.";
-  static int curip=128;
-  private static String mask="/24";
+  private static String IPPrefix = "192.168.";
+  static int curip = 128;
+  private static String mask = "/24";
   private static String SDNController;
   private static String OVSController;
   public static String serverurl;
+  private static HashSet<Integer> usedip = new HashSet<Integer>();
   private static final ReentrantLock iplock=new ReentrantLock();
   private static final ReentrantLock nodelock=new ReentrantLock();
   private static final ReentrantLock linklock=new ReentrantLock();
   //private static String type;
   private static ArrayList<String[]> advertisements=new ArrayList<String[]>();
-  private static HashSet<Integer> usedip=new HashSet<Integer>();
 
   private void addEntry_HashList(HashMap<String, ArrayList<String>> map, String key, String entry) {
     if (map.containsKey(key)) {
@@ -495,9 +494,9 @@ public class SdxManager extends SliceCommon {
         waitTillActive(s);
         Exec.sshExec("root", mynode.getManagementIP(), "/bin/bash ~/ovsbridge.sh " + OVSController, sshkey);
         routingmanager.replayCmds(routingmanager.getDPID(nodeName));
-        Exec.sshExec("root",mynode.getManagementIP(),"ifconfig;ovs-vsctl list port",sshkey);
-        routingmanager.newLink(ip, nodeName, gateway,SDNController);
-        res="Stitch operation Completed";
+        Exec.sshExec("root", mynode.getManagementIP(), "ifconfig;ovs-vsctl list port", sshkey);
+        routingmanager.newLink(ip, nodeName, gateway, SDNController);
+        res = "Stitch operation Completed";
         System.out.println(res);
       } else {
         System.out.println("Chameleon Stitch Request from " + customer_keyhash + " Unauthorized");
@@ -1021,7 +1020,7 @@ public class SdxManager extends SliceCommon {
       e.printStackTrace();
     }
   }
-
+  */
 
 	public static void undoStitch(String sdxslice, String customerName, String netName, String nodeName){
 		logger.debug("ndllib TestDriver: START");

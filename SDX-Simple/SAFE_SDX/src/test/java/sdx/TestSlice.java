@@ -131,6 +131,7 @@ public class TestSlice extends SliceManager {
     cnode0.setImage(nodeImageURL, nodeImageHash, nodeImageShortName);
     cnode0.setNodeType(nodeNodeType);
     cnode0.setDomain(clientSites.get(0));
+    cnode0.setPostBootScript(getCustomerScript());
     Network net1 = s.addBroadcastLink("stitch_c0_10",bw);
     InterfaceNode2Net ifaceNode0 = (InterfaceNode2Net) net1.stitch(cnode0);
     ifaceNode0.setIpAddress("192.168.10.2");
@@ -141,6 +142,7 @@ public class TestSlice extends SliceManager {
     cnode1.setImage(nodeImageURL, nodeImageHash, nodeImageShortName);
     cnode1.setNodeType(nodeNodeType);
     cnode1.setDomain(clientSites.get(3%clientSites.size()));
+    cnode1.setPostBootScript(getCustomerScript());
     Network net2 = s.addBroadcastLink("stitch_c3_20",bw);
     InterfaceNode2Net ifaceNode1 = (InterfaceNode2Net) net2.stitch(cnode1);
     ifaceNode1.setIpAddress("192.168.20.2");
