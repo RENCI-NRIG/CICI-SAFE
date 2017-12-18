@@ -379,12 +379,12 @@ public class SdxManager extends SliceCommon {
       link.setIP(IPPrefix + String.valueOf(ip_to_use));
       link.setMask(mask);
       links.put(stitchname, link);
-      routingmanager.newLink(link.getIP(1), link.nodea, SDNController);
       String gw = link.getIP(1);
       String ip = link.getIP(2);
       stitch(customerName, ResrvID, carrierName, net1_stitching_GUID, secret, ip);
       res[0] = gw;
       res[1] = ip;
+      routingmanager.newLink(link.getIP(1), link.nodea,ip.split("/")[0], SDNController);
       routingmanager.configurePath(ip, nodeName, ip.split("/")[0], SDNController);
       System.out.println("stitching operation  completed");
     } else {
