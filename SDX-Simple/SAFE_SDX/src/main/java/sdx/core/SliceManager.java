@@ -89,6 +89,12 @@ public class SliceManager extends SliceCommon {
       try {
         String carrierName = sliceName;
         Slice carrier = createCarrierSlice(carrierName, routerNum, 1000000, 1);
+        try {
+          carrier.commit();
+        } catch (XMLRPCTransportException e) {
+          // TODO Auto-generated catch block
+          e.printStackTrace();
+        }
         carrier.refresh();
         waitTillActive(carrier);
         carrier.refresh();
@@ -282,12 +288,6 @@ public class SliceManager extends SliceCommon {
     }
     addSafeServer(s, riakip);
     addPlexusController(s);
-    try {
-      s.commit();
-    } catch (XMLRPCTransportException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
-    }
     return s;
   }
 
