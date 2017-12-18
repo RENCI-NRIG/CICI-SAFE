@@ -1,7 +1,5 @@
 package sdx.bro;
 
-import sdx.bro.SampleSlice;
-import sdx.bro.SliceBase;
 import sdx.core.NodeBase;
 import com.jcraft.jsch.Session;
 
@@ -156,7 +154,7 @@ public class TestBroSlice extends SliceBase {
           execOnNode(n, "while [ \"`fuser /var/lib/dpkg/lock`\" != \"\" ]; do sleep 1; done"); // Make sure apt install is available
           execTillSuccess(n, "apt install -y iperf3");
           execTillSuccess(n, "apt install -y vsftpd");
-          sftpToNode(n, resource_dir + "scripts/evil.txt");
+          sftpToNode(n, resource_dir + "bro/evil.txt");
         } catch (SampleSlice.SliceBaseException e) {
           throw new RuntimeException(e);
         }
@@ -217,9 +215,8 @@ public class TestBroSlice extends SliceBase {
 
         execOnNode(flow, "sed -i 's/eth0/" + ports + "/' /opt/bro/etc/node.cfg"); // This VM uses ports for the server
         execOnNode(cs, "sed -i 's/eth0/eth1/' /opt/bro/etc/node.cfg"); // This VM uses eth1 for the flow
-
         sftpToNode(cs, resource_dir + "sdnctrl/destroy_conn.bro");
-        sftpToNode(cs, resource_dir + "scripts/evil.txt");
+        sftpToNode(cs, resource_dir + "bro/evil.txt");
         String sha1 = execOnNode(cs, "sha1sum evil.txt | cut -d' ' -f1", true);
         execOnNode(cs, "sed -i 's/bogus_dpid/" + Long.parseLong(dpid, 16) + "/' destroy_conn.bro");
         execOnNode(cs, "sed -i 's/bogus_addr/" + retrieveIP(control) + "/' destroy_conn.bro");
