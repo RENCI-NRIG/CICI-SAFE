@@ -879,6 +879,7 @@ public class SdxManager extends SliceCommon {
         String mip = node.getManagementIP();
         logger.debug(node.getName() + " " + mip);
         Exec.sshExec("root", mip, "/bin/bash ~/ovsbridge.sh " + ovscontroller, sshkey).split(" ");
+        //result[0]= num of interfaces, result[1] = dpid
         String[] result = Exec.sshExec("root", mip, "/bin/bash ~/dpid.sh", sshkey).split(" ");
         try {
           result[1] = result[1].replace("\n", "");
