@@ -51,10 +51,10 @@ public class SliceManager extends SliceCommon {
     String configfilepath = cmd.getOptionValue("config");
 
     readConfig(configfilepath);
-    int routerNum=4;
+    int routerNum = 4;
     try {
       routerNum = conf.getInt("config.routernum");
-    }catch (Exception e){
+    } catch (Exception e) {
       logger.debug("No router number specified, launching default 4 routers");
     }
 
@@ -142,8 +142,8 @@ public class SliceManager extends SliceCommon {
 
     runCmdSlice(carrier, "sed -i 's/bogus_addr/" + SDNControllerIP + "/' destroy_conn.bro",
       sshkey, "(bro\\d+)", true, true);
-    for (ComputeNode c : carrier.getComputeNodes()){
-      if (c.getName().contains("bro")){
+    for (ComputeNode c : carrier.getComputeNodes()) {
+      if (c.getName().contains("bro")) {
         String routername = c.getName().replace("bro", "c");
         ComputeNode router = (ComputeNode) carrier.getResourceByName(routername);
         String mip = router.getManagementIP();
@@ -255,7 +255,7 @@ public class SliceManager extends SliceCommon {
     ArrayList<Network> netlist = new ArrayList<Network>();
     ArrayList<Network> stitchlist = new ArrayList<Network>();
     boolean BRO = false;
-    if(conf.hasPath("config.bro")){
+    if (conf.hasPath("config.bro")) {
       BRO = conf.getBoolean("config.bro");
     }
     for (int i = 0; i < num; i++) {
@@ -282,7 +282,7 @@ public class SliceManager extends SliceCommon {
         //ifaceNode1.setNetmask("255.255.255.0");
       }
 
-      if(BRO) {
+      if (BRO) {
         addBro(s, "bro" + i, node0, curip++);
       }
 
