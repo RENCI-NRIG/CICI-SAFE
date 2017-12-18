@@ -22,7 +22,7 @@ public class NetworkManager {
   private ArrayList<Router> routers = new ArrayList<Router>();
   private ArrayList<String[]> ip_router = new ArrayList<String[]>();
   private ArrayList<String[]> links = new ArrayList<String[]>();
-  private HashMap<String, ArrayList<String>> sdncmds = new HashMap<String, ArrayList<String>>();
+  private HashMap<String, ArrayList<String[]>> sdncmds=new HashMap<String,ArrayList<String[]>>();
 
   public String getDPID(String routerid) {
     Router router = getRouter(routerid);
