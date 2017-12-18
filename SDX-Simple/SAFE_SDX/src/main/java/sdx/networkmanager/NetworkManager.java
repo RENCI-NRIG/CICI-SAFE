@@ -160,13 +160,6 @@ public class NetworkManager {
     }
   }
 
-  private void runSDNCmd(String cmd) {
-    String res = Exec.exec(cmd);
-    if (res.contains("failuer")) {
-      logger.debug("Setting routing entry failed");
-    }
-  }
-
   public Router getRouter(String routername) {
     for (Router r : routers) {
       if (r.getRouterID().equals(routername)) {

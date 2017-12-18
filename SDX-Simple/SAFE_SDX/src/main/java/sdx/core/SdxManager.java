@@ -699,7 +699,8 @@ public class SdxManager extends SliceCommon {
       }
     }
     //set ovsdb address
-    routingmanager.setOvsdbAddr(httpcontroller);
+    //TODO: comment for simple use
+    //routingmanager.setOvsdbAddr(httpcontroller);
   }
 
   public static void undoStitch(String carrierName, String customerName, String netName, String nodeName) {
