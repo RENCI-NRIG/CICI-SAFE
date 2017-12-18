@@ -51,6 +51,12 @@ public class SliceManager extends SliceCommon {
     String configfilepath = cmd.getOptionValue("config");
 
     readConfig(configfilepath);
+    int routerNum=4;
+    try {
+      routerNum = conf.getInt("config.routernum");
+    }catch (Exception e){
+      logger.debug("No router number specified, launching default 4 routers");
+    }
 
     logger.debug("configfilepath " + configfilepath);
     //readConfig(configfilepath);
@@ -82,7 +88,7 @@ public class SliceManager extends SliceCommon {
       computeIP(IPPrefix);
       try {
         String carrierName = sliceName;
-        Slice carrier = createCarrierSlice(carrierName, 4, 1000000, 1);
+        Slice carrier = createCarrierSlice(carrierName, routerNum, 1000000, 1);
         carrier.refresh();
         waitTillActive(carrier);
         carrier.refresh();
