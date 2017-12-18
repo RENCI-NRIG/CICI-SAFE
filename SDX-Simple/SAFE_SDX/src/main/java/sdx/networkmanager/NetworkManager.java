@@ -32,9 +32,10 @@ public class NetworkManager {
       return null;
   }
 
-  public void addLink(String ipa, String ra) {
-    Router router = getRouter(ra);
-    if (router != null) {
+  public  void addLink(String ipa, String ra, String gw){
+    Router router=getRouter(ra);
+    if(router!=null){
+      router.addGateway(gw);
       router.addInterface(ipa);
       putPairRouter(ipa, router.getDPID());
       //routers.put(ra,router);
@@ -77,6 +78,7 @@ public class NetworkManager {
     }
   }
 
+
   public void addRouter(String routerid, String dpid, int numinterfaces, String mip) {
     if (getRouter(routerid) == null) {
 //      logger.debug(dpid+":my dpid");
@@ -114,14 +116,6 @@ public class NetworkManager {
     cmd = addrCMD(ipb,dpid,controller);
     HttpUtil.postJSON(cmd[0],new JSONObject(cmd[1]));
     addEntry_HashList(sdncmds,dpid,cmd);
-  }
-  public void newLink(String ipa, String ra, String controller) {
-    logger.debug("RoutingManager: new link " + ra + ipa);
-    addLink(ipa, ra);
-    String dpid = getRouter(ra).getDPID();
-    String cmd = addrCMD(ipa, dpid, controller);
-    runSDNCmd(cmd);
-    addEntry_HashList(sdncmds, dpid, cmd);
   }
 
   public void configurePath(String dest, String nodename, String gateway, String controller) {
