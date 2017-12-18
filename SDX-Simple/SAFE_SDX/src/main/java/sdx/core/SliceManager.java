@@ -121,8 +121,6 @@ public class SliceManager extends SliceCommon {
         Slice carrier = createCarrierSlice(carrierName, routerNum, 1000000, 1);
         commitAndWait(carrier);
         carrier.refresh();
-        waitTillActive(carrier);
-        carrier.refresh();
         copyFile2Slice(carrier, scriptsdir + "dpid.sh", "~/dpid.sh", sshkey, "(c\\d+)");
         copyFile2Slice(carrier, scriptsdir + "ovsbridge.sh", "~/ovsbridge.sh", sshkey, "(c\\d+)");
         //Make sure that plexus container is running
