@@ -70,14 +70,14 @@ public class TestSlice extends SliceManager {
       try {
         String carrierName = sliceName;
         int routernum = conf.getInt("config.routernum");
-        Slice carrier = createTestSliceWithBroAndCNode(carrierName, routernum, 1000000);
+        Slice carrier = createTestSliceWithBroAndCNode(carrierName, routernum, 1000000000);
         String resource_dir = conf.getString("config.resourcedir");
         //Slice carrier = createCarrierSliceWithCustomerNodes(carrierName, 4, 10, 1000000, 1);
         commitAndWait(carrier);
         carrier.refresh();
         copyFile2Slice(carrier, scriptsdir + "dpid.sh", "~/dpid.sh", sshkey);
         copyFile2Slice(carrier, scriptsdir + "ovsbridge.sh", "~/ovsbridge.sh", sshkey);
-        runCmdSlice(carrier, "mkdir /home/ftpuser", sshkey, "(node\\d+)", true, true);
+        runCmdSlice(carrier, "mkdir /home/ftp", sshkey, "(node\\d+)", true, true);
         copyFile2Slice(carrier, resource_dir + "bro/evil.txt", "/home/ftpuser/evil.txt",
           sshkey, "(node\\d+)");
         //Make sure that plexus container is running
@@ -130,7 +130,7 @@ public class TestSlice extends SliceManager {
     String nodeImageURL = "http://geni-orca.renci.org/owl/9dfe179d-3736-41bf-8084-f0cd4a520c2f#Ubuntu+14.04";//http://geni-images.renci.org/images/standard/ubuntu/ub1304-ovs-opendaylight-v1.0.0.xml
     String nodeImageHash = "9394ca154aa35eb55e604503ae7943ddaecc6ca5";
     String nodeNodeType = "XO Medium";
-    Slice s = createCarrierSlice(sliceName, num, 1000000000);
+    Slice s = createCarrierSlice(sliceName, num, bw);
     //Now add two customer node to c0 and c3
     ComputeNode c0 = (ComputeNode) s.getResourceByName("c0");
     ComputeNode c3 = (ComputeNode) s.getResourceByName("c3");
@@ -138,13 +138,25 @@ public class TestSlice extends SliceManager {
     cnode0.setImage(nodeImageURL, nodeImageHash, nodeImageShortName);
     cnode0.setNodeType(nodeNodeType);
     cnode0.setDomain(clientSites.get(0));
-    String scripts = "apt-get install -y vsftpd\n";
+    String scripts = "apt-get install -y vsftpd iperf\n";
     cnode0.setPostBootScript(getCustomerScript() + scripts);
     Network net1 = s.addBroadcastLink("stitch_c0_10",bw);
     InterfaceNode2Net ifaceNode0 = (InterfaceNode2Net) net1.stitch(cnode0);
     ifaceNode0.setIpAddress("192.168.10.2");
     ifaceNode0.setNetmask("255.255.255.0");
     net1.stitch(c0);
+
+
+    ComputeNode cnode2 = s.addComputeNode("node2");
+    cnode2.setImage(nodeImageURL, nodeImageHash, nodeImageShortName);
+    cnode2.setNodeType(nodeNodeType);
+    cnode2.setDomain(clientSites.get(0));
+    cnode2.setPostBootScript(getCustomerScript() + scripts);
+    Network net3 = s.addBroadcastLink("stitch_c0_30",bw);
+    InterfaceNode2Net ifaceNode2 = (InterfaceNode2Net) net3.stitch(cnode2);
+    ifaceNode2.setIpAddress("192.168.30.2");
+    ifaceNode2.setNetmask("255.255.255.0");
+    net3.stitch(c0);
 
     ComputeNode cnode1 = s.addComputeNode("node3");
     cnode1.setImage(nodeImageURL, nodeImageHash, nodeImageShortName);
