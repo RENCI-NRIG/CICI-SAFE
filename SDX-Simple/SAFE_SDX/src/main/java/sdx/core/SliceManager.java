@@ -147,7 +147,8 @@ public class SliceManager extends SliceCommon {
         String routername = c.getName().replace("bro", "c");
         ComputeNode router = (ComputeNode) carrier.getResourceByName(routername);
         String mip = router.getManagementIP();
-        String dpid = Exec.sshExec("root", mip, "/bin/bash ~/dpid.sh", sshkey).split(" ")[1];
+        String dpid = Exec.sshExec("root", mip, "/bin/bash ~/dpid.sh", sshkey).split(" ")[1]
+          .replace("\n", "");
         Exec.sshExec("root", c.getManagementIP(), "sed -i 's/bogus_dpid/" + Long.parseLong(dpid, 16) + "/' destroy_conn.bro", sshkey);
       }
     }
@@ -223,6 +224,7 @@ public class SliceManager extends SliceCommon {
     bro.setImage(broURL, broHash, broN);
     bro.setDomain(edgerouter.getDomain());
     bro.setNodeType(broType);
+    bro.setPostBootScript("yum install -y tcpdump");
 
     Network bronet = s.addBroadcastLink("blink_" + ip_to_use);
     InterfaceNode2Net ifaceNode1 = (InterfaceNode2Net) bronet.stitch(edgerouter);

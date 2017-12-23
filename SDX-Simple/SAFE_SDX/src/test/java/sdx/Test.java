@@ -10,6 +10,7 @@ import org.json.JSONObject;
 import sdx.utils.Exec;
 import sdx.utils.HttpUtil;
 
+import java.io.IOException;
 import java.net.URI;
 
 public class Test {
@@ -37,13 +38,22 @@ public class Test {
     SdxManager.notifyPrefix("192.168.20.2/24", "192.168.20.2", "c3", "notused");
     String[] cmd = mirrorCMD(SdxManager.getSDNControllerIP(), SdxManager.getDPID("c0"), "192.168.20.1/24",
         "192.168.10.1/24", "192.168.101.2");
+    String res = HttpUtil.postJSON(cmd[0], new JSONObject(cmd[1]));
+    cmd = mirrorCMD(SdxManager.getSDNControllerIP(), SdxManager.getDPID("c0"), "192.168.10.1/24",
+      "192.168.20.1/24", "192.168.101.2");
     String dpid = SdxManager.getDPID("c0");
     System.out.println(Long.parseLong(dpid, 16));
-    String res = HttpUtil.postJSON(cmd[0], new JSONObject(cmd[1]));
+    res = HttpUtil.postJSON(cmd[0], new JSONObject(cmd[1]));
     System.out.println(res);
     System.out.println(cmd[0]);
     System.out.println(cmd[1]);
     System.out.println("IP prefix is set up, the two nodes should be able to talk now");
+    try {
+      System.out.println("Now Set up vsftp in node");
+      System.in.read();
+    }catch (IOException e){
+      e.printStackTrace();
+    }
   }
 
   private static String[] mirrorCMD(String controller, String dpid, String source, String dst, String gw) {
