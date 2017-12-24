@@ -28,6 +28,7 @@ public class Test {
   public static void main(String[] args) {
     testRouting(args);
     //testPerFlowQOS();
+    limitQos();
   }
 
   private static void testRouting(String[] args) {
@@ -37,24 +38,28 @@ public class Test {
     SdxManager.notifyPrefix("192.168.10.2/24", "192.168.10.2", "c0", "notused");
     SdxManager.notifyPrefix("192.168.30.2/24", "192.168.10.2", "c0", "notused");
     SdxManager.notifyPrefix("192.168.20.2/24", "192.168.20.2", "c3", "notused");
-    String[] cmd = mirrorCMD(SdxManager.getSDNControllerIP(), SdxManager.getDPID("c0"), "192.168.20.1/24",
-        null, "192.168.101.2");
+    String dpid = SdxManager.getDPID("c0");
+    String[] cmd = mirrorCMD(SdxManager.getSDNControllerIP(), dpid, "192.168.20.1/24",
+        "192.168.10.2/24", "192.168.101.2");
+    System.out.println(cmd[1]);
     String res = HttpUtil.postJSON(cmd[0], new JSONObject(cmd[1]));
-    cmd = mirrorCMD(SdxManager.getSDNControllerIP(), SdxManager.getDPID("c0"), null,
+    cmd = mirrorCMD(SdxManager.getSDNControllerIP(), dpid, "192.168.10.2/24",
       "192.168.20.1/24", "192.168.101.2");
-    String dpid = SdxManager.getDPID("c3");
+    System.out.println(cmd[1]);
     System.out.println(Long.parseLong(dpid, 16));
     res = HttpUtil.postJSON(cmd[0], new JSONObject(cmd[1]));
     System.out.println(res);
     System.out.println(cmd[0]);
     System.out.println(cmd[1]);
     System.out.println("IP prefix is set up, the two nodes should be able to talk now");
+    /*
     try {
       System.out.println("Now Set up vsftp in node");
       System.in.read();
     }catch (IOException e){
       e.printStackTrace();
     }
+    */
   }
 
   private static String[] mirrorCMD(String controller, String dpid, String source, String dst, String gw) {
@@ -76,15 +81,27 @@ public class Test {
   private static String[] queueCMD(String controller, String dpid) {
     String[] res = new String[2];
     res[0] = "http://" + controller + ":8080/qos/queue/" + dpid;
-    res[1] = "{\"type\":\"linux-htb\",\"max_rate\":\"1000000\",\"queues\":[{\"max_rate\":\"100000\"},{\"min_rate\":\"500000\"}]}";
+    res[1] = "{\"type\":\"linux-htb\",\"max_rate\":\"1000000000\"," +
+      "\"queues\":[{\"max_rate\":\"20000000\"},{\"min_rate\":\"500000\"}]}";
     return res;
   }
 
   private static String[] qosCMD(String controller, String dpid) {
     String[] res = new String[2];
     res[0] = "http://" + controller + ":8080/qos/rules/" + dpid;
-    res[1] = "{\"match\":{\"nw_dst\":\"192.168.10.2\",\"nw_proto\":\"TCP\",\"tp_dst\":\"5002\"},\"actions\":{\"queue\":\"0\"}}";
+    res[1] = "{\"match\":{\"nw_dst\":\"192.168.20.2\",\"nw_proto\":\"TCP\",\"tp_dst\":\"5002\"}," +
+      "\"actions\":{\"queue\":\"0\"}}";
     return res;
+  }
+
+  private static void limitQos() {
+    String dpid1 = SdxManager.getDPID("c0");
+    String controller = SdxManager.getSDNControllerIP();
+    String[] queuecmd = queueCMD(controller, dpid1);
+    HttpUtil.postJSON(queuecmd[0], new JSONObject(queuecmd[1]));
+    HttpUtil.get(queuecmd[0]);
+    String[] qoscmd = qosCMD(controller, dpid1);
+    HttpUtil.postJSON(qoscmd[0], new JSONObject(qoscmd[1]));
   }
 
   private static void testPerFlowQOS() {

@@ -78,7 +78,7 @@ public class TestSlice extends SliceManager {
         copyFile2Slice(carrier, scriptsdir + "dpid.sh", "~/dpid.sh", sshkey);
         copyFile2Slice(carrier, scriptsdir + "ovsbridge.sh", "~/ovsbridge.sh", sshkey);
         runCmdSlice(carrier, "mkdir /home/ftp", sshkey, "(node\\d+)", true, true);
-        copyFile2Slice(carrier, resource_dir + "bro/evil.txt", "/home/ftpuser/evil.txt",
+        copyFile2Slice(carrier, resource_dir + "bro/evil.txt", "/home/ftp/evil.txt",
           sshkey, "(node\\d+)");
         //Make sure that plexus container is running
         SDNControllerIP = ((ComputeNode) carrier.getResourceByName("plexuscontroller")).getManagementIP();
@@ -140,33 +140,35 @@ public class TestSlice extends SliceManager {
     cnode0.setDomain(clientSites.get(0));
     String scripts = "apt-get install -y vsftpd iperf\n";
     cnode0.setPostBootScript(getCustomerScript() + scripts);
-    Network net1 = s.addBroadcastLink("stitch_c0_10",bw);
-    InterfaceNode2Net ifaceNode0 = (InterfaceNode2Net) net1.stitch(cnode0);
+    Network net0 = s.addBroadcastLink("stitch_c0_10",bw);
+    InterfaceNode2Net ifaceNode0 = (InterfaceNode2Net) net0.stitch(cnode0);
     ifaceNode0.setIpAddress("192.168.10.2");
     ifaceNode0.setNetmask("255.255.255.0");
-    net1.stitch(c0);
+    net0.stitch(c0);
 
-
-    ComputeNode cnode2 = s.addComputeNode("node2");
-    cnode2.setImage(nodeImageURL, nodeImageHash, nodeImageShortName);
-    cnode2.setNodeType(nodeNodeType);
-    cnode2.setDomain(clientSites.get(0));
-    cnode2.setPostBootScript(getCustomerScript() + scripts);
-    Network net3 = s.addBroadcastLink("stitch_c0_30",bw);
-    InterfaceNode2Net ifaceNode2 = (InterfaceNode2Net) net3.stitch(cnode2);
-    ifaceNode2.setIpAddress("192.168.30.2");
-    ifaceNode2.setNetmask("255.255.255.0");
-    net3.stitch(c0);
-
-    ComputeNode cnode1 = s.addComputeNode("node3");
+    /*
+    ComputeNode c1 = (ComputeNode) s.getResourceByName("c1");
+    ComputeNode cnode1 = s.addComputeNode("node2");
     cnode1.setImage(nodeImageURL, nodeImageHash, nodeImageShortName);
     cnode1.setNodeType(nodeNodeType);
-    cnode1.setDomain(clientSites.get(3%clientSites.size()));
-    cnode1.setPostBootScript(getCustomerScript()+scripts);
-    Network net2 = s.addBroadcastLink("stitch_c3_20",bw);
-    InterfaceNode2Net ifaceNode1 = (InterfaceNode2Net) net2.stitch(cnode1);
-    ifaceNode1.setIpAddress("192.168.20.2");
+    cnode1.setDomain(clientSites.get(0));
+    cnode1.setPostBootScript(getCustomerScript() + scripts);
+    Network net1 = s.addBroadcastLink("stitch_c0_30",bw);
+    InterfaceNode2Net ifaceNode1 = (InterfaceNode2Net) net1.stitch(cnode1);
+    ifaceNode1.setIpAddress("192.168.30.2");
     ifaceNode1.setNetmask("255.255.255.0");
+    net1.stitch(c1);
+    */
+
+    ComputeNode cnode2 = s.addComputeNode("node3");
+    cnode2.setImage(nodeImageURL, nodeImageHash, nodeImageShortName);
+    cnode2.setNodeType(nodeNodeType);
+    cnode2.setDomain(clientSites.get(3%clientSites.size()));
+    cnode2.setPostBootScript(getCustomerScript()+scripts);
+    Network net2 = s.addBroadcastLink("stitch_c3_20",bw);
+    InterfaceNode2Net ifaceNode2 = (InterfaceNode2Net) net2.stitch(cnode2);
+    ifaceNode2.setIpAddress("192.168.20.2");
+    ifaceNode2.setNetmask("255.255.255.0");
     net2.stitch(c3);
     return s;
   }
