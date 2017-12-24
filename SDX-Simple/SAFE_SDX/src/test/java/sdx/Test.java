@@ -28,7 +28,7 @@ public class Test {
   public static void main(String[] args) {
     testRouting(args);
     //testPerFlowQOS();
-    limitQos();
+    //limitQos();
   }
 
   private static void testRouting(String[] args) {
@@ -36,11 +36,11 @@ public class Test {
     System.out.println("configured ip addresses in sdx network");
     //notify prefixes for node0 and node1
     SdxManager.notifyPrefix("192.168.10.2/24", "192.168.10.2", "c0", "notused");
-    SdxManager.notifyPrefix("192.168.30.2/24", "192.168.10.2", "c0", "notused");
+    //SdxManager.notifyPrefix("192.168.30.2/24", "192.168.10.2", "c0", "notused");
     SdxManager.notifyPrefix("192.168.20.2/24", "192.168.20.2", "c3", "notused");
     String dpid = SdxManager.getDPID("c0");
     String[] cmd = mirrorCMD(SdxManager.getSDNControllerIP(), dpid, "192.168.20.1/24",
-        "192.168.10.2/24", "192.168.101.2");
+      "192.168.10.2/24", "192.168.101.2");
     System.out.println(cmd[1]);
     String res = HttpUtil.postJSON(cmd[0], new JSONObject(cmd[1]));
     cmd = mirrorCMD(SdxManager.getSDNControllerIP(), dpid, "192.168.10.2/24",
@@ -52,6 +52,7 @@ public class Test {
     System.out.println(cmd[0]);
     System.out.println(cmd[1]);
     System.out.println("IP prefix is set up, the two nodes should be able to talk now");
+    SdxManager.printSlice();
     /*
     try {
       System.out.println("Now Set up vsftp in node");
@@ -68,10 +69,10 @@ public class Test {
     //res[1] = "{\"source\":\"" + source + "\", \"destination\": \"" + dst + "\", \"mirror\":\"" + gw + "\"}";
     JSONObject params = new JSONObject();
     params.put("mirror", gw);
-    if(source != null){
+    if (source != null) {
       params.put("source", source);
     }
-    if(dst != null){
+    if (dst != null) {
       params.put("destination", dst);
     }
     res[1] = params.toString();

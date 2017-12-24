@@ -441,6 +441,26 @@ public abstract class SliceCommon {
     }
   }
 
+  protected static void printSliceInfo(Slice s) {
+    for (Network n : s.getLinks()) {
+      System.out.println(n.getLabel() + " " + n.getState());
+    }
+    //getInterfaces
+    for (Interface i : s.getInterfaces()) {
+      InterfaceNode2Net inode2net = (InterfaceNode2Net) i;
+      System.out.println("MacAddr: " + inode2net.getMacAddress());
+      System.out.println("GUID: " + i.getGUID());
+    }
+    for (ComputeNode node : s.getComputeNodes()) {
+      System.out.println(node.getName() + node.getManagementIP());
+      for (Interface i : node.getInterfaces()) {
+        InterfaceNode2Net inode2net = (InterfaceNode2Net) i;
+        System.out.println("MacAddr: " + inode2net.getMacAddress());
+        System.out.println("GUID: " + i.getGUID());
+      }
+    }
+  }
+
 //	protected static final ArrayList<String> domains;
 //	static {
 //		ArrayList<String> l = new ArrayList<String>();

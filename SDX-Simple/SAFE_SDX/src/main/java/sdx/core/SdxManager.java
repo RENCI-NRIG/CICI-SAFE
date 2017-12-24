@@ -751,5 +751,10 @@ public class SdxManager extends SliceCommon {
     Long t2 = System.currentTimeMillis();
     logger.debug("Finished UnStitching, time elapsed: " + String.valueOf(t2 - t1) + "\n");
   }
+
+  public static void printSlice(){
+    Slice s = getSlice(sliceProxy, sliceName);
+    printSliceInfo(s);
+  }
 }
 
