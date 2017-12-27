@@ -189,8 +189,9 @@ public class SdxManager extends SliceCommon {
       // TODO Auto-generated catch block
       e.printStackTrace();
     }
-    SDNControllerIP="152.3.136.36";
-    //SDNControllerIP = ((ComputeNode) serverslice.getResourceByName("plexuscontroller")).getManagementIP();
+    //SDNControllerIP="152.3.136.36";
+    runCmdSlice(serverslice, "ovs-ofctl del-flows br0", sshkey, "(c\\d+)", true, true);
+    SDNControllerIP = ((ComputeNode) serverslice.getResourceByName("plexuscontroller")).getManagementIP();
     //System.out.println("plexuscontroler managementIP = " + SDNControllerIP);
     SDNController = SDNControllerIP + ":8080";
     OVSController = SDNControllerIP + ":6633";
@@ -453,7 +454,9 @@ public class SdxManager extends SliceCommon {
     System.out.println("Restarting Plexus Controller");
     if (checkPlexus(plexusip)) {
       //String script="docker exec -d plexus /bin/bash -c  \"cd /root;pkill ryu-manager;ryu-manager plexus/plexus/app.py ryu/ryu/app/rest_conf_switch.py ryu/ryu/app/rest_qos.py |tee log\"\n";
-      String script="docker exec -d plexus /bin/bash -c  \"cd /root;pkill ryu-manager;ryu-manager ryu/ryu/app/rest_conf_switch.py ryu/ryu/app/rest_qos.py ryu/ryu/app/rest_router_mirror.py |tee log\"\n";
+      String script="docker exec -d plexus /bin/bash -c  \"cd /root;pkill ryu-manager;ryu-manager" +
+        " ryu/ryu/app/rest_conf_switch.py ryu/ryu/app/rest_qos.py ryu/ryu/app/rest_router_mirror" +
+        ".py ryu/ryu/app/ofctl_rest.py|tee log\"\n";
       //String script = "docker exec -d plexus /bin/bash -c  \"cd /root;pkill ryu-manager;ryu-manager ryu/ryu/app/rest_router.py|tee log\"\n";
       logger.debug(sshkey);
       logger.debug(plexusip);
@@ -591,8 +594,7 @@ public class SdxManager extends SliceCommon {
 
   public static void configRouting1(Slice s,String ovscontroller, String httpcontroller, String routerpattern,String stitchportpattern) {
     logger.debug("Configurating Routing");
-    //restartPlexus(SDNControllerIP);
-    //sleep(5);
+    restartPlexus(SDNControllerIP);
     // run ovsbridge scritps to add the all interfaces to the ovsbridge br0, if new interface is added to the ovs bridge, then we reset the controller?
     // FIXME: maybe this is not the best way to do.
     //add all interfaces other than eth0 to ovs bridge br0
@@ -748,6 +750,11 @@ public class SdxManager extends SliceCommon {
     }
     Long t2 = System.currentTimeMillis();
     logger.debug("Finished UnStitching, time elapsed: " + String.valueOf(t2 - t1) + "\n");
+  }
+
+  public static void printSlice(){
+    Slice s = getSlice(sliceProxy, sliceName);
+    printSliceInfo(s);
   }
 }
 
