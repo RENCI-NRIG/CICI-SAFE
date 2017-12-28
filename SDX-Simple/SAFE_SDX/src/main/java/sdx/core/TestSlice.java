@@ -1,4 +1,4 @@
-package sdx;
+package sdx.core;
 
 import org.renci.ahab.libndl.Slice;
 import sdx.core.SliceManager;
