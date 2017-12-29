@@ -286,10 +286,9 @@ public class SliceManager extends SliceCommon {
         //ifaceNode1.setNetmask("255.255.255.0");
       }
 
-      if (BRO) {
-        addBro(s, "bro" + i, node0, curip++, bw);
+      if (BRO && (i==0 || i==num-1)) {
+        addBro(s, "bro" + i, node0, curip++, bw/4*5);
       }
-
     }
     addSafeServer(s, riakip);
     addPlexusController(s);
