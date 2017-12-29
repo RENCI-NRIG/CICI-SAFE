@@ -286,7 +286,7 @@ public class SliceManager extends SliceCommon {
         //ifaceNode1.setNetmask("255.255.255.0");
       }
 
-      if (BRO && (i==0 || i==num-1)) {
+      if (BRO && (i==0)) {
         addBro(s, "bro" + i, node0, curip++, bw/4*5);
       }
     }
