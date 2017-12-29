@@ -137,7 +137,7 @@ public class TestSlice extends SliceManager {
     Slice s = createCarrierSlice(sliceName, num, bw);
     //Now add two customer node to c0 and c3
     ComputeNode c0 = (ComputeNode) s.getResourceByName("c0");
-    ComputeNode c3 = (ComputeNode) s.getResourceByName("c3");
+    ComputeNode c3 = (ComputeNode) s.getResourceByName("c" + (num - 1));
     ComputeNode cnode0 = s.addComputeNode("node0");
     cnode0.setImage(nodeImageURL, nodeImageHash, nodeImageShortName);
     cnode0.setNodeType(nodeNodeType);
@@ -164,12 +164,12 @@ public class TestSlice extends SliceManager {
     net1.stitch(c1);
     */
 
-    ComputeNode cnode2 = s.addComputeNode("node3");
+    ComputeNode cnode2 = s.addComputeNode("node" + (num - 1));
     cnode2.setImage(nodeImageURL, nodeImageHash, nodeImageShortName);
     cnode2.setNodeType(nodeNodeType);
-    cnode2.setDomain(clientSites.get(3%clientSites.size()));
+    cnode2.setDomain(clientSites.get((num-1)%clientSites.size()));
     cnode2.setPostBootScript(getCustomerScript()+scripts);
-    Network net2 = s.addBroadcastLink("stitch_c3_20",bw);
+    Network net2 = s.addBroadcastLink("stitch_c" + (num-1) + "_20",bw);
     InterfaceNode2Net ifaceNode2 = (InterfaceNode2Net) net2.stitch(cnode2);
     ifaceNode2.setIpAddress("192.168.20.2");
     ifaceNode2.setNetmask("255.255.255.0");
