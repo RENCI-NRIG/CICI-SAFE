@@ -135,8 +135,10 @@ public class SliceManager extends SliceCommon {
       "", true, true);
 
     String resource_dir = conf.getString("config.resourcedir");
-    copyFile2Slice(carrier, resource_dir + "sdnctrl/destroy_conn.bro", "/root/destroy_conn" +
+    copyFile2Slice(carrier, resource_dir + "bro/destroy_conn.bro", "/root/destroy_conn" +
       ".bro", sshkey, "(bro\\d+)");
+    copyFile2Slice(carrier, resource_dir + "bro/test-all-policy.bro", "/root/test-all-policy" +
+        ".bro", sshkey, "(bro\\d+)");
     copyFile2Slice(carrier, resource_dir + "bro/evil.txt", "/root/evil.txt", sshkey,
       "(bro\\d+)");
 

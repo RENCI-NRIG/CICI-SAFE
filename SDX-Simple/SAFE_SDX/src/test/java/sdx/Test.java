@@ -52,7 +52,7 @@ public class Test {
     System.out.println(cmd[0]);
     System.out.println(cmd[1]);
     System.out.println("IP prefix is set up, the two nodes should be able to talk now");
-    SdxManager.printSlice();
+    //SdxManager.printSlice();
     /*
     try {
       System.out.println("Now Set up vsftp in node");
