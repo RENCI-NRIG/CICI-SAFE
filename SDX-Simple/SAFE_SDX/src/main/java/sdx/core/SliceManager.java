@@ -139,6 +139,8 @@ public class SliceManager extends SliceCommon {
       ".bro", sshkey, "(bro\\d+)");
     copyFile2Slice(carrier, resource_dir + "bro/test-all-policy.bro", "/root/test-all-policy" +
         ".bro", sshkey, "(bro\\d+)");
+    copyFile2Slice(carrier, resource_dir + "bro/test-all-policy.bro", "/root/detect-file" +
+        ".bro", sshkey, "(bro\\d+)");
     copyFile2Slice(carrier, resource_dir + "bro/evil.txt", "/root/evil.txt", sshkey,
       "(bro\\d+)");
 
