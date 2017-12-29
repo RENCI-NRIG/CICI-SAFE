@@ -70,7 +70,11 @@ public class TestSlice extends SliceManager {
       try {
         String carrierName = sliceName;
         int routernum = conf.getInt("config.routernum");
-        Slice carrier = createTestSliceWithBroAndCNode(carrierName, routernum, 1000000000);
+        long bw = 10000000;
+        if(conf.hasPath("config.bw")){
+          bw = conf.getLong("config.bw");
+        }
+        Slice carrier = createTestSliceWithBroAndCNode(carrierName, routernum, bw);
         String resource_dir = conf.getString("config.resourcedir");
         //Slice carrier = createCarrierSliceWithCustomerNodes(carrierName, 4, 10, 1000000, 1);
         commitAndWait(carrier);
