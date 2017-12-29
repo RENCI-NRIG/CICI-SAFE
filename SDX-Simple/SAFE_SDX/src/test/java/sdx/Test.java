@@ -37,7 +37,7 @@ public class Test {
     //notify prefixes for node0 and node1
     SdxManager.notifyPrefix("192.168.10.2/24", "192.168.10.2", "c0", "notused");
     //SdxManager.notifyPrefix("192.168.30.2/24", "192.168.10.2", "c0", "notused");
-    SdxManager.notifyPrefix("192.168.20.2/24", "192.168.20.2", "c3", "notused");
+    SdxManager.notifyPrefix("192.168.20.2/24", "192.168.20.2", "c1", "notused");
     String dpid = SdxManager.getDPID("c0");
     String[] cmd = mirrorCMD(SdxManager.getSDNControllerIP(), dpid, "192.168.20.1/24",
       "192.168.10.2/24", "192.168.101.2");
