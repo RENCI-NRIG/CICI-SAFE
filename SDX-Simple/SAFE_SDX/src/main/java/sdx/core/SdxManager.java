@@ -104,12 +104,17 @@ public class SdxManager extends SliceCommon {
   static int curip = 128;
   private static String mask = "/24";
   private static String SDNController;
+  private static Slice serverSlice = null;
   private static String OVSController;
   public static String serverurl;
   private static HashSet<Integer> usedip = new HashSet<Integer>();
   private static final ReentrantLock iplock=new ReentrantLock();
   //private static String type;
   private static ArrayList<String[]> advertisements = new ArrayList<String[]>();
+
+  public static void replayCMD(String dpid){
+    routingmanager.replayCmds(dpid);
+  }
 
   private void addEntry_HashList(HashMap<String, ArrayList<String>> map, String key, String entry) {
     if (map.containsKey(key)) {
@@ -176,10 +181,9 @@ public class SdxManager extends SliceCommon {
       // TODO Auto-generated catch block
       e.printStackTrace();
     }
-    Slice serverslice = null;
     try {
-      serverslice = Slice.loadManifestFile(sliceProxy, sliceName);
-      ComputeNode safe = (ComputeNode) serverslice.getResourceByName("safe-server");
+      serverSlice = Slice.loadManifestFile(sliceProxy, sliceName);
+      ComputeNode safe = (ComputeNode) serverSlice.getResourceByName("safe-server");
       //System.out.println("safe-server managementIP = " + safe.getManagementIP());
       safeserver = safe.getManagementIP() + ":7777";
     } catch (ContextTransportException e) {
@@ -190,13 +194,17 @@ public class SdxManager extends SliceCommon {
       e.printStackTrace();
     }
     //SDNControllerIP="152.3.136.36";
-    runCmdSlice(serverslice, "ovs-ofctl del-flows br0", sshkey, "(c\\d+)", true, true);
-    SDNControllerIP = ((ComputeNode) serverslice.getResourceByName("plexuscontroller")).getManagementIP();
+    runCmdSlice(serverSlice, "ovs-ofctl del-flows br0", sshkey, "(c\\d+)", true, true);
+    SDNControllerIP = ((ComputeNode) serverSlice.getResourceByName("plexuscontroller")).getManagementIP();
     //System.out.println("plexuscontroler managementIP = " + SDNControllerIP);
     SDNController = SDNControllerIP + ":8080";
     OVSController = SDNControllerIP + ":6633";
-    loadSdxNetwork(serverslice,"(c\\d+)","(sp-c\\d+.*)");
-    configRouting1(serverslice,OVSController,SDNController,"(c\\d+)","(sp-c\\d+.*)");
+    loadSdxNetwork(serverSlice,"(c\\d+)","(sp-c\\d+.*)");
+    configRouting1(serverSlice,OVSController,SDNController,"(c\\d+)","(sp-c\\d+.*)");
+  }
+
+  public static void delFlows(){
+    runCmdSlice(serverSlice, "ovs-ofctl del-flows br0", sshkey, "(c\\d+)", true, true);
   }
 
   public static String notifyPrefix(String dest, String gateway, String router, String customer_keyhash) {
@@ -464,6 +472,10 @@ public class SdxManager extends SliceCommon {
     }
   }
 
+  public static void restartPlexus() {
+    restartPlexus(SDNControllerIP);
+  }
+
   private static boolean checkPlexus(String SDNControllerIP) {
     String result = Exec.sshExec("root", SDNControllerIP, "docker ps", sshkey);
     if (result.contains("plexus")) {
@@ -592,35 +604,12 @@ public class SdxManager extends SliceCommon {
     routingmanager.newRouter(node.getName(), result[1], Integer.valueOf(result[0]), mip);
   }
 
-  public static void configRouting1(Slice s,String ovscontroller, String httpcontroller, String routerpattern,String stitchportpattern) {
-    logger.debug("Configurating Routing");
-    restartPlexus(SDNControllerIP);
-    // run ovsbridge scritps to add the all interfaces to the ovsbridge br0, if new interface is added to the ovs bridge, then we reset the controller?
-    // FIXME: maybe this is not the best way to do.
-    //add all interfaces other than eth0 to ovs bridge br0
-    runCmdSlice(s, "/bin/bash ~/ovsbridge.sh " + ovscontroller, sshkey, "(c\\d+)", false, true);
-    try {
-      for (String k : computenodes.keySet()) {
-        for (String cname : computenodes.get(k)) {
-          //System.out.println("mip node managment: " + node.getManagementIP());
-          ComputeNode node=(ComputeNode) s.getResourceByName(cname);
-          String mip = node.getManagementIP();
-          logger.debug(node.getName() + " " + mip);
-          Exec.sshExec("root", mip, "/bin/bash ~/ovsbridge.sh " + ovscontroller, sshkey).split(" ");
-          String[] result = Exec.sshExec("root", mip, "/bin/bash ~/dpid.sh", sshkey).split(" ");
-          result[1] = result[1].replace("\n", "");
-          logger.debug("Get router info " + result[0] + " " + result[1]);
-          routingmanager.newRouter(node.getName(), result[1], Integer.valueOf(result[0]), mip);
-        }
-      }
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
+  public static void waitTillAllOvsConnected(){
     logger.debug("Wait until all ovs bridges have connected to SDN controller");
     ArrayList<Thread> tlist = new ArrayList<Thread>();
     for (String k : computenodes.keySet()) {
       for (final String cname : computenodes.get(k)) {
-        final ComputeNode node=(ComputeNode) s.getResourceByName(cname);
+        final ComputeNode node=(ComputeNode) serverSlice.getResourceByName(cname);
         final String mip = node.getManagementIP();
         try {
           //      logger.debug(mip+" run commands:"+cmd);
@@ -657,6 +646,38 @@ public class SdxManager extends SliceCommon {
     } catch (Exception e) {
       e.printStackTrace();
     }
+  }
+
+  public static  String setMirror(String controller, String dpid, String source, String dst, String gw) {
+    return routingmanager.setMirror(controller, dpid, source, dst, gw);
+  }
+
+  public static void configRouting1(Slice s,String ovscontroller, String httpcontroller, String routerpattern,String stitchportpattern) {
+    logger.debug("Configurating Routing");
+    restartPlexus(SDNControllerIP);
+    // run ovsbridge scritps to add the all interfaces to the ovsbridge br0, if new interface is added to the ovs bridge, then we reset the controller?
+    // FIXME: maybe this is not the best way to do.
+    //add all interfaces other than eth0 to ovs bridge br0
+    runCmdSlice(s, "/bin/bash ~/ovsbridge.sh " + ovscontroller, sshkey, "(c\\d+)", false, true);
+    try {
+      for (String k : computenodes.keySet()) {
+        for (String cname : computenodes.get(k)) {
+          //System.out.println("mip node managment: " + node.getManagementIP());
+          ComputeNode node=(ComputeNode) s.getResourceByName(cname);
+          String mip = node.getManagementIP();
+          logger.debug(node.getName() + " " + mip);
+          Exec.sshExec("root", mip, "/bin/bash ~/ovsbridge.sh " + ovscontroller, sshkey).split(" ");
+          String[] result = Exec.sshExec("root", mip, "/bin/bash ~/dpid.sh", sshkey).split(" ");
+          result[1] = result[1].replace("\n", "");
+          logger.debug("Get router info " + result[0] + " " + result[1]);
+          routingmanager.newRouter(node.getName(), result[1], Integer.valueOf(result[0]), mip);
+        }
+      }
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+
+    waitTillAllOvsConnected();
 
     logger.debug("setting up sttichports");
     HashSet<Integer> usedip=new HashSet<Integer>();

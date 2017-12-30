@@ -190,13 +190,22 @@ public class NetworkManager {
     }
   }
 
+  public String setMirror(String controller, String dpid, String source, String dst, String gw){
+    String[] cmd = mirrorCMD(controller, dpid, source, dst, gw);
+    addEntry_HashList(sdncmds, dpid, cmd);
+    String res=HttpUtil.postJSON(cmd[0], new JSONObject(cmd[1]));
+    return res;
+  }
+
   public void replayCmds(String dpid){
     if(sdncmds.containsKey(dpid)){
       ArrayList<String[]> l=sdncmds.get(dpid);
       for(String[] cmd: l){
-        logger.debug("Replay:"+cmd);
+        logger.debug("Replay:" + cmd[0] + cmd[1]);
+        System.out.println("Replay:" + cmd[0] + cmd[1]);
         if(cmd[2]=="postJSON"){
-          HttpUtil.postJSON(cmd[0],new JSONObject(cmd[1]));
+          String result = HttpUtil.postJSON(cmd[0],new JSONObject(cmd[1]));
+          System.out.println(result);
         }
         else{
           HttpUtil.putString(cmd[0],cmd[1]);
@@ -339,6 +348,24 @@ public class NetworkManager {
     res[0]="http://"+controller+"/router/"+dpid;
     res[1]="{\"address\":\""+addr+"\"} ";
     res[2]="postJSON";
+    return res;
+  }
+
+
+  private static String[] mirrorCMD(String controller, String dpid, String source, String dst, String gw) {
+    String[] res = new String[3];
+    res[0] = "http://" + controller + ":8080/router/" + dpid;
+    //res[1] = "{\"source\":\"" + source + "\", \"destination\": \"" + dst + "\", \"mirror\":\"" + gw + "\"}";
+    JSONObject params = new JSONObject();
+    params.put("mirror", gw);
+    if (source != null) {
+      params.put("source", source);
+    }
+    if (dst != null) {
+      params.put("destination", dst);
+    }
+    res[1] = params.toString();
+    res[2] = "postJSON";
     return res;
   }
 

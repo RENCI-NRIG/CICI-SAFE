@@ -39,19 +39,31 @@ public class Test {
     //SdxManager.notifyPrefix("192.168.30.2/24", "192.168.10.2", "c0", "notused");
     SdxManager.notifyPrefix("192.168.20.2/24", "192.168.20.2", "c1", "notused");
     String dpid = SdxManager.getDPID("c0");
-    String[] cmd = mirrorCMD(SdxManager.getSDNControllerIP(), dpid, "192.168.20.1/24",
+    String res = SdxManager.setMirror(SdxManager.getSDNControllerIP(), dpid, "192.168.20.1/24",
       "192.168.10.2/24", "192.168.101.2");
-    System.out.println(cmd[1]);
-    String res = HttpUtil.postJSON(cmd[0], new JSONObject(cmd[1]));
-    cmd = mirrorCMD(SdxManager.getSDNControllerIP(), dpid, "192.168.10.2/24",
+    String res1 = SdxManager.setMirror(SdxManager.getSDNControllerIP(), dpid, "192.168.10.2/24",
       "192.168.20.1/24", "192.168.101.2");
-    System.out.println(cmd[1]);
-    System.out.println(Long.parseLong(dpid, 16));
-    res = HttpUtil.postJSON(cmd[0], new JSONObject(cmd[1]));
     System.out.println(res);
-    System.out.println(cmd[0]);
-    System.out.println(cmd[1]);
+
     System.out.println("IP prefix is set up, the two nodes should be able to talk now");
+    String dp1 = SdxManager.getDPID("c0");
+    String dp2 = SdxManager.getDPID("c1");
+    while(true){
+      System.out.println("Press enter to reset");
+      try {
+        System.in.read();
+      }catch (IOException e){
+        e.printStackTrace();
+      }
+      SdxManager.restartPlexus();
+      SdxManager.waitTillAllOvsConnected();
+      SdxManager.delFlows();
+      System.out.println("all routers connected");
+      SdxManager.replayCMD(dp1);
+      SdxManager.replayCMD(dp2);
+
+      System.out.println("IP prefix is set up, the two nodes should be able to talk now");
+    }
     //SdxManager.printSlice();
     /*
     try {
@@ -63,21 +75,6 @@ public class Test {
     */
   }
 
-  private static String[] mirrorCMD(String controller, String dpid, String source, String dst, String gw) {
-    String[] res = new String[2];
-    res[0] = "http://" + controller + ":8080/router/" + dpid;
-    //res[1] = "{\"source\":\"" + source + "\", \"destination\": \"" + dst + "\", \"mirror\":\"" + gw + "\"}";
-    JSONObject params = new JSONObject();
-    params.put("mirror", gw);
-    if (source != null) {
-      params.put("source", source);
-    }
-    if (dst != null) {
-      params.put("destination", dst);
-    }
-    res[1] = params.toString();
-    return res;
-  }
 
   private static String[] queueCMD(String controller, String dpid) {
     String[] res = new String[2];
