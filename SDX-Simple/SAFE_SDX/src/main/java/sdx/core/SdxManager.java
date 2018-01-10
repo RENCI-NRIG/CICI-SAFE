@@ -183,9 +183,11 @@ public class SdxManager extends SliceCommon {
     }
     try {
       serverSlice = Slice.loadManifestFile(sliceProxy, sliceName);
-      ComputeNode safe = (ComputeNode) serverSlice.getResourceByName("safe-server");
       //System.out.println("safe-server managementIP = " + safe.getManagementIP());
-      safeserver = safe.getManagementIP() + ":7777";
+      if(safeauth) {
+        ComputeNode safe = (ComputeNode) serverSlice.getResourceByName("safe-server");
+        safeserver = safe.getManagementIP() + ":7777";
+      }
     } catch (ContextTransportException e) {
       // TODO Auto-generated catch block
       e.printStackTrace();
@@ -685,11 +687,10 @@ public class SdxManager extends SliceCommon {
     for (StitchPort sp : stitchports) {
       logger.debug("Setting up stitchport "+sp.getName());
       String[] parts = sp.getName().split("-");
-      String ip = parts[2].replace("_", ".").replace("__", "/");
+      String ip = parts[2].replace("__", "/").replace("_", ".");
       String nodeName = parts[1];
       String[] ipseg=ip.split("\\.");
-      String gw=ipseg[0]+"."+ipseg[1]+"."+ipseg[2]+"."+"2";
-      usedip.add(Integer.valueOf(ipseg[2]));
+      String gw=ipseg[0]+"."+ipseg[1]+"."+ipseg[2]+"."+ parts[3];
       routingmanager.newLink(ip, nodeName,gw, SDNController);
     }
 

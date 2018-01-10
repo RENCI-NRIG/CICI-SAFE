@@ -246,6 +246,9 @@ public class NetworkManager {
     int start = 0;
     int end = 0;
     boolean foundpath = false;
+    if(srcdpid == dstdpid){
+      foundpath = true;
+    }
     while (start <= end && !foundpath) {
       //logger.debug("queue[start]"+queue.get(start));
       String rid = queue.get(start);

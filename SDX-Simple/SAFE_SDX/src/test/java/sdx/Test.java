@@ -26,7 +26,9 @@ public class Test {
   }
 
   public static void main(String[] args) {
-    testRouting(args);
+    //testRouting(args);
+    testRoutingTwoPair(args);
+    //testRoutingChameleon(args);
     //testPerFlowQOS();
     //limitQos();
   }
@@ -75,6 +77,96 @@ public class Test {
     */
   }
 
+  private static void testRoutingTwoPair(String[] args) {
+    SdxManager.startSdxServer(args);
+    System.out.println("configured ip addresses in sdx network");
+    //notify prefixes for node0 and node1
+    SdxManager.notifyPrefix("192.168.10.2/24", "192.168.10.2", "c0", "notused");
+    //SdxManager.notifyPrefix("192.168.30.2/24", "192.168.10.2", "c0", "notused");
+    SdxManager.notifyPrefix("192.168.20.2/24", "192.168.20.2", "c0", "notused");
+    SdxManager.notifyPrefix("192.168.30.2/24", "192.168.30.2", "c1", "notused");
+    SdxManager.notifyPrefix("192.168.40.2/24", "192.168.40.2", "c1", "notused");
+    String dpid = SdxManager.getDPID("c0");
+    String res = SdxManager.setMirror(SdxManager.getSDNControllerIP(), dpid, "192.168.10.1/24",
+      "192.168.20.1/24", "192.168.101.2");
+    String res1 = SdxManager.setMirror(SdxManager.getSDNControllerIP(), dpid, "192.168.20.1/24",
+      "192.168.10.1/24", "192.168.101.2");
+    System.out.println(res);
+
+    System.out.println("IP prefix is set up, the two nodes should be able to talk now");
+    String dp1 = SdxManager.getDPID("c0");
+    String dp2 = SdxManager.getDPID("c1");
+    while(true){
+      System.out.println("Press enter to reset");
+      try {
+        System.in.read();
+      }catch (IOException e){
+        e.printStackTrace();
+      }
+      SdxManager.restartPlexus();
+      SdxManager.waitTillAllOvsConnected();
+      SdxManager.delFlows();
+      System.out.println("all routers connected");
+      SdxManager.replayCMD(dp1);
+      SdxManager.replayCMD(dp2);
+
+      System.out.println("IP prefix is set up, the two nodes should be able to talk now");
+    }
+    //SdxManager.printSlice();
+    /*
+    try {
+      System.out.println("Now Set up vsftp in node");
+      System.in.read();
+    }catch (IOException e){
+      e.printStackTrace();
+    }
+    */
+  }
+
+  private static void testRoutingChameleon(String[] args) {
+    SdxManager.startSdxServer(args);
+    System.out.println("configured ip addresses in sdx network");
+    //notify prefixes for node0 and node1
+    SdxManager.notifyPrefix("192.168.10.2/24", "192.168.10.2", "c0", "notused");
+    //SdxManager.notifyPrefix("192.168.30.2/24", "192.168.10.2", "c0", "notused");
+    SdxManager.notifyPrefix("10.32.90.105/24", "10.32.90.105", "c1", "notused");
+    String dpid = SdxManager.getDPID("c0");
+    String res = SdxManager.setMirror(SdxManager.getSDNControllerIP(), dpid, "10.32.90.105/24",
+      "192.168.10.2/24", "192.168.101.2");
+    String res1 = SdxManager.setMirror(SdxManager.getSDNControllerIP(), dpid, "192.168.10.2/24",
+      "10.32.90.105/24", "192.168.101.2");
+    System.out.println(res);
+
+    System.out.println("IP prefix is set up, the two nodes should be able to talk now");
+    String dp1 = SdxManager.getDPID("c0");
+    String dp2 = SdxManager.getDPID("c1");
+    System.out.println(Long.parseLong(dp1,16));
+    while(true){
+      System.out.println("Press enter to reset");
+      try {
+        System.in.read();
+      }catch (IOException e){
+        e.printStackTrace();
+      }
+      SdxManager.restartPlexus();
+      SdxManager.waitTillAllOvsConnected();
+      SdxManager.delFlows();
+      System.out.println("all routers connected");
+      SdxManager.replayCMD(dp1);
+      SdxManager.replayCMD(dp2);
+
+      System.out.println("IP prefix is set up, the two nodes should be able to talk now");
+    }
+    //SdxManager.printSlice();
+    /*
+    try {
+      System.out.println("Now Set up vsftp in node");
+      System.in.read();
+    }catch (IOException e){
+      e.printStackTrace();
+    }
+    */
+  }
 
   private static String[] queueCMD(String controller, String dpid) {
     String[] res = new String[2];

@@ -223,7 +223,7 @@ public class SliceManager extends SliceCommon {
     String broURL =
       "http://geni-images.renci.org/images/standard/centos/centos7.4-bro-v1.0.4/centos7.4-bro-v1.0.4.xml";
     String broHash = "50c973571fc6da95c3f70d0f71c9aea1659ff780";
-    String broType = "XO Medium";
+    String broType = "XO Extra large";
     ComputeNode bro = s.addComputeNode(broname);
     bro.setImage(broURL, broHash, broN);
     bro.setDomain(edgerouter.getDomain());
@@ -251,7 +251,7 @@ public class SliceManager extends SliceCommon {
     String nodeImageURL = "http://geni-images.renci.org/images/standard/ubuntu/ub1404-v1.0.4.xml";
     //http://geni-images.renci.org/images/standard/ubuntu/ub1304-ovs-opendaylight-v1.0.0.xml
     String nodeImageHash = "9394ca154aa35eb55e604503ae7943ddaecc6ca5";
-    String nodeNodeType = "XO Medium";
+    String nodeNodeType = "XO Extra large";
 
     //String nodePostBootScript="apt-get update;apt-get -y  install quagga\n"
     //  +"sed -i -- 's/zebra=no/zebra=yes/g' /etc/quagga/daemons\n"
@@ -288,11 +288,11 @@ public class SliceManager extends SliceCommon {
         //ifaceNode1.setNetmask("255.255.255.0");
       }
 
-      if (BRO && (i==0)) {
-        addBro(s, "bro" + i, node0, curip++, bw/4*5);
+      if (BRO) {
+        addBro(s, "bro" + i, node0, curip++, bw);
       }
     }
-    addSafeServer(s, riakip);
+    //addSafeServer(s, riakip);
     addPlexusController(s);
     return s;
   }
