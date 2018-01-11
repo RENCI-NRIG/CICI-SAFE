@@ -11,6 +11,7 @@ import org.json.JSONObject;
 import sdx.utils.Exec;
 import sdx.utils.HttpUtil;
 
+import java.io.IOException;
 import java.net.URI;
 
 public class Test {
@@ -26,11 +27,10 @@ public class Test {
   }
 
   public static void main(String[] args) {
-    Logger.getLogger("log4j.logger.org.apache.http").setLevel(Level.OFF);
-    Logger.getLogger("log4j.logger.org.apache.http.wire").setLevel(Level.OFF);
     testRouting(args);
+    //testRoutingChameleon(args);
     //testPerFlowQOS();
-
+    //limitQos();
   }
 
   private static void testRouting(String[] args) {
@@ -40,36 +40,75 @@ public class Test {
     SdxManager.notifyPrefix("192.168.10.2/24","192.168.10.2","notused");
     SdxManager.notifyPrefix("192.168.20.2/24","192.168.20.2","notused");
     SdxManager.connectionRequest("not used","192.168.20.2/24","192.168.10.2/24",0);
+    String dpid = SdxManager.getDPID("c0");
+    String res = SdxManager.setMirror(SdxManager.getSDNControllerIP(), dpid, "192.168.20.1/24",
+      "192.168.10.2/24", "192.168.101.2");
+    String res1 = SdxManager.setMirror(SdxManager.getSDNControllerIP(), dpid, "192.168.10.2/24",
+      "192.168.20.1/24", "192.168.101.2");
+    System.out.println(res);
+
     System.out.println("IP prefix is set up, the two nodes should be able to talk now");
+    String dp1 = SdxManager.getDPID("c0");
+    String dp2 = SdxManager.getDPID("c1");
+    while (true) {
+      System.out.println("Press enter to reset");
+      try {
+        System.in.read();
+      } catch (IOException e) {
+        e.printStackTrace();
+      }
+      SdxManager.restartPlexus();
+      SdxManager.waitTillAllOvsConnected();
+      SdxManager.delFlows();
+      System.out.println("all routers connected");
+      SdxManager.replayCMD(dp1);
+      SdxManager.replayCMD(dp2);
+
+      System.out.println("IP prefix is set up, the two nodes should be able to talk now");
+    }
+    //SdxManager.printSlice();
+    /*
+    try {
+      System.out.println("Now Set up vsftp in node");
+      System.in.read();
+    }catch (IOException e){
+      e.printStackTrace();
+    }
+    */
   }
 
-  private static String[] queueCMD(String controller, String dpid){
-    String[]res=new String[2];
-    res[0]="http://"+controller+":8080/qos/queue/"+dpid;
-    res[1]="{\"port_name\":\"br0-eth1\",\"type\":\"linux-htb\",\"max_rate\":\"100000000\",\"queues\":[{\"max_rate\":\"50000000\"},{\"min_rate\":\"80000000\"}]}";
-//     return "curl -X POST -d '{\"type\":\"linux-htb\",\"max_rate\":\"1000000\",\"queues\":[{\"max_rate\":\"100000\"},{\"min_rate\":\"500000\"}]}' http://"+controller+":8080/qos/queue/"+dpid;
+
+  private static String[] queueCMD(String controller, String dpid) {
+    String[] res = new String[2];
+    res[0] = "http://" + controller + ":8080/qos/queue/" + dpid;
+    res[1] = "{\"type\":\"linux-htb\",\"max_rate\":\"1000000000\"," +
+      "\"queues\":[{\"max_rate\":\"20000000\"},{\"min_rate\":\"500000\"}]}";
     return res;
   }
 
-  private static String[] qosCMD(String controller, String dpid){
-    String[] res=new String[2];
-    res[0]="http://"+controller+":8080/qos/rules/"+dpid;
-    res[1]="{\"match\":{\"nw_dst\":\"192.168.10.2\",\"nw_proto\":\"UDP\",\"tp_dst\":\"5002\"},\"actions\":{\"queue\":\"1\"}}";
+  private static String[] qosCMD(String controller, String dpid) {
+    String[] res = new String[2];
+    res[0] = "http://" + controller + ":8080/qos/rules/" + dpid;
+    res[1] = "{\"match\":{\"nw_dst\":\"192.168.20.2\",\"nw_proto\":\"TCP\",\"tp_dst\":\"5002\"}," +
+      "\"actions\":{\"queue\":\"0\"}}";
     return res;
   }
 
-  private static String[] qosCMD_1(String controller, String dpid){
-    String[] res=new String[2];
-    res[0]="http://"+controller+":8080/qos/rules/"+dpid;
-    res[1]="{\"match\":{\"nw_dst\":\"192.168.20.2\",\"nw_proto\":\"UDP\",\"tp_dst\":\"5002\"},\"actions\":{\"queue\":\"0\"}}";
-    return res;
+  private static void limitQos() {
+    String dpid1 = SdxManager.getDPID("c0");
+    String controller = SdxManager.getSDNControllerIP();
+    String[] queuecmd = queueCMD(controller, dpid1);
+    HttpUtil.postJSON(queuecmd[0], new JSONObject(queuecmd[1]));
+    HttpUtil.get(queuecmd[0]);
+    String[] qoscmd = qosCMD(controller, dpid1);
+    HttpUtil.postJSON(qoscmd[0], new JSONObject(qoscmd[1]));
   }
 
-  private static void testPerFlowQOS(){
-    String dpid1=SdxManager.getDPID("c1");
-    String dpid2=SdxManager.getDPID("c2");
-    String controller=SdxManager.getSDNControllerIP();
-    String[] queuecmd=queueCMD(controller,dpid1);
+  private static void testPerFlowQOS() {
+    String dpid1 = "00000628a4daa642";
+    String dpid2 = "00004621982f9b41";
+    String controller = "152.54.14.12";
+    String[] queuecmd = queueCMD(controller, dpid1);
     HttpUtil.postJSON(queuecmd[0], new JSONObject(queuecmd[1]));
     HttpUtil.get(queuecmd[0]);
     queuecmd = queueCMD(controller, dpid2);

@@ -58,7 +58,7 @@
 							<name>SafeSdxExample</name>
 						</program>
 						<program>
-							<mainClass>sdx.core.Test</mainClass>
+							<mainClass>sdx.Test</mainClass>
 							<name>SafeSdxTest</name>
 						</program>
 						<program>

@@ -60,7 +60,6 @@ public class HttpUtil {
       //handle response here...
       String output = EntityUtils.toString(response.getEntity());
       logger.debug(output);
-      httpClient.getConnectionManager().shutdown();
       return output;
 
     } catch (Exception ex) {

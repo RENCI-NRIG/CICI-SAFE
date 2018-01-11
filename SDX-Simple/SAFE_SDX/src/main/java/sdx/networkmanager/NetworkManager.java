@@ -398,15 +398,25 @@ public class NetworkManager {
     }
   }
 
-  public void replayCmds(String dpid) {
-    if (sdncmds.containsKey(dpid)) {
-      ArrayList<String[]> l = sdncmds.get(dpid);
-      for (String[] cmd : l) {
-        logger.debug("Replay:" + cmd);
-        if (cmd[2] == "postJSON") {
-          HttpUtil.postJSON(cmd[0], new JSONObject(cmd[1]));
-        } else {
-          HttpUtil.putString(cmd[0], cmd[1]);
+  public String setMirror(String controller, String dpid, String source, String dst, String gw){
+    String[] cmd = mirrorCMD(controller, dpid, source, dst, gw);
+    addEntry_HashList(sdncmds, dpid, cmd);
+    String res=HttpUtil.postJSON(cmd[0], new JSONObject(cmd[1]));
+    return res;
+  }
+
+  public void replayCmds(String dpid){
+    if(sdncmds.containsKey(dpid)){
+      ArrayList<String[]> l=sdncmds.get(dpid);
+      for(String[] cmd: l){
+        logger.debug("Replay:" + cmd[0] + cmd[1]);
+        System.out.println("Replay:" + cmd[0] + cmd[1]);
+        if(cmd[2]=="postJSON"){
+          String result = HttpUtil.postJSON(cmd[0],new JSONObject(cmd[1]));
+          System.out.println(result);
+        }
+        else{
+          HttpUtil.putString(cmd[0],cmd[1]);
         }
       }
     } else {
@@ -446,6 +456,9 @@ public class NetworkManager {
     int start = 0;
     int end = 0;
     boolean foundpath = false;
+    if(srcdpid == dstdpid){
+      foundpath = true;
+    }
     while (start <= end && !foundpath) {
       //logger.debug("queue[start]"+queue.get(start));
       String rid = queue.get(start);
@@ -565,7 +578,24 @@ public class NetworkManager {
     return res;
   }
 
-  private String[] routingCMD(String dst, String gw, String dpid, String controller) {
+  private static String[] mirrorCMD(String controller, String dpid, String source, String dst, String gw) {
+    String[] res = new String[3];
+    res[0] = "http://" + controller + ":8080/router/" + dpid;
+    //res[1] = "{\"source\":\"" + source + "\", \"destination\": \"" + dst + "\", \"mirror\":\"" + gw + "\"}";
+    JSONObject params = new JSONObject();
+    params.put("mirror", gw);
+    if (source != null) {
+      params.put("source", source);
+    }
+    if (dst != null) {
+      params.put("destination", dst);
+    }
+    res[1] = params.toString();
+    res[2] = "postJSON";
+    return res;
+  }
+
+  private  String[] routingCMD(String dst,String gw, String dpid, String controller){
     //String cmd="curl -X POST -d {\"destination\":\""+dst+"\",\"gateway\":\""+gw+"\"} "+controller+"/router/"+dpid;
     String[] res=new String[4];
     res[0]="http://"+controller+"/router/"+dpid;
