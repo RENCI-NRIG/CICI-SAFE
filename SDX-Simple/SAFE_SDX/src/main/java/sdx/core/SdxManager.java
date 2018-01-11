@@ -179,8 +179,8 @@ public class SdxManager extends SliceCommon {
 
     //configRouting(serverslice,OVSController,SDNController,"(c\\d+)","(sp-c\\d+.*)");
     loadSdxNetwork(serverSlice,"(c\\d+)","(sp-c\\d+.*)");
-    configRouting1(serverSlice,OVSController,SDNController,"(c\\d+)","(sp-c\\d+.*)");
-	}
+    configRouting(serverSlice,OVSController,SDNController,"(c\\d+)","(sp-c\\d+.*)");
+  }
 
   public static void delFlows(){
     runCmdSlice(serverSlice, "ovs-ofctl del-flows br0", sshkey, "(c\\d+)", true, true);
@@ -788,7 +788,7 @@ public class SdxManager extends SliceCommon {
     return routingmanager.setMirror(controller, dpid, source, dst, gw);
   }
 
-  public static void configRouting1(Slice s,String ovscontroller, String httpcontroller, String routerpattern,String stitchportpattern) {
+  public static void configRouting(Slice s,String ovscontroller, String httpcontroller, String routerpattern,String stitchportpattern) {
     logger.debug("Configurating Routing");
     restartPlexus(SDNControllerIP);
     // run ovsbridge scritps to add the all interfaces to the ovsbridge br0, if new interface is added to the ovs bridge, then we reset the controller?
