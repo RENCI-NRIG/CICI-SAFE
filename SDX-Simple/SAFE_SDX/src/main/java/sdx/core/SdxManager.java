@@ -321,6 +321,11 @@ public class SdxManager extends SliceCommon {
     return res;
   }
 
+  private static String allocateLinkName(){
+    //TODO
+    return null;
+  }
+
 	public static String connectionRequest(String site1, String site2){
 	  Slice s=getSlice();
 	  String n1=computenodes.get(site1).get(0);
@@ -887,11 +892,6 @@ public class SdxManager extends SliceCommon {
       e.printStackTrace();
     }
   }
-
-  public static void undoStitch(String carrierName, String customerName, String netName, String nodeName) {
-    logger.debug("ndllib TestDriver: START");
-
-    //Main Example Code
 
 	public static void undoStitch(String sdxslice, String customerName, String netName, String nodeName){
 		logger.debug("ndllib TestDriver: START");
