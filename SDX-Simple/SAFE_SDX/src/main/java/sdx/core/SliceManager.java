@@ -168,8 +168,12 @@ public class SliceManager extends SliceCommon {
       "", true, true);
 
     String resource_dir = conf.getString("config.resourcedir");
-    copyFile2Slice(carrier, resource_dir + "sdnctrl/destroy_conn.bro", "/root/destroy_conn" +
+    copyFile2Slice(carrier, resource_dir + "bro/destroy_conn.bro", "/root/destroy_conn" +
       ".bro", sshkey, "(bro\\d+)");
+    copyFile2Slice(carrier, resource_dir + "bro/test-all-policy.bro", "/root/test-all-policy" +
+        ".bro", sshkey, "(bro\\d+)");
+    copyFile2Slice(carrier, resource_dir + "bro/test-all-policy.bro", "/root/detect-file" +
+        ".bro", sshkey, "(bro\\d+)");
     copyFile2Slice(carrier, resource_dir + "bro/evil.txt", "/root/evil.txt", sshkey,
       "(bro\\d+)");
 
@@ -180,7 +184,8 @@ public class SliceManager extends SliceCommon {
         String routername = c.getName().replace("bro", "c");
         ComputeNode router = (ComputeNode) carrier.getResourceByName(routername);
         String mip = router.getManagementIP();
-        String dpid = Exec.sshExec("root", mip, "/bin/bash ~/dpid.sh", sshkey).split(" ")[1];
+        String dpid = Exec.sshExec("root", mip, "/bin/bash ~/dpid.sh", sshkey).split(" ")[1]
+          .replace("\n", "");
         Exec.sshExec("root", c.getManagementIP(), "sed -i 's/bogus_dpid/" + Long.parseLong(dpid, 16) + "/' destroy_conn.bro", sshkey);
       }
     }
@@ -269,18 +274,19 @@ public class SliceManager extends SliceCommon {
   }
 
   //We always add the bro when we add the edge router
-  protected static ComputeNode addBro(Slice s, String broname, ComputeNode edgerouter, int ip_to_use) {
+  protected static ComputeNode addBro(Slice s, String broname, ComputeNode edgerouter, int ip_to_use, long bw) {
     String broN = "Centos 7.4 Bro";
     String broURL =
       "http://geni-images.renci.org/images/standard/centos/centos7.4-bro-v1.0.4/centos7.4-bro-v1.0.4.xml";
     String broHash = "50c973571fc6da95c3f70d0f71c9aea1659ff780";
-    String broType = "XO Medium";
+    String broType = "XO Extra large";
     ComputeNode bro = s.addComputeNode(broname);
     bro.setImage(broURL, broHash, broN);
     bro.setDomain(edgerouter.getDomain());
     bro.setNodeType(broType);
+    bro.setPostBootScript("yum install -y tcpdump");
 
-    Network bronet = s.addBroadcastLink("brolink_" + ip_to_use);
+    Network bronet = s.addBroadcastLink("blink_" + ip_to_use, bw);
     InterfaceNode2Net ifaceNode1 = (InterfaceNode2Net) bronet.stitch(edgerouter);
     ifaceNode1.setIpAddress("192.168." + String.valueOf(ip_to_use) + ".1");
     ifaceNode1.setNetmask("255.255.255.0");
@@ -311,7 +317,7 @@ public class SliceManager extends SliceCommon {
     String nodeImageURL = "http://geni-images.renci.org/images/standard/ubuntu/ub1404-v1.0.4.xml";
     //http://geni-images.renci.org/images/standard/ubuntu/ub1304-ovs-opendaylight-v1.0.0.xml
     String nodeImageHash = "9394ca154aa35eb55e604503ae7943ddaecc6ca5";
-    String nodeNodeType = "XO Medium";
+    String nodeNodeType = "XO Extra large";
 
     //String nodePostBootScript="apt-get update;apt-get -y  install quagga\n"
     //  +"sed -i -- 's/zebra=no/zebra=yes/g' /etc/quagga/daemons\n"
@@ -349,11 +355,10 @@ public class SliceManager extends SliceCommon {
       }
 
       if (BRO) {
-        addBro(s, "bro" + i, node0, curip++);
+        addBro(s, "bro" + i, node0, curip++, bw);
       }
-
     }
-    addSafeServer(s, riakip);
+    //addSafeServer(s, riakip);
     addPlexusController(s);
     return s;
   }

@@ -94,6 +94,9 @@ public abstract class SliceCommon {
   public SliceCommon() {
   }
 
+  public static  String getSDNControllerIP(){
+    return SDNControllerIP;
+  }
   protected static CommandLine parseCmd(String[] args) {
     Options options = new Options();
     Option config = new Option("c", "config", true, "configuration file path");
@@ -484,6 +487,26 @@ public abstract class SliceCommon {
         InterfaceNode2Net inode2net = (InterfaceNode2Net) i;
         logger.debug("MacAddr: " + inode2net.getMacAddress());
         logger.debug("GUID: " + i.getGUID());
+      }
+    }
+  }
+
+  protected static void printSliceInfo(Slice s) {
+    for (Network n : s.getLinks()) {
+      System.out.println(n.getLabel() + " " + n.getState());
+    }
+    //getInterfaces
+    for (Interface i : s.getInterfaces()) {
+      InterfaceNode2Net inode2net = (InterfaceNode2Net) i;
+      System.out.println("MacAddr: " + inode2net.getMacAddress());
+      System.out.println("GUID: " + i.getGUID());
+    }
+    for (ComputeNode node : s.getComputeNodes()) {
+      System.out.println(node.getName() + node.getManagementIP());
+      for (Interface i : node.getInterfaces()) {
+        InterfaceNode2Net inode2net = (InterfaceNode2Net) i;
+        System.out.println("MacAddr: " + inode2net.getMacAddress());
+        System.out.println("GUID: " + i.getGUID());
       }
     }
   }

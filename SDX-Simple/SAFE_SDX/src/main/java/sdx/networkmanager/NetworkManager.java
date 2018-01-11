@@ -110,7 +110,10 @@ public class NetworkManager {
     addLink(ipa,ra, gw);
     String dpid= getRouter(ra).getDPID();
     String cmd[] = addrCMD(ipa,dpid,controller);
-    HttpUtil.postJSON(cmd[0],new JSONObject(cmd[1]));
+    String res = HttpUtil.postJSON(cmd[0],new JSONObject(cmd[1]));
+    System.out.println(res);
+    System.out.println(cmd[0]);
+    System.out.println(cmd[1]);
     addEntry_HashList(sdncmds,dpid,cmd);
   }
 
@@ -120,11 +123,17 @@ public class NetworkManager {
     addLink(ipa,ra,ipb,rb);
     String dpid=getDPID(ra);
     String[] cmd = addrCMD(ipa,dpid,controller);
-    HttpUtil.postJSON(cmd[0],new JSONObject(cmd[1]));
+    String res = HttpUtil.postJSON(cmd[0],new JSONObject(cmd[1]));
+    System.out.println(res);
+    System.out.println(cmd[0]);
+    System.out.println(cmd[1]);
     addEntry_HashList(sdncmds,dpid,cmd);
     dpid=getDPID(rb);
     cmd = addrCMD(ipb,dpid,controller);
-    HttpUtil.postJSON(cmd[0],new JSONObject(cmd[1]));
+    res = HttpUtil.postJSON(cmd[0],new JSONObject(cmd[1]));
+    System.out.println(cmd[0]);
+    System.out.println(cmd[1]);
+    System.out.println(res);
     addEntry_HashList(sdncmds,dpid,cmd);
   }
 
@@ -154,16 +163,12 @@ public class NetworkManager {
     ArrayList<String[]>paths=getPairRoutes(gwdpid,targetdpid,gateway);
     for(String[] path: paths){
       String []cmd=routingCMD(dest,targetIP, path[1], path[0], controller);
-      HttpUtil.postJSON(cmd[0],new JSONObject(cmd[1]));
+      String res = HttpUtil.postJSON(cmd[0],new JSONObject(cmd[1]));
+      System.out.println(cmd[0]);
+      System.out.println(cmd[1]);
+      System.out.println(res);
       addEntry_HashList(sdncmds,path[0],cmd);
       //logger.debug(path[0]+" "+path[1]);
-    }
-  }
-
-  private void runSDNCmd(String cmd) {
-    String res = Exec.exec(cmd);
-    if (res.contains("failuer")) {
-      logger.debug("Setting routing entry failed");
     }
   }
 
@@ -185,13 +190,22 @@ public class NetworkManager {
     }
   }
 
+  public String setMirror(String controller, String dpid, String source, String dst, String gw){
+    String[] cmd = mirrorCMD(controller, dpid, source, dst, gw);
+    addEntry_HashList(sdncmds, dpid, cmd);
+    String res=HttpUtil.postJSON(cmd[0], new JSONObject(cmd[1]));
+    return res;
+  }
+
   public void replayCmds(String dpid){
     if(sdncmds.containsKey(dpid)){
       ArrayList<String[]> l=sdncmds.get(dpid);
       for(String[] cmd: l){
-        logger.debug("Replay:"+cmd);
+        logger.debug("Replay:" + cmd[0] + cmd[1]);
+        System.out.println("Replay:" + cmd[0] + cmd[1]);
         if(cmd[2]=="postJSON"){
-          HttpUtil.postJSON(cmd[0],new JSONObject(cmd[1]));
+          String result = HttpUtil.postJSON(cmd[0],new JSONObject(cmd[1]));
+          System.out.println(result);
         }
         else{
           HttpUtil.putString(cmd[0],cmd[1]);
@@ -232,6 +246,9 @@ public class NetworkManager {
     int start = 0;
     int end = 0;
     boolean foundpath = false;
+    if(srcdpid == dstdpid){
+      foundpath = true;
+    }
     while (start <= end && !foundpath) {
       //logger.debug("queue[start]"+queue.get(start));
       String rid = queue.get(start);
@@ -334,6 +351,24 @@ public class NetworkManager {
     res[0]="http://"+controller+"/router/"+dpid;
     res[1]="{\"address\":\""+addr+"\"} ";
     res[2]="postJSON";
+    return res;
+  }
+
+
+  private static String[] mirrorCMD(String controller, String dpid, String source, String dst, String gw) {
+    String[] res = new String[3];
+    res[0] = "http://" + controller + ":8080/router/" + dpid;
+    //res[1] = "{\"source\":\"" + source + "\", \"destination\": \"" + dst + "\", \"mirror\":\"" + gw + "\"}";
+    JSONObject params = new JSONObject();
+    params.put("mirror", gw);
+    if (source != null) {
+      params.put("source", source);
+    }
+    if (dst != null) {
+      params.put("destination", dst);
+    }
+    res[1] = params.toString();
+    res[2] = "postJSON";
     return res;
   }
 

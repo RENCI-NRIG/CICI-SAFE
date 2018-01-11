@@ -25,7 +25,7 @@ public class HttpUtil {
    */
   final static Logger logger = Logger.getLogger(HttpUtil.class);
 
-  public static JSONObject postJSON(String serverurl, JSONObject paramsobj) {
+  public static String postJSON(String serverurl, JSONObject paramsobj) {
     JSONObject resobj = new JSONObject();
     resobj.put("result", false);
     HttpClient httpClient = HttpClientBuilder.create().build(); //Use this instead
@@ -41,13 +41,11 @@ public class HttpUtil {
       //handle response here...
       String output = EntityUtils.toString(response.getEntity());
       logger.debug(output);
-      JSONObject jsonobj = new JSONObject(output);
-      httpClient.getConnectionManager().shutdown();
-      return jsonobj;
+      return output;
 
     } catch (Exception ex) {
       ex.printStackTrace();
-      return resobj;
+      return resobj.toString();
 
     } finally {
       //Deprecated
