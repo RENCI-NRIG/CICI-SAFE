@@ -362,7 +362,7 @@ public class SdxManager extends SliceCommon {
       }
       int N = 0;
       net = (Network) s1.getResourceByName(stitchname);
-      while (net.getState() != "Active" && N < 10) {
+      while (! net.getState().equals("Active") && N < 10) {
         try {
           s1 = Slice.loadManifestFile(sliceProxy, carrierName);
         } catch (ContextTransportException e) {

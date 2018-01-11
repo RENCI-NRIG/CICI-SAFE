@@ -18,10 +18,7 @@ import java.lang.System;
 import sdx.utils.HttpUtil;
 
 public class NetworkManager {
-  final static Logger logger = Logger.getLogger(NetworkManager.class);
-
-
-
+  final private static Logger logger = Logger.getLogger(NetworkManager.class);
   private  ArrayList<Router> routers=new ArrayList<Router>();
   private  ArrayList<String[]>ip_router=new ArrayList<String[]>();
   private  ArrayList<String[]>links=new ArrayList<String[]>();
@@ -43,6 +40,7 @@ public class NetworkManager {
     }
     return null;
   }
+
   public  void addLink(String ipa, String ra, String gw){
     Router router=getRouter(ra);
     if(router!=null){
