@@ -27,12 +27,7 @@ public class Test {
   }
 
   public static void main(String[] args) {
-    Logger.getLogger("log4j.logger.org.apache.http").setLevel(Level.OFF);
-    Logger.getLogger("log4j.logger.org.apache.http.wire").setLevel(Level.OFF);
-    //testPerFlowQOS();
-
-    //testRouting(args);
-    //testRoutingTwoPair(args);
+    testRouting(args);
     //testRoutingChameleon(args);
     //testPerFlowQOS();
     //limitQos();
@@ -82,99 +77,6 @@ public class Test {
     */
   }
 
-  /*
-  private static void testRoutingTwoPair(String[] args) {
-    SdxManager.startSdxServer(args);
-    System.out.println("configured ip addresses in sdx network");
-    //notify prefixes for node0 and node1
-    SdxManager.notifyPrefix("192.168.10.2/24", "192.168.10.2", "c0", "notused");
-    //SdxManager.notifyPrefix("192.168.30.2/24", "192.168.10.2", "c0", "notused");
-    SdxManager.notifyPrefix("192.168.20.2/24", "192.168.20.2", "c0", "notused");
-    SdxManager.notifyPrefix("192.168.30.2/24", "192.168.30.2", "c1", "notused");
-    SdxManager.notifyPrefix("192.168.40.2/24", "192.168.40.2", "c1", "notused");
-    String[] addresses = new String[4];
-    addresses[0] = "192.168.10.1/24";
-    addresses[1] = "192.168.20.1/24";
-    addresses[2] = "192.168.30.1/24";
-    addresses[3] = "192.168.40.1/24";
-
-    String dpid0 = SdxManager.getDPID("c0");
-    String dpid1 = SdxManager.getDPID("c1");
-    for (int i = 0; i < 4; i++) {
-      for (int j = 0; j < 4; j++) {
-        if(i != j){
-          if(i == 0 || j == 0) {
-            String res = SdxManager.setMirror(SdxManager.getSDNControllerIP(), dpid0, addresses[i],
-              addresses[j], "192.168.101.2");
-            //String res1 = SdxManager.setMirror(SdxManager.getSDNControllerIP(), dpid, "192.168.20.1/24",
-            //  "192.168.10.1/24", "192.168.101.2");
-            System.out.println(res);
-          }else if( i == 1 || j == 1){
-            String res = SdxManager.setMirror(SdxManager.getSDNControllerIP(), dpid1, addresses[i],
-              addresses[j], "192.168.103.2");
-            //String res1 = SdxManager.setMirror(SdxManager.getSDNControllerIP(), dpid, "192.168.20.1/24",
-            //  "192.168.10.1/24", "192.168.101.2");
-            System.out.println(res);
-          }
-        }
-      }
-    }
-    System.out.println(Long.parseLong(dpid0,16));
-    System.out.println(Long.parseLong(dpid1,16));
-    //for (int i = 0; i < 4; i++) {
-    //  for (int j = 0; j < 4; j++) {
-    //    if(i != j){
-    //      String res = SdxManager.setMirror(SdxManager.getSDNControllerIP(), dpid, addresses[i],
-    //        addresses[j], "192.168.101.2");
-    //      //String res1 = SdxManager.setMirror(SdxManager.getSDNControllerIP(), dpid, "192.168.20.1/24",
-    //      //  "192.168.10.1/24", "192.168.101.2");
-    //      System.out.println(res);
-    //    }
-    //  }
-    //}
->>>>>>> qos
-    System.out.println("IP prefix is set up, the two nodes should be able to talk now");
-  }
-
-  private static void testRoutingChameleon(String[] args) {
-    SdxManager.startSdxServer(args);
-    System.out.println("configured ip addresses in sdx network");
-    //notify prefixes for node0 and node1
-    SdxManager.notifyPrefix("192.168.10.2/24", "192.168.10.2", "c0", "notused");
-    //SdxManager.notifyPrefix("192.168.30.2/24", "192.168.10.2", "c0", "notused");
-    SdxManager.notifyPrefix("10.32.90.105/24", "10.32.90.105", "c1", "notused");
-    String dpid = SdxManager.getDPID("c0");
-    String res = SdxManager.setMirror(SdxManager.getSDNControllerIP(), dpid, "10.32.90.105/24",
-      "192.168.10.2/24", "192.168.101.2");
-    String res1 = SdxManager.setMirror(SdxManager.getSDNControllerIP(), dpid, "192.168.10.2/24",
-      "10.32.90.105/24", "192.168.101.2");
-    System.out.println(res);
-
->>>>>>> master
-    System.out.println("IP prefix is set up, the two nodes should be able to talk now");
-    String dp1 = SdxManager.getDPID("c0");
-    String dp2 = SdxManager.getDPID("c1");
-    System.out.println(Long.parseLong(dp1, 16));
-    while (true) {
-      System.out.println("Press enter to reset");
-      try {
-        System.in.read();
-      } catch (IOException e) {
-        e.printStackTrace();
-      }
-      SdxManager.restartPlexus();
-      SdxManager.waitTillAllOvsConnected();
-      SdxManager.delFlows();
-      System.out.println("all routers connected");
-      SdxManager.replayCMD(dp1);
-      SdxManager.replayCMD(dp2);
-
-      System.out.println("IP prefix is set up, the two nodes should be able to talk now");
-    }
-    //SdxManager.printSlice();
-  }
-
-  */
 
   private static String[] queueCMD(String controller, String dpid) {
     String[] res = new String[2];

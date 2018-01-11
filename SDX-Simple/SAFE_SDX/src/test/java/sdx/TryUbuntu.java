@@ -55,6 +55,7 @@ import org.renci.ahab.libtransport.xmlrpc.XMLRPCProxyFactory;
 import org.renci.ahab.libtransport.xmlrpc.XMLRPCTransportException;
 import org.renci.ahab.ndllib.transport.OrcaSMXMLRPCProxy;
 import sdx.utils.Exec;
+import sdx.core.TestSlice;
 
 public class TryUbuntu extends  SliceCommon{
   final static Logger logger = Logger.getLogger(Exec.class);
