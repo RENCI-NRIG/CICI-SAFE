@@ -516,7 +516,6 @@ public class SdxManager extends SliceCommon {
     return res;
   }
 
-
 	public static void stitch(String sdxslice, String RID,String customerName, String CID,String secret,String newip){
 		logger.debug("ndllib TestDriver: START");
 		//Main Example Code
