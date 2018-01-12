@@ -13,6 +13,14 @@ public class Link {
   public String ipprefix = "";
   public String mask = "";
 
+  public Link(){}
+
+  public Link(String linkname, String nodea, String nodeb){
+    this.linkname = linkname;
+    this.nodea = nodea;
+    this.nodeb = nodeb;
+  }
+
   public void addNode(String node) {
     if (nodea == "")
       nodea = node;
