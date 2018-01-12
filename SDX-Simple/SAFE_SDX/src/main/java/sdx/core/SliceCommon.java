@@ -9,6 +9,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -56,13 +60,7 @@ import com.typesafe.config.*;
 
 import sdx.utils.Exec;
 import sdx.utils.ScpTo;
-import com.jcraft.jsch.Channel;
-import com.jcraft.jsch.ChannelExec;
-import com.jcraft.jsch.ChannelSftp;
-import com.jcraft.jsch.JSch;
-import com.jcraft.jsch.JSchException;
-import com.jcraft.jsch.Session;
-import com.jcraft.jsch.SftpException;
+import sdx.networkmanager.Link;
 
 
 public abstract class SliceCommon {
@@ -89,6 +87,9 @@ public abstract class SliceCommon {
   protected static List<String> sitelist;
   protected static String serverSite;
   protected static boolean safeauth = false;
+  protected static HashMap<String, Link> links = new HashMap<String, Link>();
+  protected static HashMap<String, ArrayList<String>>computenodes=new HashMap<String,ArrayList<String>>();
+  protected static ArrayList<StitchPort>stitchports=new ArrayList<>();
 
 
   public SliceCommon() {
@@ -211,6 +212,42 @@ public abstract class SliceCommon {
     logger.debug("Done");
     for (ComputeNode n : s.getComputeNodes()) {
       logger.debug("ComputeNode: " + n.getName() + ", Managment IP =  " + n.getManagementIP());
+    }
+  }
+
+  protected static ArrayList<Link> readLinks(String file) {
+    ArrayList<Link>res=new ArrayList<>();
+    try (BufferedReader br = new BufferedReader(new FileReader(file))) {
+      String line;
+      while ((line = br.readLine()) != null) {
+        // process the line.
+        String[] params=line.replace("\n","").split(" ");
+        Link link=new Link();
+        link.setName(params[0]);
+        link.addNode(params[1]);
+        link.addNode(params[2]);
+        res.add(link);
+      }
+      br.close();
+    }catch (Exception e){
+      e.printStackTrace();
+    }
+    return res;
+  }
+
+  protected static void writeLinks(String file) {
+    ArrayList<Link>res=new ArrayList<>();
+    try (BufferedWriter br = new BufferedWriter(new FileWriter(file))) {
+      Set<String> keyset=links.keySet();
+      for(String key:keyset){
+        if(!key.contains("stitch")){
+          Link link=links.get(key);
+          br.write(link.linkname + " " + link.nodea + " " + link.nodeb + "\n");
+        }
+      }
+      br.close();
+    }catch (Exception e){
+      e.printStackTrace();
     }
   }
 
