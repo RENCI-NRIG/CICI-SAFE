@@ -97,9 +97,6 @@ public class SdxManager extends SliceCommon {
 
 
   private static NetworkManager routingmanager = new NetworkManager();
-  private static HashMap<String, Link> links = new HashMap<String, Link>();
-  private static HashMap<String, ArrayList<String>>computenodes=new HashMap<String,ArrayList<String>>();
-  private static ArrayList<StitchPort>stitchports=new ArrayList<>();
   private static String IPPrefix = "192.168.";
   static int curip = 128;
   private static String mask = "/24";
