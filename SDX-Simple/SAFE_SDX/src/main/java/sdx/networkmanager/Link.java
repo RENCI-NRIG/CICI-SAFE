@@ -11,7 +11,16 @@ public class Link {
   public String nodea = "";
   public String nodeb = "";
   public String ipprefix = "";
-  public String mask = "";
+  public String mask="";
+  public long capacity=0;
+
+  public Link(){}
+
+  public Link(String linkname, String nodea, String nodeb){
+    this.linkname = linkname;
+    this.nodea = nodea;
+    this.nodeb = nodeb;
+  }
 
   public void addNode(String node) {
     if (nodea == "")
@@ -32,7 +41,12 @@ public class Link {
     mask = m;
   }
 
+  public void setCapacity(long cap){
+    this.capacity=cap;
+  }
+
   public String getIP(int i) {
     return ipprefix + "." + String.valueOf(i) + mask;
   }
 }
+

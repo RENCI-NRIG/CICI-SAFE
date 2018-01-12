@@ -1,16 +1,13 @@
 package sdx.core;
 
 import sdx.networkmanager.NetworkManager;
+import sdx.networkmanager.Link;
 import sdx.utils.Exec;
 import sdx.utils.SafePost;
 
 import java.util.*;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.FileReader;
-import java.io.FileWriter;
 import java.util.concurrent.locks.ReentrantLock;
 
 import org.apache.log4j.Logger;
@@ -62,9 +59,6 @@ public class SdxManager extends SliceCommon {
   final static Logger logger = Logger.getLogger(SdxManager.class);
 
   private static NetworkManager routingmanager = new NetworkManager();
-  private static HashMap<String, Link> links = new HashMap<String, Link>();
-  private static HashMap<String, ArrayList<String>>computenodes=new HashMap<String,ArrayList<String>>();
-  private static ArrayList<StitchPort>stitchports=new ArrayList<>();
   private static String IPPrefix = "192.168.";
   static int curip = 128;
   private static String mask = "/24";
@@ -890,43 +884,6 @@ public class SdxManager extends SliceCommon {
     routingmanager.setOvsdbAddr(httpcontroller);
   }
 
-  private static ArrayList<Link> readLinks(String file) {
-    ArrayList<Link>res=new ArrayList<>();
-    try (BufferedReader br = new BufferedReader(new FileReader(file))) {
-      String line;
-      while ((line = br.readLine()) != null) {
-        // process the line.
-        String[] params=line.replace("\n","").split(" ");
-        Link link=new Link();
-        link.setName(params[0]);
-        link.addNode(params[1]);
-        link.addNode(params[2]);
-        link.setCapacity(Long.valueOf(params[3]));
-        res.add(link);
-      }
-      br.close();
-    }catch (Exception e){
-      e.printStackTrace();
-    }
-    return res;
-  }
-
-  private static void writeLinks(String file) {
-    ArrayList<Link>res=new ArrayList<>();
-    try (BufferedWriter br = new BufferedWriter(new FileWriter(file))) {
-      Set<String> keyset=links.keySet();
-      for(String key:keyset){
-        if(!key.contains("stitch")){
-          Link link=links.get(key);
-          br.write(link.linkname + " " + link.nodea + " " + link.nodeb +" "+link.capacity+"\n");
-        }
-      }
-      br.close();
-    }catch (Exception e){
-      e.printStackTrace();
-    }
-  }
-
 	public static void undoStitch(String sdxslice, String customerName, String netName, String nodeName){
 		logger.debug("ndllib TestDriver: START");
 		
@@ -976,45 +933,3 @@ public class SdxManager extends SliceCommon {
   }
 }
 
-
-class Link{
-  public String linkname="";
-  public String nodea="";
-  public String nodeb="";
-  public String ipprefix="";
-  public String mask="";
-  public long capacity=0;
-
-  public Link(){}
-
-  public void addNode(String node){
-    if(nodea=="")
-      nodea=node;
-    else
-      nodeb=node;
-  }
-
-  public void setName(String name){
-    linkname=name;
-  }
-
-  public void setIP(String ip){
-    ipprefix=ip;
-  }
-
-  public void setMask(String m){
-    mask=m;
-  }
-
-  public void setCapacity(long cap){
-    this.capacity=cap;
-  }
-
-  public String  getIP(int i){
-    return ipprefix+"."+String.valueOf(i)+mask;
-  }
-
-  public boolean match(String a, String b){
-    return (nodea.equals(a) && nodeb.equals(b)) || (nodea.equals(b) && nodeb.equals(a));
-  }
-}
