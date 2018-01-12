@@ -63,7 +63,8 @@ public class TestSlice extends SliceManager {
     }
 
     if (type.equals("server")) {
-      testBroSliceTwoPairs();
+      testSliceDynamicLinks();
+      //testBroSliceTwoPairs();
       //testBroSliceExoGENI();
     } else if (type.equals("delete")) {
       Slice s2 = null;
@@ -223,6 +224,61 @@ public class TestSlice extends SliceManager {
     }
   }
 
+  public static void testSliceDynamicLinks(){
+    IPPrefix = conf.getString("config.ipprefix");
+    riakip = conf.getString("config.riakserver");
+    BRO = conf.getBoolean("config.bro");
+    String scriptsdir = conf.getString("config.scriptsdir");
+    computeIP(IPPrefix);
+    try {
+      String carrierName = sliceName;
+      int routernum = conf.getInt("config.routernum");
+      long bw = 10000000;
+      if(conf.hasPath("config.bw")){
+        bw = conf.getLong("config.bw");
+      }
+      Slice carrier = createTestSliceWithDynamicLinks(carrierName, routernum, bw);
+      String resource_dir = conf.getString("config.resourcedir");
+      //Slice carrier = createCarrierSliceWithCustomerNodes(carrierName, 4, 10, 1000000, 1);
+      commitAndWait(carrier);
+      carrier.refresh();
+      copyFile2Slice(carrier, scriptsdir + "dpid.sh", "~/dpid.sh", sshkey);
+      copyFile2Slice(carrier, scriptsdir + "ovsbridge.sh", "~/ovsbridge.sh", sshkey);
+      runCmdSlice(carrier, "mkdir /home/ftp", sshkey, "(node\\d+)", true, true);
+      copyFile2Slice(carrier, resource_dir + "bro/evil.txt", "/home/ftp/evil.txt",
+        sshkey, "(node\\d+)");
+      copyFile2Slice(carrier, resource_dir + "scripts/getonefile.sh", "~/getonefile.sh",
+        sshkey, "(node\\d+)");
+      copyFile2Slice(carrier, resource_dir + "scripts/getfiles.sh", "~/getfiles.sh",
+        sshkey, "(node\\d+)");
+      //Make sure that plexus container is running
+      SDNControllerIP = ((ComputeNode) carrier.getResourceByName("plexuscontroller")).getManagementIP();
+      //SDNControllerIP = "152.3.136.36";
+      //if (!checkPlexus(SDNControllerIP)) {
+      //  System.exit(-1);
+      //}
+      System.out.println("Plexus Controler IP: " + SDNControllerIP);
+      runCmdSlice(carrier, "/bin/bash ~/ovsbridge.sh " + SDNControllerIP + ":6633", sshkey, "(c\\d+)", true, true);
+      runCmdSlice(carrier, "apt-get -y install quagga", sshkey, "(node\\d+)", true, true);
+      runCmdSlice(carrier, "sed -i -- 's/zebra=no/zebra=yes/g' /etc/quagga/daemons", sshkey, "(node\\d+)", true, true);
+      //runCmdSlice(carrier, "sed -i -- 's/ospfd=no/ospfd=yes/g' /etc/quagga/daemons", sshkey,
+      // "(node\\d+)", true, true);
+      runCmdSlice(carrier, "echo \"1\" > /proc/sys/net/ipv4/ip_forward", sshkey, "(node\\d+)", true, true);
+      try {
+        runCmdSlice(carrier, "ifconfig eth1 192.168.10.2/24 up", sshkey, "(node0)", true, true);
+        runCmdSlice(carrier, "echo \"ip route 10.32.90.1/24 192.168.10.1\" >>/etc/quagga/zebra" +
+          ".conf", sshkey, "(node0)", true, true);
+      }
+      catch (Exception e){
+        e.printStackTrace();
+      }
+      runCmdSlice(carrier, "/etc/init.d/quagga restart", sshkey, "(node\\d+)", true, true);
+
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+  }
+
   public static void testBroSliceChameleon(){
     IPPrefix = conf.getString("config.ipprefix");
     riakip = conf.getString("config.riakserver");
@@ -359,6 +415,56 @@ public class TestSlice extends SliceManager {
     ifaceNode3.setIpAddress("192.168.40.2");
     ifaceNode3.setNetmask("255.255.255.0");
     net3.stitch(c3);
+    return s;
+  }
+
+  public static Slice createTestSliceWithDynamicLinks(String sliceName, int num, long bw) {
+    String nodeImageShortName = "Ubuntu 14.04";
+    String nodeImageURL = "http://geni-orca.renci.org/owl/9dfe179d-3736-41bf-8084-f0cd4a520c2f#Ubuntu+14.04";//http://geni-images.renci.org/images/standard/ubuntu/ub1304-ovs-opendaylight-v1.0.0.xml
+    String nodeImageHash = "9394ca154aa35eb55e604503ae7943ddaecc6ca5";
+    String nodeNodeType = "XO Extra large";
+    Slice s = createCarrierSlice(sliceName, num, bw*2);
+    //Now add two customer node to c0 and c3
+    ComputeNode c0 = (ComputeNode) s.getResourceByName("c0");
+    ComputeNode c1 = (ComputeNode) s.getResourceByName("c1");
+    ComputeNode c2 = (ComputeNode) s.getResourceByName("c2");
+    ComputeNode cnode0 = s.addComputeNode("node0");
+    cnode0.setImage(nodeImageURL, nodeImageHash, nodeImageShortName);
+    cnode0.setNodeType(nodeNodeType);
+    cnode0.setDomain(clientSites.get(0));
+    String scripts = "apt-get install -y vsftpd iperf\n";
+    cnode0.setPostBootScript(getCustomerScript() + scripts);
+    Network net0 = s.addBroadcastLink("stitch_c0_10",bw);
+    InterfaceNode2Net ifaceNode0 = (InterfaceNode2Net) net0.stitch(cnode0);
+    ifaceNode0.setIpAddress("192.168.10.2");
+    ifaceNode0.setNetmask("255.255.255.0");
+    net0.stitch(c0);
+
+    ComputeNode cnode1 = s.addComputeNode("node1");
+    cnode1.setImage(nodeImageURL, nodeImageHash, nodeImageShortName);
+    cnode1.setNodeType(nodeNodeType);
+    cnode1.setDomain(clientSites.get(1));
+    cnode1.setPostBootScript(getCustomerScript() + scripts);
+    Network net1 = s.addBroadcastLink("stitch_c1_20",bw);
+    InterfaceNode2Net ifaceNode1 = (InterfaceNode2Net) net1.stitch(cnode1);
+    ifaceNode1.setIpAddress("192.168.20.2");
+    ifaceNode1.setNetmask("255.255.255.0");
+    net1.stitch(c1);
+
+    ComputeNode cnode2 = s.addComputeNode("node2");
+    cnode2.setImage(nodeImageURL, nodeImageHash, nodeImageShortName);
+    cnode2.setNodeType(nodeNodeType);
+    cnode2.setDomain(clientSites.get(2));
+    cnode2.setPostBootScript(getCustomerScript()+scripts);
+    Network net2 = s.addBroadcastLink("stitch_c2_30",bw);
+    InterfaceNode2Net ifaceNode2 = (InterfaceNode2Net) net2.stitch(cnode2);
+    ifaceNode2.setIpAddress("192.168.30.2");
+    ifaceNode2.setNetmask("255.255.255.0");
+    net2.stitch(c2);
+
+    Network net3 = s.addBroadcastLink("dl-c0-c2",bw);
+    InterfaceNode2Net ifaceNode3 = (InterfaceNode2Net) net3.stitch(c2);
+    net3.stitch(c0);
     return s;
   }
 
