@@ -48,5 +48,9 @@ public class Link {
   public String getIP(int i) {
     return ipprefix + "." + String.valueOf(i) + mask;
   }
+
+  public boolean match(String a, String b){
+    return (nodea.equals(a) && nodeb.equals(b)) || (nodea.equals(b) && nodeb.equals(a));
+  }
 }
 
