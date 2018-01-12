@@ -134,15 +134,15 @@ public abstract class SliceCommon {
     controllerUrl = conf.getString("config.exogenism");
     pemLocation = conf.getString("config.exogenipem");
     keyLocation = conf.getString("config.exogenipem");
+    if (conf.hasPath("config.slicename")) {
+      sliceName = conf.getString("config.slicename");
+    }
     if (conf.hasPath("config.topodir")) {
       topodir = conf.getString("config.topodir");
       topofile = topodir + sliceName + ".topo";
     }
     if (conf.hasPath("config.safekey")) {
       keyhash = conf.getString("config.safekey");
-    }
-    if (conf.hasPath("config.slicename")) {
-      sliceName = conf.getString("config.slicename");
     }
     if (conf.hasPath("config.serversite")) {
       serverSite = conf.getString("config.serversite");

@@ -27,10 +27,23 @@ public class Test {
   }
 
   public static void main(String[] args) {
-    testRouting(args);
+    testRoutingDynamicLink(args);
+    //testRouting(args);
     //testRoutingChameleon(args);
     //testPerFlowQOS();
     //limitQos();
+  }
+
+  private static void testRoutingDynamicLink(String[] args) {
+    SdxManager.startSdxServer(args);
+    System.out.println("configured ip addresses in sdx network");
+    //notify prefixes for node0 and node1
+    SdxManager.notifyPrefix("192.168.10.2/24","192.168.10.2","notused");
+    SdxManager.notifyPrefix("192.168.20.2/24","192.168.20.2","notused");
+    SdxManager.connectionRequest("not used","192.168.20.2/24","192.168.10.2/24",500000000);
+    SdxManager.notifyPrefix("192.168.30.2/24","192.168.30.2","notused");
+    SdxManager.connectionRequest("not used","192.168.20.2/24","192.168.30.2/24",500000000);
+    SdxManager.connectionRequest("not used","192.168.30.2/24","192.168.10.2/24",500000000);
   }
 
   private static void testRouting(String[] args) {

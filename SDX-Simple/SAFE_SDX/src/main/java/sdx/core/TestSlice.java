@@ -244,13 +244,6 @@ public class TestSlice extends SliceManager {
       carrier.refresh();
       copyFile2Slice(carrier, scriptsdir + "dpid.sh", "~/dpid.sh", sshkey);
       copyFile2Slice(carrier, scriptsdir + "ovsbridge.sh", "~/ovsbridge.sh", sshkey);
-      runCmdSlice(carrier, "mkdir /home/ftp", sshkey, "(node\\d+)", true, true);
-      copyFile2Slice(carrier, resource_dir + "bro/evil.txt", "/home/ftp/evil.txt",
-        sshkey, "(node\\d+)");
-      copyFile2Slice(carrier, resource_dir + "scripts/getonefile.sh", "~/getonefile.sh",
-        sshkey, "(node\\d+)");
-      copyFile2Slice(carrier, resource_dir + "scripts/getfiles.sh", "~/getfiles.sh",
-        sshkey, "(node\\d+)");
       //Make sure that plexus container is running
       SDNControllerIP = ((ComputeNode) carrier.getResourceByName("plexuscontroller")).getManagementIP();
       //SDNControllerIP = "152.3.136.36";
@@ -266,8 +259,12 @@ public class TestSlice extends SliceManager {
       runCmdSlice(carrier, "echo \"1\" > /proc/sys/net/ipv4/ip_forward", sshkey, "(node\\d+)", true, true);
       try {
         runCmdSlice(carrier, "ifconfig eth1 192.168.10.2/24 up", sshkey, "(node0)", true, true);
-        runCmdSlice(carrier, "echo \"ip route 10.32.90.1/24 192.168.10.1\" >>/etc/quagga/zebra" +
+        runCmdSlice(carrier, "echo \"ip route 192.168.1.1/16 192.168.10.1\" >>/etc/quagga/zebra" +
           ".conf", sshkey, "(node0)", true, true);
+        runCmdSlice(carrier, "echo \"ip route 192.168.1.1/16 192.168.20.1\" >>/etc/quagga/zebra" +
+          ".conf", sshkey, "(node1)", true, true);
+        runCmdSlice(carrier, "echo \"ip route 192.168.1.1/16 192.168.30.1\" >>/etc/quagga/zebra" +
+          ".conf", sshkey, "(node2)", true, true);
       }
       catch (Exception e){
         e.printStackTrace();

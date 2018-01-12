@@ -334,6 +334,7 @@ public class SdxManager extends SliceCommon {
     routingmanager.printLinks();
 	  if(!routingmanager.findPath(n1,n2,bandwidth)) {
       //find name for the new two nodes
+
       Slice s=getSlice();
       ComputeNode node1=(ComputeNode)s.getResourceByName(n1);
       ComputeNode node2=(ComputeNode)s.getResourceByName(n2);
