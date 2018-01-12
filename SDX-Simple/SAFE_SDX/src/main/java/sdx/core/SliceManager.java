@@ -363,7 +363,6 @@ public class SliceManager extends SliceCommon {
     return s;
   }
 
-  protected static ComputeNode addComputeNode(Slice s, String name, )
 
   protected static void addSafeServer(Slice s, String rip) {
     String dockerImageShortName = "Ubuntu 14.04 Docker";
