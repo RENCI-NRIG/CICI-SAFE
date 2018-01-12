@@ -323,7 +323,6 @@ public class SdxManager extends SliceCommon {
   }
 
 	public static String connectionRequest(String ckeyhash, String self_prefix, String target_prefix,long bandwidth){
-
 	  //String n1=computenodes.get(site1).get(0);
 	  //String n2=computenodes.get(site2).get(0);
     String n1=routingmanager.getRouterbyGateway(prefixgateway.get(self_prefix));
@@ -840,6 +839,7 @@ public class SdxManager extends SliceCommon {
       }
     }
 
+    //To Emulate dynamic allocation of links, we don't use link whose name does't contain "link"
     for (Object k : keyset) {
       Link link = links.get((String) k);
       logger.debug("Setting up link "+link.linkname);
@@ -865,8 +865,7 @@ public class SdxManager extends SliceCommon {
       }
     }
     //set ovsdb address
-    //TODO: comment for simple use
-    //routingmanager.setOvsdbAddr(httpcontroller);
+    routingmanager.setOvsdbAddr(httpcontroller);
   }
 
   private static ArrayList<Link> readLinks(String file) {

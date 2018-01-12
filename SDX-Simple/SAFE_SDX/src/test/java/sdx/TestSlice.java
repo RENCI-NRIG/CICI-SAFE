@@ -60,19 +60,17 @@ public class TestSlice extends SliceManager {
     } catch (UtilTransportException e) {
       // TODO Auto-generated catch block
       e.printStackTrace();
-      String dockerImageShortName = "ubuntu16.04";
-      String dockerImageURL = "http://geni-images.renci.org/images/standard/ubuntu/ub1604-v1.0.4dev.xml";//http://geni-images.renci.org/images/standard/ubuntu/ub1304-ovs-opendaylight-v1.0.0.xml
-      String dockerImageHash = "b8e6c544296dce5f91400974326d619d2910967f";
     }
 
     if (type.equals("server")) {
       IPPrefix = conf.getString("config.ipprefix");
       riakip = conf.getString("config.riakserver");
+      Long bw = conf.getLong("config.bw");
       String scriptsdir = conf.getString("config.scriptsdir");
       computeIP(IPPrefix);
       try {
         String carrierName = sliceName;
-        Slice carrier = createTestSliceWithBroAndCNode(carrierName, 4, 1000000);
+        Slice carrier = createTestSliceWithBroAndCNode(carrierName, 4, bw);
         //Slice carrier = createCarrierSliceWithCustomerNodes(carrierName, 4, 10, 1000000, 1);
         commitAndWait(carrier);
         carrier.refresh();
@@ -185,6 +183,39 @@ public class TestSlice extends SliceManager {
       // TODO Auto-generated catch block
       e.printStackTrace();
     }
+    return s;
+  }
+
+  public static Slice createTestSliceWithDynamicLink(String sliceName, int num, long bw) {
+    String nodeImageShortName = "Ubuntu 14.04";
+    String nodeImageURL = "http://geni-orca.renci.org/owl/9dfe179d-3736-41bf-8084-f0cd4a520c2f#Ubuntu+14.04";//http://geni-images.renci.org/images/standard/ubuntu/ub1304-ovs-opendaylight-v1.0.0.xml
+    String nodeImageHash = "9394ca154aa35eb55e604503ae7943ddaecc6ca5";
+    String nodeNodeType = "XO Medium";
+    Slice s = createCarrierSlice(sliceName, num, 1000000);
+    //Now add two customer node to c0 and c3
+    ComputeNode c0 = (ComputeNode) s.getResourceByName("c0");
+    ComputeNode c3 = (ComputeNode) s.getResourceByName("c3");
+    ComputeNode cnode0 = s.addComputeNode("node0");
+    cnode0.setImage(nodeImageURL, nodeImageHash, nodeImageShortName);
+    cnode0.setNodeType(nodeNodeType);
+    cnode0.setDomain(clientSites.get(0));
+    cnode0.setPostBootScript(getCustomerScript());
+    Network net1 = s.addBroadcastLink("stitch_c0_10",bw);
+    InterfaceNode2Net ifaceNode0 = (InterfaceNode2Net) net1.stitch(cnode0);
+    ifaceNode0.setIpAddress("192.168.10.2");
+    ifaceNode0.setNetmask("255.255.255.0");
+    net1.stitch(c0);
+
+    ComputeNode cnode1 = s.addComputeNode("node3");
+    cnode1.setImage(nodeImageURL, nodeImageHash, nodeImageShortName);
+    cnode1.setNodeType(nodeNodeType);
+    cnode1.setDomain(clientSites.get(3%clientSites.size()));
+    cnode1.setPostBootScript(getCustomerScript());
+    Network net2 = s.addBroadcastLink("stitch_c3_20",bw);
+    InterfaceNode2Net ifaceNode1 = (InterfaceNode2Net) net2.stitch(cnode1);
+    ifaceNode1.setIpAddress("192.168.20.2");
+    ifaceNode1.setNetmask("255.255.255.0");
+    net2.stitch(c3);
     return s;
   }
 
