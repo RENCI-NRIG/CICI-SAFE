@@ -41,6 +41,7 @@ import org.renci.ahab.libtransport.xmlrpc.XMLRPCTransportException;
 import org.renci.ahab.ndllib.transport.OrcaSMXMLRPCProxy;
 
 import sdx.utils.Exec;
+import sdx.networkmanager.Link;
 
 /**
  * @author geni-orca
@@ -331,36 +332,48 @@ public class SliceManager extends SliceCommon {
       BRO = conf.getBoolean("config.bro");
     }
     for (int i = 0; i < num; i++) {
-
-      ComputeNode node0 = s.addComputeNode("c" + String.valueOf(i));
-      node0.setImage(nodeImageURL, nodeImageHash, nodeImageShortName);
-      node0.setNodeType(nodeNodeType);
-      node0.setDomain(clientSites.get(i % clientSites.size()));
-      node0.setPostBootScript(nodePostBootScript);
+      ComputeNode node0 = addComputeNode(s, "c" + String.valueOf(i), nodeImageURL,
+        nodeImageHash, nodeImageShortName, nodeNodeType, clientSites.get(i % clientSites.size()),
+        nodePostBootScript);
       nodelist.add(node0);
-
-      int tmp = curip++;
-      if (i != num - 1) {
-        Network net2 = s.addBroadcastLink("clink" + String.valueOf(i), bw);
-        InterfaceNode2Net ifaceNode1 = (InterfaceNode2Net) net2.stitch(node0);
-        //ifaceNode1.setIpAddress("192.168."+String.valueOf(tmp)+".1");
-        //ifaceNode1.setNetmask("255.255.255.0");
-        netlist.add(net2);
-      }
-      if (i != 0) {
-        Network net = netlist.get(i - 1);
-        InterfaceNode2Net ifaceNode1 = (InterfaceNode2Net) net.stitch(node0);
-        //ifaceNode1.setIpAddress("192.168."+String.valueOf(tmp-1)+".2");
-        //ifaceNode1.setNetmask("255.255.255.0");
-      }
-
       if (BRO) {
         addBro(s, "bro" + i, node0, curip++, bw);
       }
     }
+    //add Links
+    for(int i = 0; i<num-1; i++){
+      ComputeNode node0 = nodelist.get(i);
+      ComputeNode node1 = nodelist.get(i+1);
+      String linkname = "clink" + i;
+      Link link = addLink(s, linkname, node0, node1, bw);
+      links.put(linkname, link);
+    }
     //addSafeServer(s, riakip);
     addPlexusController(s);
     return s;
+  }
+
+  private  static ComputeNode addComputeNode(Slice s, String name, String nodeImageURL, String
+    nodeImageHash, String nodeImageShortName, String nodeNodeType, String site, String
+    nodePostBootScript){
+    ComputeNode node0 = s.addComputeNode(name);
+    node0.setImage(nodeImageURL, nodeImageHash, nodeImageShortName);
+    node0.setNodeType(nodeNodeType);
+    node0.setDomain(site);
+    node0.setPostBootScript(nodePostBootScript);
+    return node0;
+  }
+
+  private static Link addLink(Slice s, String linkname, ComputeNode node0, ComputeNode node1,
+                              Long bw){
+    Network net2 = s.addBroadcastLink(linkname, bw);
+    InterfaceNode2Net ifaceNode1 = (InterfaceNode2Net) net2.stitch(node0);
+    InterfaceNode2Net ifaceNode2 = (InterfaceNode2Net) net2.stitch(node1);
+    Link link = new Link();
+    link.addNode(node0.getName());
+    link.addNode(node1.getName());
+    link.setName(linkname);
+    return link;
   }
 
 

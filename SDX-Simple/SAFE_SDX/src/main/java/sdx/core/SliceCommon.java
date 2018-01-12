@@ -56,6 +56,7 @@ import com.typesafe.config.*;
 
 import sdx.utils.Exec;
 import sdx.utils.ScpTo;
+import sdx.networkmanager.Link;
 import com.jcraft.jsch.Channel;
 import com.jcraft.jsch.ChannelExec;
 import com.jcraft.jsch.ChannelSftp;
@@ -89,6 +90,9 @@ public abstract class SliceCommon {
   protected static List<String> sitelist;
   protected static String serverSite;
   protected static boolean safeauth = false;
+  protected static HashMap<String, Link> links = new HashMap<String, Link>();
+  protected static HashMap<String, ArrayList<String>>computenodes=new HashMap<String,ArrayList<String>>();
+  protected static ArrayList<StitchPort>stitchports=new ArrayList<>();
 
 
   public SliceCommon() {
