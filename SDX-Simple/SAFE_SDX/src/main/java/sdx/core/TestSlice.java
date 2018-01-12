@@ -420,7 +420,7 @@ public class TestSlice extends SliceManager {
     String nodeImageURL = "http://geni-orca.renci.org/owl/9dfe179d-3736-41bf-8084-f0cd4a520c2f#Ubuntu+14.04";//http://geni-images.renci.org/images/standard/ubuntu/ub1304-ovs-opendaylight-v1.0.0.xml
     String nodeImageHash = "9394ca154aa35eb55e604503ae7943ddaecc6ca5";
     String nodeNodeType = "XO Extra large";
-    Slice s = createCarrierSlice(sliceName, num, bw*2);
+    Slice s = createCarrierSlice(sliceName, num, bw);
     //Now add two customer node to c0 and c3
     ComputeNode c0 = (ComputeNode) s.getResourceByName("c0");
     ComputeNode c1 = (ComputeNode) s.getResourceByName("c1");

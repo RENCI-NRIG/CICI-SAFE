@@ -333,6 +333,26 @@ public class SdxManager extends SliceCommon {
 	  boolean res=true;
     routingmanager.printLinks();
 	  if(!routingmanager.findPath(n1,n2,bandwidth)) {
+	    for(Link link : links.values()){
+	      if(link.match(n1, n2) && link.capacity >= bandwidth) {
+          int ip_to_use = 0;
+          iplock.lock();
+          try {
+            while (usedip.contains(curip)) {
+              curip++;
+            }
+            ip_to_use = curip;
+            link.setIP(IPPrefix + String.valueOf(ip_to_use));
+            link.setMask(mask);
+            curip++;
+          } finally {
+            iplock.unlock();
+          }
+          res = routingmanager.newLink(link.getIP(1), link.nodea, link.getIP(2), link.nodeb,
+            SDNController, link.capacity);
+        }
+      }
+	    /*
       //find name for the new two nodes
 
       Slice s=getSlice();
@@ -414,6 +434,7 @@ public class SdxManager extends SliceCommon {
       res = routingmanager.newLink(l1.getIP(1), l1.nodea, l1.getIP(2), l1.nodeb, SDNController,linkbw);
       //set ip address
       //add link to links
+      */
     }
     //configure routing
     if(res){
@@ -991,5 +1012,9 @@ class Link{
 
   public String  getIP(int i){
     return ipprefix+"."+String.valueOf(i)+mask;
+  }
+
+  public boolean match(String a, String b){
+    return (nodea.equals(a) && nodeb.equals(b)) || (nodea.equals(b) && nodeb.equals(a));
   }
 }
