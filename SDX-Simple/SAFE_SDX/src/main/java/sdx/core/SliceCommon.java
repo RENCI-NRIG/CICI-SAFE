@@ -4,11 +4,9 @@ import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
+import java.io.BufferedWriter;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -217,6 +215,43 @@ public abstract class SliceCommon {
       logger.debug("ComputeNode: " + n.getName() + ", Managment IP =  " + n.getManagementIP());
     }
   }
+
+  protected static ArrayList<Link> readLinks(String file) {
+    ArrayList<Link>res=new ArrayList<>();
+    try (BufferedReader br = new BufferedReader(new FileReader(file))) {
+      String line;
+      while ((line = br.readLine()) != null) {
+        // process the line.
+        String[] params=line.replace("\n","").split(" ");
+        Link link=new Link();
+        link.setName(params[0]);
+        link.addNode(params[1]);
+        link.addNode(params[2]);
+        res.add(link);
+      }
+      br.close();
+    }catch (Exception e){
+      e.printStackTrace();
+    }
+    return res;
+  }
+
+  protected static void writeLinks(String file) {
+    ArrayList<Link>res=new ArrayList<>();
+    try (BufferedWriter br = new BufferedWriter(new FileWriter(file))) {
+      Set<String> keyset=links.keySet();
+      for(String key:keyset){
+        if(!key.contains("stitch")){
+          Link link=links.get(key);
+          br.write(link.linkname + " " + link.nodea + " " + link.nodeb + "\n");
+        }
+      }
+      br.close();
+    }catch (Exception e){
+      e.printStackTrace();
+    }
+  }
+
 
   protected static Slice getSlice(ISliceTransportAPIv1 sliceProxy, String sliceName) {
     Slice s = null;

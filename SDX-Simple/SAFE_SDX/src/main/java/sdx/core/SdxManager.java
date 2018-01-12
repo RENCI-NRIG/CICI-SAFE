@@ -10,10 +10,6 @@ import java.lang.reflect.Array;
 import java.util.*;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.FileReader;
-import java.io.FileWriter;
 import java.util.concurrent.locks.ReentrantLock;
 
 import org.apache.log4j.ConsoleAppender;
@@ -851,42 +847,6 @@ public class SdxManager extends SliceCommon {
     //set ovsdb address
     //TODO: comment for simple use
     //routingmanager.setOvsdbAddr(httpcontroller);
-  }
-
-  private static ArrayList<Link> readLinks(String file) {
-    ArrayList<Link>res=new ArrayList<>();
-    try (BufferedReader br = new BufferedReader(new FileReader(file))) {
-      String line;
-      while ((line = br.readLine()) != null) {
-        // process the line.
-        String[] params=line.replace("\n","").split(" ");
-        Link link=new Link();
-        link.setName(params[0]);
-        link.addNode(params[1]);
-        link.addNode(params[2]);
-        res.add(link);
-      }
-      br.close();
-    }catch (Exception e){
-      e.printStackTrace();
-    }
-    return res;
-  }
-
-  private static void writeLinks(String file) {
-    ArrayList<Link>res=new ArrayList<>();
-    try (BufferedWriter br = new BufferedWriter(new FileWriter(file))) {
-      Set<String> keyset=links.keySet();
-      for(String key:keyset){
-        if(!key.contains("stitch")){
-          Link link=links.get(key);
-          br.write(link.linkname + " " + link.nodea + " " + link.nodeb + "\n");
-        }
-      }
-      br.close();
-    }catch (Exception e){
-      e.printStackTrace();
-    }
   }
 
 	public static void undoStitch(String sdxslice, String customerName, String netName, String nodeName){
