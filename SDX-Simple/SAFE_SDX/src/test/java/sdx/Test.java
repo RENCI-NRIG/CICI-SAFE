@@ -104,8 +104,8 @@ public class Test {
             //  "192.168.10.1/24", "192.168.101.2");
             System.out.println(res);
           }else if( i == 1 || j == 1){
-            String res = SdxManager.setMirror(SdxManager.getSDNControllerIP(), dpid1, addresses[i],
-              addresses[j], "192.168.103.2");
+            String res = SdxManager.setMirror(SdxManager.getSDNControllerIP(), dpid0, addresses[i],
+              addresses[j], "192.168.101.2");
             //String res1 = SdxManager.setMirror(SdxManager.getSDNControllerIP(), dpid, "192.168.20.1/24",
             //  "192.168.10.1/24", "192.168.101.2");
             System.out.println(res);
