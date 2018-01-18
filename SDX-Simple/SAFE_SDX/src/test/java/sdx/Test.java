@@ -115,6 +115,47 @@ public class Test {
     }
     System.out.println(Long.parseLong(dpid0,16));
     System.out.println(Long.parseLong(dpid1,16));
+    System.out.println("IP prefix is set up, the two nodes should be able to talk now");
+
+    while (true) {
+      System.out.println("Press enter to reset");
+      try {
+        System.in.read();
+      } catch (IOException e) {
+        e.printStackTrace();
+      }
+      SdxManager.clear();
+      SdxManager.delFlows();
+      SdxManager.restartPlexus();
+      SdxManager.waitTillAllOvsConnected();
+      SdxManager.replayCMD(dpid0);
+      SdxManager.replayCMD(dpid1);
+      SdxManager.notifyPrefix("192.168.10.2/24", "192.168.10.2", "c0", "notused");
+      //SdxManager.notifyPrefix("192.168.30.2/24", "192.168.10.2", "c0", "notused");
+      SdxManager.notifyPrefix("192.168.20.2/24", "192.168.20.2", "c0", "notused");
+      SdxManager.notifyPrefix("192.168.30.2/24", "192.168.30.2", "c1", "notused");
+      SdxManager.notifyPrefix("192.168.40.2/24", "192.168.40.2", "c1", "notused");
+      for (int i = 0; i < 4; i++) {
+        for (int j = 0; j < 4; j++) {
+          if(i != j){
+            if(i == 0 || j == 0) {
+              String res = SdxManager.setMirror(SdxManager.getSDNControllerIP(), dpid0, addresses[i],
+                addresses[j], "192.168.101.2");
+              //String res1 = SdxManager.setMirror(SdxManager.getSDNControllerIP(), dpid, "192.168.20.1/24",
+              //  "192.168.10.1/24", "192.168.101.2");
+              System.out.println(res);
+            }else if( i == 1 || j == 1){
+              String res = SdxManager.setMirror(SdxManager.getSDNControllerIP(), dpid0, addresses[i],
+                addresses[j], "192.168.101.2");
+              //String res1 = SdxManager.setMirror(SdxManager.getSDNControllerIP(), dpid, "192.168.20.1/24",
+              //  "192.168.10.1/24", "192.168.101.2");
+              System.out.println(res);
+            }
+          }
+        }
+      }
+      System.out.println("IP prefix is set up, the two nodes should be able to talk now");
+    }
     //for (int i = 0; i < 4; i++) {
     //  for (int j = 0; j < 4; j++) {
     //    if(i != j){
@@ -126,7 +167,6 @@ public class Test {
     //    }
     //  }
     //}
-    System.out.println("IP prefix is set up, the two nodes should be able to talk now");
   }
 
   private static void testRoutingChameleon(String[] args) {

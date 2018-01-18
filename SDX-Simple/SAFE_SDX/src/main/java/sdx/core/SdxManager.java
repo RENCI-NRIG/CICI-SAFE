@@ -206,6 +206,10 @@ public class SdxManager extends SliceCommon {
     runCmdSlice(serverSlice, "ovs-ofctl del-flows br0", sshkey, "(c\\d+)", true, true);
   }
 
+  public static void clear(){
+    advertisements.clear();
+  }
+
   public static String notifyPrefix(String dest, String gateway, String router, String customer_keyhash) {
     logger.debug("received notification for ip prefix " + dest);
     String res = "received notification for " + dest;

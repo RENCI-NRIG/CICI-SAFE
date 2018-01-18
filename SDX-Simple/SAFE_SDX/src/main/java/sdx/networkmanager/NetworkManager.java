@@ -352,7 +352,6 @@ public class NetworkManager {
     return res;
   }
 
-
   private static String[] mirrorCMD(String controller, String dpid, String source, String dst, String gw) {
     String[] res = new String[3];
     res[0] = "http://" + controller + ":8080/router/" + dpid;
