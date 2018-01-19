@@ -78,12 +78,12 @@ public class NetworkManager {
     private String dpid = "";
     private String ip = "";
     private HashSet<String> interfaces = new HashSet<String>();
-    private HashMap<String, Link> neighbors = new HashMap<String, Link>();
+    private HashMap<String, Link> neighborLinks = new HashMap<String, Link>();
     private HashSet<String> customergateways = new HashSet<>();
     private int numInterfaces = 0;
 
-    public HashMap<String, Link> getNeighbors() {
-      return neighbors;
+    public HashMap<String, Link> getNeighborLinks() {
+      return neighborLinks;
     }
 
     public Router(String rid, String switch_id, int numintf, String ip) {
@@ -107,7 +107,7 @@ public class NetworkManager {
     }
 
     public void addNeighbor(String neighborIP, Link link) {
-      neighbors.put(neighborIP, link);
+      neighborLinks.put(neighborIP, link);
     }
 
     public void updateInterfaceNum(int newnum) {
@@ -288,6 +288,37 @@ public class NetworkManager {
     return result;
   }
 
+
+  private boolean addRoute(String destIp, String srcIp, String gateWay, String dpid, String
+    controller){
+    String[] cmd = routingCMD(destIp, srcIp, gateWay, dpid, controller);
+    String res = HttpUtil.postJSON(cmd[0], new JSONObject(cmd[1]));
+    System.out.println(res);
+    if (res.contains("success")) {
+      int id = Integer.valueOf(res.split("route_id=")[1].split("]")[0]);
+      route_id.put(destIp + srcIp + dpid, id);
+      cmd[cmd.length-1] = res;
+      addEntry_HashList(sdncmds, dpid, cmd);
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  private boolean deleteRoute(String dpid, String routeid, String controller) {
+    String[] cmd = delRoutingCMD(dpid, routeid, controller);
+    String res = HttpUtil.delete(cmd[0], cmd[1]);
+    System.out.println(res);
+    if (res.contains("success")) {
+      int id = Integer.valueOf(res.split("route_id=")[1].split("]")[0]);
+      cmd[cmd.length-1] = res;
+      addEntry_HashList(sdncmds, dpid, cmd);
+      return true;
+    } else {
+      return false;
+    }
+  }
+
   public void configurePath(String dest, String nodename, String gateway, String controller) {
     String gwdpid = getRouter(nodename).getDPID();
     if (gwdpid == null) {
@@ -304,10 +335,6 @@ public class NetworkManager {
       //logger.debug(path[0]+" "+path[1]);
     }
   }
-
-  private void deleteRoute(String dpid, String routeid, String controller) {
-  }
-
   //gateway is the gateway for nodename
   public void configurePath(String dest, String nodename, String targetIP, String targetnodename, String gateway, String controller, long bw) {
     logger.debug("Network Manager: Configuring path for " + dest + " " + nodename + " " + targetIP + " " + targetnodename + " " + gateway);
@@ -318,27 +345,19 @@ public class NetworkManager {
       return;
     }
     ArrayList<String[]> paths = getPairRoutes(gwdpid, targetdpid, gateway, bw);
-    ArrayList<String> dpids = new ArrayList<String>();
     for (String[] path : paths) {
       //Path [dpid,gateway,neighborip]
       Router router = getRouterByDPID(path[0]);
       if (path[2] != null) {
-        router.getNeighbors().get(path[2]).useBW(bw);
+        router.getNeighborLinks().get(path[2]).useBW(bw);
       }
-      String[] cmd = routingCMD(dest, targetIP, path[1], path[0], controller);
-      String res = HttpUtil.postJSON(cmd[0], new JSONObject(cmd[1]));
-      System.out.println(res);
-      if (res.contains("success")) {
-        int id = Integer.valueOf(res.split("route_id=")[1].split("]")[0]);
-        route_id.put(dest + targetIP + path[0], id);
-        dpids.add(path[0]);
-        cmd[cmd.length-1] = res;
-        addEntry_HashList(sdncmds, path[0], cmd);
+      if(addRoute(dest, targetIP, path[1], path[0], controller)){
+        continue;
       } else {
         //revoke all previous routes
         //TODO
+        break;
       }
-      //logger.debug(path[0]+" "+path[1]);
     }
   }
 
@@ -439,7 +458,7 @@ public class NetworkManager {
   private ArrayList<String[]> getPairRoutes(String srcdpid, String dstdpid, String gateway, long bw) {
     HashSet<String> knownrouters = new HashSet<String>();
     //path queue: [dpid, path]
-    //format of path:Arraylist([router_id,gateway])
+    //format of path:Arraylist([router_id,gateway, IP prefix of the gateway])
     ArrayList<String> queue = new ArrayList<String>();
     queue.add(srcdpid);
     knownrouters.add(srcdpid);
@@ -465,7 +484,7 @@ public class NetworkManager {
       start += 1;
       Router router = getRouterByDPID(rid);
       if (router != null) {
-        HashMap<String, Link> nbs = router.getNeighbors();
+        HashMap<String, Link> nbs = router.getNeighborLinks();
         //ArrayList<String> nips=getNeighborIPs(rid);
         for (String ip : nbs.keySet()) {
           //logger.debug("neighborIP: "+ip);
@@ -477,7 +496,7 @@ public class NetworkManager {
             knownrouters.add(pairrouter);
             end += 1;
             String[] path = new String[3];
-            path[0] = getPairRouter(ip);
+            path[0] = pairrouter;
             logger.debug(ip);
             String pairip = getPairIP(ip);
             path[1] = pairip.split("/")[0];
@@ -615,11 +634,20 @@ public class NetworkManager {
     return cmd;
   }
 
-  //TODO
-  private String[] del_routingCMD(String dpid, String routeid, String controller) {
+  private String[] delRoutingCMD(String dpid, String routeid, String controller) {
     //String cmd="curl -X POST -d {\"destination\":\""+dst+"\",\"source\":\""+src+"\",\"gateway\":\""+gw+"\"} "+controller+"/router/"+dpid;
     String[] cmd = new String[3];
     cmd[0] = "http://" + controller + "/router/" + dpid;
+    cmd[1]="{\"routeid\":\""+routeid+"\"}";
+    cmd[2] = "DELETE";
+    return cmd;
+  }
+
+  private String[] delAllRoutingCMD(String dpid, String controller) {
+    //String cmd="curl -X POST -d {\"destination\":\""+dst+"\",\"source\":\""+src+"\",\"gateway\":\""+gw+"\"} "+controller+"/router/"+dpid;
+    String[] cmd = new String[3];
+    cmd[0] = "http://" + controller + "/router/" + dpid;
+    cmd[1]="{\"routeid\":\"all\"}";
     cmd[2] = "DELETE";
     return cmd;
   }
