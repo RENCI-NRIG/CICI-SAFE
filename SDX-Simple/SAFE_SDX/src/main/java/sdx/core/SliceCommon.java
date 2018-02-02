@@ -187,6 +187,31 @@ public abstract class SliceCommon {
     }
   }
 
+  protected static void waitTillActive(Slice s, int interval) {
+    boolean sliceActive = false;
+    while (true) {
+      s.refresh();
+      sliceActive = true;
+      logger.debug("");
+      logger.debug("Slice: " + s.getAllResources());
+      for (ComputeNode c : s.getComputeNodes()) {
+        logger.debug("Resource: " + c.getName() + ", state: " + c.getState());
+        if (! c.getState().equals("Active") || c.getManagementIP() == null) sliceActive = false;
+      }
+      for (Network l : s.getBroadcastLinks()) {
+        logger.debug("Resource: " + l.getName() + ", state: " + l.getState());
+        if (! l.getState().equals("Active")) sliceActive = false;
+      }
+
+      if (sliceActive) break;
+      sleep(interval);
+    }
+    logger.debug("Done");
+    for (ComputeNode n : s.getComputeNodes()) {
+      logger.debug("ComputeNode: " + n.getName() + ", Managment IP =  " + n.getManagementIP());
+    }
+  }
+
   protected static void waitTillActive(Slice s, List<String> resources) {
     boolean sliceActive = false;
     while (true) {
@@ -251,7 +276,6 @@ public abstract class SliceCommon {
       e.printStackTrace();
     }
   }
-
 
   protected static Slice getSlice(ISliceTransportAPIv1 sliceProxy, String sliceName) {
     Slice s = null;
