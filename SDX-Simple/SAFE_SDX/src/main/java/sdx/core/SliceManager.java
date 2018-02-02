@@ -1,6 +1,8 @@
 package sdx.core;
 
 import java.util.ArrayList;
+import java.util.Date;
+import java.text.SimpleDateFormat;
 
 import org.apache.log4j.Logger;
 import org.apache.commons.cli.*;
@@ -158,11 +160,22 @@ public class SliceManager extends SliceCommon {
       }
     }
   }
-
   protected static void commitAndWait(Slice s) {
     try {
       s.commit();
       waitTillActive(s);
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+  }
+
+  protected static void commitAndWait(Slice s, int interval) {
+    try {
+      s.commit();
+      String timeStamp1 = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(new Date());
+      waitTillActive(s,interval);
+      String timeStamp2 = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(new Date());
+      System.out.println("Time interval: " + timeStamp1 + " " + timeStamp2);
     } catch (Exception e) {
       e.printStackTrace();
     }
@@ -270,7 +283,7 @@ public class SliceManager extends SliceCommon {
         nodeImageHash, nodeImageShortName, nodeNodeType, clientSites.get(i % clientSites.size()),
         nodePostBootScript);
       nodelist.add(node0);
-      if (BRO) {
+      if (BRO && i ==0) {
         addBro(s, "bro" + i, node0, curip++, bw);
       }
     }

@@ -400,6 +400,14 @@ public class NetworkManager {
     return res;
   }
 
+  private String[] delMirrorCMD(String routeId, String dpid, String controller){
+    String[] cmd = new String[3];
+    cmd[0]="http://"+controller+"/router/"+dpid;
+    cmd[1]="{\"mirror_id\":\""+routeId+"\"}";
+    cmd[2]="delete";
+    return cmd;
+  }
+
   private  String[] routingCMD(String dst,String gw, String dpid, String controller){
     //String cmd="curl -X POST -d {\"destination\":\""+dst+"\",\"gateway\":\""+gw+"\"} "+controller+"/router/"+dpid;
     String[] res=new String[3];
@@ -415,6 +423,14 @@ public class NetworkManager {
     cmd[0]="http://"+controller+"/router/"+dpid;
     cmd[1]="{\"destination\":\""+dst+"\",\"source\":\""+src+"\",\"gateway\":\""+gw+"\"}";
     cmd[2]="postJSON";
+    return cmd;
+  }
+
+  private String[] delRoutingCMD(String routeId, String dpid, String controller){
+    String[] cmd = new String[3];
+    cmd[0]="http://"+controller+"/router/"+dpid;
+    cmd[1]="{\"route_id\":\""+routeId+"\"}";
+    cmd[2]="delete";
     return cmd;
   }
 

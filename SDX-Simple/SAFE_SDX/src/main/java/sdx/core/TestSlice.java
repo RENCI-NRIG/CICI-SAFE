@@ -64,6 +64,7 @@ public class TestSlice extends SliceManager {
 
     if (type.equals("server")) {
       testBroSliceTwoPairs();
+      //testBroSliceChameleon();
       //testBroSliceExoGENI();
     } else if (type.equals("delete")) {
       Slice s2 = null;
@@ -239,7 +240,7 @@ public class TestSlice extends SliceManager {
       Slice carrier = createTestSliceWithBroAndChameleon(carrierName, routernum, bw);
       String resource_dir = conf.getString("config.resourcedir");
       //Slice carrier = createCarrierSliceWithCustomerNodes(carrierName, 4, 10, 1000000, 1);
-      commitAndWait(carrier);
+      commitAndWait(carrier,1);
       carrier.refresh();
       copyFile2Slice(carrier, scriptsdir + "dpid.sh", "~/dpid.sh", sshkey);
       copyFile2Slice(carrier, scriptsdir + "ovsbridge.sh", "~/ovsbridge.sh", sshkey);
@@ -359,6 +360,11 @@ public class TestSlice extends SliceManager {
     ifaceNode3.setIpAddress("192.168.40.2");
     ifaceNode3.setNetmask("255.255.255.0");
     net3.stitch(c3);
+    commitAndWait(s);
+    s = getSlice(sliceProxy, sliceName);
+    ComputeNode node = (ComputeNode) s.getResourceByName("c1");
+    addBro(s, "bro1", node, 120, bw);
+    commitAndWait(s, 1);
     return s;
   }
 
@@ -418,7 +424,6 @@ public class TestSlice extends SliceManager {
     Slice s = createCarrierSlice(sliceName, num, bw);
     //Now add two customer node to c0 and c3
     ComputeNode c0 = (ComputeNode) s.getResourceByName("c0");
-    ComputeNode c3 = (ComputeNode) s.getResourceByName("c" + (num - 1));
     ComputeNode cnode0 = s.addComputeNode("node0");
     cnode0.setImage(nodeImageURL, nodeImageHash, nodeImageShortName);
     cnode0.setNodeType(nodeNodeType);
@@ -430,15 +435,20 @@ public class TestSlice extends SliceManager {
     ifaceNode0.setIpAddress("192.168.10.2");
     ifaceNode0.setNetmask("255.255.255.0");
     net0.stitch(c0);
+    commitAndWait(s);
+    s = getSlice(sliceProxy,sliceName);
+    ComputeNode c3 = (ComputeNode) s.getResourceByName("c" + (num - 1));
     String ip = "10.32.90.106/24";
     String gateway = "10.32.90.105";
     String vlan = "3290";
     String stitchport = "http://geni-orca.renci.org/owl/ion.rdf#AL2S/Chameleon/Cisco/6509/GigabitEthernet/1/1";
     String stitchname = "sp-" + c3.getName() + "-" + ip.replace("/", "__").replace(".", "_")
       + '-' + gateway.split("\\.")[3];
+
     System.out.println("Stitching to Chameleon {" + "stitchname: " + stitchname + " vlan:" + vlan + " stithport: " + stitchport + "}");
     StitchPort mysp = s.addStitchPort(stitchname, vlan, stitchport, bw);
     mysp.stitch(c3);
+
     return s;
   }
 
