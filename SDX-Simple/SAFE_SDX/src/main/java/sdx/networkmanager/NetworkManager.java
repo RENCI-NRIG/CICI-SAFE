@@ -285,6 +285,37 @@ public class NetworkManager {
     return result;
   }
 
+
+  private boolean addRoute(String destIp, String srcIp, String gateWay, String dpid, String
+    controller){
+    String[] cmd = routingCMD(destIp, srcIp, gateWay, dpid, controller);
+    String res = HttpUtil.postJSON(cmd[0], new JSONObject(cmd[1]));
+    System.out.println(res);
+    if (res.contains("success")) {
+      int id = Integer.valueOf(res.split("route_id=")[1].split("]")[0]);
+      cmd[cmd.length-1] = res;
+      addEntry_HashList(sdncmds, dpid, cmd);
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  /*
+  private boolean deleteRoute(String dpid, String routeid, String controller) {
+    String[] cmd = delRoutingCMD(dpid, routeid, controller);
+    String res = HttpUtil.delete(cmd[0], cmd[1]);
+    System.out.println(res);
+    if (res.contains("success")) {
+      int id = Integer.valueOf(res.split("route_id=")[1].split("]")[0]);
+      cmd[cmd.length-1] = res;
+      addEntry_HashList(sdncmds, dpid, cmd);
+      return true;
+    } else {
+      return false;
+    }
+  }*/
+
   public void configurePath(String dest, String nodename, String gateway, String controller) {
     String gwdpid = getRouter(nodename).getDPID();
     if (gwdpid == null) {
@@ -434,7 +465,7 @@ public class NetworkManager {
   private ArrayList<String[]> getPairRoutes(String srcdpid, String dstdpid, String gateway, long bw) {
     HashSet<String> knownrouters = new HashSet<String>();
     //path queue: [dpid, path]
-    //format of path:Arraylist([router_id,gateway])
+    //format of path:Arraylist([router_id,gateway, IP prefix of the gateway])
     ArrayList<String> queue = new ArrayList<String>();
     queue.add(srcdpid);
     knownrouters.add(srcdpid);
@@ -472,7 +503,7 @@ public class NetworkManager {
             knownrouters.add(pairrouter);
             end += 1;
             String[] path = new String[3];
-            path[0] = getPairRouter(ip);
+            path[0] = pairrouter;
             logger.debug(ip);
             String pairip = getPairIP(ip);
             path[1] = pairip.split("/")[0];
@@ -588,6 +619,14 @@ public class NetworkManager {
     return res;
   }
 
+  private String[] delMirrorCMD(String routeId, String dpid, String controller){
+    String[] cmd = new String[3];
+    cmd[0]="http://"+controller+"/router/"+dpid;
+    cmd[1]="{\"mirror_id\":\""+routeId+"\"}";
+    cmd[2]="delete";
+    return cmd;
+  }
+
   private  String[] routingCMD(String dst,String gw, String dpid, String controller){
     //String cmd="curl -X POST -d {\"destination\":\""+dst+"\",\"gateway\":\""+gw+"\"} "+controller+"/router/"+dpid;
     String[] res = new String[3];
@@ -612,6 +651,14 @@ public class NetworkManager {
     String[] cmd = new String[3];
     cmd[0] = "http://" + controller + "/router/" + dpid;
     cmd[2] = "DELETE";
+    return cmd;
+  }
+
+  private String[] delRoutingCMD(String routeId, String dpid, String controller){
+    String[] cmd = new String[3];
+    cmd[0]="http://"+controller+"/router/"+dpid;
+    cmd[1]="{\"route_id\":\""+routeId+"\"}";
+    cmd[2]="delete";
     return cmd;
   }
 
