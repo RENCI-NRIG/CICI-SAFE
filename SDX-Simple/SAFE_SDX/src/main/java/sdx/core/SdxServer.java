@@ -42,11 +42,12 @@ public class SdxServer {
    */
   public static void main(String[] args) throws IOException {
     System.out.println("starting sdx server");
-    SdxManager.startSdxServer(args);
-    logger.debug("Starting on " + SdxManager.serverurl);
-    final HttpServer server = startServer(SdxManager.serverurl);
-    logger.debug("Sdx server has started, listening on " + SdxManager.serverurl);
-    System.out.println("Sdx server has started, listening on " + SdxManager.serverurl);
+    SdxManager sdxManager = new SdxManager();
+    sdxManager.startSdxServer(args);
+    logger.debug("Starting on " + sdxManager.serverurl);
+    final HttpServer server = startServer(sdxManager.serverurl);
+    logger.debug("Sdx server has started, listening on " + sdxManager.serverurl);
+    System.out.println("Sdx server has started, listening on " + sdxManager.serverurl);
   }
 }
 

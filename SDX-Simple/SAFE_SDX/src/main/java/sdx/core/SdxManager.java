@@ -93,23 +93,23 @@ public class SdxManager extends SliceCommon {
   public SdxManager() {
   }
 
-  final static Logger logger = Logger.getLogger(SdxManager.class);
+  final Logger logger = Logger.getLogger(SdxManager.class);
 
 
-  private static NetworkManager routingmanager = new NetworkManager();
-  private static String IPPrefix = "192.168.";
-  static int curip = 128;
-  private static String mask = "/24";
-  private static String SDNController;
-  private static Slice serverSlice = null;
-  private static String OVSController;
-  public static String serverurl;
-  private static HashSet<Integer> usedip = new HashSet<Integer>();
-  private static final ReentrantLock iplock=new ReentrantLock();
-  //private static String type;
-  private static ArrayList<String[]> advertisements = new ArrayList<String[]>();
+  private NetworkManager routingmanager = new NetworkManager();
+  private String IPPrefix = "192.168.";
+  int curip = 128;
+  private String mask = "/24";
+  private String SDNController;
+  private Slice serverSlice = null;
+  private String OVSController;
+  public String serverurl;
+  private HashSet<Integer> usedip = new HashSet<Integer>();
+  private final ReentrantLock iplock=new ReentrantLock();
+  //private String type;
+  private ArrayList<String[]> advertisements = new ArrayList<String[]>();
 
-  public static void replayCMD(String dpid){
+  public void replayCMD(String dpid){
     routingmanager.replayCmds(dpid);
   }
 
@@ -137,17 +137,17 @@ public class SdxManager extends SliceCommon {
     return res;
   }
 
-  public static String getDPID(String rname){
+  public String getDPID(String rname){
     return routingmanager.getDPID(rname);
   }
-  private static void computeIP(String prefix) {
+  private void computeIP(String prefix) {
     String[] ip_mask = prefix.split("/");
     String[] ip_segs = ip_mask[0].split("\\.");
     IPPrefix = ip_segs[0] + "." + ip_segs[1] + ".";
     curip = Integer.valueOf(ip_segs[2]);
   }
 
-  public static void startSdxServer(String[] args) {
+  public void startSdxServer(String[] args) {
 
     logger.debug("Carrier Slice server with Service API: START");
     CommandLine cmd = parseCmd(args);
@@ -202,15 +202,15 @@ public class SdxManager extends SliceCommon {
     configRouting1(serverSlice,OVSController,SDNController,"(c\\d+)","(sp-c\\d+.*)");
   }
 
-  public static void delFlows(){
+  public void delFlows(){
     runCmdSlice(serverSlice, "ovs-ofctl del-flows br0", sshkey, "(c\\d+)", true, true);
   }
 
-  public static void clear(){
+  public void clear(){
     advertisements.clear();
   }
 
-  public static String notifyPrefix(String dest, String gateway, String router, String customer_keyhash) {
+  public String notifyPrefix(String dest, String gateway, String router, String customer_keyhash) {
     logger.debug("received notification for ip prefix " + dest);
     String res = "received notification for " + dest;
     if (!safeauth || authorizePrefix(customer_keyhash, dest)) {
@@ -246,7 +246,7 @@ public class SdxManager extends SliceCommon {
     return res;
   }
 
-  private static boolean authorizePrefix(String cushash, String cusip) {
+  private boolean authorizePrefix(String cushash, String cusip) {
     String[] othervalues = new String[2];
     othervalues[0] = cushash;
     othervalues[1] = cusip;
@@ -258,7 +258,7 @@ public class SdxManager extends SliceCommon {
   }
 
 
-  private static boolean authorizeConnectivity(String srchash, String srcip, String dsthash, String dstip) {
+  private boolean authorizeConnectivity(String srchash, String srcip, String dsthash, String dstip) {
     String[] othervalues = new String[4];
     othervalues[0] = srchash;
     othervalues[1] = dsthash;
@@ -271,7 +271,7 @@ public class SdxManager extends SliceCommon {
       return true;
   }
 
-  public static String stitchChameleon(String carrierName, String nodeName, String customer_keyhash, String stitchport, String vlan, String gateway, String ip) {
+  public String stitchChameleon(String carrierName, String nodeName, String customer_keyhash, String stitchport, String vlan, String gateway, String ip) {
     String res = "Stitch request unauthorized";
     try {
       if (!safeauth || authorizeStitchChameleon(customer_keyhash, stitchport, vlan, gateway, carrierName, nodeName)) {
@@ -313,7 +313,7 @@ public class SdxManager extends SliceCommon {
     return res;
   }
 
-  public static String[] stitchRequest(String carrierName, String nodeName, String customer_slice, String customerName, String ResrvID, String secret) {
+  public String[] stitchRequest(String carrierName, String nodeName, String customer_slice, String customerName, String ResrvID, String secret) {
     logger.debug("new stitch request for" + carrierName + " and " + nodeName);
     System.out.println("new stitch request for" + carrierName + " and " + nodeName);
     String[] res = new String[2];
@@ -409,7 +409,7 @@ public class SdxManager extends SliceCommon {
     return res;
   }
 
-  public static void stitch(String carrierName, String RID, String customerName, String CID, String secret, String newip) {
+  public void stitch(String carrierName, String RID, String customerName, String CID, String secret, String newip) {
     logger.debug("ndllib TestDriver: START");
     //Main Example Code
     Long t1 = System.currentTimeMillis();
@@ -427,7 +427,7 @@ public class SdxManager extends SliceCommon {
     logger.debug("finished sending reconfiguration command");
   }
 
-  public static boolean authorizeStitchRequest(String customer_slice, String customerName, String ReservID, String keyhash, String slicename, String nodename) {
+  public boolean authorizeStitchRequest(String customer_slice, String customerName, String ReservID, String keyhash, String slicename, String nodename) {
     /** Post to remote safesets using apache httpclient */
     String[] othervalues = new String[5];
     othervalues[0] = customer_slice;
@@ -442,7 +442,7 @@ public class SdxManager extends SliceCommon {
       return true;
   }
 
-  public static boolean authorizeStitchChameleon(String customer_keyhash, String stitchport, String vlan, String gateway, String slicename, String nodename) {
+  public boolean authorizeStitchChameleon(String customer_keyhash, String stitchport, String vlan, String gateway, String slicename, String nodename) {
     /** Post to remote safesets using apache httpclient */
     String[] othervalues = new String[6];
     othervalues[0] = customer_keyhash;
@@ -460,7 +460,7 @@ public class SdxManager extends SliceCommon {
   }
 
 
-  private static void restartPlexus(String plexusip) {
+  private void restartPlexus(String plexusip) {
     logger.debug("Restarting Plexus Controller");
     System.out.println("Restarting Plexus Controller");
     if (checkPlexus(plexusip)) {
@@ -478,11 +478,11 @@ public class SdxManager extends SliceCommon {
     }
   }
 
-  public static void restartPlexus() {
+  public void restartPlexus() {
     restartPlexus(SDNControllerIP);
   }
 
-  private static boolean checkPlexus(String SDNControllerIP) {
+  private boolean checkPlexus(String SDNControllerIP) {
     String result = Exec.sshExec("root", SDNControllerIP, "docker ps", sshkey);
     if (result.contains("plexus")) {
       logger.debug("plexus controller has started");
@@ -517,7 +517,7 @@ public class SdxManager extends SliceCommon {
    * brolink:
    */
 
-  public static void loadSdxNetwork(Slice s, String routerpattern, String stitchportpattern){
+  public void loadSdxNetwork(Slice s, String routerpattern, String stitchportpattern){
     logger.debug("Loading Sdx Network Topology");
     try{
       Pattern pattern = Pattern.compile(routerpattern);
@@ -593,7 +593,7 @@ public class SdxManager extends SliceCommon {
     }
   }
 
-  private static void configRouter(ComputeNode node){
+  private void configRouter(ComputeNode node){
 
     String mip = node.getManagementIP();
     logger.debug(node.getName() + " " + mip);
@@ -610,7 +610,7 @@ public class SdxManager extends SliceCommon {
     routingmanager.newRouter(node.getName(), result[1], Integer.valueOf(result[0]), mip);
   }
 
-  public static void waitTillAllOvsConnected(){
+  public void waitTillAllOvsConnected(){
     logger.debug("Wait until all ovs bridges have connected to SDN controller");
     ArrayList<Thread> tlist = new ArrayList<Thread>();
     for (String k : computenodes.keySet()) {
@@ -654,11 +654,11 @@ public class SdxManager extends SliceCommon {
     }
   }
 
-  public static  String setMirror(String controller, String dpid, String source, String dst, String gw) {
+  public  String setMirror(String controller, String dpid, String source, String dst, String gw) {
     return routingmanager.setMirror(controller, dpid, source, dst, gw);
   }
 
-  public static void configRouting1(Slice s,String ovscontroller, String httpcontroller, String routerpattern,String stitchportpattern) {
+  public void configRouting1(Slice s,String ovscontroller, String httpcontroller, String routerpattern,String stitchportpattern) {
     logger.debug("Configurating Routing");
     restartPlexus(SDNControllerIP);
     // run ovsbridge scritps to add the all interfaces to the ovsbridge br0, if new interface is added to the ovs bridge, then we reset the controller?
@@ -736,7 +736,7 @@ public class SdxManager extends SliceCommon {
     //routingmanager.setOvsdbAddr(httpcontroller);
   }
 
-  public static void undoStitch(String carrierName, String customerName, String netName, String nodeName) {
+  public void undoStitch(String carrierName, String customerName, String netName, String nodeName) {
     logger.debug("ndllib TestDriver: START");
 
     //Main Example Code
@@ -778,7 +778,7 @@ public class SdxManager extends SliceCommon {
     logger.debug("Finished UnStitching, time elapsed: " + String.valueOf(t2 - t1) + "\n");
   }
 
-  public static void printSlice(){
+  public void printSlice(){
     Slice s = getSlice(sliceProxy, sliceName);
     printSliceInfo(s);
   }

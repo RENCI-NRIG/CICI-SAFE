@@ -67,38 +67,38 @@ import com.jcraft.jsch.SftpException;
 
 
 public abstract class SliceCommon {
-  final static Logger logger = Logger.getLogger(SliceCommon.class);
+  final Logger logger = Logger.getLogger(SliceCommon.class);
 
 
-  protected static final String RequestResource = null;
-  protected static String controllerUrl;
-  protected static String SDNControllerIP;
-  protected static String sliceName;
-  protected static String pemLocation;
-  protected static String keyLocation;
-  protected static String sshkey;
-  protected static ISliceTransportAPIv1 sliceProxy;
-  protected static SliceAccessContext<SSHAccessToken> sctx;
-  protected static String safeserver;
-  protected static String keyhash;
-  protected static String type;
-  protected static Config conf;
-  protected static ArrayList<String> clientSites;
-  protected static String controllerSite;
-  protected static String serverSite;
-  protected static boolean safeauth = false;
-  protected static HashMap<String, Link> links = new HashMap<String, Link>();
-  protected static HashMap<String, ArrayList<String>>computenodes=new HashMap<String,ArrayList<String>>();
-  protected static ArrayList<StitchPort>stitchports=new ArrayList<>();
+  protected final String RequestResource = null;
+  protected String controllerUrl;
+  protected String SDNControllerIP;
+  protected String sliceName;
+  protected String pemLocation;
+  protected String keyLocation;
+  protected String sshkey;
+  protected ISliceTransportAPIv1 sliceProxy;
+  protected SliceAccessContext<SSHAccessToken> sctx;
+  protected String safeserver;
+  protected String keyhash;
+  protected String type;
+  protected Config conf;
+  protected ArrayList<String> clientSites;
+  protected String controllerSite;
+  protected String serverSite;
+  protected boolean safeauth = false;
+  protected HashMap<String, Link> links = new HashMap<String, Link>();
+  protected HashMap<String, ArrayList<String>>computenodes=new HashMap<String,ArrayList<String>>();
+  protected ArrayList<StitchPort>stitchports=new ArrayList<>();
 
 
   public SliceCommon() {
   }
 
-  public static  String getSDNControllerIP(){
+  public  String getSDNControllerIP(){
     return SDNControllerIP;
   }
-  protected static CommandLine parseCmd(String[] args) {
+  protected CommandLine parseCmd(String[] args) {
     Options options = new Options();
     Option config = new Option("c", "config", true, "configuration file path");
     Option config1 = new Option("d", "delete", false, "delete the slice");
@@ -125,7 +125,7 @@ public abstract class SliceCommon {
     return cmd;
   }
 
-  protected static void readConfig(String configfilepath) {
+  protected void readConfig(String configfilepath) {
 
     File myConfigFile = new File(configfilepath);
     Config fileConfig = ConfigFactory.parseFile(myConfigFile);
@@ -158,7 +158,7 @@ public abstract class SliceCommon {
     }
   }
 
-  protected static void waitTillActive(Slice s) {
+  protected void waitTillActive(Slice s) {
     boolean sliceActive = false;
     while (true) {
       s.refresh();
@@ -183,7 +183,7 @@ public abstract class SliceCommon {
     }
   }
 
-  protected static void waitTillActive(Slice s, int interval) {
+  protected void waitTillActive(Slice s, int interval) {
     boolean sliceActive = false;
     while (true) {
       s.refresh();
@@ -208,7 +208,7 @@ public abstract class SliceCommon {
     }
   }
 
-  protected static Slice getSlice(ISliceTransportAPIv1 sliceProxy, String sliceName) {
+  protected Slice getSlice(ISliceTransportAPIv1 sliceProxy, String sliceName) {
     Slice s = null;
     try {
       s = Slice.loadManifestFile(sliceProxy, sliceName);
@@ -222,7 +222,7 @@ public abstract class SliceCommon {
     return s;
   }
 
-  protected static void sleep(int sec) {
+  protected void sleep(int sec) {
     try {
       Thread.sleep(sec * 1000);                 //1000 milliseconds is one second.
     } catch (InterruptedException ex) {
@@ -230,7 +230,7 @@ public abstract class SliceCommon {
     }
   }
 
-  protected static void copyFile2Slice(Slice s, String lfile, String rfile, String privkey) {
+  protected void copyFile2Slice(Slice s, String lfile, String rfile, String privkey) {
     ArrayList<Thread> tlist = new ArrayList<Thread>();
     for (ComputeNode c : s.getComputeNodes()) {
       String mip = c.getManagementIP();
@@ -263,7 +263,7 @@ public abstract class SliceCommon {
   }
 
 
-  protected static void copyFile2Slice(Slice s, String lfile, String rfile, String privkey,
+  protected void copyFile2Slice(Slice s, String lfile, String rfile, String privkey,
                                        String patn) {
     Pattern pattern = Pattern.compile(patn);
     ArrayList<Thread> tlist = new ArrayList<Thread>();
@@ -301,7 +301,7 @@ public abstract class SliceCommon {
     }
   }
 
-  protected static void runCmdSlice(Slice s, String cmd, String privkey, boolean repeat) {
+  protected void runCmdSlice(Slice s, String cmd, String privkey, boolean repeat) {
     for (ComputeNode c : s.getComputeNodes()) {
       String mip = c.getManagementIP();
       try {
@@ -319,7 +319,7 @@ public abstract class SliceCommon {
     }
   }
 
-  protected static void runCmdSlice(Slice s, String cmd, String privkey, String patn, boolean repeat) {
+  protected void runCmdSlice(Slice s, String cmd, String privkey, String patn, boolean repeat) {
     Pattern pattern = Pattern.compile(patn);
     for (ComputeNode c : s.getComputeNodes()) {
       Matcher matcher = pattern.matcher(c.getName());
@@ -341,7 +341,7 @@ public abstract class SliceCommon {
     }
   }
 
-  protected static void runCmdSlice(Slice s, final String cmd, final String privkey,
+  protected void runCmdSlice(Slice s, final String cmd, final String privkey,
                                     final boolean repeat, final boolean parallel) {
     if (parallel) {
       ArrayList<Thread> tlist = new ArrayList<Thread>();
@@ -384,7 +384,7 @@ public abstract class SliceCommon {
     }
   }
 
-  protected static void runCmdSlice(Slice s, final String cmd, final String privkey, String p, final boolean repeat, final boolean parallel) {
+  protected void runCmdSlice(Slice s, final String cmd, final String privkey, String p, final boolean repeat, final boolean parallel) {
     Pattern pattern = Pattern.compile(p);
     if (parallel) {
       ArrayList<Thread> tlist = new ArrayList<Thread>();
@@ -431,7 +431,7 @@ public abstract class SliceCommon {
   }
 
 
-  protected static ISliceTransportAPIv1 getSliceProxy(String pem, String key, String controllerUrl) {
+  protected ISliceTransportAPIv1 getSliceProxy(String pem, String key, String controllerUrl) {
     ISliceTransportAPIv1 sliceProxy = null;
     try {
       //ExoGENI controller context
@@ -449,7 +449,7 @@ public abstract class SliceCommon {
     return sliceProxy;
   }
 
-  protected static void getNetworkInfo(Slice s) {
+  protected void getNetworkInfo(Slice s) {
     //getLinks
     for (Network n : s.getLinks()) {
       logger.debug(n.getLabel() + " " + n.getState());
@@ -470,7 +470,7 @@ public abstract class SliceCommon {
     }
   }
 
-  protected static void printSliceInfo(Slice s) {
+  protected void printSliceInfo(Slice s) {
     for (Network n : s.getLinks()) {
       System.out.println(n.getLabel() + " " + n.getState());
     }
@@ -490,7 +490,7 @@ public abstract class SliceCommon {
     }
   }
 
-//	protected static final ArrayList<String> domains;
+//	protected final ArrayList<String> domains;
 //	static {
 //		ArrayList<String> l = new ArrayList<String>();
 //

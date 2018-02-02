@@ -24,19 +24,19 @@ import sdx.networkmanager.Link;
  * @author geni-orca
  */
 public class SliceManager extends SliceCommon {
-  final static Logger logger = Logger.getLogger(SliceManager.class);
+  final Logger logger = Logger.getLogger(SliceManager.class);
 
   public SliceManager() {
   }
 
-  protected static int curip = 128;
-  protected static String IPPrefix = "192.168.";
-  protected static String mask = "/24";
-  protected static String riakip = "152.3.145.36";
-  protected static boolean BRO = false;
-  //private static String type;
+  protected int curip = 128;
+  protected String IPPrefix = "192.168.";
+  protected String mask = "/24";
+  protected String riakip = "152.3.145.36";
+  protected boolean BRO = false;
+  //private String type;
 
-  protected static void computeIP(String prefix) {
+  protected void computeIP(String prefix) {
     logger.debug(prefix);
     String[] ip_mask = prefix.split("/");
     String[] ip_segs = ip_mask[0].split("\\.");
@@ -44,7 +44,7 @@ public class SliceManager extends SliceCommon {
     curip = Integer.valueOf(ip_segs[2]);
   }
 
-  public static void main(String[] args) {
+  public void run(String[] args) {
     System.out.println("SDX-Simple " + args[0]);
 
     CommandLine cmd = parseCmd(args);
@@ -69,7 +69,7 @@ public class SliceManager extends SliceCommon {
       type = "delete";
     }
 
-    sliceProxy = SliceManager.getSliceProxy(pemLocation, keyLocation, controllerUrl);
+    sliceProxy = getSliceProxy(pemLocation, keyLocation, controllerUrl);
 
     //SSH context
     sctx = new SliceAccessContext<>();
@@ -132,7 +132,7 @@ public class SliceManager extends SliceCommon {
     logger.debug("XXXXXXXXXX Done XXXXXXXXXXXXXX");
   }
 
-  public static void configBroNodes(Slice carrier) {
+  public void configBroNodes(Slice carrier) {
     // Bro uses 'eth1"
     runCmdSlice(carrier, "sed -i 's/eth0/eth1/' /opt/bro/etc/node.cfg", sshkey, "(bro\\d+)" +
       "", true, true);
@@ -160,7 +160,7 @@ public class SliceManager extends SliceCommon {
       }
     }
   }
-  protected static void commitAndWait(Slice s) {
+  protected void commitAndWait(Slice s) {
     try {
       s.commit();
       waitTillActive(s);
@@ -169,7 +169,7 @@ public class SliceManager extends SliceCommon {
     }
   }
 
-  protected static void commitAndWait(Slice s, int interval) {
+  protected void commitAndWait(Slice s, int interval) {
     try {
       s.commit();
       String timeStamp1 = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(new Date());
@@ -181,7 +181,7 @@ public class SliceManager extends SliceCommon {
     }
   }
 
-  protected static boolean checkSafeServer(String SDNControllerIP) {
+  protected boolean checkSafeServer(String SDNControllerIP) {
     String result = Exec.sshExec("root", SDNControllerIP, "docker ps", sshkey);
     if (result.contains("safe")) {
       logger.debug("safe server has started");
@@ -202,7 +202,7 @@ public class SliceManager extends SliceCommon {
     return true;
   }
 
-  protected static boolean checkPlexus(String SDNControllerIP) {
+  protected boolean checkPlexus(String SDNControllerIP) {
     String result = Exec.sshExec("root", SDNControllerIP, "docker ps", sshkey);
     if (result.contains("plexus")) {
       logger.debug("plexus controller has started");
@@ -232,7 +232,7 @@ public class SliceManager extends SliceCommon {
   }
 
   //We always add the bro when we add the edge router
-  protected static ComputeNode addBro(Slice s, String broname, ComputeNode edgerouter, int ip_to_use, long bw) {
+  protected ComputeNode addBro(Slice s, String broname, ComputeNode edgerouter, int ip_to_use, long bw) {
     String broN = "Centos 7.4 Bro";
     String broURL =
       "http://geni-images.renci.org/images/standard/centos/centos7.4-bro-v1.0.4/centos7.4-bro-v1.0.4.xml";
@@ -255,7 +255,7 @@ public class SliceManager extends SliceCommon {
     return bro;
   }
 
-  public static Slice createCarrierSlice(String sliceName, int num, long bw) {
+  public Slice createCarrierSlice(String sliceName, int num, long bw) {
     //,String stitchsubnet="", String slicesubnet="")
     logger.debug("ndllib TestDriver: START");
 
@@ -300,7 +300,7 @@ public class SliceManager extends SliceCommon {
     return s;
   }
 
-  private  static ComputeNode addComputeNode(Slice s, String name, String nodeImageURL, String
+  private  ComputeNode addComputeNode(Slice s, String name, String nodeImageURL, String
     nodeImageHash, String nodeImageShortName, String nodeNodeType, String site, String
     nodePostBootScript){
     ComputeNode node0 = s.addComputeNode(name);
@@ -311,7 +311,7 @@ public class SliceManager extends SliceCommon {
     return node0;
   }
 
-  private static Link addLink(Slice s, String linkname, ComputeNode node0, ComputeNode node1,
+  private Link addLink(Slice s, String linkname, ComputeNode node0, ComputeNode node1,
                               Long bw){
     Network net2 = s.addBroadcastLink(linkname, bw);
     InterfaceNode2Net ifaceNode1 = (InterfaceNode2Net) net2.stitch(node0);
@@ -324,7 +324,7 @@ public class SliceManager extends SliceCommon {
   }
 
 
-  protected static void addSafeServer(Slice s, String rip) {
+  protected void addSafeServer(Slice s, String rip) {
     String dockerImageShortName = "Ubuntu 14.04 Docker";
     String dockerImageURL =
       "http://geni-images.renci.org/images/standard/docker/ubuntu-14.0.4/ubuntu-14.0.4-docker.xml";
@@ -338,7 +338,7 @@ public class SliceManager extends SliceCommon {
     node0.setPostBootScript(getSafeScript(rip));
   }
 
-  protected static void addPlexusController(Slice s) {
+  protected void addPlexusController(Slice s) {
     String dockerImageShortName = "Ubuntu 14.04 Docker";
     String dockerImageURL =
       "http://geni-images.renci.org/images/standard/docker/ubuntu-14.0.4/ubuntu-14.0.4-docker.xml";
@@ -352,13 +352,13 @@ public class SliceManager extends SliceCommon {
     node0.setPostBootScript(getPlexusScript());
   }
 
-  protected static String getOVSScript(String cip) {
+  protected String getOVSScript(String cip) {
     String script = "apt-get update\n" +
       "apt-get -y install openvswitch-switch\n apt-get -y install iperf\n /etc/init.d/neuca stop\n";
     return script;
   }
 
-  protected static String getSafeScript(String riakip) {
+  protected String getSafeScript(String riakip) {
     String script = "apt-get update\n"
       + "docker pull yaoyj11/safeserver\n"
       + "docker run -i -t -d -p 7777:7777 -h safe --name safe yaoyj11/safeserver\n"
@@ -368,12 +368,12 @@ public class SliceManager extends SliceCommon {
     return script;
   }
 
-  protected static String getRiakScript() {
+  protected String getRiakScript() {
     String script = "docker pull yaoyj11/riakimg\n";
     return script;
   }
 
-  protected static String getPlexusScript() {
+  protected String getPlexusScript() {
     String script = "apt-get update\n"
       + "docker pull yaoyj11/plexus\n"
       + "docker run -i -t -d -p 8080:8080 -p 6633:6633 -p 3000:3000 -h plexus --name plexus yaoyj11/plexus\n";
@@ -381,7 +381,7 @@ public class SliceManager extends SliceCommon {
     return script;
   }
 
-  protected static String getCustomerScript() {
+  protected String getCustomerScript() {
     String nodePostBootScript="apt-get update;apt-get -y install quagga\n"
       +"sed -i -- 's/zebra=no/zebra=yes/g' /etc/quagga/daemons\n"
       +"sed -i -- 's/ospfd=no/ospfd=yes/g' /etc/quagga/daemons\n"
