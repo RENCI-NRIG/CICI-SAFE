@@ -6,7 +6,6 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
 
 import org.apache.log4j.Logger;
 
@@ -69,7 +68,7 @@ public class RestService {
     logger.debug("got link request between "+sr.site1+" and "+sr.site2);
     System.out.println("got link request between "+sr.site1+" and "+sr.site2);
     try {
-      String res = SdxManager.connectionRequest(sr.site1,sr.site2);
+      String res = SdxServer.sdxManager.connectionRequest(sr.site1,sr.site2);
       return res;
     }catch (Exception e){
       e.printStackTrace();
@@ -84,7 +83,9 @@ public class RestService {
     public String stitchRequest(StitchChameleon sr){
       logger.debug("got chameleon stitch request: \n"+sr.toString());
       System.out.println(String.format("got chameleon stitch request from %s", sr.ckeyhash));
-      String res=SdxManager.stitchChameleon(sr.sdxslice, sr.sdxnode, sr.ckeyhash, sr.stitchport, sr.vlan,sr.gateway, sr.ip);
+      String res=SdxServer.sdxManager.stitchChameleon(sr.sdxslice, sr.sdxnode, sr.ckeyhash, sr
+          .stitchport,
+        sr.vlan,sr.gateway, sr.ip);
       //return new StitchResult("ha","ha");
       return res;
     }
@@ -95,7 +96,7 @@ public class RestService {
     @Produces(MediaType.TEXT_PLAIN)
     public String stitchRequest(PrefixNotification pn){
       logger.debug("got notifyprefix");
-      String res=SdxManager.notifyPrefix(pn.dest, pn.gateway,  pn.customer);
+      String res=SdxServer.sdxManager.notifyPrefix(pn.dest, pn.gateway,  pn.customer);
       logger.debug(res);
       System.out.println(res);
       return res;
