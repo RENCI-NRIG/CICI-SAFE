@@ -16,6 +16,7 @@ import java.net.URI;
  */
 public class SdxServer {
   final static Logger logger = Logger.getLogger(SdxServer.class);
+  public static SdxManager sdxManager = new SdxManager();
 
 
   // Base URI the Grizzly HTTP server will listen on
@@ -42,7 +43,15 @@ public class SdxServer {
    */
   public static void main(String[] args) throws IOException {
     System.out.println("starting sdx server");
-    SdxManager sdxManager = new SdxManager();
+    sdxManager.startSdxServer(args);
+    logger.debug("Starting on " + sdxManager.serverurl);
+    final HttpServer server = startServer(sdxManager.serverurl);
+    logger.debug("Sdx server has started, listening on " + sdxManager.serverurl);
+    System.out.println("Sdx server has started, listening on " + sdxManager.serverurl);
+  }
+
+  public static void run(String[] args) throws IOException {
+    System.out.println("starting sdx server");
     sdxManager.startSdxServer(args);
     logger.debug("Starting on " + sdxManager.serverurl);
     final HttpServer server = startServer(sdxManager.serverurl);
