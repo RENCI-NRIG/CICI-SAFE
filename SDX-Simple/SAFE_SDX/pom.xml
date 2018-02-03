@@ -54,15 +54,15 @@
 							<name>SafeSdxServer</name>
 						</program>
 						<program>
-							<mainClass>sdx.core.SliceManager</mainClass>
+							<mainClass>sdx.core.SliceServer</mainClass>
 							<name>SafeSdxExample</name>
 						</program>
 						<program>
-							<mainClass>sdx.Test</mainClass>
+							<mainClass>sdx.RunTest</mainClass>
 							<name>SafeSdxTest</name>
 						</program>
 						<program>
-							<mainClass>sdx.core.TestSlice</mainClass>
+							<mainClass>sdx.core.CreateTestSlice</mainClass>
 							<name>SafeSdxTestSlice</name>
 						</program>
 						<program>

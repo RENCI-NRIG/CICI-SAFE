@@ -19,13 +19,13 @@ import org.renci.ahab.libtransport.xmlrpc.XMLRPCTransportException;
 import sdx.utils.Exec;
 
 public class TestSlice extends SliceManager {
-  final static Logger logger = Logger.getLogger(Exec.class);
+  final Logger logger = Logger.getLogger(Exec.class);
 
   public TestSlice() {
   }
 
 
-  public static void main(String[] args) {
+  public void run(String[] args) {
 
     //TestSlice usage:   ./target/appassembler/bin/SafeSdxTestSlice  ~/.ssl/geni-pruth1.pem ~/.ssl/geni-pruth1.pem "https://geni.renci.org:11443/orca/xmlrpc" pruth.1 stitch
     //TestSlice usage:   ./target/appassembler/bin/SafeSdxTestSlice  ~/.ssl/geni-pruth1.pem ~/.ssl/geni-pruth1.pem "https://geni.renci.org:11443/orca/xmlrpc" name fournodes
@@ -47,7 +47,7 @@ public class TestSlice extends SliceManager {
       type = "delete";
     }
 
-    sliceProxy = TestSlice.getSliceProxy(pemLocation, keyLocation, controllerUrl);
+    sliceProxy = getSliceProxy(pemLocation, keyLocation, controllerUrl);
 
     //SSH context
     sctx = new SliceAccessContext<>();
@@ -80,7 +80,7 @@ public class TestSlice extends SliceManager {
     logger.debug("XXXXXXXXXX Done XXXXXXXXXXXXXX");
   }
 
-  public static void testBroSliceTwoPairs(){
+  public void testBroSliceTwoPairs(){
     IPPrefix = conf.getString("config.ipprefix");
     riakip = conf.getString("config.riakserver");
     BRO = conf.getBoolean("config.bro");
@@ -154,7 +154,7 @@ public class TestSlice extends SliceManager {
     }
   }
 
-  public static void testBroSliceExoGENI(){
+  public void testBroSliceExoGENI(){
     IPPrefix = conf.getString("config.ipprefix");
     riakip = conf.getString("config.riakserver");
     BRO = conf.getBoolean("config.bro");
@@ -179,7 +179,7 @@ public class TestSlice extends SliceManager {
       ////if (!checkPlexus(SDNControllerIP)) {
       ////  System.exit(-1);
       ////}
-      Slice carrier = SliceManager.getSlice(sliceProxy,carrierName);
+      Slice carrier = getSlice(sliceProxy,carrierName);
       SDNControllerIP = ((ComputeNode) carrier.getResourceByName("plexuscontroller")).getManagementIP();
       System.out.println("Plexus Controler IP: " + SDNControllerIP);
       runCmdSlice(carrier, "/bin/bash ~/ovsbridge.sh " + SDNControllerIP + ":6633", sshkey, "(c\\d+)", true, true);
@@ -224,7 +224,7 @@ public class TestSlice extends SliceManager {
     }
   }
 
-  public static void testSliceDynamicLinks(){
+  public  void testSliceDynamicLinks(){
     IPPrefix = conf.getString("config.ipprefix");
     riakip = conf.getString("config.riakserver");
     BRO = conf.getBoolean("config.bro");
@@ -276,7 +276,7 @@ public class TestSlice extends SliceManager {
     }
   }
 
-  public static void testBroSliceChameleon(){
+  public void testBroSliceChameleon(){
     IPPrefix = conf.getString("config.ipprefix");
     riakip = conf.getString("config.riakserver");
     BRO = conf.getBoolean("config.bro");
@@ -345,7 +345,7 @@ public class TestSlice extends SliceManager {
     }
   }
 
-  public static Slice createTestSliceWithTwoPairs(String sliceName, int num, long bw) {
+  public Slice createTestSliceWithTwoPairs(String sliceName, int num, long bw) {
     String nodeImageShortName = "Ubuntu 14.04";
     String nodeImageURL = "http://geni-orca.renci.org/owl/9dfe179d-3736-41bf-8084-f0cd4a520c2f#Ubuntu+14.04";//http://geni-images.renci.org/images/standard/ubuntu/ub1304-ovs-opendaylight-v1.0.0.xml
     String nodeImageHash = "9394ca154aa35eb55e604503ae7943ddaecc6ca5";
@@ -420,7 +420,7 @@ public class TestSlice extends SliceManager {
     return s;
   }
 
-  public static Slice createTestSliceWithDynamicLinks(String sliceName, int num, long bw) {
+  public Slice createTestSliceWithDynamicLinks(String sliceName, int num, long bw) {
     String nodeImageShortName = "Ubuntu 14.04";
     String nodeImageURL = "http://geni-orca.renci.org/owl/9dfe179d-3736-41bf-8084-f0cd4a520c2f#Ubuntu+14.04";//http://geni-images.renci.org/images/standard/ubuntu/ub1304-ovs-opendaylight-v1.0.0.xml
     String nodeImageHash = "9394ca154aa35eb55e604503ae7943ddaecc6ca5";
@@ -470,7 +470,7 @@ public class TestSlice extends SliceManager {
     return s;
   }
 
-  public static Slice createTestSliceWithBroAndCNode(String sliceName, int num, long bw) {
+  public Slice createTestSliceWithBroAndCNode(String sliceName, int num, long bw) {
     String nodeImageShortName = "Ubuntu 14.04";
     String nodeImageURL = "http://geni-orca.renci.org/owl/9dfe179d-3736-41bf-8084-f0cd4a520c2f#Ubuntu+14.04";//http://geni-images.renci.org/images/standard/ubuntu/ub1304-ovs-opendaylight-v1.0.0.xml
     String nodeImageHash = "9394ca154aa35eb55e604503ae7943ddaecc6ca5";
@@ -518,7 +518,7 @@ public class TestSlice extends SliceManager {
     return s;
   }
 
-  public static Slice createTestSliceWithBroAndChameleon(String sliceName, int num, long bw) {
+  public Slice createTestSliceWithBroAndChameleon(String sliceName, int num, long bw) {
     String nodeImageShortName = "Ubuntu 14.04";
     String nodeImageURL = "http://geni-orca.renci.org/owl/9dfe179d-3736-41bf-8084-f0cd4a520c2f#Ubuntu+14.04";//http://geni-images.renci.org/images/standard/ubuntu/ub1304-ovs-opendaylight-v1.0.0.xml
     String nodeImageHash = "9394ca154aa35eb55e604503ae7943ddaecc6ca5";
@@ -554,7 +554,7 @@ public class TestSlice extends SliceManager {
     return s;
   }
 
-  public static Slice createCarrierSliceWithCustomerNodes(String sliceName, int num, int start,
+  public Slice createCarrierSliceWithCustomerNodes(String sliceName, int num, int start,
                                                           long bw, int numstitches) {//,String stitchsubnet="", String slicesubnet="")
     logger.debug("ndllib TestDriver: START");
 

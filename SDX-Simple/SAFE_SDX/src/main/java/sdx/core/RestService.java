@@ -6,7 +6,6 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
 
 import org.apache.log4j.Logger;
 
@@ -53,7 +52,9 @@ public class RestService {
     public StitchResult stitchRequest(StitchRequest sr){
       logger.debug("got sittch request");
       try {
-        String[] res = SdxManager.stitchRequest(sr.sdxslice, sr.sdxsite, sr.ckeyhash, sr.cslice, sr.creservid, sr.secret,sr.sdxnode);
+        String[] res = SdxServer.sdxManager.stitchRequest(sr.sdxslice, sr.sdxsite, sr.ckeyhash, sr
+            .cslice,
+          sr.creservid, sr.secret,sr.sdxnode);
         return new StitchResult(res[0], res[1]);
       }catch (Exception e){
         e.printStackTrace();
@@ -69,7 +70,9 @@ public class RestService {
     logger.debug("got link request between "+sr.self_prefix+" and "+sr.target_prefix);
     System.out.println("got link request between "+sr.self_prefix+" and "+sr.target_prefix);
     try {
-      String res = SdxManager.connectionRequest(sr.ckeyhash,sr.self_prefix,sr.target_prefix,sr.bandwidth);
+      String res = SdxServer.sdxManager.connectionRequest(sr.ckeyhash,sr.self_prefix,sr
+        .target_prefix,sr
+        .bandwidth);
       return res;
     }catch (Exception e){
       e.printStackTrace();
@@ -84,7 +87,9 @@ public class RestService {
     public String stitchRequest(StitchChameleon sr){
       logger.debug("got chameleon stitch request: \n"+sr.toString());
       System.out.println(String.format("got chameleon stitch request from %s", sr.ckeyhash));
-      String res=SdxManager.stitchChameleon(sr.sdxslice, sr.sdxnode, sr.ckeyhash, sr.stitchport, sr.vlan,sr.gateway, sr.ip);
+      String res=SdxServer.sdxManager.stitchChameleon(sr.sdxslice, sr.sdxnode, sr.ckeyhash, sr
+          .stitchport,
+        sr.vlan,sr.gateway, sr.ip);
       //return new StitchResult("ha","ha");
       return res;
     }
@@ -95,7 +100,7 @@ public class RestService {
     @Produces(MediaType.TEXT_PLAIN)
     public String stitchRequest(PrefixNotification pn){
       logger.debug("got notifyprefix");
-      String res=SdxManager.notifyPrefix(pn.dest, pn.gateway,  pn.customer);
+      String res=SdxServer.sdxManager.notifyPrefix(pn.dest, pn.gateway,  pn.customer);
       logger.debug(res);
       System.out.println(res);
       return res;
