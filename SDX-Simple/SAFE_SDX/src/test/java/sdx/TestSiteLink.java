@@ -66,7 +66,7 @@ import sdx.utils.Exec;
 import java.net.URI;
 public class TestSiteLink extends SliceCommon{
   final static Logger logger = Logger.getLogger(Exec.class);
-  public static void main(String[] args) {
+  public  void run(String[] args) {
 
     //TestSlice usage:   ./target/appassembler/bin/SafeSdxTestSlice  ~/.ssl/geni-pruth1.pem ~/.ssl/geni-pruth1.pem "https://geni.renci.org:11443/orca/xmlrpc" pruth.1 stitch
     //TestSlice usage:   ./target/appassembler/bin/SafeSdxTestSlice  ~/.ssl/geni-pruth1.pem ~/.ssl/geni-pruth1.pem "https://geni.renci.org:11443/orca/xmlrpc" name fournodes
@@ -91,8 +91,8 @@ public class TestSiteLink extends SliceCommon{
     testLinkAddition();
   }
 
-  private static void testLinkAddition(){
-    sliceProxy = TestSlice.getSliceProxy(pemLocation, keyLocation, controllerUrl);
+  private  void testLinkAddition(){
+    sliceProxy = getSliceProxy(pemLocation, keyLocation, controllerUrl);
 
     //SSH context
     sctx = new SliceAccessContext<>();
@@ -178,8 +178,8 @@ public class TestSiteLink extends SliceCommon{
   }
 
 
-  private static void testLinkDelete(){
-    sliceProxy = TestSlice.getSliceProxy(pemLocation, keyLocation, controllerUrl);
+  private  void testLinkDelete(){
+    sliceProxy = getSliceProxy(pemLocation, keyLocation, controllerUrl);
 
     //SSH context
     sctx = new SliceAccessContext<>();
@@ -277,9 +277,9 @@ public class TestSiteLink extends SliceCommon{
 
   }
 
-  private static void testSiteLink(){
+  private  void testSiteLink(){
 
-    sliceProxy = TestSlice.getSliceProxy(pemLocation, keyLocation, controllerUrl);
+    sliceProxy = getSliceProxy(pemLocation, keyLocation, controllerUrl);
 
     //SSH context
     sctx = new SliceAccessContext<>();
