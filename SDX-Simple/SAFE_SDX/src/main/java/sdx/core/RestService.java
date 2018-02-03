@@ -52,7 +52,9 @@ public class RestService {
     public StitchResult stitchRequest(StitchRequest sr){
       logger.debug("got sittch request");
       try {
-        String[] res = SdxManager.stitchRequest(sr.sdxslice, sr.sdxsite, sr.ckeyhash, sr.cslice, sr.creservid, sr.secret);
+        String[] res = SdxServer.sdxManager.stitchRequest(sr.sdxslice, sr.sdxsite, sr.ckeyhash, sr
+            .cslice,
+          sr.creservid, sr.secret);
         return new StitchResult(res[0], res[1]);
       }catch (Exception e){
         e.printStackTrace();

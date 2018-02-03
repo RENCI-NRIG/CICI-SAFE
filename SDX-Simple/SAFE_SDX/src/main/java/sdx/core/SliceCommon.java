@@ -65,7 +65,6 @@ import com.jcraft.jsch.SftpException;
 
 
 public abstract class SliceCommon {
-<<<<<<< HEAD
   final static Logger logger = Logger.getLogger(SliceCommon.class);
 
 
