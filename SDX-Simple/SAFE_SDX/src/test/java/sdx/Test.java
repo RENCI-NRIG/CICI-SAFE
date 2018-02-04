@@ -28,7 +28,7 @@ public class Test {
     return GrizzlyHttpServerFactory.createHttpServer(URI.create(url), rc);
   }
 
-  public void main(String[] args) {
+  public void run(String[] args) {
     testRoutingDynamicLink(args);
     //testRoutingChameleon(args);
     //testPerFlowQOS();
@@ -36,19 +36,19 @@ public class Test {
   }
 
   private void testRoutingDynamicLink(String[] args) {
-    SdxManager.startSdxServer(args);
+    sdxManager.startSdxServer(args);
     System.out.println("configured ip addresses in sdx network");
     //notify prefixes for node0 and node1
-    SdxManager.notifyPrefix("192.168.10.2/24","192.168.10.2","notused");
-    SdxManager.notifyPrefix("192.168.20.2/24","192.168.20.2","notused");
-    SdxManager.connectionRequest("not used","192.168.20.2/24","192.168.10.2/24",500000000);
-    SdxManager.notifyPrefix("192.168.30.2/24","192.168.30.2","notused");
-    SdxManager.connectionRequest("not used","192.168.20.2/24","192.168.30.2/24",500000000);
-    SdxManager.connectionRequest("not used","192.168.30.2/24","192.168.10.2/24",500000000);
+    sdxManager.notifyPrefix("192.168.10.2/24","192.168.10.2","notused");
+    sdxManager.notifyPrefix("192.168.20.2/24","192.168.20.2","notused");
+    sdxManager.connectionRequest("not used","192.168.20.2/24","192.168.10.2/24",500000000);
+    sdxManager.notifyPrefix("192.168.30.2/24","192.168.30.2","notused");
+    sdxManager.connectionRequest("not used","192.168.20.2/24","192.168.30.2/24",500000000);
+    sdxManager.connectionRequest("not used","192.168.30.2/24","192.168.10.2/24",500000000);
   }
 
   private void testRouting(String[] args) {
-    SdxManager.startSdxServer(args);
+    sdxManager.startSdxServer(args);
     System.out.println("configured ip addresses in sdx network");
     //notify prefixes for node0 and node1
     sdxManager.notifyPrefix("192.168.10.2/24", "192.168.10.2",  "notused");
