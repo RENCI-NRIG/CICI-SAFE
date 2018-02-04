@@ -1,4 +1,4 @@
-package client.client;
+package client.exogeniclient;
 
 public class CreateClientSlice {
   public static void main (String[] args){
