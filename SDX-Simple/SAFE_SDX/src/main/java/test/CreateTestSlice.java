@@ -1,4 +1,4 @@
-package sdx.test;
+package test;
 
 public class CreateTestSlice {
   public static void main(String[] args) {
