@@ -1,4 +1,4 @@
-package sdx.core;
+package sdx.test;
 
 import org.renci.ahab.libndl.Slice;
 import sdx.core.SliceManager;
@@ -21,14 +21,7 @@ import sdx.utils.Exec;
 public class TestSlice extends SliceManager {
   final Logger logger = Logger.getLogger(Exec.class);
 
-  public TestSlice() {
-  }
-
-
-  public void run(String[] args) {
-
-    //TestSlice usage:   ./target/appassembler/bin/SafeSdxTestSlice  ~/.ssl/geni-pruth1.pem ~/.ssl/geni-pruth1.pem "https://geni.renci.org:11443/orca/xmlrpc" pruth.1 stitch
-    //TestSlice usage:   ./target/appassembler/bin/SafeSdxTestSlice  ~/.ssl/geni-pruth1.pem ~/.ssl/geni-pruth1.pem "https://geni.renci.org:11443/orca/xmlrpc" name fournodes
+  public TestSlice(String[] args) {
     System.out.println("SDX-Simple " + args[0]);
 
     CommandLine cmd = parseCmd(args);
@@ -61,21 +54,20 @@ public class TestSlice extends SliceManager {
       // TODO Auto-generated catch block
       e.printStackTrace();
     }
+  }
+
+
+  public void run() {
+
+    //TestSlice usage:   ./target/appassembler/bin/SafeSdxTestSlice  ~/.ssl/geni-pruth1.pem ~/.ssl/geni-pruth1.pem "https://geni.renci.org:11443/orca/xmlrpc" pruth.1 stitch
+    //TestSlice usage:   ./target/appassembler/bin/SafeSdxTestSlice  ~/.ssl/geni-pruth1.pem ~/.ssl/geni-pruth1.pem "https://geni.renci.org:11443/orca/xmlrpc" name fournodes
 
     if (type.equals("server")) {
       testBroSliceTwoPairs();
       //testBroSliceChameleon();
       //testBroSliceExoGENI();
     } else if (type.equals("delete")) {
-      Slice s2 = null;
-      try {
-        System.out.println("deleting slice " + sliceName);
-        s2 = Slice.loadManifestFile(sliceProxy, sliceName);
-        s2.delete();
-      } catch (Exception e) {
-        e.printStackTrace();
-      }
-
+      deleteSlice(sliceName);
     }
     logger.debug("XXXXXXXXXX Done XXXXXXXXXXXXXX");
   }

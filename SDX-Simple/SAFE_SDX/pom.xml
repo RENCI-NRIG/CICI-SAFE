@@ -58,11 +58,11 @@
 							<name>SafeSdxExample</name>
 						</program>
 						<program>
-							<mainClass>sdx.RunTest</mainClass>
+							<mainClass>sdx.test.RunTest</mainClass>
 							<name>SafeSdxTest</name>
 						</program>
 						<program>
-							<mainClass>sdx.core.CreateTestSlice</mainClass>
+							<mainClass>sdx.test.CreateTestSlice</mainClass>
 							<name>SafeSdxTestSlice</name>
 						</program>
 						<program>

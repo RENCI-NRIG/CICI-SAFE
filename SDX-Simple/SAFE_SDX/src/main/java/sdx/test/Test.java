@@ -1,4 +1,4 @@
-package sdx;
+package sdx.test;
 
 import sdx.core.*;
 import org.apache.log4j.Logger;
