@@ -123,19 +123,7 @@ public class SdxExogeniClient extends SliceCommon {
         processConnectionCmd(params);
       }
       else{
-        JSONObject paramsobj=new JSONObject();
-        paramsobj.put("dest",params[1]);
-        paramsobj.put("gateway",params[2]);
-        paramsobj.put("customer", keyhash);
-        String res=SdxHttpClient.httpRequest(sdxserver+"sdx/notifyprefix",paramsobj);
-        if(res.equals("")){
-          logger.debug("Prefix not accepted (authorization failed)");
-          System.out.println("Prefix not accepted (authorization failed)");
-        }
-        else{
-          logger.debug(res);
-          System.out.println(res);
-        }
+        processPrefixCmd(params);
       }
     }
     catch (Exception e){
@@ -148,6 +136,7 @@ public class SdxExogeniClient extends SliceCommon {
     try{
       JSONObject jsonparams=new JSONObject();
       String site1=null,site2=null;
+      /*
       for(String site:sitelist){
         if(site.contains(params[1])){
           site1=site;
@@ -166,6 +155,15 @@ public class SdxExogeniClient extends SliceCommon {
       }
       jsonparams.put("site1",site1);
       jsonparams.put("site2",site2);
+      */
+      jsonparams.put("self_prefix",params[1]);
+      jsonparams.put("target_prefix",params[2]);
+      jsonparams.put("ckeyhash",keyhash);
+      try {
+        jsonparams.put("bandwidth",Long.valueOf(params[3]));
+      }catch (Exception e){
+        ;
+      }
       String res=SdxHttpClient.httpRequest(sdxserver+"sdx/connectionrequest",jsonparams);
       logger.debug("get connection result from server:\n"+ res);
       System.out.println(res);
