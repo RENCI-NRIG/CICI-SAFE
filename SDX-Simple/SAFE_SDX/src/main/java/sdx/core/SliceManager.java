@@ -81,12 +81,6 @@ public class SliceManager extends SliceCommon {
     String configfilepath = cmd.getOptionValue("config");
 
     readConfig(configfilepath);
-    int routerNum = 4;
-    try {
-      routerNum = conf.getInt("config.routernum");
-    } catch (Exception e) {
-      logger.debug("No router number specified, launching default 4 routers");
-    }
 
     logger.debug("configfilepath " + configfilepath);
     //readConfig(configfilepath);
@@ -115,54 +109,54 @@ public class SliceManager extends SliceCommon {
     }
 
     if (type.equals("server")) {
-      IPPrefix = conf.getString("config.ipprefix");
-      riakip = conf.getString("config.riakserver");
-      String scriptsdir = conf.getString("config.scriptsdir");
-      computeIP(IPPrefix);
-      try {
-        String carrierName = sliceName;
-        Slice carrier = createCarrierSlice(carrierName, routerNum, 1000000);
-        commitAndWait(carrier);
-        carrier.refresh();
-        copyFile2Slice(carrier, scriptsdir + "dpid.sh", "~/dpid.sh", sshkey, "(c\\d+)");
-        copyFile2Slice(carrier, scriptsdir + "ovsbridge.sh", "~/ovsbridge.sh", sshkey, "(c\\d+)");
-        //Make sure that plexus container is running
-        SDNControllerIP = ((ComputeNode) carrier.getResourceByName("plexuscontroller"))
-          .getManagementIP();
-        if (!checkPlexus(SDNControllerIP)) {
-          System.exit(-1);
-        }
-        System.out.println("Plexus Controller IP: " + SDNControllerIP);
-        runCmdSlice(carrier, "/bin/bash ~/ovsbridge.sh " + SDNControllerIP + ":6633", sshkey,
-          "(c\\d+)", true, true);
-
-        String SAFEServerIP =
-          ((ComputeNode) carrier.getResourceByName("safe-server")).getManagementIP();
-        if (!checkSafeServer(SAFEServerIP)) {
-          System.exit(-1);
-        }
-        System.out.println("SAFE Server IP: " + SAFEServerIP);
-        //}
-        clearLinks(topofile);
-        if(BRO) {
-          configBroNodes(carrier);
-        }
-        System.out.println("Set up bro nodes");
-      } catch (Exception e) {
-        e.printStackTrace();
-      }
+      createAndConfigCarrierSlice();
     } else if (type.equals("delete")) {
-      Slice s2 = null;
-      try {
-        System.out.println("deleting slice " + sliceName);
-        s2 = Slice.loadManifestFile(sliceProxy, sliceName);
-        s2.delete();
-      } catch (Exception e) {
-        e.printStackTrace();
-      }
-
+      deleteSlice(sliceName);
     }
     logger.debug("XXXXXXXXXX Done XXXXXXXXXXXXXX");
+  }
+
+  public void createAndConfigCarrierSlice(){
+    int routerNum = 4;
+    try {
+      routerNum = conf.getInt("config.routernum");
+    } catch (Exception e) {
+      logger.debug("No router number specified, launching default 4 routers");
+    }
+    IPPrefix = conf.getString("config.ipprefix");
+    riakip = conf.getString("config.riakserver");
+    String scriptsdir = conf.getString("config.scriptsdir");
+    computeIP(IPPrefix);
+    try {
+      String carrierName = sliceName;
+      Slice carrier = createCarrierSlice(carrierName, routerNum, 1000000);
+      commitAndWait(carrier);
+      carrier.refresh();
+      copyFile2Slice(carrier, scriptsdir + "dpid.sh", "~/dpid.sh", sshkey);
+      copyFile2Slice(carrier, scriptsdir + "ovsbridge.sh", "~/ovsbridge.sh", sshkey);
+      //Make sure that plexus container is running
+      SDNControllerIP = ((ComputeNode) carrier.getResourceByName("plexuscontroller"))
+        .getManagementIP();
+      if (!checkPlexus(SDNControllerIP)) {
+        System.exit(-1);
+      }
+      System.out.println("Plexus Controller IP: " + SDNControllerIP);
+      runCmdSlice(carrier, "/bin/bash ~/ovsbridge.sh " + SDNControllerIP + ":6633", sshkey,
+        "(c\\d+)", true, true);
+
+      String SAFEServerIP =
+        ((ComputeNode) carrier.getResourceByName("safe-server")).getManagementIP();
+      if (!checkSafeServer(SAFEServerIP)) {
+        System.exit(-1);
+      }
+      System.out.println("SAFE Server IP: " + SAFEServerIP);
+      //}
+      configBroNodes(carrier);
+      System.out.println("Set up bro nodes");
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+
   }
 
   public void configBroNodes(Slice carrier) {
