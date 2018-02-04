@@ -1,7 +1,7 @@
 /**
  * 
  */
-package client.client;
+package client.exogeniclient;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.log4j.Logger;
