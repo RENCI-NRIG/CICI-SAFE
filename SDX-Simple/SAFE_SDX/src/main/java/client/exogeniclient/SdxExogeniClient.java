@@ -31,65 +31,65 @@ import sdx.utils.SafePost;
  */
 public class SdxExogeniClient extends SliceCommon {
   final Logger logger = Logger.getLogger(Exec.class);
+  private CommandLine cmd;
 
-  public SdxExogeniClient(){}
+  public SdxExogeniClient(String[] args){
+    //Example usage: ./target/appassembler/bin/SafeSdxClient -f alice.conf
+    logger.debug("ndllib TestDriver: START");
+    //pemLocation = args[0];
+    //keyLocation = args[1];
+    //controllerUrl = args[2]; //"https://geni.renci.org:11443/orca/xmlrpc";
+    //sliceName = args[3];
+    //sshkey=args[6];
+    //keyhash=args[7];
+
+    cmd=parseCmd(args);
+    String configfilepath=cmd.getOptionValue("config");
+    readConfig(configfilepath);
+    sdxserver=conf.getString("config.sdxserver");
+
+    sliceProxy = getSliceProxy(pemLocation,keyLocation, controllerUrl);
+    //SSH context
+    sctx = new SliceAccessContext<>();
+    try {
+      SSHAccessTokenFileFactory fac;
+      fac = new SSHAccessTokenFileFactory(sshkey+".pub", false);
+      SSHAccessToken t = fac.getPopulatedToken();
+      sctx.addToken("root", "root", t);
+      sctx.addToken("root", t);
+    } catch (UtilTransportException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+    }
+
+    Slice s2 = null;
+    try {
+      s2 = Slice.loadManifestFile(sliceProxy, sliceName);
+      ComputeNode safe=(ComputeNode)s2.getResourceByName("safe-server");
+      safeserver=safe.getManagementIP()+":7777";
+    } catch (ContextTransportException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+    } catch (TransportException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+    }
+    logger.debug("client start");
+    if(cmd.hasOption('n')){
+      safeauth=false;
+    }
+  }
   private String type;
   private String sdxserver;
   private boolean safeauth=true;
 	
-	public void main(String [] args){
-    //Example usage: ./target/appassembler/bin/SafeSdxClient -f alice.conf
-		logger.debug("ndllib TestDriver: START");
-		//pemLocation = args[0];
-		//keyLocation = args[1];
-		//controllerUrl = args[2]; //"https://geni.renci.org:11443/orca/xmlrpc";
-		//sliceName = args[3];
-    //sshkey=args[6];
-    //keyhash=args[7];
-		
-    CommandLine cmd=parseCmd(args);
-		String configfilepath=cmd.getOptionValue("config");
-    readConfig(configfilepath);
-    sdxserver=conf.getString("config.sdxserver");
-
-		sliceProxy = getSliceProxy(pemLocation,keyLocation, controllerUrl);		
-		//SSH context
-		sctx = new SliceAccessContext<>();
-		try {
-			SSHAccessTokenFileFactory fac;
-			fac = new SSHAccessTokenFileFactory(sshkey+".pub", false);
-			SSHAccessToken t = fac.getPopulatedToken();			
-			sctx.addToken("root", "root", t);
-			sctx.addToken("root", t);
-		} catch (UtilTransportException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-
-     Slice s2 = null;
-     try {
-       s2 = Slice.loadManifestFile(sliceProxy, sliceName);
-       ComputeNode safe=(ComputeNode)s2.getResourceByName("safe-server");
-       safeserver=safe.getManagementIP()+":7777";
-     } catch (ContextTransportException e) {
-       // TODO Auto-generated catch block
-       e.printStackTrace();
-     } catch (TransportException e) {
-       // TODO Auto-generated catch block
-       e.printStackTrace();
-     }
-     logger.debug("client start");
-     String message = "";
-     String customerName=sliceName;
-     if(cmd.hasOption('e')){
-       String command= cmd.getOptionValue('e');
-       processCmd(command);
-       return;
-     }
-     if(cmd.hasOption('n')){
-       safeauth=false;
-     }
-     String input = new String();  
+	public void run(String [] args){
+    if(cmd.hasOption('e')){
+      String command= cmd.getOptionValue('e');
+      processCmd(command);
+      return;
+    }
+     String input = new String();
 		try{
 //	 			logger.debug(obj.sayHello()); 
       BufferedReader stdin = new BufferedReader(new InputStreamReader(System.in));
@@ -111,30 +111,34 @@ public class SdxExogeniClient extends SliceCommon {
 		logger.debug("XXXXXXXXXX Done XXXXXXXXXXXXXX");
 	}
 
-	private void processCmd(String command){
+	public void processCmd(String command){
     try{
       String[] params=command.split(" ");
       if(params[0].equals("stitch")){
         processStitchCmd(params);
       }else{
-        JSONObject paramsobj=new JSONObject();
-        paramsobj.put("dest",params[1]);
-        paramsobj.put("gateway",params[2]);
-        paramsobj.put("router", params[4]);
-        paramsobj.put("customer", keyhash);
-        String res=SdxHttpClient.notifyPrefix(sdxserver+"sdx/notifyprefix",paramsobj);
-        if(res.equals("")){
-          logger.debug("Prefix not accepted (authorization failed)");
-          System.out.println("Prefix not accepted (authorization failed)");
-        }
-        else{
-          logger.debug(res);
-          System.out.println(res);
-        }
+        processPrefixCmd(params);
       }
     }
     catch (Exception e){
       e.printStackTrace();
+    }
+  }
+
+  private void processPrefixCmd(String[] params){
+    JSONObject paramsobj=new JSONObject();
+    paramsobj.put("dest",params[1]);
+    paramsobj.put("gateway",params[2]);
+    paramsobj.put("router", params[4]);
+    paramsobj.put("customer", keyhash);
+    String res=SdxHttpClient.notifyPrefix(sdxserver+"sdx/notifyprefix",paramsobj);
+    if(res.equals("")){
+      logger.debug("Prefix not accepted (authorization failed)");
+      System.out.println("Prefix not accepted (authorization failed)");
+    }
+    else{
+      logger.debug(res);
+      System.out.println(res);
     }
 
   }
