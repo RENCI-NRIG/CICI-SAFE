@@ -322,6 +322,17 @@ public class SliceManager extends SliceCommon {
     }
   }
 
+  protected void deleteSlice(String sliceName){
+    Slice s2 = null;
+    try {
+      System.out.println("deleting slice " + sliceName);
+      s2 = Slice.loadManifestFile(sliceProxy, sliceName);
+      s2.delete();
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+  }
+
   public Slice createCarrierSlice(String sliceName, int num, long bw) {
     //,String stitchsubnet="", String slicesubnet="")
     logger.debug("ndllib TestDriver: START");
