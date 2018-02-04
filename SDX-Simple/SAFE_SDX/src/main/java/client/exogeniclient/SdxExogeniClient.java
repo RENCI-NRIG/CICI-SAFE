@@ -116,11 +116,57 @@ public class SdxExogeniClient extends SliceCommon {
       String[] params=command.split(" ");
       if(params[0].equals("stitch")){
         processStitchCmd(params);
-      }else{
-        processPrefixCmd(params);
+      }else if(params[0].equals("link")){
+        processConnectionCmd(params);
+      }
+      else{
+        JSONObject paramsobj=new JSONObject();
+        paramsobj.put("dest",params[1]);
+        paramsobj.put("gateway",params[2]);
+        paramsobj.put("customer", keyhash);
+        String res=SdxHttpClient.httpRequest(sdxserver+"sdx/notifyprefix",paramsobj);
+        if(res.equals("")){
+          logger.debug("Prefix not accepted (authorization failed)");
+          System.out.println("Prefix not accepted (authorization failed)");
+        }
+        else{
+          logger.debug(res);
+          System.out.println(res);
+        }
       }
     }
     catch (Exception e){
+      e.printStackTrace();
+    }
+
+  }
+
+  private void processConnectionCmd(String[] params){
+    try{
+      JSONObject jsonparams=new JSONObject();
+      String site1=null,site2=null;
+      for(String site:sitelist){
+        if(site.contains(params[1])){
+          site1=site;
+        }
+        if(site.contains(params[2])){
+          site2=site;
+        }
+        if(site1!=null && site2!=null){
+          break;
+        }
+      }
+      if(site1==null || site2==null){
+        System.out.println("Cannot find both sites, here is what I found: "+site1+", "+site2+";\n");
+        logger.debug("Cannot find both sites, here is what I found: "+site1+", "+site2+";\n");
+        return;
+      }
+      jsonparams.put("site1",site1);
+      jsonparams.put("site2",site2);
+      String res=SdxHttpClient.httpRequest(sdxserver+"sdx/connectionrequest",jsonparams);
+      logger.debug("get connection result from server:\n"+ res);
+      System.out.println(res);
+    }catch (Exception e){
       e.printStackTrace();
     }
   }
@@ -129,9 +175,8 @@ public class SdxExogeniClient extends SliceCommon {
     JSONObject paramsobj=new JSONObject();
     paramsobj.put("dest",params[1]);
     paramsobj.put("gateway",params[2]);
-    paramsobj.put("router", params[4]);
     paramsobj.put("customer", keyhash);
-    String res=SdxHttpClient.notifyPrefix(sdxserver+"sdx/notifyprefix",paramsobj);
+    String res=SdxHttpClient.httpRequest(sdxserver+"sdx/notifyprefix",paramsobj);
     if(res.equals("")){
       logger.debug("Prefix not accepted (authorization failed)");
       System.out.println("Prefix not accepted (authorization failed)");
@@ -140,21 +185,11 @@ public class SdxExogeniClient extends SliceCommon {
       logger.debug(res);
       System.out.println(res);
     }
-
   }
 
   private void processStitchCmd(String[] params){
     try{
-      Slice s2 = null;
-      try {
-        s2 = Slice.loadManifestFile(sliceProxy, sliceName);
-      } catch (ContextTransportException e) {
-        // TODO Auto-generated catch block
-        e.printStackTrace();
-      } catch (TransportException e) {
-        // TODO Auto-generated catch block
-        e.printStackTrace();
-      }
+      Slice s2 =getSlice();
       ComputeNode node0_s2 = (ComputeNode) s2.getResourceByName(params[1]);
       String node0_s2_stitching_GUID = node0_s2.getStitchingGUID();
       String secret="mysecret";
@@ -170,23 +205,24 @@ public class SdxExogeniClient extends SliceCommon {
       }
       //post stitch request to SAFE
       logger.debug("posting stitch request statements to SAFE Sets");
+      String sdxsite=node0_s2.getDomain();
       if(safeauth) {
-        postSafeStitchRequest(keyhash, sliceName, node0_s2_stitching_GUID, params[2], params[3]);
+        postSafeStitchRequest(keyhash, sliceName, node0_s2_stitching_GUID, params[2], sdxsite);
       }
       JSONObject jsonparams=new JSONObject();
       jsonparams.put("sdxslice",params[2]);
-      jsonparams.put("sdxnode",params[3]);
+      jsonparams.put("sdxsite",sdxsite);
       jsonparams.put("ckeyhash",keyhash);
       jsonparams.put("cslice",sliceName);
       jsonparams.put("creservid",node0_s2_stitching_GUID);
       jsonparams.put("secret",secret);
       logger.debug("Sending stitch request to sdx server");
-      JSONObject res=SdxHttpClient.tryStitch(sdxserver+"sdx/stitchrequest",jsonparams);
+      JSONObject res=new JSONObject(SdxHttpClient.httpRequest(sdxserver+"sdx/stitchrequest",jsonparams));
       logger.debug("Got Stitch Information From Server:\n "+res.toString());
       if(!res.getBoolean("result")){
-        logger.debug("stitch request declined by server");
-        System.out.println("stitch request declined by server");
-      } 
+        logger.debug("stitch request failed");
+        System.out.println("stitch request failed");
+      }
       else{
         String ip=res.getString("ip");
         logger.debug("set IP address of the stitch interface to "+ip);
