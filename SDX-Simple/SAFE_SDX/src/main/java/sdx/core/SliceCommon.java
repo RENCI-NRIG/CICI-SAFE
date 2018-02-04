@@ -252,6 +252,7 @@ public abstract class SliceCommon {
         link.setName(params[0]);
         link.addNode(params[1]);
         link.addNode(params[2]);
+        link.setCapacity(Long.parseLong(params[3]));
         res.add(link);
       }
       br.close();
@@ -266,9 +267,11 @@ public abstract class SliceCommon {
     try (BufferedWriter br = new BufferedWriter(new FileWriter(file))) {
       Set<String> keyset=links.keySet();
       for(String key:keyset){
-        if(!key.contains("stitch")){
+        if(!key.contains("stitch") && !key.contains("blink")){
           Link link=links.get(key);
-          br.write(link.linkname + " " + link.nodea + " " + link.nodeb + "\n");
+
+          br.write(link.linkname + " " + link.nodea + " " + link.nodeb + " " + String.valueOf
+            (link.capacity)+ "\n");
         }
       }
       br.close();
