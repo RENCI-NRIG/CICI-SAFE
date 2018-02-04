@@ -96,7 +96,7 @@ public class SdxExogeniClient extends SliceCommon {
       BufferedReader stdin = new BufferedReader(new InputStreamReader(System.in));
       while(true){
         System.out.print("Enter Commands:stitch client_resource_name  server_slice_name\n\t " +
-          "advertise route: route dest gateway sdx_slice_name routername,\n\t link site1[RENCI] " +
+          "advertise route: route dest gateway\n\t link site1[RENCI] " +
           "site2[SL] "+cmdprefix);
         input = stdin.readLine();
         System.out.print("continue?[y/n]\n$>"+input);
@@ -217,6 +217,9 @@ public class SdxExogeniClient extends SliceCommon {
       jsonparams.put("cslice",sliceName);
       jsonparams.put("creservid",node0_s2_stitching_GUID);
       jsonparams.put("secret",secret);
+      if (params.length > 3){
+        jsonparams.put("sdxnode", params[3]);
+      }
       logger.debug("Sending stitch request to sdx server");
       JSONObject res=new JSONObject(SdxHttpClient.httpRequest(sdxserver+"sdx/stitchrequest",jsonparams));
       logger.debug("Got Stitch Information From Server:\n "+res.toString());

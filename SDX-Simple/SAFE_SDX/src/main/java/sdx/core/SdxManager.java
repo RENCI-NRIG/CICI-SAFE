@@ -60,7 +60,6 @@ public class SdxManager extends SliceManager {
 
 
   private NetworkManager routingmanager = new NetworkManager();
-  private String IPPrefix = "192.168.";
   int curip = 128;
   private String mask = "/24";
   private String SDNController;
@@ -182,7 +181,8 @@ public class SdxManager extends SliceManager {
                                        String ResrvID,
                                        String secret,
                                        String sdxnode) {
-    logger.debug("new stitch request from "+customerName+" for "+sdxslice +" at "+site);
+    logger.debug(": new stitch request from "+customerName+" for "+sdxslice +" at " +
+      ""+site);
     System.out.println("new stitch request for "+sdxslice +" at "+site);
     String[] res=new String[2];
     res[0]=null;

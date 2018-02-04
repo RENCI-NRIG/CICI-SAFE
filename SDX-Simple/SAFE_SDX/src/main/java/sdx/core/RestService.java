@@ -68,7 +68,6 @@ public class RestService {
   @Produces(MediaType.TEXT_PLAIN)
   public String connectionRequest(ConnectionRequest sr){
     logger.debug("got link request between "+sr.self_prefix+" and "+sr.target_prefix);
-    System.out.println("got link request between "+sr.self_prefix+" and "+sr.target_prefix);
     try {
       String res = SdxServer.sdxManager.connectionRequest(sr.ckeyhash,sr.self_prefix,sr
         .target_prefix,sr
