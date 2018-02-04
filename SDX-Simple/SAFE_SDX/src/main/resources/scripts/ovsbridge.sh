@@ -28,8 +28,6 @@ while read -r line; do
     ifconfig $line up
     ifconfig $line 0
     ovs-vsctl add-port br0 $line
-    ovs-vsctl del-controller br0
-    ovs-vsctl set-controller br0 tcp:$1
   fi
 done <<< "$interfaces"
 
