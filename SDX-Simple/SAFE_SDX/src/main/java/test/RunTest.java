@@ -1,6 +1,4 @@
-package sdx.test;
-
-import sdx.test.Test;
+package test;
 
 public class RunTest {
   public static void main(String[] args){
