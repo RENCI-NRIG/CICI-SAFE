@@ -143,7 +143,10 @@ class ContextCache(setcache: SetCache) extends LazyLogging {
         subcnt.updateFreshUntil(slogset.freshUntil.get)
       }
     }
-    subcnt.addSetToken(settoken.name)
+    subcnt.addSetToken(settoken.name) // update set token to the subcontext
+    if(!slogset.isIDSet()) {
+      slogset.addContainingContextToken(subcnt.id.name) // update containing context token to the slog set
+    }
   }
 
   /**
@@ -156,6 +159,10 @@ class ContextCache(setcache: SetCache) extends LazyLogging {
     } else { // check speaksFor
       false 
     } 
+  }
+
+  def invalidate(token: Index): Unit = {
+    cache.invalidate(token)
   }
 
   def get(token: Index): Option[Subcontext] = {

@@ -200,6 +200,10 @@ case class SetTerm(
           logger.info(s"[Slang Term evalSet defcon] slogset=${slogset}")
           logger.info(s"[Slang Term evalSet defcon] existingset=${existingset}")
           existingset.mergeSlogset(slogset)
+          // Invalidate entries of the containing contexts in cache
+          for(t <- existingset.getContainingContexts) {
+            contextCache.invalidate(Token(t))
+          } 
         }
         Constant(StrLit(token.name), StrLit("nil"), StrLit("StrLit"), Encoding.AttrBase64) 
     
@@ -272,7 +276,9 @@ case class SetTerm(
 
         var res: Seq[Seq[Statement]] = executeDefguard()
         if(res.flatten.isEmpty) {  // Refresh subcontexts and retry on a query failure 
-          slogset.links.foreach{ case t: String => contextCache.refresh(Token(t)) }
+          slogset.links.foreach{ case t: String => 
+            contextCache.refresh(Token(t))
+          }
           res = executeDefguard(isRetry = true) // retry        
         }
         val slogResult = if(res.flatten.isEmpty) Constant("false") else SlogResult(res.map(x => x.toSet))

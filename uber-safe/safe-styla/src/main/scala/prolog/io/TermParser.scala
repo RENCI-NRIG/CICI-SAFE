@@ -44,6 +44,20 @@ class TermParser(val vars: LinkedHashMap[String, Var])
     case ip => new Const(ip)
   }
 
+  // These are not what we need
+  //val portToken: Parser[Term] =  """port\"[0-9{,\\s+}-]+\"""".r ^^ {
+  //val portToken: Parser[Term] =  """port\"[([0-9]+|[0-9]+-[0-9]+)(,\\s+)]+\"""".r ^^ {
+  //val portToken: Parser[Term] =  """port\"[0-9,-([\n\r\f\t])]+\"""".r ^^ {
+  //  case port => new Const(port)
+  //}
+  val portSubrange: Parser[String] = """[0-9-]+""".r
+  def portRange: Parser[List[String]] = repsep(portSubrange, conjTok)   
+  val portToken: Parser[Term] =  """port\"""".r ~ portRange ~ """\"""".r ^^ {
+    case h ~ subranges ~ end =>
+      //println(s"h: ${h}   subranges: ${subranges.mkString(",")}   end: ${end}") 
+      new Const(s"${h}${subranges.mkString(",")}${end}")
+  }
+
   val dcgTopToken: Parser[String] = """-->""".r
   val topToken = """:-""".r
   val clauseTok = topToken | dcgTopToken
@@ -158,9 +172,10 @@ class TermParser(val vars: LinkedHashMap[String, Var])
     varToken ^^ mkVar      |
     evarToken ^^ mkEVar    |
     ipToken                |
-      numToken ^^
+    portToken              |
+    numToken ^^
       { x => new Real(x) } |
-      (idToken ~ opt(args)) ^^
+    (idToken ~ opt(args)) ^^
       {
         case x ~ None => {
           val interp = interpolate(x)

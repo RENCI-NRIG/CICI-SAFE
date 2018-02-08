@@ -366,7 +366,8 @@ object StyStmtHelper {
   }
 
   val symPattern = """([a-z][a-zA-Z0-9]*)""".r
-  val ipv4Pattern = """ipv4(.*)""".r
+  val ipv4Pattern = """ipv4"(.*)""".r
+  val portPattern = """port"(.*)""".r
 
   val styInfixMap: Map[String, String] = Map(":"->":", "isInRange"->"<:", "is_nonnum"->":=", "."->"|", "eq"->"=") 
   def styTermToString(t: StyTerm, rvmap: LinkedHashMap[StyVar, String], sb: StringBuilder, self: String): Unit = {
@@ -428,6 +429,7 @@ object StyStmtHelper {
         c.sym match {
           case symPattern(t) => sb.append(c.sym) 
           case ipv4Pattern(t) => sb.append(c.sym)
+          case portPattern(t) => sb.append(c.sym)
           case _ =>         // strings that need single quotes 
             sb.append("'") 
             sb.append(c.sym)  

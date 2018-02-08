@@ -119,6 +119,8 @@ trait InferenceImpl extends safe.safelog.InferenceImpl with KeyPairManager with 
     //, StrLit("appendName2")
     //, StrLit("guid1")
     , StrLit("objectFromScid1")
+    , StrLit("ipFromNetworkID1")
+    , StrLit("portFromNetworkID1")
     //, StrLit("querySet2")
     , StrLit("encryptBearerRef2") 
     , StrLit("decrypt2")
@@ -250,9 +252,14 @@ trait InferenceImpl extends safe.safelog.InferenceImpl with KeyPairManager with 
         throw UnSafeException(s"No speaker since Self not defined ${envContext.keySet}")
       }
 
+      //val principal: Principal = envContext.get(StrLit("Selfie")) match {
+      //  case Some(p: Principal) => p
+      //  case _                  => throw UnSafeException(s"cannot sign since principal (Selfie) not defined ${envContext.keySet}")
+      //}
+
       val principal: Principal = envContext.get(StrLit("Selfie")) match {
         case Some(p: Principal) => p
-        case _                  => null //throw UnSafeException(s"cannot sign since principal (Selfie) not defined ${envContext.keySet}")
+        case _                  => null    // Since there is not signing key, the certificate will be posted without signature
       }
 
       val unfoldedTerms: Seq[Term] = constantTerms.map(term => SlangTerm.unfoldSeq(term)).flatten 
@@ -870,8 +877,18 @@ trait InferenceImpl extends safe.safelog.InferenceImpl with KeyPairManager with 
       //  Constant(StrLit(s"${argArray(1)}"), StrLit("nil"), StrLit("StrLit"), Encoding.AttrBase64)
       case (StrLit("objectFromScid"), 1) =>
         val argArray = args(0).id.name.split("\\:")
+        assert(argArray.length == 2, s"Invalid network ID: ${args(0).id.name}")
         logger.info(s"[slang inference] objectFromScid: ${argArray(1)}")
         Constant(StrLit(s"${argArray(1)}"), StrLit("nil"), StrLit("StrLit"), Encoding.AttrBase64)
+      case (StrLit("ipFromNetworkID"), 1) =>
+        val argArray = args(0).id.name.split("\\:", -1)
+        assert(argArray.length == 2, s"Invalid network ID: ${args(0).id.name}")
+        logger.info(s"[slang inference] ipFromNetworkID: ${argArray(0)}")
+        Constant(StrLit(s"""ipv4"${argArray(0)}""""), StrLit("nil"), StrLit("StrLit"), Encoding.AttrBase64)
+      case (StrLit("portFromNetworkID"), 1) =>
+        val argArray = args(0).id.name.split("\\:", -1)
+        logger.info(s"[slang inference] portFromNetworkID: ${argArray(1)}")
+        Constant(StrLit(s"""port"${argArray(1)}""""), StrLit("nil"), StrLit("StrLit"), Encoding.AttrBase64)
       case (StrLit("decrypt"), 2) =>
         args(0) match {
           case Constant(StrLit("AES"), _, _, _) => 
@@ -926,11 +943,19 @@ trait InferenceImpl extends safe.safelog.InferenceImpl with KeyPairManager with 
         val id = subject.computeId(name = args(1).toString).value
 	Constant(StrLit(id.name), StrLit("nil"), StrLit("StrLit"), Encoding.AttrLiteral)
       case (StrLit("rootId"), 1) =>
-        val argArray = args(0).id.name.split(":")
-	Constant(StrLit(s"${argArray(0)}"), StrLit("nil"), StrLit("StrLit"), Encoding.AttrLiteral)
+        //val argArray = args(0).id.name.split(":")
+	//Constant(StrLit(s"${argArray(0)}"), StrLit("nil"), StrLit("StrLit"), Encoding.AttrLiteral)
+        val delimiterIndex = args(0).id.name.lastIndexOf(":")
+        if(delimiterIndex == -1)
+          throw UnSafeException(s"Invalid token: ${args(0).id.name}")
+	Constant(StrLit(s"${args(0).id.name.substring(0, delimiterIndex)}"), StrLit("nil"), StrLit("StrLit"), Encoding.AttrLiteral)
       case (StrLit("rootPrincipal"), 1) =>
-        val argArray = args(0).id.name.split(":")
-	Constant(StrLit(s"${argArray(0)}"), StrLit("nil"), StrLit("StrLit"), Encoding.AttrLiteral)
+        //val argArray = args(0).id.name.split(":")
+        val delimiterIndex = args(0).id.name.lastIndexOf(":")
+        if(delimiterIndex == -1)
+          throw UnSafeException(s"Invalid token: ${args(0).id.name}")
+	//Constant(StrLit(s"${argArray(0)}"), StrLit("nil"), StrLit("StrLit"), Encoding.AttrLiteral)
+	Constant(StrLit(s"${args(0).id.name.substring(0, delimiterIndex)}"), StrLit("nil"), StrLit("StrLit"), Encoding.AttrLiteral)
       case (StrLit("println"), 1) =>
         println(args.mkString(", "))
         Constant(StrLit("true"))

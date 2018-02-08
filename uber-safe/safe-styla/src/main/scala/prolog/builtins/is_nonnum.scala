@@ -23,9 +23,20 @@ final class is_nonnum() extends FunBuiltin("is_nonnum", 2) {
             val x: String = rs(0).sym
             t.sym match {
               case "rootPrincipal" => 
+                //val array = x.split(":", -1)
+                //assert(array.length>=2, s"scid must contain exactly two elements: ${array} (term: ${expr})")
+                //new Const(array(0))
+                val delimiterIndex = x.lastIndexOf(":")
+                assert(delimiterIndex != -1, s"Invalid token: ${x}")
+                new Const(x.substring(0, delimiterIndex))
+              case "ipFromNetworkID" =>
                 val array = x.split(":", -1)
-                assert(array.length==2, s"scid must contain exactly two elements: ${array} (term: ${expr})")
-                new Const(array(0))
+                assert(array.length>=2, s"scid must contain exactly two elements: ${array} (term: ${expr})")
+                new Const(s"""ipv4"${array(0)}"""")
+              case "portFromNetworkID" =>
+                val array = x.split(":", -1)
+                assert(array.length>=2, s"scid must contain exactly two elements: ${array} (term: ${expr})")
+                new Const(s"""port"${array(1)}"""")
             }
           }  else null
         }

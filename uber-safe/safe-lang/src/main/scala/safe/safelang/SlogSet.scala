@@ -28,7 +28,8 @@ class SlogSet(
     val speaksForToken: Option[String],               // Token of a set in support of SpeaksFor
     val label: String,                                // Label of the SlogSet
     val signature: Option[String],                    // Signature of the slogset by the issuer 
-    var setData: Option[String]                       // Set data signed over in a certificate
+    var setData: Option[String],                      // Set data signed over in a certificate
+    var containingContexts: OrderedSet[String]        // References to inference contexts containing this set
   ) {
 
   /**
@@ -49,7 +50,23 @@ class SlogSet(
         |speaksForToken: $speaksForToken,
         |label: $label,
         |signature: $signature,
-        |setData: $setData""".stripMargin
+        |setData: $setData,
+        |containingContexts: $containingContexts""".stripMargin
+  }
+
+  /**
+   * Add token of a containing context
+   */
+  def addContainingContextToken(token: String): Unit = {
+    containingContexts.synchronized {
+      containingContexts += token
+    }
+  }
+
+  def getContainingContexts(): OrderedSet[String] = {
+    containingContexts.synchronized {
+      containingContexts
+    }
   }
 
   def expired(): Boolean = {
@@ -64,8 +81,8 @@ class SlogSet(
   }
 
   /**
-   * Merge the slogset with another. This happens when we modify a newly-created set
-   * with an existing one that shares the same token.
+   * Merge the slogset with another. This happens when we merge an existing set with
+   * a change (also a slogset) to the set referred by the same token.
    *  
    * We also merge sibling slogsets on fetch
    */
@@ -103,22 +120,29 @@ class SlogSet(
               } else {
                 throw UnSafeException(s"link isn't found: ${s}")
               }
-            } else {
-              val idx = s.secondaryIndex
-              //println(s"[SlogSet mergeSlogset retracting] idx=${idx}  statements.get(idx)=${statements.get(idx)}  r.hashCode=${r.hashCode}")
-              if(statements.contains(idx)) {
-                val stmtset: OrderedSet[Statement] = statements(idx)
-                //stmtset.foreach(s => println(s"[SlogSet mergeSlogset retracting] s=${s}   s.hashCode=${s.hashCode}"))
-                stmtset -= r 
-                //println(s"[SlogSet mergeSlogset retracting] stmtset=${stmtset}   statements=${statements}")
-              }
             }
+            // Retract statements, including link statements
+            val sidx = s.secondaryIndex
+            //println(s"[SlogSet mergeSlogset retracting] idx=${idx}  statements.get(idx)=${statements.get(idx)}  r.hashCode=${r.hashCode}")
+            retractStatement(statements, sidx, r)
+            val pidx = s.primaryIndex 
+            retractStatement(statements, pidx, r)
           }
         }
         links = (links diff linksToRetract)
-        //statements -= retractionIdx
+        statements -= retractionIdx    // In the case of multi-version certificate, we don't want to remove the retraction stmts. 
       } 
 
+    }
+  }
+
+  def retractStatement(statements: Map[Index, OrderedSet[Statement]], idx: Index, r: Statement): Unit = {
+    //println(s"[SlogSet mergeSlogset retracting] idx=${idx}  statements.get(idx)=${statements.get(idx)}  r.hashCode=${r.hashCode}")
+    if(statements.contains(idx)) {
+      val stmtset: OrderedSet[Statement] = statements(idx)
+      //stmtset.foreach(s => println(s"[SlogSet mergeSlogset retracting] s=${s}   s.hashCode=${s.hashCode}"))
+      stmtset -= r // the retracted statement has the same hash code as r 
+      //println(s"[SlogSet mergeSlogset retracting] stmtset=${stmtset}   statements=${statements}")
     }
   }
 
@@ -213,6 +237,7 @@ class SlogSet(
      * 
      * Example:
      * preferredSetStore("http://152.3.145.36:808", "HTTPS", "[keyhash]")
+     * preferredSetStore("127.0.0.1:9042", "CASSANDRA_NATIVE", "")
      */
     var setstores = ListBuffer[SetStoreDesc]()
     val s: Option[OrderedSet[Statement]] = statements.get(StrLit("_preferredSetStore")) 
@@ -226,7 +251,8 @@ class SlogSet(
         // Do simple checks on store address
         val url = storeaddr.get 
         val validatedaddr: String = if(urlValidator.isValid(url)) {
-          if(url.last == '/') { url } else { s"${url}/" }
+          //if(url.last == '/') { url } else { s"${url}/" }
+          url
         } else {
           throw UnSafeException(s"Invalid url for set store (${url}) in stmt ${stmt}")
         }
@@ -268,6 +294,7 @@ class SlogSet(
         pid = self.get.pid
       } 
     }
+    //println(s"[SlogSet] issuer: ${issuer}    pid: ${pid}")
     Identity.computeSetToken(pid, label)
   } 
   
@@ -282,7 +309,7 @@ class SlogSet(
                          else {  throw UnSafeException(s"No issuer for this slogset: ${issuer}")  }
     if(self != null) {
       if(issuer.get != self.pid) {
-        throw UnSafeException(s"Signing principal does not match with the speaker provided in the set: ${self}    ${issuer}")
+        throw UnSafeException(s"Signing principal does not match the speaker provided in the set: ${self}    ${issuer}")
       }
     }
     // TODO: process subject
@@ -335,6 +362,7 @@ class SlogSet(
   }
 
   private def encodeToSlang(self: Principal): Tuple2[String, String] = {
+    //println(s"[encodeToSlang] self: ${self}")
     val setToken = if(self == null) computeToken(None) else computeToken(self)
     val stmts: String = if(self != null) getStatementsAsString(self.pid) else getStatementsAsString(issuer.get) // issuer must exist
 
@@ -349,6 +377,7 @@ class SlogSet(
                          |${signedData}""".stripMargin
       certStmt
     }
+    //println(s"[encodeToSlang] setToken.toString: ${setToken.toString}   cert: ${cert}")
     (setToken.toString, cert)
   }
 
@@ -421,17 +450,27 @@ object SlogSet {
 
     val slogset = new SlogSet(issuer, subject, freshUntil, speakersFreshUntil, issuerFreshUntil,
       validatedSpeaker, validated, resetTime, queries, statements, links, speaksForToken, label, 
-      signature, setData)
+      signature, setData, OrderedSet[String]())
     slogset
   }
 
   /**
    * Build a slog set from a group of queries
    * build an inferred query set
+   * for local use only
    */
   def apply(queries: Seq[Statement], label: String): SlogSet = {
     val slogset = new SlogSet(None, None, None, None, None, true, true, None, queries, 
-      Map[Index, OrderedSet[Statement]](), Seq[String](), None, label, None, None)
+      Map[Index, OrderedSet[Statement]](), Seq[String](), None, label, None, None, OrderedSet[String]())
+    slogset
+  }
+
+  /**
+   * Make an empty slog set
+   */
+  def apply(issuer: String, label: String): SlogSet = {
+    val slogset = new SlogSet(Some(issuer), None, None, None, None, true, true, None, Seq[Statement](), 
+      Map[Index, OrderedSet[Statement]](), Seq[String](), None, label, None, None, OrderedSet[String]())
     slogset
   }
 }
@@ -453,10 +492,11 @@ class IDSet(
     label: String = "",
     signature: Option[String],
     setData: Option[String], 
+    containingContexts: OrderedSet[String] = OrderedSet[String](), 
     val principalSubject: Subject,
     val preferredSetStores: Seq[SetStoreDesc]
   ) extends SlogSet(issuer, subject, freshUntil, speakersFreshUntil, issuerFreshUntil, validatedSpeaker, 
-      validated, resetTime, queries, statements, links, speaksForToken, label, signature, setData) {
+      validated, resetTime, queries, statements, links, speaksForToken, label, signature, setData, containingContexts) {
 
   def getPrincipalSubject(): Subject = principalSubject 
   def getPreferredSetStores(): Seq[SetStoreDesc] = preferredSetStores
@@ -481,7 +521,7 @@ object IDSet {
       preferredSetStores: Seq[SetStoreDesc]): IDSet = {
 
     val idset = new IDSet(issuer, None, freshUntil, None, None, false, validated, 
-        resetTime, Nil, statements, Nil, None, "", signature, setData, 
+        resetTime, Nil, statements, Nil, None, "", signature, setData, OrderedSet[String](), 
         principalSubject, preferredSetStores)
     idset
   }
