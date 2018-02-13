@@ -4,19 +4,15 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 
 import org.apache.log4j.Logger;
 
-import org.json.HTTP;
 import org.json.JSONArray;
 import org.json.JSONObject;
-import sdx.utils.Exec;
 
 import java.lang.System;
 
 import sdx.utils.HttpUtil;
-import sun.awt.image.ImageWatched;
 
 public class NetworkManager {
   final static Logger logger = Logger.getLogger(NetworkManager.class);
@@ -138,6 +134,8 @@ public class NetworkManager {
   private ArrayList<Link> links = new ArrayList<Link>();
   private HashMap<String, ArrayList<String[]>> sdncmds = new HashMap<String, ArrayList<String[]>>();
   private HashMap<String, Integer> route_id = new HashMap<>();
+  private HashMap<String, Integer> mirror_id = new HashMap<>();
+  private HashMap<String, ArrayList<String[]>> pairPath = new HashMap<>();
   private HashMap<String, ArrayList<String>> routes = new HashMap<>();
 
   public String getDPID(String routerid) {
@@ -243,6 +241,7 @@ public class NetworkManager {
     addRouter(routerid, dpid, numInterfaces, mip);
   }
 
+
   public boolean newLink(String ipa, String ra, String gw, String controller) {
     logger.debug("RoutingManager: new stitchpoint " + ra + " " + ipa);
     System.out.println("new stitch " + ra + " gateway:" + ipa);
@@ -304,6 +303,17 @@ public class NetworkManager {
     }
   }
 
+  private boolean deleteRoute(String dpid, String routeid, String controller) {
+    String[] cmd = delRoutingCMD(routeid, dpid, controller);
+    String res = HttpUtil.delete(cmd[0], cmd[1]);
+    System.out.println(res);
+    if(res.contains("success")){
+      addEntry_HashList(sdncmds, dpid, cmd);
+      return true;
+    }
+    return false;
+  }
+
   /*
   private boolean deleteRoute(String dpid, String routeid, String controller) {
     String[] cmd = delRoutingCMD(dpid, routeid, controller);
@@ -336,8 +346,6 @@ public class NetworkManager {
     }
   }
 
-  private void deleteRoute(String dpid, String routeid, String controller) {
-  }
 
   //gateway is the gateway for nodename
   public void configurePath(String dest, String nodename, String targetIP, String targetnodename, String gateway, String controller, long bw) {
@@ -349,6 +357,7 @@ public class NetworkManager {
       return;
     }
     ArrayList<String[]> paths = getPairRoutes(gwdpid, targetdpid, gateway, bw);
+    pairPath.put(getPathID(dest, targetIP), paths);
     ArrayList<String> dpids = new ArrayList<String>();
     for (String[] path : paths) {
       //Path [dpid,gateway,neighborip]
@@ -361,7 +370,7 @@ public class NetworkManager {
       System.out.println(res);
       if (res.contains("success")) {
         int id = Integer.valueOf(res.split("route_id=")[1].split("]")[0]);
-        route_id.put(dest + targetIP + path[0], id);
+        route_id.put(getRouteKey(dest, targetIP, path[0]), id);
         dpids.add(path[0]);
         cmd[cmd.length-1] = res;
         addEntry_HashList(sdncmds, path[0], cmd);
@@ -371,6 +380,52 @@ public class NetworkManager {
       }
       //logger.debug(path[0]+" "+path[1]);
     }
+  }
+
+  public void removePath(String srcIP, String dstIP, String controller){
+    ArrayList<String[]> paths = pairPath.get(getPathID(srcIP, dstIP));
+    for (String[] path: paths){
+      int routeid = route_id.get(getRouteKey(srcIP, dstIP, path[0]));
+      deleteRoute(path[0], String.valueOf(routeid), controller);
+    }
+  }
+
+  public String setMirror(String controller, String dpid, String source, String dst, String gw){
+    String[] cmd = mirrorCMD(controller, dpid, source, dst, gw);
+    addEntry_HashList(sdncmds, dpid, cmd);
+    String res=HttpUtil.postJSON(cmd[0], new JSONObject(cmd[1]));
+    System.out.println(res);
+    if (res.contains("success")) {
+      int id = Integer.valueOf(res.split("mirror_id=")[1].split("]")[0]);
+      mirror_id.put(getRouteKey(source, dst, dpid), id);
+      cmd[cmd.length-1] = res;
+    } else {
+      //revoke all previous routes
+      //TODO
+    }
+    return res;
+  }
+
+  public String delMirror(String controller, String dpid, String source, String dst){
+    int id = mirror_id.get(getRouteKey(source, dst, dpid));
+    String[] cmd = delMirrorCMD(String.valueOf(id), dpid,controller);
+    addEntry_HashList(sdncmds, dpid, cmd);
+    String res=HttpUtil.delete(cmd[0], cmd[1]);
+    System.out.println(res);
+    if (res.contains("success")) {
+    } else {
+      //revoke all previous routes
+      //TODO
+    }
+    return res;
+  }
+
+  private String getPathID(String src, String dst){
+    return src + dst;
+  }
+
+  private String getRouteKey(String src, String dst, String dpid){
+    return src + dst + dpid;
   }
 
   public boolean findPath(String node1, String node2, long bw) {
@@ -427,13 +482,6 @@ public class NetworkManager {
       addEntry_HashList(sdncmds, r.getDPID(), cmd);
       logger.debug(res);
     }
-  }
-
-  public String setMirror(String controller, String dpid, String source, String dst, String gw){
-    String[] cmd = mirrorCMD(controller, dpid, source, dst, gw);
-    addEntry_HashList(sdncmds, dpid, cmd);
-    String res=HttpUtil.postJSON(cmd[0], new JSONObject(cmd[1]));
-    return res;
   }
 
   public void replayCmds(String dpid){
@@ -651,15 +699,6 @@ public class NetworkManager {
     cmd[1]="{\"destination\":\""+dst+"\",\"source\":\""+src+"\",\"gateway\":\""+gw+"\"}";
     cmd[2]="postJSON";
     cmd[3] = "resultHolder";
-    return cmd;
-  }
-
-  //TODO
-  private String[] del_routingCMD(String dpid, String routeid, String controller) {
-    //String cmd="curl -X POST -d {\"destination\":\""+dst+"\",\"source\":\""+src+"\",\"gateway\":\""+gw+"\"} "+controller+"/router/"+dpid;
-    String[] cmd = new String[3];
-    cmd[0] = "http://" + controller + "/router/" + dpid;
-    cmd[2] = "DELETE";
     return cmd;
   }
 

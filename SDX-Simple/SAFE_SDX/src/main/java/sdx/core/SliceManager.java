@@ -137,7 +137,8 @@ public class SliceManager extends SliceCommon {
       //Make sure that plexus container is running
       SDNControllerIP = ((ComputeNode) carrier.getResourceByName("plexuscontroller"))
         .getManagementIP();
-      if (!checkPlexus(SDNControllerIP)) {
+      //SDNControllerIP = "152.3.136.36";
+      if (!SDNControllerIP.equals("152.3.136.36") && !checkPlexus(SDNControllerIP)) {
         System.exit(-1);
       }
       System.out.println("Plexus Controller IP: " + SDNControllerIP);
@@ -151,8 +152,10 @@ public class SliceManager extends SliceCommon {
       }
       System.out.println("SAFE Server IP: " + SAFEServerIP);
       //}
-      configBroNodes(carrier);
-      System.out.println("Set up bro nodes");
+      if(BRO) {
+        configBroNodes(carrier);
+        System.out.println("Set up bro nodes");
+      }
     } catch (Exception e) {
       e.printStackTrace();
     }
@@ -367,7 +370,7 @@ public class SliceManager extends SliceCommon {
       Link link = addLink(s, linkname, node0, node1, bw);
       links.put(linkname, link);
     }
-    //addSafeServer(s, riakip);
+    addSafeServer(s, riakip);
     addPlexusController(s);
     return s;
   }
