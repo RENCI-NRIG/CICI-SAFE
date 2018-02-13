@@ -7,12 +7,11 @@ import org.glassfish.jersey.grizzly2.httpserver.GrizzlyHttpServerFactory;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.json.JSONObject;
 
-import sdx.utils.Exec;
-import sdx.utils.HttpUtil;
+import common.utils.Exec;
+import common.utils.HttpUtil;
 
 import java.io.IOException;
 import java.net.URI;
-import java.util.ArrayList;
 
 public class Test {
   final Logger logger = Logger.getLogger(Exec.class);

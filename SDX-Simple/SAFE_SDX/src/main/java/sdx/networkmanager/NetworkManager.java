@@ -1,21 +1,16 @@
 package sdx.networkmanager;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 import org.apache.log4j.Logger;
 
-import org.json.HTTP;
 import org.json.JSONObject;
-import sdx.utils.Exec;
 
 import java.util.HashSet;
 import java.lang.System;
 
-import sdx.utils.HttpUtil;
+import common.utils.HttpUtil;
 
 public class NetworkManager {
   final private static Logger logger = Logger.getLogger(NetworkManager.class);

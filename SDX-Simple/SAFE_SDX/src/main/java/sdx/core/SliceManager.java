@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.text.SimpleDateFormat;
 
+import common.slice.SliceCommon;
 import org.apache.log4j.Logger;
 import org.apache.commons.cli.*;
 
@@ -15,9 +16,8 @@ import org.renci.ahab.libtransport.SSHAccessToken;
 import org.renci.ahab.libtransport.SliceAccessContext;
 import org.renci.ahab.libtransport.util.SSHAccessTokenFileFactory;
 import org.renci.ahab.libtransport.util.UtilTransportException;
-import org.renci.ahab.libtransport.xmlrpc.XMLRPCTransportException;
 
-import sdx.utils.Exec;
+import common.utils.Exec;
 import sdx.networkmanager.Link;
 
 /**

@@ -16,7 +16,7 @@ import org.renci.ahab.libtransport.util.SSHAccessTokenFileFactory;
 import org.renci.ahab.libtransport.util.UtilTransportException;
 import org.renci.ahab.libtransport.xmlrpc.XMLRPCTransportException;
 
-import sdx.utils.Exec;
+import common.utils.Exec;
 
 public class TestSlice extends SliceManager {
   final Logger logger = Logger.getLogger(Exec.class);
