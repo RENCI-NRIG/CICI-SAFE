@@ -8,12 +8,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.text.SimpleDateFormat;
 
-<<<<<<< HEAD
-import org.apache.log4j.ConsoleAppender;
-import org.apache.log4j.Level;
-=======
 import common.slice.SliceCommon;
->>>>>>> master
 import org.apache.log4j.Logger;
 import org.apache.log4j.SimpleLayout;
 import org.apache.commons.cli.*;
