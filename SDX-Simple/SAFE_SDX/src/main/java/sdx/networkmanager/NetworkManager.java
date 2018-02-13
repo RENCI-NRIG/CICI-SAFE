@@ -12,7 +12,7 @@ import org.json.JSONObject;
 
 import java.lang.System;
 
-import sdx.utils.HttpUtil;
+import common.utils.HttpUtil;
 
 public class NetworkManager {
   final static Logger logger = Logger.getLogger(NetworkManager.class);

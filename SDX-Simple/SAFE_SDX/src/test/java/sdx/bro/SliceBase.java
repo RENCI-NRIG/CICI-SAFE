@@ -1,7 +1,7 @@
 package sdx.bro;
 
-import sdx.core.SliceCommon;
-import sdx.utils.ScpTo;
+import common.slice.SliceCommon;
+import common.utils.ScpTo;
 
 import com.jcraft.jsch.ChannelExec;
 import com.jcraft.jsch.JSch;

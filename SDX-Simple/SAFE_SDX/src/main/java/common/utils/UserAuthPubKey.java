@@ -1,5 +1,5 @@
 /* -*-mode:java; c-basic-offset:2; indent-tabs-mode:nil -*- */
-package sdx.utils;
+package common.utils;
 
 import com.jcraft.jsch.*;
 
@@ -8,79 +8,47 @@ import javax.swing.*;
 
 import org.apache.log4j.Logger;
 
-import java.io.*;
 import java.util.Properties;
 
-public class Exec {
+public class UserAuthPubKey {
   final static Logger logger = Logger.getLogger(Exec.class);
 
-  public static String exec(String cmd) {
-    logger.debug(cmd);
-    String res = "";
-    try {
-      Runtime run = Runtime.getRuntime();
-      Process pr = run.exec(cmd);
-      pr.waitFor();
-      BufferedReader buf = new BufferedReader(new InputStreamReader(pr.getInputStream()));
-      String line = "";
-      while ((line = buf.readLine()) != null) {
-        res = res + line;
-        logger.debug(line);
-      }
-    }catch (Exception e){
-      logger.debug("Exeption while setting up link"+e);
-    }
-    return res;
-  }
+  public static void auth(String host) {
 
-  public static String sshExec(String user, String host, String command, String privkey) {
-    String result = "";
     try {
       JSch jsch = new JSch();
-      jsch.addIdentity(privkey);
+      jsch.addIdentity("~/.ssh/id_rsa");
+//			 , "passphrase"
+
+      String user = host.substring(0, host.indexOf('@'));
+      host = host.substring(host.indexOf('@') + 1);
+
       Session session = jsch.getSession(user, host, 22);
       Properties config = new Properties();
       config.put("StrictHostKeyChecking", "no");
       session.setConfig(config);
+
+      // username and passphrase will be given via UserInfo interface.
+//      UserInfo ui=new MyUserInfo();
+//      session.setUserInfo(ui);
       session.connect();
-      Channel channel = session.openChannel("exec");
-      ((ChannelExec) channel).setCommand(command);
-      channel.setInputStream(null);
-      ((ChannelExec) channel).setErrStream(System.err);
-      InputStream in = channel.getInputStream();
+
+      Channel channel = session.openChannel("shell");
+
+      channel.setInputStream(System.in);
+      channel.setOutputStream(System.out);
+
       channel.connect();
-      byte[] tmp = new byte[1024];
-      while (true) {
-        while (in.available() > 0) {
-          int i = in.read(tmp, 0, 1024);
-          if (i < 0) break;
-          result += new String(tmp, 0, i) + "\n";
-          logger.debug(new String(tmp, 0, i));
-        }
-        if (channel.isClosed()) {
-          //get status returns int;
-          logger.debug("exit-status: " + channel.getExitStatus());
-          if (channel.getExitStatus() != 0) {
-            result = "error:" + String.valueOf(channel.getExitStatus());
-          }
-          break;
-        }
-        try {
-          Thread.sleep(1000);
-        } catch (Exception ee) {
-        }
-      }
-      channel.disconnect();
-      session.disconnect();
+      logger.debug("end");
     } catch (Exception e) {
       logger.debug(e);
     }
-    return result;
   }
+
 
   public static class MyUserInfo implements UserInfo, UIKeyboardInteractive {
     public String getPassword() {
-      return passwd;
+      return null;
     }
 
     public boolean promptYesNo(String str) {
@@ -94,28 +62,28 @@ public class Exec {
       return foo == 0;
     }
 
-    String passwd;
-    JTextField passwordField = (JTextField) new JPasswordField(20);
+    String passphrase;
+    JTextField passphraseField = (JTextField) new JPasswordField(20);
 
     public String getPassphrase() {
-      return null;
+      return passphrase;
     }
 
     public boolean promptPassphrase(String message) {
-      return true;
-    }
-
-    public boolean promptPassword(String message) {
-      Object[] ob = {passwordField};
+      Object[] ob = {passphraseField};
       int result =
         JOptionPane.showConfirmDialog(null, ob, message,
           JOptionPane.OK_CANCEL_OPTION);
       if (result == JOptionPane.OK_OPTION) {
-        passwd = passwordField.getText();
+        passphrase = passphraseField.getText();
         return true;
       } else {
         return false;
       }
+    }
+
+    public boolean promptPassword(String message) {
+      return true;
     }
 
     public void showMessage(String message) {

@@ -1,9 +1,7 @@
 /* -*-mode:java; c-basic-offset:2; indent-tabs-mode:nil -*- */
-package sdx.utils;
+package common.utils;
 
 import com.jcraft.jsch.*;
-
-import sdx.utils.Exec;
 
 import java.awt.*;
 import javax.swing.*;
