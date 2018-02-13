@@ -1,20 +1,26 @@
 package sdx.core;
 
-import sdx.networkmanager.NetworkManager;
+import common.slice.SliceCommon;
 import sdx.networkmanager.Link;
-import sdx.utils.Exec;
-import sdx.utils.SafePost;
+import sdx.networkmanager.NetworkManager;
+import common.utils.Exec;
+import common.utils.SafePost;
 
 import java.util.*;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Set;
+import java.util.HashSet;
+import java.util.Properties;
 import java.util.concurrent.locks.ReentrantLock;
 
 import org.apache.log4j.Logger;
 import org.apache.commons.cli.*;
 
 import org.renci.ahab.libndl.Slice;
-import org.renci.ahab.libndl.resources.common.ModelResource;
 import org.renci.ahab.libndl.resources.request.BroadcastNetwork;
 import org.renci.ahab.libndl.resources.request.ComputeNode;
 import org.renci.ahab.libndl.resources.request.Interface;
@@ -29,9 +35,6 @@ import org.renci.ahab.libtransport.util.SSHAccessTokenFileFactory;
 import org.renci.ahab.libtransport.util.TransportException;
 import org.renci.ahab.libtransport.util.UtilTransportException;
 import org.renci.ahab.libtransport.xmlrpc.XMLRPCTransportException;
-import org.renci.ahab.ndllib.transport.OrcaSMXMLRPCProxy;
-
-import java.net.MalformedURLException;
 
 /*
 

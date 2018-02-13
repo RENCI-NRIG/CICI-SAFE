@@ -1,4 +1,4 @@
-package sdx.utils;
+package common.utils;
 
 import java.net.URI;
 

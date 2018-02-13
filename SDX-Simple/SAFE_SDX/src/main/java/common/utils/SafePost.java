@@ -1,4 +1,4 @@
-package sdx.utils;
+package common.utils;
 
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
@@ -12,8 +12,6 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.log4j.Logger;
-
-import sdx.utils.Exec;
 
 public class SafePost {
   final static Logger logger = Logger.getLogger(Exec.class);

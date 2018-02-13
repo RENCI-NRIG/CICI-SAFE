@@ -11,8 +11,8 @@ import org.renci.ahab.libtransport.SliceAccessContext;
 import org.renci.ahab.libtransport.util.SSHAccessTokenFileFactory;
 import org.renci.ahab.libtransport.util.UtilTransportException;
 import org.renci.ahab.libtransport.xmlrpc.XMLRPCTransportException;
-import sdx.utils.Exec;
-import sdx.core.SliceCommon;
+import common.utils.Exec;
+import common.slice.SliceCommon;
 
 import java.util.ArrayList;
 

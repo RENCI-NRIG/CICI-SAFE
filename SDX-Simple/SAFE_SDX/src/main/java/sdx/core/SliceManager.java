@@ -8,8 +8,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.text.SimpleDateFormat;
 
-import org.apache.log4j.ConsoleAppender;
-import org.apache.log4j.Level;
+import common.slice.SliceCommon;
 import org.apache.log4j.Logger;
 import org.apache.log4j.SimpleLayout;
 import org.apache.commons.cli.*;
@@ -39,11 +38,8 @@ import org.renci.ahab.libtransport.util.ContextTransportException;
 import org.renci.ahab.libtransport.util.SSHAccessTokenFileFactory;
 import org.renci.ahab.libtransport.util.TransportException;
 import org.renci.ahab.libtransport.util.UtilTransportException;
-import org.renci.ahab.libtransport.xmlrpc.XMLRPCProxyFactory;
-import org.renci.ahab.libtransport.xmlrpc.XMLRPCTransportException;
-import org.renci.ahab.ndllib.transport.OrcaSMXMLRPCProxy;
 
-import sdx.utils.Exec;
+import common.utils.Exec;
 import sdx.networkmanager.Link;
 
 /**

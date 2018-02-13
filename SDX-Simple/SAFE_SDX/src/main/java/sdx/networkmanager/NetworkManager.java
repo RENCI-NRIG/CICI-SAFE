@@ -7,15 +7,12 @@ import java.util.HashMap;
 
 import org.apache.log4j.Logger;
 
-import org.json.HTTP;
 import org.json.JSONArray;
 import org.json.JSONObject;
-import sdx.utils.Exec;
 
 import java.lang.System;
 
-import sdx.utils.HttpUtil;
-import sun.awt.image.ImageWatched;
+import common.utils.HttpUtil;
 
 public class NetworkManager {
   final static Logger logger = Logger.getLogger(NetworkManager.class);

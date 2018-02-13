@@ -20,9 +20,9 @@ import org.renci.ahab.libtransport.util.UtilTransportException;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
-import sdx.core.SliceCommon;
-import sdx.utils.Exec;
-import sdx.utils.SafePost;
+import common.slice.SliceCommon;
+import common.utils.Exec;
+import common.utils.SafePost;
 
 /**
 

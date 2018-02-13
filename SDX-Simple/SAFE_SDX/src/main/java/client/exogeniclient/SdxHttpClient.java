@@ -9,7 +9,7 @@ import org.apache.http.util.EntityUtils;
 import org.apache.http.HttpEntity;
 import org.apache.log4j.Logger;
 import org.json.JSONObject;
-import sdx.utils.Exec;
+import common.utils.Exec;
 
 /**
  * Main class.

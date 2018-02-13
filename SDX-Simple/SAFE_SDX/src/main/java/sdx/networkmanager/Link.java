@@ -2,7 +2,7 @@ package sdx.networkmanager;
 
 import org.apache.log4j.Logger;
 
-import sdx.utils.Exec;
+import common.utils.Exec;
 
 public class Link {
   final static Logger logger = Logger.getLogger(Exec.class);
