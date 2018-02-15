@@ -1,58 +1,18 @@
 package client.stitchport;
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.Properties;
 
-import org.apache.log4j.ConsoleAppender;
-import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
-import org.apache.log4j.SimpleLayout;
 import org.apache.commons.cli.*;
-import org.apache.commons.cli.DefaultParser;
-import org.renci.ahab.libndl.LIBNDL;
 import org.renci.ahab.libndl.Slice;
-import org.renci.ahab.libndl.SliceGraph;
-import org.renci.ahab.libndl.extras.PriorityNetwork;
-import org.renci.ahab.libndl.resources.common.ModelResource;
-import org.renci.ahab.libndl.resources.request.BroadcastNetwork;
 import org.renci.ahab.libndl.resources.request.ComputeNode;
 import org.renci.ahab.libndl.resources.request.Interface;
 import org.renci.ahab.libndl.resources.request.InterfaceNode2Net;
 import org.renci.ahab.libndl.resources.request.Network;
-import org.renci.ahab.libndl.resources.request.Node;
-import org.renci.ahab.libndl.resources.request.StitchPort;
-import org.renci.ahab.libndl.resources.request.StorageNode;
-import org.renci.ahab.libtransport.ISliceTransportAPIv1;
-import org.renci.ahab.libtransport.ITransportProxyFactory;
-import org.renci.ahab.libtransport.JKSTransportContext;
-import org.renci.ahab.libtransport.PEMTransportContext;
-import org.renci.ahab.libtransport.SSHAccessToken;
-import org.renci.ahab.libtransport.SliceAccessContext;
-import org.renci.ahab.libtransport.TransportContext;
-import org.renci.ahab.libtransport.util.ContextTransportException;
-import org.renci.ahab.libtransport.util.SSHAccessTokenFileFactory;
-import org.renci.ahab.libtransport.util.TransportException;
-import org.renci.ahab.libtransport.util.UtilTransportException;
-import org.renci.ahab.libtransport.xmlrpc.XMLRPCProxyFactory;
-import org.renci.ahab.ndllib.transport.OrcaSMXMLRPCProxy;
 
 import common.utils.Exec;
 import common.utils.SafePost;
 import org.json.JSONObject;
 import common.slice.SliceCommon;
-import client.exogeni.SdxHttpClient;
+import common.utils.HttpUtil;
 
 /**
 
@@ -127,7 +87,7 @@ public class SdxStitchPortClientManager extends SliceCommon {
         paramsobj.put("dest",params[1]);
         paramsobj.put("gateway",params[2]);
         paramsobj.put("customer", keyhash);
-        String res=SdxHttpClient.notifyPrefix(sdxserver+"sdx/notifyprefix",paramsobj);
+        String res= HttpUtil.postJSON(sdxserver+"sdx/notifyprefix",paramsobj);
         if(res.equals("")){
           logger.debug("Prefix notifcation failed");
           System.out.println("Prefix notifcation failed");
@@ -160,7 +120,7 @@ public class SdxStitchPortClientManager extends SliceCommon {
         postSafeStitchRequest(keyhash,jsonparams.getString("gateway"),jsonparams.getString("sdxslice"),jsonparams.getString("sdxnode"),jsonparams.getString("stitchport"),jsonparams.getString("vlan"));
       }
       System.out.println("posted stitch request, requesting to sdx server");
-      String res=SdxHttpClient.tryStitch(sdxserver+"sdx/stitchchameleon",jsonparams).toString();
+      String res= HttpUtil.postJSON(sdxserver+"sdx/stitchchameleon",jsonparams);
       logger.debug(res);
       System.out.println(res);
     }
