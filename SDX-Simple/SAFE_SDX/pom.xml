@@ -62,8 +62,12 @@
 							<name>SafeSdxTest</name>
 						</program>
 						<program>
-              <mainClass>sdx.core.MyHttpClient</mainClass>
-							<name>HttpClient</name>
+							<mainClass>client.exogeni.SdxExogeniClient</mainClass>
+							<name>SafeSdxExogeniClient</name>
+						</program>
+						<program>
+							<mainClass>client.stitchport.SdxExogeniClient</mainClass>
+							<name>SafeSdxStitchPortClient</name>
 						</program>
 					</programs>
 				</configuration>
