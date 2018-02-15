@@ -1,5 +1,5 @@
 package test;
-import client.exogeniclient.ClientSlice;
+import client.exogeni.ClientSlice;
 
 public class TestMain {
   public static void main(String[] args){

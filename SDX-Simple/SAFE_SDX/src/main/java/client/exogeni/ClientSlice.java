@@ -1,4 +1,4 @@
-package client.exogeniclient;
+package client.exogeni;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.log4j.Logger;

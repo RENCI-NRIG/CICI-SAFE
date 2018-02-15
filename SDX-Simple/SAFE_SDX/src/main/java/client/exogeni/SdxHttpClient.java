@@ -1,4 +1,4 @@
-package client.exogeniclient;
+package client.exogeni;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
