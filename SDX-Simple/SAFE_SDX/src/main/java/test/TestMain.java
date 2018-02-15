@@ -5,7 +5,7 @@ import client.exogeni.ClientSlice;
 
 public class TestMain {
   public static void main(String[] args){
-    //createTestSlice();
+    createTestSlice();
     test();
   }
 
@@ -19,8 +19,8 @@ public class TestMain {
     String[] clientarg2 = {"-c", "client-config/c4-tamu.conf", "-n"};
     SdxExogeniClientManager client1 = new SdxExogeniClientManager(clientarg1);
     SdxExogeniClientManager client2 = new SdxExogeniClientManager(clientarg2);
-    //client1.processCmd("stitch CNode0 test-yaoy c0");
-    //client2.processCmd("stitch CNode0 test-yaoy c2");
+    client1.processCmd("stitch CNode0 test-yaoy c0");
+    client2.processCmd("stitch CNode0 test-yaoy c2");
     client1.processCmd("route 192.168.30.1/24 192.168.130.2");
     client2.processCmd("route 192.168.40.1/24 192.168.131.2");
     client1.processCmd("link 192.168.30.1/24 192.168.40.1/24 10000");
@@ -31,11 +31,13 @@ public class TestMain {
 
     SdxServer.sdxManager.setMirror(SdxServer.sdxManager.getDPID("c0"), "192.168.40.1/24",
       "192.168.30.1/24", "192.168.100.2");
+    /*
     SdxServer.sdxManager.delMirror(SdxServer.sdxManager.getDPID("c0"), "192.168.30.1/24",
       "192.168.40.1/24");
 
     SdxServer.sdxManager.delMirror(SdxServer.sdxManager.getDPID("c0"), "192.168.40.1/24",
       "192.168.30.1/24");
+    */
     System.exit(0);
   }
 
