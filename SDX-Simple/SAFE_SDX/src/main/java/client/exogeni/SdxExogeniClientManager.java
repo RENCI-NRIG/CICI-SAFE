@@ -2,7 +2,6 @@
  * 
  */
 package client.exogeni;
-
 import org.apache.commons.cli.CommandLine;
 import org.apache.log4j.Logger;
 import org.json.JSONObject;
@@ -22,6 +21,7 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import common.slice.SliceCommon;
 import common.utils.Exec;
+import common.utils.HttpUtil;
 import common.utils.SafePost;
 
 /**
@@ -131,7 +131,7 @@ public class SdxExogeniClientManager extends SliceCommon {
     paramsobj.put("gateway",params[2]);
     paramsobj.put("router", params[4]);
     paramsobj.put("customer", keyhash);
-    String res=SdxHttpClient.notifyPrefix(sdxserver+"sdx/notifyprefix",paramsobj);
+    String res=HttpUtil.postJSON(sdxserver+"sdx/notifyprefix",paramsobj);
     if(res.equals("")){
       logger.debug("Prefix not accepted (authorization failed)");
       System.out.println("Prefix not accepted (authorization failed)");
@@ -181,7 +181,7 @@ public class SdxExogeniClientManager extends SliceCommon {
       jsonparams.put("creservid",node0_s2_stitching_GUID);
       jsonparams.put("secret",secret);
       logger.debug("Sending stitch request to sdx server");
-      JSONObject res=SdxHttpClient.tryStitch(sdxserver+"sdx/stitchrequest",jsonparams);
+      JSONObject res=new JSONObject(HttpUtil.postJSON(sdxserver+"sdx/stitchrequest",jsonparams));
       logger.debug("Got Stitch Information From Server:\n "+res.toString());
       if(!res.getBoolean("result")){
         logger.debug("stitch request declined by server");
