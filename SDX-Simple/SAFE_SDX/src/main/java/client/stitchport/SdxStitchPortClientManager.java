@@ -10,7 +10,7 @@ import common.utils.Exec;
 import common.utils.SafePost;
 import org.json.JSONObject;
 import common.slice.SliceCommon;
-import client.exogeni.SdxHttpClient;
+import common.utils.HttpUtil;
 
 /**
 
@@ -85,7 +85,7 @@ public class SdxStitchPortClientManager extends SliceCommon {
         paramsobj.put("dest",params[1]);
         paramsobj.put("gateway",params[2]);
         paramsobj.put("customer", keyhash);
-        String res=SdxHttpClient.httpRequest(sdxserver+"sdx/notifyprefix",paramsobj);
+        String res= HttpUtil.postJSON(sdxserver+"sdx/notifyprefix",paramsobj);
         if(res.equals("")){
           logger.debug("Prefix notifcation failed");
           System.out.println("Prefix notifcation failed");
@@ -118,7 +118,7 @@ public class SdxStitchPortClientManager extends SliceCommon {
         postSafeStitchRequest(keyhash,jsonparams.getString("gateway"),jsonparams.getString("sdxslice"),jsonparams.getString("sdxnode"),jsonparams.getString("stitchport"),jsonparams.getString("vlan"));
       }
       System.out.println("posted stitch request, requesting to sdx server");
-      String res=SdxHttpClient.httpRequest(sdxserver+"sdx/stitchchameleon",jsonparams).toString();
+      String res= HttpUtil.postJSON(sdxserver+"sdx/stitchchameleon",jsonparams);
       logger.debug(res);
       System.out.println(res);
     }
