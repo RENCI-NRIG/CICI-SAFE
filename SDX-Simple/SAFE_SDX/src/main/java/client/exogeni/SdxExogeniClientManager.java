@@ -2,9 +2,9 @@
  * 
  */
 package client.exogeni;
-
 import org.apache.commons.cli.CommandLine;
 import org.apache.log4j.Logger;
+import org.json.HTTP;
 import org.json.JSONObject;
 import org.renci.ahab.libndl.Slice;
 import org.renci.ahab.libndl.resources.request.ComputeNode;
@@ -22,6 +22,7 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import common.slice.SliceCommon;
 import common.utils.Exec;
+import common.utils.HttpUtil;
 import common.utils.SafePost;
 
 /**
@@ -127,7 +128,7 @@ public class SdxExogeniClientManager extends SliceCommon {
         paramsobj.put("dest",params[1]);
         paramsobj.put("gateway",params[2]);
         paramsobj.put("customer", keyhash);
-        String res=SdxHttpClient.httpRequest(sdxserver+"sdx/notifyprefix",paramsobj);
+        String res= HttpUtil.postJSON(sdxserver+"sdx/notifyprefix",paramsobj);
         if(res.equals("")){
           logger.debug("Prefix not accepted (authorization failed)");
           System.out.println("Prefix not accepted (authorization failed)");
@@ -166,7 +167,7 @@ public class SdxExogeniClientManager extends SliceCommon {
       }
       jsonparams.put("site1",site1);
       jsonparams.put("site2",site2);
-      String res=SdxHttpClient.httpRequest(sdxserver+"sdx/connectionrequest",jsonparams);
+      String res=HttpUtil.postJSON(sdxserver+"sdx/connectionrequest",jsonparams);
       logger.debug("get connection result from server:\n"+ res);
       System.out.println(res);
     }catch (Exception e){
@@ -179,7 +180,7 @@ public class SdxExogeniClientManager extends SliceCommon {
     paramsobj.put("dest",params[1]);
     paramsobj.put("gateway",params[2]);
     paramsobj.put("customer", keyhash);
-    String res=SdxHttpClient.httpRequest(sdxserver+"sdx/notifyprefix",paramsobj);
+    String res=HttpUtil.postJSON(sdxserver+"sdx/notifyprefix",paramsobj);
     if(res.equals("")){
       logger.debug("Prefix not accepted (authorization failed)");
       System.out.println("Prefix not accepted (authorization failed)");
@@ -220,7 +221,7 @@ public class SdxExogeniClientManager extends SliceCommon {
       jsonparams.put("creservid",node0_s2_stitching_GUID);
       jsonparams.put("secret",secret);
       logger.debug("Sending stitch request to sdx server");
-      JSONObject res=new JSONObject(SdxHttpClient.httpRequest(sdxserver+"sdx/stitchrequest",jsonparams));
+      JSONObject res=new JSONObject(HttpUtil.postJSON(sdxserver+"sdx/stitchrequest",jsonparams));
       logger.debug("Got Stitch Information From Server:\n "+res.toString());
       if(!res.getBoolean("result")){
         logger.debug("stitch request failed");
