@@ -5,7 +5,7 @@ import client.exogeni.ClientSlice;
 
 public class TestMain {
   public static void main(String[] args){
-    createTestSlice();
+    //createTestSlice();
     test();
   }
 
@@ -19,13 +19,13 @@ public class TestMain {
     String[] clientarg2 = {"-c", "client-config/cnert-uh.conf", "-n"};
     SdxExogeniClientManager client1 = new SdxExogeniClientManager(clientarg1);
     SdxExogeniClientManager client2 = new SdxExogeniClientManager(clientarg2);
-    client1.processCmd("stitch CNode0 test-yaoy c0");
-    client2.processCmd("stitch CNode0 test-yaoy c2");
-    client1.processCmd("route 192.168.30.1/24 192.168.130.2");
-    client2.processCmd("route 192.168.40.1/24 192.168.131.2");
+    //client1.processCmd("stitch CNode0 test-yaoy c0");
+    //client2.processCmd("stitch CNode0 test-yaoy c1");
+    client1.processCmd("route 192.168.30.1/24 192.168.129.2");
+    client2.processCmd("route 192.168.40.1/24 192.168.130.2");
     client1.processCmd("link 192.168.30.1/24 192.168.40.1/24 10000");
-    SdxServer.sdxManager.removePath("192.168.30.1/24", "192.168.40.1/24");
-    client1.processCmd("link 192.168.30.1/24 192.168.40.1/24 10000");
+    //SdxServer.sdxManager.removePath("192.168.30.1/24", "192.168.40.1/24");
+    //client1.processCmd("link 192.168.30.1/24 192.168.40.1/24 10000");
     SdxServer.sdxManager.setMirror(SdxServer.sdxManager.getDPID("c0"), "192.168.30.1/24",
       "192.168.40.1/24", "192.168.100.2");
 
@@ -42,10 +42,10 @@ public class TestMain {
   }
 
   public static void createTestSlice(){
-    String[] arg1 = {"-c", "config/test.conf"};
+    String[] arg1 = {"-c", "config/cnert.conf"};
     TestSlice ts = new TestSlice(arg1);
-    String[] clientarg1 = {"-c", "client-config/c3-tamu.conf"};
-    String[] clientarg2 = {"-c", "client-config/c4-tamu.conf"};
+    String[] clientarg1 = {"-c", "client-config/cnert-tamu.conf"};
+    String[] clientarg2 = {"-c", "client-config/cnert-uh.conf"};
     ClientSlice s1 =  new ClientSlice();
     ClientSlice s2 = new ClientSlice();
     ts.createAndConfigCarrierSlice();

@@ -292,6 +292,7 @@ public class NetworkManager {
     controller){
     String[] cmd = routingCMD(destIp, srcIp, gateWay, dpid, controller);
     String res = HttpUtil.postJSON(cmd[0], new JSONObject(cmd[1]));
+    System.out.println(cmd[1]);
     System.out.println(res);
     if (res.contains("success")) {
       int id = Integer.valueOf(res.split("route_id=")[1].split("]")[0]);
@@ -365,20 +366,7 @@ public class NetworkManager {
       if (path[2] != null) {
         router.getNeighbors().get(path[2]).useBW(bw);
       }
-      String[] cmd = routingCMD(dest, targetIP, path[1], path[0], controller);
-      String res = HttpUtil.postJSON(cmd[0], new JSONObject(cmd[1]));
-      System.out.println(res);
-      if (res.contains("success")) {
-        int id = Integer.valueOf(res.split("route_id=")[1].split("]")[0]);
-        route_id.put(getRouteKey(dest, targetIP, path[0]), id);
-        dpids.add(path[0]);
-        cmd[cmd.length-1] = res;
-        addEntry_HashList(sdncmds, path[0], cmd);
-      } else {
-        //revoke all previous routes
-        //TODO
-      }
-      //logger.debug(path[0]+" "+path[1]);
+      addRoute(dest, targetIP, path[1], path[0], controller);
     }
   }
 
