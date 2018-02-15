@@ -13,10 +13,10 @@ public class TestMain {
     //rest_router_mirror line 1057 for info about deleting flows. It delete the flows
     //cookie is used to differenciate different flows. Use unique cookie ids accross all tables
     // to manage the flows.
-    String[] args = {"-c", "config/test.conf", "-n"};
+    String[] args = {"-c", "config/cnert.conf", "-n"};
     SdxServer.run(args);
-    String[] clientarg1 = {"-c", "client-config/c3-tamu.conf", "-n"};
-    String[] clientarg2 = {"-c", "client-config/c4-tamu.conf", "-n"};
+    String[] clientarg1 = {"-c", "client-config/cnert-tamu.conf", "-n"};
+    String[] clientarg2 = {"-c", "client-config/cnert-uh.conf", "-n"};
     SdxExogeniClientManager client1 = new SdxExogeniClientManager(clientarg1);
     SdxExogeniClientManager client2 = new SdxExogeniClientManager(clientarg2);
     client1.processCmd("stitch CNode0 test-yaoy c0");
