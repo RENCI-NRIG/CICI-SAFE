@@ -1,7 +1,7 @@
 /**
  * 
  */
-package client.exogeniclient;
+package client.exogeni;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.log4j.Logger;
@@ -29,11 +29,11 @@ import common.utils.SafePost;
  * @author geni-orca
  *
  */
-public class SdxExogeniClient extends SliceCommon {
+public class SdxExogeniClientManager extends SliceCommon {
   final Logger logger = Logger.getLogger(Exec.class);
   private CommandLine cmd;
 
-  public SdxExogeniClient(String[] args){
+  public SdxExogeniClientManager(String[] args){
     //Example usage: ./target/appassembler/bin/SafeSdxClient -f alice.conf
     logger.debug("ndllib TestDriver: START");
     //pemLocation = args[0];
