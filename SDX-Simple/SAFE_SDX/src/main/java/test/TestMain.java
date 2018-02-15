@@ -1,7 +1,7 @@
 package test;
-import client.exogeniclient.ClientSlice;
-import client.exogeniclient.SdxExogeniClient;
+import client.exogeni.SdxExogeniClientManager;
 import sdx.core.SdxServer;
+import client.exogeni.ClientSlice;
 
 public class TestMain {
   public static void main(String[] args){
@@ -17,8 +17,8 @@ public class TestMain {
     SdxServer.run(args);
     String[] clientarg1 = {"-c", "client-config/c3-tamu.conf", "-n"};
     String[] clientarg2 = {"-c", "client-config/c4-tamu.conf", "-n"};
-    SdxExogeniClient client1 = new SdxExogeniClient(clientarg1);
-    SdxExogeniClient client2 = new SdxExogeniClient(clientarg2);
+    SdxExogeniClientManager client1 = new SdxExogeniClientManager(clientarg1);
+    SdxExogeniClientManager client2 = new SdxExogeniClientManager(clientarg2);
     //client1.processCmd("stitch CNode0 test-yaoy c0");
     //client2.processCmd("stitch CNode0 test-yaoy c2");
     client1.processCmd("route 192.168.30.1/24 192.168.130.2");
