@@ -62,7 +62,6 @@ public class RestService {
     String res = SdxServer.sdxManager.stitchChameleon(sr.sdxslice, sr.sdxnode, sr.ckeyhash, sr
         .stitchport,
       sr.vlan, sr.gateway, sr.ip);
-    //return new StitchResult("ha","ha");
     return res;
   }
 
