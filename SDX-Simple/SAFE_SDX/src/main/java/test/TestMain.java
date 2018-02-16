@@ -30,8 +30,8 @@ public class TestMain {
     //TODO new interface not added to bridge
 
     // client slice advertise their prefix
-    client1.processCmd("route 192.168.30.1/24 192.168.129.2");
-    client2.processCmd("route 192.168.40.1/24 192.168.130.2");
+    client1.processCmd("route 192.168.30.1/24 192.168.130.2");
+    client2.processCmd("route 192.168.40.1/24 192.168.131.2");
 
     //client request for connection between prefixes
     client1.processCmd("link 192.168.30.1/24 192.168.40.1/24");

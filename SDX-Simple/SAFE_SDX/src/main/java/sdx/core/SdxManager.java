@@ -304,9 +304,9 @@ public class SdxManager extends SliceManager {
       stitch(customerName,ResrvID,sdxslice,net1_stitching_GUID,secret,ip);
       res[0]=gw;
       res[1]=ip;
+      sleep(10);
       Exec.sshExec("root", node.getManagementIP(), "/bin/bash ~/ovsbridge.sh " +
         OVSController, sshkey);
-      sleep(10);
       routingmanager.newLink(link.getIP(1), link.nodea,ip.split("/")[0], SDNController);
       //routingmanager.configurePath(ip,node.getName(),ip.split("/")[0],SDNController);
       System.out.println("stitching operation  completed");
