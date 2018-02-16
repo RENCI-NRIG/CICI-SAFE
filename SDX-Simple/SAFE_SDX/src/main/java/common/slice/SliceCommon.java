@@ -6,6 +6,7 @@ import java.io.File;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 import org.apache.log4j.Logger;
 import org.apache.commons.cli.*;
@@ -169,6 +170,35 @@ public abstract class SliceCommon {
 
       if (sliceActive) break;
       sleep(interval);
+    }
+    logger.debug("Done");
+    for (ComputeNode n : s.getComputeNodes()) {
+      logger.debug("ComputeNode: " + n.getName() + ", Managment IP =  " + n.getManagementIP());
+    }
+  }
+
+  protected  void waitTillActive(Slice s, List<String> resources) {
+    boolean sliceActive = false;
+    while (true) {
+      s.refresh();
+      sliceActive = true;
+      logger.debug("");
+      logger.debug("Slice: " + s.getAllResources());
+      for (ComputeNode c : s.getComputeNodes()) {
+        logger.debug("Resource: " + c.getName() + ", state: " + c.getState());
+        if (resources.contains(c.getName())) {
+          if (c.getState() != "Active" || c.getManagementIP() == null) sliceActive = false;
+        }
+      }
+      for (Network l : s.getBroadcastLinks()) {
+        logger.debug("Resource: " + l.getName() + ", state: " + l.getState());
+        if (resources.contains(l.getName())) {
+          if (l.getState() != "Active") sliceActive = false;
+        }
+      }
+
+      if (sliceActive) break;
+      sleep(10);
     }
     logger.debug("Done");
     for (ComputeNode n : s.getComputeNodes()) {
