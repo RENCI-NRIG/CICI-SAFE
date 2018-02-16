@@ -48,7 +48,7 @@ public class SdxServer {
     System.out.println("Sdx server has started, listening on " + sdxManager.serverurl);
   }
 
-  public static void run(String[] args) throws IOException {
+  public static void run(String[] args){
     System.out.println("starting sdx server");
     sdxManager.startSdxServer(args);
     logger.debug("Starting on " + sdxManager.serverurl);

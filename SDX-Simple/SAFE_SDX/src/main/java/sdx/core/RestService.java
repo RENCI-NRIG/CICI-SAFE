@@ -15,7 +15,7 @@ import org.apache.log4j.Logger;
 @Path("sdx")
 public class RestService {
 
-	  final static Logger logger = Logger.getLogger(RestService.class);	
+	  final static Logger logger = Logger.getLogger(RestService.class);
 
 
     /** 
@@ -24,22 +24,6 @@ public class RestService {
      *
      * @return String that will be returned as a text/plain response.
      */
-    //Test API
-    @GET
-    @Produces(MediaType.TEXT_PLAIN)
-    public String getIt() {
-        return "Got it!";
-    }
-
-    //Test API
-    @GET
-    @Path("/sr")
-    @Produces(MediaType.APPLICATION_JSON)
-    public StitchRequest getJson() {
-      logger.debug("json get");
-
-        return new StitchRequest("1","2","3","4","5","6");
-    }
 
     @POST
     @Path("/stitchrequest")
@@ -78,7 +62,7 @@ public class RestService {
     @Path("/stitchchameleon")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.TEXT_PLAIN)
-    public String stitchRequest(StitchChameleon sr){
+    public String stitchChameleon(StitchChameleon sr){
       logger.debug("got chameleon stitch request: \n"+sr.toString());
       System.out.println(String.format("got chameleon stitch request from %s", sr.ckeyhash));
       String res=SdxServer.sdxManager.stitchChameleon(sr.sdxslice, sr.sdxnode, sr.ckeyhash, sr
@@ -92,7 +76,7 @@ public class RestService {
     @Path("/notifyprefix")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.TEXT_PLAIN)
-    public String stitchRequest(PrefixNotification pn){
+    public String notifyPrefix(PrefixNotification pn){
       logger.debug("got notifyprefix");
       String res=SdxServer.sdxManager.notifyPrefix(pn.dest, pn.gateway,  pn.customer);
       logger.debug(res);
