@@ -36,10 +36,15 @@ public class RestService {
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.APPLICATION_JSON)
   public StitchResult stitchRequest(StitchRequest sr) {
-    logger.debug("got sittch request");
-    String[] res = SdxServer.sdxManager.stitchRequest(sr.sdxslice, sr.sdxnode, sr.ckeyhash, sr
-      .cslice, sr.creservid, sr.secret);
-    return new StitchResult(res[0], res[1]);
+    logger.debug("got stitch request");
+    try {
+      String[] res = SdxServer.sdxManager.stitchRequest(sr.sdxslice, sr.sdxnode, sr.ckeyhash, sr
+        .cslice, sr.creservid, sr.secret);
+      return new StitchResult(res[0], res[1]);
+    }catch (Exception e){
+      e.printStackTrace();
+      return new StitchResult(null,null);
+    }
   }
 
   @POST
@@ -48,11 +53,15 @@ public class RestService {
   @Produces(MediaType.TEXT_PLAIN)
   public String stitchChameleon(StitchChameleon sr) {
     logger.debug("got chameleon stitch request: \n" + sr.toString());
-    System.out.println(String.format("got chameleon stitch request from %s", sr.ckeyhash));
-    String res = SdxServer.sdxManager.stitchChameleon(sr.sdxslice, sr.sdxnode, sr.ckeyhash, sr
-        .stitchport,
-      sr.vlan, sr.gateway, sr.ip);
-    return res;
+    try {
+      String res = SdxServer.sdxManager.stitchChameleon(sr.sdxslice, sr.sdxnode, sr.ckeyhash, sr
+          .stitchport,
+        sr.vlan, sr.gateway, sr.ip);
+      return res;
+    }catch (Exception e){
+      e.printStackTrace();
+      return "Stitch chameleon failed";
+    }
   }
 
   @POST
@@ -61,10 +70,15 @@ public class RestService {
   @Produces(MediaType.TEXT_PLAIN)
   public String notifyPrefix(PrefixNotification pn) {
     logger.debug("got sittch request");
-    String res = SdxServer.sdxManager.notifyPrefix(pn.dest, pn.gateway, pn.router, pn.customer);
-    logger.debug(res);
-    System.out.println(res);
-    return res;
+    try {
+      String res = SdxServer.sdxManager.notifyPrefix(pn.dest, pn.gateway, pn.router, pn.customer);
+      logger.debug(res);
+      System.out.println(res);
+      return res;
+    }catch (Exception e){
+      e.printStackTrace();
+      return "notify prefix exception";
+    }
   }
 }
 

@@ -42,13 +42,13 @@ public class TestMain {
 
   public static void createTestSlice(){
     String[] arg1 = {"-c", "config/test.conf"};
-    //TestSlice ts = new TestSlice(arg1);
+    TestSlice ts = new TestSlice(arg1);
     String[] clientarg1 = {"-c", "client-config/c3-tamu.conf"};
     String[] clientarg2 = {"-c", "client-config/c4-tamu.conf"};
-    //ClientSlice s1 =  new ClientSlice();
+    ClientSlice s1 =  new ClientSlice();
     ClientSlice s2 = new ClientSlice();
-    //ts.createAndConfigCarrierSlice();
-    //s1.run(clientarg1);
+    ts.createAndConfigCarrierSlice();
+    s1.run(clientarg1);
     s2.run(clientarg2);
   }
 }
