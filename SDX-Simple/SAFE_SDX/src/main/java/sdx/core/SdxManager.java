@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Set;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Properties;
 import java.util.concurrent.locks.ReentrantLock;
@@ -328,25 +329,7 @@ public class SdxManager extends SliceCommon {
 
       }
       int N = 0;
-      net = (Network) s1.getResourceByName(stitchname);
-      while (! net.getState().equals("Active") && N < 10) {
-        try {
-          s1 = Slice.loadManifestFile(sliceProxy, carrierName);
-        } catch (ContextTransportException e) {
-          // TODO Auto-generated catch block
-          e.printStackTrace();
-        } catch (TransportException e) {
-          // TODO Auto-generated catch block
-          e.printStackTrace();
-        }
-        net = (Network) s1.getResourceByName(stitchname);
-        for (Network l : s1.getBroadcastLinks()) {
-          logger.debug("Resource: " + l.getName() + ", state: " + l.getState());
-        }
-        logger.debug(((Network) s1.getResourceByName(stitchname)).getState());
-        sleep(5);
-        N++;
-      }
+      waitTillActive(s1,Arrays.asList(stitchname));
       sleep(10);
       //System.out.println("Node managmentIP: " + node.getManagementIP());
       Exec.sshExec("root", node.getManagementIP(), "/bin/bash ~/ovsbridge.sh " + OVSController, sshkey);
