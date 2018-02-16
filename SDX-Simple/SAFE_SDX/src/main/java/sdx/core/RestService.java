@@ -31,16 +31,6 @@ public class RestService {
     return "Got it!";
   }
 
-  //Test API
-  @GET
-  @Path("/sr")
-  @Produces(MediaType.APPLICATION_JSON)
-  public StitchRequest getJson() {
-    logger.debug("json get");
-
-    return new StitchRequest("1", "2", "3", "4", "5", "6");
-  }
-
   @POST
   @Path("/stitchrequest")
   @Consumes(MediaType.APPLICATION_JSON)
