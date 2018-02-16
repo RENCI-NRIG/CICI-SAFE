@@ -79,7 +79,7 @@ public class RestService {
     @Path("/stitchchameleon")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.TEXT_PLAIN)
-    public String stitchRequest(StitchChameleon sr){
+    public String stitchChameleon(StitchChameleon sr){
       logger.debug("got chameleon stitch request: \n"+sr.toString());
       System.out.println(String.format("got chameleon stitch request from %s", sr.ckeyhash));
       String res=SdxServer.sdxManager.stitchChameleon(sr.sdxslice, sr.sdxnode, sr.ckeyhash, sr
@@ -93,7 +93,7 @@ public class RestService {
     @Path("/notifyprefix")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.TEXT_PLAIN)
-    public String stitchRequest(PrefixNotification pn){
+    public String notifyPrefix(PrefixNotification pn){
       logger.debug("got notifyprefix");
       String res=SdxServer.sdxManager.notifyPrefix(pn.dest, pn.gateway,  pn.customer);
       logger.debug(res);
