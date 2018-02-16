@@ -280,12 +280,6 @@ public class SdxManager extends SliceManager {
       }
       int N=0;
       waitTillActive(s1,Arrays.asList(stitchname));
-      //System.out.println("Node managmentIP: " + node.getManagementIP());
-      //if(!newrouter) {
-      //  routingmanager.replayCmds(routingmanager.getDPID(node.getName()));
-      //}else {
-      //  configRouter(node);
-      //}
       if(newrouter) {
         configRouter(node);
       }
