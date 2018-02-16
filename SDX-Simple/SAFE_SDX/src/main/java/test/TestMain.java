@@ -25,8 +25,9 @@ public class TestMain {
     SdxExogeniClientManager client2 = new SdxExogeniClientManager(clientarg2);
 
     //client slice request stitching
-    //client1.processCmd("stitch CNode0 test-yaoy c0");
-    //client2.processCmd("stitch CNode0 test-yaoy c1");
+    client1.processCmd("stitch CNode0 test-yaoy c0");
+    client2.processCmd("stitch CNode0 test-yaoy c1");
+    //TODO new interface not added to bridge
 
     // client slice advertise their prefix
     client1.processCmd("route 192.168.30.1/24 192.168.129.2");
