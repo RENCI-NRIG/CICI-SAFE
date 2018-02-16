@@ -43,9 +43,9 @@ public class Test {
     //sdxManager.notifyPrefix("192.168.30.2/24", "192.168.10.2", "c0", "notused");
     sdxManager.notifyPrefix("192.168.20.2/24", "192.168.20.2",  "notused");
     String dpid = sdxManager.getDPID("c0");
-    String res = sdxManager.setMirror(sdxManager.getSDNControllerIP(), dpid, "192.168.20.1/24",
+    String res = sdxManager.setMirror(dpid, "192.168.20.1/24",
       "192.168.10.2/24", "192.168.101.2");
-    String res1 = sdxManager.setMirror(sdxManager.getSDNControllerIP(), dpid, "192.168.10.2/24",
+    String res1 = sdxManager.setMirror(dpid, "192.168.10.2/24",
       "192.168.20.1/24", "192.168.101.2");
     System.out.println(res);
 
@@ -208,18 +208,18 @@ public class Test {
     sdxManager.notifyPrefix("192.168.10.2/24", "192.168.10.2",  "notused");
     //sdxManager.notifyPrefix("192.168.30.2/24", "192.168.10.2", "c0", "notused");
     sdxManager.notifyPrefix("192.168.30.2/24", "192.168.30.2",  "notused");
-    String res = sdxManager.setMirror(sdxManager.getSDNControllerIP(), dpid0, addresses[0],
+    String res = sdxManager.setMirror(dpid0, addresses[0],
       addresses[2], "192.168.101.2");
     System.out.println(res);
-    res = sdxManager.setMirror(sdxManager.getSDNControllerIP(), dpid0, addresses[2],
+    res = sdxManager.setMirror(dpid0, addresses[2],
       addresses[0], "192.168.101.2");
     System.out.println(res);
     sdxManager.notifyPrefix("192.168.20.2/24", "192.168.20.2",  "notused");
     sdxManager.notifyPrefix("192.168.40.2/24", "192.168.40.2", "notused");
-    res = sdxManager.setMirror(sdxManager.getSDNControllerIP(), dpid0, addresses[1],
+    res = sdxManager.setMirror(dpid0, addresses[1],
       addresses[3], "192.168.101.2");
     System.out.println(res);
-    res = sdxManager.setMirror(sdxManager.getSDNControllerIP(), dpid0, addresses[3],
+    res = sdxManager.setMirror(dpid0, addresses[3],
       addresses[1], "192.168.101.2");
     System.out.println(res);
   }
@@ -232,9 +232,9 @@ public class Test {
     //sdxManager.notifyPrefix("192.168.30.2/24", "192.168.10.2", "c0", "notused");
     sdxManager.notifyPrefix("10.32.90.105/24", "10.32.90.105",  "notused");
     String dpid = sdxManager.getDPID("c0");
-    String res = sdxManager.setMirror(sdxManager.getSDNControllerIP(), dpid, "10.32.90.105/24",
+    String res = sdxManager.setMirror(dpid, "10.32.90.105/24",
       "192.168.10.2/24", "192.168.101.2");
-    String res1 = sdxManager.setMirror(sdxManager.getSDNControllerIP(), dpid, "192.168.10.2/24",
+    String res1 = sdxManager.setMirror(dpid, "192.168.10.2/24",
       "10.32.90.105/24", "192.168.101.2");
     System.out.println(res);
 

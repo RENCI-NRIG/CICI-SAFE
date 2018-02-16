@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Set;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Properties;
 import java.util.concurrent.locks.ReentrantLock;
@@ -766,8 +767,8 @@ public class SdxManager extends SliceManager {
     }
   }
 
-  public  String setMirror(String controller, String dpid, String source, String dst, String gw) {
-    return routingmanager.setMirror(controller, dpid, source, dst, gw);
+  public  String setMirror(String dpid, String source, String dst, String gw) {
+    return routingmanager.setMirror(SDNController, dpid, source, dst, gw);
   }
 
   public void configRouting(Slice s,String ovscontroller, String httpcontroller, String routerpattern,String stitchportpattern) {
