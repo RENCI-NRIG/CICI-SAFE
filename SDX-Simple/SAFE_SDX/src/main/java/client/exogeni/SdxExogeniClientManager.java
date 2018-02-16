@@ -129,7 +129,7 @@ public class SdxExogeniClientManager extends SliceCommon {
     JSONObject paramsobj=new JSONObject();
     paramsobj.put("dest",params[1]);
     paramsobj.put("gateway",params[2]);
-    paramsobj.put("router", params[4]);
+    paramsobj.put("router", params[3]);
     paramsobj.put("customer", keyhash);
     String res=HttpUtil.postJSON(sdxserver+"sdx/notifyprefix",paramsobj);
     if(res.equals("")){

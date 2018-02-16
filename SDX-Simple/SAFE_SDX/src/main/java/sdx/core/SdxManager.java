@@ -620,8 +620,8 @@ public class SdxManager extends SliceCommon {
     }
   }
 
-  public  String setMirror(String controller, String dpid, String source, String dst, String gw) {
-    return routingmanager.setMirror(controller, dpid, source, dst, gw);
+  public  String setMirror(String dpid, String source, String dst, String gw) {
+    return routingmanager.setMirror(SDNController, dpid, source, dst, gw);
   }
 
   public void configRouting1(Slice s,String ovscontroller, String httpcontroller, String routerpattern,String stitchportpattern) {
