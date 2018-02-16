@@ -15,7 +15,7 @@ import org.apache.log4j.Logger;
 @Path("sdx")
 public class RestService {
 
-	  final static Logger logger = Logger.getLogger(RestService.class);	
+	  final static Logger logger = Logger.getLogger(RestService.class);
 
 
     /** 
@@ -24,22 +24,6 @@ public class RestService {
      *
      * @return String that will be returned as a text/plain response.
      */
-    //Test API
-    @GET
-    @Produces(MediaType.TEXT_PLAIN)
-    public String getIt() {
-        return "Got it!";
-    }
-
-    //Test API
-    @GET
-    @Path("/sr")
-    @Produces(MediaType.APPLICATION_JSON)
-    public StitchRequest getJson() {
-      logger.debug("json get");
-
-        return new StitchRequest("1","2","3","4","5","6");
-    }
 
     @POST
     @Path("/stitchrequest")

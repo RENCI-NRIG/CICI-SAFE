@@ -222,7 +222,8 @@ public class SdxExogeniClientManager extends SliceCommon {
         jsonparams.put("sdxnode", params[3]);
       }
       logger.debug("Sending stitch request to sdx server");
-      JSONObject res=new JSONObject(HttpUtil.postJSON(sdxserver+"sdx/stitchrequest",jsonparams));
+      String  r = HttpUtil.postJSON(sdxserver+"sdx/stitchrequest",jsonparams);
+      JSONObject res=new JSONObject(r);
       logger.debug("Got Stitch Information From Server:\n "+res.toString());
       if(!res.getBoolean("result")){
         logger.debug("stitch request failed");
