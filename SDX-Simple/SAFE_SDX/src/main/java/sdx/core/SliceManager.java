@@ -105,14 +105,18 @@ public class SliceManager extends SliceCommon {
     }
 
     if (type.equals("server")) {
-      createAndConfigCarrierSlice();
+      long bw = 1000000000;
+      if (conf.hasPath("config.bw")){
+        bw = conf.getLong("config.bw");
+      }
+      createAndConfigCarrierSlice(bw);
     } else if (type.equals("delete")) {
       deleteSlice(sliceName);
     }
     logger.debug("XXXXXXXXXX Done XXXXXXXXXXXXXX");
   }
 
-  public void createAndConfigCarrierSlice(){
+  public void createAndConfigCarrierSlice(long bw){
     int routerNum = 4;
     try {
       routerNum = conf.getInt("config.routernum");
@@ -125,7 +129,7 @@ public class SliceManager extends SliceCommon {
     computeIP(IPPrefix);
     try {
       String carrierName = sliceName;
-      Slice carrier = createCarrierSlice(carrierName, routerNum, 1000000);
+      Slice carrier = createCarrierSlice(carrierName, routerNum, bw);
       commitAndWait(carrier);
       carrier.refresh();
       copyFile2Slice(carrier, scriptsdir + "dpid.sh", "~/dpid.sh", sshkey);
@@ -355,7 +359,8 @@ public class SliceManager extends SliceCommon {
         nodePostBootScript);
       nodelist.add(node0);
       if (BRO && i ==0) {
-        addBro(s, "bro" + i, node0, curip++, bw);
+        long brobw = conf.getLong("config.brobw");
+        addBro(s, "bro" + i, node0, curip++, brobw);
       }
     }
     //add Links

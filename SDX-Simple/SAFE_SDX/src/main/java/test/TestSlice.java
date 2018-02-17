@@ -56,22 +56,6 @@ public class TestSlice extends SliceManager {
     }
   }
 
-
-  public void run() {
-
-    //TestSlice usage:   ./target/appassembler/bin/SafeSdxTestSlice  ~/.ssl/geni-pruth1.pem ~/.ssl/geni-pruth1.pem "https://geni.renci.org:11443/orca/xmlrpc" pruth.1 stitch
-    //TestSlice usage:   ./target/appassembler/bin/SafeSdxTestSlice  ~/.ssl/geni-pruth1.pem ~/.ssl/geni-pruth1.pem "https://geni.renci.org:11443/orca/xmlrpc" name fournodes
-
-    if (type.equals("server")) {
-      testSliceDynamicLinks();
-      //testBroSliceTwoPairs();
-      //testBroSliceExoGENI();
-    } else if (type.equals("delete")) {
-      deleteSlice(sliceName);
-    }
-    logger.debug("XXXXXXXXXX Done XXXXXXXXXXXXXX");
-  }
-
   public void testBroSliceTwoPairs(){
     IPPrefix = conf.getString("config.ipprefix");
     riakip = conf.getString("config.riakserver");
