@@ -59,6 +59,7 @@ public class Exec {
         }
         if (channel.isClosed()) {
           //get status returns int;
+          logger.debug(host + ":" + command);
           logger.debug("exit-status: " + channel.getExitStatus());
           if (channel.getExitStatus() != 0) {
             result = "error:" + String.valueOf(channel.getExitStatus());

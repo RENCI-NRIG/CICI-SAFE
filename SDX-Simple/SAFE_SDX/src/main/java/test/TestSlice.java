@@ -114,7 +114,7 @@ public class TestSlice extends SliceManager {
       //}
       //System.out.println("SAFE Server IP: " + SAFEServerIP);
       if(BRO){
-        configBroNodes(carrier);
+        configBroNodes(carrier, "(bro\\d+_c\\d+)");
       }
 
       runCmdSlice(carrier, "mkdir /home/ftp", sshkey, "(node\\d+)", true, true);
@@ -184,7 +184,7 @@ public class TestSlice extends SliceManager {
       //}
       //System.out.println("SAFE Server IP: " + SAFEServerIP);
       if(BRO){
-        configBroNodes(carrier);
+        configBroNodes(carrier, "(bro\\d+_c\\d+)");
       }
 
       runCmdSlice(carrier, "mkdir /home/ftp", sshkey, "(node\\d+)", true, true);
@@ -313,7 +313,7 @@ public class TestSlice extends SliceManager {
       //}
       if(BRO){
         System.out.println("config bro");
-        configBroNodes(carrier);
+        configBroNodes(carrier, "(bro\\d+_c\\d+)");
       }
       //}
     } catch (Exception e) {

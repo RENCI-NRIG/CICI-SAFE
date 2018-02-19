@@ -65,7 +65,6 @@ public class SdxManager extends SliceManager {
 
   final Logger logger = Logger.getLogger(SdxManager.class);
 
-
   private NetworkManager routingmanager = new NetworkManager();
   int curip = 128;
   private String mask = "/24";
@@ -174,7 +173,7 @@ public class SdxManager extends SliceManager {
     OVSController=SDNControllerIP+":6633";
 
     //configRouting(serverslice,OVSController,SDNController,"(c\\d+)","(sp-c\\d+.*)");
-    loadSdxNetwork(serverSlice,"(c\\d+)","(sp-c\\d+.*)");
+    loadSdxNetwork(serverSlice,"(^c\\d+)","(sp-c\\d+.*)");
     configRouting(serverSlice,OVSController,SDNController,"(c\\d+)","(sp-c\\d+.*)");
   }
 
@@ -310,6 +309,49 @@ public class SdxManager extends SliceManager {
       logger.debug("Stitching Authorization Failed");
     }
     return res;
+  }
+
+  public void deployBro(String routerName){
+    Long t1 = System.currentTimeMillis();
+    ComputeNode router =  (ComputeNode) serverSlice.getResourceByName(routerName);
+    String broName = getBroName(router.getName());
+    long brobw = conf.getLong("config.brobw");
+    int ip_to_use = getAvailableIP();
+    addBro(serverSlice, broName, router, ip_to_use,brobw);
+    commitAndWait(serverSlice);
+    configBroNodes(serverSlice, "(" + broName + ")");
+    sleep(10);
+    Exec.sshExec("root", router.getManagementIP(), "/bin/bash ~/ovsbridge.sh " +
+      OVSController, sshkey);
+    Link link=new Link();
+    String broLinkName = getBroLinkName(ip_to_use);
+    link.setName(getBroLinkName(ip_to_use));
+    link.addNode(router.getName());
+    usedip.add(ip_to_use);
+    link.setIP(IPPrefix+ip_to_use);
+    link.setMask(mask);
+    routingmanager.newLink(link.getIP(1), link.nodea, link.getIP(2).split("/")[0],
+      SDNController);
+    Long t2 = System.currentTimeMillis();
+    System.out.println("Deployed new Bro node successfully, time elapsed: " + (t2- t1) +
+      "milliseconds");
+  }
+
+  private String getBroName(String routerName){
+    String broPattern = "(bro\\d+_" + routerName + ")";
+    Pattern pattern = Pattern.compile(broPattern);
+    HashSet<Integer> nameSet = new HashSet<Integer>();
+    for(ComputeNode c: serverSlice.getComputeNodes()){
+      if (pattern.matcher(c.getName()).matches()) {
+        int number = Integer.valueOf(c.getName().split("_")[0].replace("bro", ""));
+        nameSet.add(number);
+      }
+    }
+    int start = 0;
+    while(nameSet.contains(start)){
+      start ++;
+    }
+    return "bro" + start + "_" + routerName;
   }
 
   private  String allocateLinkName(){
@@ -854,24 +896,13 @@ public class SdxManager extends SliceManager {
       }
     }
 
-    //To Emulate dynamic allocation of links, we don't use link whose name does't contain "link"
+    //To Emulate dynamic allocation of links, we don't use links whose name does't contain "link"
     for (Object k : keyset) {
       Link link = links.get((String) k);
       logger.debug("Setting up link "+link.linkname);
       if (!((String) k).contains("stitch") && !((String )k).contains("blink")) {
         logger.debug("Setting up link " + link.linkname);
-        int ip_to_use = 0;
-        iplock.lock();
-        try {
-          while (usedip.contains(curip)) {
-            curip++;
-          }
-          ip_to_use = curip;
-          usedip.add(ip_to_use);
-          curip++;
-        }finally {
-          iplock.unlock();
-        }
+        int ip_to_use = getAvailableIP();
         link.setIP(IPPrefix + String.valueOf(ip_to_use));
         link.setMask(mask);
         //logger.debug(link.nodea+":"+link.getIP(1)+" "+link.nodeb+":"+link.getIP(2));
@@ -881,6 +912,22 @@ public class SdxManager extends SliceManager {
     }
     //set ovsdb address
     routingmanager.setOvsdbAddr(httpcontroller);
+  }
+
+  private int getAvailableIP(){
+    int ip_to_use = curip;
+    iplock.lock();
+    try {
+      while (usedip.contains(curip)) {
+        curip++;
+      }
+      ip_to_use = curip;
+      usedip.add(ip_to_use);
+      curip++;
+    }finally {
+      iplock.unlock();
+    }
+    return ip_to_use;
   }
 
   public void undoStitch(String sdxslice, String customerName, String netName, String nodeName) {

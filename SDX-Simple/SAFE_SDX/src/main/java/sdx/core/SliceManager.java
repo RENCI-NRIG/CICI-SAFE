@@ -153,7 +153,7 @@ public class SliceManager extends SliceCommon {
       System.out.println("SAFE Server IP: " + SAFEServerIP);
       //}
       if(BRO) {
-        configBroNodes(carrier);
+        configBroNodes(carrier, "(bro\\d+_c\\d+)");
         System.out.println("Set up bro nodes");
       }
     } catch (Exception e) {
@@ -162,26 +162,26 @@ public class SliceManager extends SliceCommon {
 
   }
 
-  public void configBroNodes(Slice carrier) {
+  public void configBroNodes(Slice carrier, String bropattern) {
     // Bro uses 'eth1"
-    runCmdSlice(carrier, "sed -i 's/eth0/eth1/' /opt/bro/etc/node.cfg", sshkey, "(bro\\d+)" +
-      "", true, true);
+    runCmdSlice(carrier, "sed -i 's/eth0/eth1/' /opt/bro/etc/node.cfg", sshkey, bropattern, true, true);
 
     String resource_dir = conf.getString("config.resourcedir");
     copyFile2Slice(carrier, resource_dir + "bro/destroy_conn.bro", "/root/destroy_conn" +
-      ".bro", sshkey, "(bro\\d+)");
+      ".bro", sshkey, bropattern);
     copyFile2Slice(carrier, resource_dir + "bro/test-all-policy.bro", "/root/test-all-policy" +
-        ".bro", sshkey, "(bro\\d+)");
+        ".bro", sshkey, bropattern);
     copyFile2Slice(carrier, resource_dir + "bro/test-all-policy.bro", "/root/detect-file" +
-        ".bro", sshkey, "(bro\\d+)");
+        ".bro", sshkey, bropattern);
     copyFile2Slice(carrier, resource_dir + "bro/evil.txt", "/root/evil.txt", sshkey,
-      "(bro\\d+)");
+      bropattern);
 
     runCmdSlice(carrier, "sed -i 's/bogus_addr/" + SDNControllerIP + "/' destroy_conn.bro",
-      sshkey, "(bro\\d+)", true, true);
+      sshkey, bropattern, true, true);
+    Pattern pattern = Pattern.compile(bropattern);
     for (ComputeNode c : carrier.getComputeNodes()) {
-      if (c.getName().contains("bro")) {
-        String routername = c.getName().replace("bro", "c");
+      if (pattern.matcher(c.getName()).matches()) {
+        String routername = c.getName().split("_")[1];
         ComputeNode router = (ComputeNode) carrier.getResourceByName(routername);
         String mip = router.getManagementIP();
         String dpid = Exec.sshExec("root", mip, "/bin/bash ~/dpid.sh", sshkey).split(" ")[1]
@@ -298,7 +298,7 @@ public class SliceManager extends SliceCommon {
     bro.setNodeType(broType);
     bro.setPostBootScript("yum install -y tcpdump");
 
-    Network bronet = s.addBroadcastLink("blink_" + ip_to_use, bw);
+    Network bronet = s.addBroadcastLink(getBroLinkName(ip_to_use), bw);
     InterfaceNode2Net ifaceNode1 = (InterfaceNode2Net) bronet.stitch(edgerouter);
     ifaceNode1.setIpAddress("192.168." + String.valueOf(ip_to_use) + ".1");
     ifaceNode1.setNetmask("255.255.255.0");
@@ -307,6 +307,10 @@ public class SliceManager extends SliceCommon {
     ifaceNode2.setIpAddress("192.168." + String.valueOf(ip_to_use) + ".2");
     ifaceNode2.setNetmask("255.255.255.0");
     return bro;
+  }
+
+  protected String getBroLinkName(int ip){
+    return "blink_"  + ip;
   }
 
   private void clearLinks(String file) {
@@ -360,7 +364,7 @@ public class SliceManager extends SliceCommon {
       nodelist.add(node0);
       if (BRO && i ==0) {
         long brobw = conf.getLong("config.brobw");
-        addBro(s, "bro" + i, node0, curip++, brobw);
+        addBro(s, "bro0_c" + i, node0, curip++, brobw);
       }
     }
     //add Links

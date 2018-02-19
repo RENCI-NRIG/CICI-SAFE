@@ -285,7 +285,7 @@ public abstract class SliceCommon {
     return s;
   }
 
-  protected void sleep(int sec) {
+  public void sleep(int sec) {
     try {
       Thread.sleep(sec * 1000);                 //1000 milliseconds is one second.
     } catch (InterruptedException ex) {
