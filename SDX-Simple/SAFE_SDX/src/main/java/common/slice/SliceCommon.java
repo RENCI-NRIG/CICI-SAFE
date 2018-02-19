@@ -228,6 +228,17 @@ public abstract class SliceCommon {
     }
   }
 
+  protected void deleteSlice(String sliceName){
+    Slice s2 = null;
+    try {
+      System.out.println("deleting slice " + sliceName);
+      s2 = Slice.loadManifestFile(sliceProxy, sliceName);
+      s2.delete();
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+  }
+
   protected void copyFile2Slice(Slice s, String lfile, String rfile, String privkey) {
     ArrayList<Thread> tlist = new ArrayList<Thread>();
     for (ComputeNode c : s.getComputeNodes()) {

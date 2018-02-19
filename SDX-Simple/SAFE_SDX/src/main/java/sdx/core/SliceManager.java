@@ -252,16 +252,6 @@ public class SliceManager extends SliceCommon {
     return bro;
   }
 
-  protected void deleteSlice(String sliceName){
-    Slice s2 = null;
-    try {
-      System.out.println("deleting slice " + sliceName);
-      s2 = Slice.loadManifestFile(sliceProxy, sliceName);
-      s2.delete();
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
-  }
 
   public Slice createCarrierSlice(String sliceName, int num, long bw) {
     //,String stitchsubnet="", String slicesubnet="")
@@ -269,10 +259,11 @@ public class SliceManager extends SliceCommon {
 
     Slice s = Slice.create(sliceProxy, sctx, sliceName);
 
-    String nodeImageShortName = "Ubuntu 14.04";
-    String nodeImageURL = "http://geni-images.renci.org/images/standard/ubuntu/ub1404-v1.0.4.xml";
+    NodeBaseInfo ninfo = NodeBase.getImageInfo("Ubuntu 16.04");
+    String nodeImageShortName = ninfo.nisn;
+    String nodeImageURL = ninfo.niurl;
     //http://geni-images.renci.org/images/standard/ubuntu/ub1304-ovs-opendaylight-v1.0.0.xml
-    String nodeImageHash = "9394ca154aa35eb55e604503ae7943ddaecc6ca5";
+    String nodeImageHash = ninfo.nihash;
     String nodeNodeType = "XO Extra large";
 
     //String nodePostBootScript="apt-get update;apt-get -y  install quagga\n"
