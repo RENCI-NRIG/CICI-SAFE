@@ -6,22 +6,23 @@ import java.util.HashMap;
 import org.renci.ahab.libndl.Slice;
 import org.renci.ahab.libndl.resources.request.ComputeNode;
 
-public class NodeBase {
-  private static class NodeBaseInfo {
-    private String nisn;
-    private String niurl;
-    private String nihash;
-    private String ntype;
-    private String domain;
+class NodeBaseInfo {
+  public String nisn;
+  public String niurl;
+  public String nihash;
+  public String ntype;
+  public String domain;
 
-    private NodeBaseInfo(String nisn, String niurl, String nihash, String ntype, String domain) {
-      this.nisn = nisn;
-      this.niurl = niurl;
-      this.nihash = nihash;
-      this.ntype = ntype;
-      this.domain = domain;
-    }
+  public NodeBaseInfo(String nisn, String niurl, String nihash, String ntype, String domain) {
+    this.nisn = nisn;
+    this.niurl = niurl;
+    this.nihash = nihash;
+    this.ntype = ntype;
+    this.domain = domain;
   }
+}
+
+public class NodeBase {
 
   private static Map<String, NodeBaseInfo> images = new HashMap<>();
 
@@ -62,6 +63,10 @@ public class NodeBase {
         "32c6a6ab0062ce8963a927925b43d8e962395fc6",
         "XO Extra large",
         "SL (Chicago, IL USA) XO Rack"));
+  }
+
+  public static NodeBaseInfo getImageInfo(String key){
+    return images.get(key);
   }
 
   public static ComputeNode makeNode(Slice s, String type, String name) {
