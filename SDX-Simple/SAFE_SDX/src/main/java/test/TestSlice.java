@@ -78,7 +78,8 @@ public class TestSlice extends SliceManager {
         System.exit(-1);
       }
       System.out.println("Plexus Controler IP: " + SDNControllerIP);
-      runCmdSlice(carrier, "/bin/bash ~/ovsbridge.sh " + SDNControllerIP + ":6633", "(c\\d+)", true, true);
+      runCmdSlice(carrier, "/bin/bash ~/ovsbridge.sh " + SDNControllerIP + ":6633", "(^c\\d+)",
+        true, true);
       runCmdSlice(carrier, "apt-get -y install quagga", "(node\\d+)", true, true);
       runCmdSlice(carrier, "sed -i -- 's/zebra=no/zebra=yes/g' /etc/quagga/daemons", "(node\\d+)", true, true);
       //runCmdSlice(carrier, "sed -i -- 's/ospfd=no/ospfd=yes/g' /etc/quagga/daemons", sshkey,
@@ -94,8 +95,10 @@ public class TestSlice extends SliceManager {
       catch (Exception e){
         e.printStackTrace();
       }
-      runCmdSlice(carrier, "echo \"ip route 192.168.1.1/16 192.168.10.1\" >>/etc/quagga/zebra.conf", "(node0)", true, true);
-      runCmdSlice(carrier, "echo \"ip route 192.168.1.1/16 192.168.20.1\" >>/etc/quagga/zebra.conf", "(node1)", true, true);
+      runCmdSlice(carrier, "echo \"ip route 192.168.1.1/16 192.168.10.1\" >>/etc/quagga/zebra" +
+        ".conf", "(node0)", true, true);
+      runCmdSlice(carrier, "echo \"ip route 192.168.1.1/16 192.168.20.1\" >>/etc/quagga/zebra" +
+        ".conf", "(node1)", true, true);
       runCmdSlice(carrier, "echo \"ip route 192.168.1.1/16 192.168.30.1\" >>/etc/quagga/zebra" +
         ".conf", "(node2)", true, true);
       runCmdSlice(carrier, "echo \"ip route 192.168.1.1/16 192.168.40.1\" >>/etc/quagga/zebra" +
@@ -131,7 +134,6 @@ public class TestSlice extends SliceManager {
       if(conf.hasPath("config.bw")){
         bw = conf.getLong("config.bw");
       }
-      //Slice carrier = createTestSliceWithBroAndCNode(carrierName, routernum, bw);
       String resource_dir = conf.getString("config.resourcedir");
       ////Slice carrier = createCarrierSliceWithCustomerNodes(carrierName, 4, 10, 1000000, 1);
       //commitAndWait(carrier);
@@ -146,7 +148,8 @@ public class TestSlice extends SliceManager {
       Slice carrier = getSlice(sliceProxy,carrierName);
       SDNControllerIP = ((ComputeNode) carrier.getResourceByName("plexuscontroller")).getManagementIP();
       System.out.println("Plexus Controler IP: " + SDNControllerIP);
-      runCmdSlice(carrier, "/bin/bash ~/ovsbridge.sh " + SDNControllerIP + ":6633", "(c\\d+)", true, true);
+      runCmdSlice(carrier, "/bin/bash ~/ovsbridge.sh " + SDNControllerIP + ":6633", "(^c\\d+)",
+        true, true);
       runCmdSlice(carrier, "apt-get -y install quagga", "(node\\d+)", true, true);
       runCmdSlice(carrier, "sed -i -- 's/zebra=no/zebra=yes/g' /etc/quagga/daemons", "(node\\d+)", true, true);
       //runCmdSlice(carrier, "sed -i -- 's/ospfd=no/ospfd=yes/g' /etc/quagga/daemons", sshkey,
@@ -359,11 +362,6 @@ public class TestSlice extends SliceManager {
     ifaceNode3.setIpAddress("192.168.40.2");
     ifaceNode3.setNetmask("255.255.255.0");
     net3.stitch(c3);
-    commitAndWait(s);
-    s = getSlice(sliceProxy, sliceName);
-    ComputeNode node = (ComputeNode) s.getResourceByName("c1");
-    addBro(s, "bro1", node, 120, bw);
-    commitAndWait(s, 1);
     return s;
   }
 

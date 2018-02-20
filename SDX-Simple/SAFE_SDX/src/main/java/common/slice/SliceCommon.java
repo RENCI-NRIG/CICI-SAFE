@@ -253,7 +253,7 @@ public abstract class SliceCommon {
       s2 = Slice.loadManifestFile(sliceProxy, sliceName);
       s2.delete();
     } catch (Exception e) {
-      e.printStackTrace();
+      System.out.println(e.getMessage());
     }
   }
 

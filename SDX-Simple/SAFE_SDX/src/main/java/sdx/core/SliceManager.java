@@ -137,7 +137,7 @@ public class SliceManager extends SliceCommon {
       }
       logger.debug("Plexus Controller IP: " + SDNControllerIP);
       runCmdSlice(carrier, "/bin/bash ~/ovsbridge.sh " + SDNControllerIP + ":6633",
-        "(c\\d+)", true, true);
+        "(^c\\d+)", true, true);
 
       if(BRO) {
         configBroNodes(carrier, "(bro\\d+_c\\d+)");

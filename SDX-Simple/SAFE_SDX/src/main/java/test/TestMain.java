@@ -18,14 +18,35 @@ public class TestMain {
   static boolean stitch = true;
 
   public static void main(String[] args){
-    //createTestSlice();
+    //multiSliceTest();
+    emulationTest();
+  }
 
+  public static void emulationTest(){
     newSlice = true;
+    if(newSlice) {
+      TestSlice ts = new TestSlice(arg1);
+      ts.testBroSliceTwoPairs();
+    }
+    SdxServer.run(arg1);
+    SdxExogeniClientManager client = new SdxExogeniClientManager(clientarg4);
+    client.processCmd("route 192.168.10.1/24 192.168.10.2");
+    client.processCmd("route 192.168.20.1/24 192.168.20.2");
+    client.processCmd("route 192.168.30.1/24 192.168.30.2");
+    client.processCmd("route 192.168.40.1/24 192.168.40.2");
+    client.processCmd("link 192.168.10.1/24 192.168.30.1/24");
+    client.processCmd("link 192.168.20.1/24 192.168.40.1/24");
+    System.exit(0);
+  }
+
+  public static void multiSliceTest(){
+    //newSlice = true;
     if(newSlice) {
       deleteSlice();
       createTestSliceParrallel();
     }
     test();
+
   }
 
   public static void test(){
