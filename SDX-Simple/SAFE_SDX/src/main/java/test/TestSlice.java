@@ -22,20 +22,16 @@ public class TestSlice extends SliceManager {
   final Logger logger = Logger.getLogger(Exec.class);
 
   public TestSlice(String[] args) {
-    System.out.println("SDX-Simple " + args[0]);
-
     CommandLine cmd = parseCmd(args);
 
-    logger.debug("cmd " + cmd);
+    System.out.println("Test Slice running: " + cmd);
 
     String configfilepath = cmd.getOptionValue("config");
 
     readConfig(configfilepath);
 
-    logger.debug("configfilepath " + configfilepath);
-    //readConfig(configfilepath);
+    System.out.println("configfilepath " + configfilepath);
 
-    //type=conf.getString("config.type");
     if (cmd.hasOption('d')) {
       type = "delete";
     }
@@ -58,7 +54,6 @@ public class TestSlice extends SliceManager {
 
   public void testBroSliceTwoPairs(){
     IPPrefix = conf.getString("config.ipprefix");
-    riakip = conf.getString("config.riakserver");
     BRO = conf.getBoolean("config.bro");
     String scriptsdir = conf.getString("config.scriptsdir");
     computeIP(IPPrefix);
@@ -83,41 +78,35 @@ public class TestSlice extends SliceManager {
         System.exit(-1);
       }
       System.out.println("Plexus Controler IP: " + SDNControllerIP);
-      runCmdSlice(carrier, "/bin/bash ~/ovsbridge.sh " + SDNControllerIP + ":6633", sshkey, "(c\\d+)", true, true);
-      runCmdSlice(carrier, "apt-get -y install quagga", sshkey, "(node\\d+)", true, true);
-      runCmdSlice(carrier, "sed -i -- 's/zebra=no/zebra=yes/g' /etc/quagga/daemons", sshkey, "(node\\d+)", true, true);
+      runCmdSlice(carrier, "/bin/bash ~/ovsbridge.sh " + SDNControllerIP + ":6633", "(c\\d+)", true, true);
+      runCmdSlice(carrier, "apt-get -y install quagga", "(node\\d+)", true, true);
+      runCmdSlice(carrier, "sed -i -- 's/zebra=no/zebra=yes/g' /etc/quagga/daemons", "(node\\d+)", true, true);
       //runCmdSlice(carrier, "sed -i -- 's/ospfd=no/ospfd=yes/g' /etc/quagga/daemons", sshkey,
       // "(node\\d+)", true, true);
-      runCmdSlice(carrier, "echo \"1\" > /proc/sys/net/ipv4/ip_forward", sshkey, "(node\\d+)",
+      runCmdSlice(carrier, "echo \"1\" > /proc/sys/net/ipv4/ip_forward", "(node\\d+)",
         true, true);
       try {
-        runCmdSlice(carrier, "ifconfig eth1 192.168.10.2/24 up", sshkey, "(node0)", true, true);
-        runCmdSlice(carrier, "ifconfig eth1 192.168.20.2/24 up", sshkey, "(node1)", true, true);
-        runCmdSlice(carrier, "ifconfig eth1 192.168.30.2/24 up", sshkey, "(node2)", true, true);
-        runCmdSlice(carrier, "ifconfig eth1 192.168.40.2/24 up", sshkey, "(node3)", true, true);
+        runCmdSlice(carrier, "ifconfig eth1 192.168.10.2/24 up", "(node0)", true, true);
+        runCmdSlice(carrier, "ifconfig eth1 192.168.20.2/24 up", "(node1)", true, true);
+        runCmdSlice(carrier, "ifconfig eth1 192.168.30.2/24 up", "(node2)", true, true);
+        runCmdSlice(carrier, "ifconfig eth1 192.168.40.2/24 up", "(node3)", true, true);
       }
       catch (Exception e){
         e.printStackTrace();
       }
-      runCmdSlice(carrier, "echo \"ip route 192.168.1.1/16 192.168.10.1\" >>/etc/quagga/zebra.conf", sshkey, "(node0)", true, true);
-      runCmdSlice(carrier, "echo \"ip route 192.168.1.1/16 192.168.20.1\" >>/etc/quagga/zebra.conf", sshkey, "(node1)", true, true);
+      runCmdSlice(carrier, "echo \"ip route 192.168.1.1/16 192.168.10.1\" >>/etc/quagga/zebra.conf", "(node0)", true, true);
+      runCmdSlice(carrier, "echo \"ip route 192.168.1.1/16 192.168.20.1\" >>/etc/quagga/zebra.conf", "(node1)", true, true);
       runCmdSlice(carrier, "echo \"ip route 192.168.1.1/16 192.168.30.1\" >>/etc/quagga/zebra" +
-        ".conf", sshkey, "(node2)", true, true);
+        ".conf", "(node2)", true, true);
       runCmdSlice(carrier, "echo \"ip route 192.168.1.1/16 192.168.40.1\" >>/etc/quagga/zebra" +
-        ".conf", sshkey, "(node3)", true, true);
-      runCmdSlice(carrier, "/etc/init.d/quagga restart", sshkey, "(node\\d+)", true, true);
+        ".conf", "(node3)", true, true);
+      runCmdSlice(carrier, "/etc/init.d/quagga restart", "(node\\d+)", true, true);
 
-      //String SAFEServerIP = ((ComputeNode) carrier.getResourceByName("safe-server"))
-      //  .getManagementIP();
-      //if (!checkSafeServer(SAFEServerIP)) {
-      //  System.exit(-1);
-      //}
-      //System.out.println("SAFE Server IP: " + SAFEServerIP);
       if(BRO){
         configBroNodes(carrier, "(bro\\d+_c\\d+)");
       }
 
-      runCmdSlice(carrier, "mkdir /home/ftp", sshkey, "(node\\d+)", true, true);
+      runCmdSlice(carrier, "mkdir /home/ftp", "(node\\d+)", true, true);
       copyFile2Slice(carrier, resource_dir + "bro/evil.txt", "/home/ftp/evil.txt",
         sshkey, "(node\\d+)");
       copyFile2Slice(carrier, resource_dir + "scripts/getonefile.sh", "~/getonefile.sh",
@@ -132,7 +121,6 @@ public class TestSlice extends SliceManager {
 
   public void testBroSliceExoGENI(){
     IPPrefix = conf.getString("config.ipprefix");
-    riakip = conf.getString("config.riakserver");
     BRO = conf.getBoolean("config.bro");
     String scriptsdir = conf.getString("config.scriptsdir");
     computeIP(IPPrefix);
@@ -158,36 +146,30 @@ public class TestSlice extends SliceManager {
       Slice carrier = getSlice(sliceProxy,carrierName);
       SDNControllerIP = ((ComputeNode) carrier.getResourceByName("plexuscontroller")).getManagementIP();
       System.out.println("Plexus Controler IP: " + SDNControllerIP);
-      runCmdSlice(carrier, "/bin/bash ~/ovsbridge.sh " + SDNControllerIP + ":6633", sshkey, "(c\\d+)", true, true);
-      runCmdSlice(carrier, "apt-get -y install quagga", sshkey, "(node\\d+)", true, true);
-      runCmdSlice(carrier, "sed -i -- 's/zebra=no/zebra=yes/g' /etc/quagga/daemons", sshkey, "(node\\d+)", true, true);
+      runCmdSlice(carrier, "/bin/bash ~/ovsbridge.sh " + SDNControllerIP + ":6633", "(c\\d+)", true, true);
+      runCmdSlice(carrier, "apt-get -y install quagga", "(node\\d+)", true, true);
+      runCmdSlice(carrier, "sed -i -- 's/zebra=no/zebra=yes/g' /etc/quagga/daemons", "(node\\d+)", true, true);
       //runCmdSlice(carrier, "sed -i -- 's/ospfd=no/ospfd=yes/g' /etc/quagga/daemons", sshkey,
       // "(node\\d+)", true, true);
-      runCmdSlice(carrier, "echo \"1\" > /proc/sys/net/ipv4/ip_forward", sshkey, "(node\\d+)",
+      runCmdSlice(carrier, "echo \"1\" > /proc/sys/net/ipv4/ip_forward", "(node\\d+)",
         true, true);
       try {
-        runCmdSlice(carrier, "ifconfig eth1 192.168.10.2/24 up", sshkey, "(node0)", true, true);
-        runCmdSlice(carrier, "ifconfig eth1 192.168.20.2/24 up", sshkey, "(node"+(routernum-1)
+        runCmdSlice(carrier, "ifconfig eth1 192.168.10.2/24 up", "(node0)", true, true);
+        runCmdSlice(carrier, "ifconfig eth1 192.168.20.2/24 up", "(node"+(routernum-1)
           +")", true, true);
       }
       catch (Exception e){
         e.printStackTrace();
       }
-      runCmdSlice(carrier, "echo \"ip route 192.168.1.1/16 192.168.10.1\" >>/etc/quagga/zebra.conf", sshkey, "(node0)", true, true);
-      runCmdSlice(carrier, "echo \"ip route 192.168.1.1/16 192.168.20.1\" >>/etc/quagga/zebra.conf", sshkey, "(node1)", true, true);
-      runCmdSlice(carrier, "/etc/init.d/quagga restart", sshkey, "(node\\d+)", true, true);
+      runCmdSlice(carrier, "echo \"ip route 192.168.1.1/16 192.168.10.1\" >>/etc/quagga/zebra.conf", "(node0)", true, true);
+      runCmdSlice(carrier, "echo \"ip route 192.168.1.1/16 192.168.20.1\" >>/etc/quagga/zebra.conf", "(node1)", true, true);
+      runCmdSlice(carrier, "/etc/init.d/quagga restart", "(node\\d+)", true, true);
 
-      //String SAFEServerIP = ((ComputeNode) carrier.getResourceByName("safe-server"))
-      //  .getManagementIP();
-      //if (!checkSafeServer(SAFEServerIP)) {
-      //  System.exit(-1);
-      //}
-      //System.out.println("SAFE Server IP: " + SAFEServerIP);
       if(BRO){
         configBroNodes(carrier, "(bro\\d+_c\\d+)");
       }
 
-      runCmdSlice(carrier, "mkdir /home/ftp", sshkey, "(node\\d+)", true, true);
+      runCmdSlice(carrier, "mkdir /home/ftp", "(node\\d+)", true, true);
       copyFile2Slice(carrier, resource_dir + "bro/evil.txt", "/home/ftp/evil.txt",
         sshkey, "(node\\d+)");
       copyFile2Slice(carrier, resource_dir + "scripts/getonefile.sh", "~/getonefile.sh",
@@ -202,7 +184,6 @@ public class TestSlice extends SliceManager {
 
   public  void testSliceDynamicLinks(){
     IPPrefix = conf.getString("config.ipprefix");
-    riakip = conf.getString("config.riakserver");
     BRO = conf.getBoolean("config.bro");
     String scriptsdir = conf.getString("config.scriptsdir");
     computeIP(IPPrefix);
@@ -227,25 +208,25 @@ public class TestSlice extends SliceManager {
       //  System.exit(-1);
       //}
       System.out.println("Plexus Controler IP: " + SDNControllerIP);
-      runCmdSlice(carrier, "/bin/bash ~/ovsbridge.sh " + SDNControllerIP + ":6633", sshkey, "(c\\d+)", true, true);
-      runCmdSlice(carrier, "apt-get -y install quagga", sshkey, "(node\\d+)", true, true);
-      runCmdSlice(carrier, "sed -i -- 's/zebra=no/zebra=yes/g' /etc/quagga/daemons", sshkey, "(node\\d+)", true, true);
+      runCmdSlice(carrier, "/bin/bash ~/ovsbridge.sh " + SDNControllerIP + ":6633", "(c\\d+)", true, true);
+      runCmdSlice(carrier, "apt-get -y install quagga", "(node\\d+)", true, true);
+      runCmdSlice(carrier, "sed -i -- 's/zebra=no/zebra=yes/g' /etc/quagga/daemons", "(node\\d+)", true, true);
       //runCmdSlice(carrier, "sed -i -- 's/ospfd=no/ospfd=yes/g' /etc/quagga/daemons", sshkey,
       // "(node\\d+)", true, true);
-      runCmdSlice(carrier, "echo \"1\" > /proc/sys/net/ipv4/ip_forward", sshkey, "(node\\d+)", true, true);
+      runCmdSlice(carrier, "echo \"1\" > /proc/sys/net/ipv4/ip_forward", "(node\\d+)", true, true);
       try {
-        runCmdSlice(carrier, "ifconfig eth1 192.168.10.2/24 up", sshkey, "(node0)", true, true);
+        runCmdSlice(carrier, "ifconfig eth1 192.168.10.2/24 up", "(node0)", true, true);
         runCmdSlice(carrier, "echo \"ip route 192.168.1.1/16 192.168.10.1\" >>/etc/quagga/zebra" +
-          ".conf", sshkey, "(node0)", true, true);
+          ".conf", "(node0)", true, true);
         runCmdSlice(carrier, "echo \"ip route 192.168.1.1/16 192.168.20.1\" >>/etc/quagga/zebra" +
-          ".conf", sshkey, "(node1)", true, true);
+          ".conf", "(node1)", true, true);
         runCmdSlice(carrier, "echo \"ip route 192.168.1.1/16 192.168.30.1\" >>/etc/quagga/zebra" +
-          ".conf", sshkey, "(node2)", true, true);
+          ".conf", "(node2)", true, true);
       }
       catch (Exception e){
         e.printStackTrace();
       }
-      runCmdSlice(carrier, "/etc/init.d/quagga restart", sshkey, "(node\\d+)", true, true);
+      runCmdSlice(carrier, "/etc/init.d/quagga restart", "(node\\d+)", true, true);
 
     } catch (Exception e) {
       e.printStackTrace();
@@ -254,7 +235,6 @@ public class TestSlice extends SliceManager {
 
   public void testBroSliceChameleon(){
     IPPrefix = conf.getString("config.ipprefix");
-    riakip = conf.getString("config.riakserver");
     BRO = conf.getBoolean("config.bro");
     String scriptsdir = conf.getString("config.scriptsdir");
     computeIP(IPPrefix);
@@ -272,7 +252,7 @@ public class TestSlice extends SliceManager {
       carrier.refresh();
       copyFile2Slice(carrier, scriptsdir + "dpid.sh", "~/dpid.sh", sshkey);
       copyFile2Slice(carrier, scriptsdir + "ovsbridge.sh", "~/ovsbridge.sh", sshkey);
-      runCmdSlice(carrier, "mkdir /home/ftp", sshkey, "(node\\d+)", true, true);
+      runCmdSlice(carrier, "mkdir /home/ftp", "(node\\d+)", true, true);
       copyFile2Slice(carrier, resource_dir + "bro/evil.txt", "/home/ftp/evil.txt",
         sshkey, "(node\\d+)");
       copyFile2Slice(carrier, resource_dir + "scripts/getonefile.sh", "~/getonefile.sh",
@@ -286,31 +266,22 @@ public class TestSlice extends SliceManager {
       //  System.exit(-1);
       //}
       System.out.println("Plexus Controler IP: " + SDNControllerIP);
-      runCmdSlice(carrier, "/bin/bash ~/ovsbridge.sh " + SDNControllerIP + ":6633", sshkey, "(c\\d+)", true, true);
-      runCmdSlice(carrier, "apt-get -y install quagga", sshkey, "(node\\d+)", true, true);
-      runCmdSlice(carrier, "sed -i -- 's/zebra=no/zebra=yes/g' /etc/quagga/daemons", sshkey, "(node\\d+)", true, true);
+      runCmdSlice(carrier, "/bin/bash ~/ovsbridge.sh " + SDNControllerIP + ":6633", "(c\\d+)", true, true);
+      runCmdSlice(carrier, "apt-get -y install quagga", "(node\\d+)", true, true);
+      runCmdSlice(carrier, "sed -i -- 's/zebra=no/zebra=yes/g' /etc/quagga/daemons", "(node\\d+)", true, true);
       //runCmdSlice(carrier, "sed -i -- 's/ospfd=no/ospfd=yes/g' /etc/quagga/daemons", sshkey,
       // "(node\\d+)", true, true);
-      runCmdSlice(carrier, "echo \"1\" > /proc/sys/net/ipv4/ip_forward", sshkey, "(node\\d+)", true, true);
+      runCmdSlice(carrier, "echo \"1\" > /proc/sys/net/ipv4/ip_forward", "(node\\d+)", true, true);
       try {
-        runCmdSlice(carrier, "ifconfig eth1 192.168.10.2/24 up", sshkey, "(node0)", true, true);
+        runCmdSlice(carrier, "ifconfig eth1 192.168.10.2/24 up", "(node0)", true, true);
         runCmdSlice(carrier, "echo \"ip route 10.32.90.1/24 192.168.10.1\" >>/etc/quagga/zebra" +
-          ".conf", sshkey, "(node0)", true, true);
+          ".conf", "(node0)", true, true);
       }
       catch (Exception e){
         e.printStackTrace();
       }
-      runCmdSlice(carrier, "/etc/init.d/quagga restart", sshkey, "(node\\d+)", true, true);
+      runCmdSlice(carrier, "/etc/init.d/quagga restart", "(node\\d+)", true, true);
 
-      //try {
-      //  String SAFEServerIP = ((ComputeNode) carrier.getResourceByName("safe-server")).getManagementIP();
-      //  if (!checkSafeServer(SAFEServerIP)) {
-      //    System.exit(-1);
-      //  }
-      //  System.out.println("SAFE Server IP: " + SAFEServerIP);
-      //}catch (Exception e){
-      //  e.printStackTrace();
-      //}
       if(BRO){
         System.out.println("config bro");
         configBroNodes(carrier, "(bro\\d+_c\\d+)");
@@ -532,7 +503,7 @@ public class TestSlice extends SliceManager {
 
   public Slice createCarrierSliceWithCustomerNodes(String sliceName, int num, int start,
                                                           long bw, int numstitches) {//,String stitchsubnet="", String slicesubnet="")
-    logger.debug("ndllib TestDriver: START");
+    System.out.println("ndllib TestDriver: START");
 
     Slice s = Slice.create(sliceProxy, sctx, sliceName);
 
@@ -582,7 +553,6 @@ public class TestSlice extends SliceManager {
         ifaceNode1.setNetmask("255.255.255.0");
       }
     }
-    addSafeServer(s, riakip);
     addPlexusController(s);
     try {
       s.commit();

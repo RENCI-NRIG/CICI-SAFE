@@ -23,11 +23,10 @@ public class SdxStitchPortClientManager extends SliceCommon {
   public SdxStitchPortClientManager(){}
   private String type;
   private String sdxserver;
-  private boolean auth=true;
 	
 	public void run(String [] args){
     //Example usage: ./target/appassembler/bin/SafeSdxClient -f alice.conf
-		logger.debug("ndllib TestDriver: START");
+		System.out.println("ndllib TestDriver: START");
 		//pemLocation = args[0];
 		//keyLocation = args[1];
 		//controllerUrl = args[2]; //"https://geni.renci.org:11443/orca/xmlrpc";
@@ -39,12 +38,8 @@ public class SdxStitchPortClientManager extends SliceCommon {
 		String configfilepath=cmd.getOptionValue("config");
     readConfig(configfilepath);
     sdxserver=conf.getString("config.sdxserver");
-    safeserver=conf.getString("config.safeserver")+":7777";
 
-    logger.debug("client start");
-    if(cmd.hasOption('n')){
-      auth=false;
-    }
+    System.out.println("client start");
     if(cmd.hasOption('e')){
       String command= cmd.getOptionValue('e');
       processCmd(command);
@@ -65,18 +60,18 @@ public class SdxStitchPortClientManager extends SliceCommon {
     }
     catch (Exception e) 
     { 
-      logger.debug("HttpClient exception: " + e.getMessage()); 
+      System.out.println("HttpClient exception: " + e.getMessage()); 
       e.printStackTrace(); 
     } 
-		logger.debug("XXXXXXXXXX Done XXXXXXXXXXXXXX");
+		System.out.println("XXXXXXXXXX Done XXXXXXXXXXXXXX");
 	}
 
 	private void processCmd(String command){
     try{
-      System.out.println(command);
+      logger.debug(command);
       String[] params=command.split(" ");
       if(params[0].equals("stitch")){
-        System.out.println(params.length);
+        logger.debug(params.length);
         processStitchCmd(params);
       }else{
 
@@ -114,10 +109,7 @@ public class SdxStitchPortClientManager extends SliceCommon {
       jsonparams.put("gateway",params[5]);
       jsonparams.put("ip",params[6]);
       jsonparams.put("ckeyhash",keyhash);
-      if(auth){
-        postSafeStitchRequest(keyhash,jsonparams.getString("gateway"),jsonparams.getString("sdxslice"),jsonparams.getString("sdxnode"),jsonparams.getString("stitchport"),jsonparams.getString("vlan"));
-      }
-      System.out.println("posted stitch request, requesting to sdx server");
+      logger.debug("posted stitch request, requesting to sdx server");
       String res= HttpUtil.postJSON(sdxserver+"sdx/stitchchameleon",jsonparams);
       logger.debug(res);
       System.out.println(res);
@@ -125,22 +117,6 @@ public class SdxStitchPortClientManager extends SliceCommon {
     catch (Exception e){
       e.printStackTrace();
     }
-  }
-
-  private boolean postSafeStitchRequest(String keyhash, String gateway,String slicename, String nodename,String stitchport, String vlan){
-		/** Post to remote safesets using apache httpclient */
-    String[] othervalues=new String[5];
-    othervalues[0]=stitchport;
-    othervalues[1]=vlan;
-    othervalues[2]=gateway;
-    othervalues[3]=slicename;
-    othervalues[4]=nodename;
-    String message=SafePost.postSafeStatements(safeserver,"postChameleonStitchRequest",keyhash,othervalues);
-    if(message.contains("fail")){
-      return false;
-    }
-    else
-      return true;
   }
 
   private void configOSPFForNewInterface(ComputeNode c, String newip){
@@ -170,7 +146,7 @@ public class SdxStitchPortClientManager extends SliceCommon {
   }
 	
 	public void undoStitch(String carrierName, String customerName, String netName, String nodeName){
-		logger.debug("Undo stich in chameleon client not implemented");
+		System.out.println("Undo stich in chameleon client not implemented");
 	}
 
   private String getOVSScript(String cip){
