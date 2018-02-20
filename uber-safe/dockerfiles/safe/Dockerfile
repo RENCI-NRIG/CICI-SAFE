@@ -17,10 +17,8 @@ ENV SBT_VERSION 0.13.12
 RUN cd ~/ && wget https://dl.bintray.com/sbt/native-packages/sbt/${SBT_VERSION}/sbt-${SBT_VERSION}.tgz
 RUN cd ~/ && tar -zxvf sbt-${SBT_VERSION}.tgz
 
-# Download and set up SAFE
-ENV RIAK_IP 192.1.1.3
+# Download and SAFE
 RUN cd ~/ && git clone https://github.com/RENCI-NRIG/SAFE.git
-RUN cd ~/SAFE/uber-safe && sed -i "/.*url = \"http/ s:.*:    url = \"http\://${RIAK_IP}\:8098/types/safesets/buckets/safe/keys\":" safe-server/src/main/resources/application.conf
 
 ENTRYPOINT ["/bin/bash", "/root/start.sh"]
 #ENTRYPOINT ["/bin/sh", "-c"]
