@@ -54,9 +54,7 @@ public class SliceManager extends SliceCommon {
   protected int curip = 128;
   protected String IPPrefix = "192.168.";
   protected String mask = "/24";
-  protected String riakip = "152.3.145.36";
   protected String scriptsdir;
-  protected boolean safeauth = true;
   protected boolean BRO = false;
 
   protected void computeIP(String prefix) {
@@ -78,16 +76,8 @@ public class SliceManager extends SliceCommon {
 
     readConfig(configfilepath);
 
-    logger.debug("configfilepath " + configfilepath);
-    //readConfig(configfilepath);
-
     //type=conf.getString("config.type");
-    if (cmd.hasOption('d')) {
-      type = "delete";
-    }
-    if(cmd.hasOption('n')){
-      safeauth = false;
-    }
+    if (cmd.hasOption('d')) type = "delete";
 
     sliceProxy = getSliceProxy(pemLocation, keyLocation, controllerUrl);
 
@@ -112,19 +102,22 @@ public class SliceManager extends SliceCommon {
       createAndConfigCarrierSlice(bw);
     } else if (type.equals("delete")) {
       deleteSlice(sliceName);
+    } else {
+      logger.debug("Warning: unknown type. Doing nothing.");
     }
-    logger.debug("XXXXXXXXXX Done XXXXXXXXXXXXXX");
+
+    System.out.println("XXXXXXXXXX Done XXXXXXXXXXXXXX");
   }
 
-  public void createAndConfigCarrierSlice(long bw){
+  public void createAndConfigCarrierSlice(long bw) {
     int routerNum = 4;
     try {
       routerNum = conf.getInt("config.routernum");
     } catch (Exception e) {
-      logger.debug("No router number specified, launching default 4 routers");
+      System.out.println("No router number specified, launching default 4 routers");
     }
+
     IPPrefix = conf.getString("config.ipprefix");
-    riakip = conf.getString("config.riakserver");
     String scriptsdir = conf.getString("config.scriptsdir");
     computeIP(IPPrefix);
     try {
@@ -138,23 +131,17 @@ public class SliceManager extends SliceCommon {
       SDNControllerIP = ((ComputeNode) carrier.getResourceByName("plexuscontroller"))
         .getManagementIP();
       //SDNControllerIP = "152.3.136.36";
+      Thread.sleep(10000);
       if (!SDNControllerIP.equals("152.3.136.36") && !checkPlexus(SDNControllerIP)) {
         System.exit(-1);
       }
-      System.out.println("Plexus Controller IP: " + SDNControllerIP);
-      runCmdSlice(carrier, "/bin/bash ~/ovsbridge.sh " + SDNControllerIP + ":6633", sshkey,
+      logger.debug("Plexus Controller IP: " + SDNControllerIP);
+      runCmdSlice(carrier, "/bin/bash ~/ovsbridge.sh " + SDNControllerIP + ":6633",
         "(c\\d+)", true, true);
 
-      String SAFEServerIP =
-        ((ComputeNode) carrier.getResourceByName("safe-server")).getManagementIP();
-      if (!checkSafeServer(SAFEServerIP)) {
-        System.exit(-1);
-      }
-      System.out.println("SAFE Server IP: " + SAFEServerIP);
-      //}
       if(BRO) {
         configBroNodes(carrier, "(bro\\d+_c\\d+)");
-        System.out.println("Set up bro nodes");
+        logger.debug("Set up bro nodes");
       }
     } catch (Exception e) {
       e.printStackTrace();
@@ -164,7 +151,7 @@ public class SliceManager extends SliceCommon {
 
   public void configBroNodes(Slice carrier, String bropattern) {
     // Bro uses 'eth1"
-    runCmdSlice(carrier, "sed -i 's/eth0/eth1/' /opt/bro/etc/node.cfg", sshkey, bropattern, true, true);
+    runCmdSlice(carrier, "sed -i 's/eth0/eth1/' /opt/bro/etc/node.cfg", bropattern, true, true);
 
     String resource_dir = conf.getString("config.resourcedir");
     copyFile2Slice(carrier, resource_dir + "bro/destroy_conn.bro", "/root/destroy_conn" +
@@ -177,7 +164,7 @@ public class SliceManager extends SliceCommon {
       bropattern);
 
     runCmdSlice(carrier, "sed -i 's/bogus_addr/" + SDNControllerIP + "/' destroy_conn.bro",
-      sshkey, bropattern, true, true);
+       bropattern, true, true);
     Pattern pattern = Pattern.compile(bropattern);
     for (ComputeNode c : carrier.getComputeNodes()) {
       if (pattern.matcher(c.getName()).matches()) {
@@ -218,6 +205,9 @@ public class SliceManager extends SliceCommon {
     try {
       s.commit();
       waitTillActive(s);
+      for (ComputeNode c : s.getComputeNodes()) {
+        logger.debug("server " + c.getManagementIP() + " - " + c.getName());
+      }
     } catch (Exception e) {
       e.printStackTrace();
     }
@@ -229,31 +219,10 @@ public class SliceManager extends SliceCommon {
       String timeStamp1 = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(new Date());
       waitTillActive(s,interval);
       String timeStamp2 = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(new Date());
-      System.out.println("Time interval: " + timeStamp1 + " " + timeStamp2);
+      logger.debug("Time interval: " + timeStamp1 + " " + timeStamp2);
     } catch (Exception e) {
       e.printStackTrace();
     }
-  }
-
-  protected boolean checkSafeServer(String SDNControllerIP) {
-    String result = Exec.sshExec("root", SDNControllerIP, "docker ps", sshkey);
-    if (result.contains("safe")) {
-      logger.debug("safe server has started");
-    } else {
-      String script = getSafeScript(riakip);
-      logger.debug("safe server hasn't started, retrying...");
-      Exec.sshExec("root", SDNControllerIP, "docker pull yaoyj11/safeserver", sshkey);
-      Exec.sshExec("root", SDNControllerIP, script, sshkey);
-      result = Exec.sshExec("root", SDNControllerIP, "docker ps", sshkey);
-      if (!result.contains("safe")) {
-        logger.debug("Failed to start safe controller, exit");
-        System.out.println("Failed to start safe controller, exit");
-        System.exit(-1);
-        return false;
-      }
-      logger.debug("safe server has started");
-    }
-    return true;
   }
 
   protected boolean checkPlexus(String SDNControllerIP) {
@@ -278,7 +247,7 @@ public class SliceManager extends SliceCommon {
       if (result.contains("plexus")) {
         logger.debug("plexus controller has started");
       } else {
-        logger.debug("Failed to start plexus controller, exit");
+        logger.debug("Failed to start plexus controller, exit - " + result);
         return false;
       }
     }
@@ -300,9 +269,6 @@ public class SliceManager extends SliceCommon {
 
     Network bronet = s.addBroadcastLink(getBroLinkName(ip_to_use), bw);
     InterfaceNode2Net ifaceNode1 = (InterfaceNode2Net) bronet.stitch(edgerouter);
-    ifaceNode1.setIpAddress("192.168." + String.valueOf(ip_to_use) + ".1");
-    ifaceNode1.setNetmask("255.255.255.0");
-
     InterfaceNode2Net ifaceNode2 = (InterfaceNode2Net) bronet.stitch(bro);
     ifaceNode2.setIpAddress("192.168." + String.valueOf(ip_to_use) + ".2");
     ifaceNode2.setNetmask("255.255.255.0");
@@ -326,7 +292,7 @@ public class SliceManager extends SliceCommon {
   protected void deleteSlice(String sliceName){
     Slice s2 = null;
     try {
-      System.out.println("deleting slice " + sliceName);
+      logger.debug("deleting slice " + sliceName);
       s2 = Slice.loadManifestFile(sliceProxy, sliceName);
       s2.delete();
     } catch (Exception e) {
@@ -354,7 +320,6 @@ public class SliceManager extends SliceCommon {
     ArrayList<ComputeNode> nodelist = new ArrayList<ComputeNode>();
     ArrayList<Network> netlist = new ArrayList<Network>();
     ArrayList<Network> stitchlist = new ArrayList<Network>();
-    boolean BRO = false;
     if (conf.hasPath("config.bro")) {
       BRO = conf.getBoolean("config.bro");
     }
@@ -376,14 +341,14 @@ public class SliceManager extends SliceCommon {
       Link link = addLink(s, linkname, node0, node1, bw);
       links.put(linkname, link);
     }
-    addSafeServer(s, riakip);
     addPlexusController(s);
     return s;
   }
 
-  private  ComputeNode addComputeNode(Slice s, String name, String nodeImageURL, String
-    nodeImageHash, String nodeImageShortName, String nodeNodeType, String site, String
-    nodePostBootScript){
+  private ComputeNode addComputeNode(
+      Slice s, String name, String nodeImageURL,
+      String nodeImageHash, String nodeImageShortName, String nodeNodeType, String site,
+      String nodePostBootScript){
     ComputeNode node0 = s.addComputeNode(name);
     node0.setImage(nodeImageURL, nodeImageHash, nodeImageShortName);
     node0.setNodeType(nodeNodeType);
@@ -404,21 +369,6 @@ public class SliceManager extends SliceCommon {
     return link;
   }
 
-
-  protected void addSafeServer(Slice s, String rip) {
-    String dockerImageShortName = "Ubuntu 14.04 Docker";
-    String dockerImageURL =
-      "http://geni-images.renci.org/images/standard/docker/ubuntu-14.0.4/ubuntu-14.0.4-docker.xml";
-    //http://geni-images.renci.org/images/standard/ubuntu/ub1304-ovs-opendaylight-v1.0.0.xml
-    String dockerImageHash = "b4ef61dbd993c72c5ac10b84650b33301bbf6829";
-    String dockerNodeType = "XO Large";
-    ComputeNode node0 = s.addComputeNode("safe-server");
-    node0.setImage(dockerImageURL, dockerImageHash, dockerImageShortName);
-    node0.setNodeType(dockerNodeType);
-    node0.setDomain(serverSite);
-    node0.setPostBootScript(getSafeScript(rip));
-  }
-
   protected void addPlexusController(Slice s) {
     String dockerImageShortName = "Ubuntu 14.04 Docker";
     String dockerImageURL =
@@ -436,21 +386,6 @@ public class SliceManager extends SliceCommon {
   protected String getOVSScript(String cip) {
     String script = "apt-get update\n" +
       "apt-get -y install openvswitch-switch\n apt-get -y install iperf\n /etc/init.d/neuca stop\n";
-    return script;
-  }
-
-  protected String getSafeScript(String riakip) {
-    String script = "apt-get update\n"
-      + "docker pull yaoyj11/safeserver\n"
-      + "docker run -i -t -d -p 7777:7777 -h safe --name safe yaoyj11/safeserver\n"
-      + "docker exec -d safe /bin/bash -c  \"cd /root/safe;export SBT_HOME=/opt/sbt-0.13.12;"
-      + "export SCALA_HOME=/opt/scala-2.11.8;sed -i 's/RIAKSERVER/" + riakip + "/g' "
-      + "safe-server/src/main/resources/application.conf;./sdx.sh\"\n";
-    return script;
-  }
-
-  protected String getRiakScript() {
-    String script = "docker pull yaoyj11/riakimg\n";
     return script;
   }
 

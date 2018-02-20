@@ -5,30 +5,37 @@ import sdx.core.SdxServer;
 import client.exogeni.ClientSlice;
 
 public class TestMain {
-  static String[] arg1 = {"-c", "config/cnert-fl.conf", "-n"};
-  static String[] clientarg1 = {"-c", "client-config/c1-ufl.conf", "-n"};
-  static String[] clientarg2 = {"-c", "client-config/c2-unf.conf", "-n"};
-  static String[] clientarg3 = {"-c", "client-config/c3-ufl.conf", "-n"};
-  static String[] clientarg4 = {"-c", "client-config/c4-unf.conf", "-n"};
+  static String state = "fl";
+  static String site1 = "ufl";
+  static String site2 = "unf";
+  static String sdx = "test-fl";
+  static String[] arg1 = {"-c", "config/cnert-"+ state + ".conf"};
+  static String[] clientarg1 = {"-c", "client-config/c1-" + site1 + ".conf"};
+  static String[] clientarg2 = {"-c", "client-config/c2-"+ site2+".conf"};
+  static String[] clientarg3 = {"-c", "client-config/c3-"+site1+".conf"};
+  static String[] clientarg4 = {"-c", "client-config/c4-"+site2+".conf"};
   static boolean newSlice = false;
+  static boolean stitch = true;
 
   public static void main(String[] args){
     //createTestSlice();
 
-    //newSlice = true;
-    if(newSlice)
+    newSlice = true;
+    if(newSlice) {
+      deleteSlice();
       createTestSliceParrallel();
+    }
     test();
   }
 
   public static void test(){
-    //rest_router_mirror line 1057 for info about deleting flows. It delete the flows
-    //cookie is used to differenciate different flows. Use unique cookie ids accross all tables
+    // rest_router_mirror line 1057 for info about deleting flows. It delete the flows
+    // cookie is used to differenciate different flows. Use unique cookie ids accross all tables
     // to manage the flows.
 
-    //use "-n" option in arguments to opt out safe authorization
+    // Use "-n" option in arguments to opt out safe authorization
 
-    //start Sdx Server
+    // Start Sdx Server
     SdxServer.run(arg1);
     SdxExogeniClientManager client1 = new SdxExogeniClientManager(clientarg1);
     SdxExogeniClientManager client2 = new SdxExogeniClientManager(clientarg2);
@@ -36,12 +43,13 @@ public class TestMain {
     SdxExogeniClientManager client4 = new SdxExogeniClientManager(clientarg4);
 
     //client slice request stitching
-    if(newSlice) {
+    /*
+    if(stitch) {
       ArrayList<Thread> tlist = new ArrayList<Thread>();
       Thread thread1 = new Thread() {
         @Override
         public void run() {
-          client1.processCmd("stitch CNode0 test-fl c0");
+          client1.processCmd("stitch CNode0 " + sdx + " c0");
         }
       };
       thread1.start();
@@ -50,7 +58,7 @@ public class TestMain {
       Thread thread2 = new Thread() {
         @Override
         public void run() {
-          client2.processCmd("stitch CNode0 test-fl c1");
+          client2.processCmd("stitch CNode0 " + sdx + " c1");
         }
       };
       thread2.start();
@@ -59,7 +67,7 @@ public class TestMain {
       Thread thread3 = new Thread() {
         @Override
         public void run() {
-          client3.processCmd("stitch CNode0 test-fl c0");
+          client3.processCmd("stitch CNode0 " + sdx + " c0");
         }
       };
       thread3.start();
@@ -68,7 +76,7 @@ public class TestMain {
       Thread thread4 = new Thread() {
         @Override
         public void run() {
-          client4.processCmd("stitch CNode0 test-fl c1");
+          client4.processCmd("stitch CNode0 " + sdx + " c1");
         }
       };
       thread4.start();
@@ -82,11 +90,14 @@ public class TestMain {
         e.printStackTrace();
       }
     }
+    */
     //TODO new interface not added to bridge
-    //client1.processCmd("stitch CNode0 test-fl c0");
-    //client2.processCmd("stitch CNode0 test-fl c1");
-    //client3.processCmd("stitch CNode0 test-fl c0");
-    //client4.processCmd("stitch CNode0 test-fl c1");
+    if(stitch) {
+      client1.processCmd("stitch CNode0 " + sdx + " c0");
+      client2.processCmd("stitch CNode0 " + sdx + " c1");
+      client3.processCmd("stitch CNode0 " + sdx + " c0");
+      client4.processCmd("stitch CNode0 " + sdx + " c1");
+    }
 
     // client slice advertise their prefix
     client1.processCmd("route 192.168.10.1/24 192.168.130.2");
@@ -94,28 +105,31 @@ public class TestMain {
     client3.processCmd("route 192.168.30.1/24 192.168.132.2");
     client4.processCmd("route 192.168.40.1/24 192.168.133.2");
 
-    //client request for connection between prefixes
-    client1.processCmd("link 192.168.10.1/24 192.168.20.1/24");
+    // Client request for connection between prefixes
     client3.processCmd("link 192.168.30.1/24 192.168.40.1/24");
+    client4.processCmd("link 192.168.40.1/24 192.168.30.1/24");
     /*
     SdxServer.sdxManager.removePath("192.168.30.1/24", "192.168.40.1/24");
     client1.processCmd("link 192.168.30.1/24 192.168.40.1/24 10000");
     */
 
-    SdxServer.sdxManager.setMirror(SdxServer.sdxManager.getDPID("c0"), "192.168.30.1/24",
-      "192.168.40.1/24", "192.168.128.2");
+   // SdxServer.sdxManager.setMirror(SdxServer.sdxManager.getDPID("c0"), "192.168.30.1/24",
+   //   "192.168.40.1/24", "192.168.128.2");
 
-    SdxServer.sdxManager.setMirror(SdxServer.sdxManager.getDPID("c0"), "192.168.40.1/24",
-      "192.168.30.1/24", "192.168.128.2");
+   // SdxServer.sdxManager.setMirror(SdxServer.sdxManager.getDPID("c0"), "192.168.40.1/24",
 
+    // "192.168.30.1/24", "192.168.128.2");
+
+    /*
     if(newSlice) {
       SdxServer.sdxManager.deployBro("c0");
     }
-    SdxServer.sdxManager.setMirror(SdxServer.sdxManager.getDPID("c0"), "192.168.10.1/24",
-      "192.168.20.1/24", "192.168.134.2");
+    */
+    //SdxServer.sdxManager.setMirror(SdxServer.sdxManager.getDPID("c0"), "192.168.10.1/24",
+    // "192.168.20.1/24", "192.168.134.2");
 
-    SdxServer.sdxManager.setMirror(SdxServer.sdxManager.getDPID("c0"), "192.168.20.1/24",
-      "192.168.10.1/24", "192.168.134.2");
+    //SdxServer.sdxManager.setMirror(SdxServer.sdxManager.getDPID("c0"), "192.168.20.1/24",
+    //  "192.168.10.1/24", "192.168.134.2");
     /*
     SdxServer.sdxManager.delMirror(SdxServer.sdxManager.getDPID("c0"), "192.168.30.1/24",
       "192.168.40.1/24");
@@ -124,21 +138,34 @@ public class TestMain {
       "192.168.30.1/24");
     */
 
-    //stop sdx server and exit
+    // Stop Sdx server and exit
     System.exit(0);
   }
 
   public static void createTestSlice(){
     TestSlice ts = new TestSlice(arg1);
-    ClientSlice s1 =  new ClientSlice();
-    ClientSlice s2 = new ClientSlice();
-    ClientSlice s3 =  new ClientSlice();
-    ClientSlice s4 = new ClientSlice();
+    ClientSlice s1 =  new ClientSlice(clientarg1);
+    ClientSlice s2 = new ClientSlice(clientarg2);
+    ClientSlice s3 =  new ClientSlice(clientarg3);
+    ClientSlice s4 = new ClientSlice(clientarg4);
     ts.run(arg1);
-    s1.run(clientarg1);
-    s2.run(clientarg2);
-    s3.run(clientarg3);
-    s4.run(clientarg4);
+    s1.run();
+    s2.run();
+    s3.run();
+    s4.run();
+  }
+
+  public static void deleteSlice(){
+    TestSlice ts = new TestSlice(arg1);
+    ClientSlice s1 =  new ClientSlice(clientarg1);
+    ClientSlice s2 = new ClientSlice(clientarg2);
+    ClientSlice s3 =  new ClientSlice(clientarg3);
+    ClientSlice s4 = new ClientSlice(clientarg4);
+    ts.delete();
+    s1.delete();
+    s2.delete();
+    s3.delete();
+    s4.delete();
   }
 
   public static void createTestSliceParrallel(){
@@ -160,8 +187,8 @@ public class TestMain {
       Thread thread2 = new Thread() {
         @Override
         public void run() {
-          ClientSlice s1 = new ClientSlice();
-          s1.run(arg);
+          ClientSlice s1 = new ClientSlice(arg);
+          s1.run();
         }
       };
       thread2.start();

@@ -65,7 +65,7 @@ public class RestService {
     @Produces(MediaType.TEXT_PLAIN)
     public String stitchChameleon(StitchChameleon sr){
       logger.debug("got chameleon stitch request: \n"+sr.toString());
-      System.out.println(String.format("got chameleon stitch request from %s", sr.ckeyhash));
+      logger.debug(String.format("got chameleon stitch request from %s", sr.ckeyhash));
       String res=SdxServer.sdxManager.stitchChameleon(sr.sdxslice, sr.sdxnode, sr.ckeyhash, sr
           .stitchport,
         sr.vlan,sr.gateway, sr.ip);
@@ -81,7 +81,7 @@ public class RestService {
       logger.debug("got notifyprefix");
       String res=SdxServer.sdxManager.notifyPrefix(pn.dest, pn.gateway,  pn.customer);
       logger.debug(res);
-      System.out.println(res);
+      logger.debug(res);
       return res;
     }
 }
