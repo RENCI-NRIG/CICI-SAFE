@@ -514,9 +514,14 @@ public class SdxManager extends SliceManager {
       String script="pkill ryu-manager;";
       Exec.sshExec("root", plexusip, script, sshkey);
       delFlows();
+      /*
       script="docker exec -d plexus /bin/bash -c  \"cd /root;pkill ryu-manager; ryu-manager" +
         " ryu/ryu/app/rest_conf_switch.py ryu/ryu/app/rest_qos.py ryu/ryu/app/rest_router_mirror" +
         ".py ryu/ryu/app/ofctl_rest.py|tee log\"\n";
+      */
+      script="docker exec -d plexus /bin/bash -c  \"cd /root;pkill ryu-manager; ryu-manager" +
+        " ryu/ryu/app/rest_conf_switch.py ryu/ryu/app/rest_qos.py ryu/ryu/app/rest_router_mirror" +
+        ".py |tee log\"\n";
       //String script = "docker exec -d plexus /bin/bash -c  \"cd /root;pkill ryu-manager;
       // ryu-manager ryu/ryu/app/rest_router.py|tee log\"\n";
       logger.debug(sshkey);
@@ -691,11 +696,16 @@ public class SdxManager extends SliceManager {
   }
 
   public  String setMirror(String dpid, String source, String dst, String gw) {
-    return routingmanager.setMirror(SDNController, dpid, source, dst, gw);
+    String res = routingmanager.setMirror(SDNController, dpid, source, dst, gw);
+    res += "\n";
+    res += routingmanager.setMirror(SDNController, dpid, dst, source, gw);
+    return  res;
   }
 
   public  String delMirror(String dpid, String source, String dst) {
-    return routingmanager.delMirror(SDNController, dpid, source, dst);
+    String res =  routingmanager.delMirror(SDNController, dpid, source, dst);
+    res += "\n" + routingmanager.delMirror(SDNController, dpid, dst, source);
+    return res;
   }
 
   public void configRouting(Slice s,String ovscontroller, String httpcontroller, String

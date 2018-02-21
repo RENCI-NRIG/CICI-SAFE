@@ -26,6 +26,7 @@ public class TestMain {
     newSlice = true;
     if(newSlice) {
       TestSlice ts = new TestSlice(arg1);
+      ts.delete();
       ts.testBroSliceTwoPairs();
     }
     SdxServer.run(arg1);
@@ -36,6 +37,16 @@ public class TestMain {
     client.processCmd("route 192.168.40.1/24 192.168.40.2");
     client.processCmd("link 192.168.10.1/24 192.168.30.1/24");
     client.processCmd("link 192.168.20.1/24 192.168.40.1/24");
+
+    SdxServer.sdxManager.setMirror(SdxServer.sdxManager.getDPID("c0"), "192.168.10.1/24",
+      "192.168.30.1/24", "192.168.128.2");
+
+    if(newSlice) {
+      SdxServer.sdxManager.deployBro("c0");
+    }
+    SdxServer.sdxManager.setMirror(SdxServer.sdxManager.getDPID("c0"), "192.168.20.1/24",
+     "192.168.40.1/24", "192.168.130.2");
+
     System.exit(0);
   }
 
@@ -62,6 +73,9 @@ public class TestMain {
     SdxExogeniClientManager client2 = new SdxExogeniClientManager(clientarg2);
     SdxExogeniClientManager client3 = new SdxExogeniClientManager(clientarg3);
     SdxExogeniClientManager client4 = new SdxExogeniClientManager(clientarg4);
+    if(newSlice) {
+      SdxServer.sdxManager.deployBro("c0");
+    }
 
     //client slice request stitching
     /*
@@ -137,10 +151,6 @@ public class TestMain {
    // SdxServer.sdxManager.setMirror(SdxServer.sdxManager.getDPID("c0"), "192.168.30.1/24",
    //   "192.168.40.1/24", "192.168.128.2");
 
-   // SdxServer.sdxManager.setMirror(SdxServer.sdxManager.getDPID("c0"), "192.168.40.1/24",
-
-    // "192.168.30.1/24", "192.168.128.2");
-
     /*
     if(newSlice) {
       SdxServer.sdxManager.deployBro("c0");
@@ -149,8 +159,6 @@ public class TestMain {
     //SdxServer.sdxManager.setMirror(SdxServer.sdxManager.getDPID("c0"), "192.168.10.1/24",
     // "192.168.20.1/24", "192.168.134.2");
 
-    //SdxServer.sdxManager.setMirror(SdxServer.sdxManager.getDPID("c0"), "192.168.20.1/24",
-    //  "192.168.10.1/24", "192.168.134.2");
     /*
     SdxServer.sdxManager.delMirror(SdxServer.sdxManager.getDPID("c0"), "192.168.30.1/24",
       "192.168.40.1/24");
