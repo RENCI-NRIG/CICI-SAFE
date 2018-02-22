@@ -54,12 +54,20 @@
 							<name>SafeSdxServer</name>
 						</program>
 						<program>
-							<mainClass>sdx.core.Example</mainClass>
+							<mainClass>sdx.core.SliceServer</mainClass>
 							<name>SafeSdxExample</name>
 						</program>
 						<program>
-              <mainClass>sdx.core.MyHttpClient</mainClass>
-							<name>HttpClient</name>
+							<mainClass>test.TestMain</mainClass>
+							<name>SafeSdxTest</name>
+						</program>
+						<program>
+							<mainClass>client.exogeni.SdxExogeniClient</mainClass>
+							<name>SafeSdxExogeniClient</name>
+						</program>
+						<program>
+							<mainClass>client.stitchport.SdxExogeniClient</mainClass>
+							<name>SafeSdxStitchPortClient</name>
 						</program>
 					</programs>
 				</configuration>
@@ -69,8 +77,8 @@
 				<artifactId>maven-compiler-plugin</artifactId>
 				<version>3.5.1</version>
 				<configuration>
-					<source>1.7</source>
-					<target>1.7</target>
+					<source>1.8</source>
+					<target>1.8</target>
 				</configuration>
 			</plugin>
 

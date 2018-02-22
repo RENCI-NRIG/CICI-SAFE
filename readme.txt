@@ -41,23 +41,23 @@ Configuration: set variables in "SAFE/configure" and run it. It will generate co
     $ ./bob.sh
 
   7. alice stitch CNode0 to sdx/c0, in alice's controller, run:
-    $>stitch CNode0 [SDX_SLICE_NAME, e.g., sdx] [STITCH_POINT, e.g., c0]
+    $>stitch CNode0 [SDX_SLICE_NAME, e.g., sdx]
     bob stitch CNode0 to sdx/c3, in bob's controller run:
-    $>stitch CNode [SDX_SLICE_NAME, e.g., sdx] [STITCH_POINT, e.g., c3]
+    $>stitch CNode [SDX_SLICE_NAME, e.g., sdx]
     
     OR the following commands are equivalent:
-    ./scripts/sdxclient.sh -c config/alice.conf -e "stitch CNode0 [SDX_SLICE_NAME, e.g., sdx] [STITCH_POINT, e.g., c0]"
-    ./scripts/sdxclient.sh -c config/bob.conf -e "stitch CNode0 [SDX_SLICE_NAME, e.g., sdx] [STITCH_POINT, e.g., c3]"
+    ./scripts/sdxclient.sh -c config/alice.conf -e "stitch CNode0 [SDX_SLICE_NAME, e.g., sdx]"
+    ./scripts/sdxclient.sh -c config/bob.conf -e "stitch CNode0 [SDX_SLICE_NAME, e.g., sdx]"
 
   8. route
     alice tells sdx controller its address space
-    $>route 192.168.10.1/24 192.168.33.2 [SDX_SLICE_NAME, e.g., sdx] [STITCH_POINT, e.g., c0]
+    $>route 192.168.10.1/24 192.168.33.2
     bob tells sdx controller its address space
-    $>route 192.168.20.1/24 192.168.34.2 [SDX_SLICE_NAME, e.g., sdx] [STITCH_POINT, e.g., c3]
+    $>route 192.168.20.1/24 192.168.34.2
     
     OR the following commands are equivalent:
-    ./scripts/sdxclient.sh -c config/alice.conf -e "route 192.168.10.1/24 192.168.33.2 [SDX_SLICE_NAME, e.g., sdx] [STITCH_POINT, e.g., c0]"
-    ./scripts/sdxclient.sh -c config/bob.conf -e "route 192.168.20.1/24 192.168.34.2 [SDX_SLICE_NAME, e.g., sdx] [STITCH_POINT, e.g., c3]"
+    ./scripts/sdxclient.sh -c config/alice.conf -e "route 192.168.10.1/24 192.168.33.2"
+    ./scripts/sdxclient.sh -c config/bob.conf -e "route 192.168.20.1/24 192.168.34.2"
 
   9. [OPTIONAL]
     For sdx demo, I added scripts to automatically configure the routing table with quagga in client slice. These scripts depends on the IP addresses assigned to client slice, the topology of client slice, which node in client slice is stitched to sdx slice, and the gateway in sdx slice.
