@@ -13,14 +13,10 @@ public class TestMain {
     //rest_router_mirror line 1057 for info about deleting flows. It delete the flows
     //cookie is used to differenciate different flows. Use unique cookie ids accross all tables
     // to manage the flows.
-
-    //use "-n" option in arguments to opt out safe authorization
-    String[] args = {"-c", "config/test.conf", "-n"};
-
-    //start Sdx Server
+    String[] args = {"-c", "config/test-fl.conf", "-n"};
     SdxServer.run(args);
-    String[] clientarg1 = {"-c", "client-config/c3-tamu.conf", "-n"};
-    String[] clientarg2 = {"-c", "client-config/c4-tamu.conf", "-n"};
+    String[] clientarg1 = {"-c", "client-config/c1-ufl.conf", "-n"};
+    String[] clientarg2 = {"-c", "client-config/c2-unf.conf", "-n"};
     SdxExogeniClientManager client1 = new SdxExogeniClientManager(clientarg1);
     SdxExogeniClientManager client2 = new SdxExogeniClientManager(clientarg2);
 
@@ -41,10 +37,10 @@ public class TestMain {
     */
 
     SdxServer.sdxManager.setMirror(SdxServer.sdxManager.getDPID("c0"), "192.168.30.1/24",
-      "192.168.40.1/24", "192.168.100.2");
+      "192.168.40.1/24");
 
     SdxServer.sdxManager.setMirror(SdxServer.sdxManager.getDPID("c0"), "192.168.40.1/24",
-      "192.168.30.1/24", "192.168.100.2");
+      "192.168.30.1/24");
     /*
     SdxServer.sdxManager.delMirror(SdxServer.sdxManager.getDPID("c0"), "192.168.30.1/24",
       "192.168.40.1/24");

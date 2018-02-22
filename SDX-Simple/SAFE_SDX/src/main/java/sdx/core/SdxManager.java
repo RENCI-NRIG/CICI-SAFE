@@ -1,15 +1,17 @@
 package sdx.core;
 
 import common.slice.SliceCommon;
+import org.json.zip.None;
+import org.renci.ahab.libndl.resources.request.*;
 import sdx.networkmanager.Link;
 import sdx.networkmanager.NetworkManager;
 import common.utils.Exec;
 import common.utils.SafePost;
 
-import java.util.*;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Set;
@@ -85,9 +87,53 @@ public class SdxManager extends SliceManager {
     return SDNControllerIP;
   }
 
-  public  void replayCMD(String dpid){
-    routingmanager.replayCmds(dpid);
+  private ArrayList<BroInstance> broInstances = new ArrayList<>();
+
+  private class Flow{
+    public String src;
+    public String dst;
+    public long bw;
+    public Flow(String s, String d, long b){
+      this.src = s;
+      this.dst = d;
+      this.bw = b;
+    }
   }
+
+  private class BroInstance{
+    private long capacity;
+    private long usedCap;
+    private String ip;
+    private ArrayList<Flow> flows;
+    public BroInstance(String ip,  long cap){
+      this.capacity = cap;
+      this.usedCap = 0;
+      this.ip = ip;
+    }
+
+    public String getIP() {
+      return this.ip;
+    }
+
+    public List<Flow> getFlows(){
+      return this.flows;
+    }
+
+    public long getAvailableCap(){
+      return capacity - usedCap;
+    }
+
+    public boolean addFlow(Flow flow){
+      if(flow.bw > capacity - usedCap){
+        return false;
+      }else{
+        usedCap += flow.bw;
+        flows.add(flow);
+        return true;
+      }
+    }
+  }
+
 
   private void addEntry_HashList(HashMap<String, ArrayList<String>> map, String key, String entry) {
     if (map.containsKey(key)) {
@@ -165,17 +211,15 @@ public class SdxManager extends SliceManager {
     catch (Exception e){
       e.printStackTrace();
     }
-    //TODO uncomment the following line
-    runCmdSlice(serverSlice, "ovs-ofctl del-flows br0", sshkey, "(c\\d+)", true, true);
+    //SDNControllerIP="152.3.136.36";
+    runCmdSlice(serverSlice, "ovs-ofctl del-flows br0", sshkey, "(^c\\d+)", true, true);
     SDNControllerIP = ((ComputeNode) serverSlice.getResourceByName("plexuscontroller")).getManagementIP();
     //SDNControllerIP="152.3.136.36";
     //System.out.println("plexuscontroler managementIP = " + SDNControllerIP);
-    SDNController=SDNControllerIP+":8080";
-    OVSController=SDNControllerIP+":6633";
-
-    //configRouting(serverslice,OVSController,SDNController,"(c\\d+)","(sp-c\\d+.*)");
-    loadSdxNetwork(serverSlice,"(c\\d+)","(sp-c\\d+.*)");
-    configRouting(serverSlice,OVSController,SDNController,"(c\\d+)","(sp-c\\d+.*)");
+    SDNController = SDNControllerIP + ":8080";
+    OVSController = SDNControllerIP + ":6633";
+    loadSdxNetwork(serverSlice,"(^c\\d+)","(sp-c\\d+.*)", "(bro\\d+_c\\d+)");
+    configRouting(serverSlice,OVSController,SDNController,"(^c\\d+)","(sp-c\\d+.*)");
   }
 
   public void delFlows(){
@@ -647,26 +691,32 @@ public class SdxManager extends SliceManager {
    * stitches: stitch_c0_20
    * brolink:
    */
-  public void loadSdxNetwork(Slice s, String routerpattern, String stitchportpattern){
+
+  public void loadSdxNetwork(Slice s, String routerpattern, String stitchportpattern, String
+    bropattern){
     logger.debug("Loading Sdx Network Topology");
     try{
       Pattern pattern = Pattern.compile(routerpattern);
       Pattern stitchpattern = Pattern.compile(stitchportpattern);
+      Pattern bropatn = Pattern.compile(bropattern);
       //Nodes: Get all router information
       for(ComputeNode node : s.getComputeNodes()){
-        Matcher matcher = pattern.matcher(node.getName());
-        if (!matcher.find())
+        if (pattern.matcher(node.getName()).find())
         {
-          continue;
+          if(computenodes.containsKey(node.getDomain())) {
+            computenodes.get(node.getDomain()).add(node.getName());
+            Collections.sort(computenodes.get(node.getDomain()));
+          }
+          else{
+            ArrayList<String> l=new ArrayList<>();
+            l.add(node.getName());
+            computenodes.put(node.getDomain(),l);
+          }
         }
-        if(computenodes.containsKey(node.getDomain())) {
-          computenodes.get(node.getDomain()).add(node.getName());
-          Collections.sort(computenodes.get(node.getDomain()));
-        }
-        else{
-          ArrayList<String> l=new ArrayList<>();
-          l.add(node.getName());
-          computenodes.put(node.getDomain(),l);
+        else if(bropatn.matcher(node.getName()).find()){
+          InterfaceNode2Net intf = (InterfaceNode2Net)node.getInterfaces().toArray()[0];
+          String  ip = intf.getLink().getName().split("_")[1];
+          broInstances.add(new BroInstance(IPPrefix + ip + ".2", 500000000));
         }
       }
       logger.debug("get links from Slice");
@@ -791,7 +841,28 @@ public class SdxManager extends SliceManager {
     }
   }
 
-  public  String setMirror(String dpid, String source, String dst, String gw) {
+  private BroInstance getBroInstance(long bw){
+    //First fit
+    BroInstance broNode = null;
+    synchronized (broInstances) {
+      for(BroInstance bro: broInstances){
+        if(bro.getAvailableCap() > bw){
+          broNode = bro;
+          break;
+        }
+      }
+    }
+    return broNode;
+  }
+
+  public  String setMirror(String dpid, String source, String dst) {
+    long bw = 100000000;
+    String gw = getBroInstance(bw).getIP();
+    return routingmanager.setMirror(SDNController, dpid, source, dst, gw);
+  }
+
+  public  String setMirror(String dpid, String source, String dst, long bw) {
+    String gw = getBroInstance(bw).getIP();
     return routingmanager.setMirror(SDNController, dpid, source, dst, gw);
   }
 
