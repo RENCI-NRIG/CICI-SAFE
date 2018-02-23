@@ -39,13 +39,13 @@ public class TestMain {
     client.processCmd("link 192.168.20.1/24 192.168.40.1/24");
 
     SdxServer.sdxManager.setMirror(SdxServer.sdxManager.getDPID("c0"), "192.168.10.1/24",
-      "192.168.30.1/24", "192.168.128.2");
+      "192.168.30.1/24");
 
     if(newSlice) {
       SdxServer.sdxManager.deployBro("c0");
     }
     SdxServer.sdxManager.setMirror(SdxServer.sdxManager.getDPID("c0"), "192.168.20.1/24",
-     "192.168.40.1/24", "192.168.130.2");
+     "192.168.40.1/24");
 
     System.exit(0);
   }
