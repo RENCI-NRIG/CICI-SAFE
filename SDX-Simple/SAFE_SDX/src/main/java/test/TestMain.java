@@ -14,7 +14,7 @@ public class TestMain {
   static String[] clientarg2 = {"-c", "client-config/c2-"+ site2+".conf"};
   static String[] clientarg3 = {"-c", "client-config/c3-"+site1+".conf"};
   static String[] clientarg4 = {"-c", "client-config/c4-"+site2+".conf"};
-  static boolean newSlice = false;
+  static boolean newSlice = true;
   static boolean stitch = true;
 
   public static void main(String[] args){
@@ -23,7 +23,6 @@ public class TestMain {
   }
 
   public static void emulationTest(){
-    newSlice = true;
     if(newSlice) {
       TestSlice ts = new TestSlice(arg1);
       ts.delete();
@@ -51,13 +50,11 @@ public class TestMain {
   }
 
   public static void multiSliceTest(){
-    newSlice = true;
     if(newSlice) {
       deleteSlice();
       createTestSliceParrallel();
     }
     test();
-
   }
 
   public static void test(){
@@ -74,45 +71,32 @@ public class TestMain {
     SdxExogeniClientManager client3 = new SdxExogeniClientManager(clientarg3);
     SdxExogeniClientManager client4 = new SdxExogeniClientManager(clientarg4);
 
-    //TODO new interface not added to bridge
     if(stitch) {
       client1.processCmd("stitch CNode0 " + sdx + " c0");
       client2.processCmd("stitch CNode0 " + sdx + " c1");
-      //client3.processCmd("stitch CNode0 " + sdx + " c0");
-      //client4.processCmd("stitch CNode0 " + sdx + " c1");
+      client3.processCmd("stitch CNode0 " + sdx + " c0");
+      client4.processCmd("stitch CNode0 " + sdx + " c1");
     }
 
     // client slice advertise their prefix
     client1.processCmd("route 192.168.10.1/24 192.168.130.2");
     client2.processCmd("route 192.168.20.1/24 192.168.131.2");
-    //client3.processCmd("route 192.168.30.1/24 192.168.134.2");
-    //client4.processCmd("route 192.168.40.1/24 192.168.135.2");
+    client3.processCmd("route 192.168.30.1/24 192.168.132.2");
+    client4.processCmd("route 192.168.40.1/24 192.168.133.2");
 
     // Client request for connection between prefixes
-    //client3.processCmd("link 192.168.30.1/24 192.168.40.1/24");
+    client3.processCmd("link 192.168.30.1/24 192.168.40.1/24");
     client1.processCmd("link 192.168.10.1/24 192.168.20.1/24");
     /*
     SdxServer.sdxManager.removePath("192.168.30.1/24", "192.168.40.1/24");
     client1.processCmd("link 192.168.30.1/24 192.168.40.1/24 10000");
     */
 
-   // SdxServer.sdxManager.setMirror(SdxServer.sdxManager.getDPID("c0"), "192.168.30.1/24",
-   //   "192.168.40.1/24", "192.168.128.2");
+    SdxServer.sdxManager.setMirror(SdxServer.sdxManager.getDPID("c0"), "192.168.30.1/24",
+      "192.168.40.1/24", 400000000);
 
-    if(newSlice) {
-      SdxServer.sdxManager.deployBro("c0");
-    }
-
-    //SdxServer.sdxManager.setMirror(SdxServer.sdxManager.getDPID("c0"), "192.168.10.1/24",
-    // "192.168.20.1/24", "192.168.134.2");
-
-    /*
-    SdxServer.sdxManager.delMirror(SdxServer.sdxManager.getDPID("c0"), "192.168.30.1/24",
-      "192.168.40.1/24");
-
-    SdxServer.sdxManager.delMirror(SdxServer.sdxManager.getDPID("c0"), "192.168.40.1/24",
-      "192.168.30.1/24");
-    */
+    SdxServer.sdxManager.setMirror(SdxServer.sdxManager.getDPID("c0"), "192.168.10.1/24",
+      "192.168.20.1/24", 400000000);
 
     // Stop Sdx server and exit
     System.exit(0);
@@ -158,7 +142,7 @@ public class TestMain {
     SdxServer.sdxManager.sleep(10);
 
     String[][] args = {clientarg1, clientarg2, clientarg3, clientarg4};
-    for(int i = 0 ; i< 2; i++) {
+    for(int i = 0 ; i< 4; i++) {
       final String[] arg = args[i];
       Thread thread2 = new Thread() {
         @Override

@@ -426,6 +426,10 @@ public abstract class SliceCommon {
     return sliceProxy;
   }
 
+  protected void refreshSliceProxy(){
+    sliceProxy = getSliceProxy(pemLocation, keyLocation, controllerUrl);
+  }
+
   protected void getNetworkInfo(Slice s) {
     //getLinks
     for (Network n : s.getLinks()) {

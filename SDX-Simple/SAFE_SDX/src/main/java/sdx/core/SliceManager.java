@@ -79,8 +79,7 @@ public class SliceManager extends SliceCommon {
     //type=conf.getString("config.type");
     if (cmd.hasOption('d')) type = "delete";
 
-    sliceProxy = getSliceProxy(pemLocation, keyLocation, controllerUrl);
-
+    refreshSliceProxy();
     //SSH context
     sctx = new SliceAccessContext<>();
     try {
