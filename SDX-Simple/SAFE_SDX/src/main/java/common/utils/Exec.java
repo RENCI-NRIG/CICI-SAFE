@@ -74,6 +74,7 @@ public class Exec {
       channel.disconnect();
       session.disconnect();
     } catch (Exception e) {
+      System.out.println(host + command);
       logger.debug(e);
     }
     return result;

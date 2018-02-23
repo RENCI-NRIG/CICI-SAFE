@@ -74,15 +74,12 @@ public class SdxManager extends SliceManager {
   private HashSet<Integer> usedip = new HashSet<Integer>();
   private final ReentrantLock iplock=new ReentrantLock();
   private  final ReentrantLock nodelock=new ReentrantLock();
-  private  final ReentrantLock linklock=new ReentrantLock();
   private  HashMap<String,String>prefixgateway=new HashMap<String,String>();
   private  ArrayList<String[]> advertisements=new ArrayList<String[]>();
 
-  public String getSDNControllerIP() {
-    return SDNControllerIP;
-  }
-
   private ArrayList<BroInstance> broInstances = new ArrayList<>();
+  private long requiredbw=0;
+
 
   private class Flow{
     public String src;
@@ -104,6 +101,7 @@ public class SdxManager extends SliceManager {
       this.capacity = cap;
       this.usedCap = 0;
       this.ip = ip;
+      this.flows = new ArrayList<>();
     }
 
     public String getIP() {
@@ -123,12 +121,15 @@ public class SdxManager extends SliceManager {
         return false;
       }else{
         usedCap += flow.bw;
-        flows.add(flow);
+        this.flows.add(flow);
         return true;
       }
     }
   }
 
+  public String getSDNControllerIP() {
+    return SDNControllerIP;
+  }
 
   private void addEntry_HashList(HashMap<String, ArrayList<String>> map, String key, String entry) {
     if (map.containsKey(key)) {
@@ -169,7 +170,7 @@ public class SdxManager extends SliceManager {
     //type=sdxconfig.type;
     computeIP(IPPrefix);
     //System.out.print(pemLocation);
-    sliceProxy = getSliceProxy(pemLocation, keyLocation, controllerUrl);
+    refreshSliceProxy();
     //SSH context
     sctx = new SliceAccessContext<>();
     try {
@@ -213,7 +214,7 @@ public class SdxManager extends SliceManager {
     res[0] = null;
     res[1] = null;
     Slice s1 = null;
-    ISliceTransportAPIv1 sliceProxy = getSliceProxy(pemLocation, keyLocation, controllerUrl);
+    refreshSliceProxy();
     try {
       s1 = Slice.loadManifestFile(sliceProxy, sdxslice);
     } catch (ContextTransportException e) {
@@ -271,7 +272,7 @@ public class SdxManager extends SliceManager {
 
     int ip_to_use = getAvailableIP();
     String stitchname;
-    stitchname = "stitch_" + node.getName() + "_" + curip;
+    stitchname = "stitch_" + node.getName() + "_" + ip_to_use;
     usedip.add(ip_to_use);
     Network net = s1.addBroadcastLink(stitchname);
     InterfaceNode2Net ifaceNode0 = (InterfaceNode2Net) net.stitch(node);
@@ -311,14 +312,23 @@ public class SdxManager extends SliceManager {
     return res;
   }
 
-  public void deployBro(String routerName){
+  public String deployBro(String routerName){
+    refreshSliceProxy();
+    System.out.println("deploying new bro instance to " + routerName);
     Long t1 = System.currentTimeMillis();
     ComputeNode router =  (ComputeNode) serverSlice.getResourceByName(routerName);
     String broName = getBroName(router.getName());
     long brobw = conf.getLong("config.brobw");
     int ip_to_use = getAvailableIP();
     addBro(serverSlice, broName, router, ip_to_use,brobw);
-    commitAndWait(serverSlice);
+    try {
+      serverSlice.commit();
+      ArrayList<String> resources= new ArrayList<String>();
+      resources.add(broName);
+      waitTillActive(serverSlice, 10, resources);
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
     configBroNodes(serverSlice, "(" + broName + ")");
     sleep(10);
     Exec.sshExec("root", router.getManagementIP(), "/bin/bash ~/ovsbridge.sh " +
@@ -335,6 +345,7 @@ public class SdxManager extends SliceManager {
     Long t2 = System.currentTimeMillis();
     System.out.println("Deployed new Bro node successfully, time elapsed: " + (t2- t1) +
       "milliseconds");
+    return link.getIP(2).split("/")[0];
   }
 
   private String getBroName(String routerName){
@@ -375,21 +386,9 @@ public class SdxManager extends SliceManager {
     boolean res=true;
     routingmanager.printLinks();
     if(!routingmanager.findPath(n1,n2,bandwidth)) {
+      //this is for emulation dynamic links
       for(Link link : links.values()){
         if(link.match(n1, n2) && link.capacity >= bandwidth) {
-          int ip_to_use = 0;
-          iplock.lock();
-          try {
-            while (usedip.contains(curip)) {
-              curip++;
-            }
-            ip_to_use = curip;
-            link.setIP(IPPrefix + String.valueOf(ip_to_use));
-            link.setMask(mask);
-            curip++;
-          } finally {
-            iplock.unlock();
-          }
           res = routingmanager.newLink(link.getIP(1), link.nodea, link.getIP(2), link.nodeb,
             SDNController, link.capacity);
         }
@@ -451,19 +450,7 @@ public class SdxManager extends SliceManager {
       l1.setCapacity(linkbw);
       links.put(link1, l1);
 
-      int ip_to_use = 0;
-      iplock.lock();
-      try {
-        while (usedip.contains(curip)) {
-          curip++;
-        }
-        ip_to_use = curip;
-        l1.setIP(IPPrefix + String.valueOf(ip_to_use));
-        l1.setMask(mask);
-        curip++;
-      } finally {
-        iplock.unlock();
-      }
+      int ip_to_use = getAvailableIP();
       String param = "";
       Exec.sshExec("root", node1.getManagementIP(), "/bin/bash ~/ovsbridge.sh " + OVSController, sshkey);
       routingmanager.replayCmds(routingmanager.getDPID(node1.getName()));
@@ -522,7 +509,7 @@ public class SdxManager extends SliceManager {
       //FIX ME: do stitching
       System.out.println("Chameleon Stitch Request from " + customer_keyhash + " Authorized");
       Slice s = null;
-      ISliceTransportAPIv1 sliceProxy = getSliceProxy(pemLocation, keyLocation, controllerUrl);
+      refreshSliceProxy();
       try {
         s = Slice.loadManifestFile(sliceProxy, sdxslice);
       } catch (ContextTransportException e) {
@@ -772,31 +759,85 @@ public class SdxManager extends SliceManager {
     }
   }
 
-  private BroInstance getBroInstance(long bw){
+  private BroInstance getBroInstance(long bw) {
     //First fit
     BroInstance broNode = null;
     synchronized (broInstances) {
-      for(BroInstance bro: broInstances){
-        if(bro.getAvailableCap() > bw){
+      for (BroInstance bro : broInstances) {
+        if (bro.getAvailableCap() > bw) {
           broNode = bro;
           break;
         }
       }
     }
     //checkif necessary to provision new Bro node
-
-    return broNode;
+    if (broNode == null || broOverloaded()) {
+      Thread thread = new Thread() {
+        @Override
+        public void run() {
+          String ip = deployBro("c0");
+          synchronized (broInstances) {
+            broInstances.add(new BroInstance(ip, 500000000));
+          }
+        }
+      };
+      thread.start();
+      if (broNode == null) {
+        try {
+          System.out.println("No enough capacity in active bro pool, waiting for new bro nodes to" +
+            " be deployed");
+          thread.join();
+          synchronized (broInstances) {
+            for (BroInstance bro : broInstances) {
+              if (bro.getAvailableCap() > bw) {
+                broNode = bro;
+                break;
+              }
+            }
+          }
+        } catch (Exception e) {
+          e.printStackTrace();
+        }
+        return broNode;
+      } else {
+        return broNode;
+      }
+    } else {
+      return broNode;
+    }
   }
 
+  private boolean broOverloaded() {
+    long sum = 0;
+    for(BroInstance bro: broInstances){
+      sum += bro.capacity;
+    }
+    double ratio = (double)requiredbw / (double) sum;
+    if (ratio > 0.6){
+      return true;
+    }else{
+      return false;
+    }
+  }
   public  String setMirror(String dpid, String source, String dst) {
     long bw = 100000000;
-    String gw = getBroInstance(bw).getIP();
-    return routingmanager.setMirror(SDNController, dpid, source, dst, gw);
+    requiredbw += bw;
+    BroInstance bro = getBroInstance(bw);
+    String gw = bro.getIP();
+    bro.addFlow(new Flow(source, dst, bw));
+    String res = routingmanager.setMirror(SDNController, dpid, source, dst, gw);
+    res += routingmanager.setMirror(SDNController, dpid, dst, source, gw);
+    return res;
   }
 
   public  String setMirror(String dpid, String source, String dst, long bw) {
-    String gw = getBroInstance(bw).getIP();
-    return routingmanager.setMirror(SDNController, dpid, source, dst, gw);
+    requiredbw += bw;
+    BroInstance bro = getBroInstance(bw);
+    String gw = bro.getIP();
+    bro.addFlow(new Flow(source, dst, bw));
+    String res = routingmanager.setMirror(SDNController, dpid, source, dst, gw);
+    res += routingmanager.setMirror(SDNController, dpid, dst, source, gw);
+    return res;
   }
 
   public  String delMirror(String dpid, String source, String dst) {
