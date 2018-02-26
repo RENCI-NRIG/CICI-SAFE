@@ -20,14 +20,13 @@ public class RestService {
   @Path("/stitchrequest")
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.APPLICATION_JSON)
-  public StitchResult stitchRequest(StitchRequest sr){
+  public StitchResult stitchRequest(StitchRequest sr) {
     logger.debug("got sittch request");
     try {
-      String[] res = SdxServer.sdxManager.stitchRequest(sr.sdxslice, sr.sdxsite, sr.ckeyhash, sr
-          .cslice,
-        sr.creservid, sr.secret,sr.sdxnode);
+      String[] res = SdxServer.sdxManager.stitchRequest(sr.sdxslice, sr.sdxsite, sr.ckeyhash, sr.cslice,
+        sr.creservid, sr.secret, sr.sdxnode);
       return new StitchResult(res[0], res[1]);
-    }catch (Exception e){
+    } catch (Exception e) {
       e.printStackTrace();
       return new StitchResult(null,null);
     }
@@ -37,14 +36,13 @@ public class RestService {
   @Path("/connectionrequest")
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.TEXT_PLAIN)
-  public String connectionRequest(ConnectionRequest sr){
-    logger.debug("got link request between "+sr.self_prefix+" and "+sr.target_prefix);
+  public String connectionRequest(ConnectionRequest sr) {
+    logger.debug("got link request between " + sr.self_prefix + " and " + sr.target_prefix);
     try {
-      String res = SdxServer.sdxManager.connectionRequest(sr.ckeyhash,sr.self_prefix,sr
-        .target_prefix,sr
-        .bandwidth);
+      String res = SdxServer.sdxManager.connectionRequest(sr.ckeyhash, sr.self_prefix,
+          sr.target_prefix, sr.bandwidth);
       return res;
-    }catch (Exception e){
+    } catch (Exception e) {
       e.printStackTrace();
       return e.getMessage();
     }
@@ -54,13 +52,11 @@ public class RestService {
   @Path("/stitchchameleon")
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.TEXT_PLAIN)
-  public String stitchChameleon(StitchChameleon sr){
+  public String stitchChameleon(StitchChameleon sr) {
     logger.debug("got chameleon stitch request: \n"+sr.toString());
     logger.debug(String.format("got chameleon stitch request from %s", sr.ckeyhash));
-    String res=SdxServer.sdxManager.stitchChameleon(sr.sdxslice, sr.sdxnode, sr.ckeyhash, sr
-        .stitchport,
-      sr.vlan,sr.gateway, sr.ip);
-    //return new StitchResult("ha","ha");
+    String res = SdxServer.sdxManager.stitchChameleon(sr.sdxslice, sr.sdxnode,
+        sr.ckeyhash, sr.stitchport, sr.vlan,sr.gateway, sr.ip);
     return res;
   }
 
@@ -68,10 +64,9 @@ public class RestService {
   @Path("/notifyprefix")
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.TEXT_PLAIN)
-  public String notifyPrefix(PrefixNotification pn){
+  public String notifyPrefix(PrefixNotification pn) {
     logger.debug("got notifyprefix");
-    String res=SdxServer.sdxManager.notifyPrefix(pn.dest, pn.gateway,  pn.customer);
-    logger.debug(res);
+    String res = SdxServer.sdxManager.notifyPrefix(pn.dest, pn.gateway, pn.customer);
     logger.debug(res);
     return res;
   }
@@ -80,9 +75,11 @@ public class RestService {
   @Path("/broload")
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.TEXT_PLAIN)
-  public String broload(BroLoad bl){
-    System.out.println("got broload + " + bl);
-    return "";
+  public String broload(BroLoad bl) {
+    logger.debug("got broload");
+    double load = Double.parseDouble(bl.usage);
+    String res = SdxServer.sdxManager.broload(bl.broip, load);
+    return res;
   }
 }
 
@@ -121,28 +118,6 @@ class StitchRequest {
   public String creservid;
   public String sdxnode;
   public String secret;
-
-  public StitchRequest() {}
-
-  public StitchRequest(String sdxslice, String sdxsite,String ckeyhash, String cslice, String creserveid, String secret){
-    this.sdxslice=sdxslice;
-    this.sdxsite=sdxsite;
-    this.ckeyhash=ckeyhash;
-    this.cslice=cslice;
-    this.creservid=creservid;
-    this.secret=secret;
-    this.sdxnode=null;
-  }
-
-  public StitchRequest(String sdxslice, String sdxsite,String ckeyhash, String cslice, String creserveid, String secret,String sdxnode){
-    this.sdxslice=sdxslice;
-    this.sdxsite=sdxsite;
-    this.ckeyhash=ckeyhash;
-    this.cslice=cslice;
-    this.creservid=creservid;
-    this.secret=secret;
-    this.sdxnode=sdxnode;
-  }
 }
 
 class ConnectionRequest {
@@ -150,33 +125,20 @@ class ConnectionRequest {
   public String self_prefix;
   public String target_prefix;
   public long bandwidth;
-
-  public ConnectionRequest() {}
-
-  public ConnectionRequest(String self_prefix, String target_prefix){
-    this.self_prefix=self_prefix;
-    this.target_prefix=target_prefix;
-    this.bandwidth=0;
-  }
-
-  public ConnectionRequest(String self_prefix, String target_prefix,long bandwidth){
-    this.self_prefix=self_prefix;
-    this.target_prefix=target_prefix;
-    this.bandwidth=bandwidth;
-  }
 }
 
 class PrefixNotification {
   public String dest;
   public String gateway;
   public String customer;
+}
 
-  public PrefixNotification() {}
+class BroLoad {
+  public String broip;
+  public String usage;
 
-  public PrefixNotification(String dest, String gateway, String customer){
-    this.dest=dest;
-    this.gateway=gateway;
-    this.customer=customer;
+  public String toString() {
+    return "{\"broip\": " + broip + ", \"usage\": " + usage + "}";
   }
 }
 
@@ -194,28 +156,6 @@ class StitchResult {
       result = true;
     else
       result = false;
-  }
-}
-
-class BroLoad {
-  public String broip;
-  public String usage;
-  public double load;
-
-  public BroLoad() {}
-
-  public BroLoad(String broip, String usage) {
-    this.broip = broip;
-    this.usage = usage;
-    try {
-      this.load = Double.parseDouble(usage);
-    } catch (Exception e) {
-      this.load = 0;
-    }
-  }
-
-  public String toString() {
-    return "{\"broip\": " + broip + ", \"usage\": " + load + "}";
   }
 }
 
