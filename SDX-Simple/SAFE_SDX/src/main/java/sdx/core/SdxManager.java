@@ -213,17 +213,7 @@ public class SdxManager extends SliceManager {
     String[] res = new String[2];
     res[0] = null;
     res[1] = null;
-    Slice s1 = null;
-    refreshSliceProxy();
-    try {
-      s1 = Slice.loadManifestFile(sliceProxy, sdxslice);
-    } catch (ContextTransportException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
-    } catch (TransportException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
-    }
+    Slice s1 = getSlice();
     ComputeNode node = null;
     boolean newrouter = false;
     if (sdxnode != null) {
