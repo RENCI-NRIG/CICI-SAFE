@@ -164,11 +164,11 @@ public class SliceManager extends SliceCommon {
     copyFile2Slice(carrier, resource_dir + "bro/reporter.py", "/root/reporter.py", sshkey,
       bropattern);
 
-    runCmdSlice(carrier, "broctl deploy", bropattern, true, true);
-    runCmdSlice(carrier, "python reporter & disown", bropattern, true, true);
-
     runCmdSlice(carrier, "sed -i 's/bogus_addr/" + SDNControllerIP + "/' destroy_conn.bro",
        bropattern, true, true);
+    runCmdSlice(carrier, "sed -i 's/bogus_addr/" + serverurl + "/' reporter.py",
+       bropattern, true, true);
+
     Pattern pattern = Pattern.compile(bropattern);
     for (ComputeNode c : carrier.getComputeNodes()) {
       if (pattern.matcher(c.getName()).matches()) {
@@ -180,6 +180,9 @@ public class SliceManager extends SliceCommon {
         Exec.sshExec("root", c.getManagementIP(), "sed -i 's/bogus_dpid/" + Long.parseLong(dpid, 16) + "/' destroy_conn.bro", sshkey);
       }
     }
+
+    runCmdSlice(carrier, "broctl deploy", bropattern, true, true);
+    runCmdSlice(carrier, "python reporter & disown", bropattern, true, true);
   }
 
   public ComputeNode addOVSRouter(Slice s, String site, String name) {
