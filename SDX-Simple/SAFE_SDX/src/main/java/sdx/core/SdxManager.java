@@ -217,14 +217,11 @@ public class SdxManager extends SliceManager {
     ComputeNode node = null;
     boolean newrouter = false;
     if (sdxnode != null) {
-      System.out.println("case 1");
       node = (ComputeNode) s1.getResourceByName(sdxnode);
     }
     if (sdxnode == null && computenodes.containsKey(site) && computenodes.get(site).size() > 0) {
-      System.out.println("case 2");
       node = (ComputeNode) s1.getResourceByName(computenodes.get(site).get(0));
     } else if (node == null) {
-      System.out.println("case 3");
       //if node not exists, add another node to the slice
       //add a node and configure it as a router.
       //later when a customer requests connection between site a and site b, we add another link to meet
@@ -279,15 +276,12 @@ public class SdxManager extends SliceManager {
     int N = 0;
     waitTillActive(s1, 10, Arrays.asList(stitchname));
     if (newrouter) {
-      System.out.println("configing new router...");
       configRouter(node);
     }
-    System.out.println("i guess im workin?...");
     s1.refresh();
     net = (BroadcastNetwork) s1.getResourceByName(stitchname);
     String net1_stitching_GUID = net.getStitchingGUID();
     logger.debug("net1_stitching_GUID: " + net1_stitching_GUID);
-    System.out.println("setting link?...");
     Link link = new Link();
     link.setName(stitchname);
     link.addNode(node.getName());
@@ -300,7 +294,6 @@ public class SdxManager extends SliceManager {
     res[0] = gw;
     res[1] = ip;
     sleep(10);
-    System.out.println("ovsbridge!");
     Exec.sshExec("root", node.getManagementIP(), "/bin/bash ~/ovsbridge.sh " +
       OVSController, sshkey);
     routingmanager.newLink(link.getIP(1), link.nodea, ip.split("/")[0], SDNController);
@@ -549,9 +542,7 @@ public class SdxManager extends SliceManager {
       //s2
       Properties p = new Properties();
       p.setProperty("ip", newip);
-      if (!sliceProxy.performSliceStitch(customerName, CID, sdxslice, RID, secret, p)) {
-        System.out.println("Unable to stitch!");
-      }
+      sliceProxy.performSliceStitch(customerName, CID, sdxslice, RID, secret, p);
     } catch (TransportException e) {
       // TODO Auto-generated catch block
       e.printStackTrace();

@@ -161,6 +161,11 @@ public class SliceManager extends SliceCommon {
         ".bro", sshkey, bropattern);
     copyFile2Slice(carrier, resource_dir + "bro/evil.txt", "/root/evil.txt", sshkey,
       bropattern);
+    copyFile2Slice(carrier, resource_dir + "bro/reporter.py", "/root/reporter.py", sshkey,
+      bropattern);
+
+    runCmdSlice(carrier, "broctl deploy", bropattern, true, true);
+    runCmdSlice(carrier, "python reporter & disown", bropattern, true, true);
 
     runCmdSlice(carrier, "sed -i 's/bogus_addr/" + SDNControllerIP + "/' destroy_conn.bro",
        bropattern, true, true);
