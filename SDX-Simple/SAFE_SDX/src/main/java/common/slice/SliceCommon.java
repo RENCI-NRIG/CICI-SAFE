@@ -51,6 +51,7 @@ public abstract class SliceCommon {
   protected String pemLocation;
   protected String keyLocation;
   protected String sshkey;
+  protected String serverurl;
   protected ISliceTransportAPIv1 sliceProxy;
   protected SliceAccessContext<SSHAccessToken> sctx;
   protected String keyhash;
@@ -102,6 +103,7 @@ public abstract class SliceCommon {
     type = conf.getString("config.type");
     sshkey = conf.getString("config.sshkey");
     controllerUrl = conf.getString("config.exogenism");
+    serverurl = conf.getString("config.serverurl");
     pemLocation = conf.getString("config.exogenipem");
     keyLocation = conf.getString("config.exogenipem");
     if (conf.hasPath("config.slicename")) {
