@@ -108,11 +108,21 @@ public class TestMain {
     ClientSlice s2 = new ClientSlice(clientarg2);
     ClientSlice s3 =  new ClientSlice(clientarg3);
     ClientSlice s4 = new ClientSlice(clientarg4);
-    ts.run(arg1);
-    s1.run();
-    s2.run();
-    s3.run();
-    s4.run();
+
+    ArrayList<Thread> tlist = new ArrayList<Thread>();
+    tlist.add(new Thread(() -> ts.run(arg1)));
+    tlist.add(new Thread(() -> s1.run()));
+    tlist.add(new Thread(() -> s2.run()));
+    tlist.add(new Thread(() -> s3.run()));
+    tlist.add(new Thread(() -> s4.run()));
+
+    tlist.forEach(w -> {
+      try {
+        w.join();
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
+    });
   }
 
   public static void deleteSlice(){
