@@ -1,2 +1,0 @@
-curl http://152.3.136.26:7777/checkIPV4 -H "Content-Type: aplication/json" -d "{ \"otherValues\": [\"ipv4\\\"152.3.11.120\\\"\"] }"
-

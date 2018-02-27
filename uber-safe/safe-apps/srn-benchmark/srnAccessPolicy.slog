@@ -1,5 +1,0 @@
-(* Speaker: accessPrefix(?P, ?O, "Group", "Prefix") :- GlobalRootID: Membership("Group", ?P), GlobalRootID: srnPathTo("Prefix", ?O). *) 
-(*Policy made by an object owner:*)
-
-accessPrefix("Group", "Prefix").
-

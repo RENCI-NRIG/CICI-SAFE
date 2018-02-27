@@ -1,2 +1,0 @@
-* How to generate a key
-openssl genrsa -out na1.pem 2048
