@@ -1,6 +1,8 @@
 package test;
 import java.util.ArrayList;
 import client.exogeni.SdxExogeniClientManager;
+import client.stitchport.SdxStitchPortClient;
+import client.stitchport.SdxStitchPortClientManager;
 import sdx.core.SdxServer;
 import client.exogeni.ClientSlice;
 
@@ -14,15 +16,21 @@ public class TestMain {
   static String[] clientarg2 = {"-c", "client-config/c2-"+ site2+".conf"};
   static String[] clientarg3 = {"-c", "client-config/c3-"+site1+".conf"};
   static String[] clientarg4 = {"-c", "client-config/c4-"+site2+".conf"};
+  static String[] clientarg6 = {"-c", "client-config/c6-tamu.conf"};
+  static String[] clientarg5 = {"-c", "chameleon-config/carol.conf"};
   static boolean newSlice = true;
   static boolean stitch = true;
 
   public static void main(String[] args){
     multiSliceTest();
     //emulationTest();
+    System.exit(0);
   }
 
   public static void emulationTest(){
+    /*
+    This function emulates the sdx slice and customer nodes in the same slice.
+     */
     if(newSlice) {
       TestSlice ts = new TestSlice(arg1);
       ts.delete();
@@ -57,13 +65,38 @@ public class TestMain {
     test();
   }
 
+  public static void testDymanicNetwork(){
+    if(newSlice){
+      ClientSlice s6 = new ClientSlice(clientarg6);
+      s6.run();
+    }
+    SdxServer.run(arg1);
+    SdxExogeniClientManager client1 = new SdxExogeniClientManager(clientarg1);
+    SdxExogeniClientManager client2 = new SdxExogeniClientManager(clientarg2);
+    SdxExogeniClientManager client3 = new SdxExogeniClientManager(clientarg3);
+    SdxExogeniClientManager client4 = new SdxExogeniClientManager(clientarg4);
+    SdxExogeniClientManager client6 = new SdxExogeniClientManager(clientarg6);
+    client1.processCmd("route 192.168.10.1/24 192.168.130.2");
+    client2.processCmd("route 192.168.20.1/24 192.168.131.2");
+    client3.processCmd("route 192.168.30.1/24 192.168.132.2");
+    client4.processCmd("route 192.168.40.1/24 192.168.133.2");
+
+    // Client request for connection between prefixes
+    client3.processCmd("link 192.168.30.1/24 192.168.40.1/24");
+    client1.processCmd("link 192.168.10.1/24 192.168.20.1/24");
+
+    client6.processCmd("stitch CNode0 " + sdx);
+    client6.processCmd("route 192.168.60.1/24 192.168.138.2");
+    client6.processCmd("link 192.168.60.1/24 192.168.40.1/24 1000000");
+    //client6.processCmd("link 192.168.60.1/24 192.168.40.1/24");
+  }
+
   public static void test(){
-    // rest_router_mirror line 1057 for info about deleting flows. It delete the flows
-    // cookie is used to differenciate different flows. Use unique cookie ids accross all tables
-    // to manage the flows.
-
-    // Use "-n" option in arguments to opt out safe authorization
-
+    /*
+    In this function, we create ahab controller for sdx slice and client slices.
+    We execute command in client controller to request network stitching to sdx slice,
+    advertise the ip prefix, and request for network connection
+     */
     // Start Sdx Server
     SdxServer.run(arg1);
     SdxExogeniClientManager client1 = new SdxExogeniClientManager(clientarg1);
@@ -99,7 +132,35 @@ public class TestMain {
       "192.168.20.1/24", 400000000);
 
     // Stop Sdx server and exit
-    System.exit(0);
+  }
+
+  public static void testChameleon(){
+    SdxServer.run(arg1);
+    SdxExogeniClientManager client1 = new SdxExogeniClientManager(clientarg1);
+    SdxExogeniClientManager client2 = new SdxExogeniClientManager(clientarg2);
+    SdxExogeniClientManager client3 = new SdxExogeniClientManager(clientarg3);
+    SdxExogeniClientManager client4 = new SdxExogeniClientManager(clientarg4);
+    SdxStitchPortClientManager cc = new SdxStitchPortClientManager(clientarg5);
+    if(stitch) {
+      client1.processCmd("stitch CNode0 " + sdx + " c0");
+      client2.processCmd("stitch CNode0 " + sdx + " c1");
+      client3.processCmd("stitch CNode0 " + sdx + " c0");
+      client4.processCmd("stitch CNode0 " + sdx + " c1");
+      cc.processCmd("stitch http://geni-orca.renci.org/owl/ion" +
+        ".rdf#AL2S/Chameleon/Cisco/6509/GigabitEthernet/1/1 3296 " + sdx +
+        "c1 10.32.90.206 10.32.90.200/24 ");
+    }
+
+    // client slice advertise their prefix
+    client1.processCmd("route 192.168.10.1/24 192.168.130.2");
+    client2.processCmd("route 192.168.20.1/24 192.168.131.2");
+    client3.processCmd("route 192.168.30.1/24 192.168.132.2");
+    client4.processCmd("route 192.168.40.1/24 192.168.133.2");
+    cc.processCmd("route 10.32.90.1/24 10.32.90.206");
+
+    // Client request for connection between prefixes
+    client3.processCmd("link 192.168.30.1/24 192.168.40.1/24");
+    client1.processCmd("link 192.168.10.1/24 192.168.20.1/24");
   }
 
   public static void createTestSlice(){

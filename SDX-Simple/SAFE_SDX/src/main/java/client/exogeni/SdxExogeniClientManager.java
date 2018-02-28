@@ -46,7 +46,7 @@ public class SdxExogeniClientManager extends SliceCommon {
     cmd=parseCmd(args);
     String configfilepath=cmd.getOptionValue("config");
     readConfig(configfilepath);
-    sdxserver=conf.getString("config.sdxserver");
+    sdxserver=serverurl;
 
     sliceProxy = getSliceProxy(pemLocation,keyLocation, controllerUrl);
     //SSH context

@@ -74,6 +74,7 @@ public class SdxManager extends SliceManager {
   public String serverurl;
   private HashSet<Integer> usedip = new HashSet<Integer>();
   private final ReentrantLock iplock=new ReentrantLock();
+  private final ReentrantLock linklock=new ReentrantLock();
   private final ReentrantLock nodelock=new ReentrantLock();
   private HashMap<String,String>prefixgateway=new HashMap<String,String>();
   private ArrayList<String[]> advertisements=new ArrayList<String[]>();
@@ -202,19 +203,35 @@ public class SdxManager extends SliceManager {
     res[0] = null;
     res[1] = null;
     Slice s1 = getSlice();
+    String stitchname = null;
+    Network net = null;
     ComputeNode node = null;
-    boolean newrouter = false;
+    int ip_to_use = 0;
     if (sdxnode != null) {
       node = (ComputeNode) s1.getResourceByName(sdxnode);
     }
     if (sdxnode == null && computenodes.containsKey(site) && computenodes.get(site).size() > 0) {
       node = (ComputeNode) s1.getResourceByName(computenodes.get(site).get(0));
+      ip_to_use = getAvailableIP();
+      stitchname = "stitch_" + node.getName() + "_" + ip_to_use;
+      usedip.add(ip_to_use);
+      net = s1.addBroadcastLink(stitchname);
+      InterfaceNode2Net ifaceNode0 = (InterfaceNode2Net) net.stitch(node);
+      try {
+        s1.commit();
+      } catch (XMLRPCTransportException e1) {
+        // TODO Auto-generated catch block
+        e1.printStackTrace();
+
+      }
+      int N = 0;
+      waitTillActive(s1, 10, Arrays.asList(stitchname));
+      s1.refresh();
     } else if (node == null) {
       //if node not exists, add another node to the slice
       //add a node and configure it as a router.
       //later when a customer requests connection between site a and site b, we add another link to meet
       // the requirments
-      newrouter = true;
       logger.debug("No existing router at requested site, adding new router");
       int max = -1;
       String routername = null;
@@ -234,39 +251,28 @@ public class SdxManager extends SliceManager {
       } finally {
         nodelock.unlock();
       }
-      addOVSRouter(s1, site, routername);
+      node = addOVSRouter(s1, site, routername);
+      ip_to_use = getAvailableIP();
+      stitchname = "stitch_" + node.getName() + "_" + ip_to_use;
+      usedip.add(ip_to_use);
+      net = s1.addBroadcastLink(stitchname);
+      InterfaceNode2Net ifaceNode0 = (InterfaceNode2Net) net.stitch(node);
       try {
         s1.commit();
-        waitTillActive(s1);
-      } catch (Exception e) {
-        e.printStackTrace();
+      } catch (XMLRPCTransportException e1) {
+        // TODO Auto-generated catch block
+        e1.printStackTrace();
+
       }
-      s1 = getSlice();
+      int N = 0;
+      waitTillActive(s1, 10, Arrays.asList(new String[]{stitchname, routername}));
+      s1.refresh();
       node = (ComputeNode) s1.getResourceByName(routername);
       copyRouterScript(s1, node);
       configRouter(node);
       logger.debug("Configured the new router in RoutingManager");
     }
 
-    int ip_to_use = getAvailableIP();
-    String stitchname;
-    stitchname = "stitch_" + node.getName() + "_" + ip_to_use;
-    usedip.add(ip_to_use);
-    Network net = s1.addBroadcastLink(stitchname);
-    InterfaceNode2Net ifaceNode0 = (InterfaceNode2Net) net.stitch(node);
-    try {
-      s1.commit();
-    } catch (XMLRPCTransportException e1) {
-      // TODO Auto-generated catch block
-      e1.printStackTrace();
-
-    }
-    int N = 0;
-    waitTillActive(s1, 10, Arrays.asList(stitchname));
-    if (newrouter) {
-      configRouter(node);
-    }
-    s1.refresh();
     net = (BroadcastNetwork) s1.getResourceByName(stitchname);
     String net1_stitching_GUID = net.getStitchingGUID();
     logger.debug("net1_stitching_GUID: " + net1_stitching_GUID);
@@ -345,7 +351,26 @@ public class SdxManager extends SliceManager {
 
   private  String allocateLinkName() {
     //TODO
-    return null;
+    String linkname;
+    linklock.lock();
+    int max = -1;
+    try {
+      for (String key : links.keySet()) {
+        Link link = links.get(key);
+        if(link.linkname.startsWith("clink")) {
+          int number = Integer.valueOf(link.linkname.replace("clink", ""));
+          max = Math.max(max, number);
+        }
+      }
+      linkname = "clink" + (max + 1);
+      Link l1 = new Link();
+      l1.setName(linkname);
+      links.put(linkname, l1);
+      logger.debug("Name of new link: " + linkname);
+    } finally {
+      linklock.unlock();
+    }
+    return linkname;
   }
 
   public void removePath(String src_prefix, String target_prefix) {
@@ -364,6 +389,7 @@ public class SdxManager extends SliceManager {
     boolean res=true;
     routingmanager.printLinks();
     if(!routingmanager.findPath(n1,n2,bandwidth)) {
+      /*========
       //this is for emulation dynamic links
       for(Link link : links.values()){
         if(link.match(n1, n2) && link.capacity >= bandwidth) {
@@ -371,42 +397,19 @@ public class SdxManager extends SliceManager {
             SDNController, link.capacity);
         }
       }
-      /*
-      //find name for the new two nodes
-
+      ===========*/
       Slice s=getSlice();
       ComputeNode node1=(ComputeNode)s.getResourceByName(n1);
       ComputeNode node2=(ComputeNode)s.getResourceByName(n2);
-      String name1 = null, name2 = null;
-      String link1 = null;
-      //FIXME: if we can't find path bewteen the requested prefix, allcoate new links to meet the
-      // requirements
 
-      linklock.lock();
-      try {
-        link1 = allocateLinkName();
-        Link l1 = new Link();
-        l1.setName(link1);
-        links.put(link1, l1);
-      } finally {
-        linklock.unlock();
-      }
+      String link1 = allocateLinkName();
       System.out.println("Add link: " + link1);
       long linkbw=2*bandwidth;
-      if(node1.getDomain().equals(node2.getDomain())){
-        Network net1=s.addBroadcastLink(link1);
-        net1.stitch(node1);
-        net1.stitch(node2);
-
-        try {
-          s.commit();
-        } catch (XMLRPCTransportException e1) {
-          // TODO Auto-generated catch block
-          e1.printStackTrace();
-          System.out.println("Link addition failed.");
-          System.out.println("Link addition failed");
-        }
-      }else{
+      Network net1=s.addBroadcastLink(link1, linkbw);
+      net1.stitch(node1);
+      net1.stitch(node2);
+      commitAndWait(s);
+      /*else{
           System.out.println("Now add a link named \"" + link1 + "\" between " + n1 + " and " + n2
             + " with bandwidht " + linkbw);
           try {
@@ -418,30 +421,27 @@ public class SdxManager extends SliceManager {
           }
         }
       waitTillActive(s);
+        */
       s = getSlice();
       //add routers first
 
+      sleep(10);
       Link l1 = links.get(link1);
       l1.setName(link1);
       l1.addNode(node1.getName());
       l1.addNode(node2.getName());
       l1.setCapacity(linkbw);
       links.put(link1, l1);
-
       int ip_to_use = getAvailableIP();
+      l1.setIP(IPPrefix + ip_to_use);
       String param = "";
       Exec.sshExec("root", node1.getManagementIP(), "/bin/bash ~/ovsbridge.sh " + OVSController, sshkey);
-      routingmanager.replayCmds(routingmanager.getDPID(node1.getName()));
-      Exec.sshExec("root", node1.getManagementIP(), "ifconfig;ovs-vsctl list port", sshkey);
       Exec.sshExec("root", node2.getManagementIP(), "/bin/bash ~/ovsbridge.sh " + OVSController, sshkey);
-      routingmanager.replayCmds(routingmanager.getDPID(node2.getName()));
-      Exec.sshExec("root", node2.getManagementIP(), "ifconfig;ovs-vsctl list port", sshkey);
 
       //TODO: why nodeb dpid could be null
       res = routingmanager.newLink(l1.getIP(1), l1.nodea, l1.getIP(2), l1.nodeb, SDNController,linkbw);
       //set ip address
       //add link to links
-      */
     }
     //configure routing
     if(res) {
@@ -460,7 +460,7 @@ public class SdxManager extends SliceManager {
       }
     }
 
-    return "link added and route configured: " + res;
+    return "route configured: " + res;
   }
 
   public void clear() {
