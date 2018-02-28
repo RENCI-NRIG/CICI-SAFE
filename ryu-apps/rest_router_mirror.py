@@ -892,8 +892,8 @@ class VlanRouter(object):
         else:
             src_ip = address.default_gw
             route = self.mirroring_tbl.add(destination, gateway,source)
-            self._set_mirror_route_packetin(route)
-            self.logger.info("_set_mirror_data send_arp_requst after set routing packet in: src %s dst %s",src_ip,dst_ip,extra=self.sw_id)
+            #self._set_mirror_route_packetin(route)
+            #self.logger.info("_set_mirror_data send_arp_requst after set routing packet in: src %s dst %s",src_ip,dst_ip,extra=self.sw_id)
             self.send_arp_request(src_ip, dst_ip)
             return route.route_id
 
