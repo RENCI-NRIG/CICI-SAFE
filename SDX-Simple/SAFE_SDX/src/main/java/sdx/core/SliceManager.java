@@ -166,7 +166,9 @@ public class SliceManager extends SliceCommon {
 
     runCmdSlice(carrier, "sed -i 's/bogus_addr/" + SDNControllerIP + "/' destroy_conn.bro",
        bropattern, true, true);
-    runCmdSlice(carrier, "sed -i 's/bogus_addr/" + serverurl + "/' reporter.py",
+
+    String url = serverurl.replace("/", "\\/");
+    runCmdSlice(carrier, "sed -i 's/bogus_addr/" + url + "/g' reporter.py",
        bropattern, true, true);
 
     Pattern pattern = Pattern.compile(bropattern);
@@ -181,7 +183,7 @@ public class SliceManager extends SliceCommon {
       }
     }
 
-    runCmdSlice(carrier, "broctl deploy", bropattern, true, true);
+    runCmdSlice(carrier, "broctl deploy&", bropattern, true, true);
     runCmdSlice(carrier, "python reporter & disown", bropattern, true, true);
   }
 

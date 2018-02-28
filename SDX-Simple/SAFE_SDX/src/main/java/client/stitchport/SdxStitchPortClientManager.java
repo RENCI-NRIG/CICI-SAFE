@@ -19,12 +19,19 @@ import common.utils.HttpUtil;
  */
 public class SdxStitchPortClientManager extends SliceCommon {
   final Logger logger = Logger.getLogger(Exec.class);
+  CommandLine cmd;
 
-  public SdxStitchPortClientManager(){}
+  public SdxStitchPortClientManager(String[] args) {
+    CommandLine cmd=parseCmd(args);
+    String configfilepath=cmd.getOptionValue("config");
+    readConfig(configfilepath);
+    sdxserver=conf.getString("config.sdxserver");
+    System.out.println("client start");
+  }
   private String type;
   private String sdxserver;
 	
-	public void run(String [] args){
+	public void run(){
     //Example usage: ./target/appassembler/bin/SafeSdxClient -f alice.conf
 		System.out.println("ndllib TestDriver: START");
 		//pemLocation = args[0];
@@ -34,12 +41,6 @@ public class SdxStitchPortClientManager extends SliceCommon {
     //sshkey=args[6];
     //keyhash=args[7];
 		
-    CommandLine cmd=parseCmd(args);
-		String configfilepath=cmd.getOptionValue("config");
-    readConfig(configfilepath);
-    sdxserver=conf.getString("config.sdxserver");
-
-    System.out.println("client start");
     if(cmd.hasOption('e')){
       String command= cmd.getOptionValue('e');
       processCmd(command);
@@ -66,7 +67,7 @@ public class SdxStitchPortClientManager extends SliceCommon {
 		System.out.println("XXXXXXXXXX Done XXXXXXXXXXXXXX");
 	}
 
-	private void processCmd(String command){
+	public void processCmd(String command){
     try{
       logger.debug(command);
       String[] params=command.split(" ");
