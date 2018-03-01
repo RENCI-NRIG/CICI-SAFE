@@ -18,6 +18,9 @@ Enter SDX-Simple
    For demo with Both ExoGENI and Chameleon, [to be updated]
 
 3. Run: ./scripts/test.sh
+   Note: In the demo, the is a vSDX slice controller, and multiple client slice controllers. The client controllers interact with vSDX controller via HTTP Restful APIs. The test program mimics the work flow in real case, the ip addresses and slice names are specific to the test demo. If you change the IP prefix in the configuration files, you need to change them in the test code accordingly.
+
+        The work flow in real case, (1) we start vSDX controller independently, (2) start multiple client controllers,(3) clients enter command-line commands for request for network stitching, and get the IP address of the gateway in SDX slice (for example 192.168.130.1/24), and set the IP address in customer node an IP address in the same subnet, say 192.168.130.2/24 (4) advertise IP prefix to vSDX controller (5) request for connections between two IP prefixes.
 
 
 ---------------SAFE-SDX-----------------------------
