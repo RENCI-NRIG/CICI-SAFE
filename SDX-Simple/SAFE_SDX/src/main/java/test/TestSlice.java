@@ -512,7 +512,7 @@ public class TestSlice extends SliceManager {
     //String nodePostBootScript="apt-get update;apt-get -y  install quagga\n"
     //  +"sed -i -- 's/zebra=no/zebra=yes/g' /etc/quagga/daemons\n"
     //  +"sed -i -- 's/ospfd=no/ospfd=yes/g' /etc/quagga/daemons\n";
-    String nodePostBootScript = getOVSScript(SDNControllerIP);
+    String nodePostBootScript = getOVSScript();
     ArrayList<ComputeNode> nodelist = new ArrayList<ComputeNode>();
     ArrayList<Network> netlist = new ArrayList<Network>();
     ArrayList<Network> stitchlist = new ArrayList<Network>();

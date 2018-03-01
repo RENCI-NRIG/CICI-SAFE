@@ -193,12 +193,21 @@ public abstract class SliceCommon {
     return res;
   }
 
+  protected boolean isValidLink(String key){
+    Link link = links.get(key);
+    if(!key.contains("stitch") && !key.contains("blink") && link !=null && link.nodeb != null){
+      return true;
+    }else{
+      return false;
+    }
+  }
+
   protected void writeLinks(String file) {
     ArrayList<Link> res = new ArrayList<>();
     try (BufferedWriter br = new BufferedWriter(new FileWriter(file))) {
       Set<String> keyset=links.keySet();
       for (String key : keyset){
-        if (!key.contains("stitch") && !key.contains("blink")){
+        if (isValidLink(key)){
           Link link=links.get(key);
 
           br.write(link.linkname + " " + link.nodea + " " + link.nodeb + " " + String.valueOf

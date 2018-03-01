@@ -22,8 +22,9 @@ public class TestMain {
   static boolean stitch = true;
 
   public static void main(String[] args){
-    multiSliceTest();
+    //multiSliceTest();
     //emulationTest();
+    testDymanicNetwork();
     System.exit(0);
   }
 
@@ -86,7 +87,7 @@ public class TestMain {
     client1.processCmd("link 192.168.10.1/24 192.168.20.1/24");
 
     client6.processCmd("stitch CNode0 " + sdx);
-    client6.processCmd("route 192.168.60.1/24 192.168.138.2");
+    client6.processCmd("route 192.168.60.1/24 192.168.136.2");
     client6.processCmd("link 192.168.60.1/24 192.168.40.1/24 1000000");
     //client6.processCmd("link 192.168.60.1/24 192.168.40.1/24");
   }

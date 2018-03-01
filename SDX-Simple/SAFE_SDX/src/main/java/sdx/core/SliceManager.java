@@ -193,7 +193,7 @@ public class SliceManager extends SliceCommon {
     String nodeImageURL = "http://geni-orca.renci.org/owl/9dfe179d-3736-41bf-8084-f0cd4a520c2f#Ubuntu+14.04";//http://geni-images.renci.org/images/standard/ubuntu/ub1304-ovs-opendaylight-v1.0.0.xml
     String nodeImageHash = "9394ca154aa35eb55e604503ae7943ddaecc6ca5";
     String nodeNodeType = "XO Medium";
-    String nodePostBootScript = getOVSScript(SDNControllerIP);
+    String nodePostBootScript = getOVSScript();
     ComputeNode node0 = s.addComputeNode(name);
     node0.setImage(nodeImageURL, nodeImageHash, nodeImageShortName);
     node0.setNodeType(nodeNodeType);
@@ -227,6 +227,18 @@ public class SliceManager extends SliceCommon {
       s.commit();
       String timeStamp1 = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(new Date());
       waitTillActive(s,interval);
+      String timeStamp2 = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(new Date());
+      logger.debug("Time interval: " + timeStamp1 + " " + timeStamp2);
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+  }
+
+  protected void commitAndWait(Slice s, int interval, List<String> resources) {
+    try {
+      s.commit();
+      String timeStamp1 = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(new Date());
+      waitTillActive(s,interval, resources);
       String timeStamp2 = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(new Date());
       logger.debug("Time interval: " + timeStamp1 + " " + timeStamp2);
     } catch (Exception e) {
@@ -325,7 +337,7 @@ public class SliceManager extends SliceCommon {
     //String nodePostBootScript="apt-get update;apt-get -y  install quagga\n"
     //  +"sed -i -- 's/zebra=no/zebra=yes/g' /etc/quagga/daemons\n"
     //  +"sed -i -- 's/ospfd=no/ospfd=yes/g' /etc/quagga/daemons\n";
-    String nodePostBootScript = getOVSScript(SDNControllerIP);
+    String nodePostBootScript = getOVSScript();
     ArrayList<ComputeNode> nodelist = new ArrayList<ComputeNode>();
     ArrayList<Network> netlist = new ArrayList<Network>();
     ArrayList<Network> stitchlist = new ArrayList<Network>();
@@ -392,7 +404,7 @@ public class SliceManager extends SliceCommon {
     node0.setPostBootScript(getPlexusScript());
   }
 
-  protected String getOVSScript(String cip) {
+  protected String getOVSScript() {
     String script = "apt-get update\n" +
       "apt-get -y install openvswitch-switch\n apt-get -y install iperf\n /etc/init.d/neuca stop\n";
     return script;
