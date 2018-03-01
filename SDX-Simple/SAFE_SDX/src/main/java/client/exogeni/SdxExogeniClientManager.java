@@ -32,7 +32,7 @@ import common.utils.HttpUtil;
 public class SdxExogeniClientManager extends SliceCommon {
   final Logger logger = Logger.getLogger(Exec.class);
   private CommandLine cmd;
-
+  private String logPrefix = "";
   public SdxExogeniClientManager(String[] args){
     //Example usage: ./target/appassembler/bin/SafeSdxClient -f alice.conf
     System.out.println("ndllib TestDriver: START");
@@ -48,7 +48,9 @@ public class SdxExogeniClientManager extends SliceCommon {
     readConfig(configfilepath);
     sdxserver=serverurl;
 
+    logPrefix = "client [" + sliceName + "] ";
     sliceProxy = getSliceProxy(pemLocation,keyLocation, controllerUrl);
+
     //SSH context
     sctx = new SliceAccessContext<>();
     try {
@@ -62,7 +64,7 @@ public class SdxExogeniClientManager extends SliceCommon {
       e.printStackTrace();
     }
 
-    System.out.println("client start");
+    System.out.println(logPrefix + "client start");
   }
   private String type;
   private String sdxserver;
@@ -76,7 +78,7 @@ public class SdxExogeniClientManager extends SliceCommon {
     String input = new String();
     String cmdprefix=sliceName+"$>";
 		try{
-//	 			System.out.println(obj.sayHello());
+//	 			System.out.println(logPrefix + obj.sayHello());
       BufferedReader stdin = new BufferedReader(new InputStreamReader(System.in));
       while(true){
         System.out.print("Enter Commands:stitch client_resource_name  server_slice_name\n\t " +
@@ -92,10 +94,10 @@ public class SdxExogeniClientManager extends SliceCommon {
     }
     catch (Exception e)
     {
-      System.out.println("HttpClient exception: " + e.getMessage());
+      System.out.println(logPrefix + "HttpClient exception: " + e.getMessage());
       e.printStackTrace();
     }
-		System.out.println("XXXXXXXXXX Done XXXXXXXXXXXXXX");
+		System.out.println(logPrefix + "XXXXXXXXXX Done XXXXXXXXXXXXXX");
 	}
 
 	public void processCmd(String command){
@@ -133,8 +135,8 @@ public class SdxExogeniClientManager extends SliceCommon {
         }
       }
       if(site1==null || site2==null){
-        System.out.println("Cannot find both sites, here is what I found: "+site1+", "+site2+";\n");
-        System.out.println("Cannot find both sites, here is what I found: "+site1+", "+site2+";\n");
+        System.out.println(logPrefix + "Cannot find both sites, here is what I found: "+site1+", "+site2+";\n");
+        System.out.println(logPrefix + "Cannot find both sites, here is what I found: "+site1+", "+site2+";\n");
         return;
       }
       jsonparams.put("site1",site1);
@@ -149,7 +151,7 @@ public class SdxExogeniClientManager extends SliceCommon {
         ;
       }
       String res=HttpUtil.postJSON(sdxserver+"sdx/connectionrequest",jsonparams);
-      System.out.println("get connection result from server:\n"+ res);
+      System.out.println(logPrefix + "get connection result from server:\n"+ res);
       logger.debug(res);
     }catch (Exception e){
       e.printStackTrace();
@@ -164,11 +166,11 @@ public class SdxExogeniClientManager extends SliceCommon {
     String res=HttpUtil.postJSON(sdxserver+"sdx/notifyprefix",paramsobj);
     if(res.equals("")){
       logger.debug("Prefix not accepted (authorization failed)");
-      System.out.println("Prefix not accepted (authorization failed)");
+      System.out.println(logPrefix + "Prefix not accepted (authorization failed)");
     }
     else{
       logger.debug(res);
-      System.out.println(res);
+      System.out.println(logPrefix + res);
     }
   }
 
@@ -184,7 +186,7 @@ public class SdxExogeniClientManager extends SliceCommon {
         sliceProxy.permitSliceStitch(sliceName,node0_s2_stitching_GUID, secret);
       } catch (TransportException e) {
         // TODO Auto-generated catch block
-        System.out.println("Failed to permit stitch");
+        System.out.println(logPrefix + "Failed to permit stitch");
         e.printStackTrace();
         return;
       }
@@ -203,15 +205,15 @@ public class SdxExogeniClientManager extends SliceCommon {
       logger.debug("Sending stitch request to sdx server");
       String  r = HttpUtil.postJSON(sdxserver+"sdx/stitchrequest",jsonparams);
       JSONObject res=new JSONObject(r);
-      System.out.println("Got Stitch Information From Server:\n "+res.toString());
+      System.out.println(logPrefix + "Got Stitch Information From Server:\n "+res.toString());
       if(!res.getBoolean("result")){
         logger.debug("stitch request failed");
-        System.out.println("stitch request failed");
+        System.out.println(logPrefix + "stitch request failed");
       }
       else{
         String ip=res.getString("ip");
         logger.debug("set IP address of the stitch interface to "+ip);
-        System.out.println("set IP address of the stitch interface to "+ip);
+        System.out.println(logPrefix + "set IP address of the stitch interface to "+ip);
         sleep(15);
         String mip= node0_s2.getManagementIP();
         String result=Exec.sshExec("root",mip,"ifconfig eth2 "+ip,sshkey);
@@ -222,7 +224,7 @@ public class SdxExogeniClientManager extends SliceCommon {
         mip= node1.getManagementIP();
         Exec.sshExec("root",mip,"echo \"ip route 192.168.1.1/16 "+IPPrefix+"\" >>/etc/quagga/zebra.conf  ",sshkey);
         Exec.sshExec("root",mip,"/etc/init.d/quagga restart",sshkey);
-        System.out.println("stitch completed.");
+        System.out.println(logPrefix + "stitch completed.");
       }
     }
     catch (Exception e){
@@ -237,27 +239,27 @@ public class SdxExogeniClientManager extends SliceCommon {
   public void getNetworkInfo(Slice s){
     //getLinks
     for(Network n :s.getLinks()){
-      System.out.println(n.getLabel());
+      System.out.println(logPrefix + n.getLabel());
     }
     //getInterfaces
     for(Interface i: s.getInterfaces()){
       InterfaceNode2Net inode2net=(InterfaceNode2Net)i;
-      System.out.println("MacAddr: "+inode2net.getMacAddress());
+      System.out.println(logPrefix + "MacAddr: "+inode2net.getMacAddress());
 
-      System.out.println("GUID: "+i.getGUID());
+      System.out.println(logPrefix + "GUID: "+i.getGUID());
     }
     for(ComputeNode node: s.getComputeNodes()){
-      System.out.println(node.getName()+node.getManagementIP());
+      System.out.println(logPrefix + node.getName()+node.getManagementIP());
       for(Interface i: node.getInterfaces()){
         InterfaceNode2Net inode2net=(InterfaceNode2Net)i;
-        System.out.println("MacAddr: "+inode2net.getMacAddress());
-        System.out.println("GUID: "+i.getGUID());
+        System.out.println(logPrefix + "MacAddr: "+inode2net.getMacAddress());
+        System.out.println(logPrefix + "GUID: "+i.getGUID());
       }
     }
   }
 
 	public void undoStitch(String carrierName, String customerName, String netName, String nodeName){
-		System.out.println("ndllib TestDriver: START");
+		System.out.println(logPrefix + "ndllib TestDriver: START");
 
 		//Main Example Code
 
@@ -295,15 +297,15 @@ public class SdxExogeniClientManager extends SliceCommon {
 			e.printStackTrace();
 		}
     Long t2 = System.currentTimeMillis();
-    System.out.println("Finished UnStitching, time elapsed: "+String.valueOf(t2-t1)+"\n");
+    System.out.println(logPrefix + "Finished UnStitching, time elapsed: "+String.valueOf(t2-t1)+"\n");
 //    try{
 //      java.io.BufferedReader stdin = new java.io.BufferedReader(new java.io.InputStreamReader(System.in));
 //      String input = new String();
 //      input = stdin.readLine();
 //      Long t3=System.currentTimeMillis();
-//      System.out.println("Time after stitching: "+String.valueOf(t3-t2)+"\n");
+//      System.out.println(logPrefix + "Time after stitching: "+String.valueOf(t3-t2)+"\n");
 //		}catch (java.io.IOException e) {
-//				System.out.println(e);
+//				System.out.println(logPrefix + e);
 //		}
 
 	}

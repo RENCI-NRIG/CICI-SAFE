@@ -65,9 +65,13 @@ public class TestMain {
     SdxExogeniClientManager client4 = new SdxExogeniClientManager(clientarg4);
 
     if(stitch) {
+      System.out.println("c1 stitches to SDX");
       client1.processCmd("stitch CNode0 " + sdx + " c0");
+      System.out.println("c2 stitches to SDX");
       client2.processCmd("stitch CNode0 " + sdx + " c1");
+      System.out.println("c3 stitches to SDX");
       client3.processCmd("stitch CNode0 " + sdx + " c0");
+      System.out.println("c4 stitches to SDX");
       client4.processCmd("stitch CNode0 " + sdx + " c1");
     }
 
@@ -198,6 +202,7 @@ public class TestMain {
     } catch (Exception e) {
       e.printStackTrace();
     }
+    System.out.println("Finished create vSDX slice and client slices");
   }
 
   public static void emulationTest(){
