@@ -8,10 +8,10 @@ public class Link {
   final static Logger logger = Logger.getLogger(Exec.class);
 
   public String linkname = "";
-  public String nodea = "";
-  public String nodeb = "";
+  public String nodea = null;
+  public String nodeb = null;
   public String ipprefix = "";
-  public String mask="";
+  public String mask="24";
   public long capacity=0;
 
   public Link(){}
@@ -23,7 +23,7 @@ public class Link {
   }
 
   public void addNode(String node) {
-    if (nodea == "")
+    if (nodea == null)
       nodea = node;
     else
       nodeb = node;

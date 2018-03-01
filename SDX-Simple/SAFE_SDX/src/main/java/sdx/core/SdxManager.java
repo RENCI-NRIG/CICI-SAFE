@@ -173,7 +173,7 @@ public class SdxManager extends SliceManager {
     //System.out.print(pemLocation);
     refreshSliceProxy();
     serverSlice = getSlice();
-    runCmdSlice(serverSlice, "ovs-ofctl del-flows br0", "(^c\\d+)", false, true);
+    //runCmdSlice(serverSlice, "ovs-ofctl del-flows br0", "(^c\\d+)", false, true);
     SDNControllerIP = ((ComputeNode) serverSlice.getResourceByName("plexuscontroller")).getManagementIP();
     //SDNControllerIP="152.3.136.36";
     //logger.debug("plexuscontroler managementIP = " + SDNControllerIP);
@@ -186,7 +186,7 @@ public class SdxManager extends SliceManager {
   }
 
   public void delFlows() {
-    runCmdSlice(serverSlice, "ovs-ofctl del-flows br0", "(c\\d+)", false, true);
+    runCmdSlice(serverSlice, "ovs-ofctl del-flows br0", "(^c\\d+)", false, true);
   }
 
   public String[] stitchRequest(String sdxslice,
@@ -199,81 +199,56 @@ public class SdxManager extends SliceManager {
     System.out.println("new stitch request from " + customerName + " for " + sdxslice + " at " +
       "" + site);
     logger.debug("new stitch request for " + sdxslice + " at " + site);
+    serverSlice = getSlice();
     String[] res = new String[2];
     res[0] = null;
     res[1] = null;
-    Slice s1 = getSlice();
     String stitchname = null;
     Network net = null;
     ComputeNode node = null;
     int ip_to_use = 0;
     if (sdxnode != null) {
-      node = (ComputeNode) s1.getResourceByName(sdxnode);
-    }
-    if (sdxnode == null && computenodes.containsKey(site) && computenodes.get(site).size() > 0) {
-      node = (ComputeNode) s1.getResourceByName(computenodes.get(site).get(0));
+      node = (ComputeNode) serverSlice.getResourceByName(sdxnode);
       ip_to_use = getAvailableIP();
       stitchname = "stitch_" + node.getName() + "_" + ip_to_use;
       usedip.add(ip_to_use);
-      net = s1.addBroadcastLink(stitchname);
+      net = serverSlice.addBroadcastLink(stitchname);
       InterfaceNode2Net ifaceNode0 = (InterfaceNode2Net) net.stitch(node);
-      try {
-        s1.commit();
-      } catch (XMLRPCTransportException e1) {
-        // TODO Auto-generated catch block
-        e1.printStackTrace();
-
-      }
-      int N = 0;
-      waitTillActive(s1, 10, Arrays.asList(stitchname));
-      s1.refresh();
-    } else if (node == null) {
+      commitAndWait(serverSlice, 10, Arrays.asList(new String[]{stitchname}));
+      serverSlice.refresh();
+    }
+    else if (sdxnode == null && computenodes.containsKey(site) && computenodes.get(site).size() >
+      0) {
+      node = (ComputeNode) serverSlice.getResourceByName(computenodes.get(site).get(0));
+      ip_to_use = getAvailableIP();
+      stitchname = "stitch_" + node.getName() + "_" + ip_to_use;
+      usedip.add(ip_to_use);
+      net = serverSlice.addBroadcastLink(stitchname);
+      InterfaceNode2Net ifaceNode0 = (InterfaceNode2Net) net.stitch(node);
+      commitAndWait(serverSlice, 10, Arrays.asList(new String[]{stitchname}));
+    } else {
       //if node not exists, add another node to the slice
       //add a node and configure it as a router.
       //later when a customer requests connection between site a and site b, we add another link to meet
       // the requirments
       logger.debug("No existing router at requested site, adding new router");
       int max = -1;
-      String routername = null;
-      nodelock.lock();
-      try {
-        for (String key : computenodes.keySet()) {
-          for (String cname : computenodes.get(key)) {
-            int number = Integer.valueOf(cname.replace("c", ""));
-            max = Math.max(max, number);
-          }
-        }
-        ArrayList<String> l = new ArrayList<>();
-        routername = "c" + (max + 1);
-        l.add(routername);
-        logger.debug("Name of new router: " + routername);
-        computenodes.put(site, l);
-      } finally {
-        nodelock.unlock();
-      }
-      node = addOVSRouter(s1, site, routername);
+      String routerName = allcoateRouterName(site);
+      node = addOVSRouter(serverSlice, site, routerName);
       ip_to_use = getAvailableIP();
       stitchname = "stitch_" + node.getName() + "_" + ip_to_use;
       usedip.add(ip_to_use);
-      net = s1.addBroadcastLink(stitchname);
+      net = serverSlice.addBroadcastLink(stitchname);
       InterfaceNode2Net ifaceNode0 = (InterfaceNode2Net) net.stitch(node);
-      try {
-        s1.commit();
-      } catch (XMLRPCTransportException e1) {
-        // TODO Auto-generated catch block
-        e1.printStackTrace();
-
-      }
-      int N = 0;
-      waitTillActive(s1, 10, Arrays.asList(new String[]{stitchname, routername}));
-      s1.refresh();
-      node = (ComputeNode) s1.getResourceByName(routername);
-      copyRouterScript(s1, node);
+      commitAndWait(serverSlice, 10, Arrays.asList(new String[]{stitchname, routerName}));
+      serverSlice.refresh();
+      node = (ComputeNode) serverSlice.getResourceByName(routerName);
+      copyRouterScript(serverSlice, node);
       configRouter(node);
       logger.debug("Configured the new router in RoutingManager");
     }
 
-    net = (BroadcastNetwork) s1.getResourceByName(stitchname);
+    net = (BroadcastNetwork) serverSlice.getResourceByName(stitchname);
     String net1_stitching_GUID = net.getStitchingGUID();
     logger.debug("net1_stitching_GUID: " + net1_stitching_GUID);
     Link link = new Link();
@@ -373,6 +348,28 @@ public class SdxManager extends SliceManager {
     return linkname;
   }
 
+  private String allcoateRouterName(String site){
+    String routername = null;
+    int max = - 1;
+    nodelock.lock();
+    try {
+      for (String key : computenodes.keySet()) {
+        for (String cname : computenodes.get(key)) {
+          int number = Integer.valueOf(cname.replace("c", ""));
+          max = Math.max(max, number);
+        }
+      }
+      ArrayList<String> l = new ArrayList<>();
+      routername = "c" + (max + 1);
+      l.add(routername);
+      logger.debug("Name of new router: " + routername);
+      computenodes.put(site, l);
+    } finally {
+      nodelock.unlock();
+    }
+    return routername;
+  }
+
   public void removePath(String src_prefix, String target_prefix) {
     routingmanager.removePath(src_prefix, target_prefix, SDNController);
     routingmanager.removePath(target_prefix, src_prefix, SDNController);
@@ -431,6 +428,7 @@ public class SdxManager extends SliceManager {
       l1.addNode(node1.getName());
       l1.addNode(node2.getName());
       l1.setCapacity(linkbw);
+      l1.setMask(mask);
       links.put(link1, l1);
       int ip_to_use = getAvailableIP();
       l1.setIP(IPPrefix + ip_to_use);
@@ -565,15 +563,14 @@ public class SdxManager extends SliceManager {
     if (checkPlexus(plexusip)) {
       //String script="docker exec -d plexus /bin/bash -c  \"cd /root;pkill ryu-manager;
       // ryu-manager plexus/plexus/app.py ryu/ryu/app/rest_conf_switch.py ryu/ryu/app/rest_qos.py |tee log\"\n";
-      String script="pkill ryu-manager;";
-      Exec.sshExec("root", plexusip, script, sshkey);
       delFlows();
       /*
       script="docker exec -d plexus /bin/bash -c  \"cd /root;pkill ryu-manager; ryu-manager" +
         " ryu/ryu/app/rest_conf_switch.py ryu/ryu/app/rest_qos.py ryu/ryu/app/rest_router_mirror" +
         ".py ryu/ryu/app/ofctl_rest.py|tee log\"\n";
       */
-      script="docker exec -d plexus /bin/bash -c  \"cd /root;pkill ryu-manager; ryu-manager" +
+      String script="docker exec -d plexus /bin/bash -c  \"cd /root;pkill ryu-manager; " +
+        "ryu-manager" +
         " ryu/ryu/app/rest_conf_switch.py ryu/ryu/app/rest_qos.py ryu/ryu/app/rest_router_mirror" +
         ".py |tee log\"\n";
       //String script = "docker exec -d plexus /bin/bash -c  \"cd /root;pkill ryu-manager;
@@ -670,7 +667,9 @@ public class SdxManager extends SliceManager {
       //read links to get bandwidth infomation
       if (topofile != null) {
         for (Link link : readLinks(topofile)) {
-          links.put(link.linkname, link);
+          if(isValidLink(link.linkname)) {
+            links.put(link.linkname, link);
+          }
         }
       }
       //Stitchports
@@ -688,16 +687,33 @@ public class SdxManager extends SliceManager {
     }
   }
 
+  private boolean validDPID(String dpid){
+    if(dpid == null){
+      return false;
+    }
+    dpid = dpid.replace("\n", "").replace(" ","");
+    if(dpid.length()>=16){
+      return  true;
+    }
+    return  false;
+  }
+
   private void configRouter(ComputeNode node) {
     String mip = node.getManagementIP();
     logger.debug(node.getName() + " " + mip);
-    Exec.sshExec("root", mip, "/bin/bash ~/ovsbridge.sh " + OVSController, sshkey).split(" ");
+    String res = Exec.sshExec("root", mip, "/bin/bash ~/ovsbridge.sh " + OVSController, sshkey);
+    if(res.contains("ovs-vsctl: command not found")){
+      logger.debug("OVS not installed, trying again");
+      res = Exec.sshExec("root", mip, getOVSScript(), sshkey);
+      Exec.sshExec("root", mip, "/bin/bash ~/ovsbridge.sh " + OVSController, sshkey);
+    }
     String []result=Exec.sshExec("root", mip, "/bin/bash ~/dpid.sh", sshkey).split(" ");
     logger.debug("Trying to get DPID of the router "+node.getName());
-    while(result==null || result[1].equals("")||result[1]==null) {
-      Exec.sshExec("root", mip, "/bin/bash ~/ovsbridge.sh " + OVSController, sshkey).split(" ");
+    while(result==null || result.length <2 || !validDPID(result[1])) {
+      Exec.sshExec("root", mip, "/bin/bash ~/ovsbridge.sh " + OVSController, sshkey).split
+        (" ");
       sleep(1);
-      result = Exec.sshExec("root", mip, "/bin/bash ~/dpid.sh", sshkey).split(" ");
+      result=Exec.sshExec("root", mip, "/bin/bash ~/dpid.sh", sshkey).split(" ");
     }
     result[1] = result[1].replace("\n", "");
     logger.debug("Get router info " + result[0] + " " + result[1]);
@@ -879,9 +895,9 @@ public class SdxManager extends SliceManager {
       routingmanager.newLink(ip, nodeName,gw, SDNController);
     }
 
-    Set keyset = links.keySet();
+    Set<String> keyset = links.keySet();
     //logger.debug(keyset);
-    for (Object k : keyset) {
+    for (String k : keyset) {
       Link link = links.get((String) k);
       logger.debug("Setting up stitch "+link.linkname);
       if(((String) k).contains("stitch") || ((String) k).contains("blink")){
@@ -892,10 +908,10 @@ public class SdxManager extends SliceManager {
     }
 
     //To Emulate dynamic allocation of links, we don't use links whose name does't contain "link"
-    for (Object k : keyset) {
+    for (String k : keyset) {
       Link link = links.get((String) k);
       logger.debug("Setting up link "+link.linkname);
-      if (!((String) k).contains("stitch") && !((String )k).contains("blink")) {
+      if(isValidLink(k)){
         logger.debug("Setting up link " + link.linkname);
         int ip_to_use = getAvailableIP();
         link.setIP(IPPrefix + String.valueOf(ip_to_use));

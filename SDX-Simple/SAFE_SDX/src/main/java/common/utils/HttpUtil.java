@@ -58,6 +58,10 @@ public class HttpUtil {
       request.setEntity(params);
       HttpResponse response = httpClient.execute(request);
       //handle response here...
+      if(response.getStatusLine().getStatusCode() != 200){
+        logger.debug(serverurl);
+        logger.debug(paramsobj.toString());
+      }
       String output = EntityUtils.toString(response.getEntity());
       logger.debug(output);
       return output;
@@ -65,7 +69,6 @@ public class HttpUtil {
     } catch (Exception ex) {
       ex.printStackTrace();
       return resobj.toString();
-
     } finally {
       //Deprecated
     }
