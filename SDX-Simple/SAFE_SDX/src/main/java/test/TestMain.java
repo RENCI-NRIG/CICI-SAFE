@@ -42,7 +42,9 @@ public class TestMain {
     SdxExogeniClientManager client6 = new SdxExogeniClientManager(clientarg6);
 
     // Client request for connection between prefixes
-    client6.processCmd("stitch CNode0 " + sdx);
+    if(stitch) {
+      client6.processCmd("stitch CNode0 " + sdx);
+    }
     client6.processCmd("route 192.168.60.1/24 192.168.136.2");
     client6.processCmd("link 192.168.60.1/24 192.168.40.1/24 1000000");
     //client6.processCmd("link 192.168.60.1/24 192.168.40.1/24");
@@ -56,6 +58,7 @@ public class TestMain {
      */
     // Start Sdx Server
     SdxServer.run(arg1);
+    sdx = SdxServer.sdxManager.getSliceName();
     SdxExogeniClientManager client1 = new SdxExogeniClientManager(clientarg1);
     SdxExogeniClientManager client2 = new SdxExogeniClientManager(clientarg2);
     SdxExogeniClientManager client3 = new SdxExogeniClientManager(clientarg3);

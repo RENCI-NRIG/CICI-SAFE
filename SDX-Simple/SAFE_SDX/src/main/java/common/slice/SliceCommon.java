@@ -96,6 +96,10 @@ public abstract class SliceCommon {
     return cmd;
   }
 
+  public String getSliceName(){
+    return sliceName;
+  }
+
   protected void readConfig(String configfilepath) {
     File myConfigFile = new File(configfilepath);
     Config fileConfig = ConfigFactory.parseFile(myConfigFile);
