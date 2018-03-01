@@ -10,6 +10,7 @@ public class TestMain {
   static String state = "fl";
   static String site1 = "ufl";
   static String site2 = "unf";
+  //name of sdx slice
   static String sdx = "test-fl";
   static String[] arg1 = {"-c", "config/cnert-"+ state + ".conf"};
   static String[] clientarg1 = {"-c", "client-config/c1-" + site1 + ".conf"};
@@ -22,41 +23,12 @@ public class TestMain {
   static boolean stitch = true;
 
   public static void main(String[] args){
-    //multiSliceTest();
+    multiSliceTest();
     //emulationTest();
     testDymanicNetwork();
     System.exit(0);
   }
 
-  public static void emulationTest(){
-    /*
-    This function emulates the sdx slice and customer nodes in the same slice.
-     */
-    if(newSlice) {
-      TestSlice ts = new TestSlice(arg1);
-      ts.delete();
-      ts.testBroSliceTwoPairs();
-    }
-    SdxServer.run(arg1);
-    SdxExogeniClientManager client = new SdxExogeniClientManager(clientarg4);
-    client.processCmd("route 192.168.10.1/24 192.168.10.2");
-    client.processCmd("route 192.168.20.1/24 192.168.20.2");
-    client.processCmd("route 192.168.30.1/24 192.168.30.2");
-    client.processCmd("route 192.168.40.1/24 192.168.40.2");
-    client.processCmd("link 192.168.10.1/24 192.168.30.1/24");
-    client.processCmd("link 192.168.20.1/24 192.168.40.1/24");
-
-    SdxServer.sdxManager.setMirror(SdxServer.sdxManager.getDPID("c0"), "192.168.10.1/24",
-      "192.168.30.1/24");
-
-    if(newSlice) {
-      SdxServer.sdxManager.deployBro("c0");
-    }
-    SdxServer.sdxManager.setMirror(SdxServer.sdxManager.getDPID("c0"), "192.168.20.1/24",
-     "192.168.40.1/24");
-
-    System.exit(0);
-  }
 
   public static void multiSliceTest(){
     if(newSlice) {
@@ -67,25 +39,9 @@ public class TestMain {
   }
 
   public static void testDymanicNetwork(){
-    if(newSlice){
-      ClientSlice s6 = new ClientSlice(clientarg6);
-      s6.run();
-    }
-    SdxServer.run(arg1);
-    SdxExogeniClientManager client1 = new SdxExogeniClientManager(clientarg1);
-    SdxExogeniClientManager client2 = new SdxExogeniClientManager(clientarg2);
-    SdxExogeniClientManager client3 = new SdxExogeniClientManager(clientarg3);
-    SdxExogeniClientManager client4 = new SdxExogeniClientManager(clientarg4);
     SdxExogeniClientManager client6 = new SdxExogeniClientManager(clientarg6);
-    client1.processCmd("route 192.168.10.1/24 192.168.130.2");
-    client2.processCmd("route 192.168.20.1/24 192.168.131.2");
-    client3.processCmd("route 192.168.30.1/24 192.168.132.2");
-    client4.processCmd("route 192.168.40.1/24 192.168.133.2");
 
     // Client request for connection between prefixes
-    client3.processCmd("link 192.168.30.1/24 192.168.40.1/24");
-    client1.processCmd("link 192.168.10.1/24 192.168.20.1/24");
-
     client6.processCmd("stitch CNode0 " + sdx);
     client6.processCmd("route 192.168.60.1/24 192.168.136.2");
     client6.processCmd("link 192.168.60.1/24 192.168.40.1/24 1000000");
@@ -170,6 +126,7 @@ public class TestMain {
     ClientSlice s2 = new ClientSlice(clientarg2);
     ClientSlice s3 =  new ClientSlice(clientarg3);
     ClientSlice s4 = new ClientSlice(clientarg4);
+    ClientSlice s6 = new ClientSlice(clientarg6);
 
     ArrayList<Thread> tlist = new ArrayList<Thread>();
     tlist.add(new Thread(() -> ts.run(arg1)));
@@ -177,6 +134,7 @@ public class TestMain {
     tlist.add(new Thread(() -> s2.run()));
     tlist.add(new Thread(() -> s3.run()));
     tlist.add(new Thread(() -> s4.run()));
+    tlist.add(new Thread(() -> s6.run()));
 
     tlist.forEach(w -> {
       try {
@@ -193,11 +151,13 @@ public class TestMain {
     ClientSlice s2 = new ClientSlice(clientarg2);
     ClientSlice s3 =  new ClientSlice(clientarg3);
     ClientSlice s4 = new ClientSlice(clientarg4);
+    ClientSlice s6 = new ClientSlice(clientarg6);
     ts.delete();
     s1.delete();
     s2.delete();
     s3.delete();
     s4.delete();
+    s6.delete();
   }
 
   public static void createTestSliceParrallel(){
@@ -213,8 +173,8 @@ public class TestMain {
     tlist.add(thread1);
     SdxServer.sdxManager.sleep(10);
 
-    String[][] args = {clientarg1, clientarg2, clientarg3, clientarg4};
-    for(int i = 0 ; i< 4; i++) {
+    String[][] args = {clientarg1, clientarg2, clientarg3, clientarg4, clientarg6};
+    for(int i = 0 ; i< 5; i++) {
       final String[] arg = args[i];
       Thread thread2 = new Thread() {
         @Override
@@ -235,5 +195,35 @@ public class TestMain {
     } catch (Exception e) {
       e.printStackTrace();
     }
+  }
+
+  public static void emulationTest(){
+    /*
+    This function emulates the sdx slice and customer nodes in the same slice.
+     */
+    if(newSlice) {
+      TestSlice ts = new TestSlice(arg1);
+      ts.delete();
+      ts.testBroSliceTwoPairs();
+    }
+    SdxServer.run(arg1);
+    SdxExogeniClientManager client = new SdxExogeniClientManager(clientarg4);
+    client.processCmd("route 192.168.10.1/24 192.168.10.2");
+    client.processCmd("route 192.168.20.1/24 192.168.20.2");
+    client.processCmd("route 192.168.30.1/24 192.168.30.2");
+    client.processCmd("route 192.168.40.1/24 192.168.40.2");
+    client.processCmd("link 192.168.10.1/24 192.168.30.1/24");
+    client.processCmd("link 192.168.20.1/24 192.168.40.1/24");
+
+    SdxServer.sdxManager.setMirror(SdxServer.sdxManager.getDPID("c0"), "192.168.10.1/24",
+      "192.168.30.1/24");
+
+    if(newSlice) {
+      SdxServer.sdxManager.deployBro("c0");
+    }
+    SdxServer.sdxManager.setMirror(SdxServer.sdxManager.getDPID("c0"), "192.168.20.1/24",
+      "192.168.40.1/24");
+
+    System.exit(0);
   }
 }
