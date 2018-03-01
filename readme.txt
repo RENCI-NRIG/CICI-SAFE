@@ -12,8 +12,13 @@ Enter SDX-Simple
         serverurl       The ip address and port number of vSDX slice controller
         scritpsdir      /Path/to/SDX/SDX-Simple/SAFE_SDX/src/main/resources/
         topodir         /Path/to/SDX/SDX-Simple/topo/
+        Generally, you need to change the above configuration fields, and leave the rest alone.
+
         controllersite  The site of plexus sdn controller
         sitelist        The list of sites that customer can request for stitching [Some of the sites may fail depending on the status]
+        bw              The bandwidth of links between vSDX routers
+        brobw           The bandwidth of links between routers and Bro node
+        bro             whether deploy bro when creating the vsdx or not
 
    For demo with Both ExoGENI and Chameleon, [to be updated]
 
