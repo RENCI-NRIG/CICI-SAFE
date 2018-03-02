@@ -55,7 +55,11 @@
 						</program>
 						<program>
 							<mainClass>sdx.core.SliceServer</mainClass>
-							<name>SafeSdxExample</name>
+							<name>SafeSdxSliceServer</name>
+						</program>
+						<program>
+							<mainClass>client.exogeni.CreateClientSlice</mainClass>
+							<name>SafeSdxClientSliceServer</name>
 						</program>
 						<program>
 							<mainClass>test.TestMain</mainClass>
