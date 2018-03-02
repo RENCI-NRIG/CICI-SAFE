@@ -195,7 +195,7 @@ public abstract class SliceCommon {
       }
       br.close();
     } catch (Exception e){
-      e.printStackTrace();
+      ;
     }
     return res;
   }
