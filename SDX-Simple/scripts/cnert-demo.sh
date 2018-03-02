@@ -13,6 +13,9 @@ echo "creating slices"
 ./scripts/createclientslice.sh -c client-config/c2-unf.conf
 ./scripts/createclientslice.sh -c client-config/c4-unf.conf
 
+echo "start sdx server"
+./scripts/sdxserver.sh -c config/test-fl.conf
+
 echo "stitch clients"
 ./scripts/sdx_exogeni_client.sh -c client-config/c1-ufl.conf -e "stitch CNode0 sdx c0"
 ./scripts/sdx_exogeni_client.sh -c client-config/c2-unf.conf -e "stitch CNode0 sdx c1"
