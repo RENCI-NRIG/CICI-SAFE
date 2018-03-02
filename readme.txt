@@ -1,7 +1,7 @@
 ---------------Experiment Demo---------------------------
 To run the exerimental demo.
-Enter SDX-Simple
 0. Install ahab 1.7( https://github.com/RENCI-NRIG/ahab.git) manually. "cd ahab; mvn install"
+Enter SDX-Simple
 1. build: ./scripts/build.sh
 2. Modify the configuration files in SDX-Simple/config, SDX-Simple/client-config, SDX-Simple/stitchport-config
    For demo on ExoGENI only: you need to modify "cnert-fl.conf" in SDX-Simple/config, "c1-ufl.conf", "c2-unf.conf", "c3-ufl.conf", "c4-unf.conf" in SDX-Simple/client-config
@@ -14,6 +14,8 @@ Enter SDX-Simple
         topodir         /Path/to/SDX/SDX-Simple/topo/
         Generally, you need to change the above configuration fields, and leave the rest alone.
 
+        clientsites     the expected sites of clients where we need to launch some routers when we create the slice
+        routernum       The number of routers to be launched when creating the slice
         controllersite  The site of plexus sdn controller
         sitelist        The list of sites that customer can request for stitching [Some of the sites may fail depending on the status]
         bw              The bandwidth of links between vSDX routers
