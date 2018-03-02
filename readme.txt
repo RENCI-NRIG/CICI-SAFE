@@ -25,13 +25,17 @@ Enter SDX-Simple
    For demo with Both ExoGENI and Chameleon, [to be updated]
 
 3. There is two version of Demo. One is java code in TestMain. In TestMain we run server controllers and multiple client controllers in the same program, and client controllers interact with server controllers via HTTP restful APIs.
+   cd SDX-Simple
    Run: ./scripts/test.sh
    Note: In the demo, the is a vSDX slice controller, and multiple client slice controllers. The client controllers interact with vSDX controller via HTTP Restful APIs. The test program mimics the work flow in real case, the ip addresses and slice names are specific to the test demo. If you change the IP prefix in the configuration files, you need to change them in the test code accordingly.
 
    The work flow in real case, (1) we start vSDX controller independently, (2) start multiple client controllers,(3) clients enter command-line commands for request for network stitching, and get the IP address of the gateway in SDX slice (for example 192.168.130.1/24), and set the IP address in customer node an IP address in the same subnet, say 192.168.130.2/24 (4) advertise IP prefix to vSDX controller (5) request for connections between two IP prefixes.
    
    Another version of the demo is implemented with bash scripts, it runs the controllers seperately [To be tested, the command for vsdx server might never return, as there is http server listening all the time. If so, you might split the scripts into two files and run clients code after the server code completes].
-   Run: ./scripts/cnert-demo.sh
+   cd SDX-Simple
+   ./scripts/cnert-slices.sh
+   ./scripts/cnert-server.sh
+   ./scripts/cnert-client.sh [wait until vsdx server starts]
 
 
 ---------------SAFE-SDX-----------------------------
