@@ -1,9 +1,10 @@
 #!/bin/bash
+SDX=test-fl-yao
 echo "stitch clients"
-./scripts/sdx_exogeni_client.sh -c client-config/c1-ufl.conf -e "stitch CNode0 sdx c0"
-./scripts/sdx_exogeni_client.sh -c client-config/c2-unf.conf -e "stitch CNode0 sdx c1"
-./scripts/sdx_exogeni_client.sh -c client-config/c3-ufl.conf -e "stitch CNode0 sdx c0"
-./scripts/sdx_exogeni_client.sh -c client-config/c4-unf.conf -e "stitch CNode0 sdx c1"
+./scripts/sdx_exogeni_client.sh -c client-config/c1-ufl.conf -e "stitch CNode0 ${SDX} c0"
+./scripts/sdx_exogeni_client.sh -c client-config/c2-unf.conf -e "stitch CNode0 ${SDX} c1"
+./scripts/sdx_exogeni_client.sh -c client-config/c3-ufl.conf -e "stitch CNode0 ${SDX} c0"
+./scripts/sdx_exogeni_client.sh -c client-config/c4-unf.conf -e "stitch CNode0 ${SDX} c1"
 
 echo "advertise ip prefixes, users can parse the gateway ip address from the output of the previous commands"
 
