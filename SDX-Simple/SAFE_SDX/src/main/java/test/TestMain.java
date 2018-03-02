@@ -7,18 +7,14 @@ import sdx.core.SdxServer;
 import client.exogeni.ClientSlice;
 
 public class TestMain {
-  static String state = "fl";
-  static String site1 = "ufl";
-  static String site2 = "unf";
-  //name of sdx slice
-  static String sdx = "test-fl";
-  static String[] arg1 = {"-c", "config/cnert-"+ state + ".conf"};
-  static String[] clientarg1 = {"-c", "client-config/c1-" + site1 + ".conf"};
-  static String[] clientarg2 = {"-c", "client-config/c2-"+ site2+".conf"};
-  static String[] clientarg3 = {"-c", "client-config/c3-"+site1+".conf"};
-  static String[] clientarg4 = {"-c", "client-config/c4-"+site2+".conf"};
+  static String[] arg1 = {"-c", "config/test.conf"};
+  static String[] clientarg1 = {"-c", "client-config/c1.conf"};
+  static String[] clientarg2 = {"-c", "client-config/c2.conf"};
+  static String[] clientarg3 = {"-c", "client-config/c3.conf"};
+  static String[] clientarg4 = {"-c", "client-config/c4.conf"};
   static String[] clientarg6 = {"-c", "client-config/c6-tamu.conf"};
   static String[] clientarg5 = {"-c", "chameleon-config/carol.conf"};
+  static String sdx = "test";
   static boolean newSlice = true;
   static boolean stitch = true;
 
