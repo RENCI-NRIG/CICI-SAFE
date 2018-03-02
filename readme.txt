@@ -33,7 +33,6 @@ Enter SDX-Simple
 ---------------SAFE-SDX-----------------------------
 To run the SDX demo, first we creat a SDX slice and two customer slices on exogeni.
 
-
   [1] Create a SDX slice
   a) $cd SDX-Simple
   b) Edit configuration file for sdx slice "config/sdx.conf"
@@ -43,33 +42,24 @@ To run the SDX demo, first we creat a SDX slice and two customer slices on exoge
      $./scritps/createslice.sh -c config/sdx.conf
 
   [2] Create two customer slices
-  a) $cd SDX-Client-ExoGENI
-  b) Edit configuration files for alice and bob, "config/alice.conf" and "config/bob.conf" 
-  c) build
-     $./scripts/build.sh
-  d) create alice slice and bob slice
-     $./scripts/createslice.sh -c config/alice.conf
-     $./scripts/createslice.sh -c config/bob.conf
+   a) $cd SDX-Client-ExoGENI
+   b) Edit configuration files for alice and bob, "config/alice.conf" and "config/bob.conf" 
+   c) build
+      $./scripts/build.sh
+   d) create alice slice and bob slice
+      $./scripts/createslice.sh -c config/alice.conf
+      $./scripts/createslice.sh -c config/bob.conf
 
-     Then we can run slice controllers for sdx, alice and bob. 
- [3] Run sdx server controller, configure the address and port number that sdx server will listen on ("config.serverurl").
-     $./scripts/sdxserver.sh -c config/sdx.conf
+      Then we can run slice controllers for sdx, alice and bob. 
+  [3] Run sdx server controller, configure the address and port number that sdx server will listen on ("config.serverurl").
+      $./scripts/sdxserver.sh -c config/sdx.conf
 
- [4] Configure the address of SDX server controller ("config.sdxserver") in configuration files and run controller for alice and bob, 
+  [4] Configure the address of SDX server controller ("config.sdxserver") in configuration files and run controller for alice and bob, 
      $./scripts/sdxclient.sh -c config/alice.conf
      $./scripts/sdxclient.sh -c config/bob.conf
 
- [5]. post SAFE identity sets, make SAFE statements to state the stitching and traffic policies, allocation of IP prefixes and stitching requests.
-    $ cd safe-scripts 
-    
-    Edit the SAFESERVER ip address to your safe server IP address in idset.sh, post.sh and updatess.sh, and run following scripts to make posts to safesets. Messages with a token in each message are expected.
-    $ ./trustedparty.sh
-    $ ./sdx.sh
-    $ ./alice.sh
-    $ ./bob.sh
-
   [6]. alice stitch CNode0 to sdx/c0, in alice's controller, run:
-    $>stitch CNode0 [SDX_SLICE_NAME, e.g., sdx]
+    $>stitch CNode0 [SDX_SLICE_NAME, e.g., sdx] [optional, the name of router in vsdx slice if the client knows exactly which router it wants to stitch to, e.g., c0]
     bob stitch CNode0 to sdx/c3, in bob's controller run:
     $>stitch CNode [SDX_SLICE_NAME, e.g., sdx]
     
