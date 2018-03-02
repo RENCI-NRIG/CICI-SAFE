@@ -1,7 +1,7 @@
 package sdx.core;
 
 public class SliceServer {
-  public void main(String[] args) {
+  public static void main(String[] args) {
     SliceManager sm = new SliceManager();
     sm.run(args);
   }

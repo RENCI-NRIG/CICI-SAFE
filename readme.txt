@@ -42,21 +42,21 @@ To run the SDX demo, first we creat a SDX slice and two customer slices on exoge
      $./scritps/createslice.sh -c config/sdx.conf
 
   [2] Create two customer slices
-   a) $cd SDX-Client-ExoGENI
+   a) $cd SDX-Simple
    b) Edit configuration files for alice and bob, "config/alice.conf" and "config/bob.conf" 
    c) build
       $./scripts/build.sh
    d) create alice slice and bob slice
-      $./scripts/createslice.sh -c config/alice.conf
-      $./scripts/createslice.sh -c config/bob.conf
+      $./scripts/createclientslice.sh -c client-config/alice.conf
+      $./scripts/createclientslice.sh -c client-config/bob.conf
 
       Then we can run slice controllers for sdx, alice and bob. 
   [3] Run sdx server controller, configure the address and port number that sdx server will listen on ("config.serverurl").
       $./scripts/sdxserver.sh -c config/sdx.conf
 
   [4] Configure the address of SDX server controller ("config.sdxserver") in configuration files and run controller for alice and bob, 
-     $./scripts/sdxclient.sh -c config/alice.conf
-     $./scripts/sdxclient.sh -c config/bob.conf
+     $./scripts/sdxclient.sh -c client-config/alice.conf
+     $./scripts/sdxclient.sh -c client-config/bob.conf
 
   [6]. alice stitch CNode0 to sdx/c0, in alice's controller, run:
     $>stitch CNode0 [SDX_SLICE_NAME, e.g., sdx] [optional, the name of router in vsdx slice if the client knows exactly which router it wants to stitch to, e.g., c0]
@@ -64,8 +64,8 @@ To run the SDX demo, first we creat a SDX slice and two customer slices on exoge
     $>stitch CNode [SDX_SLICE_NAME, e.g., sdx]
     
     OR the following commands are equivalent:
-    ./scripts/sdxclient.sh -c config/alice.conf -e "stitch CNode0 [SDX_SLICE_NAME, e.g., sdx]"
-    ./scripts/sdxclient.sh -c config/bob.conf -e "stitch CNode0 [SDX_SLICE_NAME, e.g., sdx]"
+    ./scripts/sdxclient.sh -c client-config/alice.conf -e "stitch CNode0 [SDX_SLICE_NAME, e.g., sdx]"
+    ./scripts/sdxclient.sh -c client-config/bob.conf -e "stitch CNode0 [SDX_SLICE_NAME, e.g., sdx]"
 
   [7]. advertise prefix
     alice tells sdx controller its address space
@@ -74,11 +74,14 @@ To run the SDX demo, first we creat a SDX slice and two customer slices on exoge
     $>route 192.168.20.1/24 192.168.34.2
     
     OR the following commands are equivalent:
-    ./scripts/sdxclient.sh -c config/alice.conf -e "route 192.168.10.1/24 192.168.33.2"
-    ./scripts/sdxclient.sh -c config/bob.conf -e "route 192.168.20.1/24 192.168.34.2"
+    ./scripts/sdxclient.sh -c client-config/alice.conf -e "route 192.168.10.1/24 192.168.33.2"
+    ./scripts/sdxclient.sh -c client-config/bob.conf -e "route 192.168.20.1/24 192.168.34.2"
 
   [8] customer connection request
     $>link [IP Prefix 1, e.g 192.168.10.1/24] [IP Prefix 2, e.g. 192.168.20.1/24]
+
+    OR the following commands are equivalent:
+    ./scripts/sdxclient.sh -c client-config/alice.conf -e "link 192.168.10.1/24 192.168.20.1/24"
 
   9. [OPTIONAL]
     For sdx demo, I added scripts to automatically configure the routing table with quagga in client slice. These scripts depends on the IP addresses assigned to client slice, the topology of client slice, which node in client slice is stitched to sdx slice, and the gateway in sdx slice.
@@ -95,7 +98,7 @@ To run the SDX demo, first we creat a SDX slice and two customer slices on exoge
 
   10. Delete a slice
     We can delete a slice with command: ./scripts/createslice.sh -c configFile -d
-    For exmaple: ./scripts/createslice.sh -c config/alice.conf -d
+    For exmaple: ./scripts/createslice.sh -c client-config/alice.conf -d
 
 
     ============Stitching External Sites (Chameleon, Duke, ESNet...) to Exogeni=============
