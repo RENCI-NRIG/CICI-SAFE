@@ -122,26 +122,6 @@ public class SdxExogeniClientManager extends SliceCommon {
     try{
       JSONObject jsonparams=new JSONObject();
       String site1=null,site2=null;
-      /*
-      for(String site:sitelist){
-        if(site.contains(params[1])){
-          site1=site;
-        }
-        if(site.contains(params[2])){
-          site2=site;
-        }
-        if(site1!=null && site2!=null){
-          break;
-        }
-      }
-      if(site1==null || site2==null){
-        System.out.println(logPrefix + "Cannot find both sites, here is what I found: "+site1+", "+site2+";\n");
-        System.out.println(logPrefix + "Cannot find both sites, here is what I found: "+site1+", "+site2+";\n");
-        return;
-      }
-      jsonparams.put("site1",site1);
-      jsonparams.put("site2",site2);
-      */
       jsonparams.put("self_prefix",params[1]);
       jsonparams.put("target_prefix",params[2]);
       jsonparams.put("ckeyhash",keyhash);

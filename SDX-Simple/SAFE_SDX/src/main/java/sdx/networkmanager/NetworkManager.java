@@ -244,13 +244,12 @@ public class NetworkManager {
 
   public boolean newLink(String ipa, String ra, String gw, String controller) {
     logger.debug("RoutingManager: new stitchpoint " + ra + " " + ipa);
-    System.out.println("new stitch " + ra + " gateway:" + ipa);
     addLink(ipa, ra, gw);
     String dpid = getRouter(ra).getDPID();
     String cmd[] = addrCMD(ipa, dpid, controller);
     boolean result = true;
     String res = HttpUtil.postJSON(cmd[0], new JSONObject(cmd[1]));
-    System.out.println(res);
+    logger.debug(res);
     cmd[cmd.length-1] = res;
     if (res.toString().contains("success")) {
       addEntry_HashList(sdncmds, dpid, cmd);
@@ -262,13 +261,12 @@ public class NetworkManager {
 
   public boolean newLink(String ipa, String ra, String ipb, String rb, String controller, long capacity) {
     logger.debug("RoutingManager: new link " + ra + " " + ipa + " " + rb + " " + ipb);
-    System.out.println("new link  ra " + ra + " ipa " + ipa + " rb " + rb + " ipb " + ipb + " cap:" + capacity);
     addLink(ipa, ra, ipb, rb, capacity);
     String dpid = getDPID(ra);
     String[] cmd = addrCMD(ipa, dpid, controller);
     boolean result = true;
     String res = HttpUtil.postJSON(cmd[0], new JSONObject(cmd[1]));
-    System.out.println(res);
+    logger.debug(res);
     cmd[cmd.length-1] = res;
     if (res.toString().contains("success")) {
       addEntry_HashList(sdncmds, dpid, cmd);

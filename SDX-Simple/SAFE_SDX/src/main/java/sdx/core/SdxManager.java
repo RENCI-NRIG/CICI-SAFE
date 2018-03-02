@@ -168,13 +168,12 @@ public class SdxManager extends SliceManager {
     readConfig(configfilepath);
     IPPrefix = conf.getString("config.ipprefix");
     serverurl = conf.getString("config.serverurl");
-
     //type=sdxconfig.type;
     computeIP(IPPrefix);
     //System.out.print(pemLocation);
     refreshSliceProxy();
     serverSlice = getSlice();
-    logPrefix += "vSDX Server [" + sliceName + "] ";
+    logPrefix += "vSDX Server [" + sliceName + "]: ";
     //runCmdSlice(serverSlice, "ovs-ofctl del-flows br0", "(^c\\d+)", false, true);
     SDNControllerIP = ((ComputeNode) serverSlice.getResourceByName("plexuscontroller")).getManagementIP();
     //SDNControllerIP="152.3.136.36";

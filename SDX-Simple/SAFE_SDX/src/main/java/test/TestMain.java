@@ -25,7 +25,7 @@ public class TestMain {
   public static void main(String[] args){
     multiSliceTest();
     //emulationTest();
-    testDymanicNetwork();
+    //testDymanicNetwork();
     System.exit(0);
   }
 
