@@ -33,8 +33,9 @@ public class Exec {
     return res;
   }
 
-  public static String sshExec(String user, String host, String command, String privkey) {
+  public static String[] sshExec(String user, String host, String command, String privkey) {
     String result = "";
+    String errResult = "";
     try {
       JSch jsch = new JSch();
       jsch.addIdentity(privkey);
@@ -48,6 +49,7 @@ public class Exec {
       channel.setInputStream(null);
       ((ChannelExec) channel).setErrStream(System.err);
       InputStream in = channel.getInputStream();
+      InputStream err = ((ChannelExec) channel).getErrStream();
       channel.connect();
       byte[] tmp = new byte[1024];
       while (true) {
@@ -55,6 +57,12 @@ public class Exec {
           int i = in.read(tmp, 0, 1024);
           if (i < 0) break;
           result += new String(tmp, 0, i) + "\n";
+          logger.debug(new String(tmp, 0, i));
+        }
+        while (err.available() > 0) {
+          int i = err.read(tmp, 0, 1024);
+          if (i < 0) break;
+          errResult += new String(tmp, 0, i) + "\n";
           logger.debug(new String(tmp, 0, i));
         }
         if (channel.isClosed()) {
@@ -77,7 +85,7 @@ public class Exec {
       System.out.println(host + command);
       logger.debug(e);
     }
-    return result;
+    return new String[]{result, errResult};
   }
 
   public static class MyUserInfo implements UserInfo, UIKeyboardInteractive {

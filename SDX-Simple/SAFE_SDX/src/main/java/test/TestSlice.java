@@ -114,6 +114,8 @@ public class TestSlice extends SliceManager {
         sshkey, "(node\\d+)");
       copyFile2Slice(carrier, resource_dir + "scripts/getonefile.sh", "~/getonefile.sh",
         sshkey, "(node\\d+)");
+      copyFile2Slice(carrier, resource_dir + "scripts/getnfiles.sh", "~/getnfiles.sh",
+        sshkey, "(node\\d+)");
       copyFile2Slice(carrier, resource_dir + "scripts/getfiles.sh", "~/getfiles.sh",
         sshkey, "(node\\d+)");
       //}
@@ -300,7 +302,8 @@ public class TestSlice extends SliceManager {
     String nodeImageURL = "http://geni-orca.renci.org/owl/9dfe179d-3736-41bf-8084-f0cd4a520c2f#Ubuntu+14.04";//http://geni-images.renci.org/images/standard/ubuntu/ub1304-ovs-opendaylight-v1.0.0.xml
     String nodeImageHash = "9394ca154aa35eb55e604503ae7943ddaecc6ca5";
     String nodeNodeType = "XO Extra large";
-    Slice s = createCarrierSlice(sliceName, num, bw*2);
+    Slice s = createCarrierSlice(sliceName, num, bw);
+    long cnodebw = 1000000000;
     //Now add two customer node to c0 and c3
     ComputeNode c0 = (ComputeNode) s.getResourceByName("c0");
     ComputeNode c3 = (ComputeNode) s.getResourceByName("c" + (num - 1));
@@ -310,7 +313,7 @@ public class TestSlice extends SliceManager {
     cnode0.setDomain(clientSites.get(0));
     String scripts = "apt-get install -y vsftpd iperf\n";
     cnode0.setPostBootScript(getCustomerScript() + scripts);
-    Network net0 = s.addBroadcastLink("stitch_c0_10",bw);
+    Network net0 = s.addBroadcastLink("stitch_c0_10",cnodebw);
     InterfaceNode2Net ifaceNode0 = (InterfaceNode2Net) net0.stitch(cnode0);
     ifaceNode0.setIpAddress("192.168.10.2");
     ifaceNode0.setNetmask("255.255.255.0");
@@ -321,7 +324,7 @@ public class TestSlice extends SliceManager {
     cnode1.setNodeType(nodeNodeType);
     cnode1.setDomain(clientSites.get(0));
     cnode1.setPostBootScript(getCustomerScript() + scripts);
-    Network net1 = s.addBroadcastLink("stitch_c0_20",bw);
+    Network net1 = s.addBroadcastLink("stitch_c0_20",cnodebw);
     InterfaceNode2Net ifaceNode1 = (InterfaceNode2Net) net1.stitch(cnode1);
     ifaceNode1.setIpAddress("192.168.20.2");
     ifaceNode1.setNetmask("255.255.255.0");
@@ -346,7 +349,7 @@ public class TestSlice extends SliceManager {
     cnode2.setNodeType(nodeNodeType);
     cnode2.setDomain(clientSites.get(1));
     cnode2.setPostBootScript(getCustomerScript()+scripts);
-    Network net2 = s.addBroadcastLink("stitch_c2_30",bw);
+    Network net2 = s.addBroadcastLink("stitch_c2_30",cnodebw);
     InterfaceNode2Net ifaceNode2 = (InterfaceNode2Net) net2.stitch(cnode2);
     ifaceNode2.setIpAddress("192.168.30.2");
     ifaceNode2.setNetmask("255.255.255.0");
@@ -357,7 +360,7 @@ public class TestSlice extends SliceManager {
     cnode3.setNodeType(nodeNodeType);
     cnode3.setDomain(clientSites.get(1));
     cnode3.setPostBootScript(getCustomerScript()+scripts);
-    Network net3 = s.addBroadcastLink("stitch_c2_40",bw);
+    Network net3 = s.addBroadcastLink("stitch_c2_40",cnodebw);
     InterfaceNode2Net ifaceNode3 = (InterfaceNode2Net) net3.stitch(cnode3);
     ifaceNode3.setIpAddress("192.168.40.2");
     ifaceNode3.setNetmask("255.255.255.0");

@@ -115,7 +115,7 @@
 global of_controller: OpenFlow::Controller;
 
 # Switch datapath ID
-const switch_dpid: count = 126068337835592;
+const switch_dpid: count = 99909095853135;
 # Controller Address
 const controller_addr: addr = 128.194.6.136;
 # Evil Sha1
@@ -137,12 +137,7 @@ event file_hash(f: fa_file, kind: string, hash: string)
         {
         if ( kind == "sha1" && hash == evil_file_sha1 )
                 {
-                print "file detected";
-                for ( c in f$conns)
-                        {
-                        local id = f$conns[c]$id;
-                        NetControl::drop_address(id$orig_h, 0sec);
-                        }
+		print "file detected";
                 }
         }
 

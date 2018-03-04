@@ -108,6 +108,7 @@ public class SliceManager extends SliceCommon {
     System.out.println("XXXXXXXXXX Done XXXXXXXXXXXXXX");
   }
 
+
   public void createAndConfigCarrierSlice(long bw) {
     int routerNum = 4;
     try {
@@ -153,19 +154,26 @@ public class SliceManager extends SliceCommon {
     runCmdSlice(carrier, "sed -i 's/eth0/eth1/' /opt/bro/etc/node.cfg", bropattern, true, true);
 
     String resource_dir = conf.getString("config.resourcedir");
-    copyFile2Slice(carrier, resource_dir + "bro/destroy_conn.bro", "/root/destroy_conn" +
+    copyFile2Slice(carrier, resource_dir + "bro/test.bro", "/root/test" +
       ".bro", sshkey, bropattern);
     copyFile2Slice(carrier, resource_dir + "bro/test-all-policy.bro", "/root/test-all-policy" +
         ".bro", sshkey, bropattern);
-    copyFile2Slice(carrier, resource_dir + "bro/test-all-policy.bro", "/root/detect-file" +
+    copyFile2Slice(carrier, resource_dir + "bro/detect.bro", "/root/detect" +
         ".bro", sshkey, bropattern);
+    copyFile2Slice(carrier, resource_dir + "bro/detect-all-policy.bro",
+      "/root/detect-all-policy.bro", sshkey, bropattern);
     copyFile2Slice(carrier, resource_dir + "bro/evil.txt", "/root/evil.txt", sshkey,
       bropattern);
     copyFile2Slice(carrier, resource_dir + "bro/reporter.py", "/root/reporter.py", sshkey,
       bropattern);
+    copyFile2Slice(carrier, resource_dir + "bro/cpu_percentage.sh", "/root/cpu_percentage.sh",
+      sshkey,
+      bropattern);
 
-    runCmdSlice(carrier, "sed -i 's/bogus_addr/" + SDNControllerIP + "/' destroy_conn.bro",
+    runCmdSlice(carrier, "sed -i 's/bogus_addr/" + SDNControllerIP + "/' test.bro",
        bropattern, true, true);
+    runCmdSlice(carrier, "sed -i 's/bogus_addr/" + SDNControllerIP + "/' test-all-policy.bro",
+      bropattern, true, true);
 
     String url = serverurl.replace("/", "\\/");
     runCmdSlice(carrier, "sed -i 's/bogus_addr/" + url + "/g' reporter.py",
@@ -177,9 +185,12 @@ public class SliceManager extends SliceCommon {
         String routername = c.getName().split("_")[1];
         ComputeNode router = (ComputeNode) carrier.getResourceByName(routername);
         String mip = router.getManagementIP();
-        String dpid = Exec.sshExec("root", mip, "/bin/bash ~/dpid.sh", sshkey).split(" ")[1]
+        String dpid = Exec.sshExec("root", mip, "/bin/bash ~/dpid.sh", sshkey)[0].split(" ")[1]
           .replace("\n", "");
-        Exec.sshExec("root", c.getManagementIP(), "sed -i 's/bogus_dpid/" + Long.parseLong(dpid, 16) + "/' destroy_conn.bro", sshkey);
+        Exec.sshExec("root", c.getManagementIP(), "sed -i 's/bogus_dpid/" + Long.parseLong
+          (dpid, 16) + "/' test.bro", sshkey);
+        Exec.sshExec("root", c.getManagementIP(), "sed -i 's/bogus_dpid/" + Long.parseLong
+          (dpid, 16) + "/' test-all-policy.bro", sshkey);
       }
     }
 
@@ -247,12 +258,12 @@ public class SliceManager extends SliceCommon {
   }
 
   protected boolean checkPlexus(String SDNControllerIP) {
-    String result = Exec.sshExec("root", SDNControllerIP, "docker ps", sshkey);
+    String result = Exec.sshExec("root", SDNControllerIP, "docker ps", sshkey)[0];
     if (result.contains("plexus")) {
       logger.debug("plexus controller has started");
     } else {
       logger.debug("plexus controller hasn't started, restarting it");
-      result = Exec.sshExec("root", SDNControllerIP, "docker images", sshkey);
+      result = Exec.sshExec("root", SDNControllerIP, "docker images", sshkey)[0];
       if (result.contains("yaoyj11/plexus")) {
         logger.debug("found plexus image, starting plexus container");
         Exec.sshExec("root", SDNControllerIP, "docker run -i -t -d -p 8080:8080 "
@@ -264,7 +275,7 @@ public class SliceManager extends SliceCommon {
         Exec.sshExec("root", SDNControllerIP, "docker run -i -t -d -p 8080:8080 -p"
           + " 6633:6633 -p 3000:3000 -h plexus --name plexus yaoyj11/plexus", sshkey);
       }
-      result = Exec.sshExec("root", SDNControllerIP, "docker ps", sshkey);
+      result = Exec.sshExec("root", SDNControllerIP, "docker ps", sshkey)[0];
       if (result.contains("plexus")) {
         logger.debug("plexus controller has started");
       } else {
@@ -286,7 +297,7 @@ public class SliceManager extends SliceCommon {
     bro.setImage(broURL, broHash, broN);
     bro.setDomain(edgerouter.getDomain());
     bro.setNodeType(broType);
-    bro.setPostBootScript("yum install -y tcpdump");
+    bro.setPostBootScript(getBroScripts());
 
     Network bronet = s.addBroadcastLink(getBroLinkName(ip_to_use), bw);
     InterfaceNode2Net ifaceNode1 = (InterfaceNode2Net) bronet.stitch(edgerouter);
@@ -415,6 +426,11 @@ public class SliceManager extends SliceCommon {
       + "docker pull yaoyj11/plexus\n"
       + "docker run -i -t -d -p 8080:8080 -p 6633:6633 -p 3000:3000 -h plexus --name plexus yaoyj11/plexus\n";
     //+"docker exec -d plexus /bin/bash -c  \"cd /root/;./sdx.sh\"\n";
+    return script;
+  }
+
+  protected String getBroScripts(){
+    String script = "yum install -y tcpdump bc htop";
     return script;
   }
 

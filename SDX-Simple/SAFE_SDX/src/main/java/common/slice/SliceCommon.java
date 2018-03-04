@@ -108,11 +108,17 @@ public abstract class SliceCommon {
     Config fileConfig = ConfigFactory.parseFile(myConfigFile);
     conf = ConfigFactory.load(fileConfig);
     type = conf.getString("config.type");
-    sshkey = conf.getString("config.sshkey");
-    controllerUrl = conf.getString("config.exogenism");
+    if(conf.hasPath("config.exogenism")) {
+      controllerUrl = conf.getString("config.exogenism");
+    }
     serverurl = conf.getString("config.serverurl");
-    pemLocation = conf.getString("config.exogenipem");
-    keyLocation = conf.getString("config.exogenipem");
+    if(conf.hasPath("config.exogenipem")) {
+      pemLocation = conf.getString("config.exogenipem");
+      keyLocation = conf.getString("config.exogenipem");
+    }
+    if(conf.hasPath("config.sshkey")) {
+      sshkey = conf.getString("config.sshkey");
+    }
     if (conf.hasPath("config.slicename")) {
       sliceName = conf.getString("config.slicename");
     }
@@ -361,10 +367,10 @@ public abstract class SliceCommon {
         public void run() {
           try {
             logger.debug(mip + " run commands: " + cmd);
-            String res = Exec.sshExec("root", mip, cmd, sshkey);
+            String res = Exec.sshExec("root", mip, cmd, sshkey)[0];
             while (res.startsWith("error") && repeat) {
               sleep(5);
-              res = Exec.sshExec("root", mip, cmd, sshkey);
+              res = Exec.sshExec("root", mip, cmd, sshkey)[0];
             }
           } catch (Exception e) {
             System.out.println("exception when running command");
@@ -487,5 +493,9 @@ public abstract class SliceCommon {
         System.out.println("GUID: " + i.getGUID());
       }
     }
+  }
+
+  protected boolean patternMatch(String str, String pattern){
+    return Pattern.compile(pattern).matcher(str).matches();
   }
 }

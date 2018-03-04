@@ -1,6 +1,6 @@
 #!/bin/bash
 echo $(date)
-for i in `seq 1 200000`;
+for i in `seq 1 ${1}`;
 do
    T="0"
    for j in `seq 1 5`;

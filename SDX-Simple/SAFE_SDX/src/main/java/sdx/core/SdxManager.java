@@ -78,10 +78,15 @@ public class SdxManager extends SliceManager {
   private final ReentrantLock linklock=new ReentrantLock();
   private final ReentrantLock nodelock=new ReentrantLock();
   private HashMap<String,String>prefixgateway=new HashMap<String,String>();
-  private ArrayList<String[]> advertisements=new ArrayList<String[]>();
 
   private ArrayList<BroInstance> broInstances = new ArrayList<>();
   private long requiredbw=0;
+  public static String routerPattern = "(^c\\d+)";
+  public static String broPattern = "(bro\\d+_c\\d+)";
+  public static String stitchPortPattern = "(^sp-c\\d+.*)";
+  public static String stosVlanPattern = "(^stitch_c\\d+_\\d+)";
+  public static String linkPattern = "(^clink\\d+)";
+  public static String broLinkPattern = "(^blink_\\d+)";
 
   private class Flow {
     public String src;
@@ -127,10 +132,19 @@ public class SdxManager extends SliceManager {
         return true;
       }
     }
+
+    public void removeAllFlows(){
+      this.flows.clear();
+      usedCap = 0;
+    }
   }
 
   public String getSDNControllerIP() {
     return SDNControllerIP;
+  }
+
+  public String getManagementIP(String nodeName){
+    return ((ComputeNode) serverSlice.getResourceByName(nodeName)).getManagementIP();
   }
 
   private void addEntry_HashList(HashMap<String, ArrayList<String>> map, String key, String entry) {
@@ -180,14 +194,13 @@ public class SdxManager extends SliceManager {
     //logger.debug("plexuscontroler managementIP = " + SDNControllerIP);
     SDNController=SDNControllerIP+":8080";
     OVSController=SDNControllerIP+":6633";
-
     //configRouting(serverslice,OVSController,SDNController,"(c\\d+)","(sp-c\\d+.*)");
-    loadSdxNetwork(serverSlice,"(^c\\d+)","(sp-c\\d+.*)", "(bro\\d+_c\\d+)");
-    configRouting(serverSlice,OVSController,SDNController,"(^c\\d+)","(sp-c\\d+.*)");
+    loadSdxNetwork(serverSlice,routerPattern,stitchPortPattern, broPattern);
+    configRouting(serverSlice,OVSController,SDNController,routerPattern,stitchPortPattern);
   }
 
   public void delFlows() {
-    runCmdSlice(serverSlice, "ovs-ofctl del-flows br0", "(^c\\d+)", false, true);
+    runCmdSlice(serverSlice, "ovs-ofctl del-flows br0", routerPattern, false, true);
   }
 
   public String[] stitchRequest(String sdxslice,
@@ -333,7 +346,7 @@ public class SdxManager extends SliceManager {
     try {
       for (String key : links.keySet()) {
         Link link = links.get(key);
-        if(link.linkname.startsWith("clink")) {
+        if(Pattern.compile(linkPattern).matcher(link.linkname).matches()) {
           int number = Integer.valueOf(link.linkname.replace("clink", ""));
           max = Math.max(max, number);
         }
@@ -385,7 +398,7 @@ public class SdxManager extends SliceManager {
       return "Prefix unrecognized.";
     }
     boolean res=true;
-    routingmanager.printLinks();
+    //routingmanager.printLinks();
     if(!routingmanager.findPath(n1,n2,bandwidth)) {
       /*========
       //this is for emulation dynamic links
@@ -462,8 +475,13 @@ public class SdxManager extends SliceManager {
     return "route configured: " + res;
   }
 
-  public void clear() {
-    advertisements.clear();
+  public void reset() {
+    delFlows();
+    requiredbw = 0;
+    for (BroInstance bro : broInstances) {
+      bro.removeAllFlows();
+    }
+    System.out.println("SDX network reset");
   }
 
   public String notifyPrefix(String dest, String gateway, String customer_keyhash) {
@@ -547,7 +565,7 @@ public class SdxManager extends SliceManager {
       Optional<ComputeNode> node = s.getComputeNodes().stream().filter(w -> w.getManagementIP() == broip).findAny();
       if (node.isPresent()) {
         ComputeNode n = node.get();
-        Pattern pattern = Pattern.compile("(^c\\d+)");
+        Pattern pattern = Pattern.compile(routerPattern);
         Matcher match = pattern.matcher(n.getName());
         if (match.find()) {
           System.out.println(logPrefix + "Overloaded bro is attached to " + match.group(1));
@@ -571,9 +589,8 @@ public class SdxManager extends SliceManager {
         ".py ryu/ryu/app/ofctl_rest.py|tee log\"\n";
       */
       String script="docker exec -d plexus /bin/bash -c  \"cd /root;pkill ryu-manager; " +
-        "ryu-manager" +
-        " ryu/ryu/app/rest_conf_switch.py ryu/ryu/app/rest_qos.py ryu/ryu/app/rest_router_mirror" +
-        ".py |tee log\"\n";
+        "ryu-manager ryu/ryu/app/rest_conf_switch.py ryu/ryu/app/rest_qos.py " +
+        "ryu/ryu/app/rest_router_mirror.py ryu/ryu/app/ofctl_rest.py |tee log\"\n";
       //String script = "docker exec -d plexus /bin/bash -c  \"cd /root;pkill ryu-manager;
       // ryu-manager ryu/ryu/app/rest_router.py|tee log\"\n";
       logger.debug(sshkey);
@@ -651,7 +668,8 @@ public class SdxManager extends SliceManager {
           link = new Link();
           link.setName(inode2net.getLink().toString());
           link.addNode(inode2net.getNode().toString());
-          if (link.linkname.contains("stitch") || link.linkname.contains("blink")) {
+          if (patternMatch(link.linkname, stosVlanPattern) || patternMatch(link.linkname,
+            broLinkPattern)) {
             String[] parts=link.linkname.split("_");
             String ip=parts[parts.length-1];
             usedip.add(Integer.valueOf(ip));
@@ -702,19 +720,20 @@ public class SdxManager extends SliceManager {
   private void configRouter(ComputeNode node) {
     String mip = node.getManagementIP();
     logger.debug(node.getName() + " " + mip);
-    String res = Exec.sshExec("root", mip, "/bin/bash ~/ovsbridge.sh " + OVSController, sshkey);
+    String res = Exec.sshExec("root", mip, "/bin/bash ~/ovsbridge.sh " + OVSController, sshkey)
+      [0];
     if(res.contains("ovs-vsctl: command not found")){
       logger.debug("OVS not installed, trying again");
-      res = Exec.sshExec("root", mip, getOVSScript(), sshkey);
+      res = Exec.sshExec("root", mip, getOVSScript(), sshkey)[0];
       Exec.sshExec("root", mip, "/bin/bash ~/ovsbridge.sh " + OVSController, sshkey);
     }
-    String []result=Exec.sshExec("root", mip, "/bin/bash ~/dpid.sh", sshkey).split(" ");
+    String []result=Exec.sshExec("root", mip, "/bin/bash ~/dpid.sh", sshkey)[0].split(" ");
     logger.debug("Trying to get DPID of the router "+node.getName());
     while(result==null || result.length <2 || !validDPID(result[1])) {
-      Exec.sshExec("root", mip, "/bin/bash ~/ovsbridge.sh " + OVSController, sshkey).split
+      Exec.sshExec("root", mip, "/bin/bash ~/ovsbridge.sh " + OVSController, sshkey)[0].split
         (" ");
       sleep(1);
-      result=Exec.sshExec("root", mip, "/bin/bash ~/dpid.sh", sshkey).split(" ");
+      result=Exec.sshExec("root", mip, "/bin/bash ~/dpid.sh", sshkey)[0].split(" ");
     }
     result[1] = result[1].replace("\n", "");
     logger.debug("Get router info " + result[0] + " " + result[1]);
@@ -737,10 +756,10 @@ public class SdxManager extends SliceManager {
               try {
                 String cmd = "ovs-vsctl show";
                 logger.debug(mip + " run commands:" + cmd);
-                String res = Exec.sshExec("root", mip, cmd, sshkey);
+                String res = Exec.sshExec("root", mip, cmd, sshkey)[0];
                 while (!res.contains("is_connected: true")) {
                   sleep(5);
-                  res = Exec.sshExec("root", mip, cmd, sshkey);
+                  res = Exec.sshExec("root", mip, cmd, sshkey)[0];
                 }
                 logger.debug(node.getName() + " connected");
               } catch (Exception e) {
@@ -837,6 +856,12 @@ public class SdxManager extends SliceManager {
     return res;
   }
 
+  public String setMirror(String dpid, String source, String dst, String broIP) {
+    String res = routingmanager.setMirror(SDNController, dpid, source, dst, broIP);
+    res += routingmanager.setMirror(SDNController, dpid, dst, source, broIP);
+    return res;
+  }
+
   public String setMirror(String dpid, String source, String dst, long bw) {
     requiredbw += bw;
     BroInstance bro = getBroInstance(bw);
@@ -851,6 +876,10 @@ public class SdxManager extends SliceManager {
     String res =  routingmanager.delMirror(SDNController, dpid, source, dst);
     res += "\n" + routingmanager.delMirror(SDNController, dpid, dst, source);
     return res;
+  }
+
+  public void configRouting(){
+    configRouting(serverSlice, OVSController, SDNController, routerPattern, stitchPortPattern);
   }
 
   public void configRouting(Slice s,String ovscontroller, String httpcontroller, String
@@ -869,9 +898,10 @@ public class SdxManager extends SliceManager {
           ComputeNode node=(ComputeNode) s.getResourceByName(cname);
           String mip = node.getManagementIP();
           logger.debug(node.getName() + " " + mip);
-          Exec.sshExec("root", mip, "/bin/bash ~/ovsbridge.sh " + ovscontroller, sshkey).split
+          Exec.sshExec("root", mip, "/bin/bash ~/ovsbridge.sh " + ovscontroller, sshkey)[0].split
             (" ");
-          String[] result = Exec.sshExec("root", mip, "/bin/bash ~/dpid.sh", sshkey).split(" ");
+          String[] result = Exec.sshExec("root", mip, "/bin/bash ~/dpid.sh", sshkey)[0].split("" +
+            " ");
           result[1] = result[1].replace("\n", "");
           logger.debug("Get router info " + result[0] + " " + result[1]);
           routingmanager.newRouter(node.getName(), result[1], Integer.valueOf(result[0]), mip);
@@ -901,7 +931,7 @@ public class SdxManager extends SliceManager {
     for (String k : keyset) {
       Link link = links.get((String) k);
       logger.debug("Setting up stitch "+link.linkname);
-      if(((String) k).contains("stitch") || ((String) k).contains("blink")){
+      if( patternMatch(k, stosVlanPattern) || patternMatch(k, broLinkPattern)){
         usedip.add(Integer.valueOf(link.getIP(1).split("\\.")[2]));
         routingmanager.newLink(link.getIP(1), link.nodea, link.getIP(2).split("/")[0],
           httpcontroller);

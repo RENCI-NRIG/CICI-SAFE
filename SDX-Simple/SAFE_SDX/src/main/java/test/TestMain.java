@@ -18,14 +18,16 @@ public class TestMain {
   static String[] clientarg3 = {"-c", "client-config/c3-"+site1+".conf"};
   static String[] clientarg4 = {"-c", "client-config/c4-"+site2+".conf"};
   static String[] clientarg6 = {"-c", "client-config/c6-tamu.conf"};
-  static String[] clientarg5 = {"-c", "chameleon-config/carol.conf"};
+  static String[] clientarg5 = {"-c", "chameleon-config/c1.conf"};
   static boolean newSlice = true;
   static boolean stitch = true;
 
   public static void main(String[] args){
-    multiSliceTest();
+    //multiSliceTest();
     //emulationTest();
     //testDymanicNetwork();
+    //testChameleon();
+    emulationSlice();
     System.exit(0);
   }
 
@@ -106,7 +108,7 @@ public class TestMain {
     SdxExogeniClientManager client4 = new SdxExogeniClientManager(clientarg4);
     SdxStitchPortClientManager cc = new SdxStitchPortClientManager(clientarg5);
     if(stitch) {
-      client1.processCmd("stitch CNode0 " + sdx + " c0");
+      //client1.processCmd("stitch CNode0 " + sdx + " c0");
       client2.processCmd("stitch CNode0 " + sdx + " c1");
       client3.processCmd("stitch CNode0 " + sdx + " c0");
       client4.processCmd("stitch CNode0 " + sdx + " c1");
@@ -121,6 +123,7 @@ public class TestMain {
     client3.processCmd("route 192.168.30.1/24 192.168.132.2");
     client4.processCmd("route 192.168.40.1/24 192.168.133.2");
     cc.processCmd("route 10.32.90.1/24 10.32.90.206");
+    cc.processCmd("link 10.32.90.1/24 192.168.20.1/24");
 
     // Client request for connection between prefixes
     client3.processCmd("link 192.168.30.1/24 192.168.40.1/24");
@@ -210,9 +213,7 @@ public class TestMain {
     This function emulates the sdx slice and customer nodes in the same slice.
      */
     if(newSlice) {
-      TestSlice ts = new TestSlice(arg1);
-      ts.delete();
-      ts.testBroSliceTwoPairs();
+      emulationSlice();
     }
     SdxServer.run(arg1);
     SdxExogeniClientManager client = new SdxExogeniClientManager(clientarg4);
@@ -233,5 +234,11 @@ public class TestMain {
       "192.168.40.1/24");
 
     System.exit(0);
+  }
+
+  public static void emulationSlice(){
+    TestSlice ts = new TestSlice(arg1);
+    ts.delete();
+    ts.testBroSliceTwoPairs();
   }
 }

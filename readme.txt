@@ -37,6 +37,16 @@ Enter SDX-Simple
    ./scripts/cnert-server.sh
    ./scripts/cnert-client.sh [wait until vsdx server starts]
 
+-------------- Bro Experiment --------------------
+Two run the bro experiment:
+1. set up ftp server. 
+   On the ftp server node, 
+   add a ftp user, for example, "useradd ftpuser", "passwd ftpuser", "mkdir /home/ftpuser; cp /home/ftp/evil.txt /home/ftpuser/"; 
+   change "pam_service_name=vsftpd" int /etc/vsftpd/conf to "pam_service_name=ftp"
+   restart vsftpd: service vsftpd restart
+   Now the client should be able to fetch the file with: wget ftp://ftpuser:password@192.168.30.2/evil.txt
+
+
 
 ---------------SAFE-SDX-----------------------------
 To run the SDX demo, first we creat a SDX slice and two customer slices on exogeni.
