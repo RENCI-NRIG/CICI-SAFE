@@ -498,4 +498,8 @@ public abstract class SliceCommon {
   protected boolean patternMatch(String str, String pattern){
     return Pattern.compile(pattern).matcher(str).matches();
   }
+
+  protected String getEchoTimeCMD(){
+    return "echo currentMillis:$(/bin/date \"+%s%3N\");";
+  }
 }

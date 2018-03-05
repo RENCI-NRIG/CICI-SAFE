@@ -28,8 +28,10 @@ public class BroExperiment extends SliceCommon {
   final ArrayList<String[]> iperfServerOut = new ArrayList<String[]>();
   final ArrayList<String[]> ftpClientOut = new ArrayList<String[]>();
   final ArrayList<String[]> pingClientOut = new ArrayList<String[]>();
+  final ArrayList<String[]> routerOut = new ArrayList<String[]>();
   final ArrayList<String[]> cpuOut = new ArrayList<String[]>();
   String broIP;
+  String routerName = "c0";
 
   public BroExperiment(SdxManager sm){
     sdxManager = sm;
@@ -66,6 +68,7 @@ public class BroExperiment extends SliceCommon {
     iperfServerOut.clear();
     ftpClientOut.clear();
     pingClientOut.clear();
+    routerOut.clear();
     cpuOut.clear();
   }
 
@@ -149,6 +152,32 @@ public class BroExperiment extends SliceCommon {
     filename + ";";
   }
 
+  public void getFileAndEchoTime(){
+    for(String[] file: files){
+      final String mip1 = clients.get(file[0])[0];
+      final String mip2 = clients.get(file[1])[0];
+      final String dip1 = clients.get(file[0])[1];
+      final String dip2 = clients.get(file[1])[1];
+      tlist.add(new Thread() {
+        @Override
+        public void run() {
+          ftpClientOut.add(Exec.sshExec("root", mip1, fetchFileCMD
+            (ftpuser, ftppw, dip2, file[2], 1) + getEchoTimeCMD(), sshkey));
+          try {
+            sleep(50000);
+          }catch (Exception e){
+
+          }
+          String flowPattern = ".*table=0.*nw_src="+ dip1 + " actions=drop.*";
+          routerOut.add(new String[]{sdxManager.getFlowInstallationTime(routerName, flowPattern)});
+          stopFlows();
+          stopBro();
+        }
+      });
+      tlist.get(tlist.size() - 1).start();
+    }
+  }
+
   public void getFileAndPing(){
     for(String[] file: files){
       final String mip1 = clients.get(file[0])[0];
@@ -167,9 +196,11 @@ public class BroExperiment extends SliceCommon {
     }
   }
 
+
   public double measureCPU(int times){
     //start Bro
-    String broIP = sdxManager.getManagementIP("bro0_c0");
+    broIP = sdxManager.getManagementIP("bro0_c0");
+    routerName = "c0";
     tlist.add(new Thread() {
                 @Override
                 public void run() {
@@ -283,6 +314,7 @@ public class BroExperiment extends SliceCommon {
         fileTimes: times of file transmission
      */
     broIP = sdxManager.getManagementIP("bro0_c0");
+    routerName = "c0";
     tlist.add(new Thread() {
       @Override
       public void run() {
@@ -413,6 +445,7 @@ public class BroExperiment extends SliceCommon {
 
   public double measureResponseTime(int saturateTime){
     broIP = sdxManager.getManagementIP("bro0_c0");
+    routerName = "c0";
     tlist.add(new Thread() {
       @Override
       public void run() {
@@ -430,7 +463,7 @@ public class BroExperiment extends SliceCommon {
     Roughly it takes about 1 seconds to read cpu percentage once.
      */
     //fetch one file and start ping, after 30 seconds, terminate bro and stop all flows
-    getFileAndPing();
+    getFileAndEchoTime();
 
     //wait for all to finish
     try {
@@ -441,10 +474,25 @@ public class BroExperiment extends SliceCommon {
       e.printStackTrace();
     }
 
+    //getFileCompletionTime
+    String fileCompletionTime = "0";
+    for(String[] s:ftpClientOut){
+      for(String str: s[0].split("\n")){
+        if(str.matches("currentMillis:\\d+")){
+          fileCompletionTime = str.split(":")[1];
+        }
+      }
+    }
+    String flowInstallationTime = routerOut.get(0)[0];
+    Double responseTime =0.0;
+    if(flowInstallationTime ==null){
+      responseTime = 100.0;
+    }
+    else{
+      responseTime = Double.valueOf(flowInstallationTime) - Double.valueOf(fileCompletionTime);
+    }
     System.out.println("Bro out");
     int fileDetected = 0;
-    long received = 1;
-    long dropped = 0;
     for (String[] s : broOut) {
       logger.debug("Bro:" + s[0]);
       logger.debug("Bro:" + s[1]);
@@ -456,8 +504,6 @@ public class BroExperiment extends SliceCommon {
       for(String str: s[1].split("\n")) {
         if (str.contains("packets received on interface")) {
           String[] parts = str.split(" packets received on interface eth1, ");
-          received = Long.valueOf(parts[0].split(" ")[1]);
-          dropped = Long.valueOf(parts[1].split(" ")[0]);
           System.out.println(str);
         }
       }
@@ -493,33 +539,9 @@ public class BroExperiment extends SliceCommon {
       }
     }
 
-    //process ping client output and get response time
-    int maxPingSeq = 0;
-    for (String[] s : pingClientOut) {
-      for (String str : s[0].split("\n")) {
-        logger.debug(str);
-        if (str.contains("icmp_seq=") && str.contains("ttl") && str.contains("time")) {
-          logger.debug(str);
-          int seq = Integer.valueOf(str.split("icmp_seq=")[1].split(" ")[0]);
-          maxPingSeq = seq;
-
-        }
-      }
-    }
     printSettings();
-    System.out.println("Response Time " + maxPingSeq/100.0 + " s");
-    if(maxPingSeq==0){
-      System.out.println("Connection Error");
-      try {
-        System.in.read();
-      }catch (Exception e){
-
-      }
-    }
-    if(maxPingSeq == 3000){
-      printOut(broOut);
-    }
+    System.out.println("Response Time " + responseTime + " ms");
     clearResult();
-    return maxPingSeq/100.0;
+    return responseTime/1000.0;
   }
 }

@@ -83,6 +83,7 @@ public class Exec {
       session.disconnect();
     } catch (Exception e) {
       System.out.println(host + command);
+      e.printStackTrace();
       logger.debug(e);
     }
     return new String[]{result, errResult};

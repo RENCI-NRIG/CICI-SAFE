@@ -1024,5 +1024,30 @@ public class SdxManager extends SliceManager {
     Slice s = getSlice(sliceProxy, sliceName);
     printSliceInfo(s);
   }
+
+  public String getFlowInstallationTime(String routername, String flowPattern){
+    logger.debug("Get flow installation time on " + routername + " for " + flowPattern);
+    try {
+      String result = Exec.sshExec("root", getManagementIP(routername), getEchoTimeCMD() +
+        "ovs-ofctl dump-flows br0", sshkey)[0];
+      String[] parts = result.split("\n");
+      String curMillis = parts[0].split(":")[1];
+      String flow = "";
+      Pattern pattern = Pattern.compile(flowPattern);
+      for (String s : parts) {
+        if (s.matches(flowPattern)) {
+          flow = s;
+          break;
+        }
+      }
+      String duration = flow.split("duration=")[1].split("s")[0];
+      Long installTime = Long.valueOf(curMillis) - (long)(1000 * Double.valueOf(duration));
+      logger.debug("result: " + installTime);
+      return String.valueOf(installTime);
+    }catch (Exception e){
+      logger.debug("result: null");
+      return null;
+    }
+  }
 }
 
