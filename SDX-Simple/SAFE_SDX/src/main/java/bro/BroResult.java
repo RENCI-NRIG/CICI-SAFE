@@ -49,4 +49,42 @@ public class BroResult {
   public List<Double> getPacketDropRatio(){
     return packetDropRatio;
   }
+
+  @Override
+  public String toString() {
+    try {
+      double dtime = 0.0;
+      for (Double t : detectionTime) {
+        dtime += t;
+      }
+      dtime = dtime / detectionTime.size();
+
+      double cpu = 0.0;
+      for (Double t : cpuUtilization) {
+        cpu += t;
+      }
+      cpu = cpu / cpuUtilization.size();
+
+      double detectrate = 0.0;
+      for (Double t : detectionRate) {
+        detectrate += t;
+      }
+      detectrate = detectrate / detectionRate.size();
+
+      double droprate = 0.0;
+      for (Double t : packetDropRatio) {
+        droprate += t;
+      }
+      droprate = droprate / packetDropRatio.size();
+      return String.format("%7.3f %7.3f %7.3f" +
+        "%7.3f", dtime, cpu, detectrate, droprate);
+    }catch (Exception e){
+
+    }
+    return String.format("null null null null");
+  }
+
+  public static String getHeader(){
+    return "DetectionTime  CPU  DetectionRate  DropRatio";
+  }
 }

@@ -12,7 +12,7 @@ import org.renci.ahab.libndl.resources.request.InterfaceNode2Net;
 import sdx.core.SdxManager;
 
 public class BroExperiment extends SliceCommon {
-  final Logger logger = Logger.getLogger(BroExperiment.class);
+  final static Logger logger = Logger.getLogger(BroExperiment.class);
   HashMap<String, String[]> clients;
   HashMap<String, BroResult> result;
   ArrayList<Thread> tlist;
@@ -98,10 +98,6 @@ public class BroExperiment extends SliceCommon {
         public void run() {
           iperfClientOut.add(Exec.sshExec("root", mip1,"/usr/bin/iperf " +
             "-c " + dip2 + " -u -t " + seconds + " -b " + bw, sshkey));
-          //stop iperf server when flow stops
-          Exec.sshExec("root", mip2,"pkill iperf", sshkey);
-          //stop bro when flow stops
-          Exec.sshExec("root", broIP,"pkill bro", sshkey);
         }
       });
       tlist.get(tlist.size() - 1).start();
@@ -148,11 +144,11 @@ public class BroExperiment extends SliceCommon {
   }
 
   private String fetchFileCMD(String ftpuser, String ftppw, String dip, String filename, int times){
-    return "/bin/bash getnfiles.sh " + times + " " + ftpuser + " " + ftppw + " " + dip + " " +
-    filename + ";";
+    return "rm evil.*;/bin/bash getnfiles.sh " + times + " " + ftpuser + " " + ftppw + " " + dip +
+      " " + filename + ";";
   }
 
-  public void getFileAndEchoTime(){
+  public void getFileAndEchoTime(int times){
     for(String[] file: files){
       final String mip1 = clients.get(file[0])[0];
       final String mip2 = clients.get(file[1])[0];
@@ -162,7 +158,7 @@ public class BroExperiment extends SliceCommon {
         @Override
         public void run() {
           ftpClientOut.add(Exec.sshExec("root", mip1, fetchFileCMD
-            (ftpuser, ftppw, dip2, file[2], 1) + getEchoTimeCMD(), sshkey));
+            (ftpuser, ftppw, dip2, file[2], times) + getEchoTimeCMD(), sshkey));
           try {
             sleep(50000);
           }catch (Exception e){
@@ -204,6 +200,7 @@ public class BroExperiment extends SliceCommon {
     tlist.add(new Thread() {
                 @Override
                 public void run() {
+                  Exec.sshExec("root", broIP, "pkill bro", sshkey);
                   broOut.add(Exec.sshExec("root", broIP, "/opt/bro/bin/bro -i eth1 " +
                     "detect-all-policy.bro", sshkey));
                   stopFlows();
@@ -318,6 +315,7 @@ public class BroExperiment extends SliceCommon {
     tlist.add(new Thread() {
       @Override
       public void run() {
+        Exec.sshExec("root", broIP, "pkill bro", sshkey);
         broOut.add(Exec.sshExec("root", broIP, "/opt/bro/bin/bro -i eth1 " +
           "detect-all-policy.bro", sshkey));
         stopFlows();
@@ -327,13 +325,14 @@ public class BroExperiment extends SliceCommon {
     sleep(3);
     startFlows(flowSeconds);
     sleep(30);
+    //start getting files
+    fetchFiles(fileTimes);
+
+
     /*
     start cpu measurement
     Roughly it takes about 1 seconds to read cpu percentage once.
      */
-    //start getting files
-    fetchFiles(fileTimes);
-
     tlist.add(new Thread() {
       @Override
       public void run() {
@@ -344,7 +343,10 @@ public class BroExperiment extends SliceCommon {
     });
     tlist.get(tlist.size() - 1).start();
 
-    //Then add background traffic
+    //Wait and stop all processes
+    sleep(flowSeconds);
+    stopFlows();
+    stopBro();
 
     //wait for all to finish
     try {
@@ -368,7 +370,7 @@ public class BroExperiment extends SliceCommon {
       for(String str: s[1].split("\n")) {
         if (str.contains("packets received on interface")) {
           String[] parts = str.split(" packets received on interface eth1, ");
-          received = Long.valueOf(parts[0].split(" ")[1]);
+          received = Long.valueOf(parts[0].split(" ")[parts[0].split(" ").length -1]);
           dropped = Long.valueOf(parts[1].split(" ")[0]);
           System.out.println(str);
         }
@@ -430,7 +432,7 @@ public class BroExperiment extends SliceCommon {
     double dropRatio = (double)dropped/(double)(received + dropped);
     System.out.println("Average CPU Usage: " + (cpuSum/cpuTimes));
     System.out.println("Detection Rate: " + ((double)fileDetected/(double)fileTimes));
-    System.out.println("Drop Rate: " + dropped);
+    System.out.println("Drop Rate: " + dropRatio);
     clearResult();
     printSettings();
     return new double[]{cpuSum/cpuTimes, (double)fileDetected/(double)fileTimes, dropRatio};
@@ -443,7 +445,7 @@ public class BroExperiment extends SliceCommon {
     }
   }
 
-  public double measureResponseTime(int saturateTime){
+  public double measureResponseTime(int saturateTime, int fileTimes){
     broIP = sdxManager.getManagementIP("bro0_c0");
     routerName = "c0";
     tlist.add(new Thread() {
@@ -463,7 +465,10 @@ public class BroExperiment extends SliceCommon {
     Roughly it takes about 1 seconds to read cpu percentage once.
      */
     //fetch one file and start ping, after 30 seconds, terminate bro and stop all flows
-    getFileAndEchoTime();
+    getFileAndEchoTime(fileTimes);
+    sleep(50);
+    stopFlows();
+    stopBro();
 
     //wait for all to finish
     try {
@@ -486,7 +491,7 @@ public class BroExperiment extends SliceCommon {
     String flowInstallationTime = routerOut.get(0)[0];
     Double responseTime =0.0;
     if(flowInstallationTime ==null){
-      responseTime = 100.0;
+      responseTime = 100.0* 1000;
     }
     else{
       responseTime = Double.valueOf(flowInstallationTime) - Double.valueOf(fileCompletionTime);
@@ -498,12 +503,12 @@ public class BroExperiment extends SliceCommon {
       logger.debug("Bro:" + s[1]);
       for(String str: s[0].split("\n")) {
         if (str.contains("file detected")) {
+          logger.debug(str);
           fileDetected ++;
         }
       }
       for(String str: s[1].split("\n")) {
         if (str.contains("packets received on interface")) {
-          String[] parts = str.split(" packets received on interface eth1, ");
           System.out.println(str);
         }
       }

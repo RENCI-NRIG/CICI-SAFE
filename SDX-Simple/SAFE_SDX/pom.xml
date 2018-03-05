@@ -62,6 +62,10 @@
 							<name>SafeSdxClientSliceServer</name>
 						</program>
 						<program>
+							<mainClass>bro.BroMain</mainClass>
+							<name>SafeSdxBro</name>
+						</program>
+						<program>
 							<mainClass>test.TestMain</mainClass>
 							<name>SafeSdxTest</name>
 						</program>

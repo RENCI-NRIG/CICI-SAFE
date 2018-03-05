@@ -5,12 +5,37 @@ import sdx.core.SdxManager;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.List;
+import org.apache.log4j.Logger;
 
 public class BroMain {
-    static SdxManager sdxManager;
-    static BroExperiment broExp;
+  final static Logger logger = Logger.getLogger(BroMain.class);
+  static SdxManager sdxManager;
+  static BroExperiment broExp;
+  static int flowStart = 500;
+  static int flowEnd = 1000;
+  static int flowStep = 100;
+  static ArrayList<BroResult> results = new ArrayList<>();
 
-  public static void main(String[] args){
+  public static void printResult(List<BroResult> results){
+    System.out.println("Flow " + BroResult.getHeader());
+    logger.debug("Flow " + BroResult.getHeader());
+    for(int f = flowStart, i = 0; f <=flowEnd; f += flowStep, i++){
+      BroResult result = results.get(i);
+      logger.debug(f + result.toString());
+      System.out.println(f + result.toString());
+    }
+  }
+
+  public static void main(String[] args) {
+    for (int j = 0; j <=(flowEnd - flowStart)/flowStep; j++) {
+      results.add(new BroResult());
+    }
+    Runtime.getRuntime().addShutdownHook(new Thread() {
+      public void run() {
+        printResult(results);
+      }
+    });
+
     String[] arg1 = {"-c", "config/cnert-fl2.conf"};
     sdxManager = new SdxManager();
     sdxManager.startSdxServer(arg1);
@@ -20,30 +45,24 @@ public class BroMain {
     sdxManager.notifyPrefix("192.168.40.1/24", "192.168.40.2", "notused");
     configFlows(sdxManager);
     broExp = new BroExperiment(sdxManager);
-    broExp.addClient("node0",sdxManager.getManagementIP("node0"), "192.168.10.2");
-    broExp.addClient("node1",sdxManager.getManagementIP("node1"), "192.168.20.2");
-    broExp.addClient("node2",sdxManager.getManagementIP("node2"), "192.168.30.2");
-    broExp.addClient("node3",sdxManager.getManagementIP("node3"), "192.168.40.2");
+    broExp.addClient("node0", sdxManager.getManagementIP("node0"), "192.168.10.2");
+    broExp.addClient("node1", sdxManager.getManagementIP("node1"), "192.168.20.2");
+    broExp.addClient("node2", sdxManager.getManagementIP("node2"), "192.168.30.2");
+    broExp.addClient("node3", sdxManager.getManagementIP("node3"), "192.168.40.2");
     int TIMES = 10;
-    ArrayList<BroResult> results= null;
-    for(int i=0; i<TIMES; i++) {
+    for (int i = 0; i < TIMES; i++) {
       List<double[]> multi = measureMultiMetrics();
-      if(results == null){
-        results = new ArrayList<>();
-        for(int j =0; j < multi.size(); j++){
-          results.add(new BroResult());
-        }
-      }
-      for(int j = 0; j<multi.size(); j++){
+      for (int j = 0; j < multi.size(); j++) {
         double[] res = multi.get(j);
         results.get(j).addCpuUtilization(res[0]);
         results.get(j).addDetectionRate(res[1]);
         results.get(j).addPacketDropRatio(res[2]);
       }
       List<Double> rt = measureResponseTime(30);
-      for(int j = 0; j<multi.size(); j++){
+      for (int j = 0; j < multi.size(); j++) {
         results.get(j).addDetectionTime(rt.get(j));
       }
+      printResult(results);
     }
     return;
   }
@@ -76,8 +95,8 @@ public class BroMain {
 
   static List<double[]> measureMultiMetrics(){
     ArrayList<double[]> results = new ArrayList<>();
-    for(int flow = 100; flow <=1500; flow += 100){
-      if(flow < 1000) {
+    for(int flow = flowStart; flow <= flowEnd; flow += flowStep){
+      if(flow < 900) {
         broExp.addFlow("node0", "node2", flow + "M");
         broExp.addFile("node0", "node2", "evil.txt");
         double[] result = broExp.measureMultiMetrics(300, 200, 40);
@@ -95,7 +114,7 @@ public class BroMain {
       }
     }
     System.out.println("All experiments done: results:\n flow(M) cpu detectionRate dropRate");
-    for(int flow = 100, i = 0; flow <=1500; flow += 100, i++) {
+    for(int flow = flowStart, i = 0; flow <= flowEnd; flow += flowStep, i++) {
       double[] res = results.get(i);
       System.out.println(flow + " " + res[0] + " " + res[1] + " " + res[2]);
     }
@@ -105,15 +124,22 @@ public class BroMain {
   static ArrayList<Double> measureResponseTime(int saturateTime){
     ArrayList<Double> responseTime = new ArrayList<Double>();
     double MaxTime = 40.0;
-    for(int flow = 100; flow <=1500; flow += 100){
-      if(flow < 1000) {
+    for(int flow = flowStart, j = 0; flow <= flowEnd; flow += flowStep, j++){
+      int fileTimes = 1;
+      try{
+        fileTimes = (int)(0.5/results.get(j).getDetectionRate().get(0));
+        fileTimes = fileTimes > 1? fileTimes:1;
+      }catch (Exception e){
+
+      }
+      if(flow < 900) {
         broExp.addFlow("node0", "node2", flow + "M");
         broExp.addFile("node0", "node2", "evil.txt");
-        Double time = broExp.measureResponseTime(saturateTime);
+        Double time = broExp.measureResponseTime(saturateTime, fileTimes);
         reconfigureSdxNetwork(sdxManager);
         while(time > MaxTime){
           System.out.println("bro failed to detect the file, retry");
-          time = broExp.measureResponseTime(saturateTime);
+          time = broExp.measureResponseTime(saturateTime, fileTimes);
           reconfigureSdxNetwork(sdxManager);
         }
         responseTime.add(time);
@@ -123,11 +149,11 @@ public class BroMain {
         broExp.addFlow("node0", "node2", flow/2 + "M");
         broExp.addFlow("node1", "node3", flow/2 + "M");
         broExp.addFile("node0", "node2", "evil.txt");
-        Double time = broExp.measureResponseTime(saturateTime);
+        Double time = broExp.measureResponseTime(saturateTime, fileTimes);
         reconfigureSdxNetwork(sdxManager);
         while(time > MaxTime){
           System.out.println("bro failed to detect the file, retry");
-          time = broExp.measureResponseTime(saturateTime);
+          time = broExp.measureResponseTime(saturateTime, fileTimes);
           reconfigureSdxNetwork(sdxManager);
         }
         responseTime.add(time);
@@ -136,7 +162,7 @@ public class BroMain {
       }
     }
 
-    for(int flow = 100, i = 0; flow <=1500; flow += 100, i++) {
+    for(int flow = flowStart, i = 0; flow <= flowEnd; flow += flowStep, i++) {
       double time = responseTime.get(i);
       System.out.println(flow + " " + time);
     }

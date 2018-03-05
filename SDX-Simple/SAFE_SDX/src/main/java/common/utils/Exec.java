@@ -9,6 +9,7 @@ import javax.swing.*;
 import org.apache.log4j.Logger;
 
 import java.io.*;
+import java.net.NoRouteToHostException;
 import java.util.Properties;
 
 public class Exec {
@@ -83,8 +84,9 @@ public class Exec {
       session.disconnect();
     } catch (Exception e) {
       System.out.println(host + command);
+      logger.debug(e.getMessage());
       e.printStackTrace();
-      logger.debug(e);
+      return  new String[]{null, null};
     }
     return new String[]{result, errResult};
   }
