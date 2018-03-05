@@ -36,6 +36,7 @@ public class Exec {
   public static String[] sshExec(String user, String host, String command, String privkey) {
     String result = "";
     String errResult = "";
+    logger.debug(host + ":" + command);
     try {
       JSch jsch = new JSch();
       jsch.addIdentity(privkey);
@@ -56,18 +57,17 @@ public class Exec {
         while (in.available() > 0) {
           int i = in.read(tmp, 0, 1024);
           if (i < 0) break;
-          result += new String(tmp, 0, i) + "\n";
+          result += new String(tmp, 0, i);
           logger.debug(new String(tmp, 0, i));
         }
         while (err.available() > 0) {
           int i = err.read(tmp, 0, 1024);
           if (i < 0) break;
-          errResult += new String(tmp, 0, i) + "\n";
+          errResult += new String(tmp, 0, i);
           logger.debug(new String(tmp, 0, i));
         }
         if (channel.isClosed()) {
           //get status returns int;
-          logger.debug(host + ":" + command);
           logger.debug("exit-status: " + channel.getExitStatus());
           if (channel.getExitStatus() != 0) {
             result = "error:" + String.valueOf(channel.getExitStatus());

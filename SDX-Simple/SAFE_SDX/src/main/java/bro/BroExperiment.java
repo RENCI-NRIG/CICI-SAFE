@@ -1,16 +1,18 @@
 package bro;
 
+import java.lang.reflect.Array;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.HashMap;
 import common.slice.SliceCommon;
 import common.utils.Exec;
+import org.apache.log4j.Logger;
+import org.apache.log4j.SimpleLayout;
 import org.renci.ahab.libndl.resources.request.InterfaceNode2Net;
 import sdx.core.SdxManager;
 
-import java.lang.reflect.Array;
-import java.util.ArrayList;
-import java.util.HashMap;
-
 public class BroExperiment extends SliceCommon {
-
+  final Logger logger = Logger.getLogger(BroExperiment.class);
   HashMap<String, String[]> clients;
   HashMap<String, BroResult> result;
   ArrayList<Thread> tlist;
@@ -73,6 +75,7 @@ public class BroExperiment extends SliceCommon {
   }
 
   public void startFlows(int seconds){
+    logger.debug("Start sending background flows");
     for(String[] flow: flows){
       final String mip1 = clients.get(flow[0])[0];
       final String mip2 = clients.get(flow[1])[0];
@@ -103,6 +106,7 @@ public class BroExperiment extends SliceCommon {
   }
 
   public void stopFlows(){
+    logger.debug("stop flows");
     for(String[] flow: flows){
       final String mip1 = clients.get(flow[0])[0];
       final String mip2 = clients.get(flow[1])[0];
@@ -114,6 +118,7 @@ public class BroExperiment extends SliceCommon {
   }
 
   public void stopBro(){
+    logger.debug("Stop Bro");
     Exec.sshExec("root", broIP, "pkill bro", sshkey);
   }
 
@@ -399,20 +404,27 @@ public class BroExperiment extends SliceCommon {
     return new double[]{cpuSum/cpuTimes, (double)fileDetected/(double)fileTimes, dropRatio};
   }
 
-  public double measureResponseTime(){
+  void printOut(List<String[]>result){
+    for (String[] s : result) {
+      System.out.println(s[0]);
+      System.out.println(s[1]);
+    }
+  }
+
+  public double measureResponseTime(int saturateTime){
     broIP = sdxManager.getManagementIP("bro0_c0");
     tlist.add(new Thread() {
       @Override
       public void run() {
-        broOut.add(Exec.sshExec("root", broIP, "/usr/bin/rm *.log; /opt/bro/bin/bro -i eth1 " +
-          "test-all-policy.bro", sshkey));
+        broOut.add(Exec.sshExec("root", broIP, "/usr/bin/rm *.log; pkill bro; /opt/bro/bin/bro " +
+          "-i eth1 test-all-policy.bro", sshkey));
         stopFlows();
       }
     });
     tlist.get(tlist.size() - 1).start();
     sleep(3);
     startFlows(300);
-    sleep(30);
+    sleep(saturateTime);
     /*
     start cpu measurement
     Roughly it takes about 1 seconds to read cpu percentage once.
@@ -434,6 +446,8 @@ public class BroExperiment extends SliceCommon {
     long received = 1;
     long dropped = 0;
     for (String[] s : broOut) {
+      logger.debug("Bro:" + s[0]);
+      logger.debug("Bro:" + s[1]);
       for(String str: s[0].split("\n")) {
         if (str.contains("file detected")) {
           fileDetected ++;
@@ -481,9 +495,11 @@ public class BroExperiment extends SliceCommon {
 
     //process ping client output and get response time
     int maxPingSeq = 0;
-    for (String[] s : iperfServerOut) {
+    for (String[] s : pingClientOut) {
       for (String str : s[0].split("\n")) {
+        logger.debug(str);
         if (str.contains("icmp_seq=") && str.contains("ttl") && str.contains("time")) {
+          logger.debug(str);
           int seq = Integer.valueOf(str.split("icmp_seq=")[1].split(" ")[0]);
           maxPingSeq = seq;
 
@@ -492,7 +508,6 @@ public class BroExperiment extends SliceCommon {
     }
     printSettings();
     System.out.println("Response Time " + maxPingSeq/100.0 + " s");
-    clearResult();
     if(maxPingSeq==0){
       System.out.println("Connection Error");
       try {
@@ -501,6 +516,10 @@ public class BroExperiment extends SliceCommon {
 
       }
     }
+    if(maxPingSeq == 3000){
+      printOut(broOut);
+    }
+    clearResult();
     return maxPingSeq/100.0;
   }
 }

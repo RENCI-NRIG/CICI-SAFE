@@ -7,9 +7,14 @@ import sdx.core.SdxServer;
 import client.exogeni.ClientSlice;
 
 public class TestMain {
+  /*
   static String state = "fl";
   static String site1 = "ufl";
   static String site2 = "unf";
+  */
+  static String state = "fl2";
+  static String site1 = "ufl";
+  static String site2 = "fiu";
   //name of sdx slice
   static String sdx = "test-fl";
   static String[] arg1 = {"-c", "config/cnert-"+ state + ".conf"};

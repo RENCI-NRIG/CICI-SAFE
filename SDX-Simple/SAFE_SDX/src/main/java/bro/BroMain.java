@@ -8,26 +8,36 @@ public class BroMain {
     static SdxManager sdxManager;
     static BroExperiment broExp;
   public static void main(String[] args){
-    String[] arg1 = {"-c", "config/cnert-fl.conf"};
+    String[] arg1 = {"-c", "config/cnert-fl2.conf"};
     sdxManager = new SdxManager();
     sdxManager.startSdxServer(arg1);
     sdxManager.notifyPrefix("192.168.10.1/24", "192.168.10.2", "notused");
     sdxManager.notifyPrefix("192.168.20.1/24", "192.168.20.2", "notused");
     sdxManager.notifyPrefix("192.168.30.1/24", "192.168.30.2", "notused");
     sdxManager.notifyPrefix("192.168.40.1/24", "192.168.40.2", "notused");
-    sdxManager.connectionRequest("not used", "192.168.10.1/24", "192.168.30.1/24", 0);
-    sdxManager.connectionRequest("not used", "192.168.20.1/24", "192.168.40.1/24", 0);
-    sdxManager.setMirror(sdxManager.getDPID("c0"), "192.168.10.1/24", "192.168.30.1/24",
-      "192.168.128.2");
-    sdxManager.setMirror(sdxManager.getDPID("c0"), "192.168.20.1/24", "192.168.40.1/24",
-      "192.168.128.2");
+    configFlows(sdxManager);
     broExp = new BroExperiment(sdxManager);
     broExp.addClient("node0",sdxManager.getManagementIP("node0"), "192.168.10.2");
     broExp.addClient("node1",sdxManager.getManagementIP("node1"), "192.168.20.2");
     broExp.addClient("node2",sdxManager.getManagementIP("node2"), "192.168.30.2");
     broExp.addClient("node3",sdxManager.getManagementIP("node3"), "192.168.40.2");
     //measureMultiMetrics();
-    measureResponseTime();
+    measureResponseTime(10);
+  }
+
+  static void reconfigureSdxNetwork(SdxManager sdxManager){
+    sdxManager.delFlows();
+    sdxManager.configRouting();
+    configFlows(sdxManager);
+  }
+
+  static void configFlows(SdxManager sdxManager){
+    sdxManager.connectionRequest("not used", "192.168.10.1/24", "192.168.30.1/24", 0);
+    sdxManager.connectionRequest("not used", "192.168.20.1/24", "192.168.40.1/24", 0);
+    sdxManager.setMirror(sdxManager.getDPID("c0"), "192.168.10.1/24", "192.168.30.1/24",
+      "192.168.128.2");
+    sdxManager.setMirror(sdxManager.getDPID("c0"), "192.168.20.1/24", "192.168.40.1/24",
+      "192.168.128.2");
   }
 
   static void measureCPU(){
@@ -69,16 +79,18 @@ public class BroMain {
     System.exit(0);
   }
 
-  static void measureResponseTime(){
+  static void measureResponseTime(int saturateTime){
     ArrayList<Double> responseTime = new ArrayList<Double>();
     for(int flow = 100; flow <=1500; flow += 100){
       if(flow < 1000) {
         broExp.addFlow("node0", "node2", flow + "M");
         broExp.addFile("node0", "node2", "evil.txt");
-        Double time = broExp.measureResponseTime();
-        while(time > 40.0){
+        Double time = broExp.measureResponseTime(saturateTime);
+        reconfigureSdxNetwork(sdxManager);
+        while(time > 25.0){
           System.out.println("bro failed to detect the file, retry");
-          time = broExp.measureResponseTime();
+          time = broExp.measureResponseTime(saturateTime);
+          reconfigureSdxNetwork(sdxManager);
         }
         responseTime.add(time);
         broExp.clearFlows();
@@ -87,10 +99,12 @@ public class BroMain {
         broExp.addFlow("node0", "node2", flow/2 + "M");
         broExp.addFlow("node1", "node3", flow/2 + "M");
         broExp.addFile("node0", "node2", "evil.txt");
-        Double time = broExp.measureResponseTime();
-        while(time > 40.0){
+        Double time = broExp.measureResponseTime(saturateTime);
+        reconfigureSdxNetwork(sdxManager);
+        while(time > 25.0){
           System.out.println("bro failed to detect the file, retry");
-          time = broExp.measureResponseTime();
+          time = broExp.measureResponseTime(saturateTime);
+          reconfigureSdxNetwork(sdxManager);
         }
         responseTime.add(time);
         broExp.clearFlows();

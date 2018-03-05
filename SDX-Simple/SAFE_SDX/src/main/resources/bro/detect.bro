@@ -6,9 +6,9 @@
 global of_controller: OpenFlow::Controller;
 
 # Switch datapath ID
-const switch_dpid: count = 99909095853135;
+const switch_dpid: count = bogus_dpid;
 # Controller Address
-const controller_addr: addr = 128.194.6.136;
+const controller_addr: addr = bogus_addr;
 # Evil Sha1
 const evil_file_sha1: string = "5ba00e7d99175cf4aa53ad5787e2efe6f1398216";
 

@@ -149,6 +149,16 @@ public class SliceManager extends SliceCommon {
 
   }
 
+  public void configFTPService(Slice carrier, String nodePattern, String username, String passwd){
+    runCmdSlice(carrier, "/usr/sbin/useradd "+ username + "; echo -e \"" + passwd + "\\n" +
+      passwd + "\\n\" | passwd " + username, nodePattern, true, true);
+    runCmdSlice(carrier, "mkdir /home/" + username, nodePattern, true,
+      true);
+    runCmdSlice(carrier, "/bin/sed -i \"s/pam_service_name=vsftpd/pam_service_name=ftp/\" " +
+      "/etc/vsftpd.conf; service vsftpd restart", nodePattern, true, true);
+    String resource_dir = conf.getString("config.resourcedir");
+  }
+
   public void configBroNodes(Slice carrier, String bropattern) {
     // Bro uses 'eth1"
     runCmdSlice(carrier, "sed -i 's/eth0/eth1/' /opt/bro/etc/node.cfg", bropattern, true, true);
@@ -170,10 +180,8 @@ public class SliceManager extends SliceCommon {
       sshkey,
       bropattern);
 
-    runCmdSlice(carrier, "sed -i 's/bogus_addr/" + SDNControllerIP + "/' test.bro",
+    runCmdSlice(carrier, "sed -i 's/bogus_addr/" + SDNControllerIP + "/' *.bro",
        bropattern, true, true);
-    runCmdSlice(carrier, "sed -i 's/bogus_addr/" + SDNControllerIP + "/' test-all-policy.bro",
-      bropattern, true, true);
 
     String url = serverurl.replace("/", "\\/");
     runCmdSlice(carrier, "sed -i 's/bogus_addr/" + url + "/g' reporter.py",
@@ -188,9 +196,7 @@ public class SliceManager extends SliceCommon {
         String dpid = Exec.sshExec("root", mip, "/bin/bash ~/dpid.sh", sshkey)[0].split(" ")[1]
           .replace("\n", "");
         Exec.sshExec("root", c.getManagementIP(), "sed -i 's/bogus_dpid/" + Long.parseLong
-          (dpid, 16) + "/' test.bro", sshkey);
-        Exec.sshExec("root", c.getManagementIP(), "sed -i 's/bogus_dpid/" + Long.parseLong
-          (dpid, 16) + "/' test-all-policy.bro", sshkey);
+          (dpid, 16) + "/' *.bro", sshkey);
       }
     }
 

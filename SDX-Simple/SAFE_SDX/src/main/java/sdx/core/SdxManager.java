@@ -139,6 +139,9 @@ public class SdxManager extends SliceManager {
     }
   }
 
+  public Slice getSdxSlice(){
+    return serverSlice;
+  }
   public String getSDNControllerIP() {
     return SDNControllerIP;
   }
@@ -944,9 +947,11 @@ public class SdxManager extends SliceManager {
       logger.debug("Setting up link "+link.linkname);
       if(isValidLink(k)){
         logger.debug("Setting up link " + link.linkname);
-        int ip_to_use = getAvailableIP();
-        link.setIP(IPPrefix + String.valueOf(ip_to_use));
-        link.setMask(mask);
+        if(link.ipprefix.equals("")) {
+          int ip_to_use = getAvailableIP();
+          link.setIP(IPPrefix + String.valueOf(ip_to_use));
+          link.setMask(mask);
+        }
         //logger.debug(link.nodea+":"+link.getIP(1)+" "+link.nodeb+":"+link.getIP(2));
         routingmanager.newLink(link.getIP(1), link.nodea, link.getIP(2), link.nodeb,
           httpcontroller,link.capacity);

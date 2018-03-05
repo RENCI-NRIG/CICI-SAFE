@@ -38,11 +38,11 @@ Enter SDX-Simple
    ./scripts/cnert-client.sh [wait until vsdx server starts]
 
 -------------- Bro Experiment --------------------
-Two run the bro experiment:
-1. set up ftp server. 
+Two run the bro experiment, first we need to set up FTP service. The TestSlice code should have already set up FTP service when it creates the slice.
+1. [OPtional]set up ftp server. 
    On the ftp server node, 
    add a ftp user, for example, "useradd ftpuser", "passwd ftpuser", "mkdir /home/ftpuser; cp /home/ftp/evil.txt /home/ftpuser/"; 
-   change "pam_service_name=vsftpd" int /etc/vsftpd/conf to "pam_service_name=ftp"
+   change "pam_service_name=vsftpd" in /etc/vsftpd.conf to "pam_service_name=ftp"
    restart vsftpd: service vsftpd restart
    Now the client should be able to fetch the file with: wget ftp://ftpuser:password@192.168.30.2/evil.txt
 

@@ -109,11 +109,10 @@ public class TestSlice extends SliceManager {
         configBroNodes(carrier, "(bro\\d+_c\\d+)");
       }
 
-      runCmdSlice(carrier, "mkdir /home/ftp", "(node\\d+)", true, true);
-      copyFile2Slice(carrier, resource_dir + "bro/evil.txt", "/home/ftp/evil.txt",
+      configFTPService(carrier, "(node\\d+)", "ftpuser", "ftp");
+      copyFile2Slice(carrier, resource_dir + "bro/evil.txt", "/home/ftpuser/evil.txt",
         sshkey, "(node\\d+)");
-      copyFile2Slice(carrier, resource_dir + "scripts/getonefile.sh", "~/getonefile.sh",
-        sshkey, "(node\\d+)");
+
       copyFile2Slice(carrier, resource_dir + "scripts/getnfiles.sh", "~/getnfiles.sh",
         sshkey, "(node\\d+)");
       copyFile2Slice(carrier, resource_dir + "scripts/getfiles.sh", "~/getfiles.sh",
