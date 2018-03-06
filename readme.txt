@@ -38,13 +38,10 @@ Enter SDX-Simple
    ./scripts/cnert-client.sh [wait until vsdx server starts]
 
 -------------- Bro Experiment --------------------
-Two run the bro experiment, first we need to set up FTP service. The TestSlice code should have already set up FTP service when it creates the slice.
-1. [OPtional]set up ftp server. 
-   On the ftp server node, 
-   add a ftp user, for example, "useradd ftpuser", "passwd ftpuser", "mkdir /home/ftpuser; cp /home/ftp/evil.txt /home/ftpuser/"; 
-   change "pam_service_name=vsftpd" in /etc/vsftpd.conf to "pam_service_name=ftp"
-   restart vsftpd: service vsftpd restart
-   Now the client should be able to fetch the file with: wget ftp://ftpuser:password@192.168.30.2/evil.txt
+Two run the bro experiment, first we need to set up FTP service. The TestSlice code should have already set up FTP service when it creates the slice. 
+1. create the test slice: [1] modify TestMain to call emulationSlice() in main(). [2] modify configuration files to specify two sites. Since we need large bandwdith between two sites. It's highly suggested to choose UH-TAMU, or any pair from (UFL, UNF, FIU). [3] run TestMain to create the emulation slice
+2. Run BroMain for the experiment.
+   ./scripts/bro.sh
 
 
 
