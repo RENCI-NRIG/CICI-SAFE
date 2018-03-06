@@ -893,7 +893,7 @@ public class SdxManager extends SliceManager {
     // added to the ovs bridge, then we reset the controller?
     // FIXME: maybe this is not the best way to do.
     //add all interfaces other than eth0 to ovs bridge br0
-    runCmdSlice(s, "/bin/bash ~/ovsbridge.sh " + ovscontroller, "(c\\d+)", false, true);
+    runCmdSlice(s, "/bin/bash ~/ovsbridge.sh " + ovscontroller, routerpattern, false, true);
     try {
       for (String k : computenodes.keySet()) {
         for (String cname : computenodes.get(k)) {

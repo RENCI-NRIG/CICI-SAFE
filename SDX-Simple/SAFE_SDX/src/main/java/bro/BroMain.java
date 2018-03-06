@@ -73,6 +73,7 @@ public class BroMain {
     sdxManager.delFlows();
     sdxManager.configRouting();
     configFlows(sdxManager);
+    sdxManager.sleep(10);
   }
 
   static void configFlows(SdxManager sdxManager){
