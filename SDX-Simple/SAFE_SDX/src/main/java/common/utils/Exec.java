@@ -41,17 +41,32 @@ public class Exec {
     try {
       JSch jsch = new JSch();
       jsch.addIdentity(privkey);
-      Session session = jsch.getSession(user, host, 22);
-      Properties config = new Properties();
-      config.put("StrictHostKeyChecking", "no");
-      session.setConfig(config);
-      session.connect();
+      Session session = null;
+      boolean flag = true;
+      while(flag) {
+        session = jsch.getSession(user, host, 22);
+        Properties config = new Properties();
+        config.put("StrictHostKeyChecking", "no");
+        session.setConfig(config);
+        try {
+          session.connect();
+          flag = false;
+        } catch (Exception e) {
+          logger.debug("No route to host exception: " + host + " wait 10s and retry");
+          try {
+            Thread.sleep(10000);
+          } catch (Exception ex) {
+          }
+        }
+      }
       Channel channel = session.openChannel("exec");
       ((ChannelExec) channel).setCommand(command);
       channel.setInputStream(null);
       ((ChannelExec) channel).setErrStream(System.err);
-      InputStream in = channel.getInputStream();
-      InputStream err = ((ChannelExec) channel).getErrStream();
+      InputStream in = null;
+      InputStream err = null;
+          in = channel.getInputStream();
+          err = ((ChannelExec) channel).getErrStream();
       channel.connect();
       byte[] tmp = new byte[1024];
       while (true) {

@@ -51,6 +51,8 @@ public class BroMain {
     broExp.addClient("node3", sdxManager.getManagementIP("node3"), "192.168.40.2");
     int TIMES = 10;
     for (int i = 0; i < TIMES; i++) {
+      System.out.println("=============== " + i + " ==============");
+      logger.debug("=============== " + i + " ==============");
       List<double[]> multi = measureMultiMetrics();
       for (int j = 0; j < multi.size(); j++) {
         double[] res = multi.get(j);
@@ -126,12 +128,8 @@ public class BroMain {
     double MaxTime = 40.0;
     for(int flow = flowStart, j = 0; flow <= flowEnd; flow += flowStep, j++){
       int fileTimes = 1;
-      try{
-        fileTimes = (int)(0.5/results.get(j).getDetectionRate().get(0));
-        fileTimes = fileTimes > 1? fileTimes:1;
-      }catch (Exception e){
-
-      }
+      fileTimes = (flow - 500)/100;
+      fileTimes = fileTimes > 1? fileTimes:1;
       if(flow < 900) {
         broExp.addFlow("node0", "node2", flow + "M");
         broExp.addFile("node0", "node2", "evil.txt");

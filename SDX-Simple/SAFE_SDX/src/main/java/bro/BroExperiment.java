@@ -144,8 +144,12 @@ public class BroExperiment extends SliceCommon {
   }
 
   private String fetchFileCMD(String ftpuser, String ftppw, String dip, String filename, int times){
-    return "rm evil.*;/bin/bash getnfiles.sh " + times + " " + ftpuser + " " + ftppw + " " + dip +
-      " " + filename + ";";
+    if(times >0) {
+      return "rm evil.*;/bin/bash getnfiles.sh " + times + " " + ftpuser + " " + ftppw + " " + dip +
+        " " + filename + ";";
+    }else{
+      return "";
+    }
   }
 
   public void getFileAndEchoTime(int times){
@@ -158,7 +162,8 @@ public class BroExperiment extends SliceCommon {
         @Override
         public void run() {
           ftpClientOut.add(Exec.sshExec("root", mip1, fetchFileCMD
-            (ftpuser, ftppw, dip2, file[2], times) + getEchoTimeCMD(), sshkey));
+            (ftpuser, ftppw, dip2, file[2], 1) + getEchoTimeCMD() + fetchFileCMD(ftpuser, ftppw,
+            dip2, file[2], times -1 ), sshkey));
           try {
             sleep(50000);
           }catch (Exception e){
@@ -344,6 +349,7 @@ public class BroExperiment extends SliceCommon {
     tlist.get(tlist.size() - 1).start();
 
     //Wait and stop all processes
+    System.out.println("Waiting for experiment to be finished");
     sleep(flowSeconds);
     stopFlows();
     stopBro();
@@ -429,7 +435,11 @@ public class BroExperiment extends SliceCommon {
       }
     }
     assert cpuTimes == count;
-    double dropRatio = (double)dropped/(double)(received + dropped);
+    double dropRatio = (double)dropped/(double)(received + dropped + 1);
+    if(received + dropped < 10){
+      System.out.println("Abnormal bro output");
+      logger.debug("Abnormal bro output");
+    }
     System.out.println("Average CPU Usage: " + (cpuSum/cpuTimes));
     System.out.println("Detection Rate: " + ((double)fileDetected/(double)fileTimes));
     System.out.println("Drop Rate: " + dropRatio);
