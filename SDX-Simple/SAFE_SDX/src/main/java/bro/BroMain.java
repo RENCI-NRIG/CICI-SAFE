@@ -38,7 +38,7 @@ public class BroMain {
     sdxManager.notifyPrefix("192.168.20.1/24", "192.168.20.2", "notused");
     sdxManager.notifyPrefix("192.168.30.1/24", "192.168.30.2", "notused");
     sdxManager.notifyPrefix("192.168.40.1/24", "192.168.40.2", "notused");
-    configFlows(sdxManager);
+    reconfigureSdxNetwork(sdxManager);
     broExp = new BroExperiment(sdxManager);
     broExp.addClient("node0", sdxManager.getManagementIP("node0"), "192.168.10.2");
     broExp.addClient("node1", sdxManager.getManagementIP("node1"), "192.168.20.2");
@@ -53,6 +53,8 @@ public class BroMain {
       for (int j = 0; j < cpu.size(); j++) {
         results.get(j).addCpuUtilization(cpu.get(j));
       }*/
+
+      /*
       int flowSeconds = 300;
       if(flowEnd<500){
         flowSeconds=100;
@@ -64,8 +66,10 @@ public class BroMain {
         results.get(j).addDetectionRate(res[1]);
         results.get(j).addPacketDropRatio(res[2]);
       }
+      */
+
       List<Double> rt = measureResponseTime(30);
-      for (int j = 0; j < multi.size(); j++) {
+      for (int j = 0; j < rt.size(); j++) {
         results.get(j).addDetectionTime(rt.get(j));
       }
       printResult(results);
@@ -98,8 +102,6 @@ public class BroMain {
         .getNumRouteEntries("c1", routeFlowPattern) == 4){
         suc = true;
         break;
-      }else{
-        sdxManager.sleep(5);
       }
     }
     return suc;

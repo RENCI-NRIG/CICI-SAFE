@@ -32,6 +32,7 @@ public class BroExperiment extends SliceCommon {
   final ArrayList<String[]> cpuOut = new ArrayList<String[]>();
   String broIP;
   String routerName = "c0";
+  String flowPattern = ".*table=0.*nw_src=.*actions=drop.*";
 
   public BroExperiment(SdxManager sm){
     sdxManager = sm;
@@ -87,7 +88,8 @@ public class BroExperiment extends SliceCommon {
       tlist.add(new Thread() {
                   @Override
                   public void run() {
-                    iperfServerOut.add(Exec.sshExec("root", mip2, "/usr/bin/iperf -s -u ",
+                    iperfServerOut.add(Exec.sshExec("root", mip2, "pkill iperf; /usr/bin/iperf " +
+                        "-s -u ",
                       sshkey));
                   }
                 });
@@ -96,7 +98,7 @@ public class BroExperiment extends SliceCommon {
       tlist.add(new Thread() {
         @Override
         public void run() {
-          iperfClientOut.add(Exec.sshExec("root", mip1,"/usr/bin/iperf " +
+          iperfClientOut.add(Exec.sshExec("root", mip1,"pkill iperf; /usr/bin/iperf " +
             "-c " + dip2 + " -u -t " + seconds + " -b " + bw, sshkey));
         }
       });
@@ -164,15 +166,7 @@ public class BroExperiment extends SliceCommon {
           ftpClientOut.add(Exec.sshExec("root", mip1, fetchFileCMD
             (ftpuser, ftppw, dip2, file[2], 1) + getEchoTimeCMD() + fetchFileCMD(ftpuser, ftppw,
             dip2, file[2], times -1 ), sshkey));
-          try {
-            sleep(50000);
-          }catch (Exception e){
-
-          }
-          String flowPattern = ".*table=0.*nw_src="+ dip1 + " actions=drop.*";
-          routerOut.add(new String[]{sdxManager.getFlowInstallationTime(routerName, flowPattern)});
-          stopFlows();
-          stopBro();
+          flowPattern = ".*table=0.*nw_src="+ dip1 + " actions=drop.*";
         }
       });
       tlist.get(tlist.size() - 1).start();
@@ -476,7 +470,16 @@ public class BroExperiment extends SliceCommon {
      */
     //fetch one file and start ping, after 30 seconds, terminate bro and stop all flows
     getFileAndEchoTime(fileTimes);
-    sleep(sleepTime);
+    Double flowTime =0.0;
+    for(int second = 0; second <sleepTime; second += 5){
+      String flowInstallationTime = sdxManager.getFlowInstallationTime("c0", flowPattern);
+      if(flowInstallationTime == null){
+        sleep(5);
+      }else{
+        flowTime = Double.valueOf(flowInstallationTime);
+        break;
+      }
+    }
     stopFlows();
     stopBro();
 
@@ -498,13 +501,12 @@ public class BroExperiment extends SliceCommon {
         }
       }
     }
-    String flowInstallationTime = routerOut.get(0)[0];
-    Double responseTime =0.0;
-    if(flowInstallationTime ==null){
+    double responseTime = 0.0;
+    if(flowTime == 0.0){
       responseTime = 100.0* 1000;
     }
     else{
-      responseTime = Double.valueOf(flowInstallationTime) - Double.valueOf(fileCompletionTime);
+      responseTime = flowTime - Double.valueOf(fileCompletionTime);
     }
     System.out.println("Bro out");
     int fileDetected = 0;
