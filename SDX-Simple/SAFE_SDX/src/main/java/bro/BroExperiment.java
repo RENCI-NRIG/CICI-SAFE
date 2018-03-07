@@ -455,7 +455,7 @@ public class BroExperiment extends SliceCommon {
     }
   }
 
-  public double measureResponseTime(int saturateTime, int fileTimes){
+  public double measureResponseTime(int saturateTime, int fileTimes, int sleepTime){
     broIP = sdxManager.getManagementIP("bro0_c0");
     routerName = "c0";
     tlist.add(new Thread() {
@@ -476,7 +476,7 @@ public class BroExperiment extends SliceCommon {
      */
     //fetch one file and start ping, after 30 seconds, terminate bro and stop all flows
     getFileAndEchoTime(fileTimes);
-    sleep(50);
+    sleep(sleepTime);
     stopFlows();
     stopBro();
 

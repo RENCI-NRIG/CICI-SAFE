@@ -462,19 +462,26 @@ public class SdxManager extends SliceManager {
     if(res) {
       writeLinks(topofile);
       logger.debug("Link added successfully, configuring routes");
-      routingmanager.configurePath(self_prefix,n1,target_prefix,n2,prefixgateway.get(self_prefix)
-        ,SDNController,bandwidth);
-      routingmanager.configurePath(target_prefix,n2,self_prefix,n1,prefixgateway.get
-        (target_prefix),SDNController,0);
-      System.out.println(logPrefix + "Routing set up for "+self_prefix+" and "+target_prefix);
-      if(bandwidth>0) {
-        routingmanager.setQos(SDNController, routingmanager.getDPID(n1), self_prefix,
-          target_prefix, bandwidth);
-        routingmanager.setQos(SDNController, routingmanager.getDPID(n2), target_prefix,
-          self_prefix, bandwidth);
+      if (routingmanager.configurePath(self_prefix,n1,target_prefix,n2,prefixgateway.get
+          (self_prefix), SDNController,bandwidth) &&
+          routingmanager.configurePath(target_prefix,n2,self_prefix,n1,prefixgateway.get
+        (target_prefix),SDNController,0)) {
+        System.out.println(logPrefix + "Routing set up for " + self_prefix + " and " + target_prefix);
+        logger.debug(logPrefix + "Routing set up for " + self_prefix + " and " + target_prefix);
+        if(bandwidth>0) {
+          routingmanager.setQos(SDNController, routingmanager.getDPID(n1), self_prefix,
+            target_prefix, bandwidth);
+          routingmanager.setQos(SDNController, routingmanager.getDPID(n2), target_prefix,
+            self_prefix, bandwidth);
+        }
+        return "route configured: " + res;
+      }else{
+        System.out.println(logPrefix + "Route for " + self_prefix + " and " + target_prefix +
+          "Failed");
+        logger.debug(logPrefix + "Route for " + self_prefix + " and " + target_prefix +
+          "Failed");
       }
     }
-
     return "route configured: " + res;
   }
 
@@ -1048,6 +1055,21 @@ public class SdxManager extends SliceManager {
       logger.debug("result: null");
       return null;
     }
+  }
+
+  public int getNumRouteEntries(String routerName, String flowPattern){
+    String result = Exec.sshExec("root", getManagementIP(routerName), getEchoTimeCMD() +
+      "ovs-ofctl dump-flows br0", sshkey)[0];
+    String[] parts = result.split("\n");
+    String curMillis = parts[0].split(":")[1];
+    int num =0;
+    for (String s : parts) {
+      if(s.matches(flowPattern)){
+        logger.debug(s);
+        num ++;
+      }
+    }
+    return num;
   }
 }
 

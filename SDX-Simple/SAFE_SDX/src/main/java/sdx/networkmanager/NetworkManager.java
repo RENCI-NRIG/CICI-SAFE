@@ -290,8 +290,8 @@ public class NetworkManager {
     controller){
     String[] cmd = routingCMD(destIp, srcIp, gateWay, dpid, controller);
     String res = HttpUtil.postJSON(cmd[0], new JSONObject(cmd[1]));
-    System.out.println(cmd[1]);
-    System.out.println(res);
+    logger.debug(cmd[1]);
+    logger.debug(res);
     if (res.contains("success")) {
       int id = Integer.valueOf(res.split("route_id=")[1].split("]")[0]);
       cmd[cmd.length-1] = res;
@@ -347,25 +347,28 @@ public class NetworkManager {
 
 
   //gateway is the gateway for nodename
-  public void configurePath(String dest, String nodename, String targetIP, String targetnodename, String gateway, String controller, long bw) {
+  public boolean configurePath(String dest, String nodename, String targetIP, String targetnodename,
+                         String gateway, String controller, long bw) {
     logger.debug("Network Manager: Configuring path for " + dest + " " + nodename + " " + targetIP + " " + targetnodename + " " + gateway);
     String gwdpid = getRouter(nodename).getDPID();
     String targetdpid = getRouter(targetnodename).getDPID();
     if (gwdpid == null || targetdpid == null) {
       logger.debug("No router named " + nodename + " not found");
-      return;
+      return false;
     }
     ArrayList<String[]> paths = getPairRoutes(gwdpid, targetdpid, gateway, bw);
     pairPath.put(getPathID(dest, targetIP), paths);
     ArrayList<String> dpids = new ArrayList<String>();
+    boolean res = true;
     for (String[] path : paths) {
       //Path [dpid,gateway,neighborip]
       Router router = getRouterByDPID(path[0]);
       if (path[2] != null) {
         router.getNeighbors().get(path[2]).useBW(bw);
       }
-      addRoute(dest, targetIP, path[1], path[0], controller);
+      res &= addRoute(dest, targetIP, path[1], path[0], controller);
     }
+    return res;
   }
 
   public void removePath(String srcIP, String dstIP, String controller){
@@ -380,7 +383,7 @@ public class NetworkManager {
     String[] cmd = mirrorCMD(controller, dpid, source, dst, gw);
     addEntry_HashList(sdncmds, dpid, cmd);
     String res=HttpUtil.postJSON(cmd[0], new JSONObject(cmd[1]));
-    System.out.println(res);
+    logger.debug(res);
     if (res.contains("success")) {
       int id = Integer.valueOf(res.split("mirror_id=")[1].split("]")[0]);
       mirror_id.put(getRouteKey(source, dst, dpid), id);
