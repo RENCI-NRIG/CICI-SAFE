@@ -1049,7 +1049,7 @@ public class SdxManager extends SliceManager {
       }
       String duration = flow.split("duration=")[1].split("s")[0];
       Long installTime = Long.valueOf(curMillis) - (long)(1000 * Double.valueOf(duration));
-      logger.debug("result: " + installTime);
+      logger.debug("flow installation time result: " + installTime);
       return String.valueOf(installTime);
     }catch (Exception e){
       logger.debug("result: null");

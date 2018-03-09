@@ -30,6 +30,7 @@ public class BroExperiment extends SliceCommon {
   final ArrayList<String[]> pingClientOut = new ArrayList<String[]>();
   final ArrayList<String[]> routerOut = new ArrayList<String[]>();
   final ArrayList<String[]> cpuOut = new ArrayList<String[]>();
+  String broName = "br0_c0";
   String broIP;
   String routerName = "c0";
   String flowPattern = ".*table=0.*nw_src=.*actions=drop.*";
@@ -302,15 +303,17 @@ public class BroExperiment extends SliceCommon {
     return cpuSum/times;
   }
 
-  public double[] measureMultiMetrics(int flowSeconds, int fileTimes, int cpuTimes) {
+  public double[] measureMultiMetrics(int flowSeconds, int fileTimes, int cpuTimes, String bro,
+                                      String router) {
     /*
     Function to measure detection rate and packet drop ratio
     @Params
         flowSeconds: length of background traffic
         fileTimes: times of file transmission
      */
-    broIP = sdxManager.getManagementIP("bro0_c0");
-    routerName = "c0";
+    broName = bro;
+    routerName = router;
+    broIP = sdxManager.getManagementIP(broName);
     tlist.add(new Thread() {
       @Override
       public void run() {
@@ -449,9 +452,11 @@ public class BroExperiment extends SliceCommon {
     }
   }
 
-  public double measureResponseTime(int saturateTime, int fileTimes, int sleepTime){
-    broIP = sdxManager.getManagementIP("bro0_c0");
-    routerName = "c0";
+  public double measureResponseTime(int saturateTime, int fileTimes, int sleepTime, String
+    bro, String router){
+    broName = bro;
+    broIP = sdxManager.getManagementIP(broName);
+    routerName = router;
     tlist.add(new Thread() {
       @Override
       public void run() {
@@ -470,13 +475,13 @@ public class BroExperiment extends SliceCommon {
      */
     //fetch one file and start ping, after 30 seconds, terminate bro and stop all flows
     getFileAndEchoTime(fileTimes);
-    Double flowTime =0.0;
+    long flowTime = 0;
     for(int second = 0; second <sleepTime; second += 5){
-      String flowInstallationTime = sdxManager.getFlowInstallationTime("c0", flowPattern);
+      String flowInstallationTime = sdxManager.getFlowInstallationTime(routerName, flowPattern);
       if(flowInstallationTime == null){
         sleep(5);
       }else{
-        flowTime = Double.valueOf(flowInstallationTime);
+        flowTime = Long.valueOf(flowInstallationTime);
         break;
       }
     }
@@ -497,6 +502,7 @@ public class BroExperiment extends SliceCommon {
     for(String[] s:ftpClientOut){
       for(String str: s[0].split("\n")){
         if(str.matches("currentMillis:\\d+")){
+          logger.debug(str);
           fileCompletionTime = str.split(":")[1];
         }
       }
@@ -506,7 +512,7 @@ public class BroExperiment extends SliceCommon {
       responseTime = 100.0* 1000;
     }
     else{
-      responseTime = flowTime - Double.valueOf(fileCompletionTime);
+      responseTime = flowTime - Long.valueOf(fileCompletionTime);
     }
     System.out.println("Bro out");
     int fileDetected = 0;

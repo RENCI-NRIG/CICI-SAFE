@@ -298,7 +298,7 @@ public class SliceManager extends SliceCommon {
     String broURL =
       "http://geni-images.renci.org/images/standard/centos/centos7.4-bro-v1.0.4/centos7.4-bro-v1.0.4.xml";
     String broHash = "50c973571fc6da95c3f70d0f71c9aea1659ff780";
-    String broType = "XO Extra large";
+    String broType = "XO Medium";
     ComputeNode bro = s.addComputeNode(broname);
     bro.setImage(broURL, broHash, broN);
     bro.setDomain(edgerouter.getDomain());
@@ -366,7 +366,7 @@ public class SliceManager extends SliceCommon {
         nodeImageHash, nodeImageShortName, nodeNodeType, clientSites.get(i % clientSites.size()),
         nodePostBootScript);
       nodelist.add(node0);
-      if (BRO && i ==0) {
+      if (BRO) {
         long brobw = conf.getLong("config.brobw");
         addBro(s, "bro0_c" + i, node0, curip++, brobw);
       }

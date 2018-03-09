@@ -13,11 +13,15 @@ public class BroMain {
   final static Logger logger = Logger.getLogger(BroMain.class);
   static SdxManager sdxManager;
   static BroExperiment broExp;
-  static int flowStart = 1100;
+  static int flowStart = 0;
   static int flowEnd = 1500;
   static int flowStep = 100;
-  static String fileName = "data.txt";
+  static String fileName = "data-1.txt";
   static ArrayList<BroResult> results = new ArrayList<>();
+  static String broName = "bro0_c1";
+  static String routerName = "c1";
+  static String routerNoBro = "c0";
+  static String broIP = "192.168.129.2";
 
 
   public static void main(String[] args) {
@@ -31,7 +35,7 @@ public class BroMain {
       }
     });
 
-    String[] arg1 = {"-c", "config/cnert-fl2.conf"};
+    String[] arg1 = {"-c", "config/cnert-renci-sl.conf"};
     sdxManager = new SdxManager();
     sdxManager.startSdxServer(arg1);
     sdxManager.notifyPrefix("192.168.10.1/24", "192.168.10.2", "notused");
@@ -54,7 +58,6 @@ public class BroMain {
         results.get(j).addCpuUtilization(cpu.get(j));
       }*/
 
-      /*
       int flowSeconds = 300;
       if(flowEnd<500){
         flowSeconds=100;
@@ -66,7 +69,6 @@ public class BroMain {
         results.get(j).addDetectionRate(res[1]);
         results.get(j).addPacketDropRatio(res[2]);
       }
-      */
 
       List<Double> rt = measureResponseTime(30);
       for (int j = 0; j < rt.size(); j++) {
@@ -91,15 +93,15 @@ public class BroMain {
   static boolean configFlows(SdxManager sdxManager){
     sdxManager.connectionRequest("not used", "192.168.10.1/24", "192.168.30.1/24", 0);
     sdxManager.connectionRequest("not used", "192.168.20.1/24", "192.168.40.1/24", 0);
-    sdxManager.setMirror(sdxManager.getDPID("c0"), "192.168.10.1/24", "192.168.30.1/24",
-      "192.168.128.2");
-    sdxManager.setMirror(sdxManager.getDPID("c0"), "192.168.20.1/24", "192.168.40.1/24",
-      "192.168.128.2");
+    sdxManager.setMirror(sdxManager.getDPID(routerName), "192.168.10.1/24", "192.168.30.1/24",
+      broIP);
+    sdxManager.setMirror(sdxManager.getDPID(routerName), "192.168.20.1/24", "192.168.40.1/24",
+      broIP);
     String routeFlowPattern = ".*nw_src.*nw_dst.*actions=dec_ttl.*load.*";
     boolean suc = false;
     for(int i=0; i<5; i++){
-      if(sdxManager.getNumRouteEntries("c0", routeFlowPattern) == 8 && sdxManager
-        .getNumRouteEntries("c1", routeFlowPattern) == 4){
+      if(sdxManager.getNumRouteEntries(routerName, routeFlowPattern) == 8 && sdxManager
+        .getNumRouteEntries(routerNoBro, routeFlowPattern) == 4){
         suc = true;
         break;
       }
@@ -136,9 +138,12 @@ public class BroMain {
     ArrayList<double[]> results = new ArrayList<>();
     for(int flow = flowStart; flow <= flowEnd; flow += flowStep){
       if(flow < 900) {
-        broExp.addFlow("node0", "node2", flow + "M");
+        if(flow >0) {
+          broExp.addFlow("node0", "node2", flow + "M");
+        }
         broExp.addFile("node0", "node2", "evil.txt");
-        double[] result = broExp.measureMultiMetrics(flowSeconds, filetimes, cputimes);
+        double[] result = broExp.measureMultiMetrics(flowSeconds, filetimes, cputimes, broName,
+          routerName);
         results.add(result);
         broExp.clearFlows();
         broExp.clearFiles();
@@ -146,7 +151,8 @@ public class BroMain {
         broExp.addFlow("node0", "node2", flow/2 + "M");
         broExp.addFlow("node1", "node3", flow/2 + "M");
         broExp.addFile("node0", "node2", "evil.txt");
-        double[] result = broExp.measureMultiMetrics(flowSeconds, filetimes, cputimes);
+        double[] result = broExp.measureMultiMetrics(flowSeconds, filetimes, cputimes, broName,
+          routerName);
         results.add(result);
         broExp.clearFlows();
         broExp.clearFiles();
@@ -164,23 +170,20 @@ public class BroMain {
     ArrayList<Double> responseTime = new ArrayList<Double>();
     double MaxTime = 40.0;
     for(int flow = flowStart, j = 0; flow <= flowEnd; flow += flowStep, j++){
-      if(flow < 500){
-        //Constant repsonse time, continue
-        responseTime.add(5.0);
-        continue;
-      }
       int fileTimes = 1;
       fileTimes = (flow - 500)/100;
       fileTimes = fileTimes > 1? fileTimes:1;
       int sleepTime = 30;
       if(flow < 900) {
-        broExp.addFlow("node0", "node2", flow + "M");
+        if(flow > 0) {
+          broExp.addFlow("node0", "node2", flow + "M");
+        }
         broExp.addFile("node0", "node2", "evil.txt");
-        Double time = broExp.measureResponseTime(saturateTime, fileTimes, sleepTime);
+        Double time = broExp.measureResponseTime(saturateTime, fileTimes, sleepTime, broName, routerName);
         reconfigureSdxNetwork(sdxManager);
         while(time > MaxTime){
           System.out.println("bro failed to detect the file, retry");
-          time = broExp.measureResponseTime(saturateTime, fileTimes, sleepTime);
+          time = broExp.measureResponseTime(saturateTime, fileTimes, sleepTime, broName, routerName);
           reconfigureSdxNetwork(sdxManager);
         }
         responseTime.add(time);
@@ -190,11 +193,11 @@ public class BroMain {
         broExp.addFlow("node0", "node2", flow/2 + "M");
         broExp.addFlow("node1", "node3", flow/2 + "M");
         broExp.addFile("node0", "node2", "evil.txt");
-        Double time = broExp.measureResponseTime(saturateTime, fileTimes, sleepTime);
+        Double time = broExp.measureResponseTime(saturateTime, fileTimes, sleepTime, broName, routerName);
         reconfigureSdxNetwork(sdxManager);
         while(time > MaxTime){
           System.out.println("bro failed to detect the file, retry");
-          time = broExp.measureResponseTime(saturateTime, fileTimes, sleepTime);
+          time = broExp.measureResponseTime(saturateTime, fileTimes, sleepTime, broName, routerName);
           reconfigureSdxNetwork(sdxManager);
         }
         responseTime.add(time);
