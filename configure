@@ -1,0 +1,26 @@
+#!/bin/bash
+SLICENAME_SUFFIX="yao"
+SITENAME1="ufl"
+SITENAME2="fiu"
+SITE1="UFL (Gainesville, FL USA) XO Rack"
+SITE2="FIU (Miami, FL USA) XO Rack"
+SDXSERVER="http://127.0.0.1:8888/"
+SSHKEY="~/.ssh/id_rsa"
+EXOGENIPEM="~/.ssl/geni-yuanjuny.pem"
+CWD=$(pwd)
+SCRIPTSDIR="${CWD}/SDX-Simple/SAFE_SDX/src/main/resources/scripts/"
+RESOURCEDIR="${CWD}/SDX-Simple/SAFE_SDX/src/main/resources/"
+SDX="sdx-${SLICENAME_SUFFIX}"
+C1="c1-${SITENAME1}-${SLICENAME_SUFFIX}"
+C2="c2-${SITENAME2}-${SLICENAME_SUFFIX}"
+C3="c3-${SITENAME1}-${SLICENAME_SUFFIX}"
+C4="c4-${SITENAME2}-${SLICENAME_SUFFIX}"
+
+#safe server for communion slice
+
+sed "s@slicename=\".*\"@slicename=\"${SDX}\"@g;s@serverurl=\".*\"@serverurl=\"${SDXSERVER}\"@g;s@sshkey=\".*\"@sshkey=\"${SSHKEY}\"@g;s@exogenipem=\".*pem\"@exogenipem=\"${EXOGENIPEM}\"@g;s@scriptsdir=\".*scripts/\"@scriptsdir=\"${SCRIPTSDIR}\"@g;s@resourcedir=\".*resources/\"@resourcedir=\"${RESOURCEDIR}\"@g;s@clientsites=\".*\"@clientsites=\"${SITE1}:${SITE2}\"@g;s@controllersite=\".*\"@controllersite=\"${SITE1}\"@g" SDX-Simple/config/sdx.conf
+
+sed "s@slicename=\".*\"@slicename=\"${C1}\"@g;s@serverurl=\".*\"@serverurl=\"${SDXSERVER}\"@g;s@sshkey=\".*\"@sshkey=\"${SSHKEY}\"@g;s@exogenipem=\".*pem\"@exogenipem=\"${EXOGENIPEM}\"@g;s@scriptsdir=\".*scripts/\"@scriptsdir=\"${SCRIPTSDIR}\"@g;s@resourcedir=\".*resources/\"@resourcedir=\"${RESOURCEDIR}\"@g" SDX-Simple/client-config/c1.conf
+sed "s@slicename=\".*\"@slicename=\"${C2}\"@g;s@serverurl=\".*\"@serverurl=\"${SDXSERVER}\"@g;s@sshkey=\".*\"@sshkey=\"${SSHKEY}\"@g;s@exogenipem=\".*pem\"@exogenipem=\"${EXOGENIPEM}\"@g;s@scriptsdir=\".*scripts/\"@scriptsdir=\"${SCRIPTSDIR}\"@g;s@resourcedir=\".*resources/\"@resourcedir=\"${RESOURCEDIR}\"@g" SDX-Simple/client-config/c2.conf
+sed "s@slicename=\".*\"@slicename=\"${C3}\"@g;s@serverurl=\".*\"@serverurl=\"${SDXSERVER}\"@g;s@sshkey=\".*\"@sshkey=\"${SSHKEY}\"@g;s@exogenipem=\".*pem\"@exogenipem=\"${EXOGENIPEM}\"@g;s@scriptsdir=\".*scripts/\"@scriptsdir=\"${SCRIPTSDIR}\"@g;s@resourcedir=\".*resources/\"@resourcedir=\"${RESOURCEDIR}\"@g" SDX-Simple/client-config/c3.conf
+sed "s@slicename=\".*\"@slicename=\"${C4}\"@g;s@serverurl=\".*\"@serverurl=\"${SDXSERVER}\"@g;s@sshkey=\".*\"@sshkey=\"${SSHKEY}\"@g;s@exogenipem=\".*pem\"@exogenipem=\"${EXOGENIPEM}\"@g;s@scriptsdir=\".*scripts/\"@scriptsdir=\"${SCRIPTSDIR}\"@g;s@resourcedir=\".*resources/\"@resourcedir=\"${RESOURCEDIR}\"@g" SDX-Simple/client-config/c4.conf
