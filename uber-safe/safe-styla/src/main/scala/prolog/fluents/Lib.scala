@@ -1,7 +1,18 @@
 package prolog.fluents
 
 object Lib {
-  val code = if(!prolog.Config.config.stylibOn) "" else 
+  val code = if(!prolog.Config.config.stylibOn)
+  // Always turn on Negation
+"""
+\+(X):-X,!,fail.
+\+(_).
+
+S:(\+(X)):-S:(X),!,fail.
+S:(\+(_)).
+"""
+
+else 
+
 """
 /* default library*/
     
