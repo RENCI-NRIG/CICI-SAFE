@@ -59,6 +59,7 @@ trait SafelangService extends InferenceService
       logger.info(s"""ServerPrincipal/SelfID = ${envContext.get(StrLit("Self"))}""")
       var allGoals = ListBuffer[Assertion]()
       allGoals ++= defenvGoals.map(s => Assertion(s.terms.tail))
+      logger.info(s"skipDefinit: $skipDefinit")
       if(skipDefinit == false) {
         val definitGoals = facts.get(StrLit("definit0")).getOrElse(Nil) ++ rules.get(StrLit("definit0")).getOrElse(Nil)
         logger.info(s"definitGoals: ${definitGoals}")
@@ -364,6 +365,9 @@ class SafelangManager(keypairDir: String) extends KeyPairManager with LazyLoggin
     //  logger.info(s"isValidPID(p.get): ${isValidPID(p.get)} \n serverPrincipals.keySet: ${serverPrincipals.keySet}")
     //}
 
+    // Skip definit in initial execution when it's a post
+    val skipDefinit: Boolean = if(guardType.isDefined && guardType.get == DEF_POST) true else false
+
     var envcnt: MutableMap[StrLit, EnvValue] = null
     var inference: Safelang = null
     this.synchronized {
@@ -388,10 +392,11 @@ class SafelangManager(keypairDir: String) extends KeyPairManager with LazyLoggin
           setSelfEnvs(_cnt, pid)
         }
         inference.bindEnvContext(_cnt)
-        val skipDefinit: Boolean = if(guardType.isDefined && guardType.get == DEF_POST) true else false
         inference.doInitialExecution(skipDefinit)  // Executing definit and defenv
         envcnt = inference.getEnvContext           // Reference envcontext 
-        updateReferenceEnvContexts(pid, envcnt)
+        if(skipDefinit == false) { // reusable context
+          updateReferenceEnvContexts(pid, envcnt)
+        }
         // We now know the default server PID after initial execution is done
         if(pid == "_default" && defaultServerPrincipal.isDefined) { 
           val defaultPID: String = defaultServerPrincipal.get.pid
@@ -407,7 +412,9 @@ class SafelangManager(keypairDir: String) extends KeyPairManager with LazyLoggin
     val res = inference.solveSlang(Seq(query), false)
       
     this.synchronized { // release envcont and safelang
-      getWorkableEnvContexts(pid).enqueue(envcnt) 
+      if(skipDefinit == false) { // reusable context
+        getWorkableEnvContexts(pid).enqueue(envcnt) 
+      }
       safelangs.enqueue(inference)
     }      
     res
