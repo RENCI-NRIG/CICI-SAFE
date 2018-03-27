@@ -6,6 +6,7 @@ Enter SDX-Simple
 1. build: ./scripts/build.sh
 
 2. Modify fields in "configure" and run "./configure", this script will substitute fields in configuration files
+   You should at least change the path to your exogeni pem file. And  you can choose what suffix you use for your slices, what sites you want to experiment on. 
 
    About configuration files in SDX-Simple/config and SDX-Simple/client-config: 
         slicename       Name of the slice

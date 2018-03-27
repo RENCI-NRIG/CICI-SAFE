@@ -229,7 +229,7 @@ public abstract class SliceCommon {
       }
       br.close();
     } catch (Exception e){
-      e.printStackTrace();
+      System.out.println("Topology not save to file");
     }
   }
 
