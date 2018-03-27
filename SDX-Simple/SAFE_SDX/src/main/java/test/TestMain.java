@@ -138,7 +138,7 @@ public class TestMain {
     ClientSlice s2 = new ClientSlice(clientarg2);
     ClientSlice s3 =  new ClientSlice(clientarg3);
     ClientSlice s4 = new ClientSlice(clientarg4);
-    ClientSlice s6 = new ClientSlice(clientarg6);
+    //ClientSlice s6 = new ClientSlice(clientarg6);
 
     ArrayList<Thread> tlist = new ArrayList<Thread>();
     tlist.add(new Thread(() -> ts.run(arg1)));
@@ -146,7 +146,7 @@ public class TestMain {
     tlist.add(new Thread(() -> s2.run()));
     tlist.add(new Thread(() -> s3.run()));
     tlist.add(new Thread(() -> s4.run()));
-    tlist.add(new Thread(() -> s6.run()));
+    //tlist.add(new Thread(() -> s6.run()));
 
     tlist.forEach(w -> {
       try {
@@ -163,13 +163,13 @@ public class TestMain {
     ClientSlice s2 = new ClientSlice(clientarg2);
     ClientSlice s3 =  new ClientSlice(clientarg3);
     ClientSlice s4 = new ClientSlice(clientarg4);
-    ClientSlice s6 = new ClientSlice(clientarg6);
+    //ClientSlice s6 = new ClientSlice(clientarg6);
     ts.delete();
     s1.delete();
     s2.delete();
     s3.delete();
     s4.delete();
-    s6.delete();
+    //s6.delete();
   }
 
   public static void createTestSliceParrallel(){
@@ -186,7 +186,7 @@ public class TestMain {
     SdxServer.sdxManager.sleep(10);
 
     String[][] args = {clientarg1, clientarg2, clientarg3, clientarg4, clientarg6};
-    for(int i = 0 ; i< 5; i++) {
+    for(int i = 0 ; i< 4; i++) {
       final String[] arg = args[i];
       Thread thread2 = new Thread() {
         @Override
