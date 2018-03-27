@@ -1,5 +1,5 @@
 #!/bin/bash
-SLICENAME_SUFFIX="yao"
+SLICENAME_SUFFIX=${USER}
 SITENAME1="ufl"
 SITENAME2="fiu"
 SITE1="UFL (Gainesville, FL USA) XO Rack"

@@ -3,9 +3,10 @@ To run the exerimental demo.
 0. Install ahab 1.7( https://github.com/RENCI-NRIG/ahab.git) manually. "cd ahab; mvn install"
 Enter SDX-Simple
 1. build: ./scripts/build.sh
-2. Modify the configuration files in SDX-Simple/config, SDX-Simple/client-config, SDX-Simple/stitchport-config
-   For demo on ExoGENI only: you need to modify "cnert-fl.conf" in SDX-Simple/config, "c1-ufl.conf", "c2-unf.conf", "c3-ufl.conf", "c4-unf.conf" in SDX-Simple/client-config
-   About configuration files: 
+
+2. Modify fields in "configure" and run "./configure", this script will substitute fields in configuration files
+
+   About configuration files in SDX-Simple/config and SDX-Simple/client-config: 
         slicename       Name of the slice
         sshkey          the location of your sshkey, used for logging onto ExoGENI node
         exogenipem      Your ExoGENI pem file
