@@ -242,6 +242,8 @@ public class SdxManager extends SliceManager {
       usedip.add(ip_to_use);
       net = serverSlice.addBroadcastLink(stitchname);
       InterfaceNode2Net ifaceNode0 = (InterfaceNode2Net) net.stitch(node);
+      ifaceNode0.setIpAddress("192.168." + String.valueOf(ip_to_use) + ".1");
+      ifaceNode0.setMacAddress("255.255.255.0");
       commitAndWait(serverSlice, 10, Arrays.asList(new String[]{stitchname}));
     } else {
       //if node not exists, add another node to the slice
@@ -257,6 +259,8 @@ public class SdxManager extends SliceManager {
       usedip.add(ip_to_use);
       net = serverSlice.addBroadcastLink(stitchname);
       InterfaceNode2Net ifaceNode0 = (InterfaceNode2Net) net.stitch(node);
+      ifaceNode0.setIpAddress("192.168.1.1");
+      ifaceNode0.setMacAddress("255.255.255.0");
       commitAndWait(serverSlice, 10, Arrays.asList(new String[]{stitchname, routerName}));
       serverSlice.refresh();
       node = (ComputeNode) serverSlice.getResourceByName(routerName);

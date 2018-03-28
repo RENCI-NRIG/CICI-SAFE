@@ -307,6 +307,8 @@ public class SliceManager extends SliceCommon {
 
     Network bronet = s.addBroadcastLink(getBroLinkName(ip_to_use), bw);
     InterfaceNode2Net ifaceNode1 = (InterfaceNode2Net) bronet.stitch(edgerouter);
+    ifaceNode1.setIpAddress("192.168." + String.valueOf(ip_to_use) + ".1");
+    ifaceNode1.setNetmask("255.255.255.0");
     InterfaceNode2Net ifaceNode2 = (InterfaceNode2Net) bronet.stitch(bro);
     ifaceNode2.setIpAddress("192.168." + String.valueOf(ip_to_use) + ".2");
     ifaceNode2.setNetmask("255.255.255.0");
