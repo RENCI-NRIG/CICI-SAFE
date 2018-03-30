@@ -80,10 +80,10 @@ public class TestMain {
     }
 
     // client slice advertise their prefix
-    client1.processCmd("route 192.168.10.1/24 192.168.130.2");
-    client2.processCmd("route 192.168.20.1/24 192.168.131.2");
-    client3.processCmd("route 192.168.30.1/24 192.168.132.2");
-    client4.processCmd("route 192.168.40.1/24 192.168.133.2");
+    client1.processCmd("route 192.168.10.1/24 192.168.131.2");
+    client2.processCmd("route 192.168.20.1/24 192.168.132.2");
+    client3.processCmd("route 192.168.30.1/24 192.168.133.2");
+    client4.processCmd("route 192.168.40.1/24 192.168.134.2");
 
     // Client request for connection between prefixes
     client3.processCmd("link 192.168.30.1/24 192.168.40.1/24");

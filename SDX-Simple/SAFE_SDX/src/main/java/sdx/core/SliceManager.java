@@ -239,27 +239,31 @@ public class SliceManager extends SliceCommon {
     }
   }
 
-  protected void commitAndWait(Slice s, int interval) {
+  protected boolean commitAndWait(Slice s, int interval) {
     try {
       s.commit();
       String timeStamp1 = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(new Date());
       waitTillActive(s,interval);
       String timeStamp2 = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(new Date());
       logger.debug("Time interval: " + timeStamp1 + " " + timeStamp2);
+      return true;
     } catch (Exception e) {
       e.printStackTrace();
+      return false;
     }
   }
 
-  protected void commitAndWait(Slice s, int interval, List<String> resources) {
+  protected boolean commitAndWait(Slice s, int interval, List<String> resources) {
     try {
       s.commit();
       String timeStamp1 = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(new Date());
       waitTillActive(s,interval, resources);
       String timeStamp2 = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(new Date());
       logger.debug("Time interval: " + timeStamp1 + " " + timeStamp2);
+      return true;
     } catch (Exception e) {
       e.printStackTrace();
+      return false;
     }
   }
 
@@ -329,17 +333,6 @@ public class SliceManager extends SliceCommon {
     }
   }
 
-  protected void deleteSlice(String sliceName){
-    Slice s2 = null;
-    try {
-      logger.debug("deleting slice " + sliceName);
-      s2 = Slice.loadManifestFile(sliceProxy, sliceName);
-      s2.delete();
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
-  }
-
   public Slice createCarrierSlice(String sliceName, int num, long bw) {
     //,String stitchsubnet="", String slicesubnet="")
     logger.debug("ndllib TestDriver: START");
@@ -368,7 +361,7 @@ public class SliceManager extends SliceCommon {
         nodeImageHash, nodeImageShortName, nodeNodeType, clientSites.get(i % clientSites.size()),
         nodePostBootScript);
       nodelist.add(node0);
-      if (BRO && i ==0) {
+      if (BRO) {
         long brobw = conf.getLong("config.brobw");
         addBro(s, "bro0_c" + i, node0, curip++, brobw);
       }

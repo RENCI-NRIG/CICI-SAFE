@@ -229,8 +229,10 @@ public class SdxManager extends SliceManager {
       ip_to_use = getAvailableIP();
       stitchname = "stitch_" + node.getName() + "_" + ip_to_use;
       usedip.add(ip_to_use);
-      net = serverSlice.addBroadcastLink(stitchname);
+      net = serverSlice.addBroadcastLink(stitchname, 1000000000);
       InterfaceNode2Net ifaceNode0 = (InterfaceNode2Net) net.stitch(node);
+      ifaceNode0.setIpAddress("192.168." + String.valueOf(ip_to_use) + ".1");
+      ifaceNode0.setNetmask("255.255.255.0");
       commitAndWait(serverSlice, 10, Arrays.asList(new String[]{stitchname}));
       serverSlice.refresh();
     }
@@ -240,10 +242,10 @@ public class SdxManager extends SliceManager {
       ip_to_use = getAvailableIP();
       stitchname = "stitch_" + node.getName() + "_" + ip_to_use;
       usedip.add(ip_to_use);
-      net = serverSlice.addBroadcastLink(stitchname);
+      net = serverSlice.addBroadcastLink(stitchname, 1000000000);
       InterfaceNode2Net ifaceNode0 = (InterfaceNode2Net) net.stitch(node);
       ifaceNode0.setIpAddress("192.168." + String.valueOf(ip_to_use) + ".1");
-      ifaceNode0.setMacAddress("255.255.255.0");
+      ifaceNode0.setNetmask("255.255.255.0");
       commitAndWait(serverSlice, 10, Arrays.asList(new String[]{stitchname}));
     } else {
       //if node not exists, add another node to the slice
@@ -257,10 +259,10 @@ public class SdxManager extends SliceManager {
       ip_to_use = getAvailableIP();
       stitchname = "stitch_" + node.getName() + "_" + ip_to_use;
       usedip.add(ip_to_use);
-      net = serverSlice.addBroadcastLink(stitchname);
+      net = serverSlice.addBroadcastLink(stitchname, 1000000000);
       InterfaceNode2Net ifaceNode0 = (InterfaceNode2Net) net.stitch(node);
-      ifaceNode0.setIpAddress("192.168.1.1");
-      ifaceNode0.setMacAddress("255.255.255.0");
+      ifaceNode0.setIpAddress("192.168." + String.valueOf(ip_to_use) + ".1");
+      ifaceNode0.setNetmask("255.255.255.0");
       commitAndWait(serverSlice, 10, Arrays.asList(new String[]{stitchname, routerName}));
       serverSlice.refresh();
       node = (ComputeNode) serverSlice.getResourceByName(routerName);
@@ -283,7 +285,7 @@ public class SdxManager extends SliceManager {
     stitch(customerName, ResrvID, sdxslice, net1_stitching_GUID, secret, ip);
     res[0] = gw;
     res[1] = ip;
-    sleep(10);
+    sleep(15);
     Exec.sshExec("root", node.getManagementIP(), "/bin/bash ~/ovsbridge.sh " +
       OVSController, sshkey);
     routingmanager.newLink(link.getIP(1), link.nodea, ip.split("/")[0], SDNController);
@@ -310,7 +312,7 @@ public class SdxManager extends SliceManager {
       e.printStackTrace();
     }
     configBroNodes(serverSlice, "(" + broName + ")");
-    sleep(10);
+    sleep(15);
     Exec.sshExec("root", router.getManagementIP(), "/bin/bash ~/ovsbridge.sh " +
       OVSController, sshkey);
     Link link=new Link();
