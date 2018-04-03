@@ -297,7 +297,7 @@ public class SliceManager extends SliceCommon {
   }
 
   //We always add the bro when we add the edge router
-  protected ComputeNode addBro(Slice s, String broname, ComputeNode edgerouter, int ip_to_use, long bw) {
+  protected ComputeNode addBro(Slice s, String broname, ComputeNode edgerouter) {
     String broN = "Centos 7.4 Bro";
     String broURL =
       "http://geni-images.renci.org/images/standard/centos/centos7.4-bro-v1.0.4/centos7.4-bro-v1.0.4.xml";
@@ -309,6 +309,7 @@ public class SliceManager extends SliceCommon {
     bro.setNodeType(broType);
     bro.setPostBootScript(getBroScripts());
 
+    /*
     Network bronet = s.addBroadcastLink(getBroLinkName(ip_to_use), bw);
     InterfaceNode2Net ifaceNode1 = (InterfaceNode2Net) bronet.stitch(edgerouter);
     ifaceNode1.setIpAddress("192.168." + String.valueOf(ip_to_use) + ".1");
@@ -316,6 +317,7 @@ public class SliceManager extends SliceCommon {
     InterfaceNode2Net ifaceNode2 = (InterfaceNode2Net) bronet.stitch(bro);
     ifaceNode2.setIpAddress("192.168." + String.valueOf(ip_to_use) + ".2");
     ifaceNode2.setNetmask("255.255.255.0");
+    */
     return bro;
   }
 
@@ -363,7 +365,15 @@ public class SliceManager extends SliceCommon {
       nodelist.add(node0);
       if (BRO) {
         long brobw = conf.getLong("config.brobw");
-        addBro(s, "bro0_c" + i, node0, curip++, brobw);
+        ComputeNode broNode = addBro(s, "bro0_c" + i, node0);
+        int ip_to_use = curip++;
+        Network bronet = s.addBroadcastLink(getBroLinkName(ip_to_use), bw);
+        InterfaceNode2Net ifaceNode1 = (InterfaceNode2Net) bronet.stitch(node0);
+        ifaceNode1.setIpAddress("192.168." + String.valueOf(ip_to_use) + ".1");
+        ifaceNode1.setNetmask("255.255.255.0");
+        InterfaceNode2Net ifaceNode2 = (InterfaceNode2Net) bronet.stitch(broNode);
+        ifaceNode2.setIpAddress("192.168." + String.valueOf(ip_to_use) + ".2");
+        ifaceNode2.setNetmask("255.255.255.0");
       }
     }
     //add Links

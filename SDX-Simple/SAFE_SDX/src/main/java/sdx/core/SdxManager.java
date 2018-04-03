@@ -206,8 +206,105 @@ public class SdxManager extends SliceManager {
     runCmdSlice(serverSlice, "ovs-ofctl del-flows br0", routerPattern, false, true);
   }
 
-  private void waitForNewInterface(String ip){
+  private void addLink(Slice s, String linkName, String ip, String netmask, String nodeName, long
+    bw){
+    ComputeNode node = (ComputeNode) s.getResourceByName(nodeName);
+    Network net = serverSlice.addBroadcastLink(linkName, bw);
+    InterfaceNode2Net ifaceNode0 = (InterfaceNode2Net) net.stitch(node);
+    ifaceNode0.setIpAddress(ip);
+    ifaceNode0.setNetmask(netmask);
+    try {
+      s.commit();
+    }catch (Exception e){
+    }
+    String res[] = Exec.sshExec("root", node.getManagementIP(), "ifconfig -a|grep \"eth\"|grep" +
+      " " +
+      "-v \"eth0\"|sed 's/[ \\t].*//;/^$/d'",sshkey);
+    int num = res[0].split("\n").length;
+    while(true){
+      serverSlice.refresh();
+      if (serverSlice.getResourceByName(linkName).getState() =="Active"){
+        sleep(10);
+        res = Exec.sshExec("root", node.getManagementIP(), "ifconfig -a|grep \"eth\"|grep" +
+          " " +
+          "-v \"eth0\"|sed 's/[ \\t].*//;/^$/d'",sshkey);
+        int n1 = res[0].split("\n").length;
+        if(n1 > num){
+          break;
+        }else {
+          s.getResourceByName(linkName).delete();
+          commitAndWait(s);
+          node = (ComputeNode) s.getResourceByName(nodeName);
+          net = serverSlice.addBroadcastLink(linkName, bw);
+          ifaceNode0 = (InterfaceNode2Net) net.stitch(node);
+          ifaceNode0.setIpAddress(ip);
+          ifaceNode0.setNetmask(netmask);
+          try {
+            s.commit();
+          }catch (Exception e){
+          }
+        }
+      }
+      sleep(10);
+    }
+  }
 
+  private void addLink(Slice s, String linkName, String ip1, String ip2, String netmask, String
+    node1, String node2, long bw){
+    ComputeNode node_1 = (ComputeNode) s.getResourceByName(node1);
+    ComputeNode node_2 = (ComputeNode) s.getResourceByName(node2);
+    Network net = serverSlice.addBroadcastLink(linkName, bw);
+    InterfaceNode2Net ifaceNode0 = (InterfaceNode2Net) net.stitch(node_1);
+    ifaceNode0.setIpAddress(ip1);
+    ifaceNode0.setNetmask(netmask);
+    InterfaceNode2Net ifaceNode1 = (InterfaceNode2Net) net.stitch(node_2);
+    ifaceNode1.setIpAddress(ip2);
+    ifaceNode1.setNetmask(netmask);
+    try {
+      s.commit();
+    }catch (Exception e){
+    }
+    String res1[] = Exec.sshExec("root", node_1.getManagementIP(), "ifconfig -a|grep " +
+      "\"eth\"|grep -v \"eth0\"|sed 's/[ \\t].*//;/^$/d'",sshkey);
+    int num1 = res1[0].split("\n").length;
+    String res2[] = Exec.sshExec("root", node_2.getManagementIP(), "ifconfig -a|grep " +
+      "\"eth\"|grep -v \"eth0\"|sed 's/[ \\t].*//;/^$/d'",sshkey);
+    int num2 = res2[0].split("\n").length;
+    while(true){
+      serverSlice.refresh();
+      if (serverSlice.getResourceByName(linkName).getState() =="Active"){
+        sleep(10);
+        res1 = Exec.sshExec("root", node_1.getManagementIP(), "ifconfig -a|grep \"eth\"|grep" +
+          " " +
+          "-v \"eth0\"|sed 's/[ \\t].*//;/^$/d'",sshkey);
+        int n1 = res1[0].split("\n").length;
+        res2 = Exec.sshExec("root", node_2.getManagementIP(), "ifconfig -a|grep \"eth\"|grep" +
+          " " +
+          "-v \"eth0\"|sed 's/[ \\t].*//;/^$/d'",sshkey);
+        int n2 = res1[0].split("\n").length;
+        if(n1 > num1 && n2>num2){
+          break;
+        }else {
+          s.getResourceByName(linkName).delete();
+          commitAndWait(s);
+          s.refresh();
+          try {
+            node_1 = (ComputeNode) s.getResourceByName(node1);
+            node_2 = (ComputeNode) s.getResourceByName(node2);
+            net = serverSlice.addBroadcastLink(linkName, bw);
+            ifaceNode0 = (InterfaceNode2Net) net.stitch(node_1);
+            ifaceNode0.setIpAddress(ip1);
+            ifaceNode0.setNetmask(netmask);
+            ifaceNode1 = (InterfaceNode2Net) net.stitch(node_2);
+            ifaceNode1.setIpAddress(ip2);
+            ifaceNode1.setNetmask(netmask);
+            s.commit();
+          }catch (Exception e){
+          }
+        }
+      }
+      sleep(10);
+    }
   }
 
   public String[] stitchRequest(String sdxslice,
@@ -233,12 +330,7 @@ public class SdxManager extends SliceManager {
       ip_to_use = getAvailableIP();
       stitchname = "stitch_" + node.getName() + "_" + ip_to_use;
       usedip.add(ip_to_use);
-      net = serverSlice.addBroadcastLink(stitchname, 1000000000);
-      InterfaceNode2Net ifaceNode0 = (InterfaceNode2Net) net.stitch(node);
-      ifaceNode0.setIpAddress("192.168." + String.valueOf(ip_to_use) + ".1");
-      ifaceNode0.setNetmask("255.255.255.0");
-      commitAndWait(serverSlice, 10, Arrays.asList(new String[]{stitchname}));
-      serverSlice.refresh();
+      addLink(serverSlice, stitchname, "192.168." + String.valueOf(ip_to_use) + ".1", "255.255.255.0", node.getName(), 1000000000);
     }
     else if (sdxnode == null && computenodes.containsKey(site) && computenodes.get(site).size() >
       0) {
@@ -246,11 +338,7 @@ public class SdxManager extends SliceManager {
       ip_to_use = getAvailableIP();
       stitchname = "stitch_" + node.getName() + "_" + ip_to_use;
       usedip.add(ip_to_use);
-      net = serverSlice.addBroadcastLink(stitchname, 1000000000);
-      InterfaceNode2Net ifaceNode0 = (InterfaceNode2Net) net.stitch(node);
-      ifaceNode0.setIpAddress("192.168." + String.valueOf(ip_to_use) + ".1");
-      ifaceNode0.setNetmask("255.255.255.0");
-      commitAndWait(serverSlice, 10, Arrays.asList(new String[]{stitchname}));
+      addLink(serverSlice, stitchname, "192.168." + String.valueOf(ip_to_use) + ".1", "255.255.255.0", node.getName(), 1000000000);
     } else {
       //if node not exists, add another node to the slice
       //add a node and configure it as a router.
@@ -306,7 +394,7 @@ public class SdxManager extends SliceManager {
     String broName = getBroName(router.getName());
     long brobw = conf.getLong("config.brobw");
     int ip_to_use = getAvailableIP();
-    addBro(serverSlice, broName, router, ip_to_use,brobw);
+    addBro(serverSlice, broName, router);
     try {
       serverSlice.commit();
       ArrayList<String> resources= new ArrayList<String>();
@@ -315,8 +403,9 @@ public class SdxManager extends SliceManager {
     } catch (Exception e) {
       e.printStackTrace();
     }
+    addLink(serverSlice, getBroLinkName(ip_to_use),"192.168." + ip_to_use + ".1", "192.168." +
+        ip_to_use + ".2", "255.255.255.0", routerName, broName, brobw);
     configBroNodes(serverSlice, "(" + broName + ")");
-    sleep(15);
     Exec.sshExec("root", router.getManagementIP(), "/bin/bash ~/ovsbridge.sh " +
       OVSController, sshkey);
     Link link=new Link();
