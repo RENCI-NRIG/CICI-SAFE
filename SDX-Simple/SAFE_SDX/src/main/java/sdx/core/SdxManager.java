@@ -206,6 +206,10 @@ public class SdxManager extends SliceManager {
     runCmdSlice(serverSlice, "ovs-ofctl del-flows br0", routerPattern, false, true);
   }
 
+  private void waitForNewInterface(String ip){
+
+  }
+
   public String[] stitchRequest(String sdxslice,
                                 String site,
                                 String customer_slice,
