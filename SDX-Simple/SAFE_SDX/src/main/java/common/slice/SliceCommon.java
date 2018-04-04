@@ -175,7 +175,6 @@ public abstract class SliceCommon {
           }
         }
       }
-
       if (sliceActive) break;
       sleep(interval);
     }

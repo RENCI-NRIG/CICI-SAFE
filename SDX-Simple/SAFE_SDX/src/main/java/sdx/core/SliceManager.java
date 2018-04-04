@@ -363,7 +363,7 @@ public class SliceManager extends SliceCommon {
         nodeImageHash, nodeImageShortName, nodeNodeType, clientSites.get(i % clientSites.size()),
         nodePostBootScript);
       nodelist.add(node0);
-      if (BRO) {
+      if (BRO && i == 0) {
         long brobw = conf.getLong("config.brobw");
         ComputeNode broNode = addBro(s, "bro0_c" + i, node0);
         int ip_to_use = curip++;

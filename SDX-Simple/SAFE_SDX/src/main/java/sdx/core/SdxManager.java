@@ -3,6 +3,7 @@ package sdx.core;
 import common.slice.SliceCommon;
 import org.json.zip.None;
 import org.renci.ahab.libndl.resources.request.*;
+import sdx.core.bro.BroManager;
 import sdx.networkmanager.Link;
 import sdx.networkmanager.NetworkManager;
 import common.utils.Exec;
@@ -66,6 +67,7 @@ public class SdxManager extends SliceManager {
   final Logger logger = Logger.getLogger(SdxManager.class);
 
   private NetworkManager routingmanager = new NetworkManager();
+  private BroManager broManager  = null;
   int curip = 128;
   private String mask = "/24";
   private String SDNController;
@@ -79,8 +81,6 @@ public class SdxManager extends SliceManager {
   private final ReentrantLock nodelock=new ReentrantLock();
   private HashMap<String,String>prefixgateway=new HashMap<String,String>();
 
-  private ArrayList<BroInstance> broInstances = new ArrayList<>();
-  private long requiredbw=0;
   public static String routerPattern = "(^c\\d+)";
   public static String broPattern = "(bro\\d+_c\\d+)";
   public static String stitchPortPattern = "(^sp-c\\d+.*)";
@@ -88,62 +88,15 @@ public class SdxManager extends SliceManager {
   public static String linkPattern = "(^clink\\d+)";
   public static String broLinkPattern = "(^blink_\\d+)";
 
-  private class Flow {
-    public String src;
-    public String dst;
-    public long bw;
-    public Flow(String s, String d, long b){
-      this.src = s;
-      this.dst = d;
-      this.bw = b;
-    }
-  }
-
-  private class BroInstance {
-    private long capacity;
-    private long usedCap;
-    private String ip;
-    private ArrayList<Flow> flows;
-    public BroInstance(String ip, long cap) {
-      this.capacity = cap;
-      this.usedCap = 0;
-      this.ip = ip;
-      this.flows = new ArrayList<>();
-    }
-
-    public String getIP() {
-      return this.ip;
-    }
-
-    public List<Flow> getFlows() {
-      return this.flows;
-    }
-
-    public long getAvailableCap() {
-      return capacity - usedCap;
-    }
-
-    public boolean addFlow(Flow flow) {
-      if(flow.bw > capacity - usedCap) {
-        return false;
-      } else {
-        usedCap += flow.bw;
-        this.flows.add(flow);
-        return true;
-      }
-    }
-
-    public void removeAllFlows(){
-      this.flows.clear();
-      usedCap = 0;
-    }
-  }
 
   public Slice getSdxSlice(){
     return serverSlice;
   }
   public String getSDNControllerIP() {
     return SDNControllerIP;
+  }
+  public String getSDNController(){
+    return SDNController;
   }
 
   public String getManagementIP(String nodeName){
@@ -190,6 +143,7 @@ public class SdxManager extends SliceManager {
     //System.out.print(pemLocation);
     refreshSliceProxy();
     serverSlice = getSlice();
+    broManager = new BroManager(serverSlice, routingmanager, this);
     logPrefix += "vSDX Server [" + sliceName + "]: ";
     //runCmdSlice(serverSlice, "ovs-ofctl del-flows br0", "(^c\\d+)", false, true);
     SDNControllerIP = ((ComputeNode) serverSlice.getResourceByName("plexuscontroller")).getManagementIP();
@@ -388,6 +342,7 @@ public class SdxManager extends SliceManager {
 
   public String deployBro(String routerName) {
     refreshSliceProxy();
+    serverSlice.refresh();
     System.out.println(logPrefix + "deploying new bro instance to " + routerName);
     Long t1 = System.currentTimeMillis();
     ComputeNode router =  (ComputeNode) serverSlice.getResourceByName(routerName);
@@ -403,6 +358,7 @@ public class SdxManager extends SliceManager {
     } catch (Exception e) {
       e.printStackTrace();
     }
+    serverSlice.refresh();
     addLink(serverSlice, getBroLinkName(ip_to_use),"192.168." + ip_to_use + ".1", "192.168." +
         ip_to_use + ".2", "255.255.255.0", routerName, broName, brobw);
     configBroNodes(serverSlice, "(" + broName + ")");
@@ -586,10 +542,7 @@ public class SdxManager extends SliceManager {
 
   public void reset() {
     delFlows();
-    requiredbw = 0;
-    for (BroInstance bro : broInstances) {
-      bro.removeAllFlows();
-    }
+    broManager.reset();
     System.out.println("SDX network reset");
   }
 
@@ -752,7 +705,7 @@ public class SdxManager extends SliceManager {
         else if (bropatn.matcher(node.getName()).find()) {
           InterfaceNode2Net intf = (InterfaceNode2Net)node.getInterfaces().toArray()[0];
           String  ip = intf.getLink().getName().split("_")[1];
-          broInstances.add(new BroInstance(IPPrefix + ip + ".2", 500000000));
+          broManager.addBroInstance(IPPrefix + ip + ".2", 500000000);
         }
       }
       logger.debug("get links from Slice");
@@ -893,91 +846,23 @@ public class SdxManager extends SliceManager {
     }
   }
 
-  private BroInstance getBroInstance(long bw) {
-    //First fit
-    BroInstance broNode = null;
-    synchronized (broInstances) {
-      for (BroInstance bro : broInstances) {
-        if (bro.getAvailableCap() > bw) {
-          broNode = bro;
-          break;
-        }
-      }
-    }
-    //checkif necessary to provision new Bro node
-    if (broNode == null || broOverloaded()) {
-      Thread thread = new Thread() {
-        @Override
-        public void run() {
-          String ip = deployBro("c0");
-          synchronized (broInstances) {
-            broInstances.add(new BroInstance(ip, 500000000));
-          }
-        }
-      };
-      thread.start();
-      if (broNode == null) {
-        try {
-          System.out.println(logPrefix + "No enough capacity in active bro pool, waiting for new bro nodes to" +
-            " be deployed");
-          thread.join();
-          synchronized (broInstances) {
-            for (BroInstance bro : broInstances) {
-              if (bro.getAvailableCap() > bw) {
-                broNode = bro;
-                break;
-              }
-            }
-          }
-        } catch (Exception e) {
-          e.printStackTrace();
-        }
-        return broNode;
-      } else {
-        return broNode;
-      }
-    } else {
-      return broNode;
-    }
-  }
 
-  private boolean broOverloaded() {
-    long sum = 0;
-    for(BroInstance bro: broInstances){
-      sum += bro.capacity;
-    }
-    double ratio = (double)requiredbw / (double) sum;
-    if (ratio > 0.6){
-      return true;
-    }else{
-      return false;
-    }
-  }
-
-  public String setMirror(String dpid, String source, String dst) {
+  public String setMirror(String routerName, String source, String dst) {
     long bw = 100000000;
-    requiredbw += bw;
-    BroInstance bro = getBroInstance(bw);
-    String gw = bro.getIP();
-    bro.addFlow(new Flow(source, dst, bw));
-    String res = routingmanager.setMirror(SDNController, dpid, source, dst, gw);
-    res += routingmanager.setMirror(SDNController, dpid, dst, source, gw);
+    String res = broManager.setMirror(routerName, source, dst, bw);
     return res;
   }
 
-  public String setMirror(String dpid, String source, String dst, String broIP) {
+  /*
+  public String setMirror(String routerName, String source, String dst, String broIP) {
     String res = routingmanager.setMirror(SDNController, dpid, source, dst, broIP);
     res += routingmanager.setMirror(SDNController, dpid, dst, source, broIP);
     return res;
   }
+  */
 
-  public String setMirror(String dpid, String source, String dst, long bw) {
-    requiredbw += bw;
-    BroInstance bro = getBroInstance(bw);
-    String gw = bro.getIP();
-    bro.addFlow(new Flow(source, dst, bw));
-    String res = routingmanager.setMirror(SDNController, dpid, source, dst, gw);
-    res += routingmanager.setMirror(SDNController, dpid, dst, source, gw);
+  public String setMirror(String routerName, String source, String dst, long bw) {
+    String res = broManager.setMirror(routerName, source, dst, bw);
     return res;
   }
 

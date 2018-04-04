@@ -79,10 +79,10 @@ public class TestMain {
     }
 
     // client slice advertise their prefix
-    client1.processCmd("route 192.168.10.1/24 192.168.131.2");
-    client2.processCmd("route 192.168.20.1/24 192.168.132.2");
-    client3.processCmd("route 192.168.30.1/24 192.168.133.2");
-    client4.processCmd("route 192.168.40.1/24 192.168.134.2");
+    client1.processCmd("route 192.168.10.1/24 192.168.130.2");
+    client2.processCmd("route 192.168.20.1/24 192.168.131.2");
+    client3.processCmd("route 192.168.30.1/24 192.168.132.2");
+    client4.processCmd("route 192.168.40.1/24 192.168.133.2");
 
     // Client request for connection between prefixes
     client3.processCmd("link 192.168.30.1/24 192.168.40.1/24");
@@ -92,11 +92,11 @@ public class TestMain {
     client1.processCmd("link 192.168.30.1/24 192.168.40.1/24 10000");
     */
 
-    String res = SdxServer.sdxManager.setMirror(SdxServer.sdxManager.getDPID("c0"),
+    String res = SdxServer.sdxManager.setMirror("c0",
       "192.168.30.1/24", "192.168.40.1/24", 400000000);
     System.out.println(res);
 
-    res = SdxServer.sdxManager.setMirror(SdxServer.sdxManager.getDPID("c0"), "192.168.10.1/24",
+    res = SdxServer.sdxManager.setMirror("c0", "192.168.10.1/24",
       "192.168.20.1/24", 400000000);
     System.out.println(res);
 
@@ -227,13 +227,13 @@ public class TestMain {
     client.processCmd("link 192.168.10.1/24 192.168.30.1/24");
     client.processCmd("link 192.168.20.1/24 192.168.40.1/24");
 
-    SdxServer.sdxManager.setMirror(SdxServer.sdxManager.getDPID("c0"), "192.168.10.1/24",
+    SdxServer.sdxManager.setMirror("c0", "192.168.10.1/24",
       "192.168.30.1/24");
 
     if(newSlice) {
       SdxServer.sdxManager.deployBro("c0");
     }
-    SdxServer.sdxManager.setMirror(SdxServer.sdxManager.getDPID("c0"), "192.168.20.1/24",
+    SdxServer.sdxManager.setMirror("c0", "192.168.20.1/24",
       "192.168.40.1/24");
 
     System.exit(0);
