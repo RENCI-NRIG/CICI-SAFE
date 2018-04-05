@@ -1,7 +1,10 @@
 package sdx.core.bro;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.locks.ReentrantLock;
+
 import org.apache.log4j.Logger;
 import org.renci.ahab.libndl.Slice;
 
@@ -52,10 +55,12 @@ class Flow {
   public String src;
   public String dst;
   public long bw;
-  public Flow(String s, String d, long b){
+  public String routerName;
+  public Flow(String s, String d, long b, String router){
     this.src = s;
     this.dst = d;
     this.bw = b;
+    this.routerName = router;
   }
 }
 
@@ -67,6 +72,9 @@ public class BroManager {
   SdxManager sdxManager = null;
   private long requiredbw=0;
   private ArrayList<BroInstance> broInstances = new ArrayList<>();
+  private LinkedList<Flow> jobQueue = new LinkedList<Flow>();
+  private final ReentrantLock ticketLock=new ReentrantLock();
+  private long tickedBroCapacity = 0;
 
   public BroManager(Slice slice, NetworkManager networkManager, SdxManager sdxManager){
     this.slice = slice;
@@ -85,8 +93,60 @@ public class BroManager {
     broInstances.add(new BroInstance(ip, cap));
   }
 
+  private void deployNewBro(String routerName){
+    Thread thread = new Thread() {
+      @Override
+      public void run() {
+        try{
+          ticketLock.lock();
+          tickedBroCapacity += 500000000;
+          ticketLock.unlock();
+        }catch (Exception e){
+          e.printStackTrace();
+        }
+        String ip = sdxManager.deployBro(routerName);
+        synchronized (broInstances) {
+          broInstances.add(new BroInstance(ip, 500000000));
+        }
+        try{
+          ticketLock.lock();
+          tickedBroCapacity -= 500000000;
+          ticketLock.unlock();
+        }catch (Exception e){
+          e.printStackTrace();
+        }
+        execJobs();
+      }
+    };
+    thread.start();
+  }
 
-  public BroInstance getBroInstance(long bw, String routerName) {
+  private void execJobs(){
+    synchronized (jobQueue) {
+      ArrayList<Flow> toRemove = new ArrayList<>();
+      for (Flow f : jobQueue) {
+        BroInstance bro = getBroInstance(f.bw, f.routerName);
+        if (bro != null) {
+          String dpid = sdxManager.getDPID(f.routerName);
+          String gw = bro.getIP();
+          bro.addFlow(f);
+          String res = networkManager.setMirror(sdxManager.getSDNController(), dpid, f.src, f.dst, gw);
+          res += networkManager.setMirror(sdxManager.getSDNController(), dpid, f.dst, f.src, gw);
+          logger.debug("job: " + f.src + " " + f.dst + " " + f.bw + ": \n" + res);
+          System.out.println("job: " + f.src + " " + f.dst + " " + f.bw + ": \n" + res);
+          toRemove.add(f);
+        }
+      }
+      for(Flow f: toRemove){
+        jobQueue.remove(f);
+      }
+    }
+    if(broOverloaded()) {
+      deployNewBro("c0");
+    }
+  }
+
+  private BroInstance getBroInstance(long bw, String routerName) {
     //First fit
     BroInstance broNode = null;
     synchronized (broInstances) {
@@ -97,6 +157,8 @@ public class BroManager {
         }
       }
     }
+    return broNode;
+    /*
     //checkif necessary to provision new Bro node
     if (broNode == null || broOverloaded()) {
       Thread thread = new Thread() {
@@ -132,10 +194,18 @@ public class BroManager {
     } else {
       return broNode;
     }
+    */
   }
 
   private boolean broOverloaded() {
     long sum = 0;
+    try{
+      ticketLock.lock();
+      sum = tickedBroCapacity;
+      ticketLock.unlock();
+    }catch (Exception e){
+      e.printStackTrace();
+    }
     for(BroInstance bro: broInstances){
       sum += bro.capacity;
     }
@@ -147,14 +217,11 @@ public class BroManager {
     }
   }
 
-  public String setMirror(String routerName, String source, String dst, long bw){
+  public void setMirrorAsync(String routerName, String source, String dst, long bw){
     requiredbw += bw;
-    BroInstance bro = getBroInstance(bw, routerName);
-    String dpid = sdxManager.getDPID(routerName);
-    String gw = bro.getIP();
-    bro.addFlow(new Flow(source, dst, bw));
-    String res = networkManager.setMirror(sdxManager.getSDNController(), dpid, source, dst, gw);
-    res += networkManager.setMirror(sdxManager.getSDNController(), dpid, dst, source, gw);
-    return res;
+    synchronized (jobQueue) {
+      jobQueue.offer(new Flow(source, dst, bw, routerName));
+    }
+    execJobs();
   }
 }

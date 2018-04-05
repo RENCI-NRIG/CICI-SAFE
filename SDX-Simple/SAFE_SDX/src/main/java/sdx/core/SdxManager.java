@@ -79,6 +79,7 @@ public class SdxManager extends SliceManager {
   private final ReentrantLock iplock=new ReentrantLock();
   private final ReentrantLock linklock=new ReentrantLock();
   private final ReentrantLock nodelock=new ReentrantLock();
+  private final ReentrantLock brolock=new ReentrantLock();
   private HashMap<String,String>prefixgateway=new HashMap<String,String>();
 
   public static String routerPattern = "(^c\\d+)";
@@ -341,6 +342,11 @@ public class SdxManager extends SliceManager {
   }
 
   public String deployBro(String routerName) {
+    try{
+      brolock.lock();
+    }catch (Exception e){
+      e.printStackTrace();
+    }
     refreshSliceProxy();
     serverSlice.refresh();
     System.out.println(logPrefix + "deploying new bro instance to " + routerName);
@@ -376,6 +382,7 @@ public class SdxManager extends SliceManager {
     Long t2 = System.currentTimeMillis();
     System.out.println(logPrefix + "Deployed new Bro node successfully, time elapsed: " + (t2- t1) +
       "milliseconds");
+    brolock.unlock();
     return link.getIP(2).split("/")[0];
   }
 
@@ -849,8 +856,8 @@ public class SdxManager extends SliceManager {
 
   public String setMirror(String routerName, String source, String dst) {
     long bw = 100000000;
-    String res = broManager.setMirror(routerName, source, dst, bw);
-    return res;
+    broManager.setMirrorAsync(routerName, source, dst, bw);
+    return "Job submitted";
   }
 
   /*
@@ -862,8 +869,8 @@ public class SdxManager extends SliceManager {
   */
 
   public String setMirror(String routerName, String source, String dst, long bw) {
-    String res = broManager.setMirror(routerName, source, dst, bw);
-    return res;
+    broManager.setMirrorAsync(routerName, source, dst, bw);
+    return "Job submitted";
   }
 
   public String delMirror(String dpid, String source, String dst) {
