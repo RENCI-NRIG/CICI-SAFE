@@ -35,7 +35,7 @@ public class TestMain {
 
   public static void multiSliceTest(){
     if(newSlice) {
-      //deleteSlice();
+      deleteSlice();
       createTestSliceParrallel();
     }
     test();
@@ -175,7 +175,6 @@ public class TestMain {
 
   public static void createTestSliceParrallel(){
     ArrayList<Thread> tlist = new ArrayList<Thread>();
-    /*
     Thread thread1 = new Thread() {
       @Override
       public void run() {
@@ -186,10 +185,9 @@ public class TestMain {
     thread1.start();
     tlist.add(thread1);
     SdxServer.sdxManager.sleep(10);
-    */
 
     String[][] args = {clientarg1, clientarg2, clientarg3, clientarg4, clientarg6};
-    for(int i = 1 ; i< 2; i++) {
+    for(int i = 0 ; i< 4; i++) {
       final String[] arg = args[i];
       Thread thread2 = new Thread() {
         @Override
