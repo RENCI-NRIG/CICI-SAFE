@@ -40,6 +40,7 @@ import org.renci.ahab.libtransport.util.SSHAccessTokenFileFactory;
 import org.renci.ahab.libtransport.util.TransportException;
 import org.renci.ahab.libtransport.util.UtilTransportException;
 import org.renci.ahab.libtransport.xmlrpc.XMLRPCTransportException;
+import sun.nio.ch.Net;
 
 /*
 
@@ -143,6 +144,9 @@ public class SdxManager extends SliceManager {
     computeIP(IPPrefix);
     //System.out.print(pemLocation);
     refreshSliceProxy();
+    if(cmd.hasOption('r')){
+      clearSdx();
+    }
     serverSlice = getSlice();
     broManager = new BroManager(serverSlice, routingmanager, this);
     logPrefix += "vSDX Server [" + sliceName + "]: ";
@@ -159,6 +163,24 @@ public class SdxManager extends SliceManager {
 
   public void delFlows() {
     runCmdSlice(serverSlice, "ovs-ofctl del-flows br0", routerPattern, false, true);
+  }
+
+  private void clearSdx(){
+    serverSlice = getSlice();
+    for(ComputeNode node: serverSlice.getComputeNodes()){
+      if(node.getName().matches(broPattern)&& !node.getName().equals("bro0_c0")){
+        node.delete();
+      }
+    }
+    for(Network link: serverSlice.getBroadcastLinks()){
+      if(link.getName().matches(broLinkPattern) && !link.getName().equals("blink_128")){
+        link.delete();
+      }
+      if(link.getName().matches(stosVlanPattern)){
+        link.delete();
+      }
+    }
+    commitAndWait(serverSlice);
   }
 
   private void addLink(Slice s, String linkName, String ip, String netmask, String nodeName, long

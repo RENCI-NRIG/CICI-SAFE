@@ -5,6 +5,8 @@ import client.stitchport.SdxStitchPortClient;
 import client.stitchport.SdxStitchPortClientManager;
 import sdx.core.SdxServer;
 import client.exogeni.ClientSlice;
+import org.apache.commons.cli.*;
+import org.apache.commons.cli.DefaultParser;
 
 public class TestMain {
   /*
@@ -33,6 +35,30 @@ public class TestMain {
     //emulationSlice();
   }
 
+  private void parseCmd(String[] args) {
+    Options options = new Options();
+    Option config = new Option("c", "config", true, "configuration file path");
+    Option config1 = new Option("d", "delete", false, "delete the slice");
+    Option config2 = new Option("e", "exec", true, "command to exec");
+    config.setRequired(true);
+    config1.setRequired(false);
+    config2.setRequired(false);
+    options.addOption(config);
+    options.addOption(config1);
+    options.addOption(config2);
+    CommandLineParser parser = new DefaultParser();
+    HelpFormatter formatter = new HelpFormatter();
+    CommandLine cmd = null;
+
+    try {
+      cmd = parser.parse(options, args);
+    } catch (ParseException e) {
+      System.out.println(e.getMessage());
+      formatter.printHelp("utility-name", options);
+
+      System.exit(1);
+    }
+  }
 
   public static void multiSliceTest(){
     if(newSlice) {

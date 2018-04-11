@@ -12,7 +12,7 @@ import org.renci.ahab.libtransport.util.SSHAccessTokenFileFactory;
 import org.renci.ahab.libtransport.util.UtilTransportException;
 import org.renci.ahab.libtransport.xmlrpc.XMLRPCTransportException;
 import common.utils.Exec;
-import common.slice.SliceCommon;
+import sdx.core.SliceManager;
 
 import java.util.ArrayList;
 
@@ -21,12 +21,11 @@ import java.util.ArrayList;
  * @author geni-orca
  *
  */
-public class ClientSlice extends SliceCommon{
+public class ClientSlice extends SliceManager{
   final Logger logger = Logger.getLogger(Exec.class);
 
   public ClientSlice(){}
   private int curip=128;
-  private String IPPrefix="192.168.";
   private String mask="/24";
   private String type;
   private String routerSite = "";
@@ -66,14 +65,6 @@ public class ClientSlice extends SliceCommon{
 		}
 	}
 
-  private  void computeIP(String prefix){
-    System.out.println(prefix);
-    String[] ip_mask=prefix.split("/");
-    String[] ip_segs=ip_mask[0].split("\\.");
-    IPPrefix=ip_segs[0]+"."+ip_segs[1]+".";
-    curip=Integer.valueOf(ip_segs[2]);
-  }
-
 	public void run(){
 		//Example usage:   ./target/appassembler/bin/SafeSdxExample  ~/.ssl/geni-pruth1.pem ~/.ssl/geni-pruth1.pem "https://geni.renci.org:11443/orca/xmlrpc" pruth.1 stitch
 		//Example usage:   ./target/appassembler/bin/SafeSdxExample  ~/.ssl/geni-pruth1.pem ~/.ssl/geni-pruth1.pem "https://geni.renci.org:11443/orca/xmlrpc" name fournodes
@@ -91,6 +82,7 @@ public class ClientSlice extends SliceCommon{
         //copyFile2Slice(c1, "/home/yaoyj11/project/exo-geni/SAFE_SDX/src/main/resources/scripts/configospffornewif.sh","~/configospffornewif.sh","~/.ssh/id_rsa");
         //copyFile2Slice(c1, "/home/yaoyj11/project/exo-geni/SAFE_SDX/src/main/resources/scripts/configospffornewif.sh","~/configospffornewif.sh","~/.ssh/id_rsa");
         //runCmdSlice(c1,"/bin/bash ~/ospfautoconfig.sh","~/.ssh/id_rsa");
+        configFTPService(c1,"(CNode1)", "ftp","ftp");
         System.out.println("Slice active now: " + sliceName);
         System.out.println("CNode0 IP: " + ((ComputeNode)c1.getResourceByName("CNode0")).getManagementIP());
         System.out.println("CNode1 IP: " + ((ComputeNode)c1.getResourceByName("CNode1")).getManagementIP());
@@ -142,14 +134,14 @@ public class ClientSlice extends SliceCommon{
         if(i!=num-1){
           Network net2 = s.addBroadcastLink("clink"+String.valueOf(i),bw);
           InterfaceNode2Net ifaceNode1 = (InterfaceNode2Net) net2.stitch(node0);
-          ifaceNode1.setIpAddress(prefix+String.valueOf(start+i)+".1");
+          ifaceNode1.setIpAddress(IPPrefix+String.valueOf(start+i)+".1");
           ifaceNode1.setNetmask("255.255.255.0");
           netlist.add(net2);
         }
         if(i!=0){
           Network net=netlist.get(i-1);
           InterfaceNode2Net ifaceNode1 = (InterfaceNode2Net) net.stitch(node0);
-          ifaceNode1.setIpAddress("192.168."+String.valueOf(start+i-1)+".2");
+          ifaceNode1.setIpAddress(IPPrefix+String.valueOf(start+i-1)+".2");
           ifaceNode1.setNetmask("255.255.255.0");
         }
       }
@@ -165,14 +157,6 @@ public class ClientSlice extends SliceCommon{
 
   private String getOVSScript(String cip){
     String script="apt-get update\n"+"apt-get -y install openvswitch-switch\n apt-get -y install iperf\n /etc/init.d/neuca stop\n";
-    return script;
-  }
-
-  private String getPlexusScript(){
-    String script="apt-get update\n"
-        +"docker pull yaoyj11/plexus\n"
-        +"docker run -i -t -d -p 8080:8080 -p 6633:6633 -p 3000:3000 -h plexus --name plexus yaoyj11/plexus\n";
-    //+"docker exec -d plexus /bin/bash -c  \"cd /root/;./sdx.sh\"\n";
     return script;
   }
 }
