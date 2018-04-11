@@ -194,7 +194,7 @@ public class SdxExogeniClientManager extends SliceCommon {
         String ip=res.getString("ip");
         logger.debug("set IP address of the stitch interface to "+ip);
         System.out.println(logPrefix + "set IP address of the stitch interface to "+ip);
-        sleep(15);
+        sleep(5);
         String mip= node0_s2.getManagementIP();
         String result=Exec.sshExec("root",mip,"ifconfig eth2 "+ip,sshkey)[0];
         Exec.sshExec("root",mip,"echo \"ip route 192.168.1.1/16 "+res.getString("gateway").split("/")[0]+"\" >>/etc/quagga/zebra.conf  ",sshkey);

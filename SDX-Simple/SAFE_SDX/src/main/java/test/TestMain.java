@@ -14,6 +14,7 @@ public class TestMain {
   */
   //name of sdx slice
   static String sdx = "test";
+  //Now only arg1 and clientarg 1->4 are used
   static String[] arg1 = {"-c", "config/sdx.conf"};
   static String[] clientarg1 = {"-c", "client-config/c1.conf"};
   static String[] clientarg2 = {"-c", "client-config/c2.conf"};
@@ -60,6 +61,7 @@ public class TestMain {
     advertise the ip prefix, and request for network connection
      */
     // Start Sdx Server
+    //./scripts/sdxserver.sh -c config/sdx.conf
     SdxServer.run(arg1);
     sdx = SdxServer.sdxManager.getSliceName();
     SdxExogeniClientManager client1 = new SdxExogeniClientManager(clientarg1);

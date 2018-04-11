@@ -269,6 +269,7 @@ public class SdxManager extends SliceManager {
                                 String ResrvID,
                                 String secret,
                                 String sdxnode) {
+    long start = System.currentTimeMillis();
     System.out.println(logPrefix + "new stitch request from " + customerName + " for " + sdxslice + " at " +
       "" + site);
     logger.debug("new stitch request for " + sdxslice + " at " + site);
@@ -337,7 +338,8 @@ public class SdxManager extends SliceManager {
       OVSController, sshkey);
     routingmanager.newLink(link.getIP(1), link.nodea, ip.split("/")[0], SDNController);
     //routingmanager.configurePath(ip,node.getName(),ip.split("/")[0],SDNController);
-    System.out.println(logPrefix + "stitching operation  completed");
+    System.out.println(logPrefix + "stitching operation  completed, time elapsed(s): " + (System
+      .currentTimeMillis() - start)/1000);
     return res;
   }
 

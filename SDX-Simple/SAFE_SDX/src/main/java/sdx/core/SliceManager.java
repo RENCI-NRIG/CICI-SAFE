@@ -122,6 +122,7 @@ public class SliceManager extends SliceCommon {
     computeIP(IPPrefix);
     try {
       String carrierName = sliceName;
+      //Create the slice
       Slice carrier = createCarrierSlice(carrierName, routerNum, bw);
       commitAndWait(carrier);
       carrier.refresh();
