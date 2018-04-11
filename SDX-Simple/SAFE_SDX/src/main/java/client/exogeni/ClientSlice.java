@@ -115,7 +115,7 @@ public class ClientSlice extends SliceManager{
     String nodeImageURL ="http://geni-images.renci.org/images/standard/ubuntu/ub1404-v1.0.4.xml";//http://geni-images.renci.org/images/standard/ubuntu/ub1304-ovs-opendaylight-v1.0.0.xml
     String nodeImageHash ="9394ca154aa35eb55e604503ae7943ddaecc6ca5";
     String nodeNodeType="XO Medium";
-    String nodePostBootScript="apt-get update;apt-get -y install quagga\n"
+    String nodePostBootScript="apt-get update;apt-get -y install quagga iperf vsftpd\n"
         +"sed -i -- 's/zebra=no/zebra=yes/g' /etc/quagga/daemons\n"
         +"sed -i -- 's/ospfd=no/ospfd=yes/g' /etc/quagga/daemons\n"
         +"echo \"1\" > /proc/sys/net/ipv4/ip_forward\n"
@@ -155,9 +155,5 @@ public class ClientSlice extends SliceManager{
     return s;
   }
 
-  private String getOVSScript(String cip){
-    String script="apt-get update\n"+"apt-get -y install openvswitch-switch\n apt-get -y install iperf\n /etc/init.d/neuca stop\n";
-    return script;
-  }
 }
 

@@ -30,7 +30,6 @@ public class TestSlice extends SliceManager {
 
     readConfig(configfilepath);
 
-    System.out.println("configfilepath " + configfilepath);
 
     if (cmd.hasOption('d')) {
       type = "delete";

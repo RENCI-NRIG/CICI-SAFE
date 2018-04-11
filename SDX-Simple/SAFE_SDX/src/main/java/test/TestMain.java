@@ -18,32 +18,29 @@ public class TestMain {
   static String sdx = "test";
   //Now only arg1 and clientarg 1->4 are used
   static String[] arg1 = {"-c", "config/sdx.conf"};
+  static String[] arg2 = {"-c", "config/sdx.conf", "-r"};
   static String[] clientarg1 = {"-c", "client-config/c1.conf"};
   static String[] clientarg2 = {"-c", "client-config/c2.conf"};
   static String[] clientarg3 = {"-c", "client-config/c3.conf"};
   static String[] clientarg4 = {"-c", "client-config/c4.conf"};
   static String[] clientarg6 = {"-c", "client-config/c6-tamu.conf"};
   static String[] clientarg5 = {"-c", "chameleon-config/c1.conf"};
-  static boolean newSlice = true;
   static boolean stitch = true;
 
   public static void main(String[] args){
-    multiSliceTest();
+    multiSliceTest(args);
     //emulationTest();
     //testDymanicNetwork();
     //testChameleon();
     //emulationSlice();
   }
 
-  private void parseCmd(String[] args) {
+  private static  CommandLine parseCmd(String[] args) {
     Options options = new Options();
-    Option config = new Option("c", "config", true, "configuration file path");
-    Option config1 = new Option("d", "delete", false, "delete the slice");
-    Option config2 = new Option("e", "exec", true, "command to exec");
-    config.setRequired(true);
+    Option config1 = new Option("s", "slice", false, "run with existing slice");
+    Option config2 = new Option("r", "reset", false, "reset SDX slice");
     config1.setRequired(false);
     config2.setRequired(false);
-    options.addOption(config);
     options.addOption(config1);
     options.addOption(config2);
     CommandLineParser parser = new DefaultParser();
@@ -52,20 +49,28 @@ public class TestMain {
 
     try {
       cmd = parser.parse(options, args);
+      return cmd;
     } catch (ParseException e) {
       System.out.println(e.getMessage());
       formatter.printHelp("utility-name", options);
 
       System.exit(1);
     }
+    return cmd;
   }
 
-  public static void multiSliceTest(){
-    if(newSlice) {
+  public static void multiSliceTest(String[] args){
+    CommandLine cmd = parseCmd(args);
+
+    if(!cmd.hasOption('s')) {
       deleteSlice();
       createTestSliceParrallel();
     }
-    test();
+    if(cmd.hasOption('r')) {
+      test(true);
+    }else{
+      test(false);
+    }
   }
 
   public static void testDymanicNetwork(){
@@ -80,7 +85,7 @@ public class TestMain {
     //client6.processCmd("link 192.168.60.1/24 192.168.40.1/24");
   }
 
-  public static void test(){
+  public static void test(boolean reset){
     /*
     In this function, we create ahab controller for sdx slice and client slices.
     We execute command in client controller to request network stitching to sdx slice,
@@ -88,7 +93,11 @@ public class TestMain {
      */
     // Start Sdx Server
     //./scripts/sdxserver.sh -c config/sdx.conf
-    SdxServer.run(arg1);
+    if(reset){
+      SdxServer.run(arg2);
+    }else {
+      SdxServer.run(arg1);
+    }
     sdx = SdxServer.sdxManager.getSliceName();
     SdxExogeniClientManager client1 = new SdxExogeniClientManager(clientarg1);
     SdxExogeniClientManager client2 = new SdxExogeniClientManager(clientarg2);
@@ -239,11 +248,12 @@ public class TestMain {
     System.out.println("Finished create vSDX slice and client slices");
   }
 
-  public static void emulationTest(){
+  public static void emulationTest(String[] args){
     /*
     This function emulates the sdx slice and customer nodes in the same slice.
      */
-    if(newSlice) {
+    CommandLine cmd = parseCmd(args);
+    if(!cmd.hasOption('s')) {
       emulationSlice();
     }
     SdxServer.run(arg1);
@@ -258,7 +268,7 @@ public class TestMain {
     SdxServer.sdxManager.setMirror("c0", "192.168.10.1/24",
       "192.168.30.1/24");
 
-    if(newSlice) {
+    if(!cmd.hasOption('s')) {
       SdxServer.sdxManager.deployBro("c0");
     }
     SdxServer.sdxManager.setMirror("c0", "192.168.20.1/24",
