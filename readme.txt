@@ -46,6 +46,13 @@ Enter SDX-Simple
                 -r//--reset  Clear SDX slice and undo previous operations
    ./scripts/cnert-client.sh [wait until vsdx server starts]
 
+4. Bro intrusion detection
+   SdxController will restart bro instances each time it restarts. After the mirroring flows have been set up, we can transfer evil files between customer nodes with ftp and Bro will detect it and cut the connection.
+   Example command to transfer the file:
+   [on c3]$ wget ftp://ftpuser:ftp@192.168.40.2/evil.txt
+   After about 5 seconds, the connection between 192.168.30.2 and 192.168.40.2 will be cut
+
+
 -------------- Bro Experiment --------------------
 Two run the bro experiment, first we need to set up FTP service. The TestSlice code should have already set up FTP service when it creates the slice. 
 1. create the test slice: [1] modify TestMain to call emulationSlice() in main(). [2] modify configuration files to specify two sites. Since we need large bandwdith between two sites. It's highly suggested to choose UH-TAMU, or any pair from (UFL, UNF, FIU). [3] run TestMain to create the emulation slice
