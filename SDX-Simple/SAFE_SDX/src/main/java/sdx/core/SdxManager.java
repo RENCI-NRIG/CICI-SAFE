@@ -159,6 +159,16 @@ public class SdxManager extends SliceManager {
     //configRouting(serverslice,OVSController,SDNController,"(c\\d+)","(sp-c\\d+.*)");
     loadSdxNetwork(serverSlice,routerPattern,stitchPortPattern, broPattern);
     configRouting(serverSlice,OVSController,SDNController,routerPattern,stitchPortPattern);
+    startBro();
+  }
+
+  private void startBro(){
+    for(ComputeNode node: serverSlice.getComputeNodes()){
+      if(node.getName().matches(broPattern)){
+        Exec.sshExec("root", node.getManagementIP(), "/usr/bin/rm *.log; pkill bro; /opt/bro/bin/bro " +
+          "-i eth1 test-all-policy.bro&", sshkey);
+      }
+    }
   }
 
   public void delFlows() {
