@@ -158,6 +158,8 @@ public class SliceManager extends SliceCommon {
     runCmdSlice(carrier, "/bin/sed -i \"s/pam_service_name=vsftpd/pam_service_name=ftp/\" " +
       "/etc/vsftpd.conf; service vsftpd restart", nodePattern, true, true);
     String resource_dir = conf.getString("config.resourcedir");
+    copyFile2Slice(carrier, resource_dir + "bro/evil.txt", "/home/"+username + "/evil.txt",
+      sshkey, nodePattern);
   }
 
   public void configBroNodes(Slice carrier, String bropattern) {
@@ -203,6 +205,8 @@ public class SliceManager extends SliceCommon {
 
     runCmdSlice(carrier, "broctl deploy&", bropattern, true, true);
     runCmdSlice(carrier, "python reporter & disown", bropattern, true, true);
+    runCmdSlice(carrier, "/usr/bin/rm *.log; pkill bro; /usr/bin/screen -d -m /opt/bro/bin/bro " +
+      "-i eth1 " + "test-all-policy.bro", bropattern, true, true);
   }
 
   public ComputeNode addOVSRouter(Slice s, String site, String name) {

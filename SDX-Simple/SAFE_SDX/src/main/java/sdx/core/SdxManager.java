@@ -165,8 +165,8 @@ public class SdxManager extends SliceManager {
   private void startBro(){
     for(ComputeNode node: serverSlice.getComputeNodes()){
       if(node.getName().matches(broPattern)){
-        Exec.sshExec("root", node.getManagementIP(), "/usr/bin/rm *.log; pkill bro; /opt/bro/bin/bro " +
-          "-i eth1 test-all-policy.bro&", sshkey);
+        Exec.sshExec("root", node.getManagementIP(), "/usr/bin/rm *.log; pkill bro;" +
+          "/usr/bin/screen -d -m /opt/bro/bin/bro -i eth1 test-all-policy.bro", sshkey);
       }
     }
   }

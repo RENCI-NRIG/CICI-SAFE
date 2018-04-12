@@ -25,7 +25,6 @@ public class ClientSlice extends SliceManager{
   final Logger logger = Logger.getLogger(Exec.class);
 
   public ClientSlice(){}
-  private int curip=128;
   private String mask="/24";
   private String type;
   private String routerSite = "";
@@ -82,7 +81,7 @@ public class ClientSlice extends SliceManager{
         //copyFile2Slice(c1, "/home/yaoyj11/project/exo-geni/SAFE_SDX/src/main/resources/scripts/configospffornewif.sh","~/configospffornewif.sh","~/.ssh/id_rsa");
         //copyFile2Slice(c1, "/home/yaoyj11/project/exo-geni/SAFE_SDX/src/main/resources/scripts/configospffornewif.sh","~/configospffornewif.sh","~/.ssh/id_rsa");
         //runCmdSlice(c1,"/bin/bash ~/ospfautoconfig.sh","~/.ssh/id_rsa");
-        configFTPService(c1,"(CNode1)", "ftp","ftp");
+        configFTPService(c1,"(CNode1)", "ftpuser","ftp");
         System.out.println("Slice active now: " + sliceName);
         System.out.println("CNode0 IP: " + ((ComputeNode)c1.getResourceByName("CNode0")).getManagementIP());
         System.out.println("CNode1 IP: " + ((ComputeNode)c1.getResourceByName("CNode1")).getManagementIP());
