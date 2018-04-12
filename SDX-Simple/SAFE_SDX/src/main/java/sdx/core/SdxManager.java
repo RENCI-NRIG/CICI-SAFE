@@ -563,7 +563,8 @@ public class SdxManager extends SliceManager {
           routingmanager.configurePath(target_prefix,n2,self_prefix,n1,prefixgateway.get
         (target_prefix),SDNController,0)) {
         System.out.println(logPrefix + "Routing set up for " + self_prefix + " and " + target_prefix);
-        logger.debug(logPrefix + "Routing set up for " + self_prefix + " and " + target_prefix);
+        logger.debug(logPrefix +"Routing set up for " + self_prefix + " and " + target_prefix);
+        setMirror("c0", self_prefix, target_prefix,400000000);
         if(bandwidth>0) {
           routingmanager.setQos(SDNController, routingmanager.getDPID(n1), self_prefix,
             target_prefix, bandwidth);
@@ -891,7 +892,7 @@ public class SdxManager extends SliceManager {
   public String setMirror(String routerName, String source, String dst) {
     long bw = 100000000;
     broManager.setMirrorAsync(routerName, source, dst, bw);
-    return "Job submitted";
+    return "Mirroring job submitted";
   }
 
   /*
@@ -904,7 +905,7 @@ public class SdxManager extends SliceManager {
 
   public String setMirror(String routerName, String source, String dst, long bw) {
     broManager.setMirrorAsync(routerName, source, dst, bw);
-    return "Job submitted";
+    return "Mirroring job submitted";
   }
 
   public String delMirror(String dpid, String source, String dst) {

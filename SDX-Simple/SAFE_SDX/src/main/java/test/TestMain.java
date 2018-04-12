@@ -129,13 +129,13 @@ public class TestMain {
     client1.processCmd("link 192.168.30.1/24 192.168.40.1/24 10000");
     */
 
-    String res = SdxServer.sdxManager.setMirror("c0",
-      "192.168.30.1/24", "192.168.40.1/24", 400000000);
-    System.out.println(res);
+    //String res = SdxServer.sdxManager.setMirror("c0",
+    //  "192.168.30.1/24", "192.168.40.1/24", 400000000);
+    //System.out.println(res);
 
-    res = SdxServer.sdxManager.setMirror("c0", "192.168.10.1/24",
-      "192.168.20.1/24", 400000000);
-    System.out.println(res);
+    //res = SdxServer.sdxManager.setMirror("c0", "192.168.10.1/24",
+    //  "192.168.20.1/24", 400000000);
+    //System.out.println(res);
 
     // Stop Sdx server and exit
   }
