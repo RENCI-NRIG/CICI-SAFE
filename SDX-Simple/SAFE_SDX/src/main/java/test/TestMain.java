@@ -122,8 +122,8 @@ public class TestMain {
     client4.processCmd("route 192.168.40.1/24 192.168.133.2");
 
     // Client request for connection between prefixes
-    client3.processCmd("link 192.168.30.1/24 192.168.40.1/24");
     client1.processCmd("link 192.168.10.1/24 192.168.20.1/24");
+    client3.processCmd("link 192.168.30.1/24 192.168.40.1/24");
     /*
     SdxServer.sdxManager.removePath("192.168.30.1/24", "192.168.40.1/24");
     client1.processCmd("link 192.168.30.1/24 192.168.40.1/24 10000");
