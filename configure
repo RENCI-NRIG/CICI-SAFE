@@ -1,8 +1,10 @@
 #!/bin/bash
 SLICENAME_SUFFIX=${USER}
-SITENAME1="ufl"
+SITENAME1="fiu"
+#SITENAME1="ufl"
 SITENAME2="unf"
-SITE1="UFL (Gainesville, FL USA) XO Rack"
+#SITE1="UFL (Gainesville, FL USA) XO Rack"
+SITE1="FIU (Miami, FL USA) XO Rack"
 SITE2="UNF (Jacksonville, FL) XO Rack"
 SDXSERVER="http://127.0.0.1:8888/"
 SSHKEY="~/.ssh/id_rsa"
@@ -24,3 +26,5 @@ sed -i "s@slicename=\".*\"@slicename=\"${C1}\"@g;s@serverurl=\".*\"@serverurl=\"
 sed -i "s@slicename=\".*\"@slicename=\"${C2}\"@g;s@serverurl=\".*\"@serverurl=\"${SDXSERVER}\"@g;s@sshkey=\".*\"@sshkey=\"${SSHKEY}\"@g;s@exogenipem=\".*pem\"@exogenipem=\"${EXOGENIPEM}\"@g;s@scriptsdir=\".*scripts/\"@scriptsdir=\"${SCRIPTSDIR}\"@g;s@resourcedir=\".*resources/\"@resourcedir=\"${RESOURCEDIR}\"@g;s@serversite=\".*\"@serversite=\"${SITE2}\"@g;s@routersite=\".*\"@routersite=\"${SITE2}\"@g" SDX-Simple/client-config/c2.conf
 sed -i "s@slicename=\".*\"@slicename=\"${C3}\"@g;s@serverurl=\".*\"@serverurl=\"${SDXSERVER}\"@g;s@sshkey=\".*\"@sshkey=\"${SSHKEY}\"@g;s@exogenipem=\".*pem\"@exogenipem=\"${EXOGENIPEM}\"@g;s@scriptsdir=\".*scripts/\"@scriptsdir=\"${SCRIPTSDIR}\"@g;s@resourcedir=\".*resources/\"@resourcedir=\"${RESOURCEDIR}\"@g;s@serversite=\".*\"@serversite=\"${SITE1}\"@g;s@routersite=\".*\"@routersite=\"${SITE1}\"@g" SDX-Simple/client-config/c3.conf
 sed -i "s@slicename=\".*\"@slicename=\"${C4}\"@g;s@serverurl=\".*\"@serverurl=\"${SDXSERVER}\"@g;s@sshkey=\".*\"@sshkey=\"${SSHKEY}\"@g;s@exogenipem=\".*pem\"@exogenipem=\"${EXOGENIPEM}\"@g;s@scriptsdir=\".*scripts/\"@scriptsdir=\"${SCRIPTSDIR}\"@g;s@resourcedir=\".*resources/\"@resourcedir=\"${RESOURCEDIR}\"@g;s@serversite=\".*\"@serversite=\"${SITE2}\"@g;s@routersite=\".*\"@routersite=\"${SITE2}\"@g" SDX-Simple/client-config/c4.conf
+
+sed -i "s@SDX=.*@SDX=${SDX}@g" SDX-Simple/scripts/cnert-client.sh
