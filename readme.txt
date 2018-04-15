@@ -2,7 +2,7 @@
 To run the exerimental demo.
 0. Install ahab 1.7( https://github.com/RENCI-NRIG/ahab.git) manually. "cd ahab; mvn install"
 
-Enter SDX-Simple
+Enter SAFE_HOMESDX-Simple
 1. build: ./scripts/build.sh
 
 2. Modify fields in "configure" and run "./configure", this script will substitute fields in configuration files
@@ -54,7 +54,7 @@ Enter SDX-Simple
 
 
 -------------- Bro Experiment --------------------
-Two run the bro experiment, first we need to set up FTP service. The TestSlice code should have already set up FTP service when it creates the slice. 
+To run the bro experiment, we transmit a file with known signature via FTP service. The TestSlice code should have already set up FTP service when it creates the slice. 
 1. create the test slice: [1] modify TestMain to call emulationSlice() in main(). [2] modify configuration files to specify two sites. Since we need large bandwdith between two sites. It's highly suggested to choose UH-TAMU, or any pair from (UFL, UNF, FIU). [3] run TestMain to create the emulation slice
 2. Run BroMain for the experiment.
    ./scripts/bro.sh
