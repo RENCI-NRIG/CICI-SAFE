@@ -2,11 +2,13 @@
 To run the exerimental demo.
 0. Install ahab 1.7( https://github.com/RENCI-NRIG/ahab.git) manually. "cd ahab; mvn install"
 
-Enter SDX-Simple
+Enter SAFE_HOME/SDX-Simple  (SAFE_HOME refers to the root directory of the project, same below)
 1. build: ./scripts/build.sh
 
+Enter SAFE_HOME
 2. Modify fields in "configure" and run "./configure", this script will substitute fields in configuration files
    You should at least change the path to your exogeni pem file. And  you can choose what suffix you use for your slices, what sites you want to experiment on. 
+   Note: If you are running on Mac, use configure_mac instead. The commands for sed on mac and linux are slightly different.
 
    About configuration files in SDX-Simple/config and SDX-Simple/client-config: 
         slicename       Name of the slice
@@ -28,7 +30,7 @@ Enter SDX-Simple
    For demo with Both ExoGENI and Chameleon, [to be updated]
 
 3. There is two version of Demo. One is java code in TestMain. In TestMain we run server controllers and multiple client controllers in the same program, and client controllers interact with server controllers via HTTP restful APIs.
-   cd SDX-Simple
+   cd SAFE_HOME/SDX-Simple
    Run: ./scripts/test.sh  [Options]
            Options:
              -s/--slice     use existing slice
@@ -39,7 +41,7 @@ Enter SDX-Simple
    The work flow in real case, (1) we start vSDX controller independently, (2) start multiple client controllers,(3) clients enter command-line commands for request for network stitching, and get the IP address of the gateway in SDX slice (for example 192.168.130.1/24), and set the IP address in customer node an IP address in the same subnet, say 192.168.130.2/24 (4) advertise IP prefix to vSDX controller (5) request for connections between two IP prefixes.
    
    Another version of the demo is implemented with bash scripts, it runs the controllers seperately [To be tested, the command for vsdx server might never return, as there is http server listening all the time. If so, you might split the scripts into two files and run clients code after the server code completes].
-   cd SDX-Simple
+   cd SAFE_HOME/SDX-Simple
    ./scripts/cnert-slices.sh
    ./scripts/cnert-server.sh [Options]
            Options:
