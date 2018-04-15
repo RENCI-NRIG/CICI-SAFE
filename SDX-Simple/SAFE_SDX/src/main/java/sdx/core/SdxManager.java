@@ -211,7 +211,7 @@ public class SdxManager extends SliceManager {
     while(true){
       serverSlice.refresh();
       if (serverSlice.getResourceByName(linkName).getState() =="Active"){
-        sleep(10);
+        sleep(15);
         res = Exec.sshExec("root", node.getManagementIP(), "ifconfig -a|grep \"eth\"|grep" +
           " " +
           "-v \"eth0\"|sed 's/[ \\t].*//;/^$/d'",sshkey);
