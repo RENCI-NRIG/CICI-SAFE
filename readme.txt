@@ -54,6 +54,35 @@ Enter SAFE_HOME
    [on c3]$ wget ftp://ftpuser:ftp@192.168.40.2/evil.txt
    After about 5 seconds, the connection between 192.168.30.2 and 192.168.40.2 will be cut
 
+A few example scenerios and related commands:
+Enter SAFE_HOME/SDX_Simple
+Scenerio 1: Start from nothing
+    option 1:
+    ./scripts/test.sh
+    option 2:
+    ./scripts/cnert-slices.sh
+    ./scripts/cnert-server.sh
+    ./scripts/cnert-client.sh
+
+Scenerio 2: After stitching client slices and deploying bro nodes, we want to remove the stitching and bro nodes and run the demo again.
+    option 1:
+    ./scripts/test.sh -r -s
+
+    option 2:
+    ./scripts/cnert-server.sh -r
+    ./scripts/cnert-client.sh
+
+Scenerio 3: Rerun the demo to set up connection again, while using previous stitching and bro nodes.
+    ./scripts/cnert-server.sh
+    ./scripts/sdx_exogeni_client.sh -c client-config/c1.conf -e  "route 192.168.10.1/24 192.168.130.2"
+    ./scripts/sdx_exogeni_client.sh -c client-config/c2.conf -e "route 192.168.20.1/24 192.168.131.2"
+    ./scripts/sdx_exogeni_client.sh -c client-config/c3.conf -e  "route 192.168.30.1/24 192.168.132.2"
+    ./scripts/sdx_exogeni_client.sh -c client-config/c4.conf -e "route 192.168.40.1/24 192.168.133.2"
+
+    ./scripts/sdx_exogeni_client.sh -c client-config/c1.conf -e  "link 192.168.10.1/24 192.168.20.1/24"
+    ./scripts/sdx_exogeni_client.sh -c client-config/c3.conf -e  "link 192.168.30.1/24 192.168.40.1/24"
+
+
 
 -------------- Bro Experiment --------------------
 Two run the bro experiment, first we need to set up FTP service. The TestSlice code should have already set up FTP service when it creates the slice. 
