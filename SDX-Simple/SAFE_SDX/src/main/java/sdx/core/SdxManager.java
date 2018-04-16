@@ -194,31 +194,47 @@ public class SdxManager extends SliceManager {
   }
 
   private void addLink(Slice s, String linkName, String ip, String netmask, String nodeName, long
-    bw){
+    bw) {
     ComputeNode node = (ComputeNode) s.getResourceByName(nodeName);
     Network net = serverSlice.addBroadcastLink(linkName, bw);
     InterfaceNode2Net ifaceNode0 = (InterfaceNode2Net) net.stitch(node);
     ifaceNode0.setIpAddress(ip);
     ifaceNode0.setNetmask(netmask);
-    try {
-      s.commit();
-    }catch (Exception e){
-    }
     String res[] = Exec.sshExec("root", node.getManagementIP(), "ifconfig -a|grep \"eth\"|grep" +
       " " +
-      "-v \"eth0\"|sed 's/[ \\t].*//;/^$/d'",sshkey);
+      "-v \"eth0\"|sed 's/[ \\t].*//;/^$/d'", sshkey);
+    logger.debug("Interfaces before");
+    logger.debug(res[0]);
     int num = res[0].split("\n").length;
-    while(true){
+    try {
+      s.commit();
+    } catch (Exception e) {
+    }
+    while (true) {
       serverSlice.refresh();
-      if (serverSlice.getResourceByName(linkName).getState() =="Active"){
-        sleep(15);
+      if (serverSlice.getResourceByName(linkName).getState() == "Active") {
+        sleep(10);
         res = Exec.sshExec("root", node.getManagementIP(), "ifconfig -a|grep \"eth\"|grep" +
           " " +
-          "-v \"eth0\"|sed 's/[ \\t].*//;/^$/d'",sshkey);
+          "-v \"eth0\"|sed 's/[ \\t].*//;/^$/d'", sshkey);
+        logger.debug(res[0]);
         int n1 = res[0].split("\n").length;
-        if(n1 > num){
+        logger.debug("Interfaces before: " + num);
+        logger.debug("Interfaces after:" + n1);
+        if (n1 > num) {
           break;
-        }else {
+        } else {
+          sleep(10);
+          res = Exec.sshExec("root", node.getManagementIP(), "ifconfig -a|grep \"eth\"|grep" +
+            " " +
+            "-v \"eth0\"|sed 's/[ \\t].*//;/^$/d'", sshkey);
+          logger.debug(res[0]);
+          n1 = res[0].split("\n").length;
+          if(n1>num){
+            logger.debug("Interfaces before: " + num);
+            logger.debug("Interfaces after:" + n1);
+            break;
+          }
           s.getResourceByName(linkName).delete();
           commitAndWait(s);
           node = (ComputeNode) s.getResourceByName(nodeName);
@@ -228,7 +244,7 @@ public class SdxManager extends SliceManager {
           ifaceNode0.setNetmask(netmask);
           try {
             s.commit();
-          }catch (Exception e){
+          } catch (Exception e) {
           }
         }
       }
@@ -237,7 +253,7 @@ public class SdxManager extends SliceManager {
   }
 
   private void addLink(Slice s, String linkName, String ip1, String ip2, String netmask, String
-    node1, String node2, long bw){
+    node1, String node2, long bw) {
     ComputeNode node_1 = (ComputeNode) s.getResourceByName(node1);
     ComputeNode node_2 = (ComputeNode) s.getResourceByName(node2);
     Network net = serverSlice.addBroadcastLink(linkName, bw);
@@ -249,44 +265,44 @@ public class SdxManager extends SliceManager {
     ifaceNode1.setNetmask(netmask);
     try {
       s.commit();
-    }catch (Exception e){
+    } catch (Exception e) {
     }
     String res1[] = Exec.sshExec("root", node_1.getManagementIP(), "ifconfig -a|grep " +
-      "\"eth\"|grep -v \"eth0\"|sed 's/[ \\t].*//;/^$/d'",sshkey);
+      "\"eth\"|grep -v \"eth0\"|sed 's/[ \\t].*//;/^$/d'", sshkey);
     int num1 = res1[0].split("\n").length;
     String res2[] = Exec.sshExec("root", node_2.getManagementIP(), "ifconfig -a|grep " +
-      "\"eth\"|grep -v \"eth0\"|sed 's/[ \\t].*//;/^$/d'",sshkey);
+      "\"eth\"|grep -v \"eth0\"|sed 's/[ \\t].*//;/^$/d'", sshkey);
     int num2 = res2[0].split("\n").length;
-    while(true){
+    while (true) {
       serverSlice.refresh();
-      if (serverSlice.getResourceByName(linkName).getState() =="Active"){
+      if (serverSlice.getResourceByName(linkName).getState() == "Active") {
         sleep(10);
         res1 = Exec.sshExec("root", node_1.getManagementIP(), "ifconfig -a|grep \"eth\"|grep" +
           " " +
-          "-v \"eth0\"|sed 's/[ \\t].*//;/^$/d'",sshkey);
+          "-v \"eth0\"|sed 's/[ \\t].*//;/^$/d'", sshkey);
         int n1 = res1[0].split("\n").length;
         res2 = Exec.sshExec("root", node_2.getManagementIP(), "ifconfig -a|grep \"eth\"|grep" +
           " " +
-          "-v \"eth0\"|sed 's/[ \\t].*//;/^$/d'",sshkey);
+          "-v \"eth0\"|sed 's/[ \\t].*//;/^$/d'", sshkey);
         int n2 = res1[0].split("\n").length;
-        if(n1 > num1 && n2>num2){
+        if (n1 > num1 && n2 > num2) {
           break;
-        }else {
+        } else {
           s.getResourceByName(linkName).delete();
           commitAndWait(s);
           s.refresh();
+          node_1 = (ComputeNode) s.getResourceByName(node1);
+          node_2 = (ComputeNode) s.getResourceByName(node2);
+          net = serverSlice.addBroadcastLink(linkName, bw);
+          ifaceNode0 = (InterfaceNode2Net) net.stitch(node_1);
+          ifaceNode0.setIpAddress(ip1);
+          ifaceNode0.setNetmask(netmask);
+          ifaceNode1 = (InterfaceNode2Net) net.stitch(node_2);
+          ifaceNode1.setIpAddress(ip2);
+          ifaceNode1.setNetmask(netmask);
           try {
-            node_1 = (ComputeNode) s.getResourceByName(node1);
-            node_2 = (ComputeNode) s.getResourceByName(node2);
-            net = serverSlice.addBroadcastLink(linkName, bw);
-            ifaceNode0 = (InterfaceNode2Net) net.stitch(node_1);
-            ifaceNode0.setIpAddress(ip1);
-            ifaceNode0.setNetmask(netmask);
-            ifaceNode1 = (InterfaceNode2Net) net.stitch(node_2);
-            ifaceNode1.setIpAddress(ip2);
-            ifaceNode1.setNetmask(netmask);
             s.commit();
-          }catch (Exception e){
+          } catch (Exception e) {
           }
         }
       }

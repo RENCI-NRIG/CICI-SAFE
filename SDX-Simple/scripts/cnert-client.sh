@@ -1,5 +1,5 @@
 #!/bin/bash
-SDX=sdx-yaoyj11
+SDX=sdx-tamu-uh-yaoyj11
 echo "stitch clients"
 ./scripts/sdx_exogeni_client.sh -c client-config/c1.conf -e "stitch CNode0 ${SDX} c0"
 ./scripts/sdx_exogeni_client.sh -c client-config/c2.conf -e "stitch CNode0 ${SDX} c1"
