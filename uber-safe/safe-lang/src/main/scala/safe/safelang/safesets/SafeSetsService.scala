@@ -34,7 +34,32 @@ trait SafeSetsService {
  * go to local safesets: a local directory on disk 
  * containing certificates in individual files. The path 
  * of this local safeset is set by Config.config.safeSetsDir 
+ *
+ * It deals with these kinds of links (tokens) as described 
+ * below:
+ *
+ * 1) Self certifying links: [PID]:[LabelHash]. Each principal
+ * has its own shard comprised of a list of preferred set
+ * stores. Links to identity sets only contain the PID part.
+ * Read/write requests through these links are served by a
+ * well-known metastore.  
+ *
+ * 2) Flat links: [Hash of PID+Labelhash]. This happens when
+ * set sharding (self certifying token) is turned off. The
+ * metastore stores the sets and serves read/write requests.
+ *
+ * 3) Web links: [Web url], e.g., 
+ * http://152.3.145.253:8098/types/safesets/buckets/safe/keys/cert0 
+ * Only read operations on these links at the moment.
+ *
+ * 4) LDAP links: [LDAP server addr]/[Search base]
+ * For example:
+ * ldap://registry-test.cilogon.org:389/ou=people,o=ImPACT,dc=cilogon,dc=org 
+ * Only read operations at the moment. 
+ * Also, LDAP links must be included in an ID set as a suppliment
+ * of attributes of a principal. 
  */
+
 class SafeSetsClient(val system: ActorSystem) extends LazyLogging {
   //import system.dispatcher   // execution context for futures
   import HttpMultipartContentHelper._
@@ -71,9 +96,10 @@ class SafeSetsClient(val system: ActorSystem) extends LazyLogging {
   //  DiskaccessStorageClient()
   //} else {  SprayStorageClient(system) }
 
-  val storageclient: StorageClient = SprayStorageClient(system)
-  val diskaccessclient: StorageClient = DiskaccessStorageClient()
-  val tlsstorageclient: StorageClient = ApacheStorageClient(Config.config.sslOn, this) 
+  val storageclient: StorageClient = SprayStorageClient(system)                         // default client, via http
+  val diskaccessclient: StorageClient = DiskaccessStorageClient()                       // Local disk
+  val tlsstorageclient: StorageClient = ApacheStorageClient(Config.config.sslOn, this)  // tls client, via https 
+  val cassandraclient: StorageClient = CassandraStorageClient()                         // cassandra client, via its native protocol
 
   /**
    * A Self-certifying cert token is in the following format:
@@ -104,6 +130,12 @@ class SafeSetsClient(val system: ActorSystem) extends LazyLogging {
     }
   }
 
+  /**
+   * Take a self certifying token and return the desc of the
+   * set store that holds the set. For tokens of id sets and
+   * tokens that are generated without enabling self certifying
+   * token (flat tokens), the sets are hosted on the metastore.
+   */
   def getSetStoreDescForSelfCertifyingToken(sctoken: String): SetStoreDesc = {
     val pid = getPIDFromSelfCertifyingToken(sctoken)
     if(pid.isEmpty) {
@@ -132,6 +164,13 @@ class SafeSetsClient(val system: ActorSystem) extends LazyLogging {
     }
   }
 
+  /**
+   * Compute certificate address of a self certifying token.
+   * Note that flat tokens (tokens that are generated with self certifying
+   * tokens disabled  are a special case of self certifying tokens, 
+   * in the sense that the PID part is null and that all these tokens go to
+   * the metastore.
+   */
   def getCertAddrFromSelfCertifyingToken(sctoken: String): CertAddr = {
     val ss: SetStoreDesc = getSetStoreDescForSelfCertifyingToken(sctoken)
     var hashToken: String = sctoken
@@ -171,6 +210,8 @@ class SafeSetsClient(val system: ActorSystem) extends LazyLogging {
     val p: Int = certaddr.getStoreProtocol
     if(p == SetStoreDesc.HTTP) {
       storageclient.postCert(certaddr, content) 
+    } else if(p == SetStoreDesc.CASSANDRA_NATIVE) {
+      cassandraclient.postCert(certaddr, content)
     } else if(p == SetStoreDesc.HTTPS) {
       // Set up store authN entry before request
       val storeaddr: String = certaddr.getStoreAddr
@@ -191,6 +232,8 @@ class SafeSetsClient(val system: ActorSystem) extends LazyLogging {
     val p: Int = certaddr.getStoreProtocol
     if(p == SetStoreDesc.HTTP) {
       storageclient.fetchCert(certaddr) 
+    } else if (p == SetStoreDesc.CASSANDRA_NATIVE) {
+      cassandraclient.fetchCert(certaddr) 
     } else if(p == SetStoreDesc.HTTPS) {
       // Set up store authN entry before request
       val storeaddr: String = certaddr.getStoreAddr
@@ -213,6 +256,8 @@ class SafeSetsClient(val system: ActorSystem) extends LazyLogging {
     val p: Int = certaddr.getStoreProtocol
     if(p == SetStoreDesc.HTTP) {
       storageclient.deleteCert(certaddr) 
+    } else if(p == SetStoreDesc.CASSANDRA_NATIVE) {
+      cassandraclient.deleteCert(certaddr)
     } else if(p == SetStoreDesc.HTTPS) {
       // Set up store authN entry before request
       val storeaddr: String = certaddr.getStoreAddr
@@ -273,7 +318,7 @@ class SafeSetsClient(val system: ActorSystem) extends LazyLogging {
     val setIdHash = Identity.hash(namespace.getBytes(StringEncoding), "SHA-256")
     val t = Identity.encode(setIdHash, "base64URLSafe")
     val res1 = (t == token)
-    if(!res) {
+    if(!res1) {
       throw UnSafeException(s"Token doesn't checkout   token:${token}  speaker:${speaker}   label:${label}  t:${t}")
     }
 

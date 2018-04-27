@@ -16,7 +16,10 @@ import javax.naming.ldap.InitialLdapContext
 import javax.naming.ldap.LdapContext
 
 /**
- * An LDAP client to retrieve attributes of users from a remote LDAP server
+ * An LDAP client to retrieve attributes of users from a remote LDAP server.
+ * This client only implements set fetch.
+ * Our identity model assumes that LDAP links are only attached to an ID set
+ * as a way to provide user identity supplement endorsed by the LDAP server. 
  */
 
 class LDAPClient { 
@@ -45,10 +48,10 @@ class LDAPClient {
 
     val env = new Hashtable[String, Object]()
     env.put(Context.SECURITY_AUTHENTICATION, "simple")
-    if(ldapPrincipal != null) {
+    if(!ldapPrincipal.isEmpty) {
       env.put(Context.SECURITY_PRINCIPAL, ldapPrincipal)
     }
-    if(ldapCredential != null) {
+    if(!ldapCredential.isEmpty) {
       env.put(Context.SECURITY_CREDENTIALS, ldapCredential)
     }
     env.put(Context.INITIAL_CONTEXT_FACTORY, "com.sun.jndi.ldap.LdapCtxFactory");
@@ -96,8 +99,12 @@ class LDAPClient {
 
 object LDAPClient extends App {
   val client = new LDAPClient()
-  val serverAddr = "ldap://registry-test.cilogon.org:389"
-  val searchBase = "ou=people,o=ImPACT,dc=cilogon,dc=org"
+//  val serverAddr = "ldap://registry-test.cilogon.org:389"
+//  val searchBase = "ou=people,o=ImPACT,dc=cilogon,dc=org"
+//  val serverAddr = "ldap://registry-test.cilogon.org:389/dc=org"
+//  val searchBase = "ou=people,o=ImPACT,dc=cilogon"
+  val serverAddr = "ldap://registry-test.cilogon.org:389/ou=people,o=ImPACT,dc=cilogon,dc=org"
+  val searchBase = ""
   val ctx = client.createLDAPContext(serverAddr, client.ldapUsername, client.ldapPassword)
   client.queryLDAPAndGetGroups(ctx, searchBase)
 }
