@@ -2,6 +2,7 @@ package safe.safelang
 package safesets
 
 import safe.safelog.UnSafeException
+import safe.cache.SafeTable
 
 import scala.collection.mutable.{Map => MutableMap, ListBuffer}
 import java.util.Hashtable
@@ -14,6 +15,9 @@ import javax.naming.directory.SearchControls
 import javax.naming.directory.SearchResult
 import javax.naming.ldap.InitialLdapContext
 import javax.naming.ldap.LdapContext
+import javax.naming.Context
+
+import com.typesafe.scalalogging.LazyLogging
 
 /**
  * An LDAP client to retrieve attributes of users from a remote LDAP server.
@@ -22,15 +26,22 @@ import javax.naming.ldap.LdapContext
  * as a way to provide user identity supplement endorsed by the LDAP server. 
  */
 
-class LDAPClient { 
+class LDAPClient extends LazyLogging { 
  
   /**
    * A Hash map holding all ldap contexts that have beeen created so far
    * We might want to put a cap on the nubmer of in-memory contexts later.
    * Ldap contexts in the map are indexed by the ldap server addresses. 
    */
-  val ldapContexts = MutableMap[String, LdapContext]()
+  val ldapContexts = new SafeTable[String, LdapContext](
+    1024*1024,
+    0.75f,
+    16
+  ) 
 
+  /**
+   * Default authorized principal for LDAP queries.
+   */
   val ldapUsername = Config.config.ldapUsername
   val ldapPassword = Config.config.ldapPassword
 
@@ -67,33 +78,55 @@ class LDAPClient {
     ctx   
   }
 
-  // AneExample ldap search base:  "ou=people,o=ImPACT,dc=cilogon,dc=org"
-  def queryLDAPAndGetGroups(ctx: LdapContext, searchBase: String): ListBuffer[String] = {
+  // An example ldap search base:  "ou=people,o=ImPACT,dc=cilogon,dc=org"
+  def queryLDAPAndGetGroups(ctx: LdapContext, searchBase: String): Tuple2[String, ListBuffer[String]] = {
     val searchFilter: String = "(objectClass=person)"
     val searchControls: SearchControls = new SearchControls()
     searchControls.setSearchScope(SearchControls.SUBTREE_SCOPE)
    
     val results: NamingEnumeration[SearchResult] = ctx.search(searchBase, searchFilter, searchControls)
 
-    var itemCount = 0
-    while(results.hasMoreElements) {
-      val srLdapUser: SearchResult = results.nextElement
+    // Only look into the first record
+    //var itemCount = 0
+    //while(results.hasMoreElements) {
+    if(results.hasMoreElements) {
+      val ldapUser: SearchResult = results.nextElement
 
-      val uid: String = srLdapUser.getAttributes.get("uid").get.asInstanceOf[String]
-      val cn: String = srLdapUser.getAttributes.get("cn").get.asInstanceOf[String]
-      println("uid: " + uid + "   cn: " + cn)
-      val memberAttr: Attribute = srLdapUser.getAttributes.get("isMemberOf")
+      //val uid: String = srLdapUser.getAttributes.get("uid").get.asInstanceOf[String]
+      //val cn: String = srLdapUser.getAttributes.get("cn").get.asInstanceOf[String]
+      //println("uid: " + uid + "   cn: " + cn)
+      val employeeNumber = ldapUser.getAttributes.get("employeeNumber").toString //.asInstanceOf[String]
+      logger.info(s"EmployeeNumber: ${employeeNumber}")
+      val memberAttr: Attribute = ldapUser.getAttributes.get("isMemberOf")
       // println("class: " + isMemberOf.getAll().getClass())
       //val memberships: NamingEnumeration[?] = isMemberOf.getAll
+      val groups = ListBuffer[String]()
       val memberships = memberAttr.getAll
       while(memberships.hasMoreElements) {
         val m: String = memberships.nextElement.asInstanceOf[String]
-        println("isMemberOf: " + m)
+        logger.info(s"isMemberOf: ${m}")
+        groups += m
       }
-      println("")
-      itemCount += 1
+      //println("")
+      //itemCount += 1
+      employeeNumber -> groups
+    } else {
+      throw UnSafeException(s"didn't find any record on ${ctx.getEnvironment().get(Context.PROVIDER_URL)}")
     }
-    ListBuffer[String]()
+  }
+
+  def fetchSlogSet(certaddr: CertAddr): Seq[SlogSet] = {
+    val serveraddr = certaddr.getUrl
+    var ctx: LdapContext = null
+    if(ldapContexts.containsKey(serveraddr)) {
+      ctx = ldapContexts.get(serveraddr).get
+    } else {  // make a context and add the context into cache for future user
+      ctx = createLDAPContext(serveraddr, ldapUsername, ldapPassword)
+      logger.info(s"add context for ${serveraddr}")
+      ldapContexts.put(serveraddr, ctx)
+    } 
+    val uidGroups = queryLDAPAndGetGroups(ctx, "")  // search base is part of the provider URL
+    Seq[SlogSet]()
   }
 }
 
