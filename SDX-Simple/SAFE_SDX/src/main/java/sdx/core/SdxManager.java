@@ -83,14 +83,6 @@ public class SdxManager extends SliceManager {
   private final ReentrantLock brolock=new ReentrantLock();
   private HashMap<String,String>prefixgateway=new HashMap<String,String>();
 
-  public static String routerPattern = "(^c\\d+)";
-  public static String broPattern = "(bro\\d+_c\\d+)";
-  public static String stitchPortPattern = "(^sp-c\\d+.*)";
-  public static String stosVlanPattern = "(^stitch_c\\d+_\\d+)";
-  public static String linkPattern = "(^clink\\d+)";
-  public static String broLinkPattern = "(^blink_\\d+)";
-
-
   public Slice getSdxSlice(){
     return serverSlice;
   }

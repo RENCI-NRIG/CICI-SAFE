@@ -57,6 +57,13 @@ public class SliceManager extends SliceCommon {
   protected String scriptsdir;
   protected boolean BRO = false;
 
+  public static String routerPattern = "(^c\\d+)";
+  public static String broPattern = "(bro\\d+_c\\d+)";
+  public static String stitchPortPattern = "(^sp-c\\d+.*)";
+  public static String stosVlanPattern = "(^stitch_c\\d+_\\d+)";
+  public static String linkPattern = "(^clink\\d+)";
+  public static String broLinkPattern = "(^blink_\\d+)";
+
   protected void computeIP(String prefix) {
     logger.debug(prefix);
     String[] ip_mask = prefix.split("/");
@@ -126,6 +133,7 @@ public class SliceManager extends SliceCommon {
       Slice carrier = createCarrierSlice(carrierName, routerNum, bw);
       commitAndWait(carrier);
       carrier.refresh();
+      runCmdSlice(carrier, getOVSScript(), routerPattern,true, true);
       copyFile2Slice(carrier, scriptsdir + "dpid.sh", "~/dpid.sh", sshkey);
       copyFile2Slice(carrier, scriptsdir + "ifaces.sh", "~/ifaces.sh", sshkey);
       copyFile2Slice(carrier, scriptsdir + "ovsbridge.sh", "~/ovsbridge.sh", sshkey);
@@ -357,7 +365,7 @@ public class SliceManager extends SliceCommon {
     //String nodePostBootScript="apt-get update;apt-get -y  install quagga\n"
     //  +"sed -i -- 's/zebra=no/zebra=yes/g' /etc/quagga/daemons\n"
     //  +"sed -i -- 's/ospfd=no/ospfd=yes/g' /etc/quagga/daemons\n";
-    String nodePostBootScript = getOVSScript();
+    String nodePostBootScript = "";
     ArrayList<ComputeNode> nodelist = new ArrayList<ComputeNode>();
     ArrayList<Network> netlist = new ArrayList<Network>();
     ArrayList<Network> stitchlist = new ArrayList<Network>();
@@ -433,8 +441,8 @@ public class SliceManager extends SliceCommon {
   }
 
   protected String getOVSScript() {
-    String script = "apt-get update\n" +
-      "apt-get -y install openvswitch-switch\n apt-get -y install iperf\n /etc/init.d/neuca stop\n";
+    String script = "apt update\n" +
+      "apt -y install openvswitch-switch iperf\n /etc/init.d/neuca-guest-tools stop\n";
     return script;
   }
 
@@ -456,7 +464,7 @@ public class SliceManager extends SliceCommon {
       +"sed -i -- 's/zebra=no/zebra=yes/g' /etc/quagga/daemons\n"
       +"sed -i -- 's/ospfd=no/ospfd=yes/g' /etc/quagga/daemons\n"
       +"echo \"1\" > /proc/sys/net/ipv4/ip_forward\n"
-      +"/etc/init.d/neuca stop\n";
+      +"/etc/init.d/neuca-guest-tools stop\n";
     return nodePostBootScript;
   }
 }
