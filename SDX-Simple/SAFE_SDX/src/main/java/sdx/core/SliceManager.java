@@ -127,6 +127,7 @@ public class SliceManager extends SliceCommon {
       commitAndWait(carrier);
       carrier.refresh();
       copyFile2Slice(carrier, scriptsdir + "dpid.sh", "~/dpid.sh", sshkey);
+      copyFile2Slice(carrier, scriptsdir + "ifaces.sh", "~/ifaces.sh", sshkey);
       copyFile2Slice(carrier, scriptsdir + "ovsbridge.sh", "~/ovsbridge.sh", sshkey);
       //Make sure that plexus container is running
       SDNControllerIP = ((ComputeNode) carrier.getResourceByName("plexuscontroller"))
@@ -346,7 +347,7 @@ public class SliceManager extends SliceCommon {
 
     Slice s = Slice.create(sliceProxy, sctx, sliceName);
 
-    NodeBaseInfo ninfo = NodeBase.getImageInfo("Ubuntu 14.04");
+    NodeBaseInfo ninfo = NodeBase.getImageInfo("Ubuntu 16.04");
     String nodeImageShortName = ninfo.nisn;
     String nodeImageURL = ninfo.niurl;
     //http://geni-images.renci.org/images/standard/ubuntu/ub1304-ovs-opendaylight-v1.0.0.xml

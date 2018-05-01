@@ -200,9 +200,7 @@ public class SdxManager extends SliceManager {
     InterfaceNode2Net ifaceNode0 = (InterfaceNode2Net) net.stitch(node);
     ifaceNode0.setIpAddress(ip);
     ifaceNode0.setNetmask(netmask);
-    String res[] = Exec.sshExec("root", node.getManagementIP(), "ifconfig -a|grep \"eth\"|grep" +
-      " " +
-      "-v \"eth0\"|sed 's/[ \\t].*//;/^$/d'", sshkey);
+    String res[] = Exec.sshExec("root", node.getManagementIP(),"/bin/bash ifaces.sh", sshkey);
     logger.debug("Interfaces before");
     logger.debug(res[0]);
     int num = res[0].split("\n").length;
@@ -214,9 +212,7 @@ public class SdxManager extends SliceManager {
       serverSlice.refresh();
       if (serverSlice.getResourceByName(linkName).getState() == "Active") {
         sleep(10);
-        res = Exec.sshExec("root", node.getManagementIP(), "ifconfig -a|grep \"eth\"|grep" +
-          " " +
-          "-v \"eth0\"|sed 's/[ \\t].*//;/^$/d'", sshkey);
+        res = Exec.sshExec("root", node.getManagementIP(),"/bin/bash ifaces.sh", sshkey);
         logger.debug(res[0]);
         int n1 = res[0].split("\n").length;
         logger.debug("Interfaces before: " + num);
@@ -225,9 +221,7 @@ public class SdxManager extends SliceManager {
           break;
         } else {
           sleep(10);
-          res = Exec.sshExec("root", node.getManagementIP(), "ifconfig -a|grep \"eth\"|grep" +
-            " " +
-            "-v \"eth0\"|sed 's/[ \\t].*//;/^$/d'", sshkey);
+          res = Exec.sshExec("root", node.getManagementIP(),"/bin/bash ifaces.sh", sshkey);
           logger.debug(res[0]);
           n1 = res[0].split("\n").length;
           if(n1>num){
