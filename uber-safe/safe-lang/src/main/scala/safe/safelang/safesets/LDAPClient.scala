@@ -71,6 +71,9 @@ class LDAPClient extends LazyLogging {
     env.put(Context.INITIAL_CONTEXT_FACTORY, "com.sun.jndi.ldap.LdapCtxFactory");
     env.put(Context.PROVIDER_URL, ldapServerAddr);
     
+    // Enable connection pooling
+    //env.put("com.sun.jndi.ldap.connect.pool", "true")
+    
     // Ensures that objectSID attribute values
     // will be returned as a byte array rather than a String
     env.put("java.naming.ldap.attributes.binary", "objectSID")
@@ -87,12 +90,34 @@ class LDAPClient extends LazyLogging {
     val searchControls: SearchControls = new SearchControls()
     searchControls.setSearchScope(SearchControls.SUBTREE_SCOPE)
    
-    val results: NamingEnumeration[SearchResult] = ctx.search(searchBase, searchFilter, searchControls)
+    var results: NamingEnumeration[SearchResult] = null
+    
+    Try(ctx.search(searchBase, searchFilter, searchControls)) match {
+      case Success(r) =>
+        results = r
+      case Failure(e) =>
+        logger.info(s"Fail to perform LDAP search: ${e}")
+        // Retry in case that it's because the connection timed out
+        logger.info("Create a new ldap context and query again")
+        val serveraddr = ctx.getEnvironment().get(Context.PROVIDER_URL).asInstanceOf[String]
+        val new_ctx = createLDAPContext(serveraddr, ldapUsername, ldapPassword)
+        logger.info("cache the new context")
+        ldapContexts.put(serveraddr, new_ctx)
+        logger.info("last attempt for ldap search")
+        results = new_ctx.search(searchBase, searchFilter, searchControls)
+
+        // This doesn't work
+        //logger.info("Reconnect to server...")
+        //ctx.reconnect(null)
+        //logger.info("Reconnecting done")
+        //return queryLDAPAndGetGroups(ctx, searchBase, true)
+    } 
+    //val results: NamingEnumeration[SearchResult] = ctx.search(searchBase, searchFilter, searchControls)
 
     // Only look into the first record
     //var itemCount = 0
     //while(results.hasMoreElements) {
-    if(results.hasMoreElements) {
+    if(results != null && results.hasMoreElements) {
       val ldapUser: SearchResult = results.nextElement
 
       //val uid: String = srLdapUser.getAttributes.get("uid").get.asInstanceOf[String]
@@ -132,7 +157,7 @@ class LDAPClient extends LazyLogging {
     val serveraddr = certaddr.getUrl
     var ctx: LdapContext = null
     if(ldapContexts.containsKey(serveraddr)) {
-      ctx = ldapContexts.get(serveraddr).get
+      ctx = ldapContexts.get(serveraddr).get     
     } else {  // make a context and add the context into cache for future user
       ctx = createLDAPContext(serveraddr, ldapUsername, ldapPassword)
       logger.info(s"add context for ${serveraddr}")
@@ -148,7 +173,7 @@ class LDAPClient extends LazyLogging {
         speaker = r.getHost 
         label = r.getDN
       case Failure(e) =>
-        logger.info(s"Failure to parse ${serveraddr} as a url")
+        logger.info(s"Fail to parse ${serveraddr} as a url")
     } 
    
     //val validity = Validity() // defaut validity (expire after 3 years)
