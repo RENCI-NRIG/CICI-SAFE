@@ -1,9 +1,10 @@
 package safe.safelog
 package parser
 
-import scala.collection.mutable.{Set => MutableSet}
+import scala.collection.mutable.{ListBuffer, Queue, Set => MutableSet}
 import safe.safelog.AnnotationTags._
 import scala.collection.mutable.{LinkedHashSet => OrderedSet}
+import java.nio.file.{Path, Paths}
 
 trait ParserImpl
   extends scala.util.parsing.combinator.JavaTokenParsers 
@@ -643,8 +644,25 @@ trait ParserImpl
   }
   lazy val integer: PackratParser[Term] = wholeNumber ^^ {c => Constant(c, StrLit("nil"), StrLit("Int"))}
 
+  override def parseAll[T](p: Parser[T], in: CharSequence): ParseResult[T] = {
+    // Start the statement cache from fresh
+    _statementCache = new MutableCache[Index, OrderedSet[Statement]]()
+    //println(s"[parse CharSequence] adding a new _statementCache")
+    //scala.io.StdIn.readLine()
+    super.parseAll(p, in)
+  }
+
+  override def parseAll[T](p: Parser[T], in: java.io.Reader): ParseResult[T] = {
+    // Start the statement cache from fresh
+    _statementCache = new MutableCache[Index, OrderedSet[Statement]]()
+    //println(s"[parse java.io.Reader] adding a new _statementCache")
+    //scala.io.StdIn.readLine()
+    super.parseAll(p, in)
+  }
+
   /**
-   *  source is provided by slang program
+   * Parse slog code
+   *   - source is provided by slang 
    */
   def parseSlog(source: String): ParseResult[MutableCache[Index, OrderedSet[Statement]]] = {
     //println(s"[slogParser parseSlog] saysOperator: ${saysOperator}       Config.confg.saysOperator: ${Config.config.saysOperator}")
@@ -706,17 +724,208 @@ trait ParserImpl
     res
   }
 
+  def parseFileWithProgramArgs(fileName: String, fileArgs: Option[String] = None): SafeProgram = {
+    val t0 = System.nanoTime
+    //println(s"Calling parseFileWithProgramArgs")
+    //scala.io.StdIn.readLine()
+
+    val stmts: SafeProgram = fileArgs match {
+      case Some(args: String) =>
+        val argSeq = args.split(",").toSeq
+        var _fileContents = scala.io.Source.fromFile(fileName).mkString
+        argSeq.zipWithIndex.foreach{ case (arg, idx) =>
+          _fileContents = _fileContents.replaceAll(s"\\$$${idx + 1}", s"'$arg'")
+        }
+      parse(_fileContents)
+      case _ => parseFile(fileName)
+    }
+    val compiletime = (System.nanoTime - t0) / 1000
+
+    logger.info(s"\n\n ====== Parsing DONE: $fileName ======\n")
+    //println(s"\n\n ====== Parsing DONE: $fileName ======\n")
+    //println(s"Time used for compiling $fileName: $compiletime ms")
+    //scala.io.StdIn.readLine()
+
+    stmts
+  }
+
+  /**
+   * Make an executable by assembling compiled programs from linked code
+   * Simple smashing: env vars are shared among all linked code
+   * TODO: not deal with scope yet (slog and slang)
+   *
+   * @param programs  compiled programs from linked code
+   */
+  def linkPrograms(programs: Seq[SafeProgram]): SafeProgram = {
+    val t0 = System.nanoTime
+    val allIndices = OrderedSet[Index]()
+    programs.foreach{ p => allIndices ++= p.keySet } 
+    
+    // Import statements are not needed in the combined program
+    allIndices -= new Index("import1")
+
+    val monolithic = allIndices.map {
+      case i: Index =>
+        val newStmtSet = OrderedSet[Statement]()
+        programs.foreach { p => newStmtSet ++= p.get(i).getOrElse(OrderedSet.empty[Statement]) }
+        i -> newStmtSet
+    }.toMap
+
+    val linktime = (System.nanoTime - t0) / 1000
+    //println(s"/n/nMerged slang: $slang")
+    //println(s"Time used for linking: $linktime ms")
+
+    monolithic
+  }
+
+
+  /**
+   * Compile program, and link imported code when it need to do so. 
+   * It also keeps track of the imported code, so that the
+   * processing is safe even in the face of importing loops. 
+   */
+
+  def compileAndLinkWithSource(slangSource: String, referencePath: Path = Paths.get(".")): SafeProgram = {
+    import StatementHelper._
+
+    val compiledSources = OrderedSet[String]()
+    val sourcesToCompile = Queue[String]()
+    var count = 0
+    val t0 = System.nanoTime
+    val allPrograms = ListBuffer[SafeProgram]()
+    var stmts = parse(slangSource) 
+    var rPath = referencePath
+    var inputSource = true
+    do {
+      if(inputSource == false) {
+        val s = sourcesToCompile.dequeue
+        //stmts = parseFileWithProgramArgs(s, fileArgs)
+        stmts = parseFileWithProgramArgs(s)
+        rPath = Paths.get(s)
+        compiledSources += s
+      }
+      allPrograms += stmts
+      val importedFiles: Seq[String] = stmts.get(new Index("import1")) match {
+        case Some(importStmts: OrderedSet[Statement]) =>
+          //println(s"Import statments: $importStmts")
+          importStmts.map(is => getAttribute(Some(is), 0)).filter(_.isDefined).map(_.get).toSeq
+        case _ => Seq[String]()
+      }
+
+      //println(s"""Imported files: ${importedFiles.mkString("; ")}""")
+      // Processing relative paths
+      val additionalSources = importedFiles.map( f => rPath.resolve(f).toFile.getCanonicalPath )
+      //println(s"""Additional sources: ${additionalSources.mkString("; ")}""")
+
+
+      val uncompiledAdditional = additionalSources.filter(!sourcesToCompile.contains(_)).filter(!compiledSources.contains(_))
+      //println(s"""Uncompiled additional: ${uncompiledAdditional.mkString("; ")}""")
+      //scala.io.StdIn.readLine()
+
+      sourcesToCompile ++= uncompiledAdditional
+      count += 1
+      if(inputSource) inputSource = false
+    }  while(!sourcesToCompile.isEmpty)
+
+    println(s"$count scripts in total are assembled into this code")
+    compiledSources.foreach(println(_))
+    println()
+    val compileTime = (System.nanoTime - t0) / 1000
+    println(s"Time used to compile all sources: $compileTime ms")
+    //scala.io.StdIn.readLine()
+
+    val monolithic: SafeProgram = linkPrograms(allPrograms)
+    val compilePlusLinkTime = (System.nanoTime - t0) / 1000
+    println(s"Time used to compile and assemble all code: $compilePlusLinkTime ms")
+    //scala.io.StdIn.readLine()
+
+    monolithic
+  }
+
+
+  def compileAndLink(fileName: String, fileArgs: Option[String] = None): SafeProgram = {
+    val fileContent: String = substituteAndGetFileContent(fileName, fileArgs)
+    val p: Path = Paths.get(fileName)
+    compileAndLinkWithSource(fileContent, p)
+  }
+
+
+  def substituteAndGetFileContent(fileName: String, fileArgs: Option[String] = None): String = {
+    var fileContent = scala.io.Source.fromFile(fileName).mkString
+    fileArgs match {
+      case Some(args: String) =>
+        val argSeq = args.split(",").toSeq
+        argSeq.zipWithIndex.foreach{ case (arg, idx) =>
+          fileContent = fileContent.replaceAll(s"\\$$${idx + 1}", s"'$arg'")
+        }
+      case _ =>
+    }
+    fileContent
+  } 
+
+//  def compileAndLink(fileName: String, fileArgs: Option[String] = None): SafeProgram = {
+//    import StatementHelper._
+//
+//    var referencePath: Path = Paths.get(fileName)
+//    val compiledSources = OrderedSet[String]()
+//    val sourcesToCompile = Queue[String](referencePath.toFile.getCanonicalPath)
+//    var count = 0
+//    val t0 = System.nanoTime
+//    val allPrograms = ListBuffer[SafeProgram]()
+//    while(!sourcesToCompile.isEmpty) {
+//      val s = sourcesToCompile.dequeue
+//      val stmts = parseFileWithProgramArgs(s, fileArgs)
+//      allPrograms += stmts
+//      val importedFiles: Seq[String] = stmts.get(new Index("import1")) match {
+//        case Some(importStmts: OrderedSet[Statement]) =>
+//          //println(s"Import statments: $importStmts")
+//          importStmts.map(is => getAttribute(Some(is), 0)).filter(_.isDefined).map(_.get).toSeq
+//        case _ => Seq[String]()
+//      }
+//
+//      //println(s"""Imported files: ${importedFiles.mkString("; ")}""")
+//      referencePath = Paths.get(s)
+//      // Processing relative paths
+//      val additionalSources = importedFiles.map( f => referencePath.resolve(f).toFile.getCanonicalPath )
+//      //println(s"""Additional sources: ${additionalSources.mkString("; ")}""")
+// 
+//      compiledSources += s
+//
+//      val uncompiledAdditional = additionalSources.filter(!sourcesToCompile.contains(_)).filter(!compiledSources.contains(_))
+//      //println(s"""Uncompiled additional: ${uncompiledAdditional.mkString("; ")}""")
+//      //scala.io.StdIn.readLine()
+//
+//      sourcesToCompile ++= uncompiledAdditional
+//      count += 1
+//    }
+//
+//    println(s"$count scripts in total are assembled into this code")
+//    compiledSources.foreach(println(_))
+//    println()
+//    val compileTime = (System.nanoTime - t0) / 1000
+//    println(s"Time used to compile all sources: $compileTime ms")
+//    //scala.io.StdIn.readLine()
+//
+//    val monolithic: SafeProgram = linkPrograms(allPrograms)
+//    val compilePlusLinkTime = (System.nanoTime - t0) / 1000
+//    println(s"Time used to compile and assemble all code: $compilePlusLinkTime ms")
+//    //scala.io.StdIn.readLine()
+//
+//    monolithic
+//  }
+
   private def parseAsSegmentsHelper(
     result: ParseResult[MutableCache[Index, OrderedSet[Statement]]]
   ): Tuple4[Map[Index, OrderedSet[Statement]], Seq[Statement], Seq[Statement], Seq[Statement]] = result match {
 
     case Success(_result, _) =>
       val importSeq      = _result.get(StrLit("_import")).getOrElse(Nil).toSeq
-      _result           -= StrLit("_import")
+      // We don't need to remove special statements because _statementCache is a new instance on each parseAll call
+      // _result           -= StrLit("_import")
       val querySeq       = _result.get(StrLit("_query")).getOrElse(Nil).toSeq
-      _result           -= StrLit("_query")
+      // _result           -= StrLit("_query")
       val retractionSeq  = _result.get(StrLit("_retraction")).getOrElse(Nil).toSeq
-      _result           -= StrLit("_retraction")
+      // _result           -= StrLit("_retraction")
       Tuple4(_result.toMap, querySeq, importSeq, retractionSeq)
     case failure: NoSuccess => throw ParserException(s"${failure.msg}")
   }
@@ -768,17 +977,19 @@ trait ParserImpl
     }
   }
 
-  override def parseCmdLine(source: String): Tuple2[Option[MutableCache[Index, OrderedSet[Statement]]], Symbol] = source match {
-    case startsWithComment(_) => (None, 'comment)
-    case pasteMode(_, _, _)   => 
-      _isPasteMode = true
-      (None, 'paste)
-    case quit(_, _, _) => (None, 'quit)
-    case pasteQuit(_, _, _, _) if(_isPasteMode == false) => (None, 'quit)
-    case pasteQuit(src, _, _, _) if(_isPasteMode == true)  =>
-      _isPasteMode = false
-      handleCmdLine(s"$src.")
-    case _ if(_isPasteMode)     => (None, 'continuation)
-    case _                      => handleCmdLine(source)
+  override def parseCmdLine(source: String): Tuple2[Option[MutableCache[Index, OrderedSet[Statement]]], Symbol] = {
+    source match {
+      case startsWithComment(_) => (None, 'comment)
+      case pasteMode(_, _, _)   => 
+        _isPasteMode = true
+        (None, 'paste)
+      case quit(_, _, _) => (None, 'quit)
+      case pasteQuit(_, _, _, _) if(_isPasteMode == false) => (None, 'quit)
+      case pasteQuit(src, _, _, _) if(_isPasteMode == true)  =>
+        _isPasteMode = false
+        handleCmdLine(s"$src.")
+      case _ if(_isPasteMode)     => (None, 'continuation)
+      case _                      => handleCmdLine(source)
+    }
   }
 }

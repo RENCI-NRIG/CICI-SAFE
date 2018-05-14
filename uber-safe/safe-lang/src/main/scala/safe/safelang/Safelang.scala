@@ -3,12 +3,13 @@ package safe.safelang
 import scala.collection.mutable.{Set => MutableSet, Map => MutableMap, ListBuffer}
 import scala.collection.mutable.{LinkedHashSet => OrderedSet, Queue}
 import java.util.concurrent.atomic.AtomicInteger
+import java.nio.file.{Path, Paths}
 
 import safe.cache.SafeTable
 import setcache.SetCache
 import safesets._
 import safe.safelog.{SetId, Index, MutableCache, Statement, Subcontext, StrLit, 
-  UnSafeException, Assertion, Query, EnvValue, Constant, Encoding}
+  UnSafeException, Assertion, Query, EnvValue, Constant, Encoding, SafeProgram}
 import model.Principal
 import akka.actor.ActorSystem
 import util.KeyPairManager
@@ -18,9 +19,7 @@ import javax.crypto.spec.SecretKeySpec
 trait SafelangImpl extends safe.safelog.SafelogImpl  {
   slangInference: InferenceService with ParserService with SafeSetsService =>
 
-  def init(source: String): Map[Index, OrderedSet[Statement]]
-  def init(statements: Map[Index, OrderedSet[Statement]]): Map[Index, OrderedSet[Statement]]
-  def initFile(fileName: String): Map[Index, OrderedSet[Statement]]
+  def compileSlang(slangFile: String, fileArgs: Option[String]): SafeProgram 
 }
 
 trait SafelangService extends InferenceService 
@@ -49,7 +48,7 @@ trait SafelangService extends InferenceService
   }
 
   /** Execute defenvs and definits */
-  def doInitialExecution(skipDefinit: Boolean = false): Unit = {
+  def doInitialExecution(skipDefinit: Boolean): Unit = {
     val cnt: Option[Subcontext] = contextCache.get(Token("_object"))   
     if(cnt.isDefined) {
       val facts = cnt.get.facts
@@ -72,54 +71,59 @@ trait SafelangService extends InferenceService
     }
   }
 
-  private[this] def initProgram(stmts: Map[Index, OrderedSet[Statement]]): Unit = {
+
+  /** 
+   * For dynamic import of slang code, we do initial execution only for 
+   * the imported program.
+   */
+  def doInitialExecution(program: SafeProgram, skipDefinit: Boolean): Unit = {
+    val defenvGoals = program.get(StrLit("defenv0")).getOrElse(Nil)
+    logger.info(s"defenvGoals: ${defenvGoals}")
+    logger.info(s"""ServerPrincipal/SelfID = ${envContext.get(StrLit("Self"))}""")
+    var allGoals = ListBuffer[Assertion]()
+    allGoals ++= defenvGoals.map(s => Assertion(s.terms.tail))
+    logger.info(s"skipDefinit: $skipDefinit")
+    if(skipDefinit == false) {
+      val definitGoals = program.get(StrLit("definit0")).getOrElse(Nil)
+      logger.info(s"definitGoals: ${definitGoals}")
+      allGoals ++= definitGoals.map(s => Assertion(s.terms.tail))
+    }
+    logger.info(s"allGoals: $allGoals")
+    solveSlang(allGoals.toSeq, false)
+  }
+
+  private[this] def loadProgram(stmts: SafeProgram): Unit = {
     val c = contextCache.get(Token("_object"))
     assert(c.isDefined, s"Slang program context must be in context cache: ${c}")
     val slangcnt: Subcontext = c.get
     slangcnt.addStatements(stmts)
   }
 
-  def init(source: String): Map[Index, OrderedSet[Statement]] = {
-    val stmts = parse(source)
-    logger.info("\n\n ====== Slang parsing DONE!! ======\n")
-    initProgram(stmts)
-    doInitialExecution()
-    stmts
+  /**
+   * Compile slang, and link imported code when applicable.
+   */ 
+  def compileSlang(slangFile: String, fileArgs: Option[String]): SafeProgram = {
+    val slangSource = substituteAndGetFileContent(slangFile, fileArgs)
+    val p = Paths.get(slangFile)
+    compileSlangWithSource(slangSource, p)
   }
 
-  def init(statements: Map[Index, OrderedSet[Statement]]): Map[Index, OrderedSet[Statement]] = {
-    initProgram(statements)
-    doInitialExecution()
-    statements
-  }
-
-  def initFile(fileName: String): Map[Index, OrderedSet[Statement]] = {
-    val stmts = parseFile(fileName)
-    //println("[Safelang] ============ statements after parsing =========")
-    //stmts.foreach(println)
-    //println("==========================================================")
-    logger.info("[Safelang] finish parsing source")
-    initProgram(stmts)
-    doInitialExecution()
-    stmts
-  }
-
-  def compileSlang(slangFile: String, fileArgs: Option[String]): Map[Index, OrderedSet[Statement]] = {
-    if(!fileArgs.isDefined) {
-      initFile(slangFile) 
-    } else {
-      val args = fileArgs.get
-      val argSeq = args.split(",").toSeq
-      var _fileContents = scala.io.Source.fromFile(slangFile).mkString
-      argSeq.zipWithIndex.foreach{ case (arg, idx) =>
-        _fileContents = _fileContents.replaceAll(s"\\$$${idx + 1}", s"'$arg'")
-      }
-      init(_fileContents)
-    }
+  def compileSlangWithSource(slangSource: String, referencePath: Path = Paths.get(".")): SafeProgram = {
+    val slang = compileAndLinkWithSource(slangSource, referencePath)
+    // Do initalization execution for the program
+    loadProgram(slang)
+    doInitialExecution(slang, false)
+    slang
   }
 
   def compileAndGetGuards(slangFile: String, fileArgs: Option[String] = None): Map[String, Tuple2[Int, Seq[String]]] = {
-    val compiledSlangProgram = compileSlang(slangFile, fileArgs)
+    val slangSource = substituteAndGetFileContent(slangFile, fileArgs)
+    val p = Paths.get(slangFile)
+    compileAndGetGuardsWithSource(slangSource, p)
+  } 
+
+  def compileAndGetGuardsWithSource(slangSource: String, referencePath: Path = Paths.get(".")): Map[String, Tuple2[Int, Seq[String]]] = {
+    val compiledSlangProgram = compileSlangWithSource(slangSource, referencePath)
     /**
      * Add defguard, defpost, and defetch into guardSet
      * so that all of them are invokable via requests
@@ -145,7 +149,6 @@ trait SafelangService extends InferenceService
 class Safelang(
     val self: String,
     val saysOperator: Boolean,
-    val _statementCache: MutableCache[Index, OrderedSet[Statement]],
     val slangCallClient: SlangRemoteCallClient,
     val safeSetsClient: SafeSetsClient,
     val setCache: SetCache,
@@ -156,7 +159,7 @@ class Safelang(
 object Safelang {  
   def apply(slangCallClient: SlangRemoteCallClient, safeSetsClient: SafeSetsClient, 
       setCache: SetCache, contextCache: ContextCache, safelangId: Int): Safelang = {
-    new Safelang(Config.config.self, Config.config.saysOperator, new MutableCache[Index, OrderedSet[Statement]](),
+    new Safelang(Config.config.self, Config.config.saysOperator,
       slangCallClient, safeSetsClient, setCache, contextCache, safelangId)
   }
 }
@@ -266,7 +269,7 @@ class SafelangManager(keypairDir: String) extends KeyPairManager with LazyLoggin
 
   /**
    * Set self envs, including $Selfie, $Self, $SelfKey.
-   * @param  A principal for self
+   * @param p  A principal for self
    */
   private def setSelfEnvs(envContext: MutableMap[StrLit, EnvValue], p: Principal): Unit = {
     envContext.put(StrLit("Selfie"), p)
@@ -367,6 +370,7 @@ class SafelangManager(keypairDir: String) extends KeyPairManager with LazyLoggin
 
     // Skip definit in initial execution when it's a post
     val skipDefinit: Boolean = if(guardType.isDefined && guardType.get == DEF_POST) true else false
+    // val skipDefinit = false  // always not skip definit
 
     var envcnt: MutableMap[StrLit, EnvValue] = null
     var inference: Safelang = null
@@ -394,7 +398,7 @@ class SafelangManager(keypairDir: String) extends KeyPairManager with LazyLoggin
         inference.bindEnvContext(_cnt)
         inference.doInitialExecution(skipDefinit)  // Executing definit and defenv
         envcnt = inference.getEnvContext           // Reference envcontext 
-        if(skipDefinit == false) { // reusable context
+        if(!skipDefinit) { // env context under skipDefinit is incomplete; only complete envcnt can be a reference
           updateReferenceEnvContexts(pid, envcnt)
         }
         // We now know the default server PID after initial execution is done
@@ -412,6 +416,7 @@ class SafelangManager(keypairDir: String) extends KeyPairManager with LazyLoggin
     val res = inference.solveSlang(Seq(query), false)
       
     this.synchronized { // release envcont and safelang
+      // We shouldn't recycle envcnt if envcnt is incomplete due to skipDefinit 
       if(skipDefinit == false) { // reusable context
         getWorkableEnvContexts(pid).enqueue(envcnt) 
       }
