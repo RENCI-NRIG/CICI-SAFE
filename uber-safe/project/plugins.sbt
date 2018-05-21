@@ -4,7 +4,7 @@
 // which I'm guessing was inspired by Maven's assembly plugin. The goal is
 // simple: Create a fat JAR of your project with all of its dependencies.
 // https://github.com/sbt/sbt-assembly
-addSbtPlugin("com.eed3si9n" % "sbt-assembly" % "0.13.0")
+addSbtPlugin("com.eed3si9n" % "sbt-assembly" % "0.14.6")
 
 
 //========= sbt-resolver================//
@@ -14,14 +14,15 @@ addSbtPlugin("com.eed3si9n" % "sbt-assembly" % "0.13.0")
 //  - Starting and stopping your application in the background of your interactive SBT shell (in a forked JVM)
 //  - Triggered restart: automatically restart your application as soon as some of its sources have been changed
 // https://github.com/spray/sbt-revolver
-addSbtPlugin("io.spray" % "sbt-revolver" % "0.7.2")
+addSbtPlugin("io.spray" % "sbt-revolver" % "0.9.1")
 
 // https://github.com/MasseGuillaume/ScalaKata/
 // scala in the browser
-addSbtPlugin("com.scalakata" % "plugin" % "0.5.0")
+//addSbtPlugin("com.scalakata" % "plugin" % "1.1.5")
 
 // add multi-jvm plugin
-addSbtPlugin("com.typesafe.sbt" % "sbt-multi-jvm" % "0.3.11")
+// https://github.com/sbt/sbt-multi-jvm
+addSbtPlugin("com.typesafe.sbt" % "sbt-multi-jvm" % "0.4.0")
 
 //addSbtPlugin("com.typesafe.sbt" % "sbt-scalariform" % "1.3.0")
 

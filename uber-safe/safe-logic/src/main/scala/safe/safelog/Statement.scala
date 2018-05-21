@@ -153,3 +153,27 @@ object Statement {
     case x            => throw new UnSafeException(s"Unknown typed passed: $x")
   }
 }
+
+object StatementHelper {
+  /**
+   * Get an attribute from a statement at a specified position
+   * @param stmt Option[Statement] 
+   * @param pos  position of the target attribute in the term list of the stmt
+   * @return     value of the attribute
+   */
+  def getAttribute(stmt: Option[Statement], pos: Int): Option[String] = {
+    val attr: Option[String] = stmt match {
+      case Some(s: Statement) => s.terms.head match {
+        case Structure(pred, terms, _, _, _) =>
+          if(pos < terms.length) {
+            Some(terms(pos).id.name)
+          } else {
+            None
+          }
+        case _ => None
+      }
+      case _ => None
+    }
+    attr
+  }
+}

@@ -1,27 +1,33 @@
 package safe.safelog
 
+import com.github.lalyos.jfiglet.FigletFont;
+
 import scala.collection.JavaConversions._
 import scala.collection.mutable.{Set => MutableSet}
 import scala.collection.mutable.{LinkedHashSet => OrderedSet}
 import scala.util.{Try, Success, Failure}
+import java.nio.file.{Path, Paths}
 
 import SafelogException.printLabel
 
 class Repl(
     self: String
   , saysOperator: Boolean
-  , _statementCache: MutableCache[Index, OrderedSet[Statement]]
-) extends Safelog(self, saysOperator, _statementCache) { // class is useful for unit testing and for modularity (i.e., extending from slang)
+) extends Safelog(self, saysOperator) { // class is useful for unit testing and for modularity (i.e., extending from slang)
 
   var stdPromptMsg = "slog> "
   val date = new java.text.SimpleDateFormat("EEE, d MMM yyyy HH:mm:ss z").format(java.util.Calendar.getInstance().getTime())
-  val greet = s"Safe Logic v0.1: $date (To quit, press Ctrl+D or q.)"
+  val safeBanner = FigletFont.convertOneLine("SAFE")
+  val greet = "Welcome to\n" +
+              safeBanner +
+              s"Safe Logic v0.1: $date (To quit, press Ctrl+D or q.)"
 
-  private val _assertionsInMemory: MutableSet[Statement] = MutableSet.empty     // parsed assertions
-  private val _queriesInMemory: MutableSet[Statement] = MutableSet.empty        // parsed queries
-  private val _retractionsInMemory: MutableSet[Retraction] = MutableSet.empty   // parsed retractions
-  private val _queriesInMemoryFresh: MutableSet[Statement] = MutableSet.empty   // parsed queries which are fresh, i.e., not executed yet
-  private var _inputScanned: StringBuilder = new StringBuilder()  // stores incomplete statements that end with other than (.|?|~)
+  private val _assertionsInMemory: MutableSet[Statement] = MutableSet.empty       // Parsed assertions, for console functions
+  private val _queriesInMemory: MutableSet[Statement] = MutableSet.empty          // Parsed queries
+  private val _retractionsInMemory: MutableSet[Retraction] = MutableSet.empty     // Parsed retractions
+  private val _queriesInMemoryFresh: MutableSet[Statement] = MutableSet.empty     // Parsed queries which are fresh, i.e., not executed yet
+  private var _inputScanned: StringBuilder = new StringBuilder()  // Stores incomplete statements that end with other than (.|?|~)
+  private val _replStatements = new MutableCache[Index, OrderedSet[Statement]]()  // All statements, for inference 
 
   private val replCmdSeq = Seq(
       "clear."
@@ -35,6 +41,27 @@ class Repl(
     , "ls(all)."
     , "quit."
   )
+
+  /**
+   * addStatementToRepl adds statements parsed from a program into the cache of repl statements
+   */
+  private def addStatementsToRepl(stmts: Map[Index, OrderedSet[Statement]]): Map[Index, OrderedSet[Statement]] = {
+    stmts.keySet.foreach { idx =>
+      _replStatements.get(idx) match {
+        case Some(stmtSet: OrderedSet[Statement]) =>
+          stmtSet ++= stmts(idx)
+        case _ =>
+          val newSet = OrderedSet.empty[Statement]
+          newSet ++= stmts(idx)
+          _replStatements.put(idx, newSet)
+      }
+    }
+    _replStatements.toMap
+  }
+
+  private def addStatementsToRepl(stmts: MutableCache[Index, OrderedSet[Statement]]): Map[Index, OrderedSet[Statement]] = {
+     addStatementsToRepl(stmts.toMap)
+  }
 
   // [[http://jline.github.io/jline2/apidocs/reference/jline/console/ConsoleReader.html]]
   private def consoleReader(fileName: Option[String]): jline.console.ConsoleReader = {
@@ -111,43 +138,49 @@ class Repl(
       //  println(s"rightterm.terms=${rightterm.asInstanceOf[Structure].terms}")
       //}
       //val rightval = solveAQuery(Query(Seq(cmd)))(envContext, Seq[Subcontext]()).map(f => f(v)) 
-      val rightval = solveAQuery(Query(Seq(cmd)))(envContext, Seq(Subcontext("_tmp", _statementCache.toMap))).map(f => f(v)) 
+      val rightval = solveAQuery(Query(Seq(cmd)))(envContext, Seq(Subcontext("_tmp", _replStatements.toMap))).map(f => f(v)) 
       updateEnvContext(v.simpleName, rightval.head)
       printLabel('info) 
       println(s"${v.simpleName.name}=${rightval.head}") //(${rightval})")
       //println(s"envContext=${envContext}")
-      _statementCache.remove(cmd.primaryIndex)
+      _replStatements.remove(cmd.primaryIndex)
       true
 
     case Structure(StrLit("clear"), Seq(Constant(StrLit("env"), _, _, _)), _, _, _) => 
       clearEnvContext()  // clear env variables
-      _statementCache.remove(cmd.primaryIndex)
+      _replStatements.remove(cmd.primaryIndex)
       true
 
     case Constant(StrLit("clear"), _, _, _) | Structure(StrLit("clear"), Nil, _, _, _) => 
       printLabel('info); println("clear all") 
       _assertionsInMemory.clear()
       _queriesInMemory.clear()
-      _statementCache.clear()
+      _replStatements.clear()
       clearEnvContext()
       true
 
-    case Constant(StrLit("env"), _, _, _) | Structure(StrLit("ls"), Nil, _, _, _) =>
+    case Constant(StrLit("env"), _, _, _) | Structure(StrLit("env"), Nil, _, _, _) =>
       envContext.foreach{ case (k, v) if v.isInstanceOf[Constant] => println(s"${k.name}=${v.asInstanceOf[Constant].id.name}") }
-      _statementCache.remove(cmd.primaryIndex)
+      _replStatements.remove(cmd.primaryIndex)
+      true
+
+    case Constant(StrLit("pwd"), _, _, _) | Structure(StrLit("pwd"), Nil, _, _, _) => 
+      val workingDir: Path = Paths.get(".")
+      println(workingDir.toFile.getCanonicalPath)
+      _replStatements.remove(cmd.primaryIndex)
       true
 
     case Constant(StrLit("ls"), _, _, _) | Structure(StrLit("ls"), Nil, _, _, _) => 
       //printLabel('info); println("list of assertions made so far ...")
       _assertionsInMemory.foreach(println)
-      _statementCache.remove(cmd.primaryIndex)
+      _replStatements.remove(cmd.primaryIndex)
       true
 
     case Structure(StrLit("_fact"), Variable(StrLit("$Self"), _, _, _) +: Constant(StrLit("ls"), _, _, _) +: Nil, _, _, _) 
        | Structure(StrLit("ls"), Nil, _, _, _) => 
       printLabel('info); println("list of assertions made so far ...")
       _assertionsInMemory.foreach(println)
-      _statementCache.remove(cmd.primaryIndex)
+      _replStatements.remove(cmd.primaryIndex)
       true
 
     case Structure(StrLit("ls"), Seq(Constant(StrLit("all"), _, _, _)), _, _, _) => 
@@ -155,38 +188,39 @@ class Repl(
       _assertionsInMemory.foreach(println)
       _retractionsInMemory.foreach(println)
       _queriesInMemory.foreach(println)
-      _statementCache.remove(cmd.primaryIndex)
+      _replStatements.remove(cmd.primaryIndex)
       true
 
     case Structure(StrLit("ls"), Seq(Constant(StrLit("facts"), _, _, _)), _, _, _) => 
       //printLabel('info); println("facts made so far ...")
       _assertionsInMemory.filter(_.terms.length < 2).foreach(println)
-      _statementCache.remove(cmd.primaryIndex)
+      _replStatements.remove(cmd.primaryIndex)
       true
 
     case Structure(StrLit("ls"), Seq(Constant(StrLit("rules"), _, _, _)), _, _, _) => 
       printLabel('info); println("rules made so far ....")
       _assertionsInMemory.filter(_.terms.length > 1).foreach(println)
-      _statementCache.remove(cmd.primaryIndex)
+      _replStatements.remove(cmd.primaryIndex)
       true
 
     case Structure(StrLit("ls"), Seq(Constant(StrLit("queries"), _, _, _)), _, _, _) => 
       printLabel('info); println("queries made so far ....")
       _queriesInMemory.foreach(println)
-      _statementCache.remove(cmd.primaryIndex)
+      _replStatements.remove(cmd.primaryIndex)
       true
 
     case Structure(StrLit("ls"), Seq(Constant(StrLit("retractions"), _, _, _)), _, _, _) => 
       printLabel('info); println("retractions made so far ....")
       _retractionsInMemory.foreach(println)
-      _statementCache.remove(cmd.primaryIndex)
+      _replStatements.remove(cmd.primaryIndex)
       true
 
     case Constant(StrLit("help"), _, _, _) | Structure(StrLit("help"), Nil, _, _, _) => 
       printLabel('info); println("commands list") 
       println("help.                     display this message")
       println("env.                      list of envs")
-      println("import(<file>).          import file with name <file>")
+      println("pwd.                      print working directory")
+      println("import(<file>).           import file with name <file>")
       println("ls.                       list of assertions made so far")
       println("ls(facts).                list of facts made so far")
       println("ls(rules).                list of rules made so far")
@@ -194,7 +228,7 @@ class Repl(
       println("ls(retractions).          list of retractions made so far")
       println("ls(all).                  list of all statements made so far")
       println("q().                      quit the interpreter")
-      _statementCache.remove(cmd.primaryIndex)
+      _replStatements.remove(cmd.primaryIndex)
       true
 
     case Structure(StrLit("import"), xterms, _, _, _) => 
@@ -203,28 +237,35 @@ class Repl(
          case Seq(Constant(fileName, _, _, _), Constant(sub, _, _, _)) => (fileName, sub)
       }
       printLabel('info); println(s"importing file ${fileName.name} ...") 
-      _statementCache.remove(cmd.secondaryIndex) // remove this import from cache to avoid wrong recursion
+      //println(s"cmd.primaryIndex=${cmd.primaryIndex} \n  cmd.secondaryIndex=${cmd.secondaryIndex}")
+      _replStatements.remove(cmd.primaryIndex) // remove this import from cache to avoid unneeded recursion
+      //_replStatements.remove(cmd.secondaryIndex)
+      //_replStatements.keySet.foreach { k => println(s"index: ${k}  \n  statements: ${_replStatements(k)} \n ") }
+      //scala.io.StdIn.readLine()
 
-      var allStatements = Map[Index, OrderedSet[Statement]]()
+      var importedProgram = Map[Index, OrderedSet[Statement]]()
       try {
         val file = fileName.name
-        val source = io.Source.fromFile(file).getLines.toList.mkString("\n") 
+        //val source = io.Source.fromFile(file).getLines.toList.mkString("\n") 
         //val fStream = new java.io.InputStreamReader(new java.io.FileInputStream(file))
         //val fStream = new java.io.InputStreamReader(this.getClass().getClassLoader().getResourceAsStream(file))
         //val (knowledgeBase, time) = util.time(parse(fStream))
 
-        val (knowledgeBase, time) = util.time(parse(source))
-        allStatements = knowledgeBase
-        logger.info(s"Time for import is $time")
-        println("Imported in %f milliseconds".format(time))
+        //val (knowledgeBase, time) = util.time(parse(source))
+        val (importedProgram, time) = util.time(compileAndLink(file))
+        addStatementsToRepl(importedProgram)  // Add statements to Repl cache
+        logger.info(s"Time for import is $time seconds")
+        println("Imported in %f seconds".format(time))
       } catch {
         case ex: Exception =>  
           logger.error(s"Failed to parse ${fileName.name}: ${ex}")
           return true
       }
-      allStatements.values().flatten.foreach {
+      importedProgram.values().flatten.foreach {
         case s @ Assertion(stmt) => stmt.head match {
-	   case Structure(StrLit("import"), _, _, _, _) => evalReplCmd(stmt.head)
+	   case Structure(StrLit("import"), _, _, _, _) => 
+             // evalReplCmd(stmt.head)
+             println("[" + Console.RED + "Unexpected import" + Console.RESET + "] " + s) 
 	   case _ => _assertionsInMemory += s
 	}
         case s @ Retraction(stmt) => _retractionsInMemory += s
@@ -236,12 +277,12 @@ class Repl(
 
     case Structure(StrLit("trace"), Seq(Constant(StrLit("on"), _, _, _)), _, _, _) => printLabel('info); println("starting the trace ...")
       //env._trace = true
-      _statementCache.remove(cmd.primaryIndex)
+      _replStatements.remove(cmd.primaryIndex)
       true
 
     case Structure(StrLit("trace"), Seq(Constant(StrLit("off"), _, _, _)), _, _, _) => printLabel('info); println("trace is off ...") 
       //env._trace = false
-      _statementCache.remove(cmd.primaryIndex)
+      _replStatements.remove(cmd.primaryIndex)
       true
 
     case _ => false
@@ -274,7 +315,8 @@ class Repl(
 
     _inputScanned.toString match {
       case str => parseCmdLine(str) match {
-	case (Some(program), 'success) => 
+	case (Some(stmts), 'success) =>  // program includes all statement 
+          val program = addStatementsToRepl(stmts)     // add to _replStatements
           try {
 	    program.values().flatten.map { // TODO: Looping through program.values() for each input is not necessary
 	      case assertion @ Assertion(stmt) =>
@@ -285,36 +327,36 @@ class Repl(
 		if(!interactiveMode) _assertionsInMemory += assertion
                 if(assertion.terms.head.id.name == "clear") throw new UnSafeException("clear")
 	      case query @ Query(stmt) => 
-		program.remove(StrLit("_query"))
+		_replStatements.remove(StrLit("_query"))
 		updateQuery(query, stmt)
 	      case query @ QueryAll(stmt) => 
-		program.remove(StrLit("_query"))
+		_replStatements.remove(StrLit("_query"))
 		updateQuery(query, stmt)
 	      case _ => Nil
-	   }
-         } catch {
-           case _: Throwable =>
-         }
-         // handle retractions
-         program.get(StrLit("_retraction")).map{r => r.foreach{rs => retractStatement(rs, program)}}
+	    }
+          } catch {
+            case _: Throwable =>
+          }
+          // handle retractions
+          program.get(StrLit("_retraction")).map{r => r.foreach{rs => retractStatement(rs, _replStatements)}}
 
-         if(_queriesInMemoryFresh.nonEmpty) {
-	   try {
-             val programMap = program.toMap
-             val (solutions: Seq[Seq[Statement]], time: Double) = util.time(solve(programMap, _queriesInMemoryFresh.toSeq, interactiveMode), 'ms)
-             logger.info(s"Solve completed in $time milliseconds")
-             //println(s"Solve completed in $time milliseconds")
-	     if(solutions.flatten.nonEmpty) true //printLabel('success) //println(s"""All solutions: ${solutions.mkString(", ")}""") 
-	     else false // printLabel('failure)
-           } catch {
-             case ex: Throwable => 
-               logger.error(ex.toString)
-           }
-	 }
-	 _inputScanned.clear()
-	 _queriesInMemoryFresh.clear()
-         updatePromptSelf()
-	 if(interactiveMode) readEval(reader, stdPromptMsg, true) else readEval(reader)
+          if(_queriesInMemoryFresh.nonEmpty) {
+	    try {
+              val programMap = _replStatements.toMap
+              val (solutions: Seq[Seq[Statement]], time: Double) = util.time(solve(programMap, _queriesInMemoryFresh.toSeq, interactiveMode), 'ms)
+              logger.info(s"Solve completed in $time milliseconds")
+              //println(s"Solve completed in $time milliseconds")
+	      if(solutions.flatten.nonEmpty) true //printLabel('success) //println(s"""All solutions: ${solutions.mkString(", ")}""") 
+	      else false // printLabel('failure)
+            } catch {
+              case ex: Throwable => 
+                logger.error(ex.toString)
+            }
+	  }
+	  _inputScanned.clear()
+	  _queriesInMemoryFresh.clear()
+          updatePromptSelf()
+	  if(interactiveMode) readEval(reader, stdPromptMsg, true) else readEval(reader)
         case (None, 'quit) => 
 	  _inputScanned.clear()
           if(interactiveMode) flushHistory(reader)
@@ -460,8 +502,8 @@ class Repl(
 }
 
 object Repl {
-  //def apply() = new Repl(Config.config.self, Config.config.saysOperator, new MutableCache[Index, MutableSet[Statement]]())
-  val inference = new Repl(Config.config.self, Config.config.saysOperator, new MutableCache[Index, OrderedSet[Statement]]())
+  //def apply() = new Repl(Config.config.self, Config.config.saysOperator)
+  val inference = new Repl(Config.config.self, Config.config.saysOperator)
 
   def main(args: Array[String]): Unit = {
 

@@ -39,9 +39,8 @@ trait SafelogService extends InferenceService
 class Safelog(
     val self: String
   , val saysOperator: Boolean
-  , val _statementCache: MutableCache[Index, OrderedSet[Statement]]
 ) extends SafelogService
 
 object Safelog {
-  def apply() = new Safelog(Config.config.self, Config.config.saysOperator, new MutableCache[Index, OrderedSet[Statement]]())
+  def apply() = new Safelog(Config.config.self, Config.config.saysOperator)
 }

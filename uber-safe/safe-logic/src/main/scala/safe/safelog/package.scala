@@ -1,10 +1,15 @@
 package safe
 
 package object safelog {
+  import scala.collection.mutable.{LinkedHashSet => OrderedSet}
+
   type NumericConstant = Double
   def toNumericConstant(value: StrLit): NumericConstant = try { value.toString.toDouble } catch {
     case ex: NumberFormatException => throw NumericException(s"Cannot perform numeric operations on given input: $value")
   } 
+
+  // A SAFE program is a set of logical statements, after appropriate indexing
+  type SafeProgram = Map[Index, OrderedSet[Statement]]
 
   //type TypedConstant = AnyVal
   //type TypedConstant = Double

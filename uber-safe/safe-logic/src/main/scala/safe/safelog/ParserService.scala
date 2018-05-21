@@ -7,8 +7,8 @@ trait ParserService {
 
   private[safelog] val saysOperator: Boolean
   private[safelog] val self: String          
-  // _statementCache is accessed from Repl
-  private[safelog] val _statementCache: MutableCache[Index, OrderedSet[Statement]]
+  // _statementCache holds all the statements after parsing
+  private[safelog] var _statementCache = new MutableCache[Index, OrderedSet[Statement]]()
 
 
   // A cache of set of statements indexed by statement head functor + arity + principal
@@ -36,10 +36,9 @@ trait ParserService {
 class Parser(
     val self: String
   , val saysOperator: Boolean
-  , val _statementCache: MutableCache[Index, OrderedSet[Statement]]
 ) extends ParserService with parser.ParserImpl
 
 object Parser {
-  def apply() = new Parser(Config.config.self, Config.config.saysOperator, new MutableCache[Index, OrderedSet[Statement]]())
-  def apply(self: String) = new Parser(self, true, new MutableCache[Index, OrderedSet[Statement]]())
+  def apply() = new Parser(Config.config.self, Config.config.saysOperator)
+  def apply(self: String) = new Parser(self, true)
 }

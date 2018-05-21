@@ -33,7 +33,8 @@ trait ParserImpl
   override lazy val statement: PackratParser[(Index, OrderedSet[Statement])] = (query | assertion | retraction) ^^ {
     case s @ Assertion(terms) => terms.head match {
       case Structure(StrLit("import"), trs +: Nil, _, _, _) =>
-        val idx = s.secondaryIndex
+        val idx = s.primaryIndex
+        //val idx = s.secondaryIndex
         //println(s"assertion=${s};  secondaryIndex=${idx}")
         val res = addStatement(idx, s)
         (idx, res)
@@ -432,15 +433,16 @@ trait ParserImpl
   ): Tuple4[Map[Index, OrderedSet[Statement]], Seq[Statement], Seq[Statement], Seq[Statement]] = result match {
     case Success(_result, _) =>
       val importSeq      = _result.get(StrLit("_import")).getOrElse(Nil).toSeq
-      _result           -= StrLit("_import")
+      // We don't need to remove special statements because _statementCache is a new instance on each parseAll call
+      //_result           -= StrLit("_import")
       val querySeq       = _result.get(StrLit("_query")).getOrElse(Nil).toSeq
-      _result           -= StrLit("_query")
+      //_result           -= StrLit("_query")
       val envSeq         = _result.get(StrLit("defenv0")).getOrElse(Nil).toSeq
-      _result           -= StrLit("defenv0")
+      //_result           -= StrLit("defenv0")
       val initSeq        = _result.get(StrLit("definit0")).getOrElse(Nil).toSeq
-      _result           -= StrLit("definit0")
+      //_result           -= StrLit("definit0")
       val retractionSeq  = _result.get(StrLit("_retraction")).getOrElse(Nil).toSeq
-      _result           -= StrLit("_retraction")
+      //_result           -= StrLit("_retraction")
       val allQueries     = envSeq.map {stmt => Query(stmt.terms.tail)} ++ initSeq.map {stmt => Query(stmt.terms.tail)} ++ querySeq
       Tuple4(_result.toMap, allQueries, importSeq, retractionSeq)
     case failure: NoSuccess => throw ParserException(s"${failure.msg}")
