@@ -10,11 +10,10 @@ class SafelogContext() extends safe.safelog.Inference
 class SafelogParserContext(  // why extending safe.safelog.Inference
     val self: String
   , val saysOperator: Boolean
-  , val _statementCache: MutableCache[Index, OrderedSet[Statement]]
 ) extends safe.safelog.Inference with safe.safelog.ParserService with parser.SafelogParser {
   require(saysOperator == true)
 }
 
 object SafelogParserContext {
-  def apply(self: String) = new SafelogParserContext(self, true, new MutableCache[Index, OrderedSet[Statement]]())
+  def apply(self: String) = new SafelogParserContext(self, true)
 }

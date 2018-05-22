@@ -4,12 +4,13 @@ package parser
 import safe.safelog.{ParserException, Term, Validity}
 import model.SlogSetTemplate
 import prolog.io.{TermParser => StyParser}
-import model.SlogSetHelper._
 import scala.collection.mutable.{LinkedHashSet => OrderedSet}
 
 class StylaParserService {
 
   import safe.safelang.StyStmtHelper._
+  import model.SlogSetHelper._
+
   /**
    * Parse SlogSetTemplate from a segment of slang source
    * @param source       string of a slang code snippet

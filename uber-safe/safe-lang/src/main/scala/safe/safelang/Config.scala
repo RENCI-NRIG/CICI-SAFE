@@ -39,6 +39,8 @@ class Config(config: com.typesafe.config.Config) {
                                                     Try(config.getString("safelang.metastore.protocol")).getOrElse("http"),
                                                     Try(config.getString("safelang.metastore.serverID")).getOrElse("")
                                                    )
+  val ldapUsername: String           = Try(config.getString("ldap.username")).getOrElse("")
+  val ldapPassword: String           = Try(config.getString("ldap.password")).getOrElse("")
 }
 
 object Config {

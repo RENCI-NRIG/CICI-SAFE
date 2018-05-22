@@ -2,6 +2,7 @@ package safe.safelang
 package model
 
 import safe.safelog.{Validity, UnSafeException, StrLit, Index, Structure, Term, Variable, Statement, EnvValue, Constant}
+import safe.safelog.StatementHelper
 import prolog.terms.{Var => StyVar}
 import scala.collection.mutable.{Map => MutableMap}
 
@@ -61,15 +62,7 @@ object SlogSetHelper {
   def getAttribute(stmt: Option[Statement], pos: Int): Option[String] = {
     val attr: Option[String] = stmt match {
       case Some(s: StyStmt) => s.getHeadArgument(pos-1) 
-      case Some(s: Statement) => s.terms.head match {  // Slog statement
-        case Structure(pred, terms, _, _, _) => 
-          if(pos < terms.length) {
-            Some(terms(pos).id.name) 
-          } else {
-            None
-          } 
-        case _ => None
-      }
+      case Some(s: Statement) => StatementHelper.getAttribute(stmt, pos) // Slog statement
       case _ => None
     }
     attr

@@ -14,10 +14,9 @@ trait ParserService extends safe.safelog.ParserService {
 class Parser(
     val self: String
   , val saysOperator: Boolean
-  , val _statementCache: MutableCache[Index, OrderedSet[Statement]]
 ) extends ParserService with parser.ParserImpl
 
 object Parser {
-  def apply() = new Parser(Config.config.self, Config.config.saysOperator, new MutableCache[Index, OrderedSet[Statement]]())
-  def apply(self: String) = new Parser(self, true, new MutableCache[Index, OrderedSet[Statement]]())
+  def apply() = new Parser(Config.config.self, Config.config.saysOperator)
+  def apply(self: String) = new Parser(self, true)
 }

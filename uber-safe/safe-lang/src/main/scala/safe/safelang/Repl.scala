@@ -14,14 +14,17 @@ import safe.safelog.{SetId, Index, MutableCache, Statement, StrLit, Constant}
 class Repl(
   val safeSetsClient: SafeSetsClient,
   self: String, saysOperator: Boolean, 
-  _statementCache: MutableCache[Index, OrderedSet[Statement]],
   val slangCallClient: SlangRemoteCallClient, 
   val localSetTable: SafeTable[SetId, SlogSet], val setCache: SetCache, val contextCache: ContextCache,
   val safelangId: Int, val serverPrincipalPool: MutableMap[SetId, Principal]
-) extends safe.safelog.Repl(self, saysOperator, _statementCache) with SafelangService {
+) extends safe.safelog.Repl(self, saysOperator) with SafelangService {
 
   stdPromptMsg = "slang> "
-  override val greet = s"Safe Language v0.1: $date (To quit, press Ctrl+D or q.)"
+  //override val greet = s"Safe Language v0.1: $date (To quit, press Ctrl+D or q.)"
+  override val greet = "Welcome to\n" +
+                       safeBanner +
+                       s"Safe Language v0.1: $date (To quit, press Ctrl+D or q.)"
+
   override def updatePromptSelf(): Unit = {
     if(envContext.contains(StrLit("Self"))) {
       val currentSelf = envContext(StrLit("Self")).asInstanceOf[Constant].id.name
@@ -93,7 +96,7 @@ object Repl {
       val contextCache: ContextCache = new ContextCache(setCache)
       val safelangId: Int = 0
       val serverPrincipalPool: MutableMap[SetId, Principal] = null
-      val inference = new Repl(safeSetsClient, Config.config.self, Config.config.saysOperator, new MutableCache[Index, OrderedSet[Statement]](), slangCallClient, localSetTable, setCache, contextCache, safelangId, serverPrincipalPool)
+      val inference = new Repl(safeSetsClient, Config.config.self, Config.config.saysOperator, slangCallClient, localSetTable, setCache, contextCache, safelangId, serverPrincipalPool)
 
       try {
         (argMap.get('file), argMap.get('fileArgs)) match {

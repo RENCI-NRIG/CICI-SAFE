@@ -65,7 +65,13 @@ case class Subcontext(
       index: Index, stmt: Statement): Unit = { 
     if(index.name == RETRACTION_INDEX || index.name == LINK_INDEX) return
     stmtsMap.get(index) match {
-      case Some(stmtSet: OrderedSet[Statement]) => stmtSet += stmt
+      case Some(stmtSet: OrderedSet[Statement]) => 
+        if(stmtSet.contains(stmt)) {  
+          // Duplicate
+          println("[" + Console.RED + "Duplicated stmt" + Console.RESET + s"]: $stmt")
+        } else {
+          stmtSet += stmt
+        }
       case _ => 
         val stmtSet = OrderedSet[Statement](stmt)
         stmtsMap(index) = stmtSet

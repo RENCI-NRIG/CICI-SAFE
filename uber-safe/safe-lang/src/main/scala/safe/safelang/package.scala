@@ -1,8 +1,11 @@
 package safe
 
+import scala.collection.mutable.{LinkedHashSet => OrderedSet}
+
 import akka.util.Timeout
   
 import safe.runtime.{Lang, JVMContext, JVMInterpreter}
+import safe.safelog.{Index, Statement}
 //import com.googlecode.concurrentlinkedhashmap.ConcurrentLinkedHashMap
 
 package object safelang {
@@ -18,7 +21,7 @@ package object safelang {
 
   private[safelang] implicit val timeout = Timeout(Config.config.akkaTimeout)
   //private[safelang] implicit val ec      = scala.concurrent.ExecutionContext.Implicits.global // customize the execution context if required
-
+ 
   //type SafeTable[K, V] = ConcurrentLinkedHashMap[K, V]
   //type SafeTableBuilder[K, V] = ConcurrentLinkedHashMap.Builder[K, V]
   val slangPerfCollector = new SlangPerfCollector()

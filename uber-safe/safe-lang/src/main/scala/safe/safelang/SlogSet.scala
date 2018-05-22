@@ -294,7 +294,6 @@ class SlogSet(
         pid = self.get.pid
       } 
     }
-    //println(s"[SlogSet] issuer: ${issuer}    pid: ${pid}")
     Identity.computeSetToken(pid, label)
   } 
   

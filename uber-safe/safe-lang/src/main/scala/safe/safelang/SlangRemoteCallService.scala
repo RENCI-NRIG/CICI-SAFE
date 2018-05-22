@@ -154,7 +154,7 @@ object SlangRemoteCallService extends LazyLogging {
         }
       }
       case "" => Seq[Term]() // Unsatisfied: empty res list
-      case _ => throw UnSafeException(s"Invalid defcall response message $objectStr")
+      case _ => Seq[Term]() //throw UnSafeException(s"Invalid defcall response message $objectStr")
     }
     tokensOrQueryres 
   }

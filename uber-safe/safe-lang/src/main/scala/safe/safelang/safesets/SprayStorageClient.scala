@@ -11,7 +11,7 @@ import spray.client.pipelining._
 import scala.concurrent.{Await, Future}
 
 /**
- * Spray provides async primitives for request http. 
+ * Spray provides async primitives for http requests. 
  * We implement a Spray client with both synchronous
  * and asynchronous operations.
  */
@@ -83,9 +83,8 @@ class SprayStorageClient(system: ActorSystem)
     fetchedStr
   }
 
-
   /** post synchronously */
-  def postCert(certaddr: CertAddr,  content: String): String = {
+  def postCert(certaddr: CertAddr, content: String): String = {
     logger.info(s"Post cert ${CertAddr}:\n  $content")
     val s = System.nanoTime
     val future: Future[HttpResponse] = postCertAsync(certaddr, content)

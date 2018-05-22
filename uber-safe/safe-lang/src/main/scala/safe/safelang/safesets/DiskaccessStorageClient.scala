@@ -1,6 +1,8 @@
 package safe.safelang
 package safesets
 
+import safe.safelog.UnSafeException
+
 import scala.util.{Success, Failure, Try}
 import scala.io.Source
 import java.io.{File, PrintWriter}
@@ -22,7 +24,9 @@ class DiskaccessStorageClient extends StorageClient {
    * specified in certaddr will be ignored.
    */
   def getCertFilepath(certaddr: CertAddr): String = {
-    safeSetsDir + "cert_" + certaddr.getHashToken
+    // safeSetsDir + "cert_" + certaddr.getHashToken
+    // changed to url to handle multiple domains using, i.e., self certifying tokens
+    safeSetsDir + "cert_" + certaddr.getUrl
   }
 
   def fetchCert(certaddr: CertAddr): Option[String] = {
@@ -30,7 +34,9 @@ class DiskaccessStorageClient extends StorageClient {
     val certAsString = Try(Source.fromFile(filepath).getLines.mkString("\n"))
     val content: Option[String] = certAsString match {
       case Success(rawCert) => Some(rawCert)
-      case Failure(e) => None
+      case Failure(e) =>
+        throw UnSafeException(s"Failed to find cert ${certaddr} on local disk")
+        None
     }
     content
   }

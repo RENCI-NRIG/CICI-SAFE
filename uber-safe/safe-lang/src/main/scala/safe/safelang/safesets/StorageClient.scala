@@ -20,27 +20,39 @@ import com.typesafe.scalalogging.LazyLogging
 class CertAddr(val storeDesc: SetStoreDesc, val hashToken: String) {
   def getUrl(): String = {
     val storeAddr = getStoreAddr
-    if(storeAddr.last == '/') {
-      s"${storeAddr}${hashToken}"
-    } else {
-      s"${storeAddr}/${hashToken}"
+    val certurl = storeAddr.last match {
+      case '/' => s"${storeAddr}${hashToken}"
+      case _   => s"${storeAddr}/${hashToken}"
     }
+    if(certurl.last == '/')
+      certurl.substring(0, certurl.length-1)
+    else certurl
   }
+
   override def toString(): String = {
     getUrl
   }
+
+  def getStoreNetworkEndpoint(): NetworkEndpoint = {
+    storeDesc.getNetworkEndpoint
+  }
+
   def getStoreAddr(): String = {
     storeDesc.getStoreAddr
   }
+
   def getStoreProtocol(): Int = {
     storeDesc.getProtocol
   }
+
   def getStoreID(): String = {
     storeDesc.getStoreID
   }
+
   def getHashToken(): String = {
     hashToken
   }
+
 }
 
 object CertAddr { 

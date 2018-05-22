@@ -8,7 +8,7 @@ import prolog.builtins.{interpolate => StyInterpolate, true_ => StyTrue,  fail_ 
 import scala.collection.mutable.{LinkedHashSet => OrderedSet, Map => MutableMap, LinkedHashMap}
 import com.typesafe.scalalogging.LazyLogging
 
-/* A wrapper for an equivalent of a logic statement in Styla */
+/* A wrapper for a Styla equivalent of a logic statement */
 class StyStmt(val styterms: List[StyTerm], val vmap: LinkedHashMap[String, StyVar]) extends Statement with LazyLogging {
   val terms = Seq[Term]()  // skeleton
   
