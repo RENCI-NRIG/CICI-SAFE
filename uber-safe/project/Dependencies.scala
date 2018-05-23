@@ -19,8 +19,8 @@ object BuildSettings {
     val apacheHttpAsyncClient = "4.1.2"
     //val apacheHttpClient = "4.3.6"
     val apacheValidator       = "1.5.1"
-    //val apacheCassandra       = "3.11.1"
-    val apacheCassandra       = "4.0-SNAPSHOT"
+    val apacheCassandra       = "3.11.1"
+    //val apacheCassandra       = "4.0-SNAPSHOT"
     val jersey                = "2.26"
     val jfiglet               = "0.0.8"
   }
