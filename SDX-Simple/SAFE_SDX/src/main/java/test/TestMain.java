@@ -23,7 +23,7 @@ public class TestMain {
   static String[] clientarg2 = {"-c", "client-config/c2.conf"};
   static String[] clientarg3 = {"-c", "client-config/c3.conf"};
   static String[] clientarg4 = {"-c", "client-config/c4.conf"};
-  static String[] clientarg6 = {"-c", "client-config/c6-tamu.conf"};
+  static String[] clientarg6 = {"-c", "client-config/c6.conf"};
   static String[] clientarg5 = {"-c", "chameleon-config/c1.conf"};
   static boolean stitch = true;
 
@@ -103,27 +103,33 @@ public class TestMain {
     SdxExogeniClientManager client2 = new SdxExogeniClientManager(clientarg2);
     SdxExogeniClientManager client3 = new SdxExogeniClientManager(clientarg3);
     SdxExogeniClientManager client4 = new SdxExogeniClientManager(clientarg4);
+    SdxExogeniClientManager client6 = new SdxExogeniClientManager(clientarg6);
 
     if(stitch) {
       System.out.println("c1 stitches to SDX");
-      client1.processCmd("stitch CNode0 " + sdx + " c0");
+      client1.processCmd("stitch CNode0 " + sdx + " e0");
       System.out.println("c2 stitches to SDX");
-      client2.processCmd("stitch CNode0 " + sdx + " c1");
+      client2.processCmd("stitch CNode0 " + sdx + " e1");
       System.out.println("c3 stitches to SDX");
-      client3.processCmd("stitch CNode0 " + sdx + " c0");
+      client3.processCmd("stitch CNode0 " + sdx + " e0");
       System.out.println("c4 stitches to SDX");
-      client4.processCmd("stitch CNode0 " + sdx + " c1");
+      client4.processCmd("stitch CNode0 " + sdx + " e1");
     }
 
     // client slice advertise their prefix
-    client1.processCmd("route 192.168.10.1/24 192.168.130.2");
-    client2.processCmd("route 192.168.20.1/24 192.168.131.2");
-    client3.processCmd("route 192.168.30.1/24 192.168.132.2");
-    client4.processCmd("route 192.168.40.1/24 192.168.133.2");
+    client1.processCmd("route 192.168.10.1/24 192.168.132.2");
+    client2.processCmd("route 192.168.20.1/24 192.168.133.2");
+    client3.processCmd("route 192.168.30.1/24 192.168.134.2");
+    client4.processCmd("route 192.168.40.1/24 192.168.135.2");
 
     // Client request for connection between prefixes
     client1.processCmd("link 192.168.10.1/24 192.168.20.1/24");
     client3.processCmd("link 192.168.30.1/24 192.168.40.1/24");
+
+    client6.processCmd("stitch CNode0 " + sdx);
+    client6.processCmd("route 192.168.60.1/24 192.168.136.2");
+    client6.processCmd("link 192.168.60.1/24 192.168.10.1/24");
+    client6.processCmd("link 192.168.60.1/24 192.168.20.1/24");
     /*
     SdxServer.sdxManager.removePath("192.168.30.1/24", "192.168.40.1/24");
     client1.processCmd("link 192.168.30.1/24 192.168.40.1/24 10000");
@@ -176,7 +182,7 @@ public class TestMain {
     ClientSlice s2 = new ClientSlice(clientarg2);
     ClientSlice s3 =  new ClientSlice(clientarg3);
     ClientSlice s4 = new ClientSlice(clientarg4);
-    //ClientSlice s6 = new ClientSlice(clientarg6);
+    ClientSlice s6 = new ClientSlice(clientarg6);
 
     ArrayList<Thread> tlist = new ArrayList<Thread>();
     tlist.add(new Thread(() -> ts.run(arg1)));
@@ -201,13 +207,13 @@ public class TestMain {
     ClientSlice s2 = new ClientSlice(clientarg2);
     ClientSlice s3 =  new ClientSlice(clientarg3);
     ClientSlice s4 = new ClientSlice(clientarg4);
-    //ClientSlice s6 = new ClientSlice(clientarg6);
+    ClientSlice s6 = new ClientSlice(clientarg6);
     ts.delete();
     s1.delete();
     s2.delete();
     s3.delete();
     s4.delete();
-    //s6.delete();
+    s6.delete();
   }
 
   public static void createTestSliceParrallel(){
@@ -224,7 +230,7 @@ public class TestMain {
     SdxServer.sdxManager.sleep(10);
 
     String[][] args = {clientarg1, clientarg2, clientarg3, clientarg4, clientarg6};
-    for(int i = 0 ; i< 4; i++) {
+    for(int i = 0 ; i< 5; i++) {
       final String[] arg = args[i];
       Thread thread2 = new Thread() {
         @Override

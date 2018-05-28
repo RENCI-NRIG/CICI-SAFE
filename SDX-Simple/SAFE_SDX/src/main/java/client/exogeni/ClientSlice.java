@@ -145,14 +145,8 @@ public class ClientSlice extends SliceManager{
         }
       }
     }
-    try {
-      s.commit();
-    } catch (XMLRPCTransportException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
-    }
+    commitSlice(s);
     return s;
   }
-
 }
 

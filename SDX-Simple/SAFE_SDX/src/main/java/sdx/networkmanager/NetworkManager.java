@@ -78,7 +78,7 @@ public class NetworkManager {
     private HashSet<String> customergateways = new HashSet<>();
     private int numInterfaces = 0;
 
-    public HashMap<String, Link> getNeighbors() {
+    public HashMap<String, Link> getNeighborLinks() {
       return neighbors;
     }
 
@@ -100,6 +100,10 @@ public class NetworkManager {
 
     public boolean hasGateway(String gw) {
       return customergateways.contains(gw);
+    }
+
+    public boolean hasIP(String ip) {
+      return interfaces.contains(ip);
     }
 
     public void addNeighbor(String neighborIP, Link link) {
@@ -146,7 +150,7 @@ public class NetworkManager {
       return null;
   }
 
-  public String getRouterbyGateway(String gw) {
+  public String getEdgeRouterbyGateway(String gw) {
     for (Router r : routers) {
       if (r.hasGateway(gw)) {
         return r.getRouterID();
@@ -187,7 +191,7 @@ public class NetworkManager {
     }
   }
 
-  private ArrayList<String> getNeighborIPs(String routerid) {
+  private List<String> getNeighborIPs(String routerid) {
     ArrayList<String> ips = new ArrayList<String>();
     for (String[] intf : ip_router) {
       if (intf[1].equals(routerid)) {
@@ -364,7 +368,7 @@ public class NetworkManager {
       //Path [dpid,gateway,neighborip]
       Router router = getRouterByDPID(path[0]);
       if (path[2] != null) {
-        router.getNeighbors().get(path[2]).useBW(bw);
+        router.getNeighborLinks().get(path[2]).useBW(bw);
       }
       res &= addRoute(dest, targetIP, path[1], path[0], controller);
     }
@@ -429,6 +433,18 @@ public class NetworkManager {
       }
     }
     return null;
+  }
+
+  public List<String> getNeighbors(String routerName){
+    ArrayList<String> nbs = new ArrayList<String>();
+    for(Link link: getRouter(routerName).getNeighborLinks().values()){
+      if(link.ra==routerName && !link.rb.equals("")){
+        nbs.add(link.rb);
+      }else if(link.rb.equals(routerName)){
+        nbs.add(link.ra);
+      }
+    }
+    return nbs;
   }
 
   private String queueURL(String controller, String dpid) {
@@ -533,7 +549,7 @@ public class NetworkManager {
       start += 1;
       Router router = getRouterByDPID(rid);
       if (router != null) {
-        HashMap<String, Link> nbs = router.getNeighbors();
+        HashMap<String, Link> nbs = router.getNeighborLinks();
         //ArrayList<String> nips=getNeighborIPs(rid);
         for (String ip : nbs.keySet()) {
           //logger.debug("neighborIP: "+ip);
@@ -613,7 +629,7 @@ public class NetworkManager {
       start += 1;
       Router router = getRouterByDPID(rid);
       if (router != null) {
-        ArrayList<String> nips = getNeighborIPs(rid);
+        List<String> nips = getNeighborIPs(rid);
         for (String ip : nips) {
           //logger.debug("neighborIP: "+ip);
           if (!knownrouters.contains(getPairRouter(ip))) {

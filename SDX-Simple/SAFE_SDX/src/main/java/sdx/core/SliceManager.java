@@ -5,8 +5,6 @@ import java.util.*;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 import java.util.ArrayList;
-import java.util.Date;
-import java.text.SimpleDateFormat;
 
 import common.slice.SliceCommon;
 import org.apache.log4j.Logger;
@@ -56,6 +54,16 @@ public class SliceManager extends SliceCommon {
   protected String mask = "/24";
   protected String scriptsdir;
   protected boolean BRO = false;
+  protected static String routerPattern = "(^(c|e)\\d+)";
+  protected static String cRouterPattern = "(^c\\d+)";
+  protected static String eRouterPattern = "(^e\\d+)";
+  protected static String broPattern = "(bro\\d+_e\\d+)";
+  protected static String stitchPortPattern = "(^sp-e\\d+.*)";
+  protected static String stosVlanPattern = "(^stitch_e\\d+_\\d+)";
+  protected static String linkPattern = "(^(c|e)link\\d+)";
+  protected static String cLinkPattern = "(^clink\\d+)";
+  protected static String eLinkPattern = "(^elink\\d+)";
+  protected static String broLinkPattern = "(^blink_\\d+)";
 
   protected void computeIP(String prefix) {
     logger.debug(prefix);
@@ -138,10 +146,10 @@ public class SliceManager extends SliceCommon {
       }
       logger.debug("Plexus Controller IP: " + SDNControllerIP);
       runCmdSlice(carrier, "/bin/bash ~/ovsbridge.sh " + SDNControllerIP + ":6633",
-        "(^c\\d+)", true, true);
+        routerPattern, true, true);
 
       if(BRO) {
-        configBroNodes(carrier, "(bro\\d+_c\\d+)");
+        configBroNodes(carrier, broPattern);
         logger.debug("Set up bro nodes");
       }
     } catch (Exception e) {
@@ -232,45 +240,6 @@ public class SliceManager extends SliceCommon {
     logger.debug("Finished copying ovs scripts");
   }
 
-  protected void commitAndWait(Slice s) {
-    try {
-      s.commit();
-      waitTillActive(s);
-      for (ComputeNode c : s.getComputeNodes()) {
-        logger.debug("server " + c.getManagementIP() + " - " + c.getName());
-      }
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
-  }
-
-  protected boolean commitAndWait(Slice s, int interval) {
-    try {
-      s.commit();
-      String timeStamp1 = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(new Date());
-      waitTillActive(s,interval);
-      String timeStamp2 = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(new Date());
-      logger.debug("Time interval: " + timeStamp1 + " " + timeStamp2);
-      return true;
-    } catch (Exception e) {
-      e.printStackTrace();
-      return false;
-    }
-  }
-
-  protected boolean commitAndWait(Slice s, int interval, List<String> resources) {
-    try {
-      s.commit();
-      String timeStamp1 = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(new Date());
-      waitTillActive(s,interval, resources);
-      String timeStamp2 = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(new Date());
-      logger.debug("Time interval: " + timeStamp1 + " " + timeStamp2);
-      return true;
-    } catch (Exception e) {
-      e.printStackTrace();
-      return false;
-    }
-  }
 
   protected boolean checkPlexus(String SDNControllerIP) {
     String result = Exec.sshExec("root", SDNControllerIP, "docker ps", sshkey)[0];
@@ -340,23 +309,33 @@ public class SliceManager extends SliceCommon {
     }
   }
 
-  public Slice createCarrierSlice(String sliceName, int num, long bw) {
-    //,String stitchsubnet="", String slicesubnet="")
-    logger.debug("ndllib TestDriver: START");
-
-    Slice s = Slice.create(sliceProxy, sctx, sliceName);
-
+  public void addCoreEdgeRouterPair(Slice s, String site, String router1, String router2, String linkname, long bw){
     NodeBaseInfo ninfo = NodeBase.getImageInfo("Ubuntu 14.04");
     String nodeImageShortName = ninfo.nisn;
     String nodeImageURL = ninfo.niurl;
     //http://geni-images.renci.org/images/standard/ubuntu/ub1304-ovs-opendaylight-v1.0.0.xml
     String nodeImageHash = ninfo.nihash;
     String nodeNodeType = "XO Extra large";
+    String nodePostBootScript = getOVSScript();
+    ComputeNode node0 = addComputeNode(s, router1, nodeImageURL,
+        nodeImageHash, nodeImageShortName, nodeNodeType, site,
+        nodePostBootScript);
+    ComputeNode node1 = addComputeNode(s, router2, nodeImageURL,
+        nodeImageHash, nodeImageShortName, nodeNodeType, site,
+        nodePostBootScript);
+    addLink(s, linkname, node0, node1, bw);
+  }
+
+  public Slice createCarrierSlice(String sliceName, int num, long bw) {
+    //,String stitchsubnet="", String slicesubnet="")
+    logger.debug("ndllib TestDriver: START");
+
+    Slice s = Slice.create(sliceProxy, sctx, sliceName);
+
 
     //String nodePostBootScript="apt-get update;apt-get -y  install quagga\n"
     //  +"sed -i -- 's/zebra=no/zebra=yes/g' /etc/quagga/daemons\n"
     //  +"sed -i -- 's/ospfd=no/ospfd=yes/g' /etc/quagga/daemons\n";
-    String nodePostBootScript = getOVSScript();
     ArrayList<ComputeNode> nodelist = new ArrayList<ComputeNode>();
     ArrayList<Network> netlist = new ArrayList<Network>();
     ArrayList<Network> stitchlist = new ArrayList<Network>();
@@ -364,16 +343,15 @@ public class SliceManager extends SliceCommon {
       BRO = conf.getBoolean("config.bro");
     }
     for (int i = 0; i < num; i++) {
-      ComputeNode node0 = addComputeNode(s, "c" + String.valueOf(i), nodeImageURL,
-        nodeImageHash, nodeImageShortName, nodeNodeType, clientSites.get(i % clientSites.size()),
-        nodePostBootScript);
-      nodelist.add(node0);
+      addCoreEdgeRouterPair(s,clientSites.get(i%clientSites.size()),"c" + i, "e" + i, "elink" + i, bw);
+      nodelist.add((ComputeNode)s.getResourceByName("c" + i));
       if (BRO && i == 0) {
         long brobw = conf.getLong("config.brobw");
-        ComputeNode broNode = addBro(s, "bro0_c" + i, node0);
+        ComputeNode node1 = (ComputeNode)s.getResourceByName("e" + i);
+        ComputeNode broNode = addBro(s, "bro0_e" + i, node1);
         int ip_to_use = curip++;
         Network bronet = s.addBroadcastLink(getBroLinkName(ip_to_use), bw);
-        InterfaceNode2Net ifaceNode1 = (InterfaceNode2Net) bronet.stitch(node0);
+        InterfaceNode2Net ifaceNode1 = (InterfaceNode2Net) bronet.stitch(node1);
         ifaceNode1.setIpAddress("192.168." + String.valueOf(ip_to_use) + ".1");
         ifaceNode1.setNetmask("255.255.255.0");
         InterfaceNode2Net ifaceNode2 = (InterfaceNode2Net) bronet.stitch(broNode);

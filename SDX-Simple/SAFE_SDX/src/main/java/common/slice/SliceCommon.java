@@ -13,6 +13,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.Date;
+import java.text.SimpleDateFormat;
 
 import org.apache.log4j.Logger;
 import org.apache.commons.cli.*;
@@ -143,6 +145,46 @@ public abstract class SliceCommon {
       }
     }
 
+  }
+
+  protected void commitSlice(Slice s){
+    boolean retry=true;
+    while(retry) {
+      retry=false;
+      try {
+        s.commit();
+      } catch (Exception e) {
+        if(e.getMessage().contains("low system memory, please try later")){
+          retry=true;
+          logger.debug(e.getMessage());
+        }else {
+          e.printStackTrace();
+        }
+      }
+    }
+  }
+
+  protected void commitAndWait(Slice s) {
+    commitSlice(s);
+    waitTillActive(s);
+  }
+
+  protected boolean commitAndWait(Slice s, int interval) {
+    commitSlice(s);
+    String timeStamp1 = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(new Date());
+    waitTillActive(s, interval);
+    String timeStamp2 = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(new Date());
+    logger.debug("Time interval: " + timeStamp1 + " " + timeStamp2);
+    return true;
+  }
+
+  protected boolean commitAndWait(Slice s, int interval, List<String> resources) {
+    commitSlice(s);
+    String timeStamp1 = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(new Date());
+    waitTillActive(s, interval, resources);
+    String timeStamp2 = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(new Date());
+    logger.debug("Time interval: " + timeStamp1 + " " + timeStamp2);
+    return true;
   }
 
   protected void waitTillActive(Slice s) {
