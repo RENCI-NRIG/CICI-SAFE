@@ -10,7 +10,8 @@ import org.apache.http.client.methods.HttpPut;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.util.EntityUtils;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.http.client.HttpClient;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.json.JSONObject;
@@ -41,7 +42,7 @@ public class HttpUtil {
     }
   }
 
-  final static Logger logger = Logger.getLogger(HttpUtil.class);
+  final static Logger logger = LogManager.getLogger(HttpUtil.class);
 
   public static String postJSON(String serverurl, JSONObject paramsobj) {
     JSONObject resobj = new JSONObject();

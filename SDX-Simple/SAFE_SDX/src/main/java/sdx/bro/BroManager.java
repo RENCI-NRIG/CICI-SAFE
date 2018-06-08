@@ -1,11 +1,12 @@
-package sdx.core.bro;
+package sdx.bro;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.locks.ReentrantLock;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.renci.ahab.libndl.Slice;
 
 import sdx.core.SdxManager;
@@ -66,7 +67,7 @@ class Flow {
 
 
 public class BroManager {
-  final Logger logger = Logger.getLogger(BroManager.class);
+  final Logger logger = LogManager.getLogger(BroManager.class);
   Slice slice = null;
   NetworkManager networkManager = null;
   SdxManager sdxManager = null;
@@ -133,7 +134,7 @@ public class BroManager {
           String res = networkManager.setMirror(sdxManager.getSDNController(), dpid, f.src, f.dst, gw);
           res += networkManager.setMirror(sdxManager.getSDNController(), dpid, f.dst, f.src, gw);
           logger.debug("job: " + f.src + " " + f.dst + " " + f.bw + ": \n" + res);
-          System.out.println("job: " + f.src + " " + f.dst + " " + f.bw + ": \n" + res);
+          logger.info("job: " + f.src + " " + f.dst + " " + f.bw + ": \n" + res);
           toRemove.add(f);
         }
       }
@@ -142,7 +143,7 @@ public class BroManager {
       }
     }
     if(broOverloaded()) {
-      deployNewBro("c0");
+      deployNewBro("e0");
     }
   }
 

@@ -7,14 +7,15 @@ import javax.ws.rs.Consumes;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Root resource (exposed at "myresource" path)
  */
 @Path("sdx")
 public class RestService {
-  final static Logger logger = Logger.getLogger(RestService.class);
+  final static Logger logger = LogManager.getLogger(RestService.class);
 
   @POST
   @Path("/stitchrequest")

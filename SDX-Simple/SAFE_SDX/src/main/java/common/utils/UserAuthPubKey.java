@@ -6,12 +6,13 @@ import com.jcraft.jsch.*;
 import java.awt.*;
 import javax.swing.*;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.Properties;
 
 public class UserAuthPubKey {
-  final static Logger logger = Logger.getLogger(Exec.class);
+  final static Logger logger = LogManager.getLogger(UserAuthPubKey.class);
 
   public static void auth(String host) {
 

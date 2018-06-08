@@ -1,17 +1,18 @@
 package sdx.networkmanager;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import common.utils.Exec;
 
 public class Link {
-  final static Logger logger = Logger.getLogger(Exec.class);
+  final static Logger logger = LogManager.getLogger(Link.class);
 
   public String linkname = "";
   public String nodea = null;
   public String nodeb = null;
   public String ipprefix = "";
-  public String mask="24";
+  public String mask="/24";
   public long capacity=0;
 
   public Link(){}

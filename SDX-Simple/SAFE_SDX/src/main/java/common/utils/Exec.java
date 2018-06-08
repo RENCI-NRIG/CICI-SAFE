@@ -6,14 +6,15 @@ import com.jcraft.jsch.*;
 import java.awt.*;
 import javax.swing.*;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
 
 import java.io.*;
 import java.net.NoRouteToHostException;
 import java.util.Properties;
 
 public class Exec {
-  final static Logger logger = Logger.getLogger(Exec.class);
+  final static Logger logger = LogManager.getLogger(Exec.class);
 
   public static String exec(String cmd) {
     logger.debug(cmd);

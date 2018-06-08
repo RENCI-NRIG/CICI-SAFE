@@ -1,10 +1,11 @@
 package test;
 
+import org.apache.logging.log4j.LogManager;
 import org.renci.ahab.libndl.Slice;
 import sdx.core.SliceManager;
 
 import java.util.ArrayList;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 import org.apache.commons.cli.*;
 import org.renci.ahab.libndl.resources.request.ComputeNode;
 import org.renci.ahab.libndl.resources.request.InterfaceNode2Net;
@@ -19,12 +20,12 @@ import org.renci.ahab.libtransport.xmlrpc.XMLRPCTransportException;
 import common.utils.Exec;
 
 public class TestSlice extends SliceManager {
-  final Logger logger = Logger.getLogger(Exec.class);
+  final Logger logger = LogManager.getLogger(Exec.class);
 
   public TestSlice(String[] args) {
     CommandLine cmd = parseCmd(args);
 
-    System.out.println("Test Slice running: " + cmd);
+    System.out.println("Test Slice running: " + args);
 
     String configfilepath = cmd.getOptionValue("config");
 

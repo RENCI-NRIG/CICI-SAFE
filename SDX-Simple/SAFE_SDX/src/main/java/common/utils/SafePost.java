@@ -11,10 +11,11 @@ import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class SafePost {
-  final static Logger logger = Logger.getLogger(Exec.class);
+  final static Logger logger = LogManager.getLogger(SafePost.class);
 
   private static String getMessage(String message) {
     Pattern pattern = Pattern.compile("\"message\": \"(.*?)\"");

@@ -6,13 +6,14 @@ import java.util.List;
 import java.util.HashMap;
 import common.slice.SliceCommon;
 import common.utils.Exec;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
 import org.apache.log4j.SimpleLayout;
 import org.renci.ahab.libndl.resources.request.InterfaceNode2Net;
 import sdx.core.SdxManager;
 
 public class BroExperiment extends SliceCommon {
-  final static Logger logger = Logger.getLogger(BroExperiment.class);
+  final static Logger logger = LogManager.getLogger(BroExperiment.class);
   HashMap<String, String[]> clients;
   HashMap<String, BroResult> result;
   ArrayList<Thread> tlist;

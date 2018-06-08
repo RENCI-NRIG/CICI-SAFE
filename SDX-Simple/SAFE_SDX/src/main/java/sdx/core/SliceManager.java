@@ -7,7 +7,8 @@ import java.util.regex.Matcher;
 import java.util.ArrayList;
 
 import common.slice.SliceCommon;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.log4j.SimpleLayout;
 import org.apache.commons.cli.*;
 import org.apache.commons.cli.DefaultParser;
@@ -44,7 +45,7 @@ import sdx.networkmanager.Link;
  * @author geni-orca
  */
 public class SliceManager extends SliceCommon {
-  final Logger logger = Logger.getLogger(SliceManager.class);
+  final Logger logger = LogManager.getLogger(SliceManager.class);
 
   public SliceManager() {
   }
@@ -74,7 +75,7 @@ public class SliceManager extends SliceCommon {
   }
 
   public void run(String[] args) {
-    System.out.println("SDX-Simple " + args[0]);
+    logger.info("SDX-Simple " + args[0]);
 
     CommandLine cmd = parseCmd(args);
 
@@ -112,8 +113,7 @@ public class SliceManager extends SliceCommon {
     } else {
       logger.debug("Warning: unknown type. Doing nothing.");
     }
-
-    System.out.println("XXXXXXXXXX Done XXXXXXXXXXXXXX");
+    logger.info("XXXXXXXXXX Done XXXXXXXXXXXXXX");
   }
 
 
@@ -122,7 +122,7 @@ public class SliceManager extends SliceCommon {
     try {
       routerNum = conf.getInt("config.routernum");
     } catch (Exception e) {
-      System.out.println("No router number specified, launching default 4 routers");
+      logger.error("No router number specified, launching default 4 routers");
     }
 
     IPPrefix = conf.getString("config.ipprefix");
@@ -152,6 +152,7 @@ public class SliceManager extends SliceCommon {
         configBroNodes(carrier, broPattern);
         logger.debug("Set up bro nodes");
       }
+      getNetworkInfo(carrier);
     } catch (Exception e) {
       e.printStackTrace();
     }
@@ -309,7 +310,7 @@ public class SliceManager extends SliceCommon {
     }
   }
 
-  public void addCoreEdgeRouterPair(Slice s, String site, String router1, String router2, String linkname, long bw){
+  public Slice addCoreEdgeRouterPair(Slice s, String site, String router1, String router2, String linkname, long bw){
     NodeBaseInfo ninfo = NodeBase.getImageInfo("Ubuntu 14.04");
     String nodeImageShortName = ninfo.nisn;
     String nodeImageURL = ninfo.niurl;
@@ -323,16 +324,16 @@ public class SliceManager extends SliceCommon {
     ComputeNode node1 = addComputeNode(s, router2, nodeImageURL,
         nodeImageHash, nodeImageShortName, nodeNodeType, site,
         nodePostBootScript);
-    addLink(s, linkname, node0, node1, bw);
+    Network bronet = s.addBroadcastLink(linkname, bw);
+    bronet.stitch(node0);
+    bronet.stitch(node1);
+    return  s;
   }
 
   public Slice createCarrierSlice(String sliceName, int num, long bw) {
     //,String stitchsubnet="", String slicesubnet="")
     logger.debug("ndllib TestDriver: START");
-
     Slice s = Slice.create(sliceProxy, sctx, sliceName);
-
-
     //String nodePostBootScript="apt-get update;apt-get -y  install quagga\n"
     //  +"sed -i -- 's/zebra=no/zebra=yes/g' /etc/quagga/daemons\n"
     //  +"sed -i -- 's/ospfd=no/ospfd=yes/g' /etc/quagga/daemons\n";
@@ -343,7 +344,7 @@ public class SliceManager extends SliceCommon {
       BRO = conf.getBoolean("config.bro");
     }
     for (int i = 0; i < num; i++) {
-      addCoreEdgeRouterPair(s,clientSites.get(i%clientSites.size()),"c" + i, "e" + i, "elink" + i, bw);
+      s = addCoreEdgeRouterPair(s,clientSites.get(i%clientSites.size()),"c" + i, "e" + i, "elink" + i, bw);
       nodelist.add((ComputeNode)s.getResourceByName("c" + i));
       if (BRO && i == 0) {
         long brobw = conf.getLong("config.brobw");

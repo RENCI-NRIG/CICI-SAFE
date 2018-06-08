@@ -17,6 +17,7 @@ import java.util.Map;
 import java.util.HashMap;
 import java.util.Properties;
 
+import org.apache.logging.log4j.LogManager;
 import org.renci.ahab.libndl.Slice;
 import org.renci.ahab.libndl.resources.request.ComputeNode;
 import org.renci.ahab.libndl.resources.request.Network;
@@ -27,10 +28,10 @@ import org.renci.ahab.libtransport.util.SSHAccessTokenFileFactory;
 import org.renci.ahab.libtransport.util.TransportException;
 import org.renci.ahab.libtransport.util.UtilTransportException;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 
 public abstract class SliceBase extends SliceCommon {
-  private final static Logger logger = Logger.getLogger(SliceBase.class);
+  private final static Logger logger = LogManager.getLogger(SliceBase.class);
 
 
   private Slice thisSlice;

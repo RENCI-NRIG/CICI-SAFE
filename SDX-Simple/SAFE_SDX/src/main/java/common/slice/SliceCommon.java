@@ -16,7 +16,8 @@ import java.util.stream.Collectors;
 import java.util.Date;
 import java.text.SimpleDateFormat;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.commons.cli.*;
 import org.apache.commons.cli.DefaultParser;
 
@@ -44,7 +45,7 @@ import sdx.networkmanager.Link;
 
 
 public abstract class SliceCommon {
-  final Logger logger = Logger.getLogger(SliceCommon.class);
+  final Logger logger = LogManager.getLogger(SliceCommon.class);
 
   protected final String RequestResource = null;
   protected String controllerUrl;
@@ -94,7 +95,7 @@ public abstract class SliceCommon {
     try {
       cmd = parser.parse(options, args);
     } catch (ParseException e) {
-      System.out.println(e.getMessage());
+      logger.error(e.getMessage());
       formatter.printHelp("utility-name", options);
 
       System.exit(1);
@@ -147,30 +148,28 @@ public abstract class SliceCommon {
 
   }
 
-  protected void commitSlice(Slice s){
+  protected Slice commitSlice(Slice s){
     boolean retry=true;
     while(retry) {
       retry=false;
       try {
         s.commit();
       } catch (Exception e) {
-        if(e.getMessage().contains("low system memory, please try later")){
-          retry=true;
-          logger.debug(e.getMessage());
-        }else {
-          e.printStackTrace();
-        }
+        retry = true;
+        s.refresh();
+        logger.debug(e.getMessage());
       }
     }
+    return s;
   }
 
   protected void commitAndWait(Slice s) {
-    commitSlice(s);
-    waitTillActive(s);
+    Slice s1=commitSlice(s);
+    waitTillActive(s1);
   }
 
   protected boolean commitAndWait(Slice s, int interval) {
-    commitSlice(s);
+    s = commitSlice(s);
     String timeStamp1 = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(new Date());
     waitTillActive(s, interval);
     String timeStamp2 = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(new Date());
@@ -179,7 +178,7 @@ public abstract class SliceCommon {
   }
 
   protected boolean commitAndWait(Slice s, int interval, List<String> resources) {
-    commitSlice(s);
+    s = commitSlice(s);
     String timeStamp1 = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(new Date());
     waitTillActive(s, interval, resources);
     String timeStamp2 = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(new Date());
@@ -199,15 +198,16 @@ public abstract class SliceCommon {
   }
 
   protected  void waitTillActive(Slice s, int interval, List<String> resources) {
+    logger.debug("Wait until following resources are active: " + String.join(",", resources));
     boolean sliceActive = false;
     while (true) {
       s.refresh();
       sliceActive = true;
-      logger.debug("\nSlice: " + s.getAllResources());
+      logger.debug("Slice: " + s.getAllResources());
       for (ComputeNode c : s.getComputeNodes()) {
         logger.debug("Resource: " + c.getName() + ", state: " + c.getState());
         if (resources.contains(c.getName())) {
-          if (c.getState() != "Active" || c.getManagementIP() == null) {
+          if (!c.getState().equals("Active") || c.getManagementIP() == null) {
             sliceActive = false;
           }
         }
@@ -215,7 +215,7 @@ public abstract class SliceCommon {
       for (Network l : s.getBroadcastLinks()) {
         logger.debug("Resource: " + l.getName() + ", state: " + l.getState());
         if (resources.contains(l.getName())) {
-          if (l.getState() != "Active") {
+          if (!l.getState().equals("Active")) {
             sliceActive = false;
           }
         }
@@ -223,7 +223,7 @@ public abstract class SliceCommon {
       if (sliceActive) break;
       sleep(interval);
     }
-    logger.debug("Done");
+    logger.debug("Done, those  resources are active now: " + String.join(",", resources));
     for (ComputeNode n : s.getComputeNodes()) {
       logger.debug("ComputeNode: " + n.getName() + ", Managment IP =  " + n.getManagementIP());
     }
@@ -273,7 +273,7 @@ public abstract class SliceCommon {
       }
       br.close();
     } catch (Exception e){
-      System.out.println("Topology not save to file");
+      logger.error("Topology not save to file");
     }
   }
 
@@ -317,11 +317,11 @@ public abstract class SliceCommon {
   protected void deleteSlice(String sliceName){
     Slice s2 = null;
     try {
-      System.out.println("deleting slice " + sliceName);
+      logger.info("deleting slice " + sliceName);
       s2 = Slice.loadManifestFile(sliceProxy, sliceName);
       s2.delete();
     } catch (Exception e) {
-      System.out.println("Slice " + sliceName + " doesn't exist.");
+      logger.warn("Slice " + sliceName + " doesn't exist.");
     }
   }
 
@@ -348,7 +348,6 @@ public abstract class SliceCommon {
         thread.start();
         tlist.add(thread);
       } catch (Exception e) {
-        System.out.println("exception when copying config file");
         logger.error("exception when copying config file");
       }
     }
@@ -387,7 +386,6 @@ public abstract class SliceCommon {
         thread.start();
         tlist.add(thread);
       } catch (Exception e) {
-        System.out.println("exception when copying config file");
         logger.error("exception when copying config file");
       }
     }
@@ -417,7 +415,7 @@ public abstract class SliceCommon {
               res = Exec.sshExec("root", mip, cmd, sshkey)[0];
             }
           } catch (Exception e) {
-            System.out.println("exception when running command");
+            logger.warn("exception when running command");
           }
         }
       });
@@ -510,7 +508,7 @@ public abstract class SliceCommon {
       logger.debug("GUID: " + i.getGUID());
     }
     for (ComputeNode node : s.getComputeNodes()) {
-      System.out.println(node.getName() + node.getManagementIP());
+      logger.info(node.getName() + node.getManagementIP());
       for (Interface i : node.getInterfaces()) {
         InterfaceNode2Net inode2net = (InterfaceNode2Net) i;
         logger.debug("MacAddr: " + inode2net.getMacAddress());
@@ -521,20 +519,20 @@ public abstract class SliceCommon {
 
   protected void printSliceInfo(Slice s) {
     for (Network n : s.getLinks()) {
-      System.out.println(n.getLabel() + " " + n.getState());
+      logger.info(n.getLabel() + " " + n.getState());
     }
     //getInterfaces
     for (Interface i : s.getInterfaces()) {
       InterfaceNode2Net inode2net = (InterfaceNode2Net) i;
-      System.out.println("MacAddr: " + inode2net.getMacAddress());
-      System.out.println("GUID: " + i.getGUID());
+      logger.info("MacAddr: " + inode2net.getMacAddress());
+      logger.info("GUID: " + i.getGUID());
     }
     for (ComputeNode node : s.getComputeNodes()) {
-      System.out.println(node.getName() + node.getManagementIP());
+      logger.info(node.getName() + node.getManagementIP());
       for (Interface i : node.getInterfaces()) {
         InterfaceNode2Net inode2net = (InterfaceNode2Net) i;
-        System.out.println("MacAddr: " + inode2net.getMacAddress());
-        System.out.println("GUID: " + i.getGUID());
+        logger.info("MacAddr: " + inode2net.getMacAddress());
+        logger.info("GUID: " + i.getGUID());
       }
     }
   }

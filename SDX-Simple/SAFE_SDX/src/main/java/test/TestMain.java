@@ -7,8 +7,11 @@ import sdx.core.SdxServer;
 import client.exogeni.ClientSlice;
 import org.apache.commons.cli.*;
 import org.apache.commons.cli.DefaultParser;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class TestMain {
+  private static final Logger logger = LogManager.getLogger(TestMain.class.getName());
   /*
   static String state = "fl";
   static String site1 = "ufl";
@@ -28,6 +31,9 @@ public class TestMain {
   static boolean stitch = true;
 
   public static void main(String[] args){
+    logger.debug("Debug");
+    logger.info("info");
+    logger.trace("Trace");
     multiSliceTest(args);
     //emulationTest();
     //testDymanicNetwork();
@@ -124,12 +130,18 @@ public class TestMain {
 
     // Client request for connection between prefixes
     client1.processCmd("link 192.168.10.1/24 192.168.20.1/24");
+    client1.ping("CNode1", "192.168.20.2");
     client3.processCmd("link 192.168.30.1/24 192.168.40.1/24");
+    client3.ping("CNode1", "192.168.40.2");
 
     client6.processCmd("stitch CNode0 " + sdx);
-    client6.processCmd("route 192.168.60.1/24 192.168.136.2");
+    //An IP address will be used when we add new core-edge router pair: 192.168.136.1/24
+    client6.processCmd("route 192.168.60.1/24 192.168.137.2");
     client6.processCmd("link 192.168.60.1/24 192.168.10.1/24");
+    client6.ping("CNode1", "192.168.10.2");
     client6.processCmd("link 192.168.60.1/24 192.168.20.1/24");
+    client6.ping("CNode1", "192.168.20.2");
+    SdxServer.sdxManager.logFlowTables();
     /*
     SdxServer.sdxManager.removePath("192.168.30.1/24", "192.168.40.1/24");
     client1.processCmd("link 192.168.30.1/24 192.168.40.1/24 10000");

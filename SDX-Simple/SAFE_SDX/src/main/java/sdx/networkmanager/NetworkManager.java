@@ -5,7 +5,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -15,7 +16,9 @@ import java.lang.System;
 import common.utils.HttpUtil;
 
 public class NetworkManager {
-  final static Logger logger = Logger.getLogger(NetworkManager.class);
+  final static Logger logger = LogManager.getLogger(NetworkManager.class);
+
+  final static int MAX_RATE = 2000000;
 
   class Link {
     private String ifa = "";
@@ -56,8 +59,8 @@ public class NetworkManager {
     }
 
     public boolean equals(Link link) {
-      if (ifa == link.ifa && ifb == link.ifb || ifa == link.ifb && ifb == link.ifa) {
-        if (ra == link.ra && rb == link.rb || ra == link.rb && rb == link.ra) {
+      if (ifa.equals(link.ifa) && ifb .equals(link.ifb) || ifa.equals(link.ifb) && ifb.equals(link.ifa)) {
+        if (ra.equals(link.ra) && rb.equals(link.rb) || ra.equals(link.rb) && rb.equals(link.ra)) {
           return true;
         }
       }
@@ -142,7 +145,12 @@ public class NetworkManager {
   private HashMap<String, ArrayList<String[]>> pairPath = new HashMap<>();
   private HashMap<String, ArrayList<String>> routes = new HashMap<>();
 
+  public NetworkManager(){
+    logger.debug("initialize network manager");
+  }
+
   public String getDPID(String routerid) {
+    logger.info(String.format("getDPID %s", routerid));
     Router router = getRouter(routerid);
     if (router != null)
       return router.getDPID();
@@ -151,6 +159,7 @@ public class NetworkManager {
   }
 
   public String getEdgeRouterbyGateway(String gw) {
+    logger.info(String.format("getEdgeRouterByGateway %s", gw));
     for (Router r : routers) {
       if (r.hasGateway(gw)) {
         return r.getRouterID();
@@ -159,7 +168,12 @@ public class NetworkManager {
     return null;
   }
 
+  public void setQos(String controller, String dpid, String srcip, String destip, String bw) {
+    setQos(controller, dpid, srcip, destip, Long.valueOf(bw));
+  }
+
   public void setQos(String controller, String dpid, String srcip, String destip, long bw) {
+    logger.info(String.format("setQos %s %s %s %s %s", controller, dpid, srcip, destip, bw));
     JSONObject match = new JSONObject();
     match.put("nw_src", srcip);
     match.put("nw_dst", destip);
@@ -172,16 +186,17 @@ public class NetworkManager {
     }
     router_queues.get(dpid).add(bw);
     String qurl = queueURL(controller, dpid);
-    JSONObject qdata = queueData(2000000, router_queues.get(dpid));
+    JSONObject qdata = queueData(MAX_RATE, router_queues.get(dpid));
     String res = HttpUtil.postJSON(qurl, qdata);
-    logger.debug(res.toString());
+    logger.debug(res);
     String qosurl = qosRuleURL(controller, dpid);
     JSONObject qosdata = qosRuleData(match, router_queues.get(dpid).size() - 1);
     String qosres = HttpUtil.postJSON(qosurl, qosdata);
-    logger.debug(qosres.toString());
+    logger.debug(qosres);
   }
 
   public void addLink(String ipa, String ra, String gw) {
+    logger.info(String.format("addLink %s %s %s", ipa, ra, gw));
     Router router = getRouter(ra);
     if (router != null) {
       router.addGateway(gw);
@@ -191,19 +206,8 @@ public class NetworkManager {
     }
   }
 
-  private List<String> getNeighborIPs(String routerid) {
-    ArrayList<String> ips = new ArrayList<String>();
-    for (String[] intf : ip_router) {
-      if (intf[1].equals(routerid)) {
-        String pairip = getPairIP(intf[0]);
-        if (pairip != null)
-          ips.add(pairip);
-      }
-    }
-    return ips;
-  }
-
   public void addLink(String ipa, String ra, String ipb, String rb, long cap) {
+    logger.info(String.format("addLink %s %s %s %s %s", ipa, ra, ipb, rb, cap));
     //logger.debug(ipa+" "+ipb);
     Router router = getRouter(ra);
     Link link = new Link(ipa, ipb, ra, rb, cap);
@@ -227,7 +231,14 @@ public class NetworkManager {
     }
   }
 
-  public void addRouter(String routerid, String dpid, int numinterfaces, String mip) {
+  public void newRouter(String routerid, String dpid, String numInt, String mip) {
+    int numinterfaces = Integer.valueOf(numInt);
+    newRouter(routerid, dpid, numinterfaces, mip);
+  }
+
+  public void newRouter(String routerid, String dpid, int numinterfaces, String mip) {
+    logger.debug("RoutingManager: new router " + routerid + " " + dpid);
+    logger.info(String.format("newRouter %s %s %s %s", routerid, dpid, numinterfaces, mip));
     if (getRouter(routerid) == null) {
 //      logger.debug(dpid+":my dpid");
       routers.add(new Router(routerid, dpid, numinterfaces, mip));
@@ -240,13 +251,8 @@ public class NetworkManager {
     }
   }
 
-  public void newRouter(String routerid, String dpid, int numInterfaces, String mip) {
-    logger.debug("RoutingManager: new router " + routerid + " " + dpid);
-    addRouter(routerid, dpid, numInterfaces, mip);
-  }
-
-
   public boolean newLink(String ipa, String ra, String gw, String controller) {
+    logger.info(String.format("newLink %s %s %s %s", ipa, ra, gw, controller));
     logger.debug("RoutingManager: new stitchpoint " + ra + " " + ipa);
     addLink(ipa, ra, gw);
     String dpid = getRouter(ra).getDPID();
@@ -263,7 +269,13 @@ public class NetworkManager {
     return result;
   }
 
+  public boolean newLink(String ipa, String ra, String ipb, String rb, String controller, String cap) {
+    long capacity = Long.valueOf(cap);
+    return newLink(ipa, ra, ipb, rb, controller, cap);
+  }
+
   public boolean newLink(String ipa, String ra, String ipb, String rb, String controller, long capacity) {
+    logger.info(String.format("newLink %s %s %s %s %s %s", ipa, ra, ipb, rb, controller, capacity));
     logger.debug("RoutingManager: new link " + ra + " " + ipa + " " + rb + " " + ipb);
     addLink(ipa, ra, ipb, rb, capacity);
     String dpid = getDPID(ra);
@@ -280,59 +292,17 @@ public class NetworkManager {
     dpid = getDPID(rb);
     cmd = addrCMD(ipb, dpid, controller);
     res = HttpUtil.postJSON(cmd[0], new JSONObject(cmd[1]));
-    System.out.println(res);
     if (res.toString().contains("success")) {
       addEntry_HashList(sdncmds, dpid, cmd);
+      logger.debug(res);
     } else {
+      logger.warn(res);
       result = false;
     }
     return result;
   }
-
-
-  private boolean addRoute(String destIp, String srcIp, String gateWay, String dpid, String
-    controller){
-    String[] cmd = routingCMD(destIp, srcIp, gateWay, dpid, controller);
-    String res = HttpUtil.postJSON(cmd[0], new JSONObject(cmd[1]));
-    logger.debug(cmd[1]);
-    logger.debug(res);
-    if (res.contains("success")) {
-      int id = Integer.valueOf(res.split("route_id=")[1].split("]")[0]);
-      cmd[cmd.length-1] = res;
-      addEntry_HashList(sdncmds, dpid, cmd);
-      return true;
-    } else {
-      return false;
-    }
-  }
-
-  private boolean deleteRoute(String dpid, String routeid, String controller) {
-    String[] cmd = delRoutingCMD(routeid, dpid, controller);
-    String res = HttpUtil.delete(cmd[0], cmd[1]);
-    System.out.println(res);
-    if(res.contains("success")){
-      addEntry_HashList(sdncmds, dpid, cmd);
-      return true;
-    }
-    return false;
-  }
-
-  /*
-  private boolean deleteRoute(String dpid, String routeid, String controller) {
-    String[] cmd = delRoutingCMD(dpid, routeid, controller);
-    String res = HttpUtil.delete(cmd[0], cmd[1]);
-    System.out.println(res);
-    if (res.contains("success")) {
-      int id = Integer.valueOf(res.split("route_id=")[1].split("]")[0]);
-      cmd[cmd.length-1] = res;
-      addEntry_HashList(sdncmds, dpid, cmd);
-      return true;
-    } else {
-      return false;
-    }
-  }*/
-
   public void configurePath(String dest, String nodename, String gateway, String controller) {
+    logger.info(String.format("configurePath %s %s %s %s", dest, nodename, gateway, controller));
     String gwdpid = getRouter(nodename).getDPID();
     if (gwdpid == null) {
       logger.debug("No router named " + nodename + " not found");
@@ -342,7 +312,11 @@ public class NetworkManager {
     for (String[] path : paths) {
       String[] cmd = routingCMD(dest, path[1], path[0], controller);
       String res = HttpUtil.postJSON(cmd[0], new JSONObject(cmd[1]));
-      System.out.println(res);
+      if(res.contains("success")){
+        logger.debug(res);
+      }else {
+        logger.warn(res);
+      }
       cmd[cmd.length-1] = res;
       addEntry_HashList(sdncmds, path[0], cmd);
       //logger.debug(path[0]+" "+path[1]);
@@ -352,7 +326,14 @@ public class NetworkManager {
 
   //gateway is the gateway for nodename
   public boolean configurePath(String dest, String nodename, String targetIP, String targetnodename,
-                         String gateway, String controller, long bw) {
+                         String gateway, String controller, String bandWitdth) {
+    long bw = Long.valueOf(bandWitdth);
+    return configurePath(dest, nodename, targetIP, targetnodename, gateway, controller, bw);
+  }
+
+  public boolean configurePath(String dest, String nodename, String targetIP, String targetnodename,
+                               String gateway, String controller, long bw) {
+    logger.info(String.format("configurePath %s %s %s %s %s %s %s", dest, nodename, targetIP, targetnodename, gateway, controller, bw));
     logger.debug("Network Manager: Configuring path for " + dest + " " + nodename + " " + targetIP + " " + targetnodename + " " + gateway);
     String gwdpid = getRouter(nodename).getDPID();
     String targetdpid = getRouter(targetnodename).getDPID();
@@ -376,6 +357,7 @@ public class NetworkManager {
   }
 
   public void removePath(String srcIP, String dstIP, String controller){
+    logger.info(String.format("removePath %s %s %s", srcIP, dstIP, controller));
     ArrayList<String[]> paths = pairPath.get(getPathID(srcIP, dstIP));
     for (String[] path: paths){
       int routeid = route_id.get(getRouteKey(srcIP, dstIP, path[0]));
@@ -384,6 +366,7 @@ public class NetworkManager {
   }
 
   public String setMirror(String controller, String dpid, String source, String dst, String gw){
+    logger.info(String.format("setMirror %s %s %s %s %s", controller, dpid, source, dst, gw));
     String[] cmd = mirrorCMD(controller, dpid, source, dst, gw);
     addEntry_HashList(sdncmds, dpid, cmd);
     String res=HttpUtil.postJSON(cmd[0], new JSONObject(cmd[1]));
@@ -400,33 +383,34 @@ public class NetworkManager {
   }
 
   public String delMirror(String controller, String dpid, String source, String dst){
+    logger.info(String.format("delMirror %s %s %s %s %s", controller, dpid, source, dst));
     int id = mirror_id.get(getRouteKey(source, dst, dpid));
     String[] cmd = delMirrorCMD(String.valueOf(id), dpid,controller);
     addEntry_HashList(sdncmds, dpid, cmd);
     String res=HttpUtil.delete(cmd[0], cmd[1]);
-    System.out.println(res);
     if (res.contains("success")) {
+      logger.debug(res);
     } else {
+      logger.warn(res);
       //revoke all previous routes
       //TODO
     }
     return res;
   }
 
-  private String getPathID(String src, String dst){
-    return src + dst;
-  }
-
-  private String getRouteKey(String src, String dst, String dpid){
-    return src + dst + dpid;
+  public boolean findPath(String node1, String node2, String bandWidth) {
+    long bw = Long.valueOf(bandWidth);
+    return findPath(node1, node2, Long.valueOf(bandWidth));
   }
 
   public boolean findPath(String node1, String node2, long bw) {
+    logger.info(String.format("findPath %s %s %s", node1, node2, bw));
     ArrayList<String[]> paths = getPairRoutes(getDPID(node1), getDPID(node2), "test", bw);
     return paths.size() > 0;
   }
 
   public Router getRouter(String routername) {
+    logger.info(String.format("getRouter %s", routername));
     for (Router r : routers) {
       if (r.getRouterID().equals(routername)) {
         return r;
@@ -435,16 +419,123 @@ public class NetworkManager {
     return null;
   }
 
+  public void setOvsdbAddr(String controller) {
+    logger.info(String.format("setOvsAddr %s", controller));
+    for (Router r : routers) {
+      String[] cmd = ovsdbCMD(r, controller);
+      String res = HttpUtil.putString(cmd[0], cmd[1]);
+      addEntry_HashList(sdncmds, r.getDPID(), cmd);
+      logger.debug(res);
+    }
+  }
+
+  public void replayCmds(String dpid){
+    logger.info(String.format("replayCmds %s", dpid));
+    if(sdncmds.containsKey(dpid)){
+      ArrayList<String[]> l=sdncmds.get(dpid);
+      for(String[] cmd: l){
+        logger.debug("Replay:" + cmd[0] + cmd[1]);
+        if(cmd[2].equals("postJSON")){
+          String result = HttpUtil.postJSON(cmd[0],new JSONObject(cmd[1]));
+          if(result.contains("success")){
+            logger.debug(result);
+          }else{
+            logger.warn(result);
+          }
+        }
+        else{
+          HttpUtil.putString(cmd[0],cmd[1]);
+        }
+      }
+    } else {
+      logger.debug("No cmd to replay");
+    }
+  }
+
+  public void printLinks() {
+    logger.info("printLinks");
+    for (Link l : links) {
+      logger.debug(l.toString());
+    }
+  }
+
   public List<String> getNeighbors(String routerName){
+    logger.info(String.format("getNeighbors %s", routerName));
     ArrayList<String> nbs = new ArrayList<String>();
     for(Link link: getRouter(routerName).getNeighborLinks().values()){
-      if(link.ra==routerName && !link.rb.equals("")){
+      if(link.ra.equals(routerName) && !link.rb.equals("")){
         nbs.add(link.rb);
       }else if(link.rb.equals(routerName)){
         nbs.add(link.ra);
       }
     }
     return nbs;
+  }
+
+  private List<String> getNeighborIPs(String routerid) {
+    logger.info("getNeighborIPs %s", routerid);
+    ArrayList<String> ips = new ArrayList<String>();
+    for (String[] intf : ip_router) {
+      if (intf[1].equals(routerid)) {
+        String pairip = getPairIP(intf[0]);
+        if (pairip != null)
+          ips.add(pairip);
+      }
+    }
+    return ips;
+  }
+
+  private boolean addRoute(String destIp, String srcIp, String gateWay, String dpid, String
+      controller){
+    String[] cmd = routingCMD(destIp, srcIp, gateWay, dpid, controller);
+    String res = HttpUtil.postJSON(cmd[0], new JSONObject(cmd[1]));
+    logger.debug(String.join("\n" + cmd));
+    logger.debug(res);
+    if (res.contains("success")) {
+      int id = Integer.valueOf(res.split("route_id=")[1].split("]")[0]);
+      cmd[cmd.length-1] = res;
+      addEntry_HashList(sdncmds, dpid, cmd);
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  private boolean deleteRoute(String dpid, String routeid, String controller) {
+    String[] cmd = delRoutingCMD(routeid, dpid, controller);
+    String res = HttpUtil.delete(cmd[0], cmd[1]);
+    if(res.contains("success")){
+      logger.debug(res);
+      addEntry_HashList(sdncmds, dpid, cmd);
+      return true;
+    }else{
+      logger.warn(res);
+    }
+    return false;
+  }
+
+  /*
+  private boolean deleteRoute(String dpid, String routeid, String controller) {
+    String[] cmd = delRoutingCMD(dpid, routeid, controller);
+    String res = HttpUtil.delete(cmd[0], cmd[1]);
+    System.out.println(res);
+    if (res.contains("success")) {
+      int id = Integer.valueOf(res.split("route_id=")[1].split("]")[0]);
+      cmd[cmd.length-1] = res;
+      addEntry_HashList(sdncmds, dpid, cmd);
+      return true;
+    } else {
+      return false;
+    }
+  }*/
+
+
+  private String getPathID(String src, String dst){
+    return src + dst;
+  }
+
+  private String getRouteKey(String src, String dst, String dpid){
+    return src + dst + dpid;
   }
 
   private String queueURL(String controller, String dpid) {
@@ -480,34 +571,6 @@ public class NetworkManager {
     return params;
   }
 
-  public void setOvsdbAddr(String controller) {
-    for (Router r : routers) {
-      String[] cmd = ovsdbCMD(r, controller);
-      String res = HttpUtil.putString(cmd[0], cmd[1]);
-      addEntry_HashList(sdncmds, r.getDPID(), cmd);
-      logger.debug(res);
-    }
-  }
-
-  public void replayCmds(String dpid){
-    if(sdncmds.containsKey(dpid)){
-      ArrayList<String[]> l=sdncmds.get(dpid);
-      for(String[] cmd: l){
-        logger.debug("Replay:" + cmd[0] + cmd[1]);
-        System.out.println("Replay:" + cmd[0] + cmd[1]);
-        if(cmd[2]=="postJSON"){
-          String result = HttpUtil.postJSON(cmd[0],new JSONObject(cmd[1]));
-          System.out.println(result);
-        }
-        else{
-          HttpUtil.putString(cmd[0],cmd[1]);
-        }
-      }
-    } else {
-      logger.debug("No cmd to replay");
-    }
-  }
-
   private void addEntry_HashList(HashMap<String, ArrayList<String[]>> map, String key, String[] entry) {
     if (map.containsKey(key)) {
       ArrayList<String[]> l = map.get(key);
@@ -540,7 +603,7 @@ public class NetworkManager {
     int start = 0;
     int end = 0;
     boolean foundpath = false;
-    if(srcdpid == dstdpid){
+    if(srcdpid.equals(dstdpid)){
       foundpath = true;
     }
     while (start <= end && !foundpath) {
@@ -592,12 +655,6 @@ public class NetworkManager {
       }
     }
     return spaths;
-  }
-
-  public void printLinks() {
-    for (Link l : links) {
-      logger.debug(l.toString());
-    }
   }
 
   //FIXME: There might be bug, but haven't got the chance to look into it.

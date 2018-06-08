@@ -1,6 +1,7 @@
 package client.stitchport;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.commons.cli.*;
 import org.renci.ahab.libndl.Slice;
 import org.renci.ahab.libndl.resources.request.ComputeNode;
@@ -17,7 +18,7 @@ import common.utils.HttpUtil;
  * @author geni-orca
  */
 public class SdxStitchPortClientManager extends SliceCommon {
-  final Logger logger = Logger.getLogger(Exec.class);
+  final Logger logger = LogManager.getLogger(SdxStitchPortClientManager.class);
   CommandLine cmd;
 
   public SdxStitchPortClientManager(String[] args) {

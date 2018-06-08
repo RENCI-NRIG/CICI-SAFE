@@ -1,7 +1,8 @@
 package client.exogeni;
 
 import org.apache.commons.cli.CommandLine;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.renci.ahab.libndl.Slice;
 import org.renci.ahab.libndl.resources.request.ComputeNode;
 import org.renci.ahab.libndl.resources.request.InterfaceNode2Net;
@@ -22,7 +23,7 @@ import java.util.ArrayList;
  *
  */
 public class ClientSlice extends SliceManager{
-  final Logger logger = Logger.getLogger(Exec.class);
+  final Logger logger = LogManager.getLogger(ClientSlice.class);
 
   public ClientSlice(){}
   private String mask="/24";
@@ -73,7 +74,7 @@ public class ClientSlice extends SliceManager{
 			routerSite = conf.getString("config.routersite");
       IPPrefix=conf.getString("config.ipprefix");
       computeIP(IPPrefix);
-      System.out.println("client start");
+      logger.info("client start");
       String customerName=sliceName;
       try{
         Slice c1=createCustomerSlice(customerName,2,IPPrefix,curip,1000000,true);
@@ -82,9 +83,8 @@ public class ClientSlice extends SliceManager{
         //copyFile2Slice(c1, "/home/yaoyj11/project/exo-geni/SAFE_SDX/src/main/resources/scripts/configospffornewif.sh","~/configospffornewif.sh","~/.ssh/id_rsa");
         //runCmdSlice(c1,"/bin/bash ~/ospfautoconfig.sh","~/.ssh/id_rsa");
         configFTPService(c1,"(CNode1)", "ftpuser","ftp");
-        System.out.println("Slice active now: " + sliceName);
-        System.out.println("CNode0 IP: " + ((ComputeNode)c1.getResourceByName("CNode0")).getManagementIP());
-        System.out.println("CNode1 IP: " + ((ComputeNode)c1.getResourceByName("CNode1")).getManagementIP());
+        logger.info("Slice active now: " + sliceName);
+        getNetworkInfo(c1);
         return;
       }catch (Exception e){
         e.printStackTrace();
@@ -93,7 +93,7 @@ public class ClientSlice extends SliceManager{
     else if (type.equals("delete")){
       Slice s2 = null;
       try{
-        System.out.println("deleting slice "+sliceName);
+        logger.info("deleting slice "+sliceName);
         s2=Slice.loadManifestFile(sliceProxy, sliceName);
         s2.delete();
       }catch (Exception e){
@@ -101,11 +101,9 @@ public class ClientSlice extends SliceManager{
       }
 
     }
-    System.out.println("XXXXXXXXXX Done XXXXXXXXXXXXXX");
   }
 
   public  Slice createCustomerSlice(String sliceName, int num,String prefix, int start,long bw,boolean network){//=1, String subnet="")
-    System.out.println("ndllib TestDriver: START");
     //Main Example Code
 
     Slice s = Slice.create(sliceProxy, sctx, sliceName);

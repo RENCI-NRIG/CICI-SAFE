@@ -1,7 +1,8 @@
 package test;
 
+import org.apache.logging.log4j.LogManager;
 import sdx.core.*;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 import org.apache.log4j.Level;
 import org.glassfish.grizzly.http.server.HttpServer;
 import org.glassfish.jersey.grizzly2.httpserver.GrizzlyHttpServerFactory;
@@ -15,7 +16,7 @@ import java.io.IOException;
 import java.net.URI;
 
 public class Test {
-  final Logger logger = Logger.getLogger(Exec.class);
+  final Logger logger = LogManager.getLogger(Exec.class);
   SdxManager sdxManager = new SdxManager();
 
   public HttpServer startServer(String url) {

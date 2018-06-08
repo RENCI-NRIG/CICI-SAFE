@@ -1,18 +1,14 @@
 package sdx.core;
 
-import common.slice.SliceCommon;
-import org.json.zip.None;
-import org.renci.ahab.libndl.resources.request.*;
-import sdx.core.bro.BroManager;
+import org.apache.logging.log4j.LogManager;
+import sdx.bro.BroManager;
 import sdx.networkmanager.Link;
 import sdx.networkmanager.NetworkManager;
 import common.utils.Exec;
-import common.utils.SafePost;
 
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Set;
@@ -22,7 +18,7 @@ import java.util.Properties;
 import java.util.Optional;
 import java.util.concurrent.locks.ReentrantLock;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 import org.apache.commons.cli.*;
 
 import org.renci.ahab.libndl.Slice;
@@ -32,15 +28,8 @@ import org.renci.ahab.libndl.resources.request.Interface;
 import org.renci.ahab.libndl.resources.request.InterfaceNode2Net;
 import org.renci.ahab.libndl.resources.request.Network;
 import org.renci.ahab.libndl.resources.request.StitchPort;
-import org.renci.ahab.libtransport.ISliceTransportAPIv1;
-import org.renci.ahab.libtransport.SSHAccessToken;
-import org.renci.ahab.libtransport.SliceAccessContext;
 import org.renci.ahab.libtransport.util.ContextTransportException;
-import org.renci.ahab.libtransport.util.SSHAccessTokenFileFactory;
 import org.renci.ahab.libtransport.util.TransportException;
-import org.renci.ahab.libtransport.util.UtilTransportException;
-import org.renci.ahab.libtransport.xmlrpc.XMLRPCTransportException;
-import sun.nio.ch.Net;
 
 /*
 
@@ -65,7 +54,7 @@ import sun.nio.ch.Net;
  */
 
 public class SdxManager extends SliceManager {
-  final Logger logger = Logger.getLogger(SdxManager.class);
+  final Logger logger = LogManager.getLogger(SdxManager.class);
 
   private NetworkManager routingmanager = new NetworkManager();
   private BroManager broManager  = null;
@@ -84,6 +73,7 @@ public class SdxManager extends SliceManager {
   private HashMap<String,String>prefixgateway=new HashMap<String,String>();
   protected HashMap<String, ArrayList<String>>edgeRouters=new HashMap<String,ArrayList<String>>();
 
+  final long bw = 1000000000;
 
 
   public Slice getSdxSlice(){
@@ -129,7 +119,7 @@ public class SdxManager extends SliceManager {
   }
 
   public void startSdxServer(String[] args) {
-    System.out.println(logPrefix + "Carrier Slice server with Service API: START");
+    logger.info(logPrefix + "Carrier Slice server with Service API: START");
     CommandLine cmd = parseCmd(args);
     String configfilepath = cmd.getOptionValue("config");
     readConfig(configfilepath);
@@ -144,7 +134,7 @@ public class SdxManager extends SliceManager {
     }
     serverSlice = getSlice();
     broManager = new BroManager(serverSlice, routingmanager, this);
-    logPrefix += "vSDX Server [" + sliceName + "]: ";
+    logPrefix += "[" + sliceName + "]";
     //runCmdSlice(serverSlice, "ovs-ofctl del-flows br0", "(^c\\d+)", false, true);
     SDNControllerIP = ((ComputeNode) serverSlice.getResourceByName("plexuscontroller")).getManagementIP();
     //SDNControllerIP="152.3.136.36";
@@ -188,16 +178,26 @@ public class SdxManager extends SliceManager {
     commitAndWait(serverSlice);
   }
 
-  private void addLink(Slice s, String linkName, String ip, String netmask, String nodeName, long
+  private Slice addLink(Slice s, String linkName, String ip, String netmask, String nodeName, long
     bw) {
     ComputeNode node = (ComputeNode) s.getResourceByName(nodeName);
     Network net = s.addBroadcastLink(linkName, bw);
     InterfaceNode2Net ifaceNode0 = (InterfaceNode2Net) net.stitch(node);
     ifaceNode0.setIpAddress(ip);
     ifaceNode0.setNetmask(netmask);
+    return s;
+  }
+
+  private void addLinkWithCheck(Slice s, String linkName, String ip, String netmask, String nodeName, long
+      bw) {
+    ComputeNode node = (ComputeNode) s.getResourceByName(nodeName);
+    Network net = s.addBroadcastLink(linkName, bw);
+    InterfaceNode2Net ifaceNode0 = (InterfaceNode2Net) net.stitch(node);
+    ifaceNode0.setIpAddress(ip);
+    ifaceNode0.setNetmask(netmask);
     String res[] = Exec.sshExec("root", node.getManagementIP(), "ifconfig -a|grep \"eth\"|grep" +
-      " " +
-      "-v \"eth0\"|sed 's/[ \\t].*//;/^$/d'", sshkey);
+        " " +
+        "-v \"eth0\"|sed 's/[ \\t].*//;/^$/d'", sshkey);
     logger.debug("Interfaces before");
     logger.debug(res[0]);
     int num = res[0].split("\n").length;
@@ -237,7 +237,21 @@ public class SdxManager extends SliceManager {
     }
   }
 
-  private void addLink(Slice s, String linkName, String ip1, String ip2, String netmask, String
+  private Slice addLink(Slice s, String linkName, String ip1, String ip2, String netmask, String
+      node1, String node2, long bw) {
+    ComputeNode node_1 = (ComputeNode) s.getResourceByName(node1);
+    ComputeNode node_2 = (ComputeNode) s.getResourceByName(node2);
+    Network net = s.addBroadcastLink(linkName, bw);
+    InterfaceNode2Net ifaceNode0 = (InterfaceNode2Net) net.stitch(node_1);
+    ifaceNode0.setIpAddress(ip1);
+    ifaceNode0.setNetmask(netmask);
+    InterfaceNode2Net ifaceNode1 = (InterfaceNode2Net) net.stitch(node_2);
+    ifaceNode1.setIpAddress(ip2);
+    ifaceNode1.setNetmask(netmask);
+    return s;
+  }
+
+  private void addLinkWithCheck(Slice s, String linkName, String ip1, String ip2, String netmask, String
     node1, String node2, long bw) {
     ComputeNode node_1 = (ComputeNode) s.getResourceByName(node1);
     ComputeNode node_2 = (ComputeNode) s.getResourceByName(node2);
@@ -293,7 +307,7 @@ public class SdxManager extends SliceManager {
                                 String secret,
                                 String sdxnode) {
     long start = System.currentTimeMillis();
-    System.out.println(logPrefix + "new stitch request from " + customerName + " for " + sdxslice + " at " +
+    logger.info(logPrefix + "new stitch request from " + customerName + " for " + sdxslice + " at " +
       "" + site);
     logger.debug("new stitch request for " + sdxslice + " at " + site);
     serverSlice = getSlice();
@@ -309,7 +323,9 @@ public class SdxManager extends SliceManager {
       ip_to_use = getAvailableIP();
       stitchname = "stitch_" + node.getName() + "_" + ip_to_use;
       usedip.add(ip_to_use);
-      addLink(serverSlice, stitchname, "192.168." + String.valueOf(ip_to_use) + ".1", "255.255.255.0", node.getName(), 1000000000);
+      serverSlice = addLink(serverSlice, stitchname, "192.168." + String.valueOf(ip_to_use) + ".1", "255.255.255.0", node.getName(), 1000000000);
+      commitAndWait(serverSlice, 10, Arrays.asList(new String[]{stitchname}));
+      serverSlice.refresh();
     }
     else if (sdxnode == null && edgeRouters.containsKey(site) && edgeRouters.get(site).size() >
       0) {
@@ -317,7 +333,10 @@ public class SdxManager extends SliceManager {
       ip_to_use = getAvailableIP();
       stitchname = "stitch_" + node.getName() + "_" + ip_to_use;
       usedip.add(ip_to_use);
-      addLink(serverSlice, stitchname, "192.168." + String.valueOf(ip_to_use) + ".1", "255.255.255.0", node.getName(), 1000000000);
+      serverSlice = addLink(serverSlice, stitchname, "192.168." + String.valueOf(ip_to_use) + ".1", "255.255.255.0", node.getName(), 1000000000);
+      commitAndWait(serverSlice, 10, Arrays.asList(new String[]{stitchname}));
+      serverSlice.refresh();
+
     } else {
       //if node not exists, add another node to the slice
       //add a node and configure it as a router.
@@ -327,7 +346,7 @@ public class SdxManager extends SliceManager {
       String eRouterName = allcoateERouterName(site);
       String cRouterName = allcoateCRouterName(site);
       String eLinkName = allocateELinkName();
-      addCoreEdgeRouterPair(serverSlice, site, cRouterName, eRouterName, eLinkName,1000000000);
+      serverSlice = addCoreEdgeRouterPair(serverSlice, site, cRouterName, eRouterName, eLinkName,bw);
       node = (ComputeNode) serverSlice.getResourceByName(eRouterName);
       ip_to_use = getAvailableIP();
       stitchname = "stitch_" + node.getName() + "_" + ip_to_use;
@@ -337,13 +356,18 @@ public class SdxManager extends SliceManager {
       ifaceNode0.setIpAddress("192.168." + String.valueOf(ip_to_use) + ".1");
       ifaceNode0.setNetmask("255.255.255.0");
       commitAndWait(serverSlice, 10, Arrays.asList(new String[]{stitchname, cRouterName, eRouterName, eLinkName}));
-      serverSlice.refresh();
+      serverSlice = getSlice();
       node = (ComputeNode) serverSlice.getResourceByName(cRouterName);
       copyRouterScript(serverSlice, node);
       configRouter(node);
       node = (ComputeNode) serverSlice.getResourceByName(eRouterName);
       copyRouterScript(serverSlice, node);
       configRouter(node);
+      Link internal_link  = new Link(eLinkName, cRouterName, eRouterName);
+      int ip_1 = getAvailableIP();
+      internal_link.setIP(IPPrefix + String.valueOf(ip_1));
+      links.put(eLinkName, internal_link);
+      routingmanager.newLink(internal_link.getIP(1), internal_link.nodea, internal_link.getIP(2), internal_link.nodeb, SDNController, bw);
       logger.debug("Configured the new router in RoutingManager");
     }
 
@@ -366,7 +390,7 @@ public class SdxManager extends SliceManager {
       OVSController, sshkey);
     routingmanager.newLink(link.getIP(1), link.nodea, ip.split("/")[0], SDNController);
     //routingmanager.configurePath(ip,node.getName(),ip.split("/")[0],SDNController);
-    System.out.println(logPrefix + "stitching operation  completed, time elapsed(s): " + (System
+    logger.info(logPrefix + "stitching operation  completed, time elapsed(s): " + (System
       .currentTimeMillis() - start)/1000);
     return res;
   }
@@ -378,30 +402,26 @@ public class SdxManager extends SliceManager {
       e.printStackTrace();
     }
     refreshSliceProxy();
-    serverSlice.refresh();
-    System.out.println(logPrefix + "deploying new bro instance to " + routerName);
+    Slice slice = getSlice();
+    logger.info(logPrefix + "deploying new bro instance to " + routerName);
     Long t1 = System.currentTimeMillis();
-    ComputeNode router =  (ComputeNode) serverSlice.getResourceByName(routerName);
+    ComputeNode router =  (ComputeNode) slice.getResourceByName(routerName);
     String broName = getBroName(router.getName());
     long brobw = conf.getLong("config.brobw");
     int ip_to_use = getAvailableIP();
-    addBro(serverSlice, broName, router);
-    try {
-      serverSlice.commit();
-      ArrayList<String> resources= new ArrayList<String>();
-      resources.add(broName);
-      waitTillActive(serverSlice, 10, resources);
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
-    serverSlice.refresh();
-    addLink(serverSlice, getBroLinkName(ip_to_use),"192.168." + ip_to_use + ".1", "192.168." +
+    addBro(slice, broName, router);
+    ArrayList<String> resources= new ArrayList<String>();
+    String linkName = getBroLinkName(ip_to_use);
+    slice = addLink(slice, linkName,"192.168." + ip_to_use + ".1", "192.168." +
         ip_to_use + ".2", "255.255.255.0", routerName, broName, brobw);
+    resources.add(broName);
+    resources.add(linkName);
+    commitAndWait(slice, 10 , resources);
+    serverSlice = getSlice();
     configBroNodes(serverSlice, "(" + broName + ")");
     Exec.sshExec("root", router.getManagementIP(), "/bin/bash ~/ovsbridge.sh " +
       OVSController, sshkey);
     Link link=new Link();
-    String broLinkName = getBroLinkName(ip_to_use);
     link.setName(getBroLinkName(ip_to_use));
     link.addNode(router.getName());
     usedip.add(ip_to_use);
@@ -410,8 +430,10 @@ public class SdxManager extends SliceManager {
     routingmanager.newLink(link.getIP(1), link.nodea, link.getIP(2).split("/")[0],
       SDNController);
     Long t2 = System.currentTimeMillis();
-    System.out.println(logPrefix + "Deployed new Bro node successfully, time elapsed: " + (t2- t1) +
+    logger.info(logPrefix + "Deployed new Bro node successfully, time elapsed: " + (t2- t1) +
       "milliseconds");
+    logger.debug(logPrefix + "Deployed new Bro node successfully, time elapsed: " + (t2- t1) +
+        "milliseconds");
     brolock.unlock();
     return link.getIP(2).split("/")[0];
   }
@@ -512,7 +534,7 @@ public class SdxManager extends SliceManager {
       for (String key : computenodes.keySet()) {
         for (String cname : computenodes.get(key)) {
           if(cname.matches(eRouterPattern)) {
-            int number = Integer.valueOf(cname.replace("e:", ""));
+            int number = Integer.valueOf(cname.replace("e", ""));
             max = Math.max(max, number);
           }
         }
@@ -559,31 +581,31 @@ public class SdxManager extends SliceManager {
       ===========*/
       Slice s=getSlice();
       String c1 = getCoreRouterByEdgeRouter(n1);
-      String c2 = getCoreRouterByEdgeRouter(n1);
+      String c2 = getCoreRouterByEdgeRouter(n2);
       ComputeNode node1=(ComputeNode)s.getResourceByName(c1);
       ComputeNode node2=(ComputeNode)s.getResourceByName(c2);
 
       String link1 = allocateCLinkName();
-      System.out.println(logPrefix + "Add link: " + link1);
+      logger.debug(logPrefix + "Add link: " + link1);
       long linkbw=2*bandwidth;
       Network net1=s.addBroadcastLink(link1, linkbw);
       net1.stitch(node1);
       net1.stitch(node2);
       commitAndWait(s);
       /*else{
-          System.out.println(logPrefix + "Now add a link named \"" + link1 + "\" between " + n1 + " and " + n2
+          logger.info(logPrefix + "Now add a link named \"" + link1 + "\" between " + n1 + " and " + n2
             + " with bandwidht " + linkbw);
           try {
             java.io.BufferedReader stdin = new java.io.BufferedReader(new java.io.InputStreamReader(System.in));
             stdin.readLine();
-            System.out.println(logPrefix + "Continue");
+            logger.info(logPrefix + "Continue");
           } catch (Exception e) {
             e.printStackTrace();
           }
         }
       waitTillActive(s);
         */
-      s = getSlice();
+      serverSlice = getSlice();
 
       sleep(10);
       Link l1 = links.get(link1);
@@ -612,9 +634,10 @@ public class SdxManager extends SliceManager {
           (self_prefix), SDNController,bandwidth) &&
           routingmanager.configurePath(target_prefix,n2,self_prefix,n1,prefixgateway.get
         (target_prefix),SDNController,0)) {
-        System.out.println(logPrefix + "Routing set up for " + self_prefix + " and " + target_prefix);
+        logger.info(logPrefix + "Routing set up for " + self_prefix + " and " + target_prefix);
         logger.debug(logPrefix +"Routing set up for " + self_prefix + " and " + target_prefix);
-        setMirror("c0", self_prefix, target_prefix,400000000);
+        //TODO: auto select edge router
+        setMirror("e0", self_prefix, target_prefix,400000000);
         if(bandwidth>0) {
           routingmanager.setQos(SDNController, routingmanager.getDPID(n1), self_prefix,
             target_prefix, bandwidth);
@@ -623,7 +646,7 @@ public class SdxManager extends SliceManager {
         }
         return "route configured: " + res;
       }else{
-        System.out.println(logPrefix + "Route for " + self_prefix + " and " + target_prefix +
+        logger.info(logPrefix + "Route for " + self_prefix + " and " + target_prefix +
           "Failed");
         logger.debug(logPrefix + "Route for " + self_prefix + " and " + target_prefix +
           "Failed");
@@ -635,17 +658,17 @@ public class SdxManager extends SliceManager {
   public void reset() {
     delFlows();
     broManager.reset();
-    System.out.println("SDX network reset");
+    logger.info("SDX network reset");
   }
 
   public String notifyPrefix(String dest, String gateway, String customer_keyhash) {
-    System.out.println(logPrefix + "received notification for ip prefix "+dest);
+    logger.info(logPrefix + "received notification for ip prefix "+dest);
     String res="received notification for "+dest;
     boolean flag=false;
     String router=routingmanager.getEdgeRouterbyGateway(gateway);
     prefixgateway.put(dest,gateway);
     if(router==null){
-      System.out.println(logPrefix + "Cannot find a router with cusotmer gateway"+gateway);
+      logger.warn(logPrefix + "Cannot find a router with cusotmer gateway"+gateway);
       res=res+" Cannot find a router with customer gateway "+gateway;
     }
     return res;
@@ -656,7 +679,7 @@ public class SdxManager extends SliceManager {
     String res="Stitch request unauthorized";
     try {
       //FIX ME: do stitching
-      System.out.println(logPrefix + "Chameleon Stitch Request from " + customer_keyhash + " Authorized");
+      logger.info(logPrefix + "Chameleon Stitch Request from " + customer_keyhash + " Authorized");
       Slice s = null;
       refreshSliceProxy();
       try {
@@ -671,7 +694,7 @@ public class SdxManager extends SliceManager {
         e.printStackTrace();
       }
       String stitchname = "sp-" + nodeName + "-" + ip.replace("/", "__").replace(".", "_");
-      System.out.println(logPrefix + "Stitching to Chameleon {" + "stitchname: " + stitchname + " vlan:" +
+      logger.info(logPrefix + "Stitching to Chameleon {" + "stitchname: " + stitchname + " vlan:" +
         vlan + " stithport: " + stitchport + "}");
       StitchPort mysp = s.addStitchPort(stitchname, vlan, stitchport, 100000000l);
       ComputeNode mynode = (ComputeNode) s.getResourceByName(nodeName);
@@ -684,7 +707,7 @@ public class SdxManager extends SliceManager {
       Exec.sshExec("root", mynode.getManagementIP(), "ifconfig;ovs-vsctl list port", sshkey);
       routingmanager.newLink(ip, nodeName, gateway, SDNController);
       res = "Stitch operation Completed";
-      System.out.println(logPrefix + res);
+      logger.info(logPrefix + res);
     } catch (Exception e) {
       res = "Stitch request failed.\n SdxServer exception in commiting stitching opoeration";
       e.printStackTrace();
@@ -719,11 +742,9 @@ public class SdxManager extends SliceManager {
       Optional<ComputeNode> node = s.getComputeNodes().stream().filter(w -> w.getManagementIP() == broip).findAny();
       if (node.isPresent()) {
         ComputeNode n = node.get();
-        Pattern pattern = Pattern.compile(routerPattern);
-        Matcher match = pattern.matcher(n.getName());
-        if (match.find()) {
-          System.out.println(logPrefix + "Overloaded bro is attached to " + match.group(1));
-          return deployBro(match.group(1));
+        if (n.getName().matches(eRouterPattern)) {
+          logger.info(logPrefix + "Overloaded bro is attached to " + n.getName());
+          return deployBro(n.getName());
         }
       }
     }
@@ -732,7 +753,7 @@ public class SdxManager extends SliceManager {
 
   private void restartPlexus(String plexusip) {
     logger.debug("Restarting Plexus Controller");
-    System.out.println(logPrefix + "Restarting Plexus Controller");
+    logger.info(logPrefix + "Restarting Plexus Controller");
     if (checkPlexus(plexusip)) {
       //String script="docker exec -d plexus /bin/bash -c  \"cd /root;pkill ryu-manager;
       // ryu-manager plexus/plexus/app.py ryu/ryu/app/rest_conf_switch.py ryu/ryu/app/rest_qos.py |tee log\"\n";
@@ -932,8 +953,7 @@ public class SdxManager extends SliceManager {
           thread.start();
           tlist.add(thread);
         } catch (Exception e) {
-          System.out.println(logPrefix + "exception when copying config file");
-          logger.error("exception when copying config file");
+          logger.error(logPrefix + "exception when copying config file");
         }
       }
     }
@@ -1154,6 +1174,22 @@ public class SdxManager extends SliceManager {
       }
     }
     return num;
+  }
+
+  public void logFlowTables(){
+    for(ComputeNode node: serverSlice.getComputeNodes()){
+      if(node.getName().matches(routerPattern)){
+        logger.debug("------------------");
+        logger.debug("Flow table: " + node.getName());
+        String result = Exec.sshExec("root", node.getManagementIP(), getEchoTimeCMD() +
+            "ovs-ofctl dump-flows br0", sshkey)[0];
+        String[] parts = result.split("\n");
+        for(String s: parts){
+          logger.debug(s);
+        }
+        logger.debug("------------------");
+      }
+    }
   }
 }
 

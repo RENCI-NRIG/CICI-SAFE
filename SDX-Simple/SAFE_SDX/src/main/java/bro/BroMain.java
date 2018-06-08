@@ -7,10 +7,11 @@ import java.io.FileWriter;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.List;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
 
 public class BroMain {
-  final static Logger logger = Logger.getLogger(BroMain.class);
+  final static Logger logger = LogManager.getLogger(BroMain.class);
   static SdxManager sdxManager;
   static BroExperiment broExp;
   static int flowStart = 0;
