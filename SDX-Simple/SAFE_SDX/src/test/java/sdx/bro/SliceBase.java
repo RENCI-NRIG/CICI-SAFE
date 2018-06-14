@@ -1,23 +1,13 @@
 package sdx.bro;
 
-import common.slice.SliceCommon;
-import common.utils.ScpTo;
-
 import com.jcraft.jsch.ChannelExec;
 import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.Session;
-
-import java.io.FileInputStream;
-import java.io.InputStreamReader;
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.net.MalformedURLException;
-import java.util.Map;
-import java.util.HashMap;
-import java.util.Properties;
-
+import common.slice.SliceCommon;
+import common.utils.ScpTo;
 import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.renci.ahab.libndl.Slice;
 import org.renci.ahab.libndl.resources.request.ComputeNode;
 import org.renci.ahab.libndl.resources.request.Network;
@@ -28,7 +18,14 @@ import org.renci.ahab.libtransport.util.SSHAccessTokenFileFactory;
 import org.renci.ahab.libtransport.util.TransportException;
 import org.renci.ahab.libtransport.util.UtilTransportException;
 
-import org.apache.logging.log4j.Logger;
+import java.io.BufferedReader;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.MalformedURLException;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Properties;
 
 public abstract class SliceBase extends SliceCommon {
   private final static Logger logger = LogManager.getLogger(SliceBase.class);
@@ -43,7 +40,6 @@ public abstract class SliceBase extends SliceCommon {
       System.out.println("Reading properties...");
       readConfig(configPath);
       System.out.println("Making proxy...");
-      loadProxy();
       System.out.println("Setting access context...");
       loadSliceSSHAccess();
     } catch (Exception e) {
@@ -56,7 +52,6 @@ public abstract class SliceBase extends SliceCommon {
       System.out.println("Reading properties...");
       readConfig(configPath);
       System.out.println("Making proxy...");
-      loadProxy();
       System.out.println("Setting access context...");
       boolean flag = true;
       while (flag) {
@@ -211,12 +206,6 @@ public abstract class SliceBase extends SliceCommon {
     controllerUrl = prop.getProperty("controllerUrl");
   }
 
-  private void loadProxy() throws MalformedURLException,
-    ContextTransportException,
-    TransportException {
-    sliceProxy = getSliceProxy(pemLocation, keyLocation, controllerUrl);
-  }
-
   private void loadSliceSSHAccess() throws UtilTransportException {
     sctx = new SliceAccessContext<>();
     try {
@@ -265,7 +254,7 @@ public abstract class SliceBase extends SliceCommon {
   private Session makeSshSession(ComputeNode c) throws JSchException {
     String name = c.getName();
     if (!sessions.containsKey(name) ||
-      !sessions.get(name).isConnected()) {
+        !sessions.get(name).isConnected()) {
       String cnodeIp = resourceIPs.get(name);
       System.out.println("Creating session for " + name + ": " + cnodeIp);
 

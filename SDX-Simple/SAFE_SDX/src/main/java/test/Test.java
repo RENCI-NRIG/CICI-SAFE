@@ -1,16 +1,15 @@
 package test;
 
+import common.utils.Exec;
+import common.utils.HttpUtil;
 import org.apache.logging.log4j.LogManager;
-import sdx.core.*;
 import org.apache.logging.log4j.Logger;
-import org.apache.log4j.Level;
 import org.glassfish.grizzly.http.server.HttpServer;
 import org.glassfish.jersey.grizzly2.httpserver.GrizzlyHttpServerFactory;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.json.JSONObject;
-
-import common.utils.Exec;
-import common.utils.HttpUtil;
+import org.renci.ahab.libtransport.util.TransportException;
+import sdx.core.SdxManager;
 
 import java.io.IOException;
 import java.net.URI;
@@ -18,6 +17,22 @@ import java.net.URI;
 public class Test {
   final Logger logger = LogManager.getLogger(Exec.class);
   SdxManager sdxManager = new SdxManager();
+
+  private static String[] queueCMD(String controller, String dpid) {
+    String[] res = new String[2];
+    res[0] = "http://" + controller + ":8080/qos/queue/" + dpid;
+    res[1] = "{\"type\":\"linux-htb\",\"max_rate\":\"1000000000\"," +
+        "\"queues\":[{\"max_rate\":\"20000000\"},{\"min_rate\":\"500000\"}]}";
+    return res;
+  }
+
+  private static String[] qosCMD(String controller, String dpid) {
+    String[] res = new String[2];
+    res[0] = "http://" + controller + ":8080/qos/rules/" + dpid;
+    res[1] = "{\"match\":{\"nw_dst\":\"192.168.20.2\",\"nw_proto\":\"TCP\",\"tp_dst\":\"5002\"}," +
+        "\"actions\":{\"queue\":\"0\"}}";
+    return res;
+  }
 
   public HttpServer startServer(String url) {
     // create a resource config that scans for JAX-RS resources and providers
@@ -28,37 +43,37 @@ public class Test {
     return GrizzlyHttpServerFactory.createHttpServer(URI.create(url), rc);
   }
 
-  public void run(String[] args) {
+  public void run(String[] args) throws Exception {
     testRoutingDynamicLink(args);
     //testRoutingChameleon(args);
     //testPerFlowQOS();
     //limitQos();
   }
 
-  private void testRoutingDynamicLink(String[] args) {
+  private void testRoutingDynamicLink(String[] args) throws Exception {
     sdxManager.startSdxServer(args);
     System.out.println("configured ip addresses in sdx network");
     //notify prefixes for node0 and node1
-    sdxManager.notifyPrefix("192.168.10.2/24","192.168.10.2","notused");
-    sdxManager.notifyPrefix("192.168.20.2/24","192.168.20.2","notused");
-    sdxManager.connectionRequest("not used","192.168.20.2/24","192.168.10.2/24",500000000);
-    sdxManager.notifyPrefix("192.168.30.2/24","192.168.30.2","notused");
-    sdxManager.connectionRequest("not used","192.168.20.2/24","192.168.30.2/24",500000000);
-    sdxManager.connectionRequest("not used","192.168.30.2/24","192.168.10.2/24",500000000);
+    sdxManager.notifyPrefix("192.168.10.2/24", "192.168.10.2", "notused");
+    sdxManager.notifyPrefix("192.168.20.2/24", "192.168.20.2", "notused");
+    sdxManager.connectionRequest("not used", "192.168.20.2/24", "192.168.10.2/24", 500000000);
+    sdxManager.notifyPrefix("192.168.30.2/24", "192.168.30.2", "notused");
+    sdxManager.connectionRequest("not used", "192.168.20.2/24", "192.168.30.2/24", 500000000);
+    sdxManager.connectionRequest("not used", "192.168.30.2/24", "192.168.10.2/24", 500000000);
   }
 
-  private void testRouting(String[] args) {
+  private void testRouting(String[] args) throws Exception {
     sdxManager.startSdxServer(args);
     System.out.println("configured ip addresses in sdx network");
     //notify prefixes for node0 and node1
-    sdxManager.notifyPrefix("192.168.10.2/24", "192.168.10.2",  "notused");
+    sdxManager.notifyPrefix("192.168.10.2/24", "192.168.10.2", "notused");
     //sdxManager.notifyPrefix("192.168.30.2/24", "192.168.10.2", "c0", "notused");
-    sdxManager.notifyPrefix("192.168.20.2/24", "192.168.20.2",  "notused");
+    sdxManager.notifyPrefix("192.168.20.2/24", "192.168.20.2", "notused");
     String dpid = sdxManager.getDPID("c0");
     String res = sdxManager.setMirror(dpid, "192.168.20.1/24",
-      "192.168.10.2/24");
-    String res1 = sdxManager.setMirror( dpid, "192.168.10.2/24",
-      "192.168.20.1/24");
+        "192.168.10.2/24");
+    String res1 = sdxManager.setMirror(dpid, "192.168.10.2/24",
+        "192.168.20.1/24");
     System.out.println(res);
 
     System.out.println("IP prefix is set up, the two nodes should be able to talk now");
@@ -87,6 +102,7 @@ public class Test {
     }
     */
   }
+
   /*
   private void testRoutingTwoPair(String[] args) {
     //notify 10 and 30 first
@@ -194,7 +210,7 @@ public class Test {
     //}
   }
 */
-  private void testRoutingTwoPair(String[] args) {
+  private void testRoutingTwoPair(String[] args) throws Exception {
     //notify 10 and 30 first
     //mirror traffic to 101.2
 
@@ -214,37 +230,37 @@ public class Test {
     String dpid1 = sdxManager.getDPID("c1");
     System.out.println("configured ip addresses in sdx network");
     //notify prefixes for node0 and node1
-    sdxManager.notifyPrefix("192.168.10.2/24", "192.168.10.2",  "notused");
+    sdxManager.notifyPrefix("192.168.10.2/24", "192.168.10.2", "notused");
     //sdxManager.notifyPrefix("192.168.30.2/24", "192.168.10.2", "c0", "notused");
-    sdxManager.notifyPrefix("192.168.30.2/24", "192.168.30.2",  "notused");
+    sdxManager.notifyPrefix("192.168.30.2/24", "192.168.30.2", "notused");
     String res = sdxManager.setMirror(dpid0, addresses[0],
-      addresses[2]);
+        addresses[2]);
     System.out.println(res);
     res = sdxManager.setMirror(dpid0, addresses[2],
-      addresses[0]);
+        addresses[0]);
     System.out.println(res);
-    sdxManager.notifyPrefix("192.168.20.2/24", "192.168.20.2",  "notused");
+    sdxManager.notifyPrefix("192.168.20.2/24", "192.168.20.2", "notused");
     sdxManager.notifyPrefix("192.168.40.2/24", "192.168.40.2", "notused");
     res = sdxManager.setMirror(dpid0, addresses[1],
-      addresses[3]);
+        addresses[3]);
     System.out.println(res);
     res = sdxManager.setMirror(dpid0, addresses[3],
-      addresses[1]);
+        addresses[1]);
     System.out.println(res);
   }
 
-  private void testRoutingChameleon(String[] args) {
+  private void testRoutingChameleon(String[] args) throws Exception {
     sdxManager.startSdxServer(args);
     System.out.println("configured ip addresses in sdx network");
     //notify prefixes for node0 and node1
-    sdxManager.notifyPrefix("192.168.10.2/24", "192.168.10.2",  "notused");
+    sdxManager.notifyPrefix("192.168.10.2/24", "192.168.10.2", "notused");
     //sdxManager.notifyPrefix("192.168.30.2/24", "192.168.10.2", "c0", "notused");
-    sdxManager.notifyPrefix("10.32.90.105/24", "10.32.90.105",  "notused");
+    sdxManager.notifyPrefix("10.32.90.105/24", "10.32.90.105", "notused");
     String dpid = sdxManager.getDPID("c0");
     String res = sdxManager.setMirror(dpid, "10.32.90.105/24",
-      "192.168.10.2/24");
+        "192.168.10.2/24");
     String res1 = sdxManager.setMirror(dpid, "192.168.10.2/24",
-      "10.32.90.105/24");
+        "10.32.90.105/24");
     System.out.println(res);
 
     System.out.println("IP prefix is set up, the two nodes should be able to talk now");
@@ -263,22 +279,6 @@ public class Test {
       sdxManager.delFlows();
       System.out.println("all routers connected");
     }
-  }
-
-  private static String[] queueCMD(String controller, String dpid) {
-    String[] res = new String[2];
-    res[0] = "http://" + controller + ":8080/qos/queue/" + dpid;
-    res[1] = "{\"type\":\"linux-htb\",\"max_rate\":\"1000000000\"," +
-      "\"queues\":[{\"max_rate\":\"20000000\"},{\"min_rate\":\"500000\"}]}";
-    return res;
-  }
-
-  private static String[] qosCMD(String controller, String dpid) {
-    String[] res = new String[2];
-    res[0] = "http://" + controller + ":8080/qos/rules/" + dpid;
-    res[1] = "{\"match\":{\"nw_dst\":\"192.168.20.2\",\"nw_proto\":\"TCP\",\"tp_dst\":\"5002\"}," +
-      "\"actions\":{\"queue\":\"0\"}}";
-    return res;
   }
 
   private void limitQos() {
@@ -303,8 +303,8 @@ public class Test {
     HttpUtil.get(queuecmd[0]);
     //String getcmd="curl -X GET http://"+controller+":8080/qos/rules/"+dpid1;
     //String[] qoscmd="curl -X POST -d \'{\"match\":{\"nw_dst\":\"192.168.10.2\",\"nw_proto\":\"TCP\",\"tp_dst\":\"5002\"},\"actions\":{\"queue\":\"0\"}}\' http://"+controller+":8080/qos/rules/"+dpid1;
-    String[]qoscmd=qosCMD(controller,dpid1);
-    String res=HttpUtil.postJSON(qoscmd[0], new JSONObject(qoscmd[1]));
+    String[] qoscmd = qosCMD(controller, dpid1);
+    String res = HttpUtil.postJSON(qoscmd[0], new JSONObject(qoscmd[1]));
     System.out.println(res.toString());
     System.out.println(HttpUtil.get(qoscmd[0]));
     HttpUtil.postJSON(qoscmd[0], new JSONObject(qoscmd[1]));

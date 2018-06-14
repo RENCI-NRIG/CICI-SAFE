@@ -1,27 +1,25 @@
 package sdx.bro;
 
-import java.util.Set;
-import java.util.HashSet;
-
 import org.renci.ahab.libndl.Slice;
 import org.renci.ahab.libndl.resources.request.ComputeNode;
 import org.renci.ahab.libndl.resources.request.InterfaceNode2Net;
 import org.renci.ahab.libndl.resources.request.Network;
-import sdx.core.NodeBase;
+import common.slice.NodeBase;
+
+import java.util.HashSet;
+import java.util.Set;
 
 
 public class SampleSlice extends SliceBase {
-  public SampleSlice(String configPath) throws SliceBaseException {
-    super(configPath);
-  }
-
-  public SampleSlice(String configPath, String name) throws SliceBaseException {
-    super(configPath, name);
-  }
-
   ComputeNode control, flow, end1, end2, bro;
   Network netbro, nete1, nete2;
   InterfaceNode2Net ifFBflow, ifFBbro, ifFE1flow, ifFE1end, ifFE2flow, ifFE2end;
+  public SampleSlice(String configPath) throws SliceBaseException {
+    super(configPath);
+  }
+  public SampleSlice(String configPath, String name) throws SliceBaseException {
+    super(configPath, name);
+  }
 
   protected void createSlice(Slice s) {
     control = NodeBase.makeNode(s, "Ubuntu 16.04", "control");
@@ -99,9 +97,9 @@ public class SampleSlice extends SliceBase {
         execOnNode(flow, "ovs-vsctl set-fail-mode br0 secure");
         execOnNode(flow, "ovs-vsctl set-controller br0 tcp:" + retrieveIP(control) + ":6633");
         execOnNode(flow, "for i in `ifconfig | grep -B1 \"192.168.*\" | awk '$1!=\"inet\" && $1!=\"--\"' | cut -d' ' -f1`\n" +
-          "do\n" +
-          "ovs-vsctl add-port br0 $i\n" +
-          "done\n");
+            "do\n" +
+            "ovs-vsctl add-port br0 $i\n" +
+            "done\n");
       } catch (SliceBaseException e) {
         throw new RuntimeException(e);
       }

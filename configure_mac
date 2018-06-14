@@ -1,34 +1,63 @@
 #!/bin/bash
 SLICENAME_SUFFIX=${USER}
-#SITENAME1="fiu"
-##SITENAME1="ufl"
-#SITENAME2="unf"
-SITENAME1="uh"
-SITENAME2="tamu"
-#SITE1="UFL (Gainesville, FL USA) XO Rack"
-#SITE1="FIU (Miami, FL USA) XO Rack"
+SITENAME3="gwu"
+SITENAME1="ufl"
+SITENAME2="unf"
+#SITENAME1="uh"
+#SITENAME2="tamu"
+#####SITE1="UFL (Gainesville, FL USA) XO Rack"
+#####SITE1="FIU (Miami, FL USA) XO Rack"
 #SITE2="UNF (Jacksonville, FL) XO Rack"
-SITE1="TAMU (College Station, TX, USA) XO Rack"
-SITE2="UH (Houston, TX USA) XO Rack"
+#SITE1="TAMU (College Station, TX, USA) XO Rack"
+#SITE2="UH (Houston, TX USA) XO Rack"
+
+SITE1="BBN/GPO (Boston, MA USA) XO Rack"
+########SITE1="CIENA (Ottawa,  CA) XO Rack"
+#######SITE3="FIU (Miami, FL USA) XO Rack"
+SITE2="GWU (Washington DC,  USA) XO Rack"
+#SITE2="OSF (Oakland, CA USA) XO Rack"
+SITE3="RENCI (Chapel Hill, NC USA) XO Rack"
+######SITE2="RENCI (Chapel Hill, NC USA) XO Rack"
+######SITE3="SL (Chicago, IL USA) XO Rack",
+#####SITE="TAMU (College Station, TX, USA) XO Rack"
+######SITE3="UAF (Fairbanks, AK, USA) XO Rack"
+########SITE3="UFL (Gainesville, FL USA) XO Rack"
+#######SITE="UH (Houston, TX USA) XO Rack"
+#####SITE3="UMass (UMass Amherst, MA, USA) XO Rack"
+######SITE3="UNF (Jacksonville, FL) XO Rack"
+#SITE="UvA (Amsterdam, The Netherlands) XO Rack"
+#####SITE3="WSU (Detroit, MI, USA) XO Rack"
+#####SITE3="WVN (UCS-B series rack in Morgantown, WV, USA)"
+
 SDXSERVER="http://127.0.0.1:8888/"
 SSHKEY="~/.ssh/id_rsa"
 EXOGENIPEM="~/.ssl/geni-yuanjuny.pem"
 CWD=$(pwd)
 SCRIPTSDIR="${CWD}/SDX-Simple/SAFE_SDX/src/main/resources/scripts/"
 RESOURCEDIR="${CWD}/SDX-Simple/SAFE_SDX/src/main/resources/"
-SDX="sdx-$SITENAME1-$SITENAME2-${SLICENAME_SUFFIX}"
-C1="c1-${SITENAME1}-${SLICENAME_SUFFIX}"
-C2="c2-${SITENAME2}-${SLICENAME_SUFFIX}"
-C3="c3-${SITENAME1}-${SLICENAME_SUFFIX}"
-C4="c4-${SITENAME2}-${SLICENAME_SUFFIX}"
+SDX="sdx-${SLICENAME_SUFFIX}"
+#SDX="sdx-$SITENAME1-$SITENAME2-${SLICENAME_SUFFIX}"
+TOPODIR="${CWD}/SDX-Simple/topo/"
+C1="c1-${SLICENAME_SUFFIX}"
+C2="c2-${SLICENAME_SUFFIX}"
+C3="c3-${SLICENAME_SUFFIX}"
+C4="c4-${SLICENAME_SUFFIX}"
+C6="c6-${SLICENAME_SUFFIX}"
+
+#${SITENAME1}-
+#${SITENAME2}-
+#${SITENAME1}-
+#${SITENAME2}-
+#${SITENAME3}-
 
 #safe server for communion slice
 
-sed -i '' "s@slicename=\".*\"@slicename=\"${SDX}\"@g;s@serverurl=\".*\"@serverurl=\"${SDXSERVER}\"@g;s@sshkey=\".*\"@sshkey=\"${SSHKEY}\"@g;s@exogenipem=\".*pem\"@exogenipem=\"${EXOGENIPEM}\"@g;s@scriptsdir=\".*scripts/\"@scriptsdir=\"${SCRIPTSDIR}\"@g;s@resourcedir=\".*resources/\"@resourcedir=\"${RESOURCEDIR}\"@g;s@clientsites=\".*\"@clientsites=\"${SITE1}:${SITE2}\"@g;s@controllersite=\".*\"@controllersite=\"${SITE1}\"@g" SDX-Simple/config/sdx.conf
+sed -i '' "s@slicename=\".*\"@slicename=\"${SDX}\"@g;s@serverurl=\".*\"@serverurl=\"${SDXSERVER}\"@g;s@sshkey=\".*\"@sshkey=\"${SSHKEY}\"@g;s@exogenipem=\".*pem\"@exogenipem=\"${EXOGENIPEM}\"@g;s@scriptsdir=\".*scripts/\"@scriptsdir=\"${SCRIPTSDIR}\"@g;s@resourcedir=\".*resources/\"@resourcedir=\"${RESOURCEDIR}\"@g;s@clientsites=\".*\"@clientsites=\"${SITE1}:${SITE2}\"@g;s@controllersite=\".*\"@controllersite=\"${SITE1}\"@g;s@topodir=\".*\"@topodir=\"${TOPODIR}\"@g" SDX-Simple/config/sdx.conf
 
 sed -i '' "s@slicename=\".*\"@slicename=\"${C1}\"@g;s@serverurl=\".*\"@serverurl=\"${SDXSERVER}\"@g;s@sshkey=\".*\"@sshkey=\"${SSHKEY}\"@g;s@exogenipem=\".*pem\"@exogenipem=\"${EXOGENIPEM}\"@g;s@scriptsdir=\".*scripts/\"@scriptsdir=\"${SCRIPTSDIR}\"@g;s@resourcedir=\".*resources/\"@resourcedir=\"${RESOURCEDIR}\"@g;s@serversite=\".*\"@serversite=\"${SITE1}\"@g;s@routersite=\".*\"@routersite=\"${SITE1}\"@g" SDX-Simple/client-config/c1.conf
 sed -i '' "s@slicename=\".*\"@slicename=\"${C2}\"@g;s@serverurl=\".*\"@serverurl=\"${SDXSERVER}\"@g;s@sshkey=\".*\"@sshkey=\"${SSHKEY}\"@g;s@exogenipem=\".*pem\"@exogenipem=\"${EXOGENIPEM}\"@g;s@scriptsdir=\".*scripts/\"@scriptsdir=\"${SCRIPTSDIR}\"@g;s@resourcedir=\".*resources/\"@resourcedir=\"${RESOURCEDIR}\"@g;s@serversite=\".*\"@serversite=\"${SITE2}\"@g;s@routersite=\".*\"@routersite=\"${SITE2}\"@g" SDX-Simple/client-config/c2.conf
 sed -i '' "s@slicename=\".*\"@slicename=\"${C3}\"@g;s@serverurl=\".*\"@serverurl=\"${SDXSERVER}\"@g;s@sshkey=\".*\"@sshkey=\"${SSHKEY}\"@g;s@exogenipem=\".*pem\"@exogenipem=\"${EXOGENIPEM}\"@g;s@scriptsdir=\".*scripts/\"@scriptsdir=\"${SCRIPTSDIR}\"@g;s@resourcedir=\".*resources/\"@resourcedir=\"${RESOURCEDIR}\"@g;s@serversite=\".*\"@serversite=\"${SITE1}\"@g;s@routersite=\".*\"@routersite=\"${SITE1}\"@g" SDX-Simple/client-config/c3.conf
 sed -i '' "s@slicename=\".*\"@slicename=\"${C4}\"@g;s@serverurl=\".*\"@serverurl=\"${SDXSERVER}\"@g;s@sshkey=\".*\"@sshkey=\"${SSHKEY}\"@g;s@exogenipem=\".*pem\"@exogenipem=\"${EXOGENIPEM}\"@g;s@scriptsdir=\".*scripts/\"@scriptsdir=\"${SCRIPTSDIR}\"@g;s@resourcedir=\".*resources/\"@resourcedir=\"${RESOURCEDIR}\"@g;s@serversite=\".*\"@serversite=\"${SITE2}\"@g;s@routersite=\".*\"@routersite=\"${SITE2}\"@g" SDX-Simple/client-config/c4.conf
 
+sed -i '' "s@slicename=\".*\"@slicename=\"${C6}\"@g;s@serverurl=\".*\"@serverurl=\"${SDXSERVER}\"@g;s@sshkey=\".*\"@sshkey=\"${SSHKEY}\"@g;s@exogenipem=\".*pem\"@exogenipem=\"${EXOGENIPEM}\"@g;s@scriptsdir=\".*scripts/\"@scriptsdir=\"${SCRIPTSDIR}\"@g;s@resourcedir=\".*resources/\"@resourcedir=\"${RESOURCEDIR}\"@g;s@serversite=\".*\"@serversite=\"${SITE3}\"@g;s@routersite=\".*\"@routersite=\"${SITE3}\"@g" SDX-Simple/client-config/c6.conf
 sed -i '' "s@SDX=.*@SDX=${SDX}@g" SDX-Simple/scripts/cnert-client.sh

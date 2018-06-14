@@ -1,18 +1,17 @@
 package client.stitchport;
 
+import common.slice.SliceCommon;
+import common.utils.Exec;
+import common.utils.HttpUtil;
+import org.apache.commons.cli.CommandLine;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.commons.cli.*;
+import org.json.JSONObject;
 import org.renci.ahab.libndl.Slice;
 import org.renci.ahab.libndl.resources.request.ComputeNode;
 import org.renci.ahab.libndl.resources.request.Interface;
 import org.renci.ahab.libndl.resources.request.InterfaceNode2Net;
 import org.renci.ahab.libndl.resources.request.Network;
-import common.utils.Exec;
-import common.utils.SafePost;
-import org.json.JSONObject;
-import common.slice.SliceCommon;
-import common.utils.HttpUtil;
 
 /**
  * @author geni-orca
@@ -20,6 +19,7 @@ import common.utils.HttpUtil;
 public class SdxStitchPortClientManager extends SliceCommon {
   final Logger logger = LogManager.getLogger(SdxStitchPortClientManager.class);
   CommandLine cmd;
+  private String type;
 
   public SdxStitchPortClientManager(String[] args) {
     CommandLine cmd = parseCmd(args);
@@ -27,8 +27,6 @@ public class SdxStitchPortClientManager extends SliceCommon {
     readConfig(configfilepath);
     System.out.println("client start");
   }
-
-  private String type;
 
   public void run() {
     //Example usage: ./target/appassembler/bin/SafeSdxClient -f alice.conf
@@ -160,33 +158,33 @@ public class SdxStitchPortClientManager extends SliceCommon {
 
   private String getQuaggaScript() {
     return "#!/bin/bash\n"
-      // +"mask2cdr()\n{\n"+"local x=${1##*255.}\n"
-      // +" set -- 0^^^128^192^224^240^248^252^254^ $(( (${#1} - ${#x})*2 )) ${x%%.*}\n"
-      // +" x=${1%%$3*}\n"
-      // +"echo $(( $2 + (${#x}/4) ))\n"
-      // +"}\n"
-      + "ipmask()\n"
-      + "{\n"
-      + " echo $1/24\n}\n"
-      + "apt-get update\n"
-      + "apt-get install -y quagga\n"
-      + "sed -i -- 's/zebra=no/zebra=yes/g' /etc/quagga/daemons\n"
-      + "sed -i -- 's/ospfd=no/ospfd=yes/g' /etc/quagga/daemons\n"
-      + "echo \"!zebra configuration file\" >/etc/quagga/zebra.conf\necho \"hostname Router\">>/etc/quagga/zebra.conf\n"
-      + "echo \"enable password zebra\">>/etc/quagga/zebra.conf\n"
-      + "echo \"!ospfd configuration file\" >/etc/quagga/ospfd.conf\n echo \"hostname ospfd\">>/etc/quagga/ospfd.conf\n echo \"enable password zebra\">>/etc/quagga/ospfd.conf\n  echo \"router ospf\">>/etc/quagga/ospfd.conf\n"
-      + "eth=$(ifconfig |grep 'inet addr:'|grep -v 'inet addr:10.' |grep -v '127.0.0.1' |cut -d: -f2|awk '{print $1}')\n"
-      + "eth1=$(echo $eth|cut -f 1 -d \" \")\n"
-      + "echo \"  router-id $eth1\">>/etc/quagga/ospfd.conf\n"
-      + "prefix=$(ifconfig |grep 'inet addr:'|grep -v 'inet addr:10.' |grep -v '127.0.0.1' |cut -d: -f2,4 |awk '{print $1 $2}'| sed 's/Bcast:/\\ /g')\n"
-      + "while read -r line;do\n"
-      + "  echo \"  network\" $(ipmask $line) area 0 >>/etc/quagga/ospfd.conf\n"
-      + "done <<<\"$prefix\"\n"
-      + "echo \"log stdout\">>/etc/quagga/ospfd.conf\n"
-      + "echo \"1\" > /proc/sys/net/ipv4/ip_forward\n"
-      //+"/etc/init.d/quagga restart\napt-get -y install iperf\n"
-      + "/etc/init.d/quagga stop\napt-get -y install iperf\n"
-      ;
+        // +"mask2cdr()\n{\n"+"local x=${1##*255.}\n"
+        // +" set -- 0^^^128^192^224^240^248^252^254^ $(( (${#1} - ${#x})*2 )) ${x%%.*}\n"
+        // +" x=${1%%$3*}\n"
+        // +"echo $(( $2 + (${#x}/4) ))\n"
+        // +"}\n"
+        + "ipmask()\n"
+        + "{\n"
+        + " echo $1/24\n}\n"
+        + "apt-get update\n"
+        + "apt-get install -y quagga\n"
+        + "sed -i -- 's/zebra=no/zebra=yes/g' /etc/quagga/daemons\n"
+        + "sed -i -- 's/ospfd=no/ospfd=yes/g' /etc/quagga/daemons\n"
+        + "echo \"!zebra configuration file\" >/etc/quagga/zebra.conf\necho \"hostname Router\">>/etc/quagga/zebra.conf\n"
+        + "echo \"enable password zebra\">>/etc/quagga/zebra.conf\n"
+        + "echo \"!ospfd configuration file\" >/etc/quagga/ospfd.conf\n echo \"hostname ospfd\">>/etc/quagga/ospfd.conf\n echo \"enable password zebra\">>/etc/quagga/ospfd.conf\n  echo \"router ospf\">>/etc/quagga/ospfd.conf\n"
+        + "eth=$(ifconfig |grep 'inet addr:'|grep -v 'inet addr:10.' |grep -v '127.0.0.1' |cut -d: -f2|awk '{print $1}')\n"
+        + "eth1=$(echo $eth|cut -f 1 -d \" \")\n"
+        + "echo \"  router-id $eth1\">>/etc/quagga/ospfd.conf\n"
+        + "prefix=$(ifconfig |grep 'inet addr:'|grep -v 'inet addr:10.' |grep -v '127.0.0.1' |cut -d: -f2,4 |awk '{print $1 $2}'| sed 's/Bcast:/\\ /g')\n"
+        + "while read -r line;do\n"
+        + "  echo \"  network\" $(ipmask $line) area 0 >>/etc/quagga/ospfd.conf\n"
+        + "done <<<\"$prefix\"\n"
+        + "echo \"log stdout\">>/etc/quagga/ospfd.conf\n"
+        + "echo \"1\" > /proc/sys/net/ipv4/ip_forward\n"
+        //+"/etc/init.d/quagga restart\napt-get -y install iperf\n"
+        + "/etc/init.d/quagga stop\napt-get -y install iperf\n"
+        ;
   }
 
 }

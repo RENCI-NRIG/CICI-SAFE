@@ -2,13 +2,11 @@
 package common.utils;
 
 import com.jcraft.jsch.*;
-
-import java.awt.*;
-import javax.swing.*;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import javax.swing.*;
+import java.awt.*;
 import java.util.Properties;
 
 public class UserAuthPubKey {
@@ -42,12 +40,21 @@ public class UserAuthPubKey {
       channel.connect();
       logger.debug("end");
     } catch (Exception e) {
-      logger.debug(e);
+      e.printStackTrace();
     }
   }
 
 
   public static class MyUserInfo implements UserInfo, UIKeyboardInteractive {
+    final GridBagConstraints gbc =
+        new GridBagConstraints(0, 0, 1, 1, 1, 1,
+            GridBagConstraints.NORTHWEST,
+            GridBagConstraints.NONE,
+            new Insets(0, 0, 0, 0), 0, 0);
+    String passphrase;
+    JTextField passphraseField = (JTextField) new JPasswordField(20);
+    private Container panel;
+
     public String getPassword() {
       return null;
     }
@@ -55,16 +62,13 @@ public class UserAuthPubKey {
     public boolean promptYesNo(String str) {
       Object[] options = {"yes", "no"};
       int foo = JOptionPane.showOptionDialog(null,
-        str,
-        "Warning",
-        JOptionPane.DEFAULT_OPTION,
-        JOptionPane.WARNING_MESSAGE,
-        null, options, options[0]);
+          str,
+          "Warning",
+          JOptionPane.DEFAULT_OPTION,
+          JOptionPane.WARNING_MESSAGE,
+          null, options, options[0]);
       return foo == 0;
     }
-
-    String passphrase;
-    JTextField passphraseField = (JTextField) new JPasswordField(20);
 
     public String getPassphrase() {
       return passphrase;
@@ -73,8 +77,8 @@ public class UserAuthPubKey {
     public boolean promptPassphrase(String message) {
       Object[] ob = {passphraseField};
       int result =
-        JOptionPane.showConfirmDialog(null, ob, message,
-          JOptionPane.OK_CANCEL_OPTION);
+          JOptionPane.showConfirmDialog(null, ob, message,
+              JOptionPane.OK_CANCEL_OPTION);
       if (result == JOptionPane.OK_OPTION) {
         passphrase = passphraseField.getText();
         return true;
@@ -90,13 +94,6 @@ public class UserAuthPubKey {
     public void showMessage(String message) {
       JOptionPane.showMessageDialog(null, message);
     }
-
-    final GridBagConstraints gbc =
-      new GridBagConstraints(0, 0, 1, 1, 1, 1,
-        GridBagConstraints.NORTHWEST,
-        GridBagConstraints.NONE,
-        new Insets(0, 0, 0, 0), 0, 0);
-    private Container panel;
 
     public String[] promptKeyboardInteractive(String destination,
                                               String name,
@@ -134,10 +131,10 @@ public class UserAuthPubKey {
       }
 
       if (JOptionPane.showConfirmDialog(null, panel,
-        destination + ": " + name,
-        JOptionPane.OK_CANCEL_OPTION,
-        JOptionPane.QUESTION_MESSAGE)
-        == JOptionPane.OK_OPTION) {
+          destination + ": " + name,
+          JOptionPane.OK_CANCEL_OPTION,
+          JOptionPane.QUESTION_MESSAGE)
+          == JOptionPane.OK_OPTION) {
         String[] response = new String[prompt.length];
         for (int i = 0; i < prompt.length; i++) {
           response[i] = texts[i].getText();

@@ -5,6 +5,7 @@ import org.apache.logging.log4j.Logger;
 import org.glassfish.grizzly.http.server.HttpServer;
 import org.glassfish.jersey.grizzly2.httpserver.GrizzlyHttpServerFactory;
 import org.glassfish.jersey.server.ResourceConfig;
+import org.renci.ahab.libtransport.util.TransportException;
 
 import java.io.IOException;
 import java.net.URI;
@@ -40,7 +41,7 @@ public class SdxServer {
    * @param args
    * @throws IOException
    */
-  public static void main(String[] args) throws IOException {
+  public static void main(String[] args) throws IOException, TransportException, Exception {
     System.out.println("starting sdx server");
     sdxManager.startSdxServer(args);
     logger.debug("Starting on " + sdxManager.serverurl);
@@ -49,7 +50,7 @@ public class SdxServer {
     System.out.println("Sdx server has started, listening on " + sdxManager.serverurl);
   }
 
-  public static void run(String[] args){
+  public static void run(String[] args) throws TransportException , Exception{
     System.out.println("starting sdx server");
     sdxManager.startSdxServer(args);
     logger.debug("Starting on " + sdxManager.serverurl);

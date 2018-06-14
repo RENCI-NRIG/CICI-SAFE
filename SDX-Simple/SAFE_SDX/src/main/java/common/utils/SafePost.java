@@ -1,18 +1,18 @@
 package common.utils;
 
-import java.util.regex.Pattern;
-import java.util.regex.Matcher;
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.io.IOException;
-import java.net.MalformedURLException;
-
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.MalformedURLException;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class SafePost {
   final static Logger logger = LogManager.getLogger(SafePost.class);
@@ -65,11 +65,11 @@ public class SafePost {
       HttpResponse response = httpClient.execute(postRequest);
       if (response.getStatusLine().getStatusCode() != 200) {
         throw new RuntimeException("Failed : HTTP error code : "
-          + response.getStatusLine().getStatusCode());
+            + response.getStatusLine().getStatusCode());
       }
 
       BufferedReader br = new BufferedReader(
-        new InputStreamReader((response.getEntity().getContent())));
+          new InputStreamReader((response.getEntity().getContent())));
 
       String output;
       String message = "";

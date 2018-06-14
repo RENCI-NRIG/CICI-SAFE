@@ -2,19 +2,21 @@
 package common.utils;
 
 import com.jcraft.jsch.*;
-
-import java.awt.*;
-import javax.swing.*;
-
-import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
-import java.io.*;
+import javax.swing.*;
+import java.awt.*;
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.NoRouteToHostException;
 import java.util.Properties;
 
 public class Exec {
   final static Logger logger = LogManager.getLogger(Exec.class);
+
+  final static int RETRYTIMES = 5;
 
   public static String exec(String cmd) {
     logger.debug(cmd);
@@ -29,8 +31,8 @@ public class Exec {
         res = res + line;
         logger.debug(line);
       }
-    }catch (Exception e){
-      logger.debug("Exeption while setting up link"+e);
+    } catch (Exception e) {
+      logger.debug("Exeption while setting up link" + e);
     }
     return res;
   }
@@ -44,7 +46,9 @@ public class Exec {
       jsch.addIdentity(privkey);
       Session session = null;
       boolean flag = true;
-      while(flag) {
+      int times=0;
+      while (flag) {
+        times++;
         session = jsch.getSession(user, host, 22);
         Properties config = new Properties();
         config.put("StrictHostKeyChecking", "no");
@@ -52,11 +56,15 @@ public class Exec {
         try {
           session.connect();
           flag = false;
-        } catch (Exception e) {
-          logger.debug("No route to host exception: " + host + " wait 10s and retry");
+        } catch (Exception ex) {
+          logger.debug(ex.getMessage());
+          logger.debug(" wait 10s and retry");
+          if(times==RETRYTIMES){
+            break;
+          }
           try {
             Thread.sleep(10000);
-          } catch (Exception ex) {
+          } catch (Exception exc) {
           }
         }
       }
@@ -66,8 +74,8 @@ public class Exec {
       ((ChannelExec) channel).setErrStream(System.err);
       InputStream in = null;
       InputStream err = null;
-          in = channel.getInputStream();
-          err = ((ChannelExec) channel).getErrStream();
+      in = channel.getInputStream();
+      err = ((ChannelExec) channel).getErrStream();
       channel.connect();
       byte[] tmp = new byte[1024];
       while (true) {
@@ -99,15 +107,24 @@ public class Exec {
       channel.disconnect();
       session.disconnect();
     } catch (Exception e) {
-      System.out.println(host + command);
+      System.out.println(host+ " " + command);
       logger.debug(e.getMessage());
       e.printStackTrace();
-      return  new String[]{null, null};
+      return new String[]{null, null};
     }
     return new String[]{result, errResult};
   }
 
   public static class MyUserInfo implements UserInfo, UIKeyboardInteractive {
+    final GridBagConstraints gbc =
+        new GridBagConstraints(0, 0, 1, 1, 1, 1,
+            GridBagConstraints.NORTHWEST,
+            GridBagConstraints.NONE,
+            new Insets(0, 0, 0, 0), 0, 0);
+    String passwd;
+    JTextField passwordField = (JTextField) new JPasswordField(20);
+    private Container panel;
+
     public String getPassword() {
       return passwd;
     }
@@ -115,16 +132,13 @@ public class Exec {
     public boolean promptYesNo(String str) {
       Object[] options = {"yes", "no"};
       int foo = JOptionPane.showOptionDialog(null,
-        str,
-        "Warning",
-        JOptionPane.DEFAULT_OPTION,
-        JOptionPane.WARNING_MESSAGE,
-        null, options, options[0]);
+          str,
+          "Warning",
+          JOptionPane.DEFAULT_OPTION,
+          JOptionPane.WARNING_MESSAGE,
+          null, options, options[0]);
       return foo == 0;
     }
-
-    String passwd;
-    JTextField passwordField = (JTextField) new JPasswordField(20);
 
     public String getPassphrase() {
       return null;
@@ -137,8 +151,8 @@ public class Exec {
     public boolean promptPassword(String message) {
       Object[] ob = {passwordField};
       int result =
-        JOptionPane.showConfirmDialog(null, ob, message,
-          JOptionPane.OK_CANCEL_OPTION);
+          JOptionPane.showConfirmDialog(null, ob, message,
+              JOptionPane.OK_CANCEL_OPTION);
       if (result == JOptionPane.OK_OPTION) {
         passwd = passwordField.getText();
         return true;
@@ -150,13 +164,6 @@ public class Exec {
     public void showMessage(String message) {
       JOptionPane.showMessageDialog(null, message);
     }
-
-    final GridBagConstraints gbc =
-      new GridBagConstraints(0, 0, 1, 1, 1, 1,
-        GridBagConstraints.NORTHWEST,
-        GridBagConstraints.NONE,
-        new Insets(0, 0, 0, 0), 0, 0);
-    private Container panel;
 
     public String[] promptKeyboardInteractive(String destination,
                                               String name,
@@ -194,10 +201,10 @@ public class Exec {
       }
 
       if (JOptionPane.showConfirmDialog(null, panel,
-        destination + ": " + name,
-        JOptionPane.OK_CANCEL_OPTION,
-        JOptionPane.QUESTION_MESSAGE)
-        == JOptionPane.OK_OPTION) {
+          destination + ": " + name,
+          JOptionPane.OK_CANCEL_OPTION,
+          JOptionPane.QUESTION_MESSAGE)
+          == JOptionPane.OK_OPTION) {
         String[] response = new String[prompt.length];
         for (int i = 0; i < prompt.length; i++) {
           response[i] = texts[i].getText();
