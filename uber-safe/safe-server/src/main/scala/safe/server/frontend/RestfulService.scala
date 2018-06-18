@@ -4,6 +4,7 @@ package frontend
 import akka.actor.{Actor, ActorRef, Props}
 import akka.pattern.ask
 import akka.util.Timeout
+import scala.concurrent.Await
 import scala.concurrent.duration._
 import spray.http.StatusCodes
 import spray.http.CacheDirectives.`max-age`
@@ -49,6 +50,8 @@ object RestfulService {
 
 class RestfulService(val storeURI: String, val role: Option[String], slangFile: String, fileArgs: Option[String], numWorkers: Int, val requestTimeout: Timeout, val keypairDir: String) extends Actor with RestfulHttpService {
 
+  import scala.concurrent.ExecutionContext.Implicits.global
+
   def actorRefFactory = context
 
   inference = slangManager.createSafelang() // Daemon safelang
@@ -56,6 +59,13 @@ class RestfulService(val storeURI: String, val role: Option[String], slangFile: 
   guardTable = GuardTable(MutableMap[String, Seq[String]](), MutableMap[String, Int]())
   val guards = inference.compileAndGetGuards(slangFile, fileArgs)
   guardTable.addGuards(guards)
+
+  // compile slang for import guard
+  val importGuardSlangPath = safe.safelang.Config.config.importGuardSlangPath
+  if(importGuardSlangPath != "") {
+    val importGuards = inference.compileAndGetGuards(importGuardSlangPath)
+    guardTable.addGuards(importGuards)
+  }
 
   //def receive: Receive = runRoute(route(guardTable.allGuards.toSeq)) orElse importHandler
   def receive: Receive = runRoute(route(guardTable.allGuards.toSeq) ~ importSlangRoute())
@@ -74,7 +84,7 @@ class RestfulService(val storeURI: String, val role: Option[String], slangFile: 
         val _guards = if(isSlangSource)
                         slang.compileAndGetGuardsWithSource(arg)
                       else slang.compileAndGetGuards(arg) 
-        guardTable.addGuards(_guards)
+        guardTable.addGuards(_guards)  // update guard table
       }
     } 
     result.onComplete {
@@ -95,9 +105,39 @@ class RestfulService(val storeURI: String, val role: Option[String], slangFile: 
     } ~
     path("importSource") {
       postWithParameters { (params) =>
-        runImportSlang(params.otherValues, requestTimeout, true)
+        //println(s"params: ${params}")
+        clientIP { (remoteAddress) =>
+          val ip = remoteAddress.toString
+          println(s"params.clientIP: ${ip}")
+
+          val importGuardFuture = Future {
+            val envs = Map("Speaker" -> None, "Subject" -> None, "Object" -> None,
+                           "BearerRef" -> None,  "Principal" -> None)
+            val importGuardName = "loadingSlangFromIP"
+            val (r, d) = runGuard(importGuardName, Seq(ip))(envs, requestTimeout)
+            r
+          } 
+   
+          val res = Await.result(importGuardFuture, 5 seconds)
+          val queryResultPattern = """\{(.*)\}\s*$""".r
+          res match {
+            case queryResultPattern(result) => 
+              runImportSlang(params.otherValues, requestTimeout, true)
+            case _ =>
+              reqContext: RequestContext =>
+                reqContext.complete(SlangCallResponse(s"Import request from an unauthorized IP: ${ip}"))
+          }
+        }
       }
     }
+    // Testing
+    //path("importSource") {
+    //  clientIP { (ip) => 
+    //    println(s"params.clientIP: ${ip}")
+    //    reqContext: RequestContext =>
+    //      reqContext.complete(SlangCallResponse(s"Import completed")) 
+    //  }
+    //}
   }
 
   def importHandler: Receive = {

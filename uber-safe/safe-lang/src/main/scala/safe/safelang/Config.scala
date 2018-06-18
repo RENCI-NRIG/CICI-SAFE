@@ -41,6 +41,7 @@ class Config(config: com.typesafe.config.Config) {
                                                    )
   val ldapUsername: String           = Try(config.getString("ldap.username")).getOrElse("")
   val ldapPassword: String           = Try(config.getString("ldap.password")).getOrElse("")
+  val importGuardSlangPath: String   = Try(config.getString("safelang.importGuardSlangPath")).getOrElse("")
 }
 
 object Config {
