@@ -96,11 +96,49 @@ class RestfulService(val storeURI: String, val role: Option[String], slangFile: 
     }
   }
 
+  /**
+   * Run a slang guard to check if an import request
+   * could be approved based on the requester's IP 
+   * address.
+   */
+  def approveImportBySourceIP(ip: String): Boolean = {
+    import scala.language.postfixOps
+    val importGuardFuture = Future {
+      val envs = Map("Speaker" -> None, "Subject" -> None, "Object" -> None,
+                     "BearerRef" -> None,  "Principal" -> None)
+      val guardName = safe.safelang.Config.config.importGuardName
+      val (r, d) = runGuard(guardName, Seq(ip))(envs, requestTimeout)
+      r
+    } 
+   
+    val res = Await.result(importGuardFuture, 5 seconds)
+    val queryResultPattern = """\{(.*)\}\s*$""".r
+    res match {
+      case queryResultPattern(result) => true
+      case _ => false
+    }
+  }
+
+  def importSlangFromIP(ip: String, args: Seq[String],
+       requestTimeout: Timeout, isSlangSource: Boolean): Route = {
+    val approved = approveImportBySourceIP(ip)
+    if(approved) {
+      runImportSlang(args, requestTimeout, isSlangSource)
+    } else {
+      reqContext: RequestContext =>
+        reqContext.complete(SlangCallResponse(s"Import request from an unauthorized IP: ${ip}"))
+    } 
+  }
+
   // Dynamic slang program loading
   def importSlangRoute(): Route = {
     path("import")  {
       postWithParameters { (params) =>
-        runImportSlang(params.otherValues, requestTimeout, false)
+        clientIP { (remoteAddress) =>
+          val ip = remoteAddress.toString 
+          println(s"params.clientIP: ${ip}")
+          importSlangFromIP(ip, params.otherValues, requestTimeout, false)
+        }
       }
     } ~
     path("importSource") {
@@ -109,24 +147,7 @@ class RestfulService(val storeURI: String, val role: Option[String], slangFile: 
         clientIP { (remoteAddress) =>
           val ip = remoteAddress.toString
           println(s"params.clientIP: ${ip}")
-
-          val importGuardFuture = Future {
-            val envs = Map("Speaker" -> None, "Subject" -> None, "Object" -> None,
-                           "BearerRef" -> None,  "Principal" -> None)
-            val importGuardName = "loadingSlangFromIP"
-            val (r, d) = runGuard(importGuardName, Seq(ip))(envs, requestTimeout)
-            r
-          } 
-   
-          val res = Await.result(importGuardFuture, 5 seconds)
-          val queryResultPattern = """\{(.*)\}\s*$""".r
-          res match {
-            case queryResultPattern(result) => 
-              runImportSlang(params.otherValues, requestTimeout, true)
-            case _ =>
-              reqContext: RequestContext =>
-                reqContext.complete(SlangCallResponse(s"Import request from an unauthorized IP: ${ip}"))
-          }
+          importSlangFromIP(ip, params.otherValues, requestTimeout, true)
         }
       }
     }
