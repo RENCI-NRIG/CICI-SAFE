@@ -1,0 +1,9 @@
+parameter_defaults:
+  node_count: 2
+  of_network_name: pruthsdn1
+  ip_subnet: 192.168.100.0/24
+  controller_port: 6653
+  provider: exogeni
+  key_name: pruth-chameleon
+  controller_network_name: sharednet1
+  

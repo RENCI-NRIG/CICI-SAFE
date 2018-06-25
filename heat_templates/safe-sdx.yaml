@@ -1,0 +1,248 @@
+# This describes what is deployed by this template.
+description: SAFE SDX deployed on Chameleon
+
+# This defines the minimum Heat version required by this template.
+heat_template_version: ocata
+
+# The resources section defines what OpenStack resources are to be deployed and
+# how they should be configured.
+resources:
+  controller_floating_ip:
+   type: OS::Nova::FloatingIP
+   properties:
+     pool: public
+
+  controller:
+   type: OS::Nova::Server
+   properties:
+     name: controller
+     flavor: baremetal
+     image: CC-CentOS7
+     key_name: { get_param: key_name }
+     networks:
+        - network: { get_param: controller_network_name }
+     scheduler_hints: { reservation: { get_param: reservation_id } }
+     user_data:
+       str_replace:
+         template: |
+           #!/bin/bash
+           {
+           CHAMELEON_RYU_URL="https://github.com/ChameleonCloud/ryu.git"
+           CHAMELEON_RYU_APP="simple_switch_13_custom_chameleon.py"
+
+           yum install -y epel-release
+           yum install -y python-pip git
+           pip install ryu
+           pip install --upgrade pip
+           # Remedy some version conflicts
+           # These packages are already installed, ryu installation requirements are satisfied, but running the
+           # code generates errors with existing versions of six and netaddr. Needs to be updated.
+           pip install --upgrade six
+           pip install --upgrade --ignore-installed netaddr
+
+           useradd openflow
+           usermod -s /sbin/nologin openflow
+
+           RYU_DIR="/opt/ryu"
+
+           mkdir ${RYU_DIR} && mkdir ${RYU_DIR}/repo
+
+           # Ryu Application file that is customized for Chameleon use-case
+           #wget http://geni-images.renci.org/images/mcevik/openflow/ryu/simple_switch_13_custom_chameleon.py
+           git clone ${CHAMELEON_RYU_URL} ${RYU_DIR}/repo
+           ln -s ${RYU_DIR}/repo/ryu/app/${CHAMELEON_RYU_APP} ${RYU_DIR}/${CHAMELEON_RYU_APP}
+
+           chown -R openflow. ${RYU_DIR}
+           mkdir /var/run/ryu
+           chown openflow. /var/run/ryu
+           mkdir /var/log/ryu
+           chown openflow. /var/log/ryu
+
+
+           cat << EOF > /etc/sysconfig/ryu
+           RYU_PID_FILE="/var/run/ryu/ryu-manager.pid"
+           RYU_LOG_FILE="/var/log/ryu/ryu-manager.log"
+           RYU_CONFIG_DIR="/opt/ryu/etc"
+           RYU_APP="${RYU_DIR}/${CHAMELEON_RYU_APP}"
+           OFP_TCP_LISTEN_PORT="$ryu_port"
+           EOF
+
+
+           cat << EOF > /etc/systemd/system/ryu.service
+           [Unit]
+           Description=Ryu Openflow Controller Service
+           After=network.target
+
+           [Service]
+           EnvironmentFile=/etc/sysconfig/ryu
+           User=openflow
+           ExecStart=/usr/bin/ryu-manager --pid-file \${RYU_PID_FILE} --ofp-tcp-listen-port \${OFP_TCP_LISTEN_PORT} --log-file \${RYU_LOG_FILE} \${RYU_APP}
+           KillMode=process
+           Restart=on-abort
+
+           [Install]
+           WantedBy=multi-user.target
+           EOF
+
+           cat << EOF > /etc/logrotate.d/ryu
+           /var/log/ryu/*.log {
+               rotate 2
+               missingok
+               nocreate
+               sharedscripts
+               size 100M
+               compress
+               postrotate
+                   /bin/systemctl restart ryu.service 2> /dev/null || true
+               endscript
+           }
+           EOF
+
+           # https://www.freedesktop.org/software/systemd/man/systemd-tmpfiles.html
+           cat << EOF > /usr/lib/tmpfiles.d/ryu.conf
+           d /var/run/ryu 0775 root openflow
+           EOF
+
+           systemctl enable ryu
+           systemctl daemon-reload
+           systemctl restart ryu
+           systemctl status ryu
+           } > /tmp/boot.log 2>&1
+         params:
+           $ryu_port: { get_param: controller_port }
+
+
+  controller_ip_association:
+    type: OS::Nova::FloatingIPAssociation
+    properties:
+      floating_ip: { get_resource: controller_floating_ip }
+      server_id: { get_resource: controller }
+
+  of_router_to_ext:
+    type: OS::Neutron::Router
+    properties:
+      name: router
+      external_gateway_info:
+        network: public
+
+  of_subnet:
+    type: OS::Neutron::Subnet
+    properties:
+      name: subnet
+      cidr: { get_param: ip_subnet }
+      enable_dhcp: true
+      network: { get_resource: of_network }
+
+
+  of_network:
+    type: OS::Neutron::Net
+    properties:
+      name: { get_param: of_network_name }
+      shared: false
+      value_specs: 
+        description:
+          str_replace:
+            template: OFController=IP:PORT
+            params:
+              IP: { get_attr: [controller_floating_ip, ip] }
+              PORT: { get_param: controller_port }
+        'provider:network_type': vlan
+        'provider:physical_network': { get_param: provider }
+       
+  router_interface:
+    type: OS::Neutron::RouterInterface
+    properties:
+      router: { get_resource: of_router_to_ext }
+      subnet: { get_resource: of_subnet }
+
+  nodes:
+    type: OS::Heat::ResourceGroup
+    depends_on: controller
+    properties:
+      count: { get_param: node_count }
+      resource_def:
+        type: OS::Nova::Server
+        properties:
+          name: node-%index%
+          flavor: baremetal
+          image: CC-CentOS7
+          key_name: { get_param: key_name }
+          networks:
+             - network: { get_resource: of_network }
+          scheduler_hints: { reservation: { get_param: reservation_id } }
+          user_data:
+
+# The parameters section gathers configuration from the user.
+parameters:
+  node_count:
+    type: number
+    description: Number of extra nodes connected to the OpenFlow network.
+    default: 2
+    constraints:
+      - range: { min: 0 }
+  of_network_name:
+    type: string
+    description: Name of the OpenFlow network create.
+  ip_subnet:
+    type: string
+    description: Subnet for the OpenFlow network
+    default: 192.168.100.0/24
+  controller_port:
+    type: string
+    description: The port used by the OpenFlow controller.
+    default: 6653
+  provider:
+    type: string
+    description: The provider network
+    default: exogeni
+    constraints: 
+    - allowed_values: [ physnet1, exogeni ]
+  key_name:
+    type: string
+    description: Name of a KeyPair to enable SSH access to the instance
+    constraints:
+    - custom_constraint: nova.keypair
+  reservation_id:
+    type: string
+    description: ID of the Blazar reservation to use for launching instances.
+    constraints:
+    - custom_constraint: blazar.reservation
+  controller_network_name:
+    type: string
+    description: Name of the network used by the controller. NOT the new OpenFlow netork.
+    default: sharednet1
+    constraints:
+    - custom_constraint: neutron.network
+
+parameter_groups:
+- label: Ryu OpenFlow Controller Configuration
+  description: Ryu OpenFlow Controller Configuration
+  parameters:
+  - controller_network_name
+  - controller_port
+- label: OpenFlow Network Configuration
+  description: OpenFlow Network Configuration
+  parameters:
+  - of_network_name
+  - ip_subnet
+  - provider
+- label: Node Configuration
+  description: Extra Nodes connected to the OpenFlow network
+  parameters:
+  - node_count
+- label: General Configuration
+  description: General parameters
+  parameters:
+  - key_name
+  - reservation_id
+
+
+
+outputs:
+  controller_ip:
+    description: Public IP address of the NFS server
+    value: { get_attr: [controller_floating_ip, ip] }
+
+
+
+
