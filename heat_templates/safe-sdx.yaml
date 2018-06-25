@@ -12,6 +12,60 @@ resources:
    properties:
      pool: public
 
+  controller_ip_association:
+    type: OS::Nova::FloatingIPAssociation
+    properties:
+      floating_ip: { get_resource: controller_floating_ip }
+      server_id: { get_resource: controller }
+
+  riak_ip_association:
+    type: OS::Nova::FloatingIPAssociation
+    properties:
+      floating_ip: { get_resource: riak_floating_ip }
+      server_id: { get_resource: riak-server }
+
+  riak_floating_ip:
+    type: OS::Nova::FloatingIP
+    properties:
+      pool: public
+
+  riak-server:
+     type: OS::Nova::Server
+     properties:
+       name: riak-server
+       flavor: baremetal
+       image: CC-CentOS7
+       key_name: { get_param: key_name }
+       networks:
+          - network: { get_param: controller_network_name }
+       scheduler_hints: { reservation: { get_param: reservation_id } }
+       user_data:
+         str_replace:
+           template: |
+             #!/bin/bash
+             WORKING_DIR=/root
+             {
+              echo Starting riak-server
+              BRANCH=pruth-chameleon
+
+              cd $WORKING_DIR
+
+              yum install -y git vim mlocate
+
+              git clone https://github.com/RENCI-NRIG/SAFE.git
+              cd SAFE
+              git checkout $BRANCH
+              cd SAFE-Riak-Server
+
+              ./scripts/build.sh
+              
+
+             } > ${WORKING_DIR}/boot.log 2>&1
+           params:
+             $ryu_port: { get_param: controller_port }
+
+
+
   controller:
    type: OS::Nova::Server
    properties:
@@ -112,11 +166,7 @@ resources:
            $ryu_port: { get_param: controller_port }
 
 
-  controller_ip_association:
-    type: OS::Nova::FloatingIPAssociation
-    properties:
-      floating_ip: { get_resource: controller_floating_ip }
-      server_id: { get_resource: controller }
+  
 
   of_router_to_ext:
     type: OS::Neutron::Router
