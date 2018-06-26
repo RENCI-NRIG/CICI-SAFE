@@ -1,20 +1,21 @@
 package sdx.core;
 
-import javax.ws.rs.GET;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.renci.ahab.libtransport.util.TransportException;
+
+import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
-import javax.ws.rs.Consumes;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
-
-import org.apache.log4j.Logger;
 
 /**
  * Root resource (exposed at "myresource" path)
  */
 @Path("sdx")
 public class RestService {
-  final static Logger logger = Logger.getLogger(RestService.class);
+  final static Logger logger = LogManager.getLogger(RestService.class);
 
   @POST
   @Path("/stitchrequest")
@@ -24,11 +25,11 @@ public class RestService {
     logger.debug("got sittch request");
     try {
       String[] res = SdxServer.sdxManager.stitchRequest(sr.sdxslice, sr.sdxsite, sr.ckeyhash, sr.cslice,
-        sr.creservid, sr.secret, sr.sdxnode);
+          sr.creservid, sr.secret, sr.sdxnode);
       return new StitchResult(res[0], res[1]);
     } catch (Exception e) {
       e.printStackTrace();
-      return new StitchResult(null,null);
+      return new StitchResult(null, null);
     }
   }
 
@@ -53,10 +54,10 @@ public class RestService {
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.TEXT_PLAIN)
   public String stitchChameleon(StitchChameleon sr) {
-    logger.debug("got chameleon stitch request: \n"+sr.toString());
+    logger.debug("got chameleon stitch request: \n" + sr.toString());
     logger.debug(String.format("got chameleon stitch request from %s", sr.ckeyhash));
     String res = SdxServer.sdxManager.stitchChameleon(sr.sdxslice, sr.sdxnode,
-        sr.ckeyhash, sr.stitchport, sr.vlan,sr.gateway, sr.ip);
+        sr.ckeyhash, sr.stitchport, sr.vlan, sr.gateway, sr.ip);
     return res;
   }
 
@@ -75,10 +76,17 @@ public class RestService {
   @Path("/broload")
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.TEXT_PLAIN)
-  public String broload(BroLoad bl) {
+  public String broload(BroLoad bl)  {
     logger.debug("got broload");
     double load = Double.parseDouble(bl.usage);
-    String res = SdxServer.sdxManager.broload(bl.broip, load);
+    String res = null;
+    try {
+      res = SdxServer.sdxManager.broload(bl.broip, load);
+    } catch (Exception e) {
+      e.printStackTrace();
+      res = "Failed to get Bro Load";
+      logger.warn(res);
+    }
     return res;
   }
 }
@@ -92,7 +100,8 @@ class StitchChameleon {
   public String gateway;
   public String ip;
 
-  public StitchChameleon() {}
+  public StitchChameleon() {
+  }
 
   public StitchChameleon(String sdxslice, String sdxnode, String ckeyhash, String stitchport, String vlan, String gateway, String ip) {
     this.sdxslice = sdxslice;
@@ -147,7 +156,8 @@ class StitchResult {
   public String gateway;
   public String ip;
 
-  public StitchResult() {}
+  public StitchResult() {
+  }
 
   public StitchResult(String gw, String ip) {
     this.gateway = gw;

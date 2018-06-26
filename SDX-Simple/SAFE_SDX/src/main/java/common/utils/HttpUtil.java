@@ -1,47 +1,23 @@
 package common.utils;
 
-import java.net.URI;
-
 import org.apache.http.HttpResponse;
+import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpEntityEnclosingRequestBase;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
-import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.entity.StringEntity;
-import org.apache.http.util.EntityUtils;
-import org.apache.log4j.Logger;
-import org.apache.http.client.HttpClient;
 import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.util.EntityUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.json.JSONObject;
 
+import java.net.URI;
+
 public class HttpUtil {
-  /**
-   * Main class.
-   */
-  static class HttpDeleteWithBody extends HttpEntityEnclosingRequestBase {
-    public static final String METHOD_NAME = "DELETE";
-
-    public String getMethod() {
-      return METHOD_NAME;
-    }
-
-    public HttpDeleteWithBody(final String uri) {
-      super();
-      setURI(URI.create(uri));
-    }
-
-    public HttpDeleteWithBody(final URI uri) {
-      super();
-      setURI(uri);
-    }
-
-    public HttpDeleteWithBody() {
-      super();
-    }
-  }
-
-  final static Logger logger = Logger.getLogger(HttpUtil.class);
+  final static Logger logger = LogManager.getLogger(HttpUtil.class);
 
   public static String postJSON(String serverurl, JSONObject paramsobj) {
     JSONObject resobj = new JSONObject();
@@ -58,7 +34,7 @@ public class HttpUtil {
       request.setEntity(params);
       HttpResponse response = httpClient.execute(request);
       //handle response here...
-      if(response.getStatusLine().getStatusCode() != 200){
+      if (response.getStatusLine().getStatusCode() != 200) {
         logger.debug(serverurl);
         logger.debug(paramsobj.toString());
       }
@@ -93,10 +69,6 @@ public class HttpUtil {
     }
   }
 
-  /*@Input
-   * data: a String of json format
-   */
-
   public static String delete(String serverurl, String data) {
     logger.debug("delete: " + serverurl);
     logger.debug(data);
@@ -117,6 +89,10 @@ public class HttpUtil {
     }
   }
 
+  /*@Input
+   * data: a String of json format
+   */
+
   public static String get(String serverurl) {
     CloseableHttpClient httpClient = HttpClientBuilder.create().build();
     try {
@@ -131,6 +107,31 @@ public class HttpUtil {
     } catch (Exception ex) {
       ex.printStackTrace();
       return "Exception when setting ovsdb addr";
+    }
+  }
+
+  /**
+   * Main class.
+   */
+  static class HttpDeleteWithBody extends HttpEntityEnclosingRequestBase {
+    public static final String METHOD_NAME = "DELETE";
+
+    public HttpDeleteWithBody(final String uri) {
+      super();
+      setURI(URI.create(uri));
+    }
+
+    public HttpDeleteWithBody(final URI uri) {
+      super();
+      setURI(uri);
+    }
+
+    public HttpDeleteWithBody() {
+      super();
+    }
+
+    public String getMethod() {
+      return METHOD_NAME;
     }
   }
 }

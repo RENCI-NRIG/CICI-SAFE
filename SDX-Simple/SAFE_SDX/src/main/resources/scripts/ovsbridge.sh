@@ -16,9 +16,9 @@ else
   ovs-vsctl set-controller br0 tcp:$1
 fi
 
-manageif=$(ifconfig -a| grep -B1 "inet addr:10." | awk '$1!="inet" && $1!="--" {print $1}')
+manageif=$(ifconfig -a| grep -B1 "inet 10.\|inet addr:10." | awk '$1!="inet" && $1!="--" {print $1}')
 
-interfaces=$(ifconfig -a|grep "ens"|grep -v "$manageif"|sed 's/[ \t].*//;/^$/d')
+interfaces=$(ifconfig -a|grep "ens\|eth"|grep -v "$manageif"|sed 's/[ :\t].*//;/^$/d')
 
 brinterfaces=$(ovs-ofctl show br0)
 vsinterfaces=$(ovs-vsctl show)

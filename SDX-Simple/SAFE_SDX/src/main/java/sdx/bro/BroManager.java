@@ -1,21 +1,23 @@
-package sdx.core.bro;
+package sdx.bro;
+
+import common.slice.SafeSlice;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.renci.ahab.libtransport.util.TransportException;
+import sdx.core.SdxManager;
+import sdx.networkmanager.NetworkManager;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.locks.ReentrantLock;
 
-import org.apache.log4j.Logger;
-import org.renci.ahab.libndl.Slice;
-
-import sdx.core.SdxManager;
-import sdx.networkmanager.NetworkManager;
-
 class BroInstance {
   long capacity;
   long usedCap;
   String ip;
   ArrayList<Flow> flows;
+
   public BroInstance(String ip, long cap) {
     this.capacity = cap;
     this.usedCap = 0;
@@ -36,7 +38,7 @@ class BroInstance {
   }
 
   public boolean addFlow(Flow flow) {
-    if(flow.bw > capacity - usedCap) {
+    if (flow.bw > capacity - usedCap) {
       return false;
     } else {
       usedCap += flow.bw;
@@ -45,7 +47,7 @@ class BroInstance {
     }
   }
 
-  public void removeAllFlows(){
+  public void removeAllFlows() {
     this.flows.clear();
     usedCap = 0;
   }
@@ -56,7 +58,8 @@ class Flow {
   public String dst;
   public long bw;
   public String routerName;
-  public Flow(String s, String d, long b, String router){
+
+  public Flow(String s, String d, long b, String router) {
     this.src = s;
     this.dst = d;
     this.bw = b;
@@ -66,62 +69,78 @@ class Flow {
 
 
 public class BroManager {
-  final Logger logger = Logger.getLogger(BroManager.class);
-  Slice slice = null;
+  final Logger logger = LogManager.getLogger(BroManager.class);
+  private final ReentrantLock ticketLock = new ReentrantLock();
+  SafeSlice slice = null;
   NetworkManager networkManager = null;
   SdxManager sdxManager = null;
-  private long requiredbw=0;
+  private long requiredbw = 0;
   private ArrayList<BroInstance> broInstances = new ArrayList<>();
   private LinkedList<Flow> jobQueue = new LinkedList<Flow>();
-  private final ReentrantLock ticketLock=new ReentrantLock();
   private long tickedBroCapacity = 0;
 
-  public BroManager(Slice slice, NetworkManager networkManager, SdxManager sdxManager){
+  public BroManager(SafeSlice slice, NetworkManager networkManager, SdxManager sdxManager) {
     this.slice = slice;
     this.networkManager = networkManager;
     this.sdxManager = sdxManager;
   }
 
-  public void reset(){
+  public void reset() {
     requiredbw = 0;
     for (BroInstance bro : broInstances) {
       bro.removeAllFlows();
     }
   }
 
-  public void addBroInstance(String ip, long cap){
+  public void addBroInstance(String ip, long cap) {
     broInstances.add(new BroInstance(ip, cap));
   }
 
-  private void deployNewBro(String routerName){
+  private void deployNewBro(String routerName) throws Exception{
     Thread thread = new Thread() {
       @Override
       public void run() {
-        try{
+        try {
           ticketLock.lock();
           tickedBroCapacity += 500000000;
           ticketLock.unlock();
-        }catch (Exception e){
+        } catch (Exception e) {
           e.printStackTrace();
         }
-        String ip = sdxManager.deployBro(routerName);
+        String ip = null;
+        try {
+          ip = sdxManager.deployBro(routerName);
+        } catch (Exception e) {
+          e.printStackTrace();
+          try {
+            ticketLock.lock();
+            tickedBroCapacity -= 500000000;
+            ticketLock.unlock();
+          } catch (Exception ex) {
+            ex.printStackTrace();
+          }
+        }
         synchronized (broInstances) {
           broInstances.add(new BroInstance(ip, 500000000));
         }
-        try{
+        try {
           ticketLock.lock();
           tickedBroCapacity -= 500000000;
           ticketLock.unlock();
+        } catch (Exception e) {
+          e.printStackTrace();
+        }
+        try {
+          execJobs();
         }catch (Exception e){
           e.printStackTrace();
         }
-        execJobs();
       }
     };
     thread.start();
   }
 
-  private void execJobs(){
+  private void execJobs() throws Exception{
     synchronized (jobQueue) {
       ArrayList<Flow> toRemove = new ArrayList<>();
       for (Flow f : jobQueue) {
@@ -132,17 +151,16 @@ public class BroManager {
           bro.addFlow(f);
           String res = networkManager.setMirror(sdxManager.getSDNController(), dpid, f.src, f.dst, gw);
           res += networkManager.setMirror(sdxManager.getSDNController(), dpid, f.dst, f.src, gw);
-          logger.debug("job: " + f.src + " " + f.dst + " " + f.bw + ": \n" + res);
-          System.out.println("job: " + f.src + " " + f.dst + " " + f.bw + ": \n" + res);
+          logger.info("job: " + f.src + " " + f.dst + " " + f.bw + ": \n" + res);
           toRemove.add(f);
         }
       }
-      for(Flow f: toRemove){
+      for (Flow f : toRemove) {
         jobQueue.remove(f);
       }
     }
-    if(broOverloaded()) {
-      deployNewBro("c0");
+    if (broOverloaded()) {
+      deployNewBro("e0");
     }
   }
 
@@ -199,25 +217,25 @@ public class BroManager {
 
   private boolean broOverloaded() {
     long sum = 0;
-    try{
+    try {
       ticketLock.lock();
       sum = tickedBroCapacity;
       ticketLock.unlock();
-    }catch (Exception e){
+    } catch (Exception e) {
       e.printStackTrace();
     }
-    for(BroInstance bro: broInstances){
+    for (BroInstance bro : broInstances) {
       sum += bro.capacity;
     }
-    double ratio = (double)requiredbw / (double) sum;
-    if (ratio > 0.6){
+    double ratio = (double) requiredbw / (double) sum;
+    if (ratio > 0.6) {
       return true;
-    }else{
+    } else {
       return false;
     }
   }
 
-  public void setMirrorAsync(String routerName, String source, String dst, long bw){
+  public void setMirrorAsync(String routerName, String source, String dst, long bw) throws  Exception{
     requiredbw += bw;
     synchronized (jobQueue) {
       jobQueue.offer(new Flow(source, dst, bw, routerName));

@@ -1,22 +1,22 @@
 package sdx.networkmanager;
 
-import org.apache.log4j.Logger;
-
-import common.utils.Exec;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class Link {
-  final static Logger logger = Logger.getLogger(Exec.class);
+  final static Logger logger = LogManager.getLogger(Link.class);
 
   public String linkname = "";
   public String nodea = null;
   public String nodeb = null;
   public String ipprefix = "";
-  public String mask="24";
-  public long capacity=0;
+  public String mask = "/24";
+  public long capacity = 0;
 
-  public Link(){}
+  public Link() {
+  }
 
-  public Link(String linkname, String nodea, String nodeb){
+  public Link(String linkname, String nodea, String nodeb) {
     this.linkname = linkname;
     this.nodea = nodea;
     this.nodeb = nodeb;
@@ -41,15 +41,15 @@ public class Link {
     mask = m;
   }
 
-  public void setCapacity(long cap){
-    this.capacity=cap;
+  public void setCapacity(long cap) {
+    this.capacity = cap;
   }
 
   public String getIP(int i) {
     return ipprefix + "." + String.valueOf(i) + mask;
   }
 
-  public boolean match(String a, String b){
+  public boolean match(String a, String b) {
     return (nodea.equals(a) && nodeb.equals(b)) || (nodea.equals(b) && nodeb.equals(a));
   }
 }
