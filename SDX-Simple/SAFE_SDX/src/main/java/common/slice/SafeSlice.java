@@ -18,6 +18,7 @@ import sdx.core.SliceManager;
 import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.regex.Matcher;
@@ -190,6 +191,48 @@ public class SafeSlice {
 
   public BroadcastNetwork addBroadcastLink(String name) {
     return this.addBroadcastLink(name, DEFAULT_BW);
+  }
+
+  public Interface attach(String nodeName, String linkName, String ip, String netmask){
+    ComputeNode node = null;
+    BroadcastNetwork link = null;
+    RequestResource obj;
+    if((obj = slice.getResourceByName(nodeName)) instanceof  BroadcastNetwork){
+      link = (BroadcastNetwork) obj;
+    }else {
+      node = (ComputeNode) obj;
+    }
+    if((obj = slice.getResourceByName(linkName)) instanceof  BroadcastNetwork){
+      link = (BroadcastNetwork) obj;
+    }else {
+      node = (ComputeNode) obj;
+    }
+
+    InterfaceNode2Net ifaceNode1 = (InterfaceNode2Net) link.stitch(node);
+    if(ip!= null) {
+      ifaceNode1.setIpAddress(ip);
+      ifaceNode1.setNetmask(netmask);
+    }
+    return ifaceNode1;
+  }
+
+  public Interface attach(String nodeName, String linkName){
+    ComputeNode node = null;
+    BroadcastNetwork link = null;
+    RequestResource obj;
+    if((obj = slice.getResourceByName(nodeName)) instanceof  BroadcastNetwork){
+      link = (BroadcastNetwork) obj;
+    }else {
+      node = (ComputeNode) obj;
+    }
+    if((obj = slice.getResourceByName(linkName)) instanceof  BroadcastNetwork){
+      link = (BroadcastNetwork) obj;
+    }else {
+      node = (ComputeNode) obj;
+    }
+
+    InterfaceNode2Net ifaceNode1 = (InterfaceNode2Net) link.stitch(node);
+    return ifaceNode1;
   }
 
   public RequestResource getResourceByName(String nm) {
@@ -845,5 +888,20 @@ public class SafeSlice {
     String[] res = runCmdNode("/bin/bash ~/dpid.sh", sshkey, routerName, true).split(" ");
     res[1] = res[1].replace("\n", "");
     return  res;
+  }
+
+  public ComputeNode addOVSRouter(String site, String name) {
+    logger.debug("Adding new OVS router to slice " + slice.getName());
+    String nodeImageShortName = "Ubuntu 14.04";
+    String nodeImageURL = "http://geni-orca.renci.org/owl/9dfe179d-3736-41bf-8084-f0cd4a520c2f#Ubuntu+14.04";//http://geni-images.renci.org/images/standard/ubuntu/ub1304-ovs-opendaylight-v1.0.0.xml
+    String nodeImageHash = "9394ca154aa35eb55e604503ae7943ddaecc6ca5";
+    String nodeNodeType = "XO Medium";
+    String nodePostBootScript = Scripts.getOVSScript();
+    ComputeNode node0 = slice.addComputeNode(name);
+    node0.setImage(nodeImageURL, nodeImageHash, nodeImageShortName);
+    node0.setNodeType(nodeNodeType);
+    node0.setDomain(site);
+    node0.setPostBootScript(nodePostBootScript);
+    return node0;
   }
 }

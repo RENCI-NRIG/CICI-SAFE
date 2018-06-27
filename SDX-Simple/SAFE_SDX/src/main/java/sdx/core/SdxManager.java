@@ -6,6 +6,7 @@ import common.utils.Exec;
 import org.apache.commons.cli.CommandLine;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.renci.ahab.libndl.Slice;
 import org.renci.ahab.libndl.resources.request.*;
 import org.renci.ahab.libtransport.util.ContextTransportException;
 import org.renci.ahab.libtransport.util.TransportException;
@@ -105,6 +106,15 @@ public class SdxManager extends SliceManager {
     return routingmanager.getDPID(rname);
   }
 
+  protected void configSdnControllerAddr(String ip){
+    SDNControllerIP = ip;
+    //SDNControllerIP="152.3.136.36";
+    //logger.debug("plexuscontroler managementIP = " + SDNControllerIP);
+    SDNController = SDNControllerIP + ":8080";
+    OVSController = SDNControllerIP + ":6633";
+  }
+
+
   public void startSdxServer(String[] args) throws TransportException, Exception {
     logger.info(logPrefix + "Carrier Slice server with Service API: START");
     CommandLine cmd = parseCmd(args);
@@ -123,11 +133,7 @@ public class SdxManager extends SliceManager {
     broManager = new BroManager(serverSlice, routingmanager, this);
     logPrefix += "[" + sliceName + "]";
     //runCmdSlice(serverSlice, "ovs-ofctl del-flows br0", "(^c\\d+)", false, true);
-    SDNControllerIP = serverSlice.getComputeNode("plexuscontroller").getManagementIP();
-    //SDNControllerIP="152.3.136.36";
-    //logger.debug("plexuscontroler managementIP = " + SDNControllerIP);
-    SDNController = SDNControllerIP + ":8080";
-    OVSController = SDNControllerIP + ":6633";
+    configSdnControllerAddr(serverSlice.getComputeNode("plexuscontroller").getManagementIP());
     //configRouting(serverslice,OVSController,SDNController,"(c\\d+)","(sp-c\\d+.*)");
     loadSdxNetwork(serverSlice, routerPattern, stitchPortPattern, broPattern);
     configRouting(serverSlice, OVSController, SDNController, routerPattern, stitchPortPattern);
@@ -844,7 +850,7 @@ public class SdxManager extends SliceManager {
     return false;
   }
 
-  private void configRouter(ComputeNode node) {
+  protected void configRouter(ComputeNode node) {
     String mip = node.getManagementIP();
     logger.debug(node.getName() + " " + mip);
     updateOvsInterface(node.getName());
@@ -858,6 +864,50 @@ public class SdxManager extends SliceManager {
     result[1] = result[1].replace("\n", "");
     logger.debug("Get router info " + result[0] + " " + result[1]);
     routingmanager.newRouter(node.getName(), result[1], Integer.valueOf(result[0]), mip);
+  }
+
+  protected void configRouters(SafeSlice serverSlice) {
+    ArrayList<Thread> tlist = new ArrayList<>();
+    for(ComputeNode node : serverSlice.getComputeNodes()){
+      if(node.getName().matches(routerPattern)){
+        try {
+          Thread thread = new Thread() {
+            @Override
+            public void run() {
+              try {
+                String mip = node.getManagementIP();
+                logger.debug(node.getName() + " " + mip);
+                updateOvsInterface(node.getName());
+                String[] result = serverSlice.getDpid(node.getName(), sshkey);
+                logger.debug("Trying to get DPID of the router " + node.getName());
+                while (result == null || result.length < 2 || !validDPID(result[1])) {
+                  updateOvsInterface(node.getName());
+                  sleep(1);
+                  result = serverSlice.getDpid(node.getName(), sshkey);
+                }
+                result[1] = result[1].replace("\n", "");
+                logger.debug("Get router info " + result[0] + " " + result[1]);
+                routingmanager.newRouter(node.getName(), result[1], Integer.valueOf(result[0]), mip);
+
+              } catch (Exception e) {
+                e.printStackTrace();
+              }
+            }
+          };
+          thread.start();
+          tlist.add(thread);
+        } catch (Exception e) {
+          logger.error("exception when copying config file");
+        }
+      }
+    }
+    try {
+      for (Thread t : tlist) {
+        t.join();
+      }
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
   }
 
   public void waitTillAllOvsConnected() {

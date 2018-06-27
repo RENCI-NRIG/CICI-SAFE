@@ -53,6 +53,20 @@ public class SliceManager extends SliceCommon {
     curip = Integer.valueOf(ip_segs[2]);
   }
 
+  protected void getSshContext(){
+    sctx = new SliceAccessContext<>();
+    try {
+      SSHAccessTokenFileFactory fac;
+      fac = new SSHAccessTokenFileFactory("~/.ssh/id_rsa.pub", false);
+      SSHAccessToken t = fac.getPopulatedToken();
+      sctx.addToken("root", "root", t);
+      sctx.addToken("root", t);
+    } catch (UtilTransportException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+    }
+  }
+
   public void run(String[] args) {
     logger.info("SDX-Simple " + args[0]);
 
@@ -68,17 +82,7 @@ public class SliceManager extends SliceCommon {
     if (cmd.hasOption('d')) type = "delete";
 
     //SSH context
-    sctx = new SliceAccessContext<>();
-    try {
-      SSHAccessTokenFileFactory fac;
-      fac = new SSHAccessTokenFileFactory("~/.ssh/id_rsa.pub", false);
-      SSHAccessToken t = fac.getPopulatedToken();
-      sctx.addToken("root", "root", t);
-      sctx.addToken("root", t);
-    } catch (UtilTransportException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
-    }
+    getSshContext();
 
     if (type.equals("server")) {
       long bw = 1000000000;
@@ -179,26 +183,21 @@ public class SliceManager extends SliceCommon {
     }
   }
 
-  public ComputeNode addOVSRouter(SafeSlice s, String site, String name) {
-    logger.debug("Adding new OVS router to slice " + s.getName());
-    String nodeImageShortName = "Ubuntu 14.04";
-    String nodeImageURL = "http://geni-orca.renci.org/owl/9dfe179d-3736-41bf-8084-f0cd4a520c2f#Ubuntu+14.04";//http://geni-images.renci.org/images/standard/ubuntu/ub1304-ovs-opendaylight-v1.0.0.xml
-    String nodeImageHash = "9394ca154aa35eb55e604503ae7943ddaecc6ca5";
-    String nodeNodeType = "XO Medium";
-    String nodePostBootScript = Scripts.getOVSScript();
-    ComputeNode node0 = s.addComputeNode(name);
-    node0.setImage(nodeImageURL, nodeImageHash, nodeImageShortName);
-    node0.setNodeType(nodeNodeType);
-    node0.setDomain(site);
-    node0.setPostBootScript(nodePostBootScript);
-    return node0;
-  }
 
   public void copyRouterScript(SafeSlice s, ComputeNode node) {
     scriptsdir = conf.getString("config.scriptsdir");
     s.copyFile2Node(scriptsdir + "dpid.sh", "~/dpid.sh", sshkey, node.getName());
     s.copyFile2Node(scriptsdir + "ifaces.sh", "~/ifaces.sh", sshkey, node.getName());
     s.copyFile2Node(scriptsdir + "ovsbridge.sh", "~/ovsbridge.sh", sshkey,  node.getName());
+    //Make sure that plexus container is running
+    logger.debug("Finished copying ovs scripts");
+  }
+
+  public void copyRouterScript(SafeSlice s) {
+    scriptsdir = conf.getString("config.scriptsdir");
+    s.copyFile2Slice(scriptsdir + "dpid.sh", "~/dpid.sh", sshkey, routerPattern);
+    s.copyFile2Slice(scriptsdir + "ifaces.sh", "~/ifaces.sh", sshkey, routerPattern);
+    s.copyFile2Slice(scriptsdir + "ovsbridge.sh", "~/ovsbridge.sh", sshkey, routerPattern);
     //Make sure that plexus container is running
     logger.debug("Finished copying ovs scripts");
   }
