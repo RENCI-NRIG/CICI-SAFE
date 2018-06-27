@@ -197,7 +197,6 @@ public class SafeSlice {
   }
 
   public ComputeNode getComputeNode(String nm){
-    logger.debug(String.format("getComputeNode %s", nm));
     ComputeNode node =(ComputeNode) this.slice.getResourceByName(nm);
     while( node ==null || node.getState() == null ||node.getManagementIP()==null){
       logger.debug(String.format("getComputeNode %s", nm));
