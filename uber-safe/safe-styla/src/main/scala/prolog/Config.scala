@@ -9,7 +9,8 @@ class Config(config: com.typesafe.config.Config) {
     this(ConfigFactory.load())
   }
   val indexing: String               = Try(config.getString("safestyla.indexing")).getOrElse("primary")
-  val stylibOn: Boolean               = Try(config.getBoolean("safestyla.libraryOn")).getOrElse(false)
+  val stylibOn: Boolean              = Try(config.getBoolean("safestyla.libraryOn")).getOrElse(false)
+  val maxDepth: Int                  = Try(config.getInt("safestyla.maxDepth")).getOrElse(10000)
 }
 
 object Config {

@@ -713,7 +713,8 @@ trait InferenceImpl extends safe.safelog.InferenceImpl with KeyPairManager with 
       val t = System.nanoTime()
       //slangPerfCollector.addStarPerfStats((t-t0)/1000, s"inferset_${factId.id.name}")
       //val runtime = System.currentTimeMillis - t0
-      //logger.info(s"inferset results: $res")
+      logger.info(s"inferset results: $res")
+      logger.info(s"inferset subcontexts: ${subcontexts}")
       //println(s"inferset results: $res")
       res
     }  

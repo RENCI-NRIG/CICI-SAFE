@@ -162,7 +162,8 @@ case class SetTerm(
         }
         //val trimmedResp = respMsg.replaceAll("""(?m)\s+$""", "")   // trim before extracting the token
         //val tokensOrQueryres = parseSlangCallResponse(trimmedResp)  
-        val tokensOrQueryres = parseSlangCallResponse(respMsg)  
+        logger.info(s"respMsg: $respMsg")
+        val tokensOrQueryres = parseSlangCallResponse(respMsg)
         logger.info(s"tokensOrQueryres: ${tokensOrQueryres}")
         //println(s"tokensOrQueryres: ${tokensOrQueryres}")
         val defcallRes = if(tokensOrQueryres.isEmpty) Constant("false") 

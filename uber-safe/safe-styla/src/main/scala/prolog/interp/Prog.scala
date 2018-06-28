@@ -161,7 +161,7 @@ class Prog(var db: DataBase) extends TermSource with LazyLogging {
     }
   }
 
-  val DEPTH_LIMIT = 10000
+  val DEPTH_LIMIT = prolog.Config.config.maxDepth
 
   override def getElement(): Term = {
     if (isStopped) return null
@@ -188,6 +188,9 @@ class Prog(var db: DataBase) extends TermSource with LazyLogging {
         popped = false
 
       val res = pushUnfolder(newgoal)
+
+      println(s"Pushing an unfolder to the orStack")
+      println(s"orStack: ${orStack}")
 
       if (null != res._2) return res._2
       newgoal = res._1

@@ -22,6 +22,13 @@ object StylaService extends LazyLogging{
     if(stylaQ.size > 0)  stylaQ.dequeue  else null
   }
 
+  /**
+   * Solve a query against supplied subcontexts using the Styla logic
+   * infernece engine. 
+   *
+   * @param isInteractive   interactive solving generates proofs
+   */
+
   def solveWithContext(
       queries: Seq[Statement]
     , isInteractive: Boolean

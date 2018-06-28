@@ -25,7 +25,7 @@ class SlogSet(
     val queries: Seq[Statement],                      // Queries in the SlogSet
     var statements: Map[Index, OrderedSet[Statement]],// Statments in the SlogSet
     var links: Seq[String],                           // Links included in the SlogSet
-    val speaksForToken: Option[String],               // Token of a set in support of SpeaksFor
+    val speaksForToken: Option[String],               // Token of a set to endorse the validity of speaksFor
     val label: String,                                // Label of the SlogSet
     val signature: Option[String],                    // Signature of the slogset by the issuer 
     var setData: Option[String],                      // Set data signed over in a certificate
