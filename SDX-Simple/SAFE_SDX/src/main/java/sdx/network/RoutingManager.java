@@ -1,4 +1,4 @@
-package sdx.networkmanager;
+package sdx.network;
 
 import common.utils.Exec;
 import common.utils.HttpUtil;
@@ -12,22 +12,22 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 
-public class NetworkManager {
-  final static Logger logger = LogManager.getLogger(NetworkManager.class);
+public class RoutingManager {
+  final static Logger logger = LogManager.getLogger(RoutingManager.class);
+  private NetworkManager networkManager;
 
   final static int MAX_RATE = 2000000;
   private HashMap<String, ArrayList<Long>> router_queues = new HashMap<>();
   private HashMap<String, ArrayList<JSONObject>> router_matches = new HashMap<>();
-  private ArrayList<Router> routers = new ArrayList<Router>();
-  private ArrayList<String[]> ip_router = new ArrayList<String[]>();
-  private ArrayList<Link> links = new ArrayList<Link>();
   private HashMap<String, ArrayList<String[]>> sdncmds = new HashMap<String, ArrayList<String[]>>();
   private HashMap<String, Integer> route_id = new HashMap<>();
   private HashMap<String, Integer> mirror_id = new HashMap<>();
   private HashMap<String, ArrayList<String[]>> pairPath = new HashMap<>();
   private HashMap<String, ArrayList<String>> routes = new HashMap<>();
-  public NetworkManager() {
+  private long linkId=0;
+  public RoutingManager() {
     logger.debug("initialize network manager");
+    networkManager = new NetworkManager();
   }
 
   private static String[] mirrorCMD(String controller, String dpid, String source, String dst, String gw) {
@@ -47,23 +47,14 @@ public class NetworkManager {
     return res;
   }
 
-  public String getDPID(String routerid) {
-    logger.info(String.format("getDPID %s", routerid));
-    Router router = getRouter(routerid);
-    if (router != null)
-      return router.getDPID();
-    else
-      return null;
+  public String getDPID(String routerName) {
+    logger.info(String.format("getDPID %s", routerName));
+    return networkManager.getRouter(routerName).getDPID();
   }
 
   public String getEdgeRouterbyGateway(String gw) {
     logger.info(String.format("getEdgeRouterbyGateway %s", gw));
-    for (Router r : routers) {
-      if (r.hasGateway(gw)) {
-        return r.getRouterID();
-      }
-    }
-    return null;
+    return networkManager.getRouterByGateway(gw);
   }
 
   public void setQos(String controller, String dpid, String srcip, String destip, String bw) {
@@ -93,65 +84,34 @@ public class NetworkManager {
     logger.debug(qosres);
   }
 
-  private void addLink(String ipa, String ra, String gw) {
-    Router router = getRouter(ra);
-    if (router != null) {
-      router.addGateway(gw);
-      router.addInterface(ipa);
-      putPairRouter(ipa, router.getDPID());
-      //routers.put(ra,router);
-    }
+  private String getNewLinkName(){
+    linkId ++;
+    return "link" + linkId;
   }
 
-  private void addLink(String ipa, String ra, String ipb, String rb, long cap) {
-    //logger.debug(ipa+" "+ipb);
-    Router router = getRouter(ra);
-    Link link = new Link(ipa, ipb, ra, rb, cap);
-    if (!ipa.equals("") && !ipb.equals("")) {
-      putLink(link);
-    }
-    if (router != null) {
-      router.addInterface(ipa);
-      putPairRouter(ipa, router.getDPID());
-      if (!rb.equals("")) {
-        //logger.debug("addneighbor"+ipa+" "+ipb);
-        router.addNeighbor(ipb, link);
-        putRouter(router);
-        router = getRouter(rb);
-        router.addInterface(ipb);
-        router.addNeighbor(ipa, link);
-        putRouter(router);
-        putPairRouter(ipb, router.getDPID());
-      }
-      // routers.put(ra,router);
-    }
-  }
 
   synchronized  public void newRouter(String routerid, String dpid, String numInt, String mip) {
     int numinterfaces = Integer.valueOf(numInt);
     newRouter(routerid, dpid, numinterfaces, mip);
   }
 
-  synchronized public void newRouter(String routerid, String dpid, int numinterfaces, String mip) {
-    logger.debug("RoutingManager: new router " + routerid + " " + dpid);
-    logger.info(String.format("newRouter %s %s %s %s", routerid, dpid, numinterfaces, mip));
-    if (getRouter(routerid) == null) {
+  synchronized public void newRouter(String routerName, String dpid, int numinterfaces, String mip) {
+    logger.debug("RoutingManager: new router " + routerName + " " + dpid);
+    logger.info(String.format("newRouter %s %s %s %s", routerName, dpid, numinterfaces, mip));
+    if (networkManager.getRouter(routerName) == null) {
 //      logger.debug(dpid+":my dpid");
-      routers.add(new Router(routerid, dpid, numinterfaces, mip));
+      networkManager.putRouter(new Router(routerName, dpid, mip));
       ArrayList<Long> newqueue = new ArrayList<>();
       newqueue.add(Long.valueOf(1000000));
       router_queues.put(dpid, newqueue);
-    } else {
-      Router router = getRouter(routerid);
-      router.updateInterfaceNum(numinterfaces);
     }
   }
 
-  public boolean newLink(String ipa, String ra, String gw, String controller) {
-    logger.info(String.format("newLink %s %s %s %s", ipa, ra, gw, controller));
+  public boolean newLink(String linkName, String ipa, String ra, String gw, String controller) {
+    logger.info(String.format("newLink %s %s %s %s %s", linkName, ipa, ra, gw, controller));
     logger.debug("RoutingManager: new stitchpoint " + ra + " " + ipa);
-    addLink(ipa, ra, gw);
-    String dpid = getRouter(ra).getDPID();
+    networkManager.addLink(linkName, ipa, ra, gw);
+    String dpid = networkManager.getRouter(ra).getDPID();
     String cmd[] = addrCMD(ipa, dpid, controller);
     boolean result = true;
     String res = HttpUtil.postJSON(cmd[0], new JSONObject(cmd[1]));
@@ -165,15 +125,15 @@ public class NetworkManager {
     return result;
   }
 
-  public boolean newLink(String ipa, String ra, String ipb, String rb, String controller, String cap) {
+  public boolean newLink(String linkName, String ipa, String ra, String ipb, String rb, String controller, String cap) {
     long capacity = Long.valueOf(cap);
-    return newLink(ipa, ra, ipb, rb, controller, capacity);
+    return newLink(linkName, ipa, ra, ipb, rb, controller, capacity);
   }
 
-  public boolean newLink(String ipa, String ra, String ipb, String rb, String controller, long capacity) {
-    logger.info(String.format("newLink %s %s %s %s %s %s", ipa, ra, ipb, rb, controller, capacity));
+  public boolean newLink(String linkName, String ipa, String ra, String ipb, String rb, String controller, long capacity) {
+    logger.info(String.format("newLink %s %s %s %s %s %s %s", linkName, ipa, ra, ipb, rb, controller, capacity));
     logger.debug("RoutingManager: new link " + ra + " " + ipa + " " + rb + " " + ipb);
-    addLink(ipa, ra, ipb, rb, capacity);
+    networkManager.addLink(linkName, ipa, ra, ipb, rb, capacity);
     String dpid = getDPID(ra);
     String[] cmd = addrCMD(ipa, dpid, controller);
     boolean result = true;
@@ -198,9 +158,13 @@ public class NetworkManager {
     return result;
   }
 
+  public List<String> getNeighbors(String routerName){
+    return networkManager.getNeighborNodes(routerName);
+  }
+
   public void configurePath(String dest, String nodename, String gateway, String controller) {
     logger.info(String.format("configurePath %s %s %s %s", dest, nodename, gateway, controller));
-    String gwdpid = getRouter(nodename).getDPID();
+    String gwdpid = networkManager.getRouter(nodename).getDPID();
     if (gwdpid == null) {
       logger.debug("No router named " + nodename + " not found");
       return;
@@ -231,8 +195,8 @@ public class NetworkManager {
                                String gateway, String controller, long bw) {
     logger.info(String.format("configurePath %s %s %s %s %s %s %s", dest, nodename, targetIP, targetnodename, gateway, controller, bw));
     logger.debug("Network Manager: Configuring path for " + dest + " " + nodename + " " + targetIP + " " + targetnodename + " " + gateway);
-    String gwdpid = getRouter(nodename).getDPID();
-    String targetdpid = getRouter(targetnodename).getDPID();
+    String gwdpid = networkManager.getRouter(nodename).getDPID();
+    String targetdpid = networkManager.getRouter(targetnodename).getDPID();
     if (gwdpid == null || targetdpid == null) {
       logger.debug("No router named " + nodename + " not found");
       return false;
@@ -242,10 +206,16 @@ public class NetworkManager {
     ArrayList<String> dpids = new ArrayList<String>();
     boolean res = true;
     for (String[] path : paths) {
-      //Path [dpid,gateway,neighborip]
-      Router router = getRouterByDPID(path[0]);
+      Router logRouter = networkManager.getRouterByDPID(path[0]);
       if (path[2] != null) {
-        router.getNeighborLinks().get(path[2]).useBW(bw);
+        for(String interfaceName: logRouter.getInterfaces()){
+          Link link = networkManager.getLink(networkManager.getInterface(interfaceName).getLinkName());
+          if(link.hasNode(path[2])){
+            link.useBW(bw);
+            networkManager.putLink(link);
+            break;
+          }
+        }
       }
       res &= addRoute(dest, targetIP, path[1], path[0], controller);
     }
@@ -268,12 +238,12 @@ public class NetworkManager {
     }
     for(int i=0;i<paths.size(); i++){
       String[] hop = paths.get(i);
-      String src = getRouterByDPID(hop[0]).getRouterID();
+      String src = networkManager.getRouterByDPID(hop[0]).getRouterName();
       String dst=null;
       if(i<paths.size()-1){
-        dst = getRouterByDPID(paths.get(i+1)[0]).getDPID();
+        dst = networkManager.getRouterByDPID(paths.get(i+1)[0]).getRouterName();
       }
-      String flow = getFlowOnRouter(getRouterByDPID(hop[0]).ip, p1, p2, sshKey);
+      String flow = getFlowOnRouter(networkManager.getRouterByDPID(hop[0]).getManagementIP(), p1, p2, sshKey);
       if(flow.contains("actions=CONTROLLER")) {
         logger.warn(String.format("%s %s -> %s: Failure\n %s", hop[0], src, dst, flow));
       }else if(flow.contains("output:")){
@@ -289,12 +259,12 @@ public class NetworkManager {
     }
     for(int i=0;i<paths.size(); i++){
       String[] hop = paths.get(i);
-      String src = getRouterByDPID(hop[0]).getRouterID();
+      String src = networkManager.getRouterByDPID(hop[0]).getRouterName();
       String dst=null;
       if(i<paths.size()-1){
-        dst = getRouterByDPID(paths.get(i+1)[0]).getRouterID();
+        dst = networkManager.getRouterByDPID(paths.get(i+1)[0]).getRouterName();
       }
-      String flow = getFlowOnRouter(getRouterByDPID(hop[0]).ip, p1, p2, sshKey);
+      String flow = getFlowOnRouter(networkManager.getRouterByDPID(hop[0]).getManagementIP(), p1, p2, sshKey);
       if(flow.contains("actions=CONTROLLER")) {
         logger.warn(String.format("%s %s -> %s: Failure\n %s", hop[0], src, dst, flow));
       }else if(flow.contains("output:")){
@@ -362,19 +332,9 @@ public class NetworkManager {
     return paths.size() > 0;
   }
 
-  public Router getRouter(String routername) {
-    logger.info(String.format("getRouter %s", routername));
-    for (Router r : routers) {
-      if (r.getRouterID().equals(routername)) {
-        return r;
-      }
-    }
-    return null;
-  }
-
   public void setOvsdbAddr(String controller) {
     logger.info(String.format("setOvsdbAddr %s", controller));
-    for (Router r : routers) {
+    for (Router r : networkManager.getRouters()) {
       String[] cmd = ovsdbCMD(r, controller);
       String res = HttpUtil.putString(cmd[0], cmd[1]);
       addEntry_HashList(sdncmds, r.getDPID(), cmd);
@@ -406,35 +366,9 @@ public class NetworkManager {
 
   public void printLinks() {
     logger.info("printLinks");
-    for (Link l : links) {
+    for (Link l : networkManager.getLinks()) {
       logger.debug(l.toString());
     }
-  }
-
-  public List<String> getNeighbors(String routerName) {
-    logger.info(String.format("getNeighbors %s", routerName));
-    ArrayList<String> nbs = new ArrayList<String>();
-    for (Link link : getRouter(routerName).getNeighborLinks().values()) {
-      if (link.ra.equals(routerName) && !link.rb.equals("")) {
-        nbs.add(link.rb);
-      } else if (link.rb.equals(routerName)) {
-        nbs.add(link.ra);
-      }
-    }
-    return nbs;
-  }
-
-  private List<String> getNeighborIPs(String routerid) {
-    logger.info("getNeighborIPs %s", routerid);
-    ArrayList<String> ips = new ArrayList<String>();
-    for (String[] intf : ip_router) {
-      if (intf[1].equals(routerid)) {
-        String pairip = getPairIP(intf[0]);
-        if (pairip != null)
-          ips.add(pairip);
-      }
-    }
-    return ips;
   }
 
   private boolean addRoute(String destIp, String srcIp, String gateWay, String dpid, String
@@ -561,25 +495,26 @@ public class NetworkManager {
       //logger.debug("queue[start]"+queue.get(start));
       String rid = queue.get(start);
       start += 1;
-      Router router = getRouterByDPID(rid);
-      if (router != null) {
-        HashMap<String, Link> nbs = router.getNeighborLinks();
-        //ArrayList<String> nips=getNeighborIPs(rid);
-        for (String ip : nbs.keySet()) {
+      Router logRouter = networkManager.getRouterByDPID(rid);
+      if (logRouter != null) {
+        for (Interface neighborInterface : networkManager.getNeighborInterfaces(logRouter.getRouterName())) {
+          //ip the ip of hte neighbor interface
+          Link link  = networkManager.getLink(neighborInterface.getLinkName());
+          String pairip = neighborInterface.getIp();
           //logger.debug("neighborIP: "+ip);
-          if (nbs.get(ip).getAvailableBW() < bw) {
+          if (link.getAvailableBW() < bw) {
             continue;
           }
-          String pairrouter = getPairRouter(ip);
+          String pairrouter = getDPID(neighborInterface.getNodeName());
           if (!knownrouters.contains(pairrouter)) {
             knownrouters.add(pairrouter);
             end += 1;
             String[] path = new String[3];
             path[0] = pairrouter;
-            logger.debug(ip);
-            String pairip = getPairIP(ip);
-            path[1] = pairip.split("/")[0];
-            path[2] = pairip;
+            logger.debug(pairip);
+            String ip = networkManager.getInterface(link.getPairInterfaceName(neighborInterface.getName())).getIp();
+            path[1] = ip.split("/")[0];
+            path[2] = logRouter.getRouterName();
             logger.debug(path[1]);
             knownpaths.add(path);
             if (pairrouter.equals(dstdpid)) {
@@ -591,7 +526,7 @@ public class NetworkManager {
           }
         }
       } else {
-        logger.debug("Router null");
+        logger.debug("LogRouter null");
       }
     }
     ArrayList<String[]> spaths = new ArrayList<String[]>();
@@ -599,7 +534,7 @@ public class NetworkManager {
       String[] curpath = knownpaths.get(knownpaths.size() - 1);
       spaths.add(curpath);
       for (int i = knownpaths.size() - 2; i >= 0; i--) {
-        if (knownpaths.get(i)[0].equals(getPairRouter(curpath[2]))) {
+        if (knownpaths.get(i)[0].equals(getDPID(curpath[2]))) {
           spaths.add(knownpaths.get(i));
           curpath = knownpaths.get(i);
         }
@@ -610,8 +545,8 @@ public class NetworkManager {
 
   //FIXME: There might be bug, but haven't got the chance to look into it.
   private ArrayList<String[]> getBroadcastRoutes(String gwdpid, String gateway) {
-    //logger.debug("All routers and links");
-    //for(String[] link:links){
+    //logger.debug("All logRouters and logLinks");
+    //for(String[] link:logLinks){
     //  //logger.debug(link[0]+" "+link[1]);
     //}
     //for(String[] link:ip_router){
@@ -635,25 +570,27 @@ public class NetworkManager {
       //logger.debug("queue[start]"+queue.get(start));
       String rid = queue.get(start);
       start += 1;
-      Router router = getRouterByDPID(rid);
-      if (router != null) {
-        List<String> nips = getNeighborIPs(rid);
-        for (String ip : nips) {
+      Router logRouter = networkManager.getRouterByDPID(rid);
+      if (logRouter != null) {
+        for (Interface neighborInterface : networkManager.getNeighborInterfaces(logRouter.getRouterName())) {
+          //ip the ip of hte neighbor interface
+          Link link  = networkManager.getLink(neighborInterface.getLinkName());
+          String ip = neighborInterface.getIp();
           //logger.debug("neighborIP: "+ip);
-          if (!knownrouters.contains(getPairRouter(ip))) {
-            knownrouters.add(getPairRouter(ip));
-            queue.add(getPairRouter(ip));
+          String pairrouter = getDPID(neighborInterface.getNodeName());
+          if (!knownrouters.contains(pairrouter)) {
+            knownrouters.add(pairrouter);
+            queue.add(pairrouter);
             end += 1;
             String[] path = new String[2];
-            path[0] = getPairRouter(ip);
-            println(ip);
-            path[1] = getPairIP(ip).split("/")[0];
+            path[0] = getDPID(networkManager.getPairRouter(ip));
+            path[1] = networkManager.getPairIP(ip).split("/")[0];
             println(path[1]);
             knownpaths.add(path);
           }
         }
       } else {
-        logger.debug("Router null");
+        logger.debug("LogRouter null");
       }
     }
     return knownpaths;
@@ -715,173 +652,8 @@ public class NetworkManager {
     return res;
   }
 
-  private Router getRouterByDPID(String routername) {
-    for (Router r : routers) {
-      if (r.getDPID().equals(routername)) {
-        return r;
-      }
-    }
-    return null;
-  }
-
-  private void putRouter(Router router) {
-    for (int i = 0; i < routers.size(); i++) {
-      if (routers.get(i).getDPID().equals(router.getDPID())) {
-        routers.set(i, router);
-        return;
-      }
-    }
-    routers.add(router);
-  }
-
-  private void putLink(Link l) {
-    links.add(l);
-  }
-
-  private String getPairIP(String ip) {
-    for (Link link : links) {
-      if (link.ifa.equals(ip))
-        return link.ifb;
-      else if (link.ifb.equals(ip)) {
-        return link.ifa;
-      }
-    }
-    return null;
-  }
-
-  private String getPairRouter(String ip) {
-    for (String[] link : ip_router) {
-      //logger.debug(link[0]+" "+link[1]);
-      if (link[0].equals(ip))
-        return link[1];
-    }
-    return null;
-  }
-
-  private void putPairRouter(String ip, String dpid) {
-    if (getPairRouter(ip) == null) {
-      String[] iprouter = new String[2];
-      iprouter[0] = ip;
-      iprouter[1] = dpid;
-      ip_router.add(iprouter);
-    }
-  }
-
   private void println(String out) {
     logger.debug(out);
   }
 
-  class Link {
-    private String ifa = "";
-    private String ifb = "";
-    private String ra = "";
-    private String rb = "";
-    private long capacity;
-    private long usedbw;
-
-    public Link(String ia, String ib, String routera, String routerb, long capacity) {
-      this.ifa = ia;
-      this.ifb = ib;
-      this.ra = routera;
-      this.rb = routerb;
-      this.capacity = capacity;
-      this.usedbw = 0;
-    }
-
-    public String pair_ip(String ip) {
-      if (ip.equals(ifa))
-        return ifb;
-      else if (ip.equals(ifb))
-        return ifa;
-      else
-        return "";
-    }
-
-    public long getAvailableBW() {
-      return this.capacity - this.usedbw;
-    }
-
-    public void useBW(long bw) {
-      this.usedbw += bw;
-    }
-
-    public void releaseBW(long bw) {
-      this.usedbw -= bw;
-    }
-
-    public boolean equals(Link link) {
-      if (ifa.equals(link.ifa) && ifb.equals(link.ifb) || ifa.equals(link.ifb) && ifb.equals(link.ifa)) {
-        if (ra.equals(link.ra) && rb.equals(link.rb) || ra.equals(link.rb) && rb.equals(link.ra)) {
-          return true;
-        }
-      }
-      return false;
-    }
-
-    public String toString() {
-      return ra + ":" + ifa + ", " + rb + ":" + ifb + ", cap" + getAvailableBW();
-    }
-  }
-
-  class Router {
-    private String routerid = "";
-    private String dpid = "";
-    private String ip = "";
-    private HashSet<String> interfaces = new HashSet<String>();
-    private HashMap<String, Link> neighbors = new HashMap<String, Link>();
-    private HashSet<String> customergateways = new HashSet<>();
-    private int numInterfaces = 0;
-
-    public Router(String rid, String switch_id, int numintf, String ip) {
-      routerid = rid;
-      dpid = switch_id;
-      this.ip = ip;
-      numInterfaces = numintf;
-    }
-
-    public HashMap<String, Link> getNeighborLinks() {
-      return neighbors;
-    }
-
-    public void addInterface(String interfaceIP) {
-      interfaces.add(interfaceIP);
-    }
-
-    public void addGateway(String gw) {
-      logger.debug("Gateway " + gw + " added to " + routerid);
-      customergateways.add(gw);
-    }
-
-    public boolean hasGateway(String gw) {
-      return customergateways.contains(gw);
-    }
-
-    public boolean hasIP(String ip) {
-      return interfaces.contains(ip);
-    }
-
-    public void addNeighbor(String neighborIP, Link link) {
-      neighbors.put(neighborIP, link);
-    }
-
-    public void updateInterfaceNum(int newnum) {
-      numInterfaces = newnum;
-    }
-
-    public int getInterfaceNum() {
-      return numInterfaces;
-    }
-
-    public String getDPID() {
-      return dpid;
-    }
-
-    public String getRouterID() {
-      return routerid;
-    }
-
-    public String getManagementIP() {
-      return this.ip;
-    }
-  }
 }

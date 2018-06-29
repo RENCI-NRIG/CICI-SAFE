@@ -1,20 +1,29 @@
-package sdx.networkmanager;
+package sdx.network;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import sdx.core.SdxManager;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.lang.reflect.Method;
 
-public class TestNetworkManager {
-  final static String log = "/Users/yaoyj11/SAFE/SDX-Simple/log/network-manager.log";
+public class TestRoutingManager {
+  final static String log = "/Users/yaoyj11/SAFE/SDX-Simple/log/routing-manager.log";
 
 
   public static void main(String args[]) {
     try {
-      Class NetM = Class.forName("sdx.networkmanager.NetworkManager");
+      Class NetM = Class.forName("sdx.network.RoutingManager");
       Object obj = NetM.newInstance();
+      SdxManager sdxManager = new SdxManager();
+      sdxManager.readConfig(new String[]{"-c", "config/sdx.conf"});
+      sdxManager.loadSlice();
+      sdxManager.delFlows();
+      sdxManager.restartPlexus();
+      try{
+        Thread.sleep(10000);
+      }catch (Exception e){
+
+      }
 
       try (BufferedReader br = new BufferedReader(new FileReader(log))) {
         String line;

@@ -215,7 +215,7 @@ def get_priority_type(priority, vid):
 
 
 class NotFoundError(RyuException):
-    message = 'Router SW is not connected. : switch_id=%(switch_id)s'
+    message = 'LogRouter SW is not connected. : switch_id=%(switch_id)s'
 
 
 class CommandFailure(RyuException):
@@ -608,7 +608,7 @@ class Router(dict):
             # Event dispatch
             if vlan_id in self:
                 #DEBUG
-                self.logger.debug("Router packet_in_handler")
+                self.logger.debug("LogRouter packet_in_handler")
                 ##DEBUG
                 self[vlan_id].packet_in_handler(msg, header_list)
             else:
@@ -1038,7 +1038,7 @@ class VlanRouter(object):
 
         # Analyze event type.
         #DEBUG
-        self.logger.debug("Router packet_in_handler")
+        self.logger.debug("LogRouter packet_in_handler")
         print header_list
         ##DEBUG
         if ARP in header_list:

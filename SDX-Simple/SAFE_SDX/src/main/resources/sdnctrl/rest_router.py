@@ -199,7 +199,7 @@ def get_priority_type(priority, vid):
 
 
 class NotFoundError(RyuException):
-    message = 'Router SW is not connected. : switch_id=%(switch_id)s'
+    message = 'LogRouter SW is not connected. : switch_id=%(switch_id)s'
 
 
 class CommandFailure(RyuException):

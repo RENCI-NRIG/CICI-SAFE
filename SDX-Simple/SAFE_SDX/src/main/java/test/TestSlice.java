@@ -547,7 +547,7 @@ public class TestSlice extends SliceManager {
         ifaceNode1.setNetmask("255.255.255.0");
       }
     }
-    s.addPlexusController(controllerSite);
+    s.addPlexusController(controllerSite, "plexuscontroller");
     try {
       s.commit();
     } catch (XMLRPCTransportException e) {

@@ -7,18 +7,15 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.renci.ahab.libndl.resources.request.*;
 import org.renci.ahab.libtransport.*;
-import org.renci.ahab.libtransport.util.ContextTransportException;
-import org.renci.ahab.libtransport.util.TransportException;
-import org.renci.ahab.libtransport.xmlrpc.XMLRPCProxyFactory;
-import sdx.networkmanager.Link;
 
 import java.io.*;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 import java.util.regex.Pattern;
+
+import sdx.network.Link;
 
 
 public abstract class SliceCommon {
@@ -30,13 +27,14 @@ public abstract class SliceCommon {
   protected String pemLocation;
   protected String keyLocation;
   protected String sshkey;
-  protected String serverurl;
+  public String serverurl;
   protected ISliceTransportAPIv1 sliceProxy;
   protected SliceAccessContext<SSHAccessToken> sctx;
   protected String keyhash;
   protected String type;
   protected String topofile = null;
   protected Config conf;
+  protected CommandLine cmd;
   protected ArrayList<String> clientSites;
   protected String controllerSite;
   protected List<String> sitelist;
@@ -132,12 +130,12 @@ public abstract class SliceCommon {
       while ((line = br.readLine()) != null) {
         // process the line.
         String[] params = line.replace("\n", "").split(" ");
-        Link link = new Link();
-        link.setName(params[0]);
-        link.addNode(params[1]);
-        link.addNode(params[2]);
-        link.setCapacity(Long.parseLong(params[3]));
-        res.add(link);
+        Link logLink = new Link();
+        logLink.setName(params[0]);
+        logLink.addNode(params[1]);
+        logLink.addNode(params[2]);
+        logLink.setCapacity(Long.parseLong(params[3]));
+        res.add(logLink);
       }
       br.close();
     } catch (Exception e) {
@@ -147,8 +145,8 @@ public abstract class SliceCommon {
   }
 
   protected boolean isValidLink(String key) {
-    Link link = links.get(key);
-    if (!key.contains("stitch") && !key.contains("blink") && link != null && link.nodeb != null) {
+    Link logLink = links.get(key);
+    if (!key.contains("stitch") && !key.contains("blink") && logLink != null && logLink.getInterfaceB() != null) {
       return true;
     } else {
       return false;
@@ -161,10 +159,10 @@ public abstract class SliceCommon {
       Set<String> keyset = links.keySet();
       for (String key : keyset) {
         if (isValidLink(key)) {
-          Link link = links.get(key);
+          Link logLink = links.get(key);
 
-          br.write(link.linkname + " " + link.nodea + " " + link.nodeb + " " + String.valueOf
-              (link.capacity) + "\n");
+          br.write(logLink.getLinkName() + " " + logLink.getNodeA() + " " + logLink.getNodeB() + " " + String.valueOf
+              (logLink.getCapacity()) + "\n");
         }
       }
       br.close();

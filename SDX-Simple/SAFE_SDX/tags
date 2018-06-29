@@ -266,7 +266,7 @@ endNT	target/appassembler/bin/SafeSdxRpkiServer.bat	/^:endNT$/;"	l
 endNT	target/appassembler/bin/SafeSdxServer.bat	/^:endNT$/;"	l
 endorsePA	src/main/java/safe/sdx/rpki/RpkiServer.java	/^  public static boolean endorsePA(String pm,String pa){$/;"	m	class:RpkiServer	signature:(String pm,String pa)
 endorsePM	src/main/java/safe/sdx/rpki/RpkiServer.java	/^  public static String endorsePM(String pa,String pm){$/;"	m	class:RpkiServer	signature:(String pa,String pm)
-equals	src/main/java/safe/sdx/sdx/RoutingManager.java	/^  public boolean equals(RLink link){$/;"	m	class:RLink	signature:(RLink link)
+equals	src/main/java/safe/sdx/sdx/RoutingManager.java	/^  public boolean equals(RLink logLink){$/;"	m	class:RLink	signature:(RLink logLink)
 error	target/appassembler/bin/SafeSdxClient.bat	/^:error$/;"	l
 error	target/appassembler/bin/SafeSdxExample.bat	/^:error$/;"	l
 error	target/appassembler/bin/SafeSdxRouting.bat	/^:error$/;"	l
@@ -366,8 +366,8 @@ newLink	src/main/java/safe/sdx/sdx/RoutingManager.java	/^  public void newLink(S
 newRouter	src/main/java/safe/sdx/sdx/RoutingManager.java	/^  public void newRouter(String routerid, String dpid, int numInterfaces) {$/;"	m	class:RoutingManager	signature:(String routerid, String dpid, int numInterfaces)
 nodea	src/main/java/safe/sdx/sdx/Link.java	/^  public String nodea="";$/;"	f	class:Link
 nodeb	src/main/java/safe/sdx/sdx/Link.java	/^  public String nodeb="";$/;"	f	class:Link
-notifyPrefix	src/main/java/safe/sdx/sdx/SdxServer.java	/^  public void notifyPrefix(String dest, String gateway, String router,String customer_keyhash) throws RemoteException{$/;"	m	class:SdxServer	signature:(String dest, String gateway, String router,String customer_keyhash)
-notifyPrefix	src/main/java/safe/sdx/sdx/ServiceAPI.java	/^  void notifyPrefix(String dest, String gateway, String router,String customer_keyhash) throws RemoteException;$/;"	m	interface:ServiceAPI	signature:(String dest, String gateway, String router,String customer_keyhash)
+notifyPrefix	src/main/java/safe/sdx/sdx/SdxServer.java	/^  public void notifyPrefix(String dest, String gateway, String logRouter,String customer_keyhash) throws RemoteException{$/;"	m	class:SdxServer	signature:(String dest, String gateway, String logRouter,String customer_keyhash)
+notifyPrefix	src/main/java/safe/sdx/sdx/ServiceAPI.java	/^  void notifyPrefix(String dest, String gateway, String logRouter,String customer_keyhash) throws RemoteException;$/;"	m	interface:ServiceAPI	signature:(String dest, String gateway, String logRouter,String customer_keyhash)
 numInterfaces	src/main/java/safe/sdx/sdx/RoutingManager.java	/^    private int numInterfaces=0;$/;"	f	class:Router	file:
 pair_ip	src/main/java/safe/sdx/sdx/RoutingManager.java	/^  public String pair_ip(String ip){$/;"	m	class:RLink	signature:(String ip)
 panel	src/main/java/safe/sdx/utils/Exec.java	/^    private Container panel;$/;"	f	class:Exec.MyUserInfo	file:
@@ -423,7 +423,7 @@ promptYesNo	src/main/java/safe/sdx/utils/ScpTo.java	/^    public boolean promptY
 promptYesNo	src/main/java/safe/sdx/utils/UserAuthPubKey.java	/^    public boolean promptYesNo(String str){$/;"	m	class:UserAuthPubKey.MyUserInfo	signature:(String str)
 putLink	src/main/java/safe/sdx/sdx/RoutingManager.java	/^  private  void putLink(String linka, String linkb){$/;"	m	class:RoutingManager	file:	signature:(String linka, String linkb)
 putPairRouter	src/main/java/safe/sdx/sdx/RoutingManager.java	/^  private  void putPairRouter(String ip,String dpid){$/;"	m	class:RoutingManager	file:	signature:(String ip,String dpid)
-putRouter	src/main/java/safe/sdx/sdx/RoutingManager.java	/^  private  void putRouter(Router router){$/;"	m	class:RoutingManager	file:	signature:(Router router)
+putRouter	src/main/java/safe/sdx/sdx/RoutingManager.java	/^  private  void putRouter(Router logRouter){$/;"	m	class:RoutingManager	file:	signature:(Router logRouter)
 ra	src/main/java/safe/sdx/sdx/RoutingManager.java	/^  private String ra="";$/;"	f	class:RLink	file:
 rb	src/main/java/safe/sdx/sdx/RoutingManager.java	/^  private String rb="";$/;"	f	class:RLink	file:
 readNeighbors	src/main/java/safe/sdx/routing/RoutingClient.java	/^  private static void readNeighbors(){$/;"	m	class:RoutingClient	file:	signature:()

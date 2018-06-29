@@ -14,13 +14,12 @@ import org.renci.ahab.libtransport.SSHAccessToken;
 import org.renci.ahab.libtransport.SliceAccessContext;
 import org.renci.ahab.libtransport.util.SSHAccessTokenFileFactory;
 import org.renci.ahab.libtransport.util.UtilTransportException;
-import sdx.networkmanager.Link;
+import sdx.network.Link;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.regex.Pattern;
 
 /**
  * @author geni-orca
@@ -31,11 +30,12 @@ public class SliceManager extends SliceCommon {
   protected static String eRouterPattern = "(^e\\d+)";
   protected static String broPattern = "(bro\\d+_e\\d+)";
   protected static String stitchPortPattern = "(^sp-e\\d+.*)";
-  protected static String stosVlanPattern = "(^stitch_e\\d+_\\d+)";
+  protected static String stosVlanPattern = "(^stitch_(c|e)\\d+_\\d+)";
   protected static String linkPattern = "(^(c|e)link\\d+)";
   protected static String cLinkPattern = "(^clink\\d+)";
   protected static String eLinkPattern = "(^elink\\d+)";
   protected static String broLinkPattern = "(^blink_\\d+)";
+  protected long bw = 1000000000;
   final Logger logger = LogManager.getLogger(SliceManager.class);
   protected int curip = 128;
   protected String IPPrefix = "192.168.";
@@ -51,6 +51,18 @@ public class SliceManager extends SliceCommon {
     String[] ip_segs = ip_mask[0].split("\\.");
     IPPrefix = ip_segs[0] + "." + ip_segs[1] + ".";
     curip = Integer.valueOf(ip_segs[2]);
+  }
+
+  public  void readConfig(String[] args){
+    cmd = parseCmd(args);
+    String configfilepath = cmd.getOptionValue("config");
+    readConfig(configfilepath);
+    bw = conf.getLong("config.bw");
+    IPPrefix = conf.getString("config.ipprefix");
+    serverurl = conf.getString("config.serverurl");
+    //type=sdxconfig.type;
+    computeIP(IPPrefix);
+    //System.out.print(pemLocation);
   }
 
   protected void getSshContext(){
@@ -282,24 +294,24 @@ public class SliceManager extends SliceCommon {
       ComputeNode node0 = nodelist.get(i);
       ComputeNode node1 = nodelist.get(i + 1);
       String linkname = "clink" + i;
-      Link link = addLink(s, linkname, node0, node1, bw);
-      links.put(linkname, link);
+      Link logLink = addLink(s, linkname, node0, node1, bw);
+      links.put(linkname, logLink);
     }
-    s.addPlexusController(controllerSite);
+    s.addPlexusController(controllerSite, "plexuscontroller");
     return s;
   }
 
 
   private Link addLink(SafeSlice s, String linkname, ComputeNode node0, ComputeNode node1,
-                       Long bw) {
+                          Long bw) {
     Network net2 = s.addBroadcastLink(linkname, bw);
     InterfaceNode2Net ifaceNode1 = (InterfaceNode2Net) net2.stitch(node0);
     InterfaceNode2Net ifaceNode2 = (InterfaceNode2Net) net2.stitch(node1);
-    Link link = new Link();
-    link.addNode(node0.getName());
-    link.addNode(node1.getName());
-    link.setName(linkname);
-    return link;
+    Link logLink = new Link();
+    logLink.addNode(node0.getName());
+    logLink.addNode(node1.getName());
+    logLink.setName(linkname);
+    return logLink;
   }
 }
 

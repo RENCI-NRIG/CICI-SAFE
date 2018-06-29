@@ -754,7 +754,7 @@ public class SafeSlice {
     String nodeImageURL = ninfo.niurl;
     //http://geni-images.renci.org/images/standard/ubuntu/ub1304-ovs-opendaylight-v1.0.0.xml
     String nodeImageHash = ninfo.nihash;
-    String nodeNodeType = "XO Extra large";
+    String nodeNodeType = "XO Medium";
     String nodePostBootScript = Scripts.getOVSScript();
     ComputeNode node0 = addComputeNode(router1, nodeImageURL,
         nodeImageHash, nodeImageShortName, nodeNodeType, site,
@@ -765,6 +765,19 @@ public class SafeSlice {
     Network bronet = addBroadcastLink(linkname, bw);
     bronet.stitch(node0);
     bronet.stitch(node1);
+  }
+
+  public void addOvsRouter(String site, String router1) {
+    NodeBaseInfo ninfo = NodeBase.getImageInfo(VMVersion);
+    String nodeImageShortName = ninfo.nisn;
+    String nodeImageURL = ninfo.niurl;
+    //http://geni-images.renci.org/images/standard/ubuntu/ub1304-ovs-opendaylight-v1.0.0.xml
+    String nodeImageHash = ninfo.nihash;
+    String nodeNodeType = "XO Medium";
+    String nodePostBootScript = Scripts.getOVSScript();
+    ComputeNode node0 = addComputeNode(router1, nodeImageURL,
+        nodeImageHash, nodeImageShortName, nodeNodeType, site,
+        nodePostBootScript);
   }
 
   private ComputeNode addComputeNode(
@@ -779,14 +792,14 @@ public class SafeSlice {
     return node0;
   }
 
-  public void addPlexusController(String controllerSite) {
+  public void addPlexusController(String controllerSite, String name) {
     String dockerImageShortName = "Ubuntu 14.04 Docker";
     String dockerImageURL =
         "http://geni-images.renci.org/images/standard/docker/ubuntu-14.0.4/ubuntu-14.0.4-docker.xml";
     //http://geni-images.renci.org/images/standard/ubuntu/ub1304-ovs-opendaylight-v1.0.0.xml
     String dockerImageHash = "b4ef61dbd993c72c5ac10b84650b33301bbf6829";
     String dockerNodeType = "XO Large";
-    ComputeNode node0 = addComputeNode("plexuscontroller");
+    ComputeNode node0 = addComputeNode(name);
     node0.setImage(dockerImageURL, dockerImageHash, dockerImageShortName);
     node0.setNodeType(dockerNodeType);
     node0.setDomain(controllerSite);
@@ -892,9 +905,11 @@ public class SafeSlice {
 
   public ComputeNode addOVSRouter(String site, String name) {
     logger.debug("Adding new OVS router to slice " + slice.getName());
-    String nodeImageShortName = "Ubuntu 14.04";
-    String nodeImageURL = "http://geni-orca.renci.org/owl/9dfe179d-3736-41bf-8084-f0cd4a520c2f#Ubuntu+14.04";//http://geni-images.renci.org/images/standard/ubuntu/ub1304-ovs-opendaylight-v1.0.0.xml
-    String nodeImageHash = "9394ca154aa35eb55e604503ae7943ddaecc6ca5";
+    NodeBaseInfo ninfo = NodeBase.getImageInfo(VMVersion);
+    String nodeImageShortName = ninfo.nisn;
+    String nodeImageURL = ninfo.niurl;
+    //http://geni-images.renci.org/images/standard/ubuntu/ub1304-ovs-opendaylight-v1.0.0.xml
+    String nodeImageHash = ninfo.nihash;
     String nodeNodeType = "XO Medium";
     String nodePostBootScript = Scripts.getOVSScript();
     ComputeNode node0 = slice.addComputeNode(name);

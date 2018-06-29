@@ -5,7 +5,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.renci.ahab.libtransport.util.TransportException;
 import sdx.core.SdxManager;
-import sdx.networkmanager.NetworkManager;
+import sdx.network.RoutingManager;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -72,14 +72,14 @@ public class BroManager {
   final Logger logger = LogManager.getLogger(BroManager.class);
   private final ReentrantLock ticketLock = new ReentrantLock();
   SafeSlice slice = null;
-  NetworkManager networkManager = null;
+  RoutingManager networkManager = null;
   SdxManager sdxManager = null;
   private long requiredbw = 0;
   private ArrayList<BroInstance> broInstances = new ArrayList<>();
   private LinkedList<Flow> jobQueue = new LinkedList<Flow>();
   private long tickedBroCapacity = 0;
 
-  public BroManager(SafeSlice slice, NetworkManager networkManager, SdxManager sdxManager) {
+  public BroManager(SafeSlice slice, RoutingManager networkManager, SdxManager sdxManager) {
     this.slice = slice;
     this.networkManager = networkManager;
     this.sdxManager = sdxManager;

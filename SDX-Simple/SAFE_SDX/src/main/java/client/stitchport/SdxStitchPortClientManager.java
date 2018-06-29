@@ -170,7 +170,7 @@ public class SdxStitchPortClientManager extends SliceCommon {
         + "apt-get install -y quagga\n"
         + "sed -i -- 's/zebra=no/zebra=yes/g' /etc/quagga/daemons\n"
         + "sed -i -- 's/ospfd=no/ospfd=yes/g' /etc/quagga/daemons\n"
-        + "echo \"!zebra configuration file\" >/etc/quagga/zebra.conf\necho \"hostname Router\">>/etc/quagga/zebra.conf\n"
+        + "echo \"!zebra configuration file\" >/etc/quagga/zebra.conf\necho \"hostname LogRouter\">>/etc/quagga/zebra.conf\n"
         + "echo \"enable password zebra\">>/etc/quagga/zebra.conf\n"
         + "echo \"!ospfd configuration file\" >/etc/quagga/ospfd.conf\n echo \"hostname ospfd\">>/etc/quagga/ospfd.conf\n echo \"enable password zebra\">>/etc/quagga/ospfd.conf\n  echo \"router ospf\">>/etc/quagga/ospfd.conf\n"
         + "eth=$(ifconfig |grep 'inet addr:'|grep -v 'inet addr:10.' |grep -v '127.0.0.1' |cut -d: -f2|awk '{print $1}')\n"

@@ -34,6 +34,26 @@
                 <SizeBasedTriggeringPolicy size="250 MB"/>
             </Policies>
         </RollingFile>
+        <RollingFile name="RoutingRollingFile" fileName="log/routing-manager.log"
+                     filePattern="log/$${date:yyyy-MM}/app-%d{MM-dd-yyyy}-%i.log.gz" append="false">
+            <PatternLayout>
+                <Pattern>%m%n</Pattern>
+            </PatternLayout>
+
+            <Filters>
+                <!-- Now deny warn, error and fatal messages -->
+                <ThresholdFilter level="warn" onMatch="DENY" onMismatch="NEUTRAL"/>
+                <ThresholdFilter level="error" onMatch="DENY" onMismatch="NEUTRAL"/>
+                <ThresholdFilter level="fatal" onMatch="DENY" onMismatch="NEUTRAL"/>
+
+                <!-- This filter accepts info, warn, error, fatal and denies debug/trace -->
+                <ThresholdFilter level="info" onMatch="ACCEPT" onMismatch="DENY"/>
+            </Filters>
+            <Policies>
+                <TimeBasedTriggeringPolicy/>
+                <SizeBasedTriggeringPolicy size="250 MB"/>
+            </Policies>
+        </RollingFile>
         <RollingFile name="SliceRollingFile" fileName="log/slice.log"
                      filePattern="log/$${date:yyyy-MM}/slice-%d{MM-dd-yyyy}-%i.log.gz" append="false">
             <PatternLayout>
@@ -68,7 +88,7 @@
         <Logger name="sdx.core.SliceManager" level="debug" additivity="false">
             <AppenderRef ref="RollingFile"/>
         </Logger>
-        <Logger name="sdx.networkmanager.NetworkManager" level="warn" additivity="false">
+        <Logger name="sdx.network.NetworkManager" level="warn" additivity="false">
             <AppenderRef ref="Console"/>
         </Logger>
         <Logger name="common.slice.SliceCommon" level="info" additivity="false">
@@ -89,8 +109,11 @@
         <Logger name="common.slice.SafeSlice" level="debug" additivity="true">
             <AppenderRef ref="RollingFile"/>
         </Logger>
-        <Logger name="sdx.networkmanager.NetworkManager" level="info" additivity="false">
+        <Logger name="sdx.network.NetworkManager" level="info" additivity="false">
             <AppenderRef ref="NetworkRollingFile"/>
+        </Logger>
+        <Logger name="sdx.network.RoutingManager" level="info" additivity="false">
+            <AppenderRef ref="RoutingRollingFile"/>
         </Logger>
         <Logger name="common.slice.SafeSlice" level="info" additivity="true">
             <AppenderRef ref="SliceRollingFile"/>
