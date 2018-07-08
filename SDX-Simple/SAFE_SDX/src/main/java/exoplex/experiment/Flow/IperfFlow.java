@@ -49,12 +49,23 @@ public class IperfFlow {
           }
           cmd = cmd + " -b " + bw;
           results.add(Exec.sshExec("root", managementIp, cmd, sshKey));
+          try{
+            lock.lock();
+            started = false;
+            lock.unlock();
+          }catch (Exception e){
+
+          }
         }
       };
       thread.start();
       started = true;
     }
-    lock.unlock();
+    try {
+      lock.unlock();
+    }catch (Exception e){
+
+    }
   }
 
   public void stop(){

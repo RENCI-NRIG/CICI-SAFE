@@ -1,5 +1,6 @@
 package exoplex.sdx.routing;
 import exoplex.common.slice.*;
+import exoplex.experiment.ExperimentBase;
 import org.apache.commons.cli.CommandLine;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -19,7 +20,9 @@ public class TestMpRouting extends SdxManager {
     mpr.test();
 
     mpr.initNetwork();
-    mpr.testGroup();
+    mpr.installTestGroup();
+    mpr.sendTraffic();
+    mpr.getGroupStats();
     System.out.println("end");
   }
 
@@ -111,7 +114,7 @@ public class TestMpRouting extends SdxManager {
     return  slice;
   }
 
-  public void testGroup(){
+  public void installTestGroup(){
     //===>>c0 =>c1 c2
     HashMap<String, Integer> nbs = new HashMap<>();
     nbs.put("c1", 10);
@@ -138,8 +141,6 @@ public class TestMpRouting extends SdxManager {
     //logger.info(res);
     routingmanager.singleStepRouting("192.168.20.0/24", "192.168.20.2",
         getDPID("c3"), getSDNController());
-
-
 
     //<<==== c3-> c1 c2
     groupId  = 2;
@@ -168,11 +169,39 @@ public class TestMpRouting extends SdxManager {
         getDPID("c0"), getSDNController());
     logger.info(res);
 
-
-
     logFlowTables("c0");
     logFlowTables("c1");
     logFlowTables("c2");
     logFlowTables("c3");
+  }
+
+  public void sendTraffic(){
+    ExperimentBase experiment = new ExperimentBase(this);
+    experiment.addClient("CNode0", serverSlice.getComputeNode("CNode0").getManagementIP(),
+        "192.168.10.2");
+    experiment.addClient("CNode1", serverSlice.getComputeNode("CNode1").getManagementIP(),
+        "192.168.20.2");
+    experiment.addClient("CNode2", serverSlice.getComputeNode("CNode2").getManagementIP(),
+        "192.168.30.2");
+    experiment.addUdpFlow("CNode0", "CNode1", "1m");
+    experiment.startFlows(10);
+    sleep(10);
+    experiment.stopFlows();
+  }
+
+  public void getGroupStats(){
+    logger.info("---------------------");
+    String res = SdnUtil.getGroupStats(getSDNController(), getDPID("c0"));
+    logger.info(res);
+    logger.info("---------------------");
+    res = SdnUtil.getGroupStats(getSDNController(), getDPID("c1"));
+    logger.info(res);
+    logger.info("---------------------");
+    res = SdnUtil.getGroupStats(getSDNController(), getDPID("c2"));
+    logger.info(res);
+    logger.info("---------------------");
+    res = SdnUtil.getGroupStats(getSDNController(), getDPID("c3"));
+    logger.info(res);
+    logger.info("---------------------");
   }
 }
