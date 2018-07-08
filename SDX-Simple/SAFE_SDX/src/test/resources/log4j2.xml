@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="warn">
+    <Appenders>
+        <Console name="Console" target="SYSTEM_OUT">
+            <PatternLayout pattern="%highlight{%d{HH:mm:ss} [%t] %-5level %logger{36} - %msg%n}{FATAL=red, ERROR=red, WARN=yellow, INFO=black, DEBUG=green, TRACE=blue}"/>
+        </Console>
+        <RollingFile name="RollingFile" fileName="log/demo.log"
+                     filePattern="log/$${date:yyyy-MM}/app-%d{MM-dd-yyyy}-%i.log.gz" append="false">
+            <PatternLayout>
+                <Pattern>%d %p %c{1.} [%t] %m%n</Pattern>
+            </PatternLayout>
+            <Policies>
+                <TimeBasedTriggeringPolicy/>
+                <SizeBasedTriggeringPolicy size="250 MB"/>
+            </Policies>
+        </RollingFile>
+        <RollingFile name="NetworkRollingFile" fileName="log/test-nm.log"
+                     filePattern="log/$${date:yyyy-MM}/app-%d{MM-dd-yyyy}-%i.log.gz" append="false">
+            <PatternLayout>
+                <Pattern>%m%n</Pattern>
+            </PatternLayout>
+
+            <Filters>
+                <!-- Now deny warn, error and fatal messages -->
+                <ThresholdFilter level="warn" onMatch="DENY" onMismatch="NEUTRAL"/>
+                <ThresholdFilter level="error" onMatch="DENY" onMismatch="NEUTRAL"/>
+                <ThresholdFilter level="fatal" onMatch="DENY" onMismatch="NEUTRAL"/>
+
+                <!-- This filter accepts info, warn, error, fatal and denies debug/trace -->
+                <ThresholdFilter level="info" onMatch="ACCEPT" onMismatch="DENY"/>
+            </Filters>
+            <Policies>
+                <TimeBasedTriggeringPolicy/>
+                <SizeBasedTriggeringPolicy size="250 MB"/>
+            </Policies>
+        </RollingFile>
+        <RollingFile name="RoutingRollingFile" fileName="log/test-rm.log"
+                     filePattern="log/$${date:yyyy-MM}/app-%d{MM-dd-yyyy}-%i.log.gz" append="false">
+            <PatternLayout>
+                <Pattern>%m%n</Pattern>
+            </PatternLayout>
+
+            <Filters>
+                <!-- Now deny warn, error and fatal messages -->
+                <ThresholdFilter level="warn" onMatch="DENY" onMismatch="NEUTRAL"/>
+                <ThresholdFilter level="error" onMatch="DENY" onMismatch="NEUTRAL"/>
+                <ThresholdFilter level="fatal" onMatch="DENY" onMismatch="NEUTRAL"/>
+
+                <!-- This filter accepts info, warn, error, fatal and denies debug/trace -->
+                <ThresholdFilter level="info" onMatch="ACCEPT" onMismatch="DENY"/>
+            </Filters>
+            <Policies>
+                <TimeBasedTriggeringPolicy/>
+                <SizeBasedTriggeringPolicy size="250 MB"/>
+            </Policies>
+        </RollingFile>
+        <RollingFile name="SliceRollingFile" fileName="log/test-slice.log"
+                     filePattern="log/$${date:yyyy-MM}/slice-%d{MM-dd-yyyy}-%i.log.gz" append="false">
+            <PatternLayout>
+                <Pattern>%m%n</Pattern>
+            </PatternLayout>
+
+            <Filters>
+                <!-- Now deny warn, error and fatal messages -->
+                <ThresholdFilter level="warn" onMatch="DENY" onMismatch="NEUTRAL"/>
+                <ThresholdFilter level="error" onMatch="DENY" onMismatch="NEUTRAL"/>
+                <ThresholdFilter level="fatal" onMatch="DENY" onMismatch="NEUTRAL"/>
+
+                <!-- This filter accepts info, warn, error, fatal and denies debug/trace -->
+                <ThresholdFilter level="info" onMatch="ACCEPT" onMismatch="DENY"/>
+            </Filters>
+            <Policies>
+                <TimeBasedTriggeringPolicy/>
+                <SizeBasedTriggeringPolicy size="250 MB"/>
+            </Policies>
+        </RollingFile>
+    </Appenders>
+    <Loggers>
+        <Root level="debug">
+            <AppenderRef ref="RollingFile"/>
+            <AppenderRef ref="Console"/>
+        </Root>
+        <Logger name="exoplex.sdx.core.SdxManager" level="info" additivity="false">
+            <AppenderRef ref="Console"/>
+        </Logger>
+        <Logger name="exoplex.sdx.core.SliceManager" level="info" additivity="false">
+            <AppenderRef ref="Console"/>
+        </Logger>
+        <Logger name="exoplex.sdx.core.SliceManager" level="debug" additivity="false">
+            <AppenderRef ref="RollingFile"/>
+        </Logger>
+        <Logger name="exoplex.sdx.network.RoutingManager" level="warn" additivity="false">
+            <AppenderRef ref="Console"/>
+        </Logger>
+        <Logger name="exoplex.sdx.network.NetworkManager" level="warn" additivity="false">
+            <AppenderRef ref="Console"/>
+        </Logger>
+        <Logger name="exoplex.common.slice.SliceCommon" level="info" additivity="false">
+            <AppenderRef ref="Console"/>
+        </Logger>
+        <Logger name="exoplex.sdx.bro.BroManager" level="info" additivity="false">
+            <AppenderRef ref="Console"/>
+        </Logger>
+        <Logger name="exoplex.client.exogeni.SdxExogeniClientManager" level="info" additivity="false">
+            <AppenderRef ref="Console"/>
+        </Logger>
+        <Logger name="exoplex.client.exogeni.ClientSlice" level="info" additivity="false">
+            <AppenderRef ref="Console"/>
+        </Logger>
+        <Logger name="exoplex.common.slice.SafeSlice" level="warn" additivity="true">
+            <AppenderRef ref="Console"/>
+        </Logger>
+        <Logger name="exoplex.common.slice.SafeSlice" level="debug" additivity="true">
+            <AppenderRef ref="RollingFile"/>
+        </Logger>
+        <Logger name="exoplex.sdx.network.RoutingManager" level="info" additivity="false">
+            <AppenderRef ref="RoutingRollingFile"/>
+        </Logger>
+        <Logger name="exoplex.sdx.network.NetworkManager" level="info" additivity="false">
+            <AppenderRef ref="NetworkRollingFile"/>
+        </Logger>
+        <Logger name="exoplex.common.slice.SafeSlice" level="info" additivity="true">
+            <AppenderRef ref="SliceRollingFile"/>
+        </Logger>
+        <Logger name="exoplex.common.slice.SafeSlice" level="warn" additivity="true">
+            <AppenderRef ref="Console"/>
+        </Logger>
+        <Logger name="exoplex.common.slice.SafeSlice" level="error" additivity="true">
+            <AppenderRef ref="Console"/>
+        </Logger>
+        <Logger name="exoplex.common.slice.SafeSlice" level="debug" additivity="true">
+            <AppenderRef ref="RollingFile"/>
+        </Logger>
+        <Logger name="org.apache.commons.httpclient.HttpClient" level="debug" additivity="false">
+            <AppenderRef ref="RollingFile"/>
+        </Logger>
+    </Loggers>
+</Configuration>
