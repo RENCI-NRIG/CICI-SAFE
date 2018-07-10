@@ -283,7 +283,6 @@ public class SliceManager extends SliceCommon {
     return true;
   }
 
-
   protected String getBroLinkName(int ip) {
     return "blink_" + ip;
   }
