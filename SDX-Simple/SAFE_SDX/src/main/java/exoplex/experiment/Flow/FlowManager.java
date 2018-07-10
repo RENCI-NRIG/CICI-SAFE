@@ -17,7 +17,7 @@ public class FlowManager {
     this.sshKey = sshKey;
   }
 
-  public boolean addUdpFlow(String c1, String server, String bw){
+  public boolean addUdpFlow(String c1, String server, String serverDpIP, String bw){
     IperfServer iperfServer = new IperfServer(server, DEFAULT_PORT, IperfServer.UDP, this.sshKey);
     if(iperfServers.containsKey(iperfServer.toString())){
       if(!iperfServers.get(iperfServer.toString()).transportProto.equals(IperfServer.UDP)){
@@ -25,7 +25,7 @@ public class FlowManager {
       }
     }
     iperfServers.put(iperfServer.toString(), iperfServer);
-    IperfFlow flow = new IperfFlow(c1, server, sshKey, DEFAULT_PORT,
+    IperfFlow flow = new IperfFlow(c1, serverDpIP, sshKey, DEFAULT_PORT,
         DEFAULT_TIME, bw, IperfServer.UDP, iperfServer.toString());
     flows.add(flow);
     return true;

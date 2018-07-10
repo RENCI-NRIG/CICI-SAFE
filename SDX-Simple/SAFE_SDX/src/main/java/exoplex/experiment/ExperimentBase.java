@@ -37,13 +37,14 @@ public class ExperimentBase {
 
   public void addClient(String name, String managementIP, String dataplaneIP) {
     clients.put(name, new String[]{managementIP, dataplaneIP});
+    Exec.sshExec("root", managementIP, "apt-get install -y iperf", sshkey);
   }
 
   public void addUdpFlow(String client, String server, String bw) {
     final String mip1 = clients.get(client)[0];
     final String mip2 = clients.get(server)[0];
     final String dip2 = clients.get(server)[1];
-    flowManager.addUdpFlow(mip1, mip2, bw);
+    flowManager.addUdpFlow(mip1, mip2, dip2, bw);
   }
 
   public void clearFlows() {

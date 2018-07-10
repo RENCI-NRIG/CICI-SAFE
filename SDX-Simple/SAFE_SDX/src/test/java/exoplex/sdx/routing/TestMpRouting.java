@@ -17,12 +17,13 @@ public class TestMpRouting extends SdxManager {
   public static void main(String[] args) throws Exception {
     TestMpRouting mpr = new TestMpRouting();
     //create the network
-    mpr.test();
+    //mpr.test();
 
     mpr.initNetwork();
     mpr.installTestGroup();
     mpr.sendTraffic();
     mpr.getGroupStats();
+    mpr.logFlowTables();
     System.out.println("end");
   }
 
@@ -169,6 +170,9 @@ public class TestMpRouting extends SdxManager {
         getDPID("c0"), getSDNController());
     logger.info(res);
 
+  }
+
+  public void logFlowTables(){
     logFlowTables("c0");
     logFlowTables("c1");
     logFlowTables("c2");
@@ -190,17 +194,32 @@ public class TestMpRouting extends SdxManager {
   }
 
   public void getGroupStats(){
+    int gid = 1;
     logger.info("---------------------");
-    String res = SdnUtil.getGroupStats(getSDNController(), getDPID("c0"));
+    String res = SdnUtil.getGroupStats(getSDNController(), getDPID("c0"), gid);
     logger.info(res);
     logger.info("---------------------");
-    res = SdnUtil.getGroupStats(getSDNController(), getDPID("c1"));
+    res = SdnUtil.getGroupStats(getSDNController(), getDPID("c1"), gid);
     logger.info(res);
     logger.info("---------------------");
-    res = SdnUtil.getGroupStats(getSDNController(), getDPID("c2"));
+    res = SdnUtil.getGroupStats(getSDNController(), getDPID("c2"), gid);
     logger.info(res);
     logger.info("---------------------");
-    res = SdnUtil.getGroupStats(getSDNController(), getDPID("c3"));
+    res = SdnUtil.getGroupStats(getSDNController(), getDPID("c3"), gid);
+    logger.info(res);
+    logger.info("---------------------");
+    gid = 2;
+    logger.info("---------------------");
+    res = SdnUtil.getGroupStats(getSDNController(), getDPID("c0"), gid);
+    logger.info(res);
+    logger.info("---------------------");
+    res = SdnUtil.getGroupStats(getSDNController(), getDPID("c1"), gid);
+    logger.info(res);
+    logger.info("---------------------");
+    res = SdnUtil.getGroupStats(getSDNController(), getDPID("c2"), gid);
+    logger.info(res);
+    logger.info("---------------------");
+    res = SdnUtil.getGroupStats(getSDNController(), getDPID("c3"), gid);
     logger.info(res);
     logger.info("---------------------");
   }

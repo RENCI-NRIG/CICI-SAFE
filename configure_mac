@@ -1,4 +1,5 @@
 #!/bin/bash
+SAFE=false
 SLICENAME_SUFFIX=${USER}
 SITENAME3="gwu"
 SITENAME1="ufl"
@@ -61,3 +62,6 @@ sed -i '' "s@slicename=\".*\"@slicename=\"${C4}\"@g;s@serverurl=\".*\"@serverurl
 
 sed -i '' "s@slicename=\".*\"@slicename=\"${C6}\"@g;s@serverurl=\".*\"@serverurl=\"${SDXSERVER}\"@g;s@sshkey=\".*\"@sshkey=\"${SSHKEY}\"@g;s@exogenipem=\".*pem\"@exogenipem=\"${EXOGENIPEM}\"@g;s@scriptsdir=\".*scripts/\"@scriptsdir=\"${SCRIPTSDIR}\"@g;s@resourcedir=\".*resources/\"@resourcedir=\"${RESOURCEDIR}\"@g;s@serversite=\".*\"@serversite=\"${SITE3}\"@g;s@routersite=\".*\"@routersite=\"${SITE3}\"@g" SDX-Simple/client-config/c6.conf
 sed -i '' "s@SDX=.*@SDX=${SDX}@g" SDX-Simple/scripts/cnert-client.sh
+
+sed -i '' "s@safe=.*@safe=${SAFE}@g;" SDX-Simple/config/sdx.conf
+sed -i '' "s@safe=.*@safe=${SAFE}@g;" SDX-Simple/client-config/*.conf

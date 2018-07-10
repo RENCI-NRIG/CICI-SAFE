@@ -26,8 +26,6 @@ public class TestSlice extends SliceManager {
   public TestSlice(String[] args) {
     CommandLine cmd = parseCmd(args);
 
-    System.out.println("Test Slice running: " + args);
-
     String configfilepath = cmd.getOptionValue("config");
 
     readConfig(configfilepath);

@@ -21,7 +21,7 @@ public class RestService {
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.APPLICATION_JSON)
   public StitchResult stitchRequest(StitchRequest sr) {
-    logger.debug("got sittch request");
+    logger.debug("got sittch request ");
     try {
       String[] res = SdxServer.sdxManager.stitchRequest(sr.sdxslice, sr.sdxsite, sr.ckeyhash, sr.cslice,
           sr.creservid, sr.secret, sr.sdxnode);
@@ -126,6 +126,11 @@ class StitchRequest {
   public String creservid;
   public String sdxnode;
   public String secret;
+
+  @Override
+  public String toString(){
+    return String.format("%s %s %s %s %s", sdxslice, sdxsite, cslice, creservid, sdxnode);
+  }
 }
 
 class ConnectionRequest {
