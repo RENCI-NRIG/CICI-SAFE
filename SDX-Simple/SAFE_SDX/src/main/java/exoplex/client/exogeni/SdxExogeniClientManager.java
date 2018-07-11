@@ -146,7 +146,7 @@ public class SdxExogeniClientManager extends SliceCommon {
       String site1 = null, site2 = null;
       jsonparams.put("self_prefix", params[1]);
       jsonparams.put("target_prefix", params[2]);
-      jsonparams.put("ckeyhash", keyhash);
+      jsonparams.put("ckeyhash", safeKeyHash);
       try {
         jsonparams.put("bandwidth", Long.valueOf(params[3]));
       } catch (Exception e) {
@@ -163,7 +163,7 @@ public class SdxExogeniClientManager extends SliceCommon {
     JSONObject paramsobj = new JSONObject();
     paramsobj.put("dest", params[1]);
     paramsobj.put("gateway", params[2]);
-    paramsobj.put("customer", keyhash);
+    paramsobj.put("customer", safeKeyHash);
     String res = HttpUtil.postJSON(sdxserver + "sdx/notifyprefix", paramsobj);
     if (res.equals("")) {
       logger.warn(logPrefix + "Prefix not accepted (authorization failed)");
@@ -193,12 +193,15 @@ public class SdxExogeniClientManager extends SliceCommon {
       JSONObject jsonparams = new JSONObject();
       jsonparams.put("sdxslice", params[2]);
       jsonparams.put("sdxsite", sdxsite);
-      jsonparams.put("ckeyhash", keyhash);
+      jsonparams.put("ckeyhash", safeKeyHash);
       jsonparams.put("cslice", sliceName);
       jsonparams.put("creservid", node0_s2_stitching_GUID);
       jsonparams.put("secret", secret);
       if (params.length > 3) {
         jsonparams.put("sdxnode", params[3]);
+      }
+      if(safeEnabled){
+
       }
       logger.debug("Sending stitch request to Sdx server");
       String r = HttpUtil.postJSON(sdxserver + "sdx/stitchrequest", jsonparams);
