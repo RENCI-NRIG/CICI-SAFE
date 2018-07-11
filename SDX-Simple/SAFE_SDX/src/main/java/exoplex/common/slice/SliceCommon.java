@@ -30,7 +30,6 @@ public abstract class SliceCommon {
   public String serverurl;
   protected ISliceTransportAPIv1 sliceProxy;
   protected SliceAccessContext<SSHAccessToken> sctx;
-  protected String keyhash;
   protected String type;
   protected String topofile = null;
   protected Config conf;
@@ -39,6 +38,9 @@ public abstract class SliceCommon {
   protected String controllerSite;
   protected List<String> sitelist;
   protected String serverSite;
+  protected String safeServer;
+  protected String safeKeyHash;
+  protected boolean safeEnabled = false;
   protected HashMap<String, Link> links = new HashMap<String, Link>();
   protected HashMap<String, ArrayList<String>> computenodes = new HashMap<String, ArrayList<String>>();
   protected ArrayList<StitchPort> stitchports = new ArrayList<>();
@@ -119,7 +121,12 @@ public abstract class SliceCommon {
         clientSites.add(site);
       }
     }
-
+    if(conf.hasPath("config.safe")){
+      safeEnabled = conf.getBoolean("config.safe");
+    }
+    if(conf.hasPath("config.safekey")){
+      safeKeyHash = conf.getString("config.clientsites");
+    }
   }
 
 
