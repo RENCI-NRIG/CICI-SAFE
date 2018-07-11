@@ -26,6 +26,7 @@ public class SafeSlice {
   private static final int COMMIT_COUNT = 5;
   private static final int INTERVAL = 10;
   public static final String VMVersion = "Ubuntu 17.10";
+  public static final String SafeVMVersion = "Ubuntu 14.04 Docker";
   public static final String CustomerVMVersion = "Ubuntu 14.04";
   private ReentrantLock lock = new ReentrantLock();
   final static long DEFAULT_BW = 10000000;
@@ -802,6 +803,20 @@ public class SafeSlice {
     ComputeNode node0 = addComputeNode(router1, nodeImageURL,
         nodeImageHash, nodeImageShortName, nodeNodeType, site,
         nodePostBootScript);
+  }
+
+
+  protected void addSafeServer(String siteName,  String riakIp) {
+    NodeBaseInfo ninfo = NodeBase.getImageInfo(NodeBase.Docker);
+    String dockerImageShortName = ninfo.nisn;
+    String dockerImageURL = ninfo.niurl;
+    String dockerImageHash = ninfo.nihash;
+    String dockerNodeType = "XO Large";
+    ComputeNode node0 = addComputeNode("safe-server");
+    node0.setImage(dockerImageURL, dockerImageHash, dockerImageShortName);
+    node0.setNodeType(dockerNodeType);
+    node0.setDomain(siteName);
+    node0.setPostBootScript(Scripts.getSafeScript(riakIp));
   }
 
   public void addPlexusController(String controllerSite, String name) {

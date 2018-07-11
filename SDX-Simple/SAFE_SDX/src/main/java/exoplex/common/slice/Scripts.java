@@ -32,4 +32,15 @@ public class Scripts {
         + "/etc/init.d/neuca stop\n";
     return nodePostBootScript;
   }
+
+  public static String getSafeScript(String riakip) {
+    String script = "apt-get update\n"
+        + "docker pull yaoyj11/safeserver\n"
+        + "docker run -i -t -d -p 7777:7777 -h safe --name safe yaoyj11/safeserver\n"
+        + "docker exec -d safe /bin/bash -c  \"cd /root/safe;export SBT_HOME=/opt/sbt-0.13.12;"
+        + "export SCALA_HOME=/opt/scala-2.11.8;sed -i 's/RIAKSERVER/" + riakip + "/g' "
+        + "safe-server/src/main/resources/application.conf;./sdx.sh\"\n";
+    return script;
+  }
+
 }

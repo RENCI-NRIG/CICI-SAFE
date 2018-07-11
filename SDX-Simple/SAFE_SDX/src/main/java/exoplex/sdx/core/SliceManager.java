@@ -253,6 +253,26 @@ public class SliceManager extends SliceCommon {
     logger.debug("Finished copying ovs scripts");
   }
 
+  protected boolean checkSafeServer(String safeIP, String riakIp) {
+    String result = Exec.sshExec("root", safeIP, "docker ps", sshkey)[0];
+    if (result.contains("safe")) {
+      logger.debug("safe server has started");
+    } else {
+      String script = Scripts.getSafeScript(riakIp);
+      logger.debug("safe server hasn't started, retrying...");
+      Exec.sshExec("root", safeIP, "docker pull yaoyj11/safeserver", sshkey);
+      Exec.sshExec("root",safeIP, script, sshkey);
+      result = Exec.sshExec("root", safeIP, "docker ps", sshkey)[0];
+      if (!result.contains("safe")) {
+        logger.debug("Failed to start safe controller, exit");
+        System.out.println("Failed to start safe controller, exit");
+        System.exit(-1);
+        return false;
+      }
+      logger.debug("safe server has started");
+    }
+    return true;
+  }
 
   protected boolean checkPlexus(String SDNControllerIP) {
     String result = Exec.sshExec("root", SDNControllerIP, "docker ps", sshkey)[0];

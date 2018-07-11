@@ -13,9 +13,6 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
 
-
-
-
 	<organization>
 		<name>RENCI, The University of North Carolina at Chapel Hill</name>
 		<url>http://www.renci.org</url>
