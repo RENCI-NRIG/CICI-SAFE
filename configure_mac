@@ -66,5 +66,6 @@ sed -i '' "s@SDX=.*@SDX=${SDX}@g" SDX-Simple/scripts/cnert-client.sh
 
 sed -i '' "s@safe=.*@safe=${SAFE}@g;" SDX-Simple/config/sdx.conf
 sed -i '' "s@safe=.*@safe=${SAFE}@g;" SDX-Simple/client-config/*.conf
-sed -i '' "s@riak=\".*\"@safe=\"${RIAK}\"@g;" SDX-Simple/config/sdx.conf
-sed -i '' "s@safe=.*@safe=${SAFE}@g;" SDX-Simple/client-config/*.conf
+
+sed -i '' "s@riak=\".*\"@riak=\"${RIAK}\"@g;" SDX-Simple/config/sdx.conf
+sed -i '' "s@riak=\".*\"@riak=\"${RIAK}\"@g;" SDX-Simple/client-config/*.conf

@@ -137,6 +137,9 @@ public class SafeSlice {
     SafeSlice s = new SafeSlice(pemLocation, keyLocation, controllerUrl);
     s.sliceName = sliceName;
     s.sliceProxy = getSliceProxy(pemLocation, keyLocation, controllerUrl);
+    s.pemLocation = pemLocation;
+    s.keyLocation = keyLocation;
+    s.controllerUrl = controllerUrl;
     int i=0;
     do {
       try {

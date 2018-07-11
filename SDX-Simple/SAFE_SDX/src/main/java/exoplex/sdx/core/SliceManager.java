@@ -143,7 +143,7 @@ public class SliceManager extends SliceCommon {
       carrier.copyFile2Slice(scriptsdir + "ovsbridge.sh", "~/ovsbridge.sh", sshkey);
       //Make sure that plexus container is running
       SDNControllerIP = carrier.getComputeNode("plexuscontroller").getManagementIP();
-      safeServerIp = carrier.getComputeNode("safeserver").getManagementIP();
+      safeServerIp = carrier.getComputeNode("safe-server").getManagementIP();
       safeServer = safeServerIp + ":7777";
       //SDNControllerIP = "152.3.136.36";
       Thread.sleep(10000);
@@ -218,11 +218,6 @@ public class SliceManager extends SliceCommon {
       checkSafeServer(safeServerIp, riakIp);
     }
     logger.debug("Finished checking prerequisites");
-  }
-
-  protected void configSafeServerIp(SafeSlice serverSlice){
-    safeServerIp = serverSlice.getComputeNode("safeserver").getManagementIP();
-    safeServer = safeServerIp + ":7777";
   }
 
   public void checkOVS(SafeSlice serverSlice, String nodeName){

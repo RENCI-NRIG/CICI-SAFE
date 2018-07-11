@@ -23,6 +23,7 @@ import org.renci.ahab.libtransport.util.UtilTransportException;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.util.concurrent.ExecutionException;
 
 /**
  * @author geni-orca
@@ -33,6 +34,7 @@ public class SdxExogeniClientManager extends SliceCommon {
   private String logPrefix = "";
   private String type;
   private String sdxserver;
+  private SafeSlice serverSlice = null;
   public SdxExogeniClientManager(String[] args) {
     //Example usage: ./target/appassembler/bin/SafeSdxClient -f alice.conf
     //pemLocation = args[0];
@@ -67,6 +69,12 @@ public class SdxExogeniClientManager extends SliceCommon {
   }
 
   public void run(String[] args) {
+    try {
+      SafeSlice s = SafeSlice.loadManifestFile(sliceName, pemLocation, keyLocation, controllerUrl);
+      configSafeServerIp(s);
+    }catch (Exception e){
+      e.printStackTrace();
+    }
     if (cmd.hasOption('e')) {
       String command = cmd.getOptionValue('e');
       processCmd(command);
@@ -112,16 +120,19 @@ public class SdxExogeniClientManager extends SliceCommon {
   }
 
   public boolean ping(String nodeName, String ip) {
-    try {
-      SafeSlice s = SafeSlice.loadManifestFile(sliceName, pemLocation, keyLocation, controllerUrl);
-      ComputeNode node = s.getComputeNode(nodeName);
-      String res[] = Exec.sshExec("root", node.getManagementIP(), "ping  -c 1 " + ip, sshkey);
-      logger.debug(res[0]);
-      return res[0].contains("1 received");
-    }catch (Exception e){
-      logger.warn(e.getMessage());
-      return false;
+
+    if(serverSlice==null) {
+      try {
+        serverSlice = SafeSlice.loadManifestFile(sliceName, pemLocation, keyLocation, controllerUrl);
+      } catch (Exception e) {
+        logger.warn(e.getMessage());
+        return false;
+      }
     }
+    ComputeNode node = serverSlice.getComputeNode(nodeName);
+    String res[] = Exec.sshExec("root", node.getManagementIP(), "ping  -c 1 " + ip, sshkey);
+    logger.debug(res[0]);
+    return res[0].contains("1 received");
   }
 
   public boolean checkConnectivity(String nodeName, String ip) {
@@ -174,9 +185,15 @@ public class SdxExogeniClientManager extends SliceCommon {
   }
 
   private void processStitchCmd(String[] params) {
+    if(serverSlice==null){
+      try {
+        serverSlice = SafeSlice.loadManifestFile(sliceName, pemLocation, keyLocation, controllerUrl);
+      }catch (Exception e){
+        logger.error(e.getMessage());
+      }
+    }
     try {
-      SafeSlice s2 = SafeSlice.loadManifestFile(sliceName, pemLocation, keyLocation, controllerUrl);
-      ComputeNode node0_s2 = (ComputeNode) s2.getResourceByName(params[1]);
+      ComputeNode node0_s2 = (ComputeNode) serverSlice.getResourceByName(params[1]);
       String node0_s2_stitching_GUID = node0_s2.getStitchingGUID();
       String secret = "mysecret";
       logger.debug("node0_s2_stitching_GUID: " + node0_s2_stitching_GUID);
@@ -202,6 +219,7 @@ public class SdxExogeniClientManager extends SliceCommon {
         jsonparams.put("sdxnode", params[3]);
       }
       if(safeEnabled){
+        configSafeServerIp(serverSlice);
         postSafeStitchRequest(safeKeyHash, sliceName, node0_s2_stitching_GUID, params[2], params[3]);
       }
       logger.debug("Sending stitch request to Sdx server");
@@ -218,7 +236,7 @@ public class SdxExogeniClientManager extends SliceCommon {
         String result = Exec.sshExec("root", mip, "ifconfig eth2 " + ip, sshkey)[0];
         Exec.sshExec("root", mip, "echo \"ip route 192.168.1.1/16 " + res.getString("gateway").split("/")[0] + "\" >>/etc/quagga/zebra.conf  ", sshkey);
         Exec.sshExec("root", mip, "/etc/init.d/quagga restart", sshkey);
-        ComputeNode node1 = s2.getComputeNode("CNode1");
+        ComputeNode node1 = serverSlice.getComputeNode("CNode1");
         String IPPrefix = conf.getString("config.ipprefix").split("/")[0];
         mip = node1.getManagementIP();
         Exec.sshExec("root", mip, "echo \"ip route 192.168.1.1/16 " + IPPrefix + "\" >>/etc/quagga/zebra.conf  ", sshkey);

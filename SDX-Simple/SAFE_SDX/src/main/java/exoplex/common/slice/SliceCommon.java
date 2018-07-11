@@ -130,10 +130,14 @@ public abstract class SliceCommon {
       safeEnabled = conf.getBoolean("config.safe");
     }
     if(conf.hasPath("config.safekey")){
-      safeKeyHash = conf.getString("config.clientsites");
+      safeKeyHash = conf.getString("config.safekey");
     }
   }
 
+  protected void configSafeServerIp(SafeSlice serverSlice){
+    safeServerIp = serverSlice.getComputeNode("safe-server").getManagementIP();
+    safeServer = safeServerIp + ":7777";
+  }
 
   protected ArrayList<Link> readLinks(String file) {
     ArrayList<Link> res = new ArrayList<>();
