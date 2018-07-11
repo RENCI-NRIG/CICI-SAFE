@@ -806,7 +806,7 @@ public class SafeSlice {
   }
 
 
-  protected void addSafeServer(String siteName,  String riakIp) {
+  public void addSafeServer(String siteName,  String riakIp) {
     NodeBaseInfo ninfo = NodeBase.getImageInfo(NodeBase.Docker);
     String dockerImageShortName = ninfo.nisn;
     String dockerImageURL = ninfo.niurl;

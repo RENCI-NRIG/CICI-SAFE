@@ -122,7 +122,9 @@ public class SdxManager extends SliceManager {
     broManager = new BroManager(serverSlice, routingmanager, this);
     logPrefix += "[" + sliceName + "]";
     //runCmdSlice(serverSlice, "ovs-ofctl del-flows br0", "(^c\\d+)", false, true);
+
     configSdnControllerAddr(serverSlice.getComputeNode(plexusName).getManagementIP());
+    configSafeServerIp(serverSlice);
     //configRouting(serverslice,OVSController,SDNController,"(c\\d+)","(sp-c\\d+.*)");
     loadSdxNetwork(serverSlice, routerPattern, stitchPortPattern, broPattern);
   }

@@ -1,5 +1,6 @@
 #!/bin/bash
 SAFE=false
+RIAK="192.168.1.1"
 SLICENAME_SUFFIX=${USER}
 SITENAME3="gwu"
 SITENAME1="ufl"
@@ -64,4 +65,6 @@ sed -i '' "s@slicename=\".*\"@slicename=\"${C6}\"@g;s@serverurl=\".*\"@serverurl
 sed -i '' "s@SDX=.*@SDX=${SDX}@g" SDX-Simple/scripts/cnert-client.sh
 
 sed -i '' "s@safe=.*@safe=${SAFE}@g;" SDX-Simple/config/sdx.conf
+sed -i '' "s@safe=.*@safe=${SAFE}@g;" SDX-Simple/client-config/*.conf
+sed -i '' "s@riak=\".*\"@safe=\"${RIAK}\"@g;" SDX-Simple/config/sdx.conf
 sed -i '' "s@safe=.*@safe=${SAFE}@g;" SDX-Simple/client-config/*.conf

@@ -143,6 +143,8 @@ public class SliceManager extends SliceCommon {
       carrier.copyFile2Slice(scriptsdir + "ovsbridge.sh", "~/ovsbridge.sh", sshkey);
       //Make sure that plexus container is running
       SDNControllerIP = carrier.getComputeNode("plexuscontroller").getManagementIP();
+      safeServerIp = carrier.getComputeNode("safeserver").getManagementIP();
+      safeServer = safeServerIp + ":7777";
       //SDNControllerIP = "152.3.136.36";
       Thread.sleep(10000);
       if (!SDNControllerIP.equals("152.3.136.36") && !checkPlexus(SDNControllerIP)) {
@@ -212,7 +214,15 @@ public class SliceManager extends SliceCommon {
     }
     //checkPlexus
     checkPlexus(SDNControllerIP);
+    if(safeEnabled){
+      checkSafeServer(safeServerIp, riakIp);
+    }
     logger.debug("Finished checking prerequisites");
+  }
+
+  protected void configSafeServerIp(SafeSlice serverSlice){
+    safeServerIp = serverSlice.getComputeNode("safeserver").getManagementIP();
+    safeServer = safeServerIp + ":7777";
   }
 
   public void checkOVS(SafeSlice serverSlice, String nodeName){
@@ -265,8 +275,7 @@ public class SliceManager extends SliceCommon {
       result = Exec.sshExec("root", safeIP, "docker ps", sshkey)[0];
       if (!result.contains("safe")) {
         logger.debug("Failed to start safe controller, exit");
-        System.out.println("Failed to start safe controller, exit");
-        System.exit(-1);
+        logger.error("Failed to start safe controller, exit");
         return false;
       }
       logger.debug("safe server has started");
@@ -354,6 +363,9 @@ public class SliceManager extends SliceCommon {
       String linkname = "clink" + i;
       Link logLink = addLink(s, linkname, node0, node1, bw);
       links.put(linkname, logLink);
+    }
+    if(safeEnabled){
+      s.addSafeServer(serverSite, riakIp);
     }
     s.addPlexusController(controllerSite, "plexuscontroller");
     return s;

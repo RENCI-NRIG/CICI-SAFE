@@ -39,8 +39,10 @@ public abstract class SliceCommon {
   protected List<String> sitelist;
   protected String serverSite;
   protected String safeServer;
+  protected String safeServerIp;
   protected String safeKeyHash;
   protected boolean safeEnabled = false;
+  protected String riakIp = null;
   protected HashMap<String, Link> links = new HashMap<String, Link>();
   protected HashMap<String, ArrayList<String>> computenodes = new HashMap<String, ArrayList<String>>();
   protected ArrayList<StitchPort> stitchports = new ArrayList<>();
@@ -110,6 +112,9 @@ public abstract class SliceCommon {
     }
     if (conf.hasPath("config.serversite")) {
       serverSite = conf.getString("config.serversite");
+    }
+    if(conf.hasPath("conf.riak")){
+      riakIp = conf.getString("config.riak");
     }
     if (conf.hasPath("config.controllersite")) {
       controllerSite = conf.getString("config.controllersite");

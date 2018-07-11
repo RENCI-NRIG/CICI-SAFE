@@ -138,6 +138,9 @@ public class ClientSlice extends SliceManager {
         }
       }
     }
+    if(safeEnabled){
+      s.addSafeServer(serverSite, riakIp);
+    }
     return s;
   }
 }
