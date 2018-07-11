@@ -3,6 +3,7 @@ package exoplex.client.stitchport;
 import exoplex.common.slice.SliceCommon;
 import exoplex.common.utils.Exec;
 import exoplex.common.utils.HttpUtil;
+import exoplex.common.utils.SafePost;
 import org.apache.commons.cli.CommandLine;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -75,7 +76,7 @@ public class SdxStitchPortClientManager extends SliceCommon {
         JSONObject paramsobj = new JSONObject();
         paramsobj.put("dest", params[1]);
         paramsobj.put("gateway", params[2]);
-        paramsobj.put("customer", keyhash);
+        paramsobj.put("customer", safeKeyHash);
         String res = HttpUtil.postJSON(serverurl + "sdx/notifyprefix", paramsobj);
         if (res.equals("")) {
           logger.debug("Prefix notifcation failed");
@@ -102,14 +103,11 @@ public class SdxStitchPortClientManager extends SliceCommon {
       jsonparams.put("sdxnode", params[4]);
       jsonparams.put("gateway", params[5]);
       jsonparams.put("ip", params[6]);
-      jsonparams.put("ckeyhash", keyhash);
+      jsonparams.put("ckeyhash", safeKeyHash);
+      if(safeEnabled){
+        postSafeStitchRequest(safeKeyHash,jsonparams.getString("gateway"),jsonparams.getString("sdxslice"),jsonparams.getString("sdxnode"),jsonparams.getString("stitchport"),jsonparams.getString("vlan"));
+      }
       logger.debug("posted stitch request, requesting to Sdx server");
-
-
-
-
-
-
       String res = HttpUtil.postJSON(serverurl + "sdx/stitchchameleon", jsonparams);
       logger.debug(res);
       System.out.println(res);
@@ -142,6 +140,22 @@ public class SdxStitchPortClientManager extends SliceCommon {
         logger.debug("GUID: " + i.getGUID());
       }
     }
+  }
+
+  private boolean postSafeStitchRequest(String keyhash, String gateway,String slicename, String nodename,String stitchport, String vlan){
+    /** Post to remote safesets using apache httpclient */
+    String[] othervalues=new String[5];
+    othervalues[0]=stitchport;
+    othervalues[1]=vlan;
+    othervalues[2]=gateway;
+    othervalues[3]=slicename;
+    othervalues[4]=nodename;
+    String message= SafePost.postSafeStatements(safeServer,"postChameleonStitchRequest",keyhash,othervalues);
+    if(message.contains("fail")){
+      return false;
+    }
+    else
+      return true;
   }
 
   public void undoStitch(String carrierName, String customerName, String netName, String nodeName) {

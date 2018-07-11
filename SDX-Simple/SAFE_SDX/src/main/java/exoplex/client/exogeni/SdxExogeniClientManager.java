@@ -7,6 +7,7 @@ import exoplex.common.slice.SafeSlice;
 import exoplex.common.slice.SliceCommon;
 import exoplex.common.utils.Exec;
 import exoplex.common.utils.HttpUtil;
+import exoplex.common.utils.SafePost;
 import org.apache.commons.cli.CommandLine;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -201,7 +202,7 @@ public class SdxExogeniClientManager extends SliceCommon {
         jsonparams.put("sdxnode", params[3]);
       }
       if(safeEnabled){
-
+        postSafeStitchRequest(safeKeyHash, sliceName, node0_s2_stitching_GUID, params[2], params[3]);
       }
       logger.debug("Sending stitch request to Sdx server");
       String r = HttpUtil.postJSON(sdxserver + "sdx/stitchrequest", jsonparams);
@@ -328,6 +329,21 @@ public class SdxExogeniClientManager extends SliceCommon {
         //+"/etc/init.d/quagga restart\napt-get -y install iperf\n"
         + "/etc/init.d/quagga stop\napt-get -y install iperf\n"
         ;
+  }
+
+  private boolean postSafeStitchRequest(String keyhash,String customerName,String ReservID,String slicename, String nodename){
+    /** Post to remote safesets using apache httpclient */
+    String[] othervalues=new String[4];
+    othervalues[0]=customerName;
+    othervalues[1]=ReservID;
+    othervalues[2]=slicename;
+    othervalues[3]=nodename;
+    String message= SafePost.postSafeStatements(safeServer,"postStitchRequest",keyhash,othervalues);
+    if(message.contains("fail")){
+      return false;
+    }
+    else
+      return true;
   }
 
 }
