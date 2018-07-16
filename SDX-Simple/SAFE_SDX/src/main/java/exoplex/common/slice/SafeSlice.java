@@ -808,7 +808,7 @@ public class SafeSlice {
         nodePostBootScript);
   }
 
-  public void addDocker(String siteName, String nodeName, String script){
+  public void addDocker(String siteName, String nodeName, String script, String size){
     NodeBaseInfo ninfo = NodeBase.getImageInfo(NodeBase.Docker);
     String dockerImageShortName = ninfo.nisn;
     String dockerImageURL = ninfo.niurl;
@@ -822,16 +822,16 @@ public class SafeSlice {
   }
 
   public void addRiakServer(String siteName, String nodeName){
-    addDocker(siteName, nodeName, Scripts.getRiakPreBootScripts());
+    addDocker(siteName, nodeName, Scripts.getRiakPreBootScripts(), NodeBase.xoMedium);
 
   }
 
   public void addSafeServer(String siteName,  String riakIp) {
-    addDocker(siteName, "safe-server", Scripts.getSafeScript_v1(riakIp));
+    addDocker(siteName, "safe-server", Scripts.getSafeScript_v1(riakIp), NodeBase.xoMedium);
   }
 
   public void addPlexusController(String controllerSite, String name) {
-    addDocker(controllerSite, name, Scripts.getPlexusScript());
+    addDocker(controllerSite, name, Scripts.getPlexusScript(), NodeBase.xoMedium);
   }
 
   //We always add the bro when we add the edge router
@@ -947,13 +947,8 @@ public class SafeSlice {
       logger.debug("MacAddr: " + inode2net.getMacAddress());
       logger.debug("GUID: " + i.getGUID());
     }
-    for (ComputeNode node : slice.getComputeNodes()) {
-      logger.info(node.getName() + node.getManagementIP());
-      for (Interface i : node.getInterfaces()) {
-        InterfaceNode2Net inode2net = (InterfaceNode2Net) i;
-        logger.debug("MacAddr: " + inode2net.getMacAddress());
-        logger.debug("GUID: " + i.getGUID());
-      }
+    for(BroadcastNetwork link :slice.getBroadcastLinks()){
+      logger.debug(link.getName());
     }
   }
 

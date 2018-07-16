@@ -4,6 +4,7 @@ import exoplex.common.slice.SafeSlice;
 import exoplex.common.slice.Scripts;
 import exoplex.common.slice.SliceCommon;
 import exoplex.common.utils.Exec;
+import exoplex.sdx.safe.SafeManager;
 import org.apache.commons.cli.CommandLine;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -15,6 +16,7 @@ import org.renci.ahab.libtransport.SliceAccessContext;
 import org.renci.ahab.libtransport.util.SSHAccessTokenFileFactory;
 import org.renci.ahab.libtransport.util.UtilTransportException;
 import exoplex.sdx.network.Link;
+import safe.AuthorityMock;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -137,14 +139,16 @@ public class SliceManager extends SliceCommon {
         carrier = createCarrierSlice(carrierName, routerNum, bw);
         carrier.commitAndWait();
       }
+      logger.info(String.format("Slice %s active now, making configurations", sliceName));
       carrier.runCmdSlice( Scripts.getOVSScript(), sshkey, routerPattern, true);
       carrier.copyFile2Slice(scriptsdir + "dpid.sh", "~/dpid.sh", sshkey);
       carrier.copyFile2Slice(scriptsdir + "ifaces.sh", "~/ifaces.sh", sshkey);
       carrier.copyFile2Slice(scriptsdir + "ovsbridge.sh", "~/ovsbridge.sh", sshkey);
       //Make sure that plexus container is running
       SDNControllerIP = carrier.getComputeNode("plexuscontroller").getManagementIP();
-      safeServerIp = carrier.getComputeNode("safe-server").getManagementIP();
-      safeServer = safeServerIp + ":7777";
+      if(safeEnabled){
+        configSafeServerIp(carrier);
+      }
       //SDNControllerIP = "152.3.136.36";
       Thread.sleep(10000);
       if (!SDNControllerIP.equals("152.3.136.36") && !checkPlexus(SDNControllerIP)) {
@@ -230,6 +234,10 @@ public class SliceManager extends SliceCommon {
         @Override
         public void run() {
           checkSafeServer(safeServerIp, riakIp);
+          AuthorityMock mock = new AuthorityMock(safeServerIp + ":7777");
+          if(!mock.verifySafePreparation()){
+            mock.makeSafePreparation();
+          }
         }
       });
     }
@@ -280,22 +288,8 @@ public class SliceManager extends SliceCommon {
   }
 
   protected boolean checkSafeServer(String safeIP, String riakIp) {
-    String result = Exec.sshExec("root", safeIP, "docker ps", sshkey)[0];
-    if (result.contains("safe")) {
-      logger.debug("safe server has started");
-    } else {
-      String script = Scripts.getSafeScript_v1(riakIp);
-      logger.debug("safe server hasn't started, retrying...");
-      Exec.sshExec("root", safeIP, "docker pull yaoyj11/safeserver", sshkey);
-      Exec.sshExec("root",safeIP, script, sshkey);
-      result = Exec.sshExec("root", safeIP, "docker ps", sshkey)[0];
-      if (!result.contains("safe")) {
-        logger.debug("Failed to start safe controller, exit");
-        logger.error("Failed to start safe controller, exit");
-        return false;
-      }
-      logger.debug("safe server has started");
-    }
+    SafeManager sm = new SafeManager(safeIP, safeKeyFile, sshkey);
+    sm.verifySafeInstallation(riakIp);
     return true;
   }
 

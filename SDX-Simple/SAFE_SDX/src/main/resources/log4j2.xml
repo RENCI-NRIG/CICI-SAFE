@@ -82,6 +82,9 @@
         <Logger name="exoplex.sdx.core.SdxManager" level="info" additivity="false">
             <AppenderRef ref="Console"/>
         </Logger>
+        <Logger name="exoplex.common.utils.SafeUtils" level="debug" additivity="false">
+            <AppenderRef ref="RollingFile"/>
+        </Logger>
         <Logger name="exoplex.sdx.core.SliceManager" level="info" additivity="false">
             <AppenderRef ref="Console"/>
         </Logger>

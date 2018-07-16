@@ -116,22 +116,29 @@ public class TestMain {
     SdxExogeniClient client4 = new SdxExogeniClient(clientarg4);
     SdxExogeniClient client6 = new SdxExogeniClient(clientarg6);
 
+    String[] gateways = new String[]{
+        "192.168.132.2",
+        "192.168.133.2",
+        "192.168.134.2",
+        "192.168.135.2",
+        "192.168.137.2"};
+
     if (stitch) {
       System.out.println("c1 stitches to SDX");
-      client1.processCmd("stitch CNode0 " + sdx + " e0");
+      gateways[0] = client1.processCmd("stitch CNode0 " + sdx + " e0");
       System.out.println("c2 stitches to SDX");
-      client2.processCmd("stitch CNode0 " + sdx + " e1");
+      gateways[1] = client2.processCmd("stitch CNode0 " + sdx + " e1");
       System.out.println("c3 stitches to SDX");
-      client3.processCmd("stitch CNode0 " + sdx + " e0");
+      gateways[2] = client3.processCmd("stitch CNode0 " + sdx + " e0");
       System.out.println("c4 stitches to SDX");
-      client4.processCmd("stitch CNode0 " + sdx + " e1");
+      gateways[3] = client4.processCmd("stitch CNode0 " + sdx + " e1");
     }
 
     // Client slice advertise their prefix
-    client1.processCmd("route 192.168.10.1/24 192.168.132.2");
-    client2.processCmd("route 192.168.20.1/24 192.168.133.2");
-    client3.processCmd("route 192.168.30.1/24 192.168.134.2");
-    client4.processCmd("route 192.168.40.1/24 192.168.135.2");
+    client1.processCmd("route 192.168.10.1/24 " + gateways[0]);
+    client2.processCmd("route 192.168.20.1/24 " + gateways[1]);
+    client3.processCmd("route 192.168.30.1/24 " + gateways[2]);
+    client4.processCmd("route 192.168.40.1/24 " + gateways[3]);
 
     // Client request for connection between prefixes
     client1.processCmd("link 192.168.10.1/24 192.168.20.1/24");
@@ -146,9 +153,9 @@ public class TestMain {
       "192.168.30.1/24", "192.168.40.1/24");
     }
 
-    client6.processCmd("stitch CNode0 " + sdx);
+    gateways[4] = client6.processCmd("stitch CNode0 " + sdx);
     //An IP address will be used when we add new core-edge router pair: 192.168.136.1/24
-    client6.processCmd("route 192.168.60.1/24 192.168.137.2");
+    client6.processCmd("route 192.168.60.1/24 " + gateways[4]);
     client6.processCmd("link 192.168.60.1/24 192.168.10.1/24");
     if(!client6.checkConnectivity("CNode1", "192.168.10.2")){
       SdxServer.sdxManager.checkFlowTableForPair("192.168.10.0/24", "192.168.60.0/24",

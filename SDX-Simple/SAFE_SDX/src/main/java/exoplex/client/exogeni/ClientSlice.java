@@ -83,6 +83,10 @@ public class ClientSlice extends SliceManager {
         c1.commitAndWait();
       }
       c1.refresh();
+      if(safeEnabled){
+        String safeIp = c1.getComputeNode("safe-server").getManagementIP();
+        checkSafeServer(safeIp, riakIp);
+      }
       //copyFile2Slice(c1, "/home/yaoyj11/project/exo-geni/SAFE_SDX/src/main/resources/scripts/configospffornewif.sh","~/configospffornewif.sh","~/.ssh/id_rsa");
       //copyFile2Slice(c1, "/home/yaoyj11/project/exo-geni/SAFE_SDX/src/main/resources/scripts/configospffornewif.sh","~/configospffornewif.sh","~/.ssh/id_rsa");
       //runCmdSlice(c1,"/bin/bash ~/ospfautoconfig.sh","~/.ssh/id_rsa");

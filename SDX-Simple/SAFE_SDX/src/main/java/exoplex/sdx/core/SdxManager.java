@@ -226,6 +226,7 @@ public class SdxManager extends SliceManager {
     String ip = serverSlice.getComputeNode(nodeName).getManagementIP();
     int numInterfaces = getInterfaceNum(ip);
     serverSlice.lockSlice();
+    serverSlice.reloadSlice();
     int times = 1;
     while(true) {
       serverSlice.addLink(stitchName, nodeName, bw);
@@ -284,7 +285,7 @@ public class SdxManager extends SliceManager {
     //if(!safeEnabled || authorizeStitchRequest(customer_slice,customerName,ResrvID, safeKeyHash,
     if(!safeEnabled || authorizeStitchRequest(customerSafeKeyHash,customerSlice)){
       if (safeEnabled) {
-        System.out.println("Authorized: stitch request for" + sliceName + " and " + sdxnode);
+        logger.info("Authorized: stitch request for " + sliceName + " and " + sdxnode);
       }
       serverSlice.reloadSlice();
       String stitchname = null;
@@ -327,6 +328,7 @@ public class SdxManager extends SliceManager {
         String cRouterName = allcoateCRouterName(site);
         String eLinkName = allocateELinkName();
         serverSlice.lockSlice();
+        serverSlice.reloadSlice();
         serverSlice.addCoreEdgeRouterPair(site, cRouterName, eRouterName, eLinkName, bw);
         node = (ComputeNode) serverSlice.getResourceByName(eRouterName);
         ip_to_use = getAvailableIP();
@@ -558,6 +560,7 @@ public class SdxManager extends SliceManager {
   }
 
   public String connectionRequest(String ckeyhash, String self_prefix, String target_prefix, long bandwidth) throws  Exception{
+    logger.info(String.format("Connection request between %s and %s", self_prefix, target_prefix));
     //String n1=computenodes.get(site1).get(0);
     //String n2=computenodes.get(site2).get(0);
     String n1 = routingmanager.getEdgeRouterbyGateway(prefixgateway.get(self_prefix));
@@ -1223,17 +1226,11 @@ public class SdxManager extends SliceManager {
   private boolean authorizeConnectivity(String srchash, String srcip, String dsthash, String dstip){
     String[] othervalues=new String[4];
     othervalues[0]=srchash;
-    othervalues[1]=dsthash;
-    othervalues[2]=srcip;
+    othervalues[1]=srcip;
+    othervalues[2]=dsthash;
     othervalues[3]=dstip;
-    String message= SafeUtils.postSafeStatements(safeServer,"connectivity",
-        safeManager.getSafeKeyHash(),
+    return SafeUtils.authorize(safeServer, "authZByUserAttr", safeManager.getSafeKeyHash(),
         othervalues);
-    if(message !=null && message.contains("Unsatisfied")){
-      return false;
-    }
-    else
-      return true;
   }
 
   public boolean authorizeStitchRequest(String customer_slice,
@@ -1266,7 +1263,8 @@ public class SdxManager extends SliceManager {
     /** Post to remote safesets using apache httpclient */
     String[] othervalues=new String[2];
     othervalues[0]=customerSafeKeyHash;
-    othervalues[1]=customerSlice;
+    String saHash = SafeUtils.getPrincipalId(safeServer, "key_p3");
+    othervalues[1]=saHash + ":" + customerSlice;
     String message= SafeUtils.postSafeStatements(safeServer,"authorizeStitchByUID",
         safeManager.getSafeKeyHash(),
         othervalues);

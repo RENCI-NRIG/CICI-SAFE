@@ -117,14 +117,10 @@ public class SafeUtils {
 
     } catch (MalformedURLException e) {
       logger.debug("malformedURLExcepto");
-      e.printStackTrace();
-
     } catch (IOException e) {
       logger.debug("ioexception");
-      e.printStackTrace();
     } catch (Exception e) {
       logger.debug("normal Exception");
-      e.printStackTrace();
     }
     return null;
   }
@@ -150,5 +146,4 @@ public class SafeUtils {
         .replace("'","")
         .replace(" ","");
   }
-
 }

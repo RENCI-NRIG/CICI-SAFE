@@ -48,9 +48,8 @@ public class Scripts {
   public static String getSafeScript_v1(String riakip) {
     String script = "apt-get update\n"
         + "docker pull yaoyj11/safeserver\n"
-        + "docker run -i -t -d -p 7777:7777 -h safe --name safe yaoyj11/safeserver-v1\n"
-        + "docker exec -d safe /bin/bash -c  \"cd /root/safe;export SBT_HOME=/opt/sbt-0.13.12;"
-        + "export SCALA_HOME=/opt/scala-2.11.8;"
+        + "docker run -i -t -d -p 7777:7777 -h safe --name safe yaoyj11/safeserver-v4\n"
+        + "docker exec -d safe /bin/bash -c  \"cd /root/safe;"
         + "sed -i 's/http:\\/\\/.*:8098/http:\\/\\/" + riakip + ":8098/g' "
         + "safe-server/src/main/resources/application.conf;"
         + "./prdn.sh\"\n";
@@ -58,8 +57,7 @@ public class Scripts {
   }
 
   public static String restartSafe_v1(){
-    return "docker exec -d safe /bin/bash -c  \"cd /root/safe;export SBT_HOME=/opt/sbt-0.13.12;"
-            + "export SCALA_HOME=/opt/scala-2.11.8;"
+    return "docker exec -d safe /bin/bash -c  \"cd /root/safe;pkill java;"
             + "./prdn.sh\"\n";
   }
 

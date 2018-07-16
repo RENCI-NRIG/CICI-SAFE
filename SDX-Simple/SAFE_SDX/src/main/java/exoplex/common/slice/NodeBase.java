@@ -29,6 +29,9 @@ public class NodeBase {
   public static final String UBUNTU16 = "Ubuntu 16.04";
   public static final String UBUNTU17 = "Ubuntu 17.10";
   public static final String Docker = "Ubuntu 14.04 Docker";
+  public static final String xoMedium = "XO Medium";
+  public static final String xoLarge = "XO Large";
+  public static final String xoExtraLarge = "XO Extra Large";
 
   private static Map<String, NodeBaseInfo> images = new HashMap<>();
 

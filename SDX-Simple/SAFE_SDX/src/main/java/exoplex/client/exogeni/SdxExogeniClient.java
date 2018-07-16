@@ -8,6 +8,8 @@ import exoplex.common.slice.SliceCommon;
 import exoplex.common.utils.Exec;
 import exoplex.common.utils.HttpUtil;
 import exoplex.common.utils.SafeUtils;
+import exoplex.sdx.core.SliceManager;
+import exoplex.sdx.safe.SafeManager;
 import org.apache.commons.cli.CommandLine;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -27,7 +29,7 @@ import java.io.InputStreamReader;
 /**
  * @author geni-orca
  */
-public class SdxExogeniClient extends SliceCommon {
+public class SdxExogeniClient extends SliceCommon{
   final Logger logger = LogManager.getLogger(SdxExogeniClient.class);
   private CommandLine cmd;
   private String logPrefix = "";
@@ -108,11 +110,11 @@ public class SdxExogeniClient extends SliceCommon {
     logger.info(logPrefix + "XXXXXXXXXX Done XXXXXXXXXXXXXX");
   }
 
-  public void processCmd(String command) {
+  public String processCmd(String command) {
     try {
       String[] params = command.split(" ");
       if (params[0].equals("stitch")) {
-        processStitchCmd(params);
+        return processStitchCmd(params);
       } else if (params[0].equals("link")) {
         processConnectionCmd(params);
       } else {
@@ -121,7 +123,7 @@ public class SdxExogeniClient extends SliceCommon {
     } catch (Exception e) {
       e.printStackTrace();
     }
-
+    return null;
   }
 
   public boolean ping(String nodeName, String ip) {
@@ -189,7 +191,7 @@ public class SdxExogeniClient extends SliceCommon {
     }
   }
 
-  private void processStitchCmd(String[] params) {
+  private String processStitchCmd(String[] params) {
     if(serverSlice==null){
       try {
         serverSlice = SafeSlice.loadManifestFile(sliceName, pemLocation, keyLocation, controllerUrl);
@@ -209,14 +211,13 @@ public class SdxExogeniClient extends SliceCommon {
         // TODO Auto-generated catch block
         logger.warn(logPrefix + "Failed to permit stitch");
         e.printStackTrace();
-        return;
+        return null;
       }
       String sdxsite = node0_s2.getDomain();
       //post stitch request to SAFE
       JSONObject jsonparams = new JSONObject();
       jsonparams.put("sdxslice", params[2]);
       jsonparams.put("sdxsite", sdxsite);
-      jsonparams.put("ckeyhash", safeKeyHash);
       jsonparams.put("cslice", sliceName);
       jsonparams.put("creservid", node0_s2_stitching_GUID);
       jsonparams.put("secret", secret);
@@ -225,7 +226,10 @@ public class SdxExogeniClient extends SliceCommon {
       }
       if(safeEnabled) {
         configSafeServerIp(serverSlice);
+        SafeManager sm = new SafeManager(safeServerIp, safeKeyFile, sshkey);
+        sm.verifySafeInstallation(riakIp);
         safeKeyHash = SafeUtils.getPrincipalId(safeServer, safeKeyFile);
+        jsonparams.put("ckeyhash", safeKeyHash);
         /*
         postSafeStitchRequest(safeKeyHash, sliceName, node0_s2_stitching_GUID, params[2],
             params[3]);
@@ -234,7 +238,7 @@ public class SdxExogeniClient extends SliceCommon {
       logger.debug("Sending stitch request to Sdx server");
       String r = HttpUtil.postJSON(sdxserver + "sdx/stitchrequest", jsonparams);
       JSONObject res = new JSONObject(r);
-      System.out.println(logPrefix + "Got Stitch Information From Server:\n " + res.toString());
+      logger.info(logPrefix + "Got Stitch Information From Server:\n " + res.toString());
       if (!res.getBoolean("result")) {
         logger.warn(logPrefix + "stitch request failed");
       } else {
@@ -251,10 +255,12 @@ public class SdxExogeniClient extends SliceCommon {
         Exec.sshExec("root", mip, "echo \"ip route 192.168.1.1/16 " + IPPrefix + "\" >>/etc/quagga/zebra.conf  ", sshkey);
         Exec.sshExec("root", mip, "/etc/init.d/quagga restart", sshkey);
         logger.info(logPrefix + "stitch completed.");
+        return ip.split("/")[0];
       }
     } catch (Exception e) {
       e.printStackTrace();
     }
+    return null;
   }
 
   private void configOSPFForNewInterface(ComputeNode c, String newip) {

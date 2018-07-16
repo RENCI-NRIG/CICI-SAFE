@@ -15,8 +15,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-import static org.junit.Assert.assertTrue;
-
 public class AuthorityMock {
 
   static Logger logger = LogManager.getLogger(AuthorityMock.class);
@@ -24,6 +22,8 @@ public class AuthorityMock {
   static final String bearerRef = "bearerRef";
 
   static final String subject = "subject";
+
+  static String exampleSafeServer ="128.194.6.138:7777";
 
   static final String postMakeIPTokenSet = "postMakeIPTokenSet";
   static final String postUserAclEntry = "postUserAclEntry";
@@ -96,18 +96,43 @@ public class AuthorityMock {
 
    String[] slices;
 
+   public AuthorityMock(String safeServer){
+     this.safeServer = safeServer;
+   }
+
   public static void main(String[] args){
     LoggerContext ctx = (LoggerContext) LogManager.getContext(false);
     Configuration config = ctx.getConfiguration();
     LoggerConfig loggerConfig = config.getLoggerConfig(LogManager.ROOT_LOGGER_NAME);
     loggerConfig.setLevel(Level.DEBUG);
     ctx.updateLoggers();
-    AuthorityMock authorityMock = new AuthorityMock();
+    AuthorityMock authorityMock = new AuthorityMock(exampleSafeServer);
     authorityMock.customSetting();
     authorityMock.addPrincipals();
     authorityMock.initPrincipals();
     authorityMock.initializeGeniAuth();
+    authorityMock.checkAuthorization();
 
+  }
+
+  public  boolean verifySafePreparation(){
+    customSetting();
+    addPrincipals();
+    initPrincipals();
+    try {
+      checkAuthorization();
+    }catch (AssertionError e){
+      e.printStackTrace();
+      return false;
+    }
+    return true;
+  }
+
+  public void makeSafePreparation(){
+    customSetting();
+    addPrincipals();
+    initPrincipals();
+    initializeGeniAuth();
   }
 
   private void customSetting(){
@@ -139,12 +164,12 @@ public class AuthorityMock {
     //SA
     principals.add("key_p3");
 
-    for(int i=4; i<20; i++){
+    for(int i=4; i<10; i++){
       principals.add("key_p"+i);
     }
   }
 
-  public void initPrincipals(){
+  private void initPrincipals(){
     principals.forEach(p->{
       initIdSetSubjectSet(p);
       principalMap.put(p, SafeUtils.getPrincipalId(safeServer, p));
@@ -158,7 +183,27 @@ public class AuthorityMock {
     subjectSet.put(key, token);
   }
 
-  public void initializeGeniAuth(){
+  private void checkAuthorization(){
+    for(int i=1; i<6; i++){
+      assert authorize(authorizeStitchByUID,"sdx",
+          new String[]{principalMap.get(sliceKeyMap.get(slices[i])), sliceScid.get(slices[i])});
+    }
+    for(int i=1; i<6; i++) {
+      String slice = slices[i];
+      String user = sliceKeyMap.get(slice);
+      String userKey = principalMap.get(user);
+      String ip = sliceIpMap.get(slice);
+      for(int j =i+1;j<6;j++){
+        String peerSlice = slices[j];
+        String peer = sliceKeyMap.get(peerSlice);
+        String peerKey = principalMap.get(peer);
+        String peerIp = sliceIpMap.get(peerSlice);
+        authorize(authZByUserAttr, "sdx", new String[]{userKey, ip, peerKey, peerIp});
+      }
+    }
+  }
+
+  private void initializeGeniAuth(){
     String token;
     simpleEndorseMent(postMAEndorsement, "geniroot", "key_p1", "MA");
     simpleEndorseMent(postPAEndorsement, "geniroot", "key_p2", "PA");
@@ -191,7 +236,7 @@ public class AuthorityMock {
     envs.put(subject, principalMap.get("key_p4"));
     //bearerRef should be subject set, as it contains both project token and MA token
     envs.put(bearerRef, piProjectTokens.get(1));
-    assertTrue(authorize(createSlice, "key_p3", new String[]{projectId},envs));
+    assert authorize(createSlice, "key_p3", new String[]{projectId},envs);
 
     //PI delegate to users
 
@@ -205,7 +250,7 @@ public class AuthorityMock {
       envs.clear();
       envs.put(subject, userKey);
       envs.put(bearerRef, tokens.get(1));
-      assertTrue(authorize(createSlice, "key_p3", new String[]{projectId},envs));
+      assert authorize(createSlice, "key_p3", new String[]{projectId},envs);
     }
 
     /*
@@ -246,7 +291,7 @@ public class AuthorityMock {
 
     //authorizeStitchByUid
     for(int i=1; i<6; i++){
-      assertTrue(authorize(authorizeStitchByUID,"sdx",
+      assert (authorize(authorizeStitchByUID,"sdx",
           new String[]{principalMap.get(sliceKeyMap.get(slices[i])), sliceScid.get(slices[i])}));
     }
 
@@ -260,7 +305,7 @@ public class AuthorityMock {
       String ipToken = safePost(postIPAllocate, "rpkiroot", new String[]{userKey, ip,
           "192.1.1.1/24"});
       safePost(postDlgToken, user, new String[]{ipToken, ip});
-      assertTrue(authorize(authorizeOwnPrefix, "sdx", new String[]{userKey, ip}));
+      assert authorize(authorizeOwnPrefix, "sdx", new String[]{userKey, ip});
     }
 
     //Tag delegation
@@ -297,10 +342,9 @@ public class AuthorityMock {
         String peer = sliceKeyMap.get(peerSlice);
         String peerKey = principalMap.get(peer);
         String peerIp = sliceIpMap.get(peerSlice);
-        authorize(authZByUserAttr, "sdx", new String[]{userKey, ip, peerKey, peerIp});
+        assert (authorize(authZByUserAttr, "sdx", new String[]{userKey, ip, peerKey, peerIp}));
       }
     }
-
     System.out.println("end");
   }
 
