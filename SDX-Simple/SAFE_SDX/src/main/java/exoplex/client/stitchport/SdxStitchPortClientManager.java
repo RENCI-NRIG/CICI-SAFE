@@ -3,7 +3,7 @@ package exoplex.client.stitchport;
 import exoplex.common.slice.SliceCommon;
 import exoplex.common.utils.Exec;
 import exoplex.common.utils.HttpUtil;
-import exoplex.common.utils.SafePost;
+import exoplex.common.utils.SafeUtils;
 import org.apache.commons.cli.CommandLine;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -150,7 +150,7 @@ public class SdxStitchPortClientManager extends SliceCommon {
     othervalues[2]=gateway;
     othervalues[3]=slicename;
     othervalues[4]=nodename;
-    String message= SafePost.postSafeStatements(safeServer,"postChameleonStitchRequest",keyhash,othervalues);
+    String message= SafeUtils.postSafeStatements(safeServer,"postChameleonStitchRequest",keyhash,othervalues);
     if(message.contains("fail")){
       return false;
     }

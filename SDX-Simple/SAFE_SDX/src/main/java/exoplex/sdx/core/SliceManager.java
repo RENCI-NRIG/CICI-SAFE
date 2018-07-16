@@ -206,17 +206,38 @@ public class SliceManager extends SliceCommon {
   public void checkPrerequisites(SafeSlice serverSlice){
     //check if openvswitch is installed on all ovs nodes
     logger.debug("Start checking prerequisites");
+    ArrayList<Thread> tlist = new ArrayList<>();
     for(ComputeNode node: serverSlice.getComputeNodes()){
       if(node.getName().matches(routerPattern)){
-        checkOVS(serverSlice, node.getName());
-        checkScripts(serverSlice, node.getName());
+        tlist.add(new Thread(){
+          @Override
+          public void run(){
+            checkOVS(serverSlice, node.getName());
+            checkScripts(serverSlice, node.getName());
+          }
+        });
       }
     }
     //checkPlexus
-    checkPlexus(SDNControllerIP);
+    tlist.add(new Thread(){
+      @Override
+      public void run() {
+        checkPlexus(SDNControllerIP);
+      }
+    });
     if(safeEnabled){
-      checkSafeServer(safeServerIp, riakIp);
+      tlist.add(new Thread(){
+        @Override
+        public void run() {
+          checkSafeServer(safeServerIp, riakIp);
+        }
+      });
     }
+    tlist.forEach(t->t.start());
+    tlist.forEach(t -> {
+      try{t.join();
+      }catch (Exception e){}
+    });
     logger.debug("Finished checking prerequisites");
   }
 
@@ -263,7 +284,7 @@ public class SliceManager extends SliceCommon {
     if (result.contains("safe")) {
       logger.debug("safe server has started");
     } else {
-      String script = Scripts.getSafeScript(riakIp);
+      String script = Scripts.getSafeScript_v1(riakIp);
       logger.debug("safe server hasn't started, retrying...");
       Exec.sshExec("root", safeIP, "docker pull yaoyj11/safeserver", sshkey);
       Exec.sshExec("root",safeIP, script, sshkey);

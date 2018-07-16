@@ -808,32 +808,30 @@ public class SafeSlice {
         nodePostBootScript);
   }
 
-
-  public void addSafeServer(String siteName,  String riakIp) {
+  public void addDocker(String siteName, String nodeName, String script){
     NodeBaseInfo ninfo = NodeBase.getImageInfo(NodeBase.Docker);
     String dockerImageShortName = ninfo.nisn;
     String dockerImageURL = ninfo.niurl;
     String dockerImageHash = ninfo.nihash;
-    String dockerNodeType = "XO Large";
-    ComputeNode node0 = addComputeNode("safe-server");
+    String dockerNodeType = "XO Medium";
+    ComputeNode node0 = addComputeNode(nodeName);
     node0.setImage(dockerImageURL, dockerImageHash, dockerImageShortName);
     node0.setNodeType(dockerNodeType);
     node0.setDomain(siteName);
-    node0.setPostBootScript(Scripts.getSafeScript(riakIp));
+    node0.setPostBootScript(script);
+  }
+
+  public void addRiakServer(String siteName, String nodeName){
+    addDocker(siteName, nodeName, Scripts.getRiakPreBootScripts());
+
+  }
+
+  public void addSafeServer(String siteName,  String riakIp) {
+    addDocker(siteName, "safe-server", Scripts.getSafeScript_v1(riakIp));
   }
 
   public void addPlexusController(String controllerSite, String name) {
-    String dockerImageShortName = "Ubuntu 14.04 Docker";
-    String dockerImageURL =
-        "http://geni-images.renci.org/images/standard/docker/ubuntu-14.0.4/ubuntu-14.0.4-docker.xml";
-    //http://geni-images.renci.org/images/standard/ubuntu/ub1304-ovs-opendaylight-v1.0.0.xml
-    String dockerImageHash = "b4ef61dbd993c72c5ac10b84650b33301bbf6829";
-    String dockerNodeType = "XO Large";
-    ComputeNode node0 = addComputeNode(name);
-    node0.setImage(dockerImageURL, dockerImageHash, dockerImageShortName);
-    node0.setNodeType(dockerNodeType);
-    node0.setDomain(controllerSite);
-    node0.setPostBootScript(Scripts.getPlexusScript());
+    addDocker(controllerSite, name, Scripts.getPlexusScript());
   }
 
   //We always add the bro when we add the edge router
@@ -848,16 +846,6 @@ public class SafeSlice {
     bro.setDomain(domain);
     bro.setNodeType(broType);
     bro.setPostBootScript(Scripts.getBroScripts());
-
-    /*
-    Network bronet = s.addBroadcastLink(getBroLinkName(ip_to_use), bw);
-    InterfaceNode2Net ifaceNode1 = (InterfaceNode2Net) bronet.stitch(edgerouter);
-    ifaceNode1.setIpAddress("192.168." + String.valueOf(ip_to_use) + ".1");
-    ifaceNode1.setNetmask("255.255.255.0");
-    InterfaceNode2Net ifaceNode2 = (InterfaceNode2Net) bronet.stitch(bro);
-    ifaceNode2.setIpAddress("192.168." + String.valueOf(ip_to_use) + ".2");
-    ifaceNode2.setNetmask("255.255.255.0");
-    */
     return bro;
   }
   public static ISliceTransportAPIv1 getSliceProxy(String pem, String key, String controllerUrl) {

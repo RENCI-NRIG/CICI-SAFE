@@ -40,7 +40,8 @@ public abstract class SliceCommon {
   protected String serverSite;
   protected String safeServer;
   protected String safeServerIp;
-  protected String safeKeyHash;
+  protected String safeKeyFile;
+  protected String safeKeyHash = null;
   protected boolean safeEnabled = false;
   protected String riakIp = null;
   protected HashMap<String, Link> links = new HashMap<String, Link>();
@@ -95,7 +96,9 @@ public abstract class SliceCommon {
     if (conf.hasPath("config.exogenism")) {
       controllerUrl = conf.getString("config.exogenism");
     }
-    serverurl = conf.getString("config.serverurl");
+    if(conf.hasPath("config.serverurl")) {
+      serverurl = conf.getString("config.serverurl");
+    }
     if (conf.hasPath("config.exogenipem")) {
       pemLocation = conf.getString("config.exogenipem");
       keyLocation = conf.getString("config.exogenipem");
@@ -113,7 +116,7 @@ public abstract class SliceCommon {
     if (conf.hasPath("config.serversite")) {
       serverSite = conf.getString("config.serversite");
     }
-    if(conf.hasPath("conf.riak")){
+    if(conf.hasPath("config.riak")){
       riakIp = conf.getString("config.riak");
     }
     if (conf.hasPath("config.controllersite")) {
@@ -130,7 +133,7 @@ public abstract class SliceCommon {
       safeEnabled = conf.getBoolean("config.safe");
     }
     if(conf.hasPath("config.safekey")){
-      safeKeyHash = conf.getString("config.safekey");
+      safeKeyFile = conf.getString("config.safekey");
     }
   }
 

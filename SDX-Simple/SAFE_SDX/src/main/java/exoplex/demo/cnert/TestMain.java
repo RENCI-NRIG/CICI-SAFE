@@ -1,7 +1,7 @@
 package exoplex.demo.cnert;
 
 import exoplex.client.exogeni.ClientSlice;
-import exoplex.client.exogeni.SdxExogeniClientManager;
+import exoplex.client.exogeni.SdxExogeniClient;
 import exoplex.client.stitchport.SdxStitchPortClientManager;
 import org.apache.commons.cli.*;
 import org.apache.logging.log4j.LogManager;
@@ -85,7 +85,7 @@ public class TestMain {
   }
 
   public static void testDymanicNetwork() {
-    SdxExogeniClientManager client6 = new SdxExogeniClientManager(clientarg6);
+    SdxExogeniClient client6 = new SdxExogeniClient(clientarg6);
 
     // Client request for connection between prefixes
     if (stitch) {
@@ -110,11 +110,11 @@ public class TestMain {
       SdxServer.run(arg1);
     }
     sdx = SdxServer.sdxManager.getSliceName();
-    SdxExogeniClientManager client1 = new SdxExogeniClientManager(clientarg1);
-    SdxExogeniClientManager client2 = new SdxExogeniClientManager(clientarg2);
-    SdxExogeniClientManager client3 = new SdxExogeniClientManager(clientarg3);
-    SdxExogeniClientManager client4 = new SdxExogeniClientManager(clientarg4);
-    SdxExogeniClientManager client6 = new SdxExogeniClientManager(clientarg6);
+    SdxExogeniClient client1 = new SdxExogeniClient(clientarg1);
+    SdxExogeniClient client2 = new SdxExogeniClient(clientarg2);
+    SdxExogeniClient client3 = new SdxExogeniClient(clientarg3);
+    SdxExogeniClient client4 = new SdxExogeniClient(clientarg4);
+    SdxExogeniClient client6 = new SdxExogeniClient(clientarg6);
 
     if (stitch) {
       System.out.println("c1 stitches to SDX");
@@ -178,10 +178,10 @@ public class TestMain {
 
   public static void testChameleon() throws TransportException , Exception{
     SdxServer.run(arg1);
-    SdxExogeniClientManager client1 = new SdxExogeniClientManager(clientarg1);
-    SdxExogeniClientManager client2 = new SdxExogeniClientManager(clientarg2);
-    SdxExogeniClientManager client3 = new SdxExogeniClientManager(clientarg3);
-    SdxExogeniClientManager client4 = new SdxExogeniClientManager(clientarg4);
+    SdxExogeniClient client1 = new SdxExogeniClient(clientarg1);
+    SdxExogeniClient client2 = new SdxExogeniClient(clientarg2);
+    SdxExogeniClient client3 = new SdxExogeniClient(clientarg3);
+    SdxExogeniClient client4 = new SdxExogeniClient(clientarg4);
     SdxStitchPortClientManager cc = new SdxStitchPortClientManager(clientarg5);
     if (stitch) {
       //client1.processCmd("stitch CNode0 " + sdx + " c0");
@@ -276,7 +276,7 @@ public class TestMain {
       emulationSlice();
     }
     SdxServer.run(arg1);
-    SdxExogeniClientManager client = new SdxExogeniClientManager(clientarg4);
+    SdxExogeniClient client = new SdxExogeniClient(clientarg4);
     client.processCmd("route 192.168.10.1/24 192.168.10.2");
     client.processCmd("route 192.168.20.1/24 192.168.20.2");
     client.processCmd("route 192.168.30.1/24 192.168.30.2");

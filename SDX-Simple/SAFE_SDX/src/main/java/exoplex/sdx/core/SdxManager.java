@@ -2,7 +2,8 @@ package exoplex.sdx.core;
 
 import exoplex.common.slice.SafeSlice;
 import exoplex.common.utils.Exec;
-import exoplex.common.utils.SafePost;
+import exoplex.common.utils.SafeUtils;
+import exoplex.sdx.safe.SafeManager;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.renci.ahab.libndl.resources.request.*;
@@ -50,6 +51,7 @@ public class SdxManager extends SliceManager {
   protected HashMap<String, ArrayList<String>> edgeRouters = new HashMap<String, ArrayList<String>>();
   int curip = 128;
   protected RoutingManager routingmanager = new RoutingManager();
+  protected SafeManager safeManager = null;
   private BroManager broManager = null;
   private String mask = "/24";
   private String SDNController;
@@ -124,7 +126,11 @@ public class SdxManager extends SliceManager {
     //runCmdSlice(serverSlice, "ovs-ofctl del-flows br0", "(^c\\d+)", false, true);
 
     configSdnControllerAddr(serverSlice.getComputeNode(plexusName).getManagementIP());
-    configSafeServerIp(serverSlice);
+    if(safeEnabled) {
+      configSafeServerIp(serverSlice);
+      safeManager = new SafeManager(safeServerIp, safeKeyFile, sshkey);
+    }
+    checkPrerequisites(serverSlice);
     //configRouting(serverslice,OVSController,SDNController,"(c\\d+)","(sp-c\\d+.*)");
     loadSdxNetwork(serverSlice, routerPattern, stitchPortPattern, broPattern);
   }
@@ -263,8 +269,8 @@ public class SdxManager extends SliceManager {
 
   public String[] stitchRequest(String sdxslice,
                                 String site,
-                                String customer_slice,
-                                String customerName,
+                                String customerSafeKeyHash,
+                                String customerSlice,
                                 String ResrvID,
                                 String secret,
                                 String sdxnode) throws TransportException, Exception{
@@ -272,10 +278,11 @@ public class SdxManager extends SliceManager {
     String[] res = new String[2];
     res[0] = null;
     res[1] = null;
-    logger.info(logPrefix + "new stitch request from " + customerName + " for " + sdxslice + " at " +
+    logger.info(logPrefix + "new stitch request from " + customerSlice+ " for " + sdxslice + " at " +
         "" + site);
     logger.debug("new stitch request for " + sdxslice + " at " + site);
-    if(!safeEnabled || authorizeStitchRequest(customer_slice,customerName,ResrvID, safeKeyHash, sliceName, sdxnode)) {
+    //if(!safeEnabled || authorizeStitchRequest(customer_slice,customerName,ResrvID, safeKeyHash,
+    if(!safeEnabled || authorizeStitchRequest(customerSafeKeyHash,customerSlice)){
       if (safeEnabled) {
         System.out.println("Authorized: stitch request for" + sliceName + " and " + sdxnode);
       }
@@ -360,7 +367,7 @@ public class SdxManager extends SliceManager {
       links.put(stitchname, logLink);
       String gw = logLink.getIP(1);
       String ip = logLink.getIP(2);
-      serverSlice.stitch(net1_stitching_GUID, customerName, ResrvID, secret, ip);
+      serverSlice.stitch(net1_stitching_GUID, customerSlice, ResrvID, secret, ip);
       res[0] = gw;
       res[1] = ip;
       sleep(15);
@@ -1202,7 +1209,9 @@ public class SdxManager extends SliceManager {
     String[] othervalues=new String[2];
     othervalues[0]=cushash;
     othervalues[1]=cusip;
-    String message= SafePost.postSafeStatements(safeServer,"ownPrefix",safeKeyHash,othervalues);
+    String message= SafeUtils.postSafeStatements(safeServer,"ownPrefix",
+        safeManager.getSafeKeyHash(),
+        othervalues);
     if(message !=null && message.contains("Unsatisfied")){
       return false;
     }
@@ -1217,7 +1226,9 @@ public class SdxManager extends SliceManager {
     othervalues[1]=dsthash;
     othervalues[2]=srcip;
     othervalues[3]=dstip;
-    String message=SafePost.postSafeStatements(safeServer,"connectivity", safeKeyHash, othervalues);
+    String message= SafeUtils.postSafeStatements(safeServer,"connectivity",
+        safeManager.getSafeKeyHash(),
+        othervalues);
     if(message !=null && message.contains("Unsatisfied")){
       return false;
     }
@@ -1239,8 +1250,27 @@ public class SdxManager extends SliceManager {
     othervalues[2]=ReservID;
     othervalues[3]=slicename;
     othervalues[4]=nodename;
-    String message=SafePost.postSafeStatements(safeServer,"verifyStitch",safeKeyHash,othervalues);
+    String message= SafeUtils.postSafeStatements(safeServer,"verifyStitch",
+        safeManager.getSafeKeyHash(),
+        othervalues);
     if(message ==null || message.contains("Unsatisfied")){
+      return false;
+    }
+    else
+      return true;
+  }
+
+  public boolean authorizeStitchRequest(String customerSafeKeyHash,
+                                        String customerSlice
+  ){
+    /** Post to remote safesets using apache httpclient */
+    String[] othervalues=new String[2];
+    othervalues[0]=customerSafeKeyHash;
+    othervalues[1]=customerSlice;
+    String message= SafeUtils.postSafeStatements(safeServer,"authorizeStitchByUID",
+        safeManager.getSafeKeyHash(),
+        othervalues);
+    if(message ==null || message.contains("Unsatisfied") || message.contains("Query failed")){
       return false;
     }
     else
@@ -1257,7 +1287,9 @@ public class SdxManager extends SliceManager {
     othervalues[4]=slicename;
     othervalues[5]=nodename;
 
-    String message=SafePost.postSafeStatements(safeServer,"verifyChameleonStitch",safeKeyHash,othervalues);
+    String message= SafeUtils.postSafeStatements(safeServer,"verifyChameleonStitch",
+        safeManager.getSafeKeyHash(),
+        othervalues);
     if(message ==null || message.contains("Unsatisfied")){
       return false;
     }

@@ -1,6 +1,6 @@
 #!/bin/bash
 SAFE=true
-RIAK="192.168.1.1"
+RIAK="152.54.14.10"
 SLICENAME_SUFFIX=${USER}
 SITENAME3="gwu"
 SITENAME1="ufl"
