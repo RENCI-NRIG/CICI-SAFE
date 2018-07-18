@@ -34,32 +34,11 @@ public class ClientSlice extends SliceManager {
 
     logger.debug("SDX-Simple " + args[0]);
 
-    CommandLine cmd = parseCmd(args);
-
-    logger.debug("cmd " + cmd);
-
-    String configfilepath = cmd.getOptionValue("config");
-
-    logger.debug("configfilepath " + configfilepath);
-    readConfig(configfilepath);
+    initializeExoGENIContexts(args);
 
     type = conf.getString("config.type");
     if (cmd.hasOption('d')) {
       type = "delete";
-    }
-
-
-    //SSH context
-    sctx = new SliceAccessContext<>();
-    try {
-      SSHAccessTokenFileFactory fac;
-      fac = new SSHAccessTokenFileFactory("~/.ssh/id_rsa.pub", false);
-      SSHAccessToken t = fac.getPopulatedToken();
-      sctx.addToken("root", "root", t);
-      sctx.addToken("root", t);
-    } catch (UtilTransportException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
     }
   }
 
@@ -92,6 +71,35 @@ public class ClientSlice extends SliceManager {
       //runCmdSlice(c1,"/bin/bash ~/ospfautoconfig.sh","~/.ssh/id_rsa");
       configFTPService(c1, "(CNode1)", "ftpuser", "ftp");
       logger.info("Slice active now: " + sliceName);
+      c1.printNetworkInfo();
+      return;
+    } else if (type.equals("delete")) {
+      SafeSlice s2 = null;
+      logger.info("deleting slice " + sliceName);
+      s2 = SafeSlice.loadManifestFile(sliceName, pemLocation, keyLocation, controllerUrl);
+      s2.delete();
+    }
+  }
+
+  public void run(String customerName, String ipPrefix, String site) throws Exception {
+    //Example usage:   ./target/appassembler/bin/SafeSdxExample  ~/.ssl/geni-pruth1.pem ~/.ssl/geni-pruth1.pem "https://geni.renci.org:11443/orca/xmlrpc" pruth.1 stitch
+    //Example usage:   ./target/appassembler/bin/SafeSdxExample  ~/.ssl/geni-pruth1.pem ~/.ssl/geni-pruth1.pem "https://geni.renci.org:11443/orca/xmlrpc" name fournodes
+    if (type.equals("client")) {
+      routerSite = site;
+      computeIP(ipPrefix);
+      logger.info("Client start");
+      SafeSlice c1 = createCustomerSlice(customerName, 2, IPPrefix, curip, bw, true);
+      c1.commitAndWait();
+      c1.refresh();
+      if(safeEnabled){
+        String safeIp = c1.getComputeNode("safe-server").getManagementIP();
+        checkSafeServer(safeIp, riakIp);
+      }
+      //copyFile2Slice(c1, "/home/yaoyj11/project/exo-geni/SAFE_SDX/src/main/resources/scripts/configospffornewif.sh","~/configospffornewif.sh","~/.ssh/id_rsa");
+      //copyFile2Slice(c1, "/home/yaoyj11/project/exo-geni/SAFE_SDX/src/main/resources/scripts/configospffornewif.sh","~/configospffornewif.sh","~/.ssh/id_rsa");
+      //runCmdSlice(c1,"/bin/bash ~/ospfautoconfig.sh","~/.ssh/id_rsa");
+      configFTPService(c1, "(CNode1)", "ftpuser", "ftp");
+      logger.info("Slice active now: " + customerName);
       c1.printNetworkInfo();
       return;
     } else if (type.equals("delete")) {

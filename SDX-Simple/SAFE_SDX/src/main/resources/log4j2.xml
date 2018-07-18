@@ -100,6 +100,9 @@
         <Logger name="exoplex.sdx.bro.BroManager" level="info" additivity="false">
             <AppenderRef ref="Console"/>
         </Logger>
+        <Logger name="exoplex.demo.tridentcom.TridentSlice" level="info" additivity="false">
+            <AppenderRef ref="Console"/>
+        </Logger>
         <Logger name="exoplex.client.exogeni.SdxExogeniClient" level="info" additivity="false">
             <AppenderRef ref="Console"/>
         </Logger>
@@ -110,6 +113,9 @@
             <AppenderRef ref="Console"/>
         </Logger>
         <Logger name="exoplex.common.slice.SafeSlice" level="debug" additivity="true">
+            <AppenderRef ref="RollingFile"/>
+        </Logger>
+        <Logger name="org.renci.ahab.libndl.LIBNDL" level="info" additivity="true">
             <AppenderRef ref="RollingFile"/>
         </Logger>
         <Logger name="exoplex.sdx.network.NetworkManager" level="info" additivity="false">

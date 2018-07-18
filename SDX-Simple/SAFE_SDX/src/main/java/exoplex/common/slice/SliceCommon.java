@@ -16,6 +16,8 @@ import java.util.Set;
 import java.util.regex.Pattern;
 
 import exoplex.sdx.network.Link;
+import org.renci.ahab.libtransport.util.SSHAccessTokenFileFactory;
+import org.renci.ahab.libtransport.util.UtilTransportException;
 
 
 public abstract class SliceCommon {
@@ -88,7 +90,7 @@ public abstract class SliceCommon {
     return sliceName;
   }
 
-  protected void readConfig(String configfilepath) {
+  private void readConfig(String configfilepath) {
     File myConfigFile = new File(configfilepath);
     Config fileConfig = ConfigFactory.parseFile(myConfigFile);
     conf = ConfigFactory.load(fileConfig);
@@ -135,6 +137,43 @@ public abstract class SliceCommon {
     if(conf.hasPath("config.safekey")){
       safeKeyFile = conf.getString("config.safekey");
     }
+    if(conf.hasPath("config.sitelist")){
+      sitelist = conf.getStringList("config.sitelist");
+    }
+  }
+
+  private void getSshContext(){
+    //SSH context
+    sctx = new SliceAccessContext<>();
+    try {
+      SSHAccessTokenFileFactory fac;
+      fac = new SSHAccessTokenFileFactory(sshkey + ".pub", false);
+      SSHAccessToken t = fac.getPopulatedToken();
+      sctx.addToken("root", "root", t);
+      sctx.addToken("root", t);
+    } catch (UtilTransportException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+    }
+  }
+  protected void initializeExoGENIContexts(String[] args){
+    cmd = parseCmd(args);
+
+    logger.debug("cmd " + cmd);
+
+    String configfilepath = cmd.getOptionValue("config");
+
+    readConfig(configfilepath);
+
+    //SSH context
+    getSshContext();
+  }
+
+  protected void initializeExoGENIContexts(String configfilepath){
+    readConfig(configfilepath);
+
+    //SSH context
+    getSshContext();
   }
 
   protected void configSafeServerIp(SafeSlice serverSlice){

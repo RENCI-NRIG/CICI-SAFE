@@ -23,9 +23,7 @@ public class SdxStitchPortClientManager extends SliceCommon {
   private String type;
 
   public SdxStitchPortClientManager(String[] args) {
-    CommandLine cmd = parseCmd(args);
-    String configfilepath = cmd.getOptionValue("config");
-    readConfig(configfilepath);
+    initializeExoGENIContexts(args);
     System.out.println("Client start");
   }
 

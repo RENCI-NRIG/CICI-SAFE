@@ -138,7 +138,7 @@ public class SdxManager extends SliceManager {
 
   public void startSdxServer(String[] args) throws TransportException, Exception {
     logger.info(logPrefix + "Carrier Slice server with Service API: START");
-    readConfig(args);
+    parseConfig(args);
     if (cmd.hasOption('r')) {
       clearSdx();
     }

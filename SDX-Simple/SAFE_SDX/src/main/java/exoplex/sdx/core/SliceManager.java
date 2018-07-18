@@ -59,16 +59,12 @@ public class SliceManager extends SliceCommon {
     return sshkey;
   }
 
-  public  void readConfig(String[] args){
-    cmd = parseCmd(args);
-    String configfilepath = cmd.getOptionValue("config");
-    readConfig(configfilepath);
+  public  void parseConfig(String[] args){
+    super.initializeExoGENIContexts(args);
     bw = conf.getLong("config.bw");
     IPPrefix = conf.getString("config.ipprefix");
     serverurl = conf.getString("config.serverurl");
-    //type=sdxconfig.type;
     computeIP(IPPrefix);
-    //System.out.print(pemLocation);
   }
 
   protected void getSshContext(){
@@ -88,19 +84,10 @@ public class SliceManager extends SliceCommon {
   public void run(String[] args) {
     logger.info("SDX-Simple " + args[0]);
 
-    CommandLine cmd = parseCmd(args);
-
-    logger.debug("cmd " + cmd);
-
-    String configfilepath = cmd.getOptionValue("config");
-
-    readConfig(configfilepath);
+    initializeExoGENIContexts(args);
 
     //type=conf.getString("config.type");
     if (cmd.hasOption('d')) type = "delete";
-
-    //SSH context
-    getSshContext();
 
     if (type.equals("server")) {
       long bw = 1000000000;
@@ -230,14 +217,16 @@ public class SliceManager extends SliceCommon {
       }
     });
     if(safeEnabled){
+      configSafeServerIp(serverSlice);
       tlist.add(new Thread(){
         @Override
         public void run() {
           checkSafeServer(safeServerIp, riakIp);
+          /*
           AuthorityMock mock = new AuthorityMock(safeServerIp + ":7777");
           if(!mock.verifySafePreparation()){
             mock.makeSafePreparation();
-          }
+          }*/
         }
       });
     }

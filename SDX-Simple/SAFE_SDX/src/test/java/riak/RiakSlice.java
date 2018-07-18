@@ -22,9 +22,7 @@ public class RiakSlice extends SliceCommon{
       args = new String[]{"-c", "config/riak.conf"};
     }
     RiakSlice slice = new RiakSlice();
-    cmd = parseCmd(args);
-    String configfilepath = cmd.getOptionValue("config");
-    readConfig(configfilepath);
+    initializeExoGENIContexts(args);
     //SSH context
     sctx = new SliceAccessContext<>();
     try {

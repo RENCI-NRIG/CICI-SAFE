@@ -24,12 +24,7 @@ public class TestSlice extends SliceManager {
   final Logger logger = LogManager.getLogger(Exec.class);
 
   public TestSlice(String[] args) {
-    CommandLine cmd = parseCmd(args);
-
-    String configfilepath = cmd.getOptionValue("config");
-
-    readConfig(configfilepath);
-
+    initializeExoGENIContexts(args);
 
     if (cmd.hasOption('d')) {
       type = "delete";

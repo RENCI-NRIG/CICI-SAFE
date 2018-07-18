@@ -28,20 +28,13 @@ public class TestMpRouting extends SdxManager {
   }
 
   public  void test() throws Exception {
-    CommandLine cmd = parseCmd(arg1);
-    String configfilepath = cmd.getOptionValue("config");
-    readConfig(configfilepath);
-    getSshContext();
+    initializeExoGENIContexts(arg1);
     createNetwork();
   }
 
   public void initNetwork() throws Exception {
-    CommandLine cmd = parseCmd(arg1);
-    String configfilepath = cmd.getOptionValue("config");
-    readConfig(configfilepath);
-    getSshContext();
+    initializeExoGENIContexts(arg1);
     plexusName = "plexus";
-    readConfig(arg1);
     initializeSdx();
     delFlows();
     configRouting();

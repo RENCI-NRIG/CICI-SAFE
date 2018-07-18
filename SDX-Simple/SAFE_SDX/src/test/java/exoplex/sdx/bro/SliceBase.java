@@ -35,7 +35,7 @@ public abstract class SliceBase extends SliceCommon {
   public SliceBase(String configPath) throws SampleSlice.SliceBaseException {
     try {
       System.out.println("Reading properties...");
-      readConfig(configPath);
+      initializeExoGENIContexts(configPath);
       System.out.println("Making proxy...");
       System.out.println("Setting access context...");
       loadSliceSSHAccess();
@@ -47,7 +47,7 @@ public abstract class SliceBase extends SliceCommon {
   public SliceBase(String configPath, String sliceName) throws SampleSlice.SliceBaseException {
     try {
       System.out.println("Reading properties...");
-      readConfig(configPath);
+      initializeExoGENIContexts(configPath);
       System.out.println("Making proxy...");
       System.out.println("Setting access context...");
       boolean flag = true;

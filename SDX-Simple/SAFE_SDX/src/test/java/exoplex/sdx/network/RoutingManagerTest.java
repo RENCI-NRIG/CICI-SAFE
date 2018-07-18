@@ -15,7 +15,7 @@ public class RoutingManagerTest {
       Class NetM = Class.forName("exoplex.sdx.network.RoutingManager");
       Object obj = NetM.newInstance();
       SdxManager sdxManager = new SdxManager();
-      sdxManager.readConfig(new String[]{"-c", "config/sdx.conf"});
+      sdxManager.parseConfig(new String[]{"-c", "config/sdx.conf"});
       sdxManager.loadSlice();
       sdxManager.initializeSdx();
       sdxManager.configRouting();

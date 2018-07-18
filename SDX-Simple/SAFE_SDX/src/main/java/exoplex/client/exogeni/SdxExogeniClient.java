@@ -31,9 +31,7 @@ import java.io.InputStreamReader;
  */
 public class SdxExogeniClient extends SliceCommon{
   final Logger logger = LogManager.getLogger(SdxExogeniClient.class);
-  private CommandLine cmd;
   private String logPrefix = "";
-  private String type;
   private String sdxserver;
   private SafeSlice serverSlice = null;
 
@@ -51,26 +49,12 @@ public class SdxExogeniClient extends SliceCommon{
     //sshkey=args[6];
     //keyhash=args[7];
 
-    cmd = parseCmd(args);
-    String configfilepath = cmd.getOptionValue("config");
-    readConfig(configfilepath);
+    initializeExoGENIContexts(args);
+
     sliceProxy = SafeSlice.getSliceProxy(pemLocation, keyLocation, controllerUrl);
     sdxserver = serverurl;
 
     logPrefix = "[" + sliceName + "] ";
-
-    //SSH context
-    sctx = new SliceAccessContext<>();
-    try {
-      SSHAccessTokenFileFactory fac;
-      fac = new SSHAccessTokenFileFactory(sshkey + ".pub", false);
-      SSHAccessToken t = fac.getPopulatedToken();
-      sctx.addToken("root", "root", t);
-      sctx.addToken("root", t);
-    } catch (UtilTransportException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
-    }
 
     logger.info(logPrefix + "Client start");
   }

@@ -179,7 +179,7 @@ public class SafeSlice {
       String name, String nodeImageURL,
       String nodeImageHash, String nodeImageShortName, String nodeNodeType, String site,
       String nodePostBootScript) {
-    ComputeNode node0 = slice.addComputeNode(name);
+    ComputeNode node0 = this.slice.addComputeNode(name);
     node0.setImage(nodeImageURL, nodeImageHash, nodeImageShortName);
     node0.setNodeType(nodeNodeType);
     node0.setDomain(site);
