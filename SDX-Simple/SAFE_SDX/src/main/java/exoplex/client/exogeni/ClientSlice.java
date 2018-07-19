@@ -25,6 +25,7 @@ public class ClientSlice extends SliceManager {
   final Logger logger = LogManager.getLogger(ClientSlice.class);
   private String mask = "/24";
   private String type;
+  private String subnet;
   private String routerSite = "";
 
   public ClientSlice() {
@@ -50,8 +51,8 @@ public class ClientSlice extends SliceManager {
 
     if (type.equals("client")) {
       routerSite = conf.getString("config.routersite");
-      IPPrefix = conf.getString("config.ipprefix");
-      computeIP(IPPrefix);
+      subnet = conf.getString("config.ipprefix");
+      computeIP(subnet);
       logger.info("Client start");
       String customerName = sliceName;
       SafeSlice c1 = createCustomerSlice(customerName, 2, IPPrefix, curip, bw, true);
@@ -71,10 +72,7 @@ public class ClientSlice extends SliceManager {
       //copyFile2Slice(c1, "/home/yaoyj11/project/exo-geni/SAFE_SDX/src/main/resources/scripts/configospffornewif.sh","~/configospffornewif.sh","~/.ssh/id_rsa");
       //runCmdSlice(c1,"/bin/bash ~/ospfautoconfig.sh","~/.ssh/id_rsa");
       configFTPService(c1, "(CNode1)", "ftpuser", "ftp");
-      IPPrefix = conf.getString("config.ipprefix").split("/")[0];
-      String mip = c1.getComputeNode("CNode1").getManagementIP();
-      Exec.sshExec("root", mip, "echo \"ip route 192.168.1.1/16 " + IPPrefix + "\" >>/etc/quagga/zebra.conf  ", sshkey);
-      Exec.sshExec("root", mip, "/etc/init.d/quagga restart", sshkey);
+      configQuaggaRouting(c1);
       logger.info("Slice active now: " + sliceName);
       c1.printNetworkInfo();
       return;
@@ -86,12 +84,21 @@ public class ClientSlice extends SliceManager {
     }
   }
 
+  public void configQuaggaRouting(SafeSlice c1){
+    c1.runCmdSlice("apt-get install -y quagga, iperf", sshkey, "CNode\\d+", true);
+    String Prefix = subnet.split("/")[0];
+    String mip = c1.getComputeNode("CNode1").getManagementIP();
+    Exec.sshExec("root", mip, "echo \"ip route 192.168.1.1/16 " + Prefix + "\" >>/etc/quagga/zebra.conf  ", sshkey);
+    Exec.sshExec("root", mip, "/etc/init.d/quagga restart", sshkey);
+  }
+
   public void run(String customerName, String ipPrefix, String site) throws Exception {
     //Example usage:   ./target/appassembler/bin/SafeSdxExample  ~/.ssl/geni-pruth1.pem ~/.ssl/geni-pruth1.pem "https://geni.renci.org:11443/orca/xmlrpc" pruth.1 stitch
     //Example usage:   ./target/appassembler/bin/SafeSdxExample  ~/.ssl/geni-pruth1.pem ~/.ssl/geni-pruth1.pem "https://geni.renci.org:11443/orca/xmlrpc" name fournodes
     if (type.equals("client")) {
       routerSite = site;
-      computeIP(ipPrefix);
+      subnet = ipPrefix;
+      computeIP(subnet);
       logger.info("Client start");
       SafeSlice c1 = createCustomerSlice(customerName, 2, IPPrefix, curip, bw, true);
       c1.commitAndWait();
@@ -104,10 +111,7 @@ public class ClientSlice extends SliceManager {
       //copyFile2Slice(c1, "/home/yaoyj11/project/exo-geni/SAFE_SDX/src/main/resources/scripts/configospffornewif.sh","~/configospffornewif.sh","~/.ssh/id_rsa");
       //runCmdSlice(c1,"/bin/bash ~/ospfautoconfig.sh","~/.ssh/id_rsa");
       configFTPService(c1, "(CNode1)", "ftpuser", "ftp");
-      String IPPrefix = ipPrefix.split("/")[0];
-      String mip = c1.getComputeNode("CNode1").getManagementIP();
-      Exec.sshExec("root", mip, "echo \"ip route 192.168.1.1/16 " + IPPrefix + "\" >>/etc/quagga/zebra.conf  ", sshkey);
-      Exec.sshExec("root", mip, "/etc/init.d/quagga restart", sshkey);
+      configQuaggaRouting(c1);
       logger.info("Slice active now: " + customerName);
       c1.printNetworkInfo();
       return;

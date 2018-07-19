@@ -41,6 +41,15 @@ public class RoutingManager {
     }
   }
 
+  /**
+   *
+   * @param linkName
+   * @param ipa
+   * @param routerA
+   * @param gw
+   * @param controller 192.168.1.1:80080
+   * @return
+   */
   public boolean newExternalLink(String linkName, String ipa, String routerA, String gw, String
     controller) {
     logger.info(String.format("newLink %s %s %s %s %s", linkName, ipa, routerA, gw, controller));
@@ -133,11 +142,19 @@ public class RoutingManager {
 
   /**
    * Configure routing in one direction:
+<<<<<<< HEAD
    * @param dstIP
    * @param dstNode
    * @param srcIP
    * @param srcNode
    * @param gateway
+=======
+   * @param dstIP    192.168.10.1/24
+   * @param dstNode   e0
+   * @param srcIP    192.168.20.1/24
+   * @param srcNode   e2
+   * @param gateway  192.168.10.1
+>>>>>>> Fix qugga routing in customer slice
    * @param controller
    * @param bw
    * @return
@@ -284,6 +301,8 @@ public class RoutingManager {
     ArrayList<String[]> paths = getPairRoutes(getDPID(node1), getDPID(node2), "demo", bw);
     return paths.size() > 0;
   }
+
+  //==========SEPERATOR===================//
 
   public void setOvsdbAddr(String controller) {
     logger.info(String.format("setOvsdbAddr %s", controller));

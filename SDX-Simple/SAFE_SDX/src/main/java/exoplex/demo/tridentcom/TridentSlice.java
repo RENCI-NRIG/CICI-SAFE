@@ -32,7 +32,7 @@ public class TridentSlice extends SliceManager{
 
     /*
     TridentSlice tridentSlice = new TridentSlice();
-    tridentSlice.run(sdxArgs);
+    tridentSlicnye.run(sdxArgs);
     */
     TridentSlice clientSlice = new TridentSlice();
     clientSlice.initializeExoGENIContexts(clientArgs);
@@ -76,7 +76,7 @@ public class TridentSlice extends SliceManager{
       logger.info(siteName);
       coreRouterMap.put(site, coreRouter);
     }
-    //add Links
+    //add Links between core routers
     for(int n = 0; n< sites.size(); n++){
       String linkName = "clink" + n;
       if(n>0){
