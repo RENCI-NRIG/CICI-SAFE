@@ -154,12 +154,14 @@ public class SdxExogeniClient extends SliceCommon{
 
   private void processConnectionCmd(String[] params) {
     try {
-      if(!safeChecked) {
-        configSafeServerIp(serverSlice);
-        SafeManager sm = new SafeManager(safeServerIp, safeKeyFile, sshkey);
-        sm.verifySafeInstallation(riakIp);
-        safeKeyHash = SafeUtils.getPrincipalId(safeServer, safeKeyFile);
-        safeChecked = true;
+      if(safeEnabled) {
+        if (!safeChecked) {
+          configSafeServerIp(serverSlice);
+          SafeManager sm = new SafeManager(safeServerIp, safeKeyFile, sshkey);
+          sm.verifySafeInstallation(riakIp);
+          safeKeyHash = SafeUtils.getPrincipalId(safeServer, safeKeyFile);
+          safeChecked = true;
+        }
       }
       JSONObject jsonparams = new JSONObject();
       String site1 = null, site2 = null;

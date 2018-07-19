@@ -1,6 +1,6 @@
 #!/bin/bash
-BRO=false
-SAFE=false
+BRO=true
+SAFE=true
 RIAK="152.54.14.10"
 SLICENAME_SUFFIX=${USER}
 SITENAME3="gwu"

@@ -675,6 +675,7 @@ public class SdxManager extends SliceManager {
     boolean flag = false;
     String router = routingmanager.getEdgeRouterByGateway(gateway);
     prefixgateway.put(dest, gateway);
+    prefixKeyHash.put(dest, customer_keyhash);
     if (router == null) {
       logger.warn(logPrefix + "Cannot find a router with cusotmer gateway" + gateway);
       res = res + " Cannot find a router with customer gateway " + gateway;
