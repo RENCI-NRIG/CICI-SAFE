@@ -167,6 +167,8 @@ public abstract class SliceCommon {
 
     //SSH context
     getSshContext();
+
+    sliceProxy = SafeSlice.getSliceProxy(pemLocation, keyLocation, controllerUrl);
   }
 
   protected void initializeExoGENIContexts(String configfilepath){

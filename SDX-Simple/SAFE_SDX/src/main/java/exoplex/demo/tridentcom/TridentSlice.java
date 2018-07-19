@@ -10,6 +10,7 @@ import exoplex.sdx.core.SliceManager;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Random;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -85,9 +86,15 @@ public class TridentSlice extends SliceManager{
         slice.addLink(linkName, pcore, core, bw * 2);
       }
     }
-    slice.addPlexusController(controllerSite, "plexuscontroller");
+    Random rand = new Random();
+    slice.addPlexusController(SiteBase.get(TridentSetting.sites.get(rand.nextInt(TridentSetting
+        .sites.size())
+      )),
+      "plexuscontroller");
     if(safeEnabled){
-      slice.addSafeServer(SiteBase.get(serverSite), riakIp);
+      slice.addSafeServer(SiteBase.get(TridentSetting.sites.get(rand.nextInt(TridentSetting.sites
+          .size()))),
+        riakIp);
     }
     slice.commitAndWait();
     return slice;

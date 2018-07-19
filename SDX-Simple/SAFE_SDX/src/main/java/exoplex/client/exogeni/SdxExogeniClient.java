@@ -32,12 +32,21 @@ import java.io.InputStreamReader;
 public class SdxExogeniClient extends SliceCommon{
   final Logger logger = LogManager.getLogger(SdxExogeniClient.class);
   private String logPrefix = "";
-  private String sdxserver;
+  private String ipIprefix;
   private SafeSlice serverSlice = null;
 
   public static void main(String[] args){
     SdxExogeniClient sdxExogeniClient = new SdxExogeniClient(args);
     sdxExogeniClient.run(args);
+  }
+
+  public SdxExogeniClient(String sliceName, String IPPrefix, String safeKeyFile, String[] args){
+    initializeExoGENIContexts(args);
+    this.ipIprefix = IPPrefix;
+    this.safeKeyFile = safeKeyFile;
+    this.sliceName = sliceName;
+    logPrefix = "[" + sliceName + "] ";
+    logger.info(logPrefix + "Client start");
   }
 
   public SdxExogeniClient(String[] args) {
@@ -52,7 +61,6 @@ public class SdxExogeniClient extends SliceCommon{
     initializeExoGENIContexts(args);
 
     sliceProxy = SafeSlice.getSliceProxy(pemLocation, keyLocation, controllerUrl);
-    sdxserver = serverurl;
 
     logPrefix = "[" + sliceName + "] ";
 
@@ -154,7 +162,7 @@ public class SdxExogeniClient extends SliceCommon{
         jsonparams.put("bandwidth", Long.valueOf(params[3]));
       } catch (Exception e) {
       }
-      String res = HttpUtil.postJSON(sdxserver + "sdx/connectionrequest", jsonparams);
+      String res = HttpUtil.postJSON(serverurl + "sdx/connectionrequest", jsonparams);
       logger.info(logPrefix + "get connection result from server:\n" + res);
       logger.debug(res);
     } catch (Exception e) {
@@ -167,7 +175,7 @@ public class SdxExogeniClient extends SliceCommon{
     paramsobj.put("dest", params[1]);
     paramsobj.put("gateway", params[2]);
     paramsobj.put("customer", safeKeyHash);
-    String res = HttpUtil.postJSON(sdxserver + "sdx/notifyprefix", paramsobj);
+    String res = HttpUtil.postJSON(serverurl + "sdx/notifyprefix", paramsobj);
     if (res.equals("")) {
       logger.warn(logPrefix + "Prefix not accepted (authorization failed)");
     } else {
@@ -220,7 +228,7 @@ public class SdxExogeniClient extends SliceCommon{
         */
       }
       logger.debug("Sending stitch request to Sdx server");
-      String r = HttpUtil.postJSON(sdxserver + "sdx/stitchrequest", jsonparams);
+      String r = HttpUtil.postJSON(serverurl + "sdx/stitchrequest", jsonparams);
       JSONObject res = new JSONObject(r);
       logger.info(logPrefix + "Got Stitch Information From Server:\n " + res.toString());
       if (!res.getBoolean("result")) {
@@ -234,10 +242,6 @@ public class SdxExogeniClient extends SliceCommon{
         Exec.sshExec("root", mip, "echo \"ip route 192.168.1.1/16 " + res.getString("gateway").split("/")[0] + "\" >>/etc/quagga/zebra.conf  ", sshkey);
         Exec.sshExec("root", mip, "/etc/init.d/quagga restart", sshkey);
         ComputeNode node1 = serverSlice.getComputeNode("CNode1");
-        String IPPrefix = conf.getString("config.ipprefix").split("/")[0];
-        mip = node1.getManagementIP();
-        Exec.sshExec("root", mip, "echo \"ip route 192.168.1.1/16 " + IPPrefix + "\" >>/etc/quagga/zebra.conf  ", sshkey);
-        Exec.sshExec("root", mip, "/etc/init.d/quagga restart", sshkey);
         logger.info(logPrefix + "stitch completed.");
         return ip.split("/")[0];
       }

@@ -79,6 +79,10 @@ public class SdxManager extends SliceManager {
     return (serverSlice.getComputeNode(nodeName)).getManagementIP();
   }
 
+  public String getSafeServer(){
+    return safeServer;
+  }
+
   private void addEntry_HashList(HashMap<String, ArrayList<String>> map, String key, String entry) {
     if (map.containsKey(key)) {
       ArrayList<String> l = map.get(key);
@@ -166,12 +170,12 @@ public class SdxManager extends SliceManager {
       serverSlice = SafeSlice.loadManifestFile(sliceName, pemLocation, keyLocation, controllerUrl);
     }
     for (ComputeNode node : serverSlice.getComputeNodes()) {
-      if (node.getName().matches(broPattern) && !node.getName().equals("bro0_e0")) {
+      if (node.getName().matches(broPattern)) {
         node.delete();
       }
     }
     for (Network link : serverSlice.getBroadcastLinks()) {
-      if (link.getName().matches(broLinkPattern) && !link.getName().equals("blink_128")) {
+      if (link.getName().matches(broLinkPattern)) {
         link.delete();
       }
       if (link.getName().matches(stosVlanPattern)) {
@@ -348,7 +352,7 @@ public class SdxManager extends SliceManager {
         int ip_1 = getAvailableIP();
         internal_Log_link.setIP(IPPrefix + String.valueOf(ip_1));
         links.put(eLinkName, internal_Log_link);
-        routingmanager.newLink(internal_Log_link.getLinkName(),
+        routingmanager.newInternalLink(internal_Log_link.getLinkName(),
             internal_Log_link.getIP(1),
             internal_Log_link.getNodeA(),
             internal_Log_link.getIP(2),
@@ -374,7 +378,7 @@ public class SdxManager extends SliceManager {
       res[1] = ip;
       sleep(15);
       updateOvsInterface(serverSlice, node.getName());
-      routingmanager.newLink(logLink.getLinkName(),
+      routingmanager.newExternalLink(logLink.getLinkName(),
           logLink.getIP(1),
           logLink.getNodeA(),
           ip.split("/")[0],
@@ -408,7 +412,7 @@ public class SdxManager extends SliceManager {
     int ip_to_use = getAvailableIP();
     serverSlice.addBro(broName, router.getDomain());
     ArrayList<String> resources = new ArrayList<String>();
-    String linkName = getBroLinkName(ip_to_use);
+    String linkName = getBroLinkName(broName, ip_to_use);
     serverSlice.addLink(linkName, "192.168." + ip_to_use + ".1", "192.168." +
         ip_to_use + ".2", "255.255.255.0", routerName, broName, brobw);
     resources.add(broName);
@@ -419,12 +423,12 @@ public class SdxManager extends SliceManager {
     serverSlice.configBroNode(broName, routerName, resource_dir, SDNControllerIP, serverurl, sshkey);
     updateOvsInterface(serverSlice,routerName);
     Link logLink = new Link();
-    logLink.setName(getBroLinkName(ip_to_use));
+    logLink.setName(getBroLinkName(broName, ip_to_use));
     logLink.addNode(router.getName());
     usedip.add(ip_to_use);
     logLink.setIP(IPPrefix + ip_to_use);
     logLink.setMask(mask);
-    routingmanager.newLink(logLink.getLinkName(),
+    routingmanager.newExternalLink(logLink.getLinkName(),
         logLink.getIP(1),
         logLink.getNodeA(),
         logLink.getIP(2).split("/")[0],
@@ -563,8 +567,8 @@ public class SdxManager extends SliceManager {
     logger.info(String.format("Connection request between %s and %s", self_prefix, target_prefix));
     //String n1=computenodes.get(site1).get(0);
     //String n2=computenodes.get(site2).get(0);
-    String n1 = routingmanager.getEdgeRouterbyGateway(prefixgateway.get(self_prefix));
-    String n2 = routingmanager.getEdgeRouterbyGateway(prefixgateway.get(target_prefix));
+    String n1 = routingmanager.getEdgeRouterByGateway(prefixgateway.get(self_prefix));
+    String n2 = routingmanager.getEdgeRouterByGateway(prefixgateway.get(target_prefix));
     if (n1 == null || n2 == null) {
       return "Prefix unrecognized.";
     }
@@ -619,7 +623,7 @@ public class SdxManager extends SliceManager {
       updateOvsInterface(serverSlice, c2);
 
       //TODO: why nodeb dpid could be null
-      res = routingmanager.newLink(l1.getLinkName(),
+      res = routingmanager.newInternalLink(l1.getLinkName(),
           l1.getIP(1),
           l1.getNodeA(),
           l1.getIP(2),
@@ -640,13 +644,16 @@ public class SdxManager extends SliceManager {
         logger.info(logPrefix + "Routing set up for " + self_prefix + " and " + target_prefix);
         logger.debug(logPrefix + "Routing set up for " + self_prefix + " and " + target_prefix);
         //TODO: auto select edge router
-        setMirror("e0", self_prefix, target_prefix, 400000000);
+        setMirror(n1, self_prefix, target_prefix, bandwidth);
+        /*
+        TODO: qos
         if (bandwidth > 0) {
           routingmanager.setQos(SDNController, routingmanager.getDPID(n1), self_prefix,
               target_prefix, bandwidth);
           routingmanager.setQos(SDNController, routingmanager.getDPID(n2), target_prefix,
               self_prefix, bandwidth);
         }
+        */
         return "route configured: " + res;
       } else {
         logger.info(logPrefix + "Route for " + self_prefix + " and " + target_prefix +
@@ -668,7 +675,7 @@ public class SdxManager extends SliceManager {
     logger.info(logPrefix + "received notification for ip prefix " + dest);
     String res = "received notification for " + dest;
     boolean flag = false;
-    String router = routingmanager.getEdgeRouterbyGateway(gateway);
+    String router = routingmanager.getEdgeRouterByGateway(gateway);
     prefixgateway.put(dest, gateway);
     if (router == null) {
       logger.warn(logPrefix + "Cannot find a router with cusotmer gateway" + gateway);
@@ -709,7 +716,7 @@ public class SdxManager extends SliceManager {
         updateOvsInterface(serverSlice, nodeName);
         //routingmanager.replayCmds(routingmanager.getDPID(nodeName));
         Exec.sshExec("root", mynode.getManagementIP(), "ifconfig;ovs-vsctl list port", sshkey);
-        routingmanager.newLink(stitchname, ip, nodeName, gateway, SDNController);
+        routingmanager.newExternalLink(stitchname, ip, nodeName, gateway, SDNController);
         res = "Stitch operation Completed";
         logger.info(logPrefix + res);
       } catch (Exception e) {
@@ -798,9 +805,12 @@ public class SdxManager extends SliceManager {
             putEdgeRouter(node);
           }
         } else if (bropatn.matcher(node.getName()).find()) {
-          InterfaceNode2Net intf = (InterfaceNode2Net) node.getInterfaces().toArray()[0];
-          String ip = intf.getLink().getName().split("_")[1];
-          broManager.addBroInstance(IPPrefix + ip + ".2", 500000000);
+          try {
+            InterfaceNode2Net intf = (InterfaceNode2Net) node.getInterfaces().toArray()[0];
+            String[] parts = intf.getLink().getName().split("_");
+            String ip = parts[parts.length-1];
+            broManager.addBroInstance(node.getName(),IPPrefix + ip + ".2", 500000000);
+          }catch (Exception e){}
         }
       }
       logger.debug("get links from Slice");
@@ -971,11 +981,7 @@ public class SdxManager extends SliceManager {
 */
 
   public String setMirror(String routerName, String source, String dst) {
-    try {
-      broManager.setMirrorAsync(routerName, source, dst, bw);
-    }catch (Exception e){
-
-    }
+    setMirror(routerName, source, dst, 100000000);
     return "Mirroring job submitted";
   }
 
@@ -1028,7 +1034,7 @@ public class SdxManager extends SliceManager {
       String nodeName = parts[1];
       String[] ipseg = ip.split("\\.");
       String gw = ipseg[0] + "." + ipseg[1] + "." + ipseg[2] + "." + parts[3];
-      routingmanager.newLink(sp.getName(), ip, nodeName, gw, SDNController);
+      routingmanager.newExternalLink(sp.getName(), ip, nodeName, gw, SDNController);
     }
 
     Set<String> keyset = links.keySet();
@@ -1038,7 +1044,7 @@ public class SdxManager extends SliceManager {
       logger.debug("Setting up stitch " + logLink.getLinkName());
       if (patternMatch(k, stosVlanPattern) || patternMatch(k, broLinkPattern)) {
         usedip.add(Integer.valueOf(logLink.getIP(1).split("\\.")[2]));
-        routingmanager.newLink(logLink.getLinkName(),
+        routingmanager.newExternalLink(logLink.getLinkName(),
             logLink.getIP(1),
             logLink.getNodeA(),
             logLink.getIP(2).split("/")[0],
@@ -1058,7 +1064,7 @@ public class SdxManager extends SliceManager {
           logLink.setMask(mask);
         }
         //logger.debug(logLink.nodea+":"+logLink.getIP(1)+" "+logLink.nodeb+":"+logLink.getIP(2));
-        routingmanager.newLink(logLink.getLinkName(),
+        routingmanager.newInternalLink(logLink.getLinkName(),
             logLink.getIP(1),
             logLink.getNodeA(),
             logLink.getIP(2),

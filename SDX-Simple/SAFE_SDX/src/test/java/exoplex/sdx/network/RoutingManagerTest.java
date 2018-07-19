@@ -45,6 +45,7 @@ public class RoutingManagerTest {
       } catch (Exception e) {
         e.printStackTrace();
       }
+      //((RoutingManager)obj).deleteAllFlows(sdxManager.getSDNController());
 
     } catch (Exception e) {
       e.printStackTrace();

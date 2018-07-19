@@ -2,10 +2,7 @@ package exoplex.common.utils;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpEntityEnclosingRequestBase;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.methods.HttpPut;
+import org.apache.http.client.methods.*;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
@@ -76,6 +73,23 @@ public class HttpUtil {
     try {
       HttpDeleteWithBody httpDelete = new HttpDeleteWithBody(serverurl);
       httpDelete.setEntity(new StringEntity(data));
+      HttpResponse response = httpClient.execute(httpDelete);
+      //handle response here...
+      String output = EntityUtils.toString(response.getEntity());
+      logger.debug(output);
+      httpClient.close();
+      return output;
+    } catch (Exception e) {
+      e.printStackTrace();
+      return "Exception when deleting data";
+    }
+  }
+
+  public static String delete(String serverurl) {
+    logger.debug("delete: " + serverurl);
+    CloseableHttpClient httpClient = HttpClientBuilder.create().build();
+    try {
+      HttpDelete httpDelete = new HttpDelete(serverurl);
       HttpResponse response = httpClient.execute(httpDelete);
       //handle response here...
       String output = EntityUtils.toString(response.getEntity());

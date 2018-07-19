@@ -195,7 +195,7 @@ public class SafeSlice {
     //http://geni-images.renci.org/images/standard/ubuntu/ub1304-ovs-opendaylight-v1.0.0.xml
     String nodeImageHash = ninfo.nihash;
     String nodeNodeType = "XO Medium";
-    String nodePostBootScript = Scripts.getBroScripts();
+    String nodePostBootScript = Scripts.getCustomerScript();
     ComputeNode node0 = slice.addComputeNode(name);
     node0.setImage(nodeImageURL, nodeImageHash, nodeImageShortName);
     node0.setNodeType(nodeNodeType);

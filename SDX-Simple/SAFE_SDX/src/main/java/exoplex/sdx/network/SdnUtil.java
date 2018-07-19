@@ -242,6 +242,11 @@ public class SdnUtil {
     return HttpUtil.postJSON(url, entity);
   }
 
+  public static void deleteAllFlows(String controller, String dpid){
+    String url = "http://" + controller + "/stats/flowentry/clear/" + Long.parseLong(dpid, 16);
+    HttpUtil.delete(url);
+  }
+
   public static String getAllFlowStats(String controller, String dpid){
     String url = "http://" + controller + "/stats/flow/" + Long.parseLong(dpid, 16);
     return HttpUtil.get(url);

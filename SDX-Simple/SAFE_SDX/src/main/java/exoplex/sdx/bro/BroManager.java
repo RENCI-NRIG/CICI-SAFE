@@ -7,76 +7,23 @@ import exoplex.sdx.core.SdxManager;
 import exoplex.sdx.network.RoutingManager;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.locks.ReentrantLock;
 
-class BroInstance {
-  long capacity;
-  long usedCap;
-  String ip;
-  ArrayList<Flow> flows;
-
-  public BroInstance(String ip, long cap) {
-    this.capacity = cap;
-    this.usedCap = 0;
-    this.ip = ip;
-    this.flows = new ArrayList<>();
-  }
-
-  public String getIP() {
-    return this.ip;
-  }
-
-  public List<Flow> getFlows() {
-    return this.flows;
-  }
-
-  public long getAvailableCap() {
-    return capacity - usedCap;
-  }
-
-  public boolean addFlow(Flow flow) {
-    if (flow.bw > capacity - usedCap) {
-      return false;
-    } else {
-      usedCap += flow.bw;
-      this.flows.add(flow);
-      return true;
-    }
-  }
-
-  public void removeAllFlows() {
-    this.flows.clear();
-    usedCap = 0;
-  }
-}
-
-class Flow {
-  public String src;
-  public String dst;
-  public long bw;
-  public String routerName;
-
-  public Flow(String s, String d, long b, String router) {
-    this.src = s;
-    this.dst = d;
-    this.bw = b;
-    this.routerName = router;
-  }
-}
-
 
 public class BroManager {
   final Logger logger = LogManager.getLogger(BroManager.class);
+  static final long singleBroCap = 500000000;
   private final ReentrantLock ticketLock = new ReentrantLock();
   SafeSlice slice = null;
   RoutingManager networkManager = null;
   SdxManager sdxManager = null;
-  private long requiredbw = 0;
-  private ArrayList<BroInstance> broInstances = new ArrayList<>();
-  private LinkedList<Flow> jobQueue = new LinkedList<Flow>();
-  private long tickedBroCapacity = 0;
+  private HashMap<String, Long> requiredbw = new HashMap<>();
+  private HashMap<String, ArrayList<BroInstance>> routerBroMap = new HashMap<>();
+  private LinkedList<BroFlow> jobQueue = new LinkedList<BroFlow>();
+  private HashMap<String, Long> tickedBroCapacity = new HashMap<>();
 
   public BroManager(SafeSlice slice, RoutingManager networkManager, SdxManager sdxManager) {
     this.slice = slice;
@@ -85,14 +32,20 @@ public class BroManager {
   }
 
   public void reset() {
-    requiredbw = 0;
-    for (BroInstance bro : broInstances) {
-      bro.removeAllFlows();
+    for(String key:requiredbw.keySet()){
+      requiredbw.put(key, 0l);
+    }
+    for(ArrayList<BroInstance> broInstances: routerBroMap.values()) {
+      for (BroInstance bro : broInstances) {
+        bro.removeAllBroFlows();
+      }
     }
   }
 
-  public void addBroInstance(String ip, long cap) {
+  public void addBroInstance(String edgeRouter, String ip, long cap) {
+    ArrayList<BroInstance> broInstances = routerBroMap.getOrDefault(edgeRouter, new ArrayList<>());
     broInstances.add(new BroInstance(ip, cap));
+    routerBroMap.put(edgeRouter, broInstances);
   }
 
   private void deployNewBro(String routerName) throws Exception{
@@ -101,7 +54,8 @@ public class BroManager {
       public void run() {
         try {
           ticketLock.lock();
-          tickedBroCapacity += 500000000;
+          tickedBroCapacity.put(routerName, tickedBroCapacity.getOrDefault(routerName, 0l) +
+            singleBroCap);
           ticketLock.unlock();
         } catch (Exception e) {
           e.printStackTrace();
@@ -113,18 +67,20 @@ public class BroManager {
           e.printStackTrace();
           try {
             ticketLock.lock();
-            tickedBroCapacity -= 500000000;
+            tickedBroCapacity.put(routerName, tickedBroCapacity.getOrDefault(routerName, 0l) -
+              singleBroCap);
             ticketLock.unlock();
           } catch (Exception ex) {
             ex.printStackTrace();
           }
         }
-        synchronized (broInstances) {
-          broInstances.add(new BroInstance(ip, 500000000));
+        synchronized (routerBroMap) {
+          addBroInstance(routerName, ip, singleBroCap);
         }
         try {
           ticketLock.lock();
-          tickedBroCapacity -= 500000000;
+          tickedBroCapacity.put(routerName, tickedBroCapacity.getOrDefault(routerName, 0l) -
+            singleBroCap);
           ticketLock.unlock();
         } catch (Exception e) {
           e.printStackTrace();
@@ -141,33 +97,35 @@ public class BroManager {
 
   private void execJobs() throws Exception{
     synchronized (jobQueue) {
-      ArrayList<Flow> toRemove = new ArrayList<>();
-      for (Flow f : jobQueue) {
+      ArrayList<BroFlow> toRemove = new ArrayList<>();
+      for (BroFlow f : jobQueue) {
         BroInstance bro = getBroInstance(f.bw, f.routerName);
         if (bro != null) {
           String dpid = sdxManager.getDPID(f.routerName);
           String gw = bro.getIP();
-          bro.addFlow(f);
+          bro.addBroFlow(f);
           String res = networkManager.setMirror(sdxManager.getSDNController(), dpid, f.src, f.dst, gw);
           res += networkManager.setMirror(sdxManager.getSDNController(), dpid, f.dst, f.src, gw);
           logger.info("job: " + f.src + " " + f.dst + " " + f.bw + ": \n" + res);
           toRemove.add(f);
         }
       }
-      for (Flow f : toRemove) {
+      for (BroFlow f : toRemove) {
         jobQueue.remove(f);
       }
     }
-    if (broOverloaded()) {
-      deployNewBro("e0");
+    for(String router: requiredbw.keySet()) {
+      if (broOverloaded(router)) {
+        deployNewBro(router);
+      }
     }
   }
 
   private BroInstance getBroInstance(long bw, String routerName) {
     //First fit
     BroInstance broNode = null;
-    synchronized (broInstances) {
-      for (BroInstance bro : broInstances) {
+    synchronized (routerBroMap) {
+      for (BroInstance bro : routerBroMap.getOrDefault(routerName, new ArrayList<>())) {
         if (bro.getAvailableCap() > bw) {
           broNode = bro;
           break;
@@ -183,7 +141,7 @@ public class BroManager {
         public void run() {
           String ip = sdxManager.deployBro(routerName);
           synchronized (broInstances) {
-            broInstances.add(new BroInstance(ip, 500000000));
+            broInstances.add(new BroInstance(ip, singleBroCap));
           }
         }
       };
@@ -214,19 +172,19 @@ public class BroManager {
     */
   }
 
-  private boolean broOverloaded() {
+  private boolean broOverloaded(String routerName) {
     long sum = 0;
     try {
       ticketLock.lock();
-      sum = tickedBroCapacity;
+      sum = tickedBroCapacity.getOrDefault(routerName, 0l);
       ticketLock.unlock();
     } catch (Exception e) {
       e.printStackTrace();
     }
-    for (BroInstance bro : broInstances) {
+    for (BroInstance bro : routerBroMap.getOrDefault(routerName, new ArrayList<>())) {
       sum += bro.capacity;
     }
-    double ratio = (double) requiredbw / (double) sum;
+    double ratio = (double) requiredbw.getOrDefault(routerName, 0l) / (double) sum;
     if (ratio > 0.6) {
       return true;
     } else {
@@ -235,9 +193,9 @@ public class BroManager {
   }
 
   public void setMirrorAsync(String routerName, String source, String dst, long bw) throws  Exception{
-    requiredbw += bw;
+    requiredbw.put(routerName, requiredbw.getOrDefault(routerName, 0l));
     synchronized (jobQueue) {
-      jobQueue.offer(new Flow(source, dst, bw, routerName));
+      jobQueue.offer(new BroFlow(source, dst, bw, routerName));
     }
     execJobs();
   }

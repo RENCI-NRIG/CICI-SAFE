@@ -1,6 +1,7 @@
 package exoplex.client.exogeni;
 
 import exoplex.common.slice.SafeSlice;
+import exoplex.common.utils.Exec;
 import exoplex.sdx.core.SliceManager;
 import org.apache.commons.cli.CommandLine;
 import org.apache.logging.log4j.LogManager;
@@ -70,6 +71,10 @@ public class ClientSlice extends SliceManager {
       //copyFile2Slice(c1, "/home/yaoyj11/project/exo-geni/SAFE_SDX/src/main/resources/scripts/configospffornewif.sh","~/configospffornewif.sh","~/.ssh/id_rsa");
       //runCmdSlice(c1,"/bin/bash ~/ospfautoconfig.sh","~/.ssh/id_rsa");
       configFTPService(c1, "(CNode1)", "ftpuser", "ftp");
+      IPPrefix = conf.getString("config.ipprefix").split("/")[0];
+      String mip = c1.getComputeNode("CNode1").getManagementIP();
+      Exec.sshExec("root", mip, "echo \"ip route 192.168.1.1/16 " + IPPrefix + "\" >>/etc/quagga/zebra.conf  ", sshkey);
+      Exec.sshExec("root", mip, "/etc/init.d/quagga restart", sshkey);
       logger.info("Slice active now: " + sliceName);
       c1.printNetworkInfo();
       return;
@@ -99,6 +104,10 @@ public class ClientSlice extends SliceManager {
       //copyFile2Slice(c1, "/home/yaoyj11/project/exo-geni/SAFE_SDX/src/main/resources/scripts/configospffornewif.sh","~/configospffornewif.sh","~/.ssh/id_rsa");
       //runCmdSlice(c1,"/bin/bash ~/ospfautoconfig.sh","~/.ssh/id_rsa");
       configFTPService(c1, "(CNode1)", "ftpuser", "ftp");
+      String IPPrefix = ipPrefix.split("/")[0];
+      String mip = c1.getComputeNode("CNode1").getManagementIP();
+      Exec.sshExec("root", mip, "echo \"ip route 192.168.1.1/16 " + IPPrefix + "\" >>/etc/quagga/zebra.conf  ", sshkey);
+      Exec.sshExec("root", mip, "/etc/init.d/quagga restart", sshkey);
       logger.info("Slice active now: " + customerName);
       c1.printNetworkInfo();
       return;
@@ -116,39 +125,21 @@ public class ClientSlice extends SliceManager {
 
     SafeSlice s = SafeSlice.create(sliceName, pemLocation, keyLocation, controllerUrl, sctx);
 
-    String nodeImageShortName = "Ubuntu 14.04";
-    String nodeImageURL = "http://geni-images.renci.org/images/standard/ubuntu/ub1404-v1.0.4.xml";//http://geni-images.renci.org/images/standard/ubuntu/ub1304-ovs-opendaylight-v1.0.0.xml
-    String nodeImageHash = "9394ca154aa35eb55e604503ae7943ddaecc6ca5";
-    String nodeNodeType = "XO Medium";
-    String nodePostBootScript = "apt-get update;apt-get -y install quagga iperf vsftpd\n"
-        + "sed -i -- 's/zebra=no/zebra=yes/g' /etc/quagga/daemons\n"
-        + "sed -i -- 's/ospfd=no/ospfd=yes/g' /etc/quagga/daemons\n"
-        + "echo \"1\" > /proc/sys/net/ipv4/ip_forward\n"
-        + "/etc/init.d/neuca stop\n";
-    String nodeDomain = routerSite;
     ArrayList<ComputeNode> nodelist = new ArrayList<ComputeNode>();
-    ArrayList<Network> netlist = new ArrayList<Network>();
     for (int i = 0; i < num; i++) {
-      ComputeNode node0 = s.addComputeNode("CNode" + String.valueOf(i));
-      node0.setImage(nodeImageURL, nodeImageHash, nodeImageShortName);
-      node0.setNodeType(nodeNodeType);
-      node0.setDomain(routerSite);
-      node0.setPostBootScript(nodePostBootScript);
+      ComputeNode node0 = s.addComputeNode(routerSite, "CNode" + String.valueOf(i));
       nodelist.add(node0);
-      if (network) {
-        if (i != num - 1) {
-          Network net2 = s.addBroadcastLink("clink" + String.valueOf(i), bw);
-          InterfaceNode2Net ifaceNode1 = (InterfaceNode2Net) net2.stitch(node0);
-          ifaceNode1.setIpAddress(IPPrefix + String.valueOf(start + i) + ".1");
-          ifaceNode1.setNetmask("255.255.255.0");
-          netlist.add(net2);
-        }
-        if (i != 0) {
-          Network net = netlist.get(i - 1);
-          InterfaceNode2Net ifaceNode1 = (InterfaceNode2Net) net.stitch(node0);
-          ifaceNode1.setIpAddress(IPPrefix + String.valueOf(start + i - 1) + ".2");
-          ifaceNode1.setNetmask("255.255.255.0");
-        }
+    }
+    if(network){
+      for(int i=0; i < nodelist.size() - 1; i++){
+        s.addLink("clink" + i,
+          IPPrefix + (start +i) + ".1",
+          IPPrefix + (start +i) + ".2",
+          "255.255.255.0",
+          nodelist.get(i).getName(),
+          nodelist.get(i + 1).getName(),
+          bw
+          );
       }
     }
     if (safeEnabled) {

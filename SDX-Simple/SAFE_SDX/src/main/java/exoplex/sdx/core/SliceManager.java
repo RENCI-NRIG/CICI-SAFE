@@ -36,7 +36,7 @@ public class SliceManager extends SliceCommon {
   protected static String linkPattern = "(^(c|e)link\\d+)";
   protected static String cLinkPattern = "(^clink\\d+)";
   protected static String eLinkPattern = "(^elink\\d+)";
-  protected static String broLinkPattern = "(^blink_\\d+)";
+  protected static String broLinkPattern = "(^blink_bro\\d+_e\\d+_\\d+)";
   protected long bw = 1000000000;
   final Logger logger = LogManager.getLogger(SliceManager.class);
   protected int curip = 128;
@@ -159,6 +159,7 @@ public class SliceManager extends SliceCommon {
   }
 
   public void configFTPService(SafeSlice carrier, String nodePattern, String username, String passwd) {
+    carrier.runCmdSlice("apt-get install -y vsftpd", sshkey, nodePattern, true);
     carrier.runCmdSlice("/usr/sbin/useradd " + username + "; echo -e \"" + passwd + "\\n" +
         passwd + "\\n\" | passwd " + username, sshkey, nodePattern, true);
     carrier.runCmdSlice("mkdir /home/" + username, sshkey, nodePattern, false);
@@ -213,6 +214,7 @@ public class SliceManager extends SliceCommon {
     tlist.add(new Thread(){
       @Override
       public void run() {
+        SDNControllerIP = serverSlice.getComputeNode("plexuscontroller").getManagementIP();
         checkPlexus(SDNControllerIP);
       }
     });
@@ -311,8 +313,8 @@ public class SliceManager extends SliceCommon {
     return true;
   }
 
-  protected String getBroLinkName(int ip) {
-    return "blink_" + ip;
+  protected String getBroLinkName(String broName, int ip) {
+    return "blink_" + broName + "_" + ip;
   }
 
   private void clearLinks(String file) {
@@ -346,7 +348,9 @@ public class SliceManager extends SliceCommon {
         ComputeNode node1 = (ComputeNode) s.getResourceByName("e" + i);
         ComputeNode broNode = s.addBro( "bro0_e" + i, node1.getDomain());
         int ip_to_use = curip++;
-        Network bronet = s.addBroadcastLink(getBroLinkName(ip_to_use), bw);
+        Network bronet = s.addBroadcastLink(getBroLinkName(broNode.getName(),
+          ip_to_use),
+          bw);
         InterfaceNode2Net ifaceNode1 = (InterfaceNode2Net) bronet.stitch(node1);
         ifaceNode1.setIpAddress("192.168." + String.valueOf(ip_to_use) + ".1");
         ifaceNode1.setNetmask("255.255.255.0");

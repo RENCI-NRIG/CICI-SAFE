@@ -11,14 +11,13 @@ public class TridentSetting {
   final static String sdxName = "sdx-tri";
 
   static {
-    //sites.add("TAMU");
+    sites.add("UMASS");
+    sites.add("UFL");
     sites.add("UH");
-    //sites.add("RENCI");
-    //sites.add("SL");
+    sites.add("UNF");
+    sites.add("RENCI");
+    sites.add("TAMU");
     //sites.add("GWU");
-    //sites.add("UFL");
-    //sites.add("UNF");
-    //sites.add("FIU");
     //sites.add("WSU");
   }
 

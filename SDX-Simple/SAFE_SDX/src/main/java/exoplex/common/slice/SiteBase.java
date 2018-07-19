@@ -24,6 +24,12 @@ public class SiteBase {
   }
 
   public static String get(String site){
-    return sites.get(site);
+    if(sites.containsKey(site)) {
+      return sites.get(site);
+    }else if(sites.containsValue(site)){
+      return site;
+    }else{
+      return null;
+    }
   }
 }
