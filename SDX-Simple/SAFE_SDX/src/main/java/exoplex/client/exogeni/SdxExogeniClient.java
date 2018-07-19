@@ -34,6 +34,7 @@ public class SdxExogeniClient extends SliceCommon{
   private String logPrefix = "";
   private String ipIprefix;
   private SafeSlice serverSlice = null;
+  private boolean safeChecked = false;
 
   public static void main(String[] args){
     SdxExogeniClient sdxExogeniClient = new SdxExogeniClient(args);
@@ -153,6 +154,13 @@ public class SdxExogeniClient extends SliceCommon{
 
   private void processConnectionCmd(String[] params) {
     try {
+      if(!safeChecked) {
+        configSafeServerIp(serverSlice);
+        SafeManager sm = new SafeManager(safeServerIp, safeKeyFile, sshkey);
+        sm.verifySafeInstallation(riakIp);
+        safeKeyHash = SafeUtils.getPrincipalId(safeServer, safeKeyFile);
+        safeChecked = true;
+      }
       JSONObject jsonparams = new JSONObject();
       String site1 = null, site2 = null;
       jsonparams.put("self_prefix", params[1]);
@@ -217,9 +225,12 @@ public class SdxExogeniClient extends SliceCommon{
         jsonparams.put("sdxnode", params[3]);
       }
       if(safeEnabled) {
-        configSafeServerIp(serverSlice);
-        SafeManager sm = new SafeManager(safeServerIp, safeKeyFile, sshkey);
-        sm.verifySafeInstallation(riakIp);
+        if(!safeChecked) {
+          configSafeServerIp(serverSlice);
+          SafeManager sm = new SafeManager(safeServerIp, safeKeyFile, sshkey);
+          sm.verifySafeInstallation(riakIp);
+          safeChecked = true;
+        }
         safeKeyHash = SafeUtils.getPrincipalId(safeServer, safeKeyFile);
         jsonparams.put("ckeyhash", safeKeyHash);
         /*

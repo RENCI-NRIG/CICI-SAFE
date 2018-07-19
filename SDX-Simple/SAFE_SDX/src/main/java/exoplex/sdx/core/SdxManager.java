@@ -63,6 +63,8 @@ public class SdxManager extends SliceManager {
 
   private HashMap<String, String> prefixgateway = new HashMap<String, String>();
 
+  private HashMap<String, String> prefixKeyHash = new HashMap<String, String>();
+
   public SafeSlice getSdxSlice() {
     return serverSlice;
   }
@@ -287,7 +289,7 @@ public class SdxManager extends SliceManager {
         "" + site);
     logger.debug("new stitch request for " + sdxslice + " at " + site);
     //if(!safeEnabled || authorizeStitchRequest(customer_slice,customerName,ResrvID, safeKeyHash,
-    if(!safeEnabled || authorizeStitchRequest(customerSafeKeyHash,customerSlice)){
+    if(!safeEnabled || safeManager.authorizeStitchRequest(customerSafeKeyHash,customerSlice)){
       if (safeEnabled) {
         logger.info("Authorized: stitch request for " + sliceName + " and " + sdxnode);
       }
@@ -567,6 +569,15 @@ public class SdxManager extends SliceManager {
     logger.info(String.format("Connection request between %s and %s", self_prefix, target_prefix));
     //String n1=computenodes.get(site1).get(0);
     //String n2=computenodes.get(site2).get(0);
+    if(safeEnabled) {
+      String targetHash = prefixKeyHash.get(target_prefix);
+      if(! safeManager.authorizeConnectivity(ckeyhash, self_prefix, targetHash, target_prefix)){
+        logger.info("Unauthorized connection request");
+        return "Unauthorized connection request";
+      }else{
+        logger.info("Authorized connection request");
+      }
+    }
     String n1 = routingmanager.getEdgeRouterByGateway(prefixgateway.get(self_prefix));
     String n2 = routingmanager.getEdgeRouterByGateway(prefixgateway.get(target_prefix));
     if (n1 == null || n2 == null) {
@@ -595,19 +606,6 @@ public class SdxManager extends SliceManager {
       logger.debug(logPrefix + "Add link: " + link1);
       long linkbw = 2 * bandwidth;
       addLink(link1, node1.getName(), node2.getName(), bw);
-      /*else{
-          logger.info(logPrefix + "Now add a link named \"" + link1 + "\" between " + n1 + " and " + n2
-            + " with bandwidht " + linkbw);
-          try {
-            java.io.BufferedReader stdin = new java.io.BufferedReader(new java.io.InputStreamReader(System.in));
-            stdin.readLine();
-            logger.info(logPrefix + "Continue");
-          } catch (Exception e) {
-            e.printStackTrace();
-          }
-        }
-      waitTillActive(s);
-        */
 
       Link l1 = new Link();
       l1.setName(link1);
@@ -1214,72 +1212,7 @@ public class SdxManager extends SliceManager {
     return "echo currentMillis:$(/bin/date \"+%s%3N\");";
   }
 
-  private boolean authorizePrefix(String cushash, String cusip){
-    String[] othervalues=new String[2];
-    othervalues[0]=cushash;
-    othervalues[1]=cusip;
-    String message= SafeUtils.postSafeStatements(safeServer,"ownPrefix",
-        safeManager.getSafeKeyHash(),
-        othervalues);
-    if(message !=null && message.contains("Unsatisfied")){
-      return false;
-    }
-    else
-      return true;
-  }
 
-
-  private boolean authorizeConnectivity(String srchash, String srcip, String dsthash, String dstip){
-    String[] othervalues=new String[4];
-    othervalues[0]=srchash;
-    othervalues[1]=srcip;
-    othervalues[2]=dsthash;
-    othervalues[3]=dstip;
-    return SafeUtils.authorize(safeServer, "authZByUserAttr", safeManager.getSafeKeyHash(),
-        othervalues);
-  }
-
-  public boolean authorizeStitchRequest(String customer_slice,
-                                        String customerName,
-                                        String ReservID,
-                                        String keyhash,
-                                        String slicename,
-                                        String nodename
-  ){
-    /** Post to remote safesets using apache httpclient */
-    String[] othervalues=new String[5];
-    othervalues[0]=customer_slice;
-    othervalues[1]=customerName;
-    othervalues[2]=ReservID;
-    othervalues[3]=slicename;
-    othervalues[4]=nodename;
-    String message= SafeUtils.postSafeStatements(safeServer,"verifyStitch",
-        safeManager.getSafeKeyHash(),
-        othervalues);
-    if(message ==null || message.contains("Unsatisfied")){
-      return false;
-    }
-    else
-      return true;
-  }
-
-  public boolean authorizeStitchRequest(String customerSafeKeyHash,
-                                        String customerSlice
-  ){
-    /** Post to remote safesets using apache httpclient */
-    String[] othervalues=new String[2];
-    othervalues[0]=customerSafeKeyHash;
-    String saHash = SafeUtils.getPrincipalId(safeServer, "key_p3");
-    othervalues[1]=saHash + ":" + customerSlice;
-    String message= SafeUtils.postSafeStatements(safeServer,"authorizeStitchByUID",
-        safeManager.getSafeKeyHash(),
-        othervalues);
-    if(message ==null || message.contains("Unsatisfied") || message.contains("Query failed")){
-      return false;
-    }
-    else
-      return true;
-  }
 
   public boolean authorizeStitchChameleon(String customer_keyhash,String stitchport,String vlan,String gateway,String slicename, String nodename){
     /** Post to remote safesets using apache httpclient */
