@@ -30,10 +30,8 @@ public class TridentSlice extends SliceManager{
 
   public static void main(String[] args){
 
-    /*
     TridentSlice tridentSlice = new TridentSlice();
-    tridentSlicnye.run(sdxArgs);
-    */
+    tridentSlice.run(sdxArgs);
     TridentSlice clientSlice = new TridentSlice();
     clientSlice.initializeExoGENIContexts(clientArgs);
     clientSlice.deleteClientSlices();

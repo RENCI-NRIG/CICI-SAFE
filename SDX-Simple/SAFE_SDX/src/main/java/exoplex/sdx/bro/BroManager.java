@@ -106,7 +106,7 @@ public class BroManager {
           bro.addBroFlow(f);
           String res = networkManager.setMirror(sdxManager.getSDNController(), dpid, f.src, f.dst, gw);
           res += networkManager.setMirror(sdxManager.getSDNController(), dpid, f.dst, f.src, gw);
-          logger.info("job: " + f.src + " " + f.dst + " " + f.bw + ": \n" + res);
+          logger.info("Excuting job: " + f.src + " " + f.dst + " " + f.bw + ": \n" + res);
           toRemove.add(f);
         }
       }
@@ -193,6 +193,7 @@ public class BroManager {
   }
 
   public void setMirrorAsync(String routerName, String source, String dst, long bw) throws  Exception{
+    logger.info(String.format("Mirror job: %s %s %s %s", routerName, source, dst, bw));
     requiredbw.put(routerName, requiredbw.getOrDefault(routerName, 0l));
     synchronized (jobQueue) {
       jobQueue.offer(new BroFlow(source, dst, bw, routerName));
