@@ -15,7 +15,7 @@ import prolog.terms.{Const => StyConstant, Fun => StyFun}
 class SlogSet(
     val issuer: Option[String],                       // Hash of the issuer's public key; the speaker of a signed credential
     val subject: Option[String],                      // Subject of the set; used in conjunction with 
-                                                      // speaksForToken, when it's different from issuer
+                                                      // speaksForToken, when it's different from the issuer
     val freshUntil: Option[DateTime],                 // Expiration time of this set
     var speakersFreshUntil: Option[DateTime],         // Expiration time of speaksFor authorization, 
     var issuerFreshUntil: Option[DateTime],           // Expiration time of the issuer's ID set
@@ -53,6 +53,29 @@ class SlogSet(
         |setData: $setData,
         |containingContexts: $containingContexts""".stripMargin
   }
+
+  /**
+   * Setting the speaker for each statement in the slogset.
+   * The value of the speaker is determined by the value of the
+   * the issuer and the value of the subject of the set.
+   */
+  def setStatementSpeaker(): Unit = {
+    val spkr: String = if(subject.isDefined) {
+      subject.get
+    } else if(issuer.isDefined) {
+      issuer.get 
+    } else {
+      ""
+    }
+   
+    if(!spkr.isEmpty) {
+      for(stmtSet <- statements.values) {
+        for(stmt <- stmtSet) {
+          stmt.addSpeaker(spkr)
+        }
+      }
+    }
+  } 
 
   /**
    * Add token of a containing context

@@ -19,8 +19,8 @@ class Config(config: com.typesafe.config.Config) {
     , StrLit("subject")            ->  2
     , StrLit("principal")          ->  1
     , StrLit("signatureAlgorithm") ->  1
-    , StrLit("speaksFor")          ->  2
-    , StrLit("speaksForOn")        ->  3
+    //, StrLit("speaksFor")          ->  2
+    //, StrLit("speaksForOn")        ->  3
     , StrLit("name")               ->  1
     , StrLit("label")              ->  1
     , StrLit("link")               ->  1

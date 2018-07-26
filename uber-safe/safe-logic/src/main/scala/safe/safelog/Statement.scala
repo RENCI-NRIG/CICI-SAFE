@@ -19,6 +19,8 @@ abstract class Statement {
     _statement
   }
 
+  def addSpeaker(spkr: String): Statement = this
+ 
   def toStringWithSays(): String = toString()
   def toStringCompact(speaker: String): String  = toString()
 

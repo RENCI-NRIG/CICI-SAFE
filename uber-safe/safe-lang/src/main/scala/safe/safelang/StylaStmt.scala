@@ -101,20 +101,24 @@ class StyStmt(val styterms: List[StyTerm], val vmap: LinkedHashMap[String, StyVa
     }
 
     //println(s"[Safelang StyStmt bind] after binding: newstmt=${newstmt}")
+    newstmt
 
-    val stmtWithSpeaker = if(bindings.contains(StrLit("$Self"))) {  // $Self is the speaker 
-      if(bindings(StrLit("$Self")).isInstanceOf[Constant]) {
-        newstmt.addSpeaker(bindings(StrLit("$Self")).asInstanceOf[Constant].id.name) 
-      } else {
-        newstmt
-      }
-    } else {
-      newstmt
-    }
-    stmtWithSpeaker
+    // Bind() only doesn't binding
+    // Adding a speaker to each statement should go to slogset instantiation
+    //
+    //val stmtWithSpeaker = if(bindings.contains(StrLit("$Self"))) {  // $Self is the speaker 
+    //  if(bindings(StrLit("$Self")).isInstanceOf[Constant]) {
+    //    newstmt.addSpeaker(bindings(StrLit("$Self")).asInstanceOf[Constant].id.name) 
+    //  } else {
+    //    newstmt
+    //  }
+    //} else {
+    //  newstmt
+    //}
+    //stmtWithSpeaker
   }
 
-  def addSpeaker(speaker: String): StyStmt = {
+  override def addSpeaker(speaker: String): StyStmt = {
     val spkop: String = ":"
     val termsWithSpeaker = styterms.map {
       t: StyTerm => 

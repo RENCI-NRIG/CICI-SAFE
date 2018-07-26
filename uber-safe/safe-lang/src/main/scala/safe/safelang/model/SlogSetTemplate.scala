@@ -34,7 +34,9 @@ case class SlogSetTemplate(
     }
     //println(s"[SlogSetTemplate] spkr = ${spkr}   ${envContext.keySet}  ${envContext.values}")
     //println(s"[SlogSetTemplate] bindedStmts = ${bindedStmts}")
-    buildSlogSet(bindedStmts, bindedLabelInDef.map{term => term.id.name}, speaker=spkr)
+    val s = buildSlogSet(bindedStmts, bindedLabelInDef.map{term => term.id.name}, speaker=spkr)
+    s.setStatementSpeaker()  // TODO: This might be part of the SlogSet constructor
+    s
   }
 
   def getBindedStatements(bindings: Map[StrLit, Term]): Map[Index, OrderedSet[Statement]] = {
@@ -89,17 +91,28 @@ object SlogSetHelper {
     var issuer: Option[String] = speaker
     var subject: Option[String] = speaker  // TODO: speaksFor
     var speaksForToken: Option[String] = None
-    if(!speaker.isDefined) {
-      val speakerStmt: Option[Statement] = getUniqueStatement(stmts.get(StrLit("_speaker"))) // self: speaker(speakerID, ref-to-speaksFor)
-      issuer = getAttribute(speakerStmt, 1) 
-      //println(s"[SlogSetTemplate buildSlogSet] speakerStmt=${speakerStmt}    issuer=${issuer}")
-      speaksForToken = getAttribute(speakerStmt, 2)
-      val subjectStmt: Option[Statement] = getUniqueStatement(stmts.get(StrLit("_subject"))) // self: subject(subject-id, publicKeyHash)
-      subject = getAttribute(subjectStmt, 1) 
-    }
+    //if(!speaker.isDefined) {
+    //
+    // no use of the builtin speaker(., .) at the moment     
+    //
+    // val speakerStmt: Option[Statement] = getUniqueStatement(stmts.get(StrLit("_speaker"))) // self: speaker(speakerID, ref-to-speaksFor)
+    // issuer = getAttribute(speakerStmt, 1) 
+    // println(s"[SlogSetTemplate buildSlogSet] speakerStmt=${speakerStmt}    issuer=${issuer}")
+    // speaksForToken = getAttribute(speakerStmt, 2)
+    //
+    // Builtin subject(.,.) is used to specify a speaker that is different from the issuer.
+    // It also specifies a slogset reference that links to a proof of the speaksFor eligibility
+    // for the issuer.
+    //
+    // Usage of subject(): self: subject(<subjectId> ,
+    val subjectStmt: Option[Statement] = getUniqueStatement(stmts.get(StrLit("_subject"))) // self: subject(subject-id, publicKeyHash)
+    println(s"[SlogSetTemplate buildSlogSet] subjectStmt=${subjectStmt}    subject=${subject}")
+    subject = getAttribute(subjectStmt, 1) 
+    //
+    //}
     val freshUntil: Option[DateTime] = if(!validity.isDefined) { 
-    //println(s"[SlogSetTemplate buildSlogSet] subjectStmt=${subjectStmt}    subject=${subject}")
       val validityStmt: Option[Statement] = getUniqueStatement(stmts.get(StrLit("_validity"))) // self: validity(notBefore, notAfter) 
+      println(s"[SlogSetTemplate buildSlogSet] validityStmt=${validityStmt}")
       getAttribute(validityStmt, 2) match {
         case Some(notAfter: String) => 
           Some(Validity.format.parseDateTime(notAfter))
