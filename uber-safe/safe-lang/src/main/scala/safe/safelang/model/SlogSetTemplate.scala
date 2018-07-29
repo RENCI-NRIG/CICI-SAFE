@@ -106,8 +106,10 @@ object SlogSetHelper {
     //
     // Usage of subject(): self: subject(<subjectId> ,
     val subjectStmt: Option[Statement] = getUniqueStatement(stmts.get(StrLit("_subject"))) // self: subject(subject-id, publicKeyHash)
-    println(s"[SlogSetTemplate buildSlogSet] subjectStmt=${subjectStmt}    subject=${subject}")
+    println(s"[SlogSetTemplate buildSlogSet] subjectStmt=${subjectStmt}   subject=${subject}")
     subject = getAttribute(subjectStmt, 1) 
+    println(s"[SlogSetTemplate buildSlogSet] subject=${subject}")
+
     //
     //}
     val freshUntil: Option[DateTime] = if(!validity.isDefined) { 

@@ -184,7 +184,7 @@ class LDAPClient extends LazyLogging {
     // Instantiate Slog Set
     val prolog: List[List[StyTerm]] = groups.toList.map{ g => makeMembershipEndorsement(uid, g) }
     val slogset: SlogSet = safe.safelang.model.SlogSetHelper.buildSlogSet( 
-        safe.safelang.StyStmtHelper.indexStyStmts(prolog, LinkedHashMap[String, StyVar](), speaker),
+        safe.safelang.StyStmtHelper.indexStyStmts(prolog, LinkedHashMap[String, StyVar]()),
         Some(label), 
         None, None,  // No set data; no signature
         Some(speaker), Some(validity) 
