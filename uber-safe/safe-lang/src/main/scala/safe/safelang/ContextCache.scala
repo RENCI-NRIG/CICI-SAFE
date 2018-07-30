@@ -154,9 +154,25 @@ class ContextCache(setcache: SetCache) extends LazyLogging {
    * 
    */
   def validateSpeakers(slogset: SlogSet): Boolean = {
-    if(slogset.validatedSpeaker || slogset.checkMatchingSpeaker) {
+    if(slogset.issuer.isDefined && slogset.subject.isDefined && slogset.speaksForToken.isDefined) { // check speaksFor
+      val methodName = "validateSpeaksFor"
+      val args = Seq(slogset.issuer.get, slogset.subject.get, slogset.speaksForToken.get)
+      val query = Query(Seq(Structure(methodName, args.map{
+        case x: String  => Constant(StrLit(x), StrLit("nil"), StrLit("StrLit"), Encoding.AttrBase64)
+        case _ => throw UnSafeException(s"Invalid speaksFor check argument: ${_}")
+      })))
+      requestedEnv: Map[String, Option[String]] = Map.empty
+
+      logger.info(s"[runGuard] query: $query \n requestedEnv: $requestedEnv")
+      val res = slangManager.solveSlangQuery(query, requestedEnv, guardTable.getGuardType(methodName)).flatten
+      //val strres = res.mkString("; ")
+      //val desc = methodName + "___" + args.mkString("___") + "___" + requestedEnv("Principal") + "___" +  requestedEnv("Subject") + "___" + requestedEnv("BearerRef")
+      println(s"speaksFor check: ${res}")
+      res
+    }
+    else if (slogset.validatedSpeaker || slogset.checkMatchingSpeaker) { // check matching speaker
       true
-    } else { // check speaksFor
+    } else { // other
       false 
     } 
   }

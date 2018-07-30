@@ -307,16 +307,18 @@ class SlogSet(
   def computeToken(self: Option[Principal] = None): String = {
     var pid = ""
     if(issuer.isDefined) {
-      if(subject.isDefined) { // speaksForToken must point to a valid proof
-        pid = subject.get
-      } else {
-        pid = issuer.get
-      }
+      //if(subject.isDefined) { // speaksForToken must point to a valid proof
+      //  pid = subject.get
+      //} else {
+      //  pid = issuer.get
+      //}
+      pid = issuer.get  // the logic set is always under the issuer's namespace
     } else {
       if(self.isDefined) {
         pid = self.get.pid
       } 
     }
+    println(s"[safelang/SlogSet.computeToken()] pid: ${pid}    label: ${label}")
     Identity.computeSetToken(pid, label)
   } 
   
@@ -334,7 +336,11 @@ class SlogSet(
         throw UnSafeException(s"Signing principal does not match the speaker provided in the set: ${self}    ${issuer}")
       }
     }
-    // TODO: process subject
+
+    // process subject
+    val subjectID = if(subject.isDefined) subject.get else ""
+
+    val spksForT = if(speaksForToken.isDefined) speaksForToken.get else "" 
 
     val now = new DateTime()
     val notAfter = if(freshUntil.isDefined) freshUntil.get else now.plusYears(3) 
@@ -342,6 +348,8 @@ class SlogSet(
 
     // Data to sign
     s"""|${selfID}
+        |${subjectID}
+        |${spksForT}
         |${validity}
         |${signatureAlgorithm}
         |${cred}""".stripMargin
@@ -352,6 +360,7 @@ class SlogSet(
    *    SetToken
    *    Signature
    *    SpeakerID
+   *    SubjectID
    *    Validity
    *    Signature Algorithm
    *    SetLabel
