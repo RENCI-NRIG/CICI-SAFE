@@ -406,6 +406,8 @@ trait ParserImpl
     val speaker: String = source.substring(endOfSig+1, endOfSpeaker)
     val endOfSubject = source.indexOf("\n", endOfSpeaker+1)
     val subject: String = source.substring(endOfSpeaker+1, endOfSubject)
+    val endOfSpeaksForToken = source.indexOf("\n", endOfSubject+1)
+    val speaksForToken: String = source.substring(endOfSubject+1, endOfSpeaksForToken)
     val endOfValidity = source.indexOf("\n", endOfSpeaker+1)
     val validity: String = source.substring(endOfSpeaker+1, endOfValidity) 
     val endOfSigAlg = source.indexOf("\n", endOfValidity+1)
@@ -421,7 +423,7 @@ trait ParserImpl
     //println(s"slogSource:${slogSource}")
     //println(s"setData:${setData}")
 
-    StylaParserService.getParser().parseSlogSet(slogSource, label, setData, sig, speaker, subject, v)
+    StylaParserService.getParser().parseSlogSet(slogSource, label, setData, sig, speaker, subject, speaksForToken, v)
   }
 
   private[safe] def parseFileAsCertificate(fileName: String): SlogSet = {

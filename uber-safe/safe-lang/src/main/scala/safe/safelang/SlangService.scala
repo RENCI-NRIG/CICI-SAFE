@@ -67,7 +67,7 @@ object GuardTable {
 class SlangService(keypairDir: String, slangFile: String, fileArgs: Option[String]) extends LazyLogging {
   import scala.concurrent.ExecutionContext.Implicits.global
 
-  val slangManager: SafelangManager = new SafelangManager(keypairDir)
+  val slangManager: SafelangManager = SafelangManager.instance(keypairDir)
   val numServedReqs = new AtomicInteger(0)
 
   val slang = slangManager.createSafelang()

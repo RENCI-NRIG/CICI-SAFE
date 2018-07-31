@@ -291,10 +291,10 @@ object StyRetraction {
     new StyRetraction(styterms, vmap)
   }
 
-  def apply(styterms: List[StyTerm], vmap: LinkedHashMap[String, StyVar], speaker: String): StyStmt = {
-    val stmt = new StyRetraction(styterms, vmap)
-    stmt.addSpeaker(speaker)
-  }
+  // def apply(styterms: List[StyTerm], vmap: LinkedHashMap[String, StyVar], speaker: String): StyStmt = {
+  //   val stmt = new StyRetraction(styterms, vmap)
+  //   stmt.addSpeaker(speaker)
+  // }
 }
 
 /**
@@ -327,10 +327,10 @@ object StyQuery {
     new StyQuery(styterms, vmap, annotation)
   }
 
-  def apply(styterms: List[StyTerm], vmap: LinkedHashMap[String, StyVar], annotation: Int, speaker: String): StyStmt = {
-    val stmt = new StyQuery(styterms, vmap, annotation)
-    stmt.addSpeaker(speaker)
-  }
+  // def apply(styterms: List[StyTerm], vmap: LinkedHashMap[String, StyVar], annotation: Int, speaker: String): StyStmt = {
+  //   val stmt = new StyQuery(styterms, vmap, annotation)
+  //   stmt.addSpeaker(speaker)
+  // }
 }
 
 /* Helper for styla statements */
@@ -445,14 +445,17 @@ object StyStmtHelper {
   }
 
   /* Make a set of indexed SytStmts out of a styla-parsed prolog program */
-  def indexStyStmts(prolog: List[List[StyTerm]], vmap: LinkedHashMap[String, StyVar]): Map[Index, OrderedSet[Statement]] = {
-    val speaker = ""
-    indexStyStmts(prolog, vmap, speaker)
-  }
+  //def indexStyStmts(prolog: List[List[StyTerm]], vmap: LinkedHashMap[String, StyVar]): Map[Index, OrderedSet[Statement]] = {
+  //  val speaker = ""
+  //  indexStyStmts(prolog, vmap, speaker)
+  //}
  
   val qAnnotMap = Map("_query" -> UNCLASSIFIED, "_query_allow" -> ALLOW, "_query_require" -> REQUIRE, "_query_deny" -> DENY)
-  /* Make a set of indexed SytStmts wth speaker out of a styla-parsed prolog program */
-  def indexStyStmts(prolog: List[List[StyTerm]], vmap: LinkedHashMap[String, StyVar], speaker: String):
+  /* *
+   * Make a set of indexed SytStmts out of a styla-parsed prolog program
+   * Defer the processing of speaker until the instantiation of the logic set
+   **/
+  def indexStyStmts(prolog: List[List[StyTerm]], vmap: LinkedHashMap[String, StyVar]):
      Map[Index, OrderedSet[Statement]] = {
     val program = MutableMap[Index, OrderedSet[Statement]]()
     for(l <- prolog) {
@@ -461,16 +464,19 @@ object StyStmtHelper {
           val qtype = query.sym
           assert(qAnnotMap.contains(qtype), s"Invalid type of Styla query: ${qtype}")
           val annotation = qAnnotMap(qtype)
-          val stystmt = if(speaker.isEmpty) StyQuery(query.qargs.toList, vmap, annotation) else StyQuery(query.qargs.toList, vmap, annotation, speaker)
+          //val stystmt = if(speaker.isEmpty) StyQuery(query.qargs.toList, vmap, annotation) else StyQuery(query.qargs.toList, vmap, annotation, speaker)
+          val stystmt = StyQuery(query.qargs.toList, vmap, annotation)
           val idx = "_query" //query.sym
           //println(s"[StyStmt indexStyStmts] idx=${idx}  ==>  stystmt=${stystmt}")
           addStmt(StrLit(idx), stystmt, program)
         case (retraction: StyRetractionTerm) :: Nil =>
-          val stystmt = if(speaker.isEmpty) StyRetraction(retraction.args.toList, vmap) else StyRetraction(retraction.args.toList, vmap, speaker)
+          //val stystmt = if(speaker.isEmpty) StyRetraction(retraction.args.toList, vmap) else StyRetraction(retraction.args.toList, vmap, speaker)
+          val stystmt = StyRetraction(retraction.args.toList, vmap)
           val idx = retraction.sym // "_retraction"
           addStmt(StrLit(idx), stystmt, program) 
 	case _ =>  
-          val stystmt = if(speaker.isEmpty) StyStmt(l, vmap) else StyStmt(l, vmap, speaker)
+          //val stystmt = if(speaker.isEmpty) StyStmt(l, vmap) else StyStmt(l, vmap, speaker)
+          val stystmt = StyStmt(l, vmap)
           val idx = stystmt.secondaryIndex
           //println(s"[StyStmt indexStyStmts] idx=${idx}  ==>  stystmt=${stystmt}")
           addStmt(idx, stystmt, program) 

@@ -4,8 +4,6 @@ package frontend
 import akka.actor.{Actor, ActorRef, Props}
 import akka.pattern.ask
 import akka.util.Timeout
-import scala.concurrent.Await
-import scala.concurrent.duration._
 import spray.http.StatusCodes
 import spray.http.CacheDirectives.`max-age`
 import spray.http.HttpHeaders.`Cache-Control`
@@ -21,6 +19,8 @@ import MediaTypes._
 import HttpMethods._
 import spray.http.HttpHeaders._
 
+import scala.concurrent.Await
+import scala.concurrent.duration._
 import scala.concurrent.Future
 import scala.util.{Success, Failure}
 
@@ -187,7 +187,7 @@ trait RestfulHttpService extends Actor with HttpService with DefaultJsonProtocol
   val numServedReqs = new AtomicInteger(0)  // For perf collection
 
   // safelang manager
-  val slangManager: SafelangManager = new SafelangManager(keypairDir)
+  val slangManager: SafelangManager = SafelangManager.instance(keypairDir)
 
   //The responses should not be cached at the client site; so we explicitly disable them.
   val CacheHeader = (maxAge: Long) => `Cache-Control`(`max-age`(maxAge)) :: Nil

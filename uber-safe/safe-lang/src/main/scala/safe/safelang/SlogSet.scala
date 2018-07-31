@@ -22,7 +22,7 @@ class SlogSet(
     var validatedSpeaker: Boolean,                    // Member of SlogSet
     var validated: Boolean,                           // True if the signature checks out
     val resetTime: Option[DateTime],                  // Time to refresh the set
-    val queries: Seq[Statement],                      // Queries in the SlogSet
+    var queries: Seq[Statement],                      // Queries in the SlogSet
     var statements: Map[Index, OrderedSet[Statement]],// Statments in the SlogSet
     var links: Seq[String],                           // Links included in the SlogSet
     val speaksForToken: Option[String],               // Token of a set to endorse the validity of speaksFor
@@ -68,12 +68,22 @@ class SlogSet(
       ""
     }
    
-    if(!spkr.isEmpty) {
-      for(stmtSet <- statements.values) {
-        for(stmt <- stmtSet) {
-          stmt.addSpeaker(spkr)
-        }
-      }
+    if(!spkr.isEmpty) { 
+      println(s"[safelang/SlogSet.setStatementSpeaker]  statements (without speaker) = ${statements}")
+      println(s"[safelang/SlogSet.setStatementSpeaker]  spkr = ${spkr}")
+      statements = statements.keySet.map {
+        case idx: Index =>
+          val resultStatements: OrderedSet[Statement] = 
+               statements.get(idx).getOrElse(OrderedSet.empty).map(stmt => stmt.addSpeaker(spkr))
+          idx -> resultStatements
+      }.toMap
+      println(s"[safelang/SlogSet.setStatementSpeaker]  statements (with speaker) = ${statements}")
+
+
+      println(s"[safelang/SlogSet.setStatementSpeaker]  queries (without speaker) = ${queries}")
+      println(s"[safelang/SlogSet.setStatementSpeaker]  spkr = ${spkr}")
+      queries = queries.map(stmt => stmt.addSpeaker(spkr))
+      println(s"[safelang/SlogSet.setStatementSpeaker]  queries (with speaker) = ${queries}")
     }
   } 
 

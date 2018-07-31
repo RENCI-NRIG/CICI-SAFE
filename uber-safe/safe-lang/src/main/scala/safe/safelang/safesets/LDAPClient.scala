@@ -187,7 +187,9 @@ class LDAPClient extends LazyLogging {
         safe.safelang.StyStmtHelper.indexStyStmts(prolog, LinkedHashMap[String, StyVar]()),
         Some(label), 
         None, None,  // No set data; no signature
-        Some(speaker), Some(validity) 
+        Some(speaker),
+        None, None,  // no subject; no speaksFor token
+        Some(validity) 
       )
     println(s"slogset built as below: \n${slogset}")
     Seq[SlogSet](slogset)

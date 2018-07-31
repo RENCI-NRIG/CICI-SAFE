@@ -83,14 +83,17 @@ object SlogSetHelper {
 
   /** 
    * Build a local slogset 
+   * TODO: refactor to consider the scenarios where one makes a slogset from an instantiation 
+   * of a slang template and from an imported SAFE certificate.
    */
   def buildSlogSet(stmts: Map[Index, OrderedSet[Statement]], labelPredef: Option[String] = None, 
       setData: Option[String] = None, signature: Option[String] = None, 
-      speaker: Option[String] = None, validity: Option[Validity] = None): SlogSet = {
+      speaker: Option[String] = None, subj: Option[String] = None, spksForToken: Option[String] = None,
+      validity: Option[Validity] = None): SlogSet = {
     
     var issuer: Option[String] = speaker
-    var subject: Option[String] = speaker  // TODO: speaksFor
-    var speaksForToken: Option[String] = None
+    var subject: Option[String] = subj // speaksFor
+    var speaksForToken: Option[String] = spksForToken
     //if(!speaker.isDefined) {
     //
     // no use of the builtin speaker(., .) at the moment     
@@ -106,9 +109,12 @@ object SlogSetHelper {
     //
     // Usage of subject(): self: subject(<subjectId> ,
     val subjectStmt: Option[Statement] = getUniqueStatement(stmts.get(StrLit("_subject"))) // self: subject(subject-id, publicKeyHash)
-    println(s"[SlogSetTemplate buildSlogSet] subjectStmt=${subjectStmt}   subject=${subject}")
-    subject = getAttribute(subjectStmt, 1) 
-    println(s"[SlogSetTemplate buildSlogSet] subject=${subject}")
+    if(subjectStmt.isDefined) {
+      println(s"[SlogSetTemplate buildSlogSet] subjectStmt=${subjectStmt}   subject=${subject}")
+      subject = getAttribute(subjectStmt, 1) 
+      speaksForToken = getAttribute(subjectStmt, 2)
+      println(s"[SlogSetTemplate buildSlogSet] subject=${subject}    speaksForToken=${speaksForToken}")
+    }
 
     //
     //}

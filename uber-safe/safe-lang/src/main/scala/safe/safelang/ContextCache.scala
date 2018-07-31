@@ -1,17 +1,19 @@
 package safe.safelang
 
-import setcache.SetCache
-import safe.safelog.{UnSafeException, Subcontext}
-import safe.safelang.{Token => Index}
+
+import com.google.common.cache._
+import org.joda.time.DateTime
+import com.typesafe.scalalogging.LazyLogging
 
 import scala.collection.mutable.{LinkedHashSet => OrderedSet, ListBuffer}
 import scala.collection.mutable.Queue
 
 import scala.util.{Try, Failure, Success}
 
-import com.google.common.cache._
-import org.joda.time.DateTime
-import com.typesafe.scalalogging.LazyLogging
+import setcache.SetCache
+import safe.safelog.{UnSafeException, Subcontext}
+import safe.safelog._
+import safe.safelang.{Token => Index}
 
 /**
   * ContextCache wraps a Guava cache
@@ -159,16 +161,22 @@ class ContextCache(setcache: SetCache) extends LazyLogging {
       val args = Seq(slogset.issuer.get, slogset.subject.get, slogset.speaksForToken.get)
       val query = Query(Seq(Structure(methodName, args.map{
         case x: String  => Constant(StrLit(x), StrLit("nil"), StrLit("StrLit"), Encoding.AttrBase64)
-        case _ => throw UnSafeException(s"Invalid speaksFor check argument: ${_}")
+        case a @ _ => throw UnSafeException(s"Invalid speaksFor check argument: ${a}")
       })))
-      requestedEnv: Map[String, Option[String]] = Map.empty
+
+      val requestedEnv: Map[String, Option[String]] = Map.empty
 
       logger.info(s"[runGuard] query: $query \n requestedEnv: $requestedEnv")
-      val res = slangManager.solveSlangQuery(query, requestedEnv, guardTable.getGuardType(methodName)).flatten
+      val res = SafelangManager.instance().solveSlangQuery(query, requestedEnv).flatten
       //val strres = res.mkString("; ")
       //val desc = methodName + "___" + args.mkString("___") + "___" + requestedEnv("Principal") + "___" +  requestedEnv("Subject") + "___" + requestedEnv("BearerRef")
-      println(s"speaksFor check: ${res}")
-      res
+      val queryResultPattern = """\{(.*)\}\s*$""".r
+      val valid: Boolean = res match {
+        case queryResultPattern(result) => true
+        case _ => false
+      }
+      println(s"speaksFor validity: ${valid} \n${res}")
+      valid
     }
     else if (slogset.validatedSpeaker || slogset.checkMatchingSpeaker) { // check matching speaker
       true

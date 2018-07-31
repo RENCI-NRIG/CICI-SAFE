@@ -354,7 +354,7 @@ class SafelangManager(keypairDir: String) extends KeyPairManager with LazyLoggin
     } 
   }
 
-  def solveSlangQuery(query: Query, requestedEnv: Map[String, Option[String]], guardType: Option[Int]): Seq[Seq[Statement]] = {
+  def solveSlangQuery(query: Query, requestedEnv: Map[String, Option[String]], guardType: Option[Int]=Some(DEF_GUARD)): Seq[Seq[Statement]] = {
     val penv: Option[String] = requestedEnv("Principal")  // Consider the case where the value can be a principal name
     val p: Option[String] = if(!penv.isDefined) penv else { Some(principalNameToID.getOrElse(penv.get, penv.get))}
     //val p: Option[String] = requestedEnv("Principal")
@@ -442,5 +442,20 @@ class SafelangManager(keypairDir: String) extends KeyPairManager with LazyLoggin
 
 
 object SafelangManager {
-  def apply(): SafelangManager = new SafelangManager("")
+  var _instance: Option[SafelangManager] = None 
+  
+  def instance(): SafelangManager = {
+    if(!_instance.isDefined) {
+      _instance = Some(new SafelangManager(""))
+    }
+    _instance.get
+  }
+
+  def instance(keydir: String): SafelangManager = {
+    if(!_instance.isDefined) {
+      _instance = Some(new SafelangManager(keydir))
+    }   
+    _instance.get
+  }
+
 } 
