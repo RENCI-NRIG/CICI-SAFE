@@ -37,7 +37,10 @@ class StylaParserService {
   def parseSlogSet(source: String, labelPredef: String, setData: String, signature: String, speaker: String, subject: String, speaksForToken: String, validity: Validity): SlogSet = {
     val styparser = new StyParser
     val prolog = styparser.parseProg(source) 
-    val slogset = buildSlogSet(indexStyStmts(prolog, styparser.vars), Some(labelPredef), Some(setData), Some(signature), Some(speaker), Some(subject), Some(speaksForToken), Some(validity)) 
+    val spkr: Option[String] = if(speaker.isEmpty) None else Some(speaker)
+    val subj: Option[String] = if(subject.isEmpty) None else Some(subject)
+    val spkForT: Option[String] = if(speaksForToken.isEmpty) None else Some(speaksForToken)
+    val slogset = buildSlogSet(indexStyStmts(prolog, styparser.vars), Some(labelPredef), Some(setData), Some(signature), spkr, subj, spkForT, Some(validity)) 
     slogset.setStatementSpeaker()
     slogset
   }

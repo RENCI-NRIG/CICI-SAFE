@@ -62,6 +62,7 @@ class SetCache (localSetTable: SafeTable[SetId, SlogSet], safeSetsClient: SafeSe
   }
 
   def get(token: Index): Option[SlogSet] = {
+    logger.info(s"[safelang/setcache/SetCache.get()] get ${token}")
     Try(cache.get(token)) match {
       case Success(s) =>
         Some(s)

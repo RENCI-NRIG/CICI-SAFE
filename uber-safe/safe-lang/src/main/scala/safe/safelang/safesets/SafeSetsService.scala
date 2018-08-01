@@ -297,8 +297,12 @@ class SafeSetsClient(val system: ActorSystem) extends LazyLogging {
     val sig: String = source.substring(endOfToken+1, endOfSig)
     val endOfSpeaker = source.indexOf("\n", endOfSig+1)
     val speaker: String = source.substring(endOfSig+1, endOfSpeaker)
-    val endOfValidity = source.indexOf("\n", endOfSpeaker+1)
-    val validity: String = source.substring(endOfSpeaker+1, endOfValidity)
+    val endOfSubject = source.indexOf("\n", endOfSpeaker+1)
+    val subject: String = source.substring(endOfSpeaker+1, endOfSubject)
+    val endOfSpeaksForToken = source.indexOf("\n", endOfSubject+1)
+    val speaksForToken: String = source.substring(endOfSubject+1, endOfSpeaksForToken)
+    val endOfValidity = source.indexOf("\n", endOfSpeaksForToken+1)
+    val validity: String = source.substring(endOfSpeaksForToken+1, endOfValidity)
     val endOfSigAlg = source.indexOf("\n", endOfValidity+1)
     val sigAlg = source.substring(endOfValidity+1, endOfSigAlg)
     val endOfLabel = source.indexOf("\n", endOfSigAlg+1)
@@ -308,7 +312,7 @@ class SafeSetsClient(val system: ActorSystem) extends LazyLogging {
     val setData: String = source.substring(endOfSig+1, source.length)
     val slogSource: String = source.substring(startOfLogic, source.length)
     val vldParts: Array[String] = validity.split(",")
-    assert(vldParts.size == 3, s"Invalid validity: ${validity}  ${vldParts}")
+    assert(vldParts.size == 3, s"Post validation: invalid validity ${validity}  ${vldParts.size}")
     val v: Validity = Validity(Some(vldParts(0).trim), Some(vldParts(1).trim), Some(vldParts(2).trim))
 
     // validate signature

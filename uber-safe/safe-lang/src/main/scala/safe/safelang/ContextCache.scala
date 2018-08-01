@@ -166,7 +166,7 @@ class ContextCache(setcache: SetCache) extends LazyLogging {
 
       val requestedEnv: Map[String, Option[String]] = Map.empty
 
-      logger.info(s"[runGuard] query: $query \n requestedEnv: $requestedEnv")
+      logger.info(s"[validateSpeakers] query: $query \n requestedEnv: $requestedEnv   \n slogset: \n ${slogset}")
       val res = SafelangManager.instance().solveSlangQuery(query, requestedEnv).flatten
       //val strres = res.mkString("; ")
       //val desc = methodName + "___" + args.mkString("___") + "___" + requestedEnv("Principal") + "___" +  requestedEnv("Subject") + "___" + requestedEnv("BearerRef")
