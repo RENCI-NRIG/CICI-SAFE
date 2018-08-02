@@ -47,7 +47,6 @@ public class SdxManager extends SliceManager {
   private final ReentrantLock nodelock = new ReentrantLock();
   private final ReentrantLock brolock = new ReentrantLock();
   private static final String dpidPattern = "^[a-f0-9]{16}";
-  protected  static String plexusName = "plexuscontroller";
   protected HashMap<String, ArrayList<String>> edgeRouters = new HashMap<String, ArrayList<String>>();
   int curip = 128;
   protected RoutingManager routingmanager = new RoutingManager();

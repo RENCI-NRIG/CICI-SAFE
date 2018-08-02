@@ -37,6 +37,7 @@ public class SliceManager extends SliceCommon {
   protected static String cLinkPattern = "(^clink\\d+)";
   protected static String eLinkPattern = "(^elink\\d+)";
   protected static String broLinkPattern = "(^blink_bro\\d+_e\\d+_\\d+)";
+  protected  static String plexusName = "plexuscontroller";
   protected long bw = 1000000000;
   final Logger logger = LogManager.getLogger(SliceManager.class);
   protected int curip = 128;
@@ -132,7 +133,7 @@ public class SliceManager extends SliceCommon {
       carrier.copyFile2Slice(scriptsdir + "ifaces.sh", "~/ifaces.sh", sshkey);
       carrier.copyFile2Slice(scriptsdir + "ovsbridge.sh", "~/ovsbridge.sh", sshkey);
       //Make sure that plexus container is running
-      SDNControllerIP = carrier.getComputeNode("plexuscontroller").getManagementIP();
+      SDNControllerIP = carrier.getComputeNode(plexusName).getManagementIP();
       if(safeEnabled){
         configSafeServerIp(carrier);
       }
@@ -214,7 +215,7 @@ public class SliceManager extends SliceCommon {
     tlist.add(new Thread(){
       @Override
       public void run() {
-        SDNControllerIP = serverSlice.getComputeNode("plexuscontroller").getManagementIP();
+        SDNControllerIP = serverSlice.getComputeNode(plexusName).getManagementIP();
         checkPlexus(SDNControllerIP);
       }
     });
@@ -370,7 +371,7 @@ public class SliceManager extends SliceCommon {
     if(safeEnabled){
       s.addSafeServer(serverSite, riakIp);
     }
-    s.addPlexusController(controllerSite, "plexuscontroller");
+    s.addPlexusController(controllerSite, plexusName);
     return s;
   }
 

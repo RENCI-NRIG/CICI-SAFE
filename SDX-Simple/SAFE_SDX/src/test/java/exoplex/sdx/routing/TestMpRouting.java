@@ -17,7 +17,7 @@ public class TestMpRouting extends SdxManager {
   public static void main(String[] args) throws Exception {
     TestMpRouting mpr = new TestMpRouting();
     //create the network
-    mpr.test();
+    //mpr.test();
 
     mpr.initNetwork();
     mpr.installTestGroup();
@@ -45,8 +45,8 @@ public class TestMpRouting extends SdxManager {
     SafeSlice slice = createTestSlice();
     slice.commitAndWait();
     configTestSlice(slice);
-    configSdnControllerAddr(slice.getComputeNode("plexus").getManagementIP());
-    checkPlexus(slice.getComputeNode("plexus").getManagementIP());
+    configSdnControllerAddr(slice.getComputeNode(plexusName).getManagementIP());
+    checkPlexus(slice.getComputeNode(plexusName).getManagementIP());
     slice.runCmdSlice(Scripts.getOVSScript(), sshkey, routerPattern, true);
     copyRouterScript(slice);
     configRouters(slice);
@@ -104,7 +104,7 @@ public class TestMpRouting extends SdxManager {
     slice.addBroadcastLink("stitch_c3_30");
     slice.attach("stitch_c3_30", "CNode2", "192.168.30.2", "255.255.255.0");
     slice.attach("stitch_c3_30", "c3");
-    slice.addPlexusController(controllerSite, "plexus");
+    slice.addPlexusController(controllerSite, plexusName);
     return  slice;
   }
 
