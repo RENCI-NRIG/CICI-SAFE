@@ -4,7 +4,7 @@
 
     <appender name="Other" class="org.apache.log4j.RollingFileAppender">
         <param name="append" value="false" />
-        <param name="maxFileSize" value="10MB" />
+        <param name="maxFileSize" value="1000MB" />
         <param name="maxBackupIndex" value="10" />
         <param name="file" value="log/other.log" />
         <layout class="org.apache.log4j.PatternLayout">
@@ -14,7 +14,7 @@
     </appender>
     <appender name="Ahab" class="org.apache.log4j.RollingFileAppender">
         <param name="append" value="false" />
-        <param name="maxFileSize" value="10MB" />
+        <param name="maxFileSize" value="1000MB" />
         <param name="maxBackupIndex" value="10" />
         <param name="file" value="log/ahab.log" />
         <layout class="org.apache.log4j.PatternLayout">
