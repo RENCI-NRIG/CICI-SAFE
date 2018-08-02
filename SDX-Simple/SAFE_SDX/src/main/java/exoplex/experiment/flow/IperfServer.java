@@ -1,12 +1,16 @@
-package exoplex.experiment.Flow;
+package exoplex.experiment.flow;
 
 import exoplex.common.utils.Exec;
+import exoplex.experiment.task.AsyncTask;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
-public class IperfServer {
+public class IperfServer extends AsyncTask {
 
   public static String TCP = "tcp";
   public static String UDP = "udp";
@@ -18,8 +22,13 @@ public class IperfServer {
   boolean started;
   String sshKey;
   ArrayList<String[]> results = new ArrayList<>();
-  Thread thread;
-  public IperfServer(String ip, int port, String transportProto, String sshKey){
+
+  public IperfServer(String ip, int port, String transportProto, String sshKey) {
+    super(UUID.randomUUID(),
+      0l,
+      TimeUnit.SECONDS,
+      new ArrayList<>(),
+      new HashMap<>());
     this.ip = ip;
     this.port = port;
     this.transportProto = transportProto;
@@ -27,32 +36,17 @@ public class IperfServer {
     started = false;
   }
 
-  public void start(){
-    lock.lock();
-    if(started){
-      lock.unlock();
-      return;
-    }else {
-      thread=
-          new Thread() {
-            @Override
-            public void run() {
-              String cmd = baseCmd;
-              if(port != 0){
-                cmd = cmd + " -p " + port;
-              }
-              if(transportProto.equals(UDP)){
-                cmd = cmd + " -u";
-              }
-              results.add(Exec.sshExec("root", ip, cmd,
-                  sshKey));
-            }
-          };
-      thread.start();
-      started = true;
-      lock.unlock();
-      return;
+  @Override
+  public void runTask() {
+    String cmd = baseCmd;
+    if (port != 0) {
+      cmd = cmd + " -p " + port;
     }
+    if (transportProto.equals(UDP)) {
+      cmd = cmd + " -u";
+    }
+    results.add(Exec.sshExec("root", ip, cmd,
+      sshKey));
   }
 
   public void stop(){

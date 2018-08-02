@@ -1,10 +1,14 @@
-package exoplex.experiment.Flow;
+package exoplex.experiment.flow;
+
+import exoplex.experiment.task.AsyncTask;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
-public class FlowManager {
+public class FlowManager extends AsyncTask{
   static int DEFAULT_PORT = 5001;
   static int DEFAULT_TIME = 60;
   HashMap<String, IperfServer> iperfServers= new HashMap<>();
@@ -13,7 +17,19 @@ public class FlowManager {
   protected final HashMap<String, List<String[]>> iperfServerOut = new HashMap<>();
   String sshKey;
 
-  public FlowManager(String sshKey){
+  public FlowManager(UUID taskId, Long offSetTime, TimeUnit timeUnit, List<UUID> dependencies,
+                     HashMap<UUID, AsyncTask> allTasks,
+                     String sshKey){
+    super(taskId, offSetTime, timeUnit, dependencies, allTasks);
+    this.sshKey = sshKey;
+  }
+
+  public FlowManager(String sshKey) {
+    super(UUID.randomUUID(),
+      0l,
+      TimeUnit.SECONDS,
+      new ArrayList<>(),
+      new HashMap<>());
     this.sshKey = sshKey;
   }
 
@@ -40,7 +56,17 @@ public class FlowManager {
     }
   }
 
-  public void startFlows(){
+  @Override
+  public void runTask(){
+    startFlows();
+  }
+
+  @Override
+  public void stop(){
+    stopFlows();
+  }
+
+  void startFlows(){
     for(IperfServer server: iperfServers.values()){
       server.start();
     }

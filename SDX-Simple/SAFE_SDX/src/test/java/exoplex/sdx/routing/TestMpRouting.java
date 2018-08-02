@@ -17,7 +17,7 @@ public class TestMpRouting extends SdxManager {
   public static void main(String[] args) throws Exception {
     TestMpRouting mpr = new TestMpRouting();
     //create the network
-    //mpr.test();
+    mpr.test();
 
     mpr.initNetwork();
     mpr.installTestGroup();

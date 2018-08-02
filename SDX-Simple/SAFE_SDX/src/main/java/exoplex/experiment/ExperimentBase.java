@@ -1,7 +1,7 @@
 package exoplex.experiment;
 
 import exoplex.common.utils.Exec;
-import exoplex.experiment.Flow.FlowManager;
+import exoplex.experiment.flow.FlowManager;
 import exoplex.sdx.core.SdxManager;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -75,7 +75,7 @@ public class ExperimentBase {
 
   public void startFlows(int seconds) {
     logger.debug("Start flows");
-    flowManager.startFlows();
+    flowManager.start();
   }
 
   public void stopFlows() {

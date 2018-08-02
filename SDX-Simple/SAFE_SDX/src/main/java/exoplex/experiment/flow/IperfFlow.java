@@ -1,12 +1,16 @@
-package exoplex.experiment.Flow;
+package exoplex.experiment.flow;
 
 import exoplex.common.utils.Exec;
+import exoplex.experiment.task.AsyncTask;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
-public class IperfFlow {
+public class IperfFlow extends AsyncTask{
   String iperfServer;
   String managementIp;
   String serverIp;
@@ -16,12 +20,14 @@ public class IperfFlow {
   String proto;
   String sshKey;
   ArrayList<String[]> results = new ArrayList<>();
-  Thread thread;
-  ReentrantLock lock = new ReentrantLock();
-  boolean started;
   static String baseCmd = "/usr/bin/iperf";
 
   public IperfFlow(String clientIp, String serverIp, String sshKey, int port, int seconds, String bw, String proto, String iperfServer){
+    super(UUID.randomUUID(),
+      0l,
+      TimeUnit.SECONDS,
+      new ArrayList<>(),
+      new HashMap<>());
     this.iperfServer = iperfServer;
     this.managementIp = clientIp;
     this.serverIp = serverIp;
@@ -33,39 +39,18 @@ public class IperfFlow {
     started = false;
   }
 
-  public void start() {
-    lock.lock();
-    if (!started) {
-      thread = new Thread() {
-        @Override
-        public void run() {
-          String cmd = baseCmd;
-          cmd = cmd + " -c " + serverIp;
-          if (proto.equals(IperfServer.UDP)) {
-            cmd = cmd + " -u";
-          }
-          if (seconds > 0) {
-            cmd = cmd + " -t " + seconds;
-          }
-          cmd = cmd + " -b " + bw;
-          results.add(Exec.sshExec("root", managementIp, cmd, sshKey));
-          try{
-            lock.lock();
-            started = false;
-            lock.unlock();
-          }catch (Exception e){
-
-          }
-        }
-      };
-      thread.start();
-      started = true;
+  @Override
+  public void runTask() {
+    String cmd = baseCmd;
+    cmd = cmd + " -c " + serverIp;
+    if (proto.equals(IperfServer.UDP)) {
+      cmd = cmd + " -u";
     }
-    try {
-      lock.unlock();
-    }catch (Exception e){
-
+    if (seconds > 0) {
+      cmd = cmd + " -t " + seconds;
     }
+    cmd = cmd + " -b " + bw;
+    results.add(Exec.sshExec("root", managementIp, cmd, sshKey));
   }
 
   public void stop(){
