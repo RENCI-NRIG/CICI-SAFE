@@ -33,4 +33,8 @@ package object safelang {
   val DEF_POST   = 1
   val DEF_FETCH  = 2
   val DEF_FUN    = 3
+
+  val emptyReqEnvs: Map[String, Option[String]] = Map(
+    "Speaker" -> None, "Subject" -> None, "Object" -> None,
+    "BearerRef" -> None, "Principal" -> None)
 }

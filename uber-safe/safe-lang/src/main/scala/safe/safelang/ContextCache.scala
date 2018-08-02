@@ -164,10 +164,9 @@ class ContextCache(setcache: SetCache) extends LazyLogging {
         case a @ _ => throw UnSafeException(s"Invalid speaksFor check argument: ${a}")
       })))
 
-      val requestedEnv: Map[String, Option[String]] = Map.empty
-
-      logger.info(s"[validateSpeakers] query: $query \n requestedEnv: $requestedEnv   \n slogset: \n ${slogset}")
-      val res = SafelangManager.instance().solveSlangQuery(query, requestedEnv).flatten
+      logger.info(s"[validateSpeakers] query: $query   \n slogset: \n ${slogset}")
+      val res = SafelangManager.instance().solveSlangQuery(query).flatten.mkString("; ")
+      println(s"speaksFor validation res: ${res}")
       //val strres = res.mkString("; ")
       //val desc = methodName + "___" + args.mkString("___") + "___" + requestedEnv("Principal") + "___" +  requestedEnv("Subject") + "___" + requestedEnv("BearerRef")
       val queryResultPattern = """\{(.*)\}\s*$""".r
@@ -190,6 +189,8 @@ class ContextCache(setcache: SetCache) extends LazyLogging {
   }
 
   def get(token: Index): Option[Subcontext] = {
+    // logger.info(s"[safelang/ContextCache.get()] get ${token}")
+    // scala.io.StdIn.readLine()
     Try(cache.get(token)) match {
       case Success(s) => 
         Some(s)

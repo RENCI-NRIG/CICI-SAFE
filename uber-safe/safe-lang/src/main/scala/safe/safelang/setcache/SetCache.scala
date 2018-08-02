@@ -24,14 +24,14 @@ import com.typesafe.scalalogging.LazyLogging
 
 /**
  * This is a simple cache with async link crawling/prefetch using futures.
- * The cache is a Google Guava cache.
+ * It's based on Google Guava cache.
  *
- * We just plug in two application-specific methods:
+ * We plug in two  methods:
  * - A CacheLoader.load method that knows enough about the objects to know what to prefetch.
  * - A fetch method that knows how to fetch the cacheable objects from a store and validate them.
  *
  * For SAFE, the objects are certs, and the cert fetch method must fetch another cert (an identity
- * cert) to validate a logic cert.  So we throw in an idcache for those too.
+ * cert) to validate a logic cert.  So we throw in an idcache for caching ID cert.
  */
 
 class SetCache (localSetTable: SafeTable[SetId, SlogSet], safeSetsClient: SafeSetsClient) extends CRDTAPI with LazyLogging { 

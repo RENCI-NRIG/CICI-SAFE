@@ -32,12 +32,29 @@ defcon accessPrivBySpeaksFor(?SubjectID, ?SpeaksForRef, ?GroupID, ?ObjID) :-
     grantAccessPriv($GroupID, $ObjID).
     label("speaksForExample/$GroupID/$ObjID"). 
     // this set is stored under the issuer's namespace in SafeSets
-    // the subject can use this as credential by creating a linking
-    // to this set.
+    // the subject can use this by creating a credential set containing
+    // a link to this set.
   }.
 
 defpost postAccessPriv(?SubjectID, ?SpeaksForRef, ?GroupID, ?ObjID) :-
   [accessPrivBySpeaksFor(?SubjectID, ?SpeaksForRef, ?GroupID, ?ObjID)].
+
+defcon privPolicySet() :-
+  {
+    approvedPriv(?Authority, ?GroupID, ?ObjectID) :- ?Authority: grantAccessPriv(?GroupID, ?ObjectID).
+    label('priv-policy').
+  }.
+
+definit privPolicySet().
+ 
+defguard checkPriv(?Authority, ?GroupID, ?ObjectID) :-
+  spec('Check privilege delegation'),
+  ?PolicySet := label('priv-policy'),
+  {
+    link($BearerRef).
+    link($PolicySet).
+    approvedPriv($Authority, $GroupID, $ObjectID)?
+  }.
 
 defguard validateSpeaksFor(?IssuerID, ?SubjectID, ?SpeaksForToken) :-
   spec('Check eligibility of speaksFor'),

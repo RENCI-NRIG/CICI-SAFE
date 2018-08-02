@@ -354,7 +354,8 @@ class SafelangManager(keypairDir: String) extends KeyPairManager with LazyLoggin
     } 
   }
 
-  def solveSlangQuery(query: Query, requestedEnv: Map[String, Option[String]], guardType: Option[Int]=Some(DEF_GUARD)): Seq[Seq[Statement]] = {
+  def solveSlangQuery(query: Query, requestedEnv: Map[String, Option[String]]=emptyReqEnvs,
+      guardType: Option[Int]=Some(DEF_GUARD)): Seq[Seq[Statement]] = {
     val penv: Option[String] = requestedEnv("Principal")  // Consider the case where the value can be a principal name
     val p: Option[String] = if(!penv.isDefined) penv else { Some(principalNameToID.getOrElse(penv.get, penv.get))}
     //val p: Option[String] = requestedEnv("Principal")

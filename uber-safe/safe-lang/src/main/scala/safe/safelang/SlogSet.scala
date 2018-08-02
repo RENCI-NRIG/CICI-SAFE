@@ -1,18 +1,19 @@
 package safe.safelang
 
+import scala.util.control.Breaks
+import scala.collection.mutable.{LinkedHashSet => OrderedSet, ListBuffer}
+
+import org.apache.commons.validator.routines.UrlValidator
+import com.typesafe.scalalogging.LazyLogging
+import org.joda.time.DateTime
+
 import safe.safelog.{StrLit, Index, Statement, Structure, Validity, UnSafeException, NotImplementedException}
 import model.{Subject, Principal, Identity, Id, Scid, SpeakerStmt, SubjectStmt}
 import model.SlogSetHelper._
 import safesets._
-
-import org.apache.commons.validator.routines.UrlValidator
-
-import org.joda.time.DateTime
-import scala.util.control.Breaks
-import scala.collection.mutable.{LinkedHashSet => OrderedSet, ListBuffer}
 import prolog.terms.{Const => StyConstant, Fun => StyFun}
 
-class SlogSet(
+class SlogSet (
     val issuer: Option[String],                       // Hash of the issuer's public key; the speaker of a signed credential
     val subject: Option[String],                      // Subject of the set; used in conjunction with 
                                                       // speaksForToken, when it's different from the issuer
@@ -30,7 +31,7 @@ class SlogSet(
     val signature: Option[String],                    // Signature of the slogset by the issuer 
     var setData: Option[String],                      // Set data signed over in a certificate
     var containingContexts: OrderedSet[String]        // References to inference contexts containing this set
-  ) {
+  ) extends LazyLogging {
 
   /**
    * @DeveloperApi
@@ -69,21 +70,20 @@ class SlogSet(
     }
    
     if(!spkr.isEmpty) { 
-      println(s"[safelang/SlogSet.setStatementSpeaker]  statements (without speaker) = ${statements}")
-      println(s"[safelang/SlogSet.setStatementSpeaker]  spkr = ${spkr}")
+      logger.info(s"statements (without speaker) = ${statements}")
+      logger.info(s"spkr = ${spkr}")
       statements = statements.keySet.map {
         case idx: Index =>
           val resultStatements: OrderedSet[Statement] = 
                statements.get(idx).getOrElse(OrderedSet.empty).map(stmt => stmt.addSpeaker(spkr))
           idx -> resultStatements
       }.toMap
-      println(s"[safelang/SlogSet.setStatementSpeaker]  statements (with speaker) = ${statements}")
+      logger.info(s"statements (with speaker) = ${statements}")
 
-
-      println(s"[safelang/SlogSet.setStatementSpeaker]  queries (without speaker) = ${queries}")
-      println(s"[safelang/SlogSet.setStatementSpeaker]  spkr = ${spkr}")
+      logger.info(s"queries (without speaker) = ${queries}")
+      logger.info(s"spkr = ${spkr}")
       queries = queries.map(stmt => stmt.addSpeaker(spkr))
-      println(s"[safelang/SlogSet.setStatementSpeaker]  queries (with speaker) = ${queries}")
+      logger.info(s"queries (with speaker) = ${queries}")
     }
   } 
 
