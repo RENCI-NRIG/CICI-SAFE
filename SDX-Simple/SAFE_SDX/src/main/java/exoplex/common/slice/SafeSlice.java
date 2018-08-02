@@ -536,6 +536,10 @@ public class SafeSlice {
           if (l.getState().equals("Active")) {
             activeResources.add(l.getName());
           }
+          if (l.getState().equals("Null")) {
+            activeResources.add(l.getName());
+            logger.warn(String.format("%s state: Null", l.getName()));
+          }
         }
       }
       if (activeResources.containsAll(resources)) break;
