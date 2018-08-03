@@ -128,7 +128,8 @@ public class Example extends SliceCommon{
 				copyFile2Slice(carrier, scriptsdir+"dpid.sh","~/dpid.sh",sshkey);
 				copyFile2Slice(carrier, scriptsdir+"ovsbridge.sh","~/ovsbridge.sh",sshkey);
         //Make sure that plexus container is running
-				SDNControllerIP=((ComputeNode)carrier.getResourceByName("plexuscontroller")).getManagementIP();
+				//SDNControllerIP=((ComputeNode)carrier.getResourceByName("plexuscontroller")).getManagementIP();
+				SDNControllerIP==(conf.getString("config.plexusserver");
         if(!checkPlexus(SDNControllerIP)){
           System.exit(-1);
         }
@@ -136,7 +137,8 @@ public class Example extends SliceCommon{
 				runCmdSlice(carrier,"/bin/bash ~/ovsbridge.sh "+SDNControllerIP+":6633",sshkey,"(c\\d+)",true,true);
 				//runCmdSlice(carrier,"mkdir report && cd report\n/opt/bro/bin/bro -i &\ndisown -h `jobs -l | grep -E '[0-9]{2,4}' -o`\n",sshkey,"(b\\d+)",true,false);
 				
-				String SAFEServerIP=((ComputeNode)carrier.getResourceByName("safe-server")).getManagementIP();
+				//String SAFEServerIP=((ComputeNode)carrier.getResourceByName("safe-server")).getManagementIP();
+				String SAFEServerIP=(conf.getString("config.safeserver");
         if(!checkSafeServer(SAFEServerIP)){
           System.exit(-1);
         }
@@ -286,8 +288,8 @@ public class Example extends SliceCommon{
       //}
 
 		}
-		addSafeServer(s,riakip);
-		addPlexusController(s);
+		//addSafeServer(s,riakip);
+		//addPlexusController(s);
 		try {
 			s.commit();
 		} catch (XMLRPCTransportException e) {
