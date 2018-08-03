@@ -129,7 +129,7 @@ public class Example extends SliceCommon{
 				copyFile2Slice(carrier, scriptsdir+"ovsbridge.sh","~/ovsbridge.sh",sshkey);
         //Make sure that plexus container is running
 				//SDNControllerIP=((ComputeNode)carrier.getResourceByName("plexuscontroller")).getManagementIP();
-				SDNControllerIP==(conf.getString("config.plexusserver"));
+				SDNControllerIP=(conf.getString("config.plexusserver"));
         if(!checkPlexus(SDNControllerIP)){
           System.exit(-1);
         }
