@@ -2,6 +2,7 @@ package exoplex.experiment;
 
 import exoplex.common.utils.Exec;
 import exoplex.experiment.flow.FlowManager;
+import exoplex.experiment.latency.MeasureLatency;
 import exoplex.sdx.core.SdxManager;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -18,6 +19,7 @@ public class ExperimentBase {
   protected final ArrayList<String[]> flows;
   protected final ArrayList<String[]> files;
   protected FlowManager flowManager;
+  protected MeasureLatency latencyTask;
   protected final ArrayList<String[]> ftpClientOut = new ArrayList<String[]>();
   protected final ArrayList<String[]> pingClientOut = new ArrayList<String[]>();
   protected final ArrayList<String[]> routerOut = new ArrayList<String[]>();
@@ -38,6 +40,27 @@ public class ExperimentBase {
   public void addClient(String name, String managementIP, String dataplaneIP) {
     clients.put(name, new String[]{managementIP, dataplaneIP});
     Exec.sshExec("root", managementIP, "apt-get install -y iperf", sshkey);
+  }
+
+  public void setLatencyTask(String client, String server){
+    final String mip1 = clients.get(client)[0];
+    final String mip2 = clients.get(server)[0];
+    final String dip2 = clients.get(server)[1];
+    latencyTask = new MeasureLatency(mip1, dip2, sshkey);
+    latencyTask.setPeriod(1000);
+    latencyTask.setTotalTime(30);
+  }
+
+  public void startLatencyTask(){
+    latencyTask.start();
+  }
+
+  public void stopLatencyTask(){
+    latencyTask.stop();
+  }
+
+  public void printLatencyResult(){
+    latencyTask.printResults();
   }
 
   public void addUdpFlow(String client, String server, String bw) {
@@ -73,6 +96,7 @@ public class ExperimentBase {
     sdxManager.configRouting();
   }
 
+  //TODO: flow length seconds is not used
   public void startFlows(int seconds) {
     logger.debug("Start flows");
     flowManager.start();
@@ -80,7 +104,7 @@ public class ExperimentBase {
 
   public void stopFlows() {
     logger.debug("Stop flows");
-    flowManager.stopFlows();
+    flowManager.stop();
   }
 
   public void printSettings() {

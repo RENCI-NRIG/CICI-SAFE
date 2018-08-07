@@ -121,8 +121,8 @@ public class Exec {
 
   }
   public static String[] sshExec(String user, String host, String command, String privkey) {
-    String result = "";
-    String errResult = "";
+    StringBuilder result = new StringBuilder();
+    StringBuilder errResult = new StringBuilder();
     logger.debug(host + ":" + command);
     try {
       Session session = getSession(user, host, privkey);
@@ -140,20 +140,21 @@ public class Exec {
         while (in.available() > 0) {
           int i = in.read(tmp, 0, 1024);
           if (i < 0) break;
-          result += new String(tmp, 0, i);
+          result.append(new String(tmp, 0, i));
           logger.debug(new String(tmp, 0, i));
         }
         while (err.available() > 0) {
           int i = err.read(tmp, 0, 1024);
           if (i < 0) break;
-          errResult += new String(tmp, 0, i);
+          errResult.append( new String(tmp, 0, i));
           logger.debug(new String(tmp, 0, i));
         }
         if (channel.isClosed()) {
           //get status returns int;
           logger.debug("exit-status: " + channel.getExitStatus());
           if (channel.getExitStatus() != 0) {
-            result = "error:" + String.valueOf(channel.getExitStatus()) + "\n" + errResult;
+            result.append("error:" + String.valueOf(channel.getExitStatus()) + "\n");
+            result.append(errResult.toString());
           }
           break;
         }
@@ -170,7 +171,7 @@ public class Exec {
       e.printStackTrace();
       return new String[]{null, null};
     }
-    return new String[]{result, errResult};
+    return new String[]{result.toString(), errResult.toString()};
   }
 
   public static class MyUserInfo implements UserInfo, UIKeyboardInteractive {

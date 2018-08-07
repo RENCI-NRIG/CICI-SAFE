@@ -12,7 +12,7 @@ import java.util.HashMap;
 public class TestMpRouting extends SdxManager {
   static Logger logger = LogManager.getLogger(TestMpRouting.class);
   static String[] arg1 = {"-c", "config/test-mptcp.conf"};
-  static String site= SiteBase.get("BBN");
+  static String site= SiteBase.get("TAMU");
 
   public static void main(String[] args) throws Exception {
     TestMpRouting mpr = new TestMpRouting();
@@ -34,7 +34,7 @@ public class TestMpRouting extends SdxManager {
 
   public void initNetwork() throws Exception {
     initializeExoGENIContexts(arg1);
-    plexusName = "plexus";
+    plexusName = "plexuscontroller";
     initializeSdx();
     delFlows();
     configRouting();
@@ -181,9 +181,15 @@ public class TestMpRouting extends SdxManager {
     experiment.addClient("CNode2", serverSlice.getComputeNode("CNode2").getManagementIP(),
         "192.168.30.2");
     experiment.addUdpFlow("CNode0", "CNode1", "1m");
+    experiment.setLatencyTask("CNode0", "CNode1");
+    experiment.startLatencyTask();
     experiment.startFlows(10);
-    sleep(10);
+    logger.warn(String.format("start time %s", System.currentTimeMillis()/1000));
+    sleep(15);
     experiment.stopFlows();
+    experiment.stopLatencyTask();
+    experiment.printLatencyResult();
+    logger.warn(String.format("stop time %s", System.currentTimeMillis()/1000));
   }
 
   public void getGroupStats(){

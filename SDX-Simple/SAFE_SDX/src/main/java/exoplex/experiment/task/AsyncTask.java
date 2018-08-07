@@ -8,7 +8,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.UUID;
 
-public class AsyncTask {
+public abstract class AsyncTask {
   protected final UUID taskId;
   protected Long offSetTime;
   protected TimeUnit timeUnit;
@@ -67,9 +67,7 @@ public class AsyncTask {
     lock.unlock();
   }
 
-  public void runTask(){
-    throw new NotImplementedException();
-  }
+  public abstract void runTask();
 
   public void terminate(){
     if(started && !ended){
