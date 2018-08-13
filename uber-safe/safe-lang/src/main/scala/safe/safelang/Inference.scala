@@ -694,9 +694,19 @@ trait InferenceImpl extends safe.safelog.InferenceImpl with KeyPairManager with 
       val queries: Seq[Statement] = ruleSet.get.queries
       logger.info(s"Queries for inferSet: $queries")
 
+      //logger.info(s"fact context: ${contextCache.get(Token(factId.id.name))}")
+      val factSet = setCache.get(Token(factId.id.name))
+
+      if(factSet.isDefined == false) {
+        throw UnSafeException(s"Fact set ${factId.id.name} is expected, but not found in the set cache: check the set token")  
+      } 
+
       val inferenceCntIds: Seq[StrLit] = Seq(factId.id, ruleId.id) 
       val subcontexts: Seq[Subcontext] = inferenceCntIds.map{ case id: StrLit => contextCache.get(Token(id.name)) }
                                          .collect{ case cnt: Option[Subcontext] if cnt.isDefined => cnt.get}
+
+      logger.info(s"inferset subcontexts: ${subcontexts}")
+
       val t0 = System.nanoTime()
       // Use the inference engine to solve slog queries
       val res: Seq[Seq[Statement]] = if(Config.config.logicEngine == "styla") {
@@ -714,7 +724,6 @@ trait InferenceImpl extends safe.safelog.InferenceImpl with KeyPairManager with 
       //slangPerfCollector.addStarPerfStats((t-t0)/1000, s"inferset_${factId.id.name}")
       //val runtime = System.currentTimeMillis - t0
       logger.info(s"inferset results: $res")
-      logger.info(s"inferset subcontexts: ${subcontexts}")
       //println(s"inferset results: $res")
       res
     }  

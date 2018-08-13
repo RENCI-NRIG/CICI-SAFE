@@ -29,6 +29,7 @@ class SlogSet (
     val speaksForToken: Option[String],               // Token of a set to endorse the validity of speaksFor
     val label: String,                                // Label of the SlogSet
     val signature: Option[String],                    // Signature of the slogset by the issuer 
+    val sigAlgorithm: String,                         // Signature algorithm
     var setData: Option[String],                      // Set data signed over in a certificate
     var containingContexts: OrderedSet[String]        // References to inference contexts containing this set
   ) extends LazyLogging {
@@ -51,6 +52,7 @@ class SlogSet (
         |speaksForToken: $speaksForToken,
         |label: $label,
         |signature: $signature,
+        |signatureAlgorithm: $sigAlgorithm,
         |setData: $setData,
         |containingContexts: $containingContexts""".stripMargin
   }
@@ -295,7 +297,7 @@ class SlogSet (
         throw UnSafeException(s"Problematic set store stmt: ${stmt} (${storeaddr}, ${protocol}, ${storeId})") 
       }
     } 
-    IDSet(issuer, freshUntil, validated, resetTime, statements, signature, setData, principalSubject, setstores.toSeq)
+    IDSet(issuer, freshUntil, validated, resetTime, statements, signature, sigAlgorithm, setData, principalSubject, setstores.toSeq)
   }
 
   def getStatementsAsString(self: String): String = { // Remove _speaker, _subject
@@ -328,8 +330,10 @@ class SlogSet (
         pid = self.get.pid
       } 
     }
-    println(s"[safelang/SlogSet.computeToken()] pid: ${pid}    label: ${label}")
-    Identity.computeSetToken(pid, label)
+
+    val t = Identity.computeSetToken(pid, label)
+    logger.info(s"[safelang/SlogSet.computeToken()] pid: ${pid}    label: ${label}    token: ${t}")
+    t
   } 
   
   def computeToken(self: Principal): String = {
@@ -337,7 +341,7 @@ class SlogSet (
   }
 
   def prepareSignedData(self: Principal, cred: String, isEncrypted: Boolean, version: Int = 1, 
-      encode: String = "slang", signatureAlgorithm: String = "SHA256withRSA"): String = {
+      encode: String = "slang"): String = {
 
     val selfID: String = if(issuer.isDefined) { issuer.get } 
                          else {  throw UnSafeException(s"No issuer for this slogset: ${issuer}")  }
@@ -361,7 +365,7 @@ class SlogSet (
         |${subjectID}
         |${spksForT}
         |${validity}
-        |${signatureAlgorithm}
+        |${sigAlgorithm}
         |${cred}""".stripMargin
   }
 
@@ -371,14 +375,15 @@ class SlogSet (
    *    Signature
    *    SpeakerID
    *    SubjectID
+   *    SpeaksForToken
    *    Validity
    *    Signature Algorithm
    *    SetLabel
    *    [Empty line]
    *    Logical Statements 
    */
-  private def signAndGetData(self: Principal, cred: String, isEncrypted: Boolean = false, 
-      signatureAlgorithm: String = "SHA256withRSA"): Tuple2[String, String] = {
+  private def signAndGetData(self: Principal, cred: String, 
+      isEncrypted: Boolean = false): Tuple2[String, String] = {
     val dataToSign = prepareSignedData(self, cred, isEncrypted)
     //println(s"[slang slogset] Signing")
     //println(s"[slang slogset] dataToSign=${dataToSign}")
@@ -386,7 +391,7 @@ class SlogSet (
     if(self != null) {
       val s = System.nanoTime
       val h: Array[Byte] = Identity.hash(dataToSign.getBytes())  // sign data hash
-      val signatureBytes  = self.sign(h, signatureAlgorithm) 
+      val signatureBytes  = self.sign(h, sigAlgorithm) 
       val t = (System.nanoTime - s) / 1000
 
       val signatureEncoded = Identity.base64EncodeURLSafe(signatureBytes)
@@ -434,14 +439,14 @@ class SlogSet (
       throw NotImplementedException(s"X509 certificate format not yet implemented; use safe as an alternative")
   }
   
-  def verify(speaker: Subject, signatureAlgorithm: String = "SHA256withRSA"): Boolean = {
+  def verify(speaker: Subject): Boolean = {
     val verifiable: Boolean = this.synchronized { signature.isDefined && !signature.get.isEmpty && setData.isDefined }
     if(!verifiable) {
       true //throw UnSafeException(s"Signature and setData must exist to verify a slog set: \n${this}")
     } else {  // Verify
       val s = System.nanoTime
 
-      val sig: java.security.Signature = java.security.Signature.getInstance(signatureAlgorithm)
+      val sig: java.security.Signature = java.security.Signature.getInstance(sigAlgorithm)
       //println(s"[slang slogset] verifying")
       //println(s"[slang slogset] speaker.publicKey=${speaker.publicKey}")
       //println(s"[slang slogset] setData=${setData.get}")
@@ -469,8 +474,8 @@ class SlogSet (
    * set passes the validation. The old setData object can be then garbage
    * collected. setData = None has been moved to setValidated().
    */
-  def verifyAndSetValidated(speaker: Subject, signatureAlgorithm: String = "SHA256withRSA"): Boolean = {
-    val validSet: Boolean = verify(speaker, signatureAlgorithm)
+  def verifyAndSetValidated(speaker: Subject): Boolean = {
+    val validSet: Boolean = verify(speaker)
     if(validSet) {
       if(!validated) {
         setValidated()
@@ -487,11 +492,14 @@ object SlogSet {
       validatedSpeaker: Boolean, validated: Boolean, resetTime: Option[DateTime], 
       queries: Seq[Statement], statements: Map[Index, OrderedSet[Statement]], links: Seq[String], 
       speaksForToken: Option[String], label: String, signature: Option[String], 
-      setData: Option[String]): SlogSet = {
+      sigAlgorithm: Option[String], setData: Option[String]): SlogSet = {
+
+    val sigAlgo = if(sigAlgorithm.isDefined) sigAlgorithm.get else Config.config.signatureAlgorithm
+    //assert(sigAlgorithm.isDefined, s"Signature algorithm must be defined: ${sigAlgorithm}") 
 
     val slogset = new SlogSet(issuer, subject, freshUntil, speakersFreshUntil, issuerFreshUntil,
       validatedSpeaker, validated, resetTime, queries, statements, links, speaksForToken, label, 
-      signature, setData, OrderedSet[String]())
+      signature, sigAlgo, setData, OrderedSet[String]())
     slogset
   }
 
@@ -502,7 +510,8 @@ object SlogSet {
    */
   def apply(queries: Seq[Statement], label: String): SlogSet = {
     val slogset = new SlogSet(None, None, None, None, None, true, true, None, queries, 
-      Map[Index, OrderedSet[Statement]](), Seq[String](), None, label, None, None, OrderedSet[String]())
+      Map[Index, OrderedSet[Statement]](), Seq[String](), None, label, None, 
+      Config.config.signatureAlgorithm, None, OrderedSet[String]())
     slogset
   }
 
@@ -511,7 +520,8 @@ object SlogSet {
    */
   def apply(issuer: String, label: String): SlogSet = {
     val slogset = new SlogSet(Some(issuer), None, None, None, None, true, true, None, Seq[Statement](), 
-      Map[Index, OrderedSet[Statement]](), Seq[String](), None, label, None, None, OrderedSet[String]())
+      Map[Index, OrderedSet[Statement]](), Seq[String](), None, label, None,
+      Config.config.signatureAlgorithm, None, OrderedSet[String]())
     slogset
   }
 }
@@ -532,12 +542,13 @@ class IDSet(
     speaksForToken: Option[String] = None,
     label: String = "",
     signature: Option[String],
+    sigAlgorithm: String,
     setData: Option[String], 
     containingContexts: OrderedSet[String] = OrderedSet[String](), 
     val principalSubject: Subject,
     val preferredSetStores: Seq[SetStoreDesc]
   ) extends SlogSet(issuer, subject, freshUntil, speakersFreshUntil, issuerFreshUntil, validatedSpeaker, 
-      validated, resetTime, queries, statements, links, speaksForToken, label, signature, setData, containingContexts) {
+      validated, resetTime, queries, statements, links, speaksForToken, label, signature, sigAlgorithm, setData, containingContexts) {
 
   def getPrincipalSubject(): Subject = principalSubject 
   def getPreferredSetStores(): Seq[SetStoreDesc] = preferredSetStores
@@ -558,12 +569,14 @@ class IDSet(
 object IDSet {
   def apply(issuer: Option[String], freshUntil: Option[DateTime], validated: Boolean, 
       resetTime: Option[DateTime], statements: Map[Index, OrderedSet[Statement]], 
-      signature: Option[String], setData: Option[String], principalSubject: Subject,
-      preferredSetStores: Seq[SetStoreDesc]): IDSet = {
+      signature: Option[String], sigAlgorithm: String, setData: Option[String],
+      principalSubject: Subject, preferredSetStores: Seq[SetStoreDesc]): IDSet = {
+
+    //val sigAlgo = if(sigAlgorithm.isDefined) sigAlgorithm.get else Config.config.signatureAlgorithm
 
     val idset = new IDSet(issuer, None, freshUntil, None, None, false, validated, 
-        resetTime, Nil, statements, Nil, None, "", signature, setData, OrderedSet[String](), 
-        principalSubject, preferredSetStores)
+        resetTime, Nil, statements, Nil, None, "", signature, sigAlgorithm, setData,
+        OrderedSet[String](), principalSubject, preferredSetStores)
     idset
   }
 }

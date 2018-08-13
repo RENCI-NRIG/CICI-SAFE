@@ -400,19 +400,28 @@ trait ParserImpl
     //println("============================================================") 
     val endOfToken = source.indexOf("\n")
     val token: String = source.substring(0, endOfToken)
+    logger.info(s"token: ${token}")
     val endOfSig = source.indexOf("\n", endOfToken+1)
     val sig: String = source.substring(endOfToken+1, endOfSig)
+    logger.info(s"sig: ${sig}")
     val endOfSpeaker = source.indexOf("\n", endOfSig+1)
     val speaker: String = source.substring(endOfSig+1, endOfSpeaker)
+    logger.info(s"speaker: ${speaker}")
     val endOfSubject = source.indexOf("\n", endOfSpeaker+1)
     val subject: String = source.substring(endOfSpeaker+1, endOfSubject)
+    logger.info(s"subject: ${subject}")
     val endOfSpeaksForToken = source.indexOf("\n", endOfSubject+1)
     val speaksForToken: String = source.substring(endOfSubject+1, endOfSpeaksForToken)
+    logger.info(s"speaksForToken: ${speaksForToken}")
     val endOfValidity = source.indexOf("\n", endOfSpeaksForToken+1)
     val validity: String = source.substring(endOfSpeaksForToken+1, endOfValidity) 
+    logger.info(s"validity: ${validity}")
     val endOfSigAlg = source.indexOf("\n", endOfValidity+1)
+    val sigAlg = source.substring(endOfValidity+1, endOfSigAlg)
+    logger.info(s"sigAlg: ${sigAlg}")
     val endOfLabel = source.indexOf("\n", endOfSigAlg+1)
     val label: String = source.substring(endOfSigAlg+1, endOfLabel)
+    logger.info(s"label: ${label}")
     val startOfLogic = source.indexOf("\n", endOfLabel+1) + 1  // An empty line as delimiter
   
     val setData: String = source.substring(endOfSig+1, source.length)
@@ -423,7 +432,7 @@ trait ParserImpl
     //println(s"slogSource:${slogSource}")
     //println(s"setData:${setData}")
 
-    StylaParserService.getParser().parseSlogSet(slogSource, label, setData, sig, speaker, subject, speaksForToken, v)
+    StylaParserService.getParser().parseSlogSet(slogSource, label, setData, sig, sigAlg, speaker, subject, speaksForToken, v)
   }
 
   private[safe] def parseFileAsCertificate(fileName: String): SlogSet = {

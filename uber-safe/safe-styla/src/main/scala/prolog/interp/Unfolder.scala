@@ -5,14 +5,20 @@ import prolog.terms.Term
 import prolog.terms.Trail
 import com.typesafe.scalalogging.LazyLogging
 
-class Unfolder(prog: Prog, val goal: List[Term], atClause: Iterator[List[Term]])
+class Unfolder(prog: Prog, val goal: List[Term], matchingClauses: List[List[Term]])
   extends SystemObject with LazyLogging {
-  def this(prog: Prog) = this(prog, null, Nil.iterator)
+  def this(prog: Prog) = this(prog, null, List[List[Term]]())
   type CLAUSE = List[Term]
   type GOAL = List[Term]
 
+  val atClause: Iterator[List[Term]] = matchingClauses.toIterator
+
+  // For debugging
+  var previousClause: List[Term] = null
+  var numTakenBranches: Int = 0
+
   private val oldtop = prog.trail.size
-  def lastClause = !atClause.hasNext
+  def isLastClause = !atClause.hasNext
 
   private final def unfoldWith(cs: CLAUSE, trail: Trail): GOAL = {
     trail.unwind(oldtop)
@@ -53,6 +59,9 @@ class Unfolder(prog: Prog, val goal: List[Term], atClause: Iterator[List[Term]])
       logger.info(s"\n[Unfolder nextGoal] goal= ${Term.printClause(goal)}") 
 
       val clause: CLAUSE = atClause.next
+      previousClause = clause
+      numTakenBranches = numTakenBranches + 1 
+
       //println(s"\n[Unfolder nextGoal] goal= ${Term.printClause(goal)}")
       logger.info(s"\n[Unfolder nextGoal] clause= ${Term.printClause(clause)}")
       newgoal = unfoldWith(clause, prog.trail)
@@ -60,6 +69,26 @@ class Unfolder(prog: Prog, val goal: List[Term], atClause: Iterator[List[Term]])
     newgoal
   }
 
-  override def toString = "Step:" + goal + ",last=" + lastClause
+  //def topGoal()
+ 
+  /**
+   * @DeveloperAPI
+   */
+  def unfolderStateAsString: String = {
+    s"Previous clause: ${previousClause}      number of taken branches: ${numTakenBranches}"
+  }
+
+  override def toString(): String = {
+    //println(s"atClause.size: ${atClause.size} (at the beginning)  atClause.length: ${atClause.length}")
+    //atClause.foreach {c => println(s"${c};")}
+    //println(s"atClause.size: ${atClause.size}  atClause.length: ${atClause.length}  MatchingClauses.length: ${matchingClauses.length}")
+    //println(s"atClause.length: ${atClause.length}    MatchingClauses.length: ${matchingClauses.length}")
+    //val array = new Array[List[Term]](atClause.size)
+    //atClause.copyToArray(array)
+    val res = s"""Step: ${goal}   MatchingClauses: ${matchingClauses.mkString(" | ")}   last: ${isLastClause}\n""" +
+              unfolderStateAsString
+    //println(s"atClause.size (after display): ${atClause.size}   atClause.length: ${atClause.length}")
+    res
+  }
 }
 

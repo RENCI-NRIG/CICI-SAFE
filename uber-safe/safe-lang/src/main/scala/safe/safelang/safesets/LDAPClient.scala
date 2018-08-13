@@ -186,7 +186,7 @@ class LDAPClient extends LazyLogging {
     val slogset: SlogSet = safe.safelang.model.SlogSetHelper.buildSlogSet( 
         safe.safelang.StyStmtHelper.indexStyStmts(prolog, LinkedHashMap[String, StyVar]()),
         Some(label), 
-        None, None,  // No set data; no signature
+        None, None, None, // No set data; no signature; no signature algorithm
         Some(speaker),
         None, None,  // no subject; no speaksFor token
         Some(validity) 

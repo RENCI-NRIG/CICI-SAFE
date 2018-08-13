@@ -75,6 +75,11 @@ class Prog(var db: DataBase) extends TermSource with LazyLogging {
     copier.clear()
   }
 
+  /**
+   * Query setup: setting the answer handler by a
+   * suggested input answer or the conjunctive 
+   * goals of the query.
+   */
   def set_query(answer: Term, query: GOAL) {
     clearAll()
     //orStack.clear()
@@ -108,6 +113,14 @@ class Prog(var db: DataBase) extends TermSource with LazyLogging {
     set_query(null, query: GOAL)
   }
 
+  /*
+   * Push a matching unfolder to the top of the orStack according to
+   * the head of the goal list. 
+   * 
+   * @param g0 current goal list.
+   * @return remaining goal list and a return term (mostly null) as a
+   * pair.
+   */
   def pushUnfolder(g0: GOAL): (GOAL, Term) = {
     val g = reduceBuiltins(g0)
     var return_term: Term = null
@@ -121,11 +134,11 @@ class Prog(var db: DataBase) extends TermSource with LazyLogging {
       }
 
       val cs = db.getMatches(g)
-      //logger.info("[Prog pushUnfolder] new Unfolder")
-      //cs.foreach{ m => logger.info(s"[Prog pushUnfolder] $m") }
-      //logger.info("[Prog pushUnfolder] end")
+      logger.info("[Prog pushUnfolder] new Unfolder")
+      cs.foreach{ m => logger.info(s"[Prog pushUnfolder] $m") }
+      logger.info("[Prog pushUnfolder] end")
       if (!cs.eq(null)) {
-        val u = new Unfolder(this, g, cs.iterator)
+        val u = new Unfolder(this, g, cs.toList)
         orStack.push(u)
       }
     }
@@ -163,6 +176,9 @@ class Prog(var db: DataBase) extends TermSource with LazyLogging {
 
   val DEPTH_LIMIT = prolog.Config.config.maxDepth
 
+  /**
+   * Run inference to get an answer to the query
+   */
   override def getElement(): Term = {
     if (isStopped) return null
 
@@ -181,7 +197,7 @@ class Prog(var db: DataBase) extends TermSource with LazyLogging {
       //println("step="+step)
       newgoal = step.nextGoal()
 
-      if (step.lastClause && !orStack.isEmpty) {
+      if (step.isLastClause && !orStack.isEmpty) {
         orStack.pop()
         popped = true
       } else
@@ -189,7 +205,7 @@ class Prog(var db: DataBase) extends TermSource with LazyLogging {
 
       val res = pushUnfolder(newgoal)
 
-      println(s"Pushing an unfolder to the orStack")
+      println(s"Pushing an unfolder to the orStack: ${res._1}  {res._2}")
       println(s"orStack: ${orStack}")
 
       if (null != res._2) return res._2

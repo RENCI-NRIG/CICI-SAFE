@@ -24,6 +24,7 @@ class Config(config: com.typesafe.config.Config) {
   val maxSubcontextSize: Int         = Try(config.getInt("safelang.maxSubcontextSize")).getOrElse(Int.MaxValue)
   val logicEngine: String            = Try(config.getString("safelang.logicEngine")).getOrElse("slog") 
   val proofsOn: Boolean              = Try(config.getBoolean("safelang.proofsOn")).getOrElse(false)
+  val signatureAlgorithm: String     = Try(config.getString("safelang.signatureAlgorithm")).getOrElse("SHA256withRSA")
   val maxEnvcontextsOnServer: Int    = Try(config.getInt("safelang.maxEnvcontextsOnServer")).getOrElse(Int.MaxValue)
   // Period(hours, minutes, seconds, millis)
   val minContextRefreshTime: Period  = new Period(0, 0, 0, Try(config.getInt("safelang.minContextRefreshTimeInMillis")).getOrElse(10000)) 

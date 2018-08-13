@@ -87,7 +87,7 @@ object SlogSetHelper {
    * of a slang template and from an imported SAFE certificate.
    */
   def buildSlogSet(stmts: Map[Index, OrderedSet[Statement]], labelPredef: Option[String] = None, 
-      setData: Option[String] = None, signature: Option[String] = None, 
+      setData: Option[String] = None, signature: Option[String] = None, sigAlgorithm: Option[String] = None,
       speaker: Option[String] = None, subj: Option[String] = None, spksForToken: Option[String] = None,
       validity: Option[Validity] = None): SlogSet = {
     
@@ -110,17 +110,17 @@ object SlogSetHelper {
     // Usage of subject(): self: subject(<subjectId> ,
     val subjectStmt: Option[Statement] = getUniqueStatement(stmts.get(StrLit("_subject"))) // self: subject(subject-id, publicKeyHash)
     if(subjectStmt.isDefined) {
-      println(s"[SlogSetTemplate buildSlogSet] subjectStmt=${subjectStmt}   subject=${subject}")
+      //logger.info(s"[SlogSetTemplate buildSlogSet] subjectStmt=${subjectStmt}   subject=${subject}")
       subject = getAttribute(subjectStmt, 1) 
       speaksForToken = getAttribute(subjectStmt, 2)
-      println(s"[SlogSetTemplate buildSlogSet] subject=${subject}    speaksForToken=${speaksForToken}")
+      //logger.info(s"[SlogSetTemplate buildSlogSet] subject=${subject}    speaksForToken=${speaksForToken}")
     }
 
     //
     //}
     val freshUntil: Option[DateTime] = if(!validity.isDefined) { 
       val validityStmt: Option[Statement] = getUniqueStatement(stmts.get(StrLit("_validity"))) // self: validity(notBefore, notAfter) 
-      println(s"[SlogSetTemplate buildSlogSet] validityStmt=${validityStmt}")
+      //println(s"[SlogSetTemplate buildSlogSet] validityStmt=${validityStmt}")
       getAttribute(validityStmt, 2) match {
         case Some(notAfter: String) => 
           Some(Validity.format.parseDateTime(notAfter))
@@ -158,8 +158,10 @@ object SlogSetHelper {
     val metadataIdx = safe.safelog.Config.config.metadata.map { case id: StrLit => StrLit(s"_${id.name}") } 
     val effectiveStmts = stmts -- (metadataIdx + StrLit("_query"))
    
+    val sigAlgo = if(sigAlgorithm.isDefined) sigAlgorithm else Some(Config.config.signatureAlgorithm)
+
     //println(s"[SlogSetTemplate buildSlogSet] effectiveStmts = ${effectiveStmts}")
     SlogSet(issuer, subject, freshUntil, speakersFreshUntil, issuerFreshUntil, validatedSpeaker,
-        validated, resetTime, queries, effectiveStmts, links, speaksForToken, slogsetLabel, signature, setData)
+        validated, resetTime, queries, effectiveStmts, links, speaksForToken, slogsetLabel, signature, sigAlgo, setData)
   }
 }

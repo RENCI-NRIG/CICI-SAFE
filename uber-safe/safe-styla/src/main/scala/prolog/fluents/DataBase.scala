@@ -39,6 +39,15 @@ class DataBase(fname: String) extends LinkedHashMap[String, Deque[List[Term]]] w
     addAll(cs)
   }
 
+  /** 
+   * @DeveloperAPI
+   */
+  override def toString(): String = {
+    s"""|allByPrimary: ${allByPrimary},
+        |factsBySecondary: ${factsBySecondary},
+        |rulesByPrimary: ${rulesByPrimary}""".stripMargin
+  }
+
   type CLAUSE = List[Term]
 
   val vars = new LinkedHashMap[String, Var]
@@ -281,7 +290,9 @@ class DataBase(fname: String) extends LinkedHashMap[String, Deque[List[Term]]] w
       }
     }
     if(matches.isEmpty) {
-      if (verbose) IO.warnmes("call to undefined predicate: " + k1)
+      //if (verbose) IO.warnmes("call to undefined predicate: " + k1)
+      IO.warnmes("call to undefined predicate: " + k1)
+      IO.warnmes(s"Styla database: \n$this")
       return null
     }
     return matches

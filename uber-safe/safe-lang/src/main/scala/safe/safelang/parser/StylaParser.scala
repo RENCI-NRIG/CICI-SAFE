@@ -34,13 +34,15 @@ class StylaParserService {
    * @param setData      raw data that slogset signature is derived from (the signedData section of a certificate)
    * @param signature    encoded signature of the certificate
    */
-  def parseSlogSet(source: String, labelPredef: String, setData: String, signature: String, speaker: String, subject: String, speaksForToken: String, validity: Validity): SlogSet = {
+  def parseSlogSet(source: String, labelPredef: String, setData: String, signature: String, sigAlgorithm: String,
+      speaker: String, subject: String, speaksForToken: String, validity: Validity): SlogSet = {
     val styparser = new StyParser
     val prolog = styparser.parseProg(source) 
     val spkr: Option[String] = if(speaker.isEmpty) None else Some(speaker)
     val subj: Option[String] = if(subject.isEmpty) None else Some(subject)
     val spkForT: Option[String] = if(speaksForToken.isEmpty) None else Some(speaksForToken)
-    val slogset = buildSlogSet(indexStyStmts(prolog, styparser.vars), Some(labelPredef), Some(setData), Some(signature), spkr, subj, spkForT, Some(validity)) 
+    val slogset = buildSlogSet(indexStyStmts(prolog, styparser.vars), Some(labelPredef), Some(setData),
+        Some(signature), Some(sigAlgorithm),spkr, subj, spkForT, Some(validity)) 
     slogset.setStatementSpeaker()
     slogset
   }
