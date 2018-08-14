@@ -60,12 +60,21 @@ class RestfulService(val storeURI: String, val role: Option[String], slangFile: 
   val guards = inference.compileAndGetGuards(slangFile, fileArgs)
   guardTable.addGuards(guards)
 
-  // compile slang for import guard
+  // Pre-load guarding scripts
+  // import guard
   val importGuardSlangPath = safe.safelang.Config.config.importGuardSlangPath
   if(importGuardSlangPath != "") {
     val importGuards = inference.compileAndGetGuards(importGuardSlangPath)
     guardTable.addGuards(importGuards)
   }
+
+  // speaksfor guard
+  val speaksForGuardSlangPath = safe.safelang.Config.config.speaksForGuardSlangPath
+  if(speaksForGuardSlangPath != "") {
+    val speaksForGuards = inference.compileAndGetGuards(speaksForGuardSlangPath)
+    guardTable.addGuards(speaksForGuards)
+  } 
+
 
   //def receive: Receive = runRoute(route(guardTable.allGuards.toSeq)) orElse importHandler
   def receive: Receive = runRoute(route(guardTable.allGuards.toSeq) ~ importSlangRoute())

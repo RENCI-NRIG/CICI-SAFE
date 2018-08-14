@@ -17,7 +17,7 @@ $ curl -H "Content-Type:application/json" -XPOST http://152.3.136.26:777/postIdS
 }
 
 
-$ curl -H "Content-Type:application/json" -XPOST http://152.3.136.26:7777/postASpeaksfor -d  '{ "principal": "key_p806", "otherValues": ["1bKw1ggQFkINurtu_MNmcr5n5RG8BcdqqyTPx2D0u5w"]}'
+$ curl -H "Content-Type:application/json" -XPOST http://152.3.136.26:7777/setupSpeaksFor -d  '{ "principal": "key_p806", "otherValues": ["1bKw1ggQFkINurtu_MNmcr5n5RG8BcdqqyTPx2D0u5w"]}'
 {
   "message": "['Tg8kQhLQ98fgimdHqAnj_eV3VuxCO6gJcXhbIxMQLrI']"
 }
@@ -38,3 +38,9 @@ $ curl -H "Content-Type:application/json" -XPOST http://152.3.136.26:7777/checkP
 {
   "message": "{ 'YvF9XVfcOyACLKBBCHFVT5ravBgok9t2jD1QNLR1mK8':approvedPriv('83Ed2ump7BHHbbXLFmCDo3Ctf--08KQHp8qo2RlKcpY',group0,obj0) }"
 }
+
+
+Run server:
+===========
+
+run -f /home/qiang/Desktop/safe-new-version-benchmark/safe/safe-apps/speaksfor/example.slang  -r safeService -kd src/main/resources/multi-principal-keys

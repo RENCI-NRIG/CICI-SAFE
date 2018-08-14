@@ -289,11 +289,9 @@ class DataBase(fname: String) extends LinkedHashMap[String, Deque[List[Term]]] w
         case Some(cs) => cs
       }
     }
-    if(matches.isEmpty) {
-      //if (verbose) IO.warnmes("call to undefined predicate: " + k1)
-      IO.warnmes("call to undefined predicate: " + k1)
-      IO.warnmes(s"Styla database: \n$this")
-      return null
+    if(matches.isEmpty && verbose) {
+        IO.warnmes("call to undefined predicate: " + k1)
+        IO.warnmes(s"Styla database: \n$this")
     }
     return matches
   }

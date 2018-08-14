@@ -45,6 +45,8 @@ class Config(config: com.typesafe.config.Config) {
   val ldapPassword: String           = Try(config.getString("ldap.password")).getOrElse("")
   val importGuardSlangPath: String   = Try(config.getString("safelang.importGuardSlangPath")).getOrElse("")
   val importGuardName: String        = Try(config.getString("safelang.importGuardName")).getOrElse("")
+  val speaksForGuardSlangPath: String= Try(config.getString("safelang.speaksForGuardSlangPath")).getOrElse("") 
+  val speaksForGuardName: String     = Try(config.getString("safelang.speaksForGuardName")).getOrElse("")
 }
 
 object Config {

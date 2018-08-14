@@ -133,12 +133,15 @@ class Prog(var db: DataBase) extends TermSource with LazyLogging {
         case _ => ()
       }
 
-      val cs = db.getMatches(g)
-      logger.info("[Prog pushUnfolder] new Unfolder")
-      cs.foreach{ m => logger.info(s"[Prog pushUnfolder] $m") }
+      val cs = db.getMatches(g).toList
+      logger.info(s"[Prog pushUnfolder] new Unfolder     cs.size=${cs.size}")
+      //if(cs.size > 0) {
+        cs.foreach{ m => logger.info(s"[Prog pushUnfolder] matched stmt: $m") }
+      //} else {
+      //}
       logger.info("[Prog pushUnfolder] end")
       if (!cs.eq(null)) {
-        val u = new Unfolder(this, g, cs.toList)
+        val u = new Unfolder(this, g, cs)
         orStack.push(u)
       }
     }

@@ -129,6 +129,8 @@ class ContextCache(setcache: SetCache) extends LazyLogging {
     val cntBuildingTime = (System.nanoTime - s) / 1000
     slangPerfCollector.addContextBuildingTime(cntBuildingTime.toString, token.name) // collect the context-building time
 
+    //println(s"[ContextCache/renderSubcontextInTwoSteps]: finishing") 
+
     subcnt 
   }
 
@@ -177,7 +179,8 @@ class ContextCache(setcache: SetCache) extends LazyLogging {
       println(s"speaksFor validity: ${valid} \n${res}")
       valid
     }
-    else if (slogset.validatedSpeaker || slogset.checkMatchingSpeaker) { // check matching speaker
+    // We always check statement speaker in a slog set 
+    if (slogset.validatedSpeaker || slogset.checkMatchingSpeaker) { // check matching speaker
       true
     } else { // other
       false 
@@ -189,7 +192,7 @@ class ContextCache(setcache: SetCache) extends LazyLogging {
   }
 
   def get(token: Index): Option[Subcontext] = {
-    // logger.info(s"[safelang/ContextCache.get()] get ${token}")
+    //logger.info(s"[safelang/ContextCache.get()] get ${token}")
     // scala.io.StdIn.readLine()
     Try(cache.get(token)) match {
       case Success(s) => 

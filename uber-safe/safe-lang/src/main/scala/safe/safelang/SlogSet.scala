@@ -190,6 +190,12 @@ class SlogSet (
     }
   }
 
+  /**
+   * Checking statement speakers happens when the context cache inhales linked slog sets
+   * from the set cache to mint and load a subcontext. It requires that the speaker of 
+   * each statement be either the issuer or the subject of the slog set (a parsed
+   * certificate).
+   */
   def checkMatchingSpeaker(): Boolean = {
     val now = new DateTime()
     if(!issuer.isDefined) { // A local slogset
@@ -200,6 +206,7 @@ class SlogSet (
       println(s"[SlogSet checkMatchingSpeaker] stale issuer: ${issuerFreshUntil}")
       false
     } else {
+      //println(s"[SlogSet/checkMatchingSpeaker] checking speakers")
       var speakerUnmatched: Boolean = false 
       val outerLoop = new Breaks
       val innerLoop = new Breaks
@@ -213,8 +220,10 @@ class SlogSet (
                   val hterm = stystmt.styterms.head
                   hterm match {
                     case f: StyFun if f.sym == ":" && f.args(0).isInstanceOf[StyConstant] => 
-                      if(f.args(0).asInstanceOf[StyConstant].sym != issuer.get) {
-                        println(s"[SlogSet checkMatchingSpeaker styla] speaker:${f.args(0)}  issuer.get:${issuer.get}")
+                      val spkr = f.args(0).asInstanceOf[StyConstant].sym
+                      if( !spkr.equals(issuer.get) && (!subject.isDefined || !spkr.equals(subject.get)) ) {
+                        // Allow statement speaker to be the subject if the subject is defined 
+                        println(s"[SlogSet checkMatchingSpeaker styla] speaker:${f.args(0)}  issuer:${issuer}  subject:${subject}")
                         speakerUnmatched = true 
                         innerLoop.break
                       }
@@ -224,8 +233,8 @@ class SlogSet (
                 case _: Statement =>
                   stmt.terms.head match {
                     case Structure(pred, speaker +: other, _, _, _) => 
-                      if(speaker.id.name != issuer.get) {
-                        println(s"[SlogSet checkMatchingSpeaker] speaker:$speaker  issuer.get:${issuer.get}")
+                      if( !speaker.equals(issuer.get) && (!subject.isDefined || !speaker.equals(subject.get)) ) {
+                        println(s"[SlogSet checkMatchingSpeaker] speaker:$speaker  issuer:${issuer}  subject:${subject}")
                         speakerUnmatched = true 
                         innerLoop.break
                       }
@@ -429,7 +438,7 @@ class SlogSet (
 
   /**  
    * A principal signs the slogset and encodes it into a string according to some format
-   * Make sure that the principal speaker is issuer
+   * Make sure that the principal speaker is the issuer
    * @return a tuple of a set token and the encoded cert
    */
   def signAndEncode(self: Principal, format: String = "slang"): Tuple2[String, String] = format.toLowerCase match {

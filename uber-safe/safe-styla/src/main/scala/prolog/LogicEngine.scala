@@ -50,10 +50,10 @@ class LogicEngine(var database: DataBase) extends Prog(database) with LazyLoggin
         //val s = answer.tcopy(cleancopier)
         val s = LogicEngine.copyTerm(answer, cleancopier)
 
-        println(s"Answer to styla query: $s")
-        println(s"Proof: ${orStack}") 
-        println(s"Substitution trail: ${trail}")
-        scala.io.StdIn.readLine()
+        //println(s"Answer to styla query: $s")
+        //println(s"Proof: ${orStack}") 
+        //println(s"Substitution trail: ${trail}")
+        //scala.io.StdIn.readLine()
 
         solutions += s
         if(findall != true) {

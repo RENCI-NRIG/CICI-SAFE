@@ -65,6 +65,7 @@ class Unfolder(prog: Prog, val goal: List[Term], matchingClauses: List[List[Term
       //println(s"\n[Unfolder nextGoal] goal= ${Term.printClause(goal)}")
       logger.info(s"\n[Unfolder nextGoal] clause= ${Term.printClause(clause)}")
       newgoal = unfoldWith(clause, prog.trail)
+      println(s"\n[Unfolder nextGoal] newgoal= ${Term.printClause(newgoal)}")
     }
     newgoal
   }
