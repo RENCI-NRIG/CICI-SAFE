@@ -1,4 +1,4 @@
-import("../speaksFor.slang").
+// import("../speaksFor.slang").
 
 defcon grantSpeaksFor(?IssuerID) :-
   spec('A subject issues a statement to grant speaksFor to an issuer'),

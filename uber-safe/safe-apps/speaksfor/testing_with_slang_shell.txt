@@ -1,0 +1,56 @@
+Testing speaksFor with Slang shell
+===================================
+
+Load slang shell script:
+------------------------
+slang> import("/home/qiang/Desktop/safe-new-version-benchmark/safe/safe-apps/slang-shell/speaksfor.slang").
+key_p8060@slang> ?ServerJVM := "152.3.136.26:7777".
+key_p8060@slang> ?Envs := ":::".
+
+
+Issuer:
+------
+slang> ?Self := "key_p8060".
+key_p8060@slang> postIdSet("p8060")?
+
+'viToNc1nWtwk1ZL5WEpotbROiZMYba_3uHwsY4xcodA'
+
+
+Subject:
+--------
+?Self := "key_p8061".
+key_p8061@slang> postIdSet("p8061")?
+
+'-9G6I5_Ha4K_OOJFvpZtkcsJueMJMd88A5dcLPxIlwo'.
+
+
+Set up speaksfor:
+-----------------
+key_p8061@slang> setupSpeaksFor("viToNc1nWtwk1ZL5WEpotbROiZMYba_3uHwsY4xcodA")?
+
+1_RWVo1GycE2j_nLc9cc8YChsf-syweVqZTPsVBoIGE
+
+
+Check setup:
+------------
+?Self := "key_p8888".
+validateSpeaksFor("viToNc1nWtwk1ZL5WEpotbROiZMYba_3uHwsY4xcodA", "-9G6I5_Ha4K_OOJFvpZtkcsJueMJMd88A5dcLPxIlwo", "1_RWVo1GycE2j_nLc9cc8YChsf-syweVqZTPsVBoIGE")?
+
+
+Use speaksfor:
+--------------
+?Self := "key_p8060".
+postAccessPriv("-9G6I5_Ha4K_OOJFvpZtkcsJueMJMd88A5dcLPxIlwo", "1_RWVo1GycE2j_nLc9cc8YChsf-syweVqZTPsVBoIGE",  "group0",  "obj0")?
+
+ZdJ6ywoM-PUjdS_BmFh2DetwmQvNsxuqKmmVEazR5Ls
+
+
+Check statements made through speaksfor:
+----------------------------------------
+?Self := "key_p8888".
+key_p8888@slang> ?Envs := ":::ZdJ6ywoM-PUjdS_BmFh2DetwmQvNsxuqKmmVEazR5Ls".  (Envs = ":::" // format: [speaker]:[subject]:[object]:[bearerRef])
+key_p8888@slang> checkPriv("-9G6I5_Ha4K_OOJFvpZtkcsJueMJMd88A5dcLPxIlwo", "group0",  "obj0")?
+
+
+
+
