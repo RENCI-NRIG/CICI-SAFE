@@ -1,33 +1,38 @@
 #!/bin/bash
-SDXSERVER="http://152.3.136.36:8080/"
-RIAKSERVER="147.72.248.6"
+SAFE=false
+SLICENAME_SUFFIX=${USER}
+#SITENAME1="fiu"
+##SITENAME1="ufl"
+#SITENAME2="unf"
+SITENAME1="tamu"
+SITENAME2="uh"
+#SITE1="UFL (Gainesville, FL USA) XO Rack"
+#SITE1="FIU (Miami, FL USA) XO Rack"
+#SITE2="UNF (Jacksonville, FL) XO Rack"
+SITE1="TAMU (College Station, TX, USA) XO Rack"
+SITE2="UH (Houston, TX USA) XO Rack"
+SDXSERVER="http://127.0.0.1:8888/"
 SSHKEY="~/.ssh/id_rsa"
 EXOGENIPEM="~/.ssl/geni-yuanjuny.pem"
-SDXNAME="sdx"
-ALICENAME="c1"
-BOBNAME="c2"
-SDXSAFEKEY="bphJZn3RJBnNqoCZk6k9SBD8mwSb054PXbwV7HpE80E"
-ALICESAFEKEY="V1F2853Nq8V304Yb_GInYaWTgVqmBsQwC0tXWuNmmf8"
-BOBSAFEKEY="UIz4bXT7accigZ7KNpEyF2igwGOgXb9gne7p13i2bWA"
-CARROTSAFEKEY="KXwvxF_rWupThUEAKwmkMTuhV8X-hqZXOAtMkWBFapc"
-SDXPREFIX="192.168.30.1/20"
-ALICEPREFIX="192.168.10.1/24"
-BOBPREFIX="192.168.20.1/24"
 CWD=$(pwd)
-SDX_SCRIPTSDIR="${CWD}/SDX-Simple/SAFE_SDX/src/main/resources/scripts/"
-CLIENT_SCRIPTDIR="${CWD}/SDX-Client-ExoGENI/SDX_ExoGENI_Client/src/main/resources/scripts/"
+SCRIPTSDIR="${CWD}/SDX-Simple/SAFE_SDX/src/main/resources/scripts/"
+RESOURCEDIR="${CWD}/SDX-Simple/SAFE_SDX/src/main/resources/"
+SDX="sdx-$SITENAME1-$SITENAME2-${SLICENAME_SUFFIX}"
+C1="c1-${SITENAME1}-${SLICENAME_SUFFIX}"
+C2="c2-${SITENAME2}-${SLICENAME_SUFFIX}"
+C3="c3-${SITENAME1}-${SLICENAME_SUFFIX}"
+C4="c4-${SITENAME2}-${SLICENAME_SUFFIX}"
 
 #safe server for communion slice
-SAFESERVER="152.54.14.12"
-CARROETNAME="carrot"
-CARROTPREFIX="192.168.40.1/24"
-STITCHPORT="http://geni-orca.renci.org/owl/ion.rdf#AL2S/Chameleon/Cisco/6509/GigabitEthernet/1/1"
-VLAN="3297"
 
-sed  "s@{SLICENAME}@${SDXNAME}@g;s@{SSHKEY}@${SSHKEY}@g;s@{EXOGENIPEM}@${EXOGENIPEM}@g;s@{RIAKSERVER}@${RIAKSERVER}@g;s@{SDXSERVER}@${SDXSERVER}@g; s@{SDX_SCRIPTSDIR}@${SDX_SCRIPTSDIR}@g; s@{SAFEKEY}@${SDXSAFEKEY}@g;s@{IPPREFIX}@${SDXPREFIX}@g" config/sdxconf.txt | tee ${CWD}/SDX-Simple/config/${SDXNAME}.conf
+sed -i  "s@slicename=\".*\"@slicename=\"${SDX}\"@g;s@serverurl=\".*\"@serverurl=\"${SDXSERVER}\"@g;s@sshkey=\".*\"@sshkey=\"${SSHKEY}\"@g;s@exogenipem=\".*pem\"@exogenipem=\"${EXOGENIPEM}\"@g;s@scriptsdir=\".*scripts/\"@scriptsdir=\"${SCRIPTSDIR}\"@g;s@resourcedir=\".*resources/\"@resourcedir=\"${RESOURCEDIR}\"@g;s@clientsites=\".*\"@clientsites=\"${SITE1}:${SITE2}\"@g;s@controllersite=\".*\"@controllersite=\"${SITE1}\"@g" SDX-Simple/config/sdx.conf
 
-sed  "s@{SLICENAME}@${ALICENAME}@g;s@{SSHKEY}@${SSHKEY}@g;s@{EXOGENIPEM}@${EXOGENIPEM}@g;s@{RIAKSERVER}@${RIAKSERVER}@g;s@{SDXSERVER}@${SDXSERVER}@g; s@{SDX_SCRIPTSDIR}@${SDX_SCRIPTSDIR}@g; s@{SAFEKEY}@${ALICESAFEKEY}@g;s@{IPPREFIX}@${ALICEPREFIX}@g" config/clientconf.txt | tee ${CWD}/SDX-Client-ExoGENI/config/${ALICENAME}.conf
+sed -i "s@slicename=\".*\"@slicename=\"${C1}\"@g;s@serverurl=\".*\"@serverurl=\"${SDXSERVER}\"@g;s@sshkey=\".*\"@sshkey=\"${SSHKEY}\"@g;s@exogenipem=\".*pem\"@exogenipem=\"${EXOGENIPEM}\"@g;s@scriptsdir=\".*scripts/\"@scriptsdir=\"${SCRIPTSDIR}\"@g;s@resourcedir=\".*resources/\"@resourcedir=\"${RESOURCEDIR}\"@g;s@serversite=\".*\"@serversite=\"${SITE1}\"@g;s@routersite=\".*\"@routersite=\"${SITE1}\"@g" SDX-Simple/client-config/c1.conf
+sed -i "s@slicename=\".*\"@slicename=\"${C2}\"@g;s@serverurl=\".*\"@serverurl=\"${SDXSERVER}\"@g;s@sshkey=\".*\"@sshkey=\"${SSHKEY}\"@g;s@exogenipem=\".*pem\"@exogenipem=\"${EXOGENIPEM}\"@g;s@scriptsdir=\".*scripts/\"@scriptsdir=\"${SCRIPTSDIR}\"@g;s@resourcedir=\".*resources/\"@resourcedir=\"${RESOURCEDIR}\"@g;s@serversite=\".*\"@serversite=\"${SITE2}\"@g;s@routersite=\".*\"@routersite=\"${SITE2}\"@g" SDX-Simple/client-config/c2.conf
+sed -i "s@slicename=\".*\"@slicename=\"${C3}\"@g;s@serverurl=\".*\"@serverurl=\"${SDXSERVER}\"@g;s@sshkey=\".*\"@sshkey=\"${SSHKEY}\"@g;s@exogenipem=\".*pem\"@exogenipem=\"${EXOGENIPEM}\"@g;s@scriptsdir=\".*scripts/\"@scriptsdir=\"${SCRIPTSDIR}\"@g;s@resourcedir=\".*resources/\"@resourcedir=\"${RESOURCEDIR}\"@g;s@serversite=\".*\"@serversite=\"${SITE1}\"@g;s@routersite=\".*\"@routersite=\"${SITE1}\"@g" SDX-Simple/client-config/c3.conf
+sed -i "s@slicename=\".*\"@slicename=\"${C4}\"@g;s@serverurl=\".*\"@serverurl=\"${SDXSERVER}\"@g;s@sshkey=\".*\"@sshkey=\"${SSHKEY}\"@g;s@exogenipem=\".*pem\"@exogenipem=\"${EXOGENIPEM}\"@g;s@scriptsdir=\".*scripts/\"@scriptsdir=\"${SCRIPTSDIR}\"@g;s@resourcedir=\".*resources/\"@resourcedir=\"${RESOURCEDIR}\"@g;s@serversite=\".*\"@serversite=\"${SITE2}\"@g;s@routersite=\".*\"@routersite=\"${SITE2}\"@g" SDX-Simple/client-config/c4.conf
 
-sed  "s@{SLICENAME}@${BOBNAME}@g;s@{SSHKEY}@${SSHKEY}@g;s@{EXOGENIPEM}@${EXOGENIPEM}@g;s@{RIAKSERVER}@${RIAKSERVER}@g;s@{SDXSERVER}@${SDXSERVER}@g; s@{SDX_SCRIPTSDIR}@${SDX_SCRIPTSDIR}@g; s@{SAFEKEY}@${BOBSAFEKEY}@g;s@{IPPREFIX}@${BOBPREFIX}@g" config/clientconf.txt | tee ${CWD}/SDX-Client-ExoGENI/config/${BOBNAME}.conf
+sed -i "s@SDX=.*@SDX=${SDX}@g" SDX-Simple/scripts/cnert-client.sh
 
-sed  "s@{STITCHPORT}@${STITCHPORT}@g;s@{VLAN}@${VLAN}@g;s@{SAFESERVER}@${SAFESERVER}@g;s@{SDXSERVER}@${SDXSERVER}@g; s@{SAFEKEY}@${CARROTSAFEKEY}@g;s@{IPPREFIX}@${CARROTPREFIX}@g" config/communionconf.txt | tee ${CWD}/SDX-Client-StitchPort/config/${CARROTNAME}.conf
+sed -i  "s@safe=.*@safe=${SAFE}@g;" SDX-Simple/config/sdx.conf
+sed -i  "s@safe=.*@safe=${SAFE}@g;" SDX-Simple/client-config/*.conf

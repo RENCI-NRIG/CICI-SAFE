@@ -1,0 +1,1 @@
+This directory stores the bandwidth of links in vsdx slice, now ahab doesn't support getting bandwidth information, so we store it here create allocating links

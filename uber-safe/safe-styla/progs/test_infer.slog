@@ -1,6 +1,0 @@
-alice: neighbor(bob).
-bob: neighbor(cindy).
-cindy: neighbor(david).
-reach(X, Y) :- X: neighbor(Y).
-reach(X, Z) :- X: neighbor(Y), reach(Y, Z).
-% reach(alice, david).
