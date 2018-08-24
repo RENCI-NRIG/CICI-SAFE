@@ -5,7 +5,7 @@ public class NetworkUtil {
   public static boolean checkReachability(String ip){
     for(int i=0; i< RETRY; i++) {
       String res = Exec.exec(String.format("ping -c 1 %s", ip));
-      if(res.contains("1 packets received")){
+      if(res.contains("1 packets received") || res.contains("1 received")){
         return true;
       }
     }

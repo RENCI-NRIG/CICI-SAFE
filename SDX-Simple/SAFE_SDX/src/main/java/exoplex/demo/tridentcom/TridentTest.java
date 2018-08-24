@@ -27,7 +27,7 @@ public class TridentTest {
 
   public static void main(String[] args) throws  Exception{
     SdxServer.run(sdxArgs2);
-    //postSafeCertificates();
+    postSafeCertificates();
     for(String clientSlice: TridentSetting.clientSlices){
       exogeniClients.put(clientSlice, new SdxExogeniClient(clientSlice,
         TridentSetting.clientIpMap.get(clientSlice),

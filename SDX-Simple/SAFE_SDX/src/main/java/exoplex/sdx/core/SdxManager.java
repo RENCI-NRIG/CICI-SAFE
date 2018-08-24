@@ -141,7 +141,11 @@ public class SdxManager extends SliceManager {
 
     configSdnControllerAddr(serverSlice.getComputeNode(plexusName).getManagementIP());
     if(safeEnabled) {
-      configSafeServerIp(serverSlice);
+      if(safeInSlice) {
+        setSafeServerIp(serverSlice.getComputeNode("safe-server").getManagementIP());
+      }else{
+        setSafeServerIp(conf.getString("config.safeserver"));
+      }
       safeManager = new SafeManager(safeServerIp, safeKeyFile, sshkey);
     }
     checkPrerequisites(serverSlice);

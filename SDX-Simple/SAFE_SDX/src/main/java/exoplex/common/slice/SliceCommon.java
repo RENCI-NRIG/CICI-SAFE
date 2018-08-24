@@ -43,6 +43,7 @@ public abstract class SliceCommon {
   protected String safeKeyFile;
   protected String safeKeyHash = null;
   protected boolean safeEnabled = false;
+  protected boolean safeInSlice = false;
   protected String riakIp = null;
   protected HashMap<String, Link> links = new HashMap<String, Link>();
   protected HashMap<String, ArrayList<String>> computenodes = new HashMap<String, ArrayList<String>>();
@@ -102,6 +103,9 @@ public abstract class SliceCommon {
     if(conf.hasPath("config.safe")){
       safeEnabled = conf.getBoolean("config.safe");
     }
+    if(conf.hasPath("config.safeinslice")){
+      safeInSlice = conf.getBoolean("config.safeinslice");
+    }
     if(conf.hasPath("config.safekey")){
       safeKeyFile = conf.getString("config.safekey");
     }
@@ -134,8 +138,12 @@ public abstract class SliceCommon {
     sliceProxy = SafeSlice.getSliceProxy(pemLocation, keyLocation, controllerUrl);
   }
 
-  protected void configSafeServerIp(SafeSlice serverSlice){
-    safeServerIp = serverSlice.getComputeNode("safe-server").getManagementIP();
+  protected  void setSdnControllerIp(String sdnControllerIp){
+    SDNControllerIP = sdnControllerIp;
+  }
+
+  protected void setSafeServerIp(String safeServerIp){
+    this.safeServerIp = safeServerIp;
     safeServer = safeServerIp + ":7777";
   }
 

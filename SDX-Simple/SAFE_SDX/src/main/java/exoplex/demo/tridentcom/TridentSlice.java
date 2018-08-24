@@ -88,14 +88,16 @@ public class TridentSlice extends SliceManager{
       }
     }
     Random rand = new Random();
-    slice.addPlexusController(SiteBase.get(TridentSetting.sites.get(rand.nextInt(TridentSetting
-        .sites.size())
-      )),
-      "plexuscontroller");
-    if(safeEnabled){
-      slice.addSafeServer(SiteBase.get(TridentSetting.sites.get(rand.nextInt(TridentSetting.sites
-          .size()))),
-        riakIp);
+    if(safeInSlice) {
+      slice.addPlexusController(SiteBase.get(TridentSetting.sites.get(rand.nextInt(TridentSetting
+          .sites.size())
+        )),
+        "plexuscontroller");
+      if (safeEnabled) {
+        slice.addSafeServer(SiteBase.get(TridentSetting.sites.get(rand.nextInt(TridentSetting.sites
+            .size()))),
+          riakIp);
+      }
     }
     slice.commitAndWait();
     return slice;
