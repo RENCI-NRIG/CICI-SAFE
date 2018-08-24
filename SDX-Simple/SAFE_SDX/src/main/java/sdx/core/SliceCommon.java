@@ -70,13 +70,13 @@ public class SliceCommon {
   protected static String sshkey;
   protected static ISliceTransportAPIv1 sliceProxy;
   protected static SliceAccessContext<SSHAccessToken> sctx;
-	protected static String safeserver;
+	//protected static String safeserver;
   protected static String keyhash;
   protected static String type;
-  protected static Config conf;
+  //protected static Config conf;
   protected static ArrayList<String> clientSites;
-  protected static String controllerSite;
-  protected static String serverSite;
+  //protected static String controllerSite;
+  //protected static String serverSite;
   protected static boolean safeauth=false;
 
   public SliceCommon(){}

@@ -67,6 +67,7 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 
+
 /*
 
  * @author geni-orca
@@ -93,19 +94,30 @@ public class SdxManager extends SliceCommon{
 
   final static Logger logger = Logger.getLogger(SdxManager.class);
 
-  
+  //Carrier Network Manager
   private static NetworkManager routingmanager=new NetworkManager();
+
+  //External Links
   private static HashMap<String, Link> links=new HashMap<String, Link>();
+
+  //
+
+  //What are these for?
   private static String IPPrefix="192.168.";
   static int curip=128;
   private static String mask="/24";
+
+  //What is the SDN vs OVS controller
   private static String SDNController;
   private static String OVSController;
+
   public static String serverurl;
   private static HashSet<Integer> usedip=new HashSet<Integer>();
   private static final ReentrantLock lock=new ReentrantLock();
+
   //private static String type;
   private static ArrayList<String[]> advertisements=new ArrayList<String[]>();
+
 
   private void addEntry_HashList(HashMap<String,ArrayList<String>>  map,String key, String entry){
     if(map.containsKey(key)){
@@ -139,24 +151,12 @@ public class SdxManager extends SliceCommon{
     curip=Integer.valueOf(ip_segs[2]);
   }
 	
-	public static void startSdxServer(String [] args){
+	public static void startSdxServer(String IPPrefix, String serverurl, String safeserver, String SDNControllerIP, String SDNController, String OVSController, boolean safeauth){
 
 		logger.debug("Carrier Slice server with Service API: START");
-    CommandLine cmd=parseCmd(args);
-    if(cmd.hasOption('n')){
-      safeauth=false;
-      System.out.println("Safe disabled, allowing all requests");
-    }
-    else{
-      safeauth=true;
-    }
-		String configfilepath=cmd.getOptionValue("config");
-    readConfig(configfilepath);
-    IPPrefix=conf.getString("config.ipprefix");
-    serverurl=conf.getString("config.serverurl");
-
-    //type=sdxconfig.type;
+   
     computeIP(IPPrefix);
+   
     //System.out.print(pemLocation);
 		sliceProxy = getSliceProxy(pemLocation,keyLocation, controllerUrl);
 		//SSH context
@@ -174,9 +174,6 @@ public class SdxManager extends SliceCommon{
     Slice keyhashslice = null;
     try {
       keyhashslice = Slice.loadManifestFile(sliceProxy, sliceName);
-      ComputeNode safe=(ComputeNode)keyhashslice.getResourceByName("safe-server");
-      //System.out.println("safe-server managementIP = " + safe.getManagementIP());
-      safeserver=safe.getManagementIP()+":7777";
     } catch (ContextTransportException e) {
       // TODO Auto-generated catch block
       e.printStackTrace();
@@ -184,11 +181,6 @@ public class SdxManager extends SliceCommon{
       // TODO Auto-generated catch block
       e.printStackTrace();
     }
-    //SDNControllerIP="152.3.136.36";
-    SDNControllerIP=((ComputeNode)keyhashslice.getResourceByName("plexuscontroller")).getManagementIP();
-    //System.out.println("plexuscontroler managementIP = " + SDNControllerIP);
-    SDNController=SDNControllerIP+":8080";
-    OVSController=SDNControllerIP+":6633";
     configRouting(keyhashslice,OVSController,SDNController,"(c\\d+)","(sp-c\\d+.*)");
 	}
 
