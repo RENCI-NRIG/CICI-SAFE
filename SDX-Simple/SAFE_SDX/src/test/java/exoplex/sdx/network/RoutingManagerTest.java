@@ -1,6 +1,9 @@
 package exoplex.sdx.network;
 
+import exoplex.common.utils.ServerOptions;
 import exoplex.sdx.core.SdxManager;
+
+import org.apache.commons.cli.CommandLine;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -15,7 +18,8 @@ public class RoutingManagerTest {
       Class NetM = Class.forName("exoplex.sdx.network.RoutingManager");
       Object obj = NetM.newInstance();
       SdxManager sdxManager = new SdxManager();
-      sdxManager.parseConfig(new String[]{"-c", "config/sdx.conf"});
+      CommandLine cmd = ServerOptions.parseCmd(new String[]{"-c", "config/sdx.conf"});
+      sdxManager.readConfig(cmd.getOptionValue("config"));
       sdxManager.loadSlice();
       sdxManager.initializeSdx();
       sdxManager.configRouting();

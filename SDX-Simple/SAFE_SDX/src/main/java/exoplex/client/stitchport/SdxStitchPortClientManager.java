@@ -4,6 +4,7 @@ import exoplex.common.slice.SliceCommon;
 import exoplex.common.utils.Exec;
 import exoplex.common.utils.HttpUtil;
 import exoplex.common.utils.SafeUtils;
+import exoplex.common.utils.ServerOptions;
 import org.apache.commons.cli.CommandLine;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -23,7 +24,9 @@ public class SdxStitchPortClientManager extends SliceCommon {
   private String type;
 
   public SdxStitchPortClientManager(String[] args) {
-    initializeExoGENIContexts(args);
+    CommandLine cmd = ServerOptions.parseCmd(args);
+    String configFilePath = cmd.getOptionValue("config");
+    initializeExoGENIContexts(configFilePath);
     System.out.println("Client start");
   }
 

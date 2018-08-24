@@ -1,11 +1,9 @@
 package exoplex.demo.tridentcom;
 
-import com.sun.deploy.util.SessionState;
-import com.sun.org.apache.xpath.internal.axes.SelfIteratorNoPredicate;
 import exoplex.client.exogeni.ClientSlice;
-import exoplex.common.slice.NodeBase;
 import exoplex.common.slice.SafeSlice;
 import exoplex.common.slice.SiteBase;
+import exoplex.common.utils.ServerOptions;
 import exoplex.sdx.core.SliceManager;
 
 import java.util.ArrayList;
@@ -15,6 +13,7 @@ import java.util.Random;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import safe.SafeAuthority;
+import org.apache.commons.cli.CommandLine;
 
 public class TridentSlice extends SliceManager{
 
@@ -33,14 +32,18 @@ public class TridentSlice extends SliceManager{
     TridentSlice tridentSlice = new TridentSlice();
     tridentSlice.run(sdxArgs);
     TridentSlice clientSlice = new TridentSlice();
-    clientSlice.initializeExoGENIContexts(clientArgs);
+    CommandLine cmd = ServerOptions.parseCmd(clientArgs);
+    String configFilePath = cmd.getOptionValue("config");
+    clientSlice.initializeExoGENIContexts(configFilePath);
     clientSlice.deleteClientSlices();
     clientSlice.createClientSlices();
   }
 
   @Override
   public void run(String[] args){
-    parseConfig(args);
+    CommandLine cmd = ServerOptions.parseCmd(args);
+    String configFilePath = cmd.getOptionValue("config");
+    initializeExoGENIContexts(configFilePath);
     SafeSlice slice = null;
     try {
       slice = createTridentTestSlice();

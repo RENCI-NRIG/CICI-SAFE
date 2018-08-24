@@ -3,6 +3,7 @@ package exoplex.demo.cnert;
 import exoplex.common.slice.SafeSlice;
 import exoplex.common.slice.Scripts;
 import exoplex.common.utils.Exec;
+import exoplex.common.utils.ServerOptions;
 import org.apache.commons.cli.CommandLine;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -24,7 +25,9 @@ public class TestSlice extends SliceManager {
   final Logger logger = LogManager.getLogger(Exec.class);
 
   public TestSlice(String[] args) {
-    initializeExoGENIContexts(args);
+    CommandLine cmd = ServerOptions.parseCmd(args);
+    String configFilePath = cmd.getOptionValue("config");
+    initializeExoGENIContexts(configFilePath);
 
     if (cmd.hasOption('d')) {
       type = "delete";

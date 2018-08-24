@@ -3,6 +3,7 @@ package exoplex.sdx.core;
 import exoplex.common.slice.SafeSlice;
 import exoplex.common.utils.Exec;
 import exoplex.common.utils.SafeUtils;
+import exoplex.common.utils.ServerOptions;
 import exoplex.sdx.safe.SafeManager;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -12,6 +13,14 @@ import org.renci.ahab.libtransport.util.TransportException;
 import exoplex.sdx.bro.BroManager;
 import exoplex.sdx.network.RoutingManager;
 import exoplex.sdx.network.Link;
+
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.CommandLineParser;
+import org.apache.commons.cli.DefaultParser;
+import org.apache.commons.cli.HelpFormatter;
+import org.apache.commons.cli.ParseException;
 
 import java.util.*;
 import java.util.concurrent.locks.ReentrantLock;
@@ -143,7 +152,7 @@ public class SdxManager extends SliceManager {
 
   public void startSdxServer(String[] args) throws TransportException, Exception {
     logger.info(logPrefix + "Carrier Slice server with Service API: START");
-    parseConfig(args);
+    CommandLine cmd = ServerOptions.parseCmd(args);
     if (cmd.hasOption('r')) {
       clearSdx();
     }

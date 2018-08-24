@@ -4,6 +4,7 @@ import exoplex.common.slice.SafeSlice;
 import exoplex.common.slice.Scripts;
 import exoplex.common.slice.SliceCommon;
 import exoplex.common.utils.Exec;
+import exoplex.common.utils.ServerOptions;
 import exoplex.sdx.safe.SafeManager;
 import org.apache.commons.cli.CommandLine;
 import org.apache.logging.log4j.LogManager;
@@ -60,8 +61,9 @@ public class SliceManager extends SliceCommon {
     return sshkey;
   }
 
-  public  void parseConfig(String[] args){
-    super.initializeExoGENIContexts(args);
+  @Override
+  public void readConfig(String configFilePath){
+    super.initializeExoGENIContexts(configFilePath);
     bw = conf.getLong("config.bw");
     IPPrefix = conf.getString("config.ipprefix");
     serverurl = conf.getString("config.serverurl");
@@ -85,7 +87,9 @@ public class SliceManager extends SliceCommon {
   public void run(String[] args) {
     logger.info("SDX-Simple " + args[0]);
 
-    initializeExoGENIContexts(args);
+    CommandLine cmd = ServerOptions.parseCmd(args);
+    String configFilePath = cmd.getOptionValue("config");
+    initializeExoGENIContexts(configFilePath);
 
     //type=conf.getString("config.type");
     if (cmd.hasOption('d')) type = "delete";
