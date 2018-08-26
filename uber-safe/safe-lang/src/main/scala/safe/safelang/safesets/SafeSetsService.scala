@@ -366,10 +366,10 @@ class SafeSetsClient(val system: ActorSystem) extends LazyLogging {
     //logger.info(s"rawCert: $rawCert")
     val slogsets: Seq[SlogSet] = rawCert match {
       case Some(cert) => 
-        logger.info(s"cert: \n$cert")
+        //logger.info(s"cert: \n$cert")
         if(localSafeSets || notMultipartEntity(cert)) {
           val s: SlogSet = parseASlogSet(cert) 
-          logger.info(s"slogset: $s")
+          //logger.info(s"slogset: $s")
 
           // Collect set-parsing time
           val t = (System.nanoTime - start) / 1000

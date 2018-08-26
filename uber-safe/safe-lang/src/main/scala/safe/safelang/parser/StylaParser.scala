@@ -17,9 +17,9 @@ class StylaParserService {
    * @param labelInDef   label defined in defX, just in front of the first bracket
    */
   def parseSlogSetTemplate(source: String, labelInDef: Option[Term] = None): SlogSetTemplate = {
-    println("\n\n=== [Safelang/StylaParser]  parse using styla ===")
+    println("\n\n=== [Safelang/StylaParser]  parse styla ===")
     println(source)
-    println("============================================\n")
+    println("===========================================\n")
     //println("[SafelogParser] Press enter to continue")
     //scala.io.StdIn.readLine()
     val styparser = new StyParser 

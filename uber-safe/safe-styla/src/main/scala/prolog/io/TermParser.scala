@@ -17,12 +17,12 @@ class TermParser(val vars: LinkedHashMap[String, Var])
 
   def mkVar(x0: String) = {
     val x = if ("_" == x0) x0 + x0 + vars.size else x0
-    vars.getOrElseUpdate(x, new Var())
+    vars.getOrElseUpdate(x, new Var(x))
   }
   
   def mkEVar(x: String) = {
     //println(s"[TermParser mkEVar] x=$x")
-    vars.getOrElseUpdate(x, new EVar())
+    vars.getOrElseUpdate(x, new EVar(x))
   }
 
   def trimQuotes(q: String) = q.substring(1, q.length() - 1)
@@ -500,7 +500,7 @@ object TermParser {
 
   def postProcessBody(h: Term, xs: List[Term]): List[Term] = {
     var hasCut = false
-    val V = new Var()
+    val V = Var()
 
       def fixSpecial(t: Term): Term = t match {
         case f: Fun => {
@@ -534,8 +534,8 @@ object TermParser {
   //def dcgExpand(a: Term, b: List[Term]) = (a, b)
 
   def dcgExpand(a: Term, bs: List[Term]): (Term, List[Term]) = {
-    val V1 = new Var()
-    val V2 = new Var()
+    val V1 = Var()
+    val V2 = Var()
     val hd = dcg_goal(a, V1, V2)
     val cs = dcg_body(bs, V1, V2)
     (hd, cs)
@@ -595,7 +595,7 @@ object TermParser {
         Nil
       }
       case x :: xs => {
-        val V = new Var()
+        val V = Var()
         val y = dcg_goal(x, S1, V)
         val ys = dcg_conj(xs, V, S2)
         y :: ys

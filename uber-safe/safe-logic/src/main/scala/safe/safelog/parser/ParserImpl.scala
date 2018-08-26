@@ -683,9 +683,14 @@ trait ParserImpl
 
   override def parse(source: String): Map[Index, OrderedSet[Statement]] = {
     //println(s"[slogParser parse] saysOperator: ${saysOperator}")
-    //println("===================== parse source =======================")
-    //println(source)
-    //println("==========================================================")
+    println("\n\n========================== PARSE SOURCE ============================")
+    // Only display the first 100
+    if(source.size > 100) {
+      println(s"${source.substring(0, 100)} \n\n...")
+    } else {
+      println(source)
+    }
+    println("====================================================================")
     //println(s"_statementCache=${_statementCache}")
     //scala.io.StdIn.readLine()
     val res: Map[Index, OrderedSet[Statement]] = parseAll(program, source) match {
@@ -709,9 +714,9 @@ trait ParserImpl
 
   override def parseFile(fileName: String): Map[Index, OrderedSet[Statement]] = {
     val source = new java.io.BufferedReader(new java.io.FileReader(fileName))
-    println("============parse file===========") 
+    println("\n\n============================= PARSE FILE ===========================") 
     println(fileName)
-    println("=================================")
+    println("====================================================================")
     val res = parse(source)
     source.close()
     res
@@ -793,6 +798,9 @@ trait ParserImpl
     var count = 0
     val t0 = System.nanoTime
     val allPrograms = ListBuffer[SafeProgram]()
+
+    // The starting slang is compiled from source.
+    // This is useful because it covers the case of importing slang from source. 
     var stmts = parse(slangSource) 
     var rPath = referencePath
     var inputSource = true
@@ -827,11 +835,12 @@ trait ParserImpl
       if(inputSource) inputSource = false
     }  while(!sourcesToCompile.isEmpty)
 
-    println(s"$count scripts in total are assembled into this code")
+    println(s"\n$count scripts in total are assembled")
+    println(s"${count-1} imported scripts:") 
     compiledSources.foreach(println(_))
-    println()
+
     val compileTime = (System.nanoTime - t0) / 1000
-    println(s"Time used to compile all sources: $compileTime ms")
+    println(s"\nTime used to compile all sources: $compileTime ms")
     //scala.io.StdIn.readLine()
 
     val monolithic: SafeProgram = linkPrograms(allPrograms)

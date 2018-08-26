@@ -117,7 +117,7 @@ class Prog(var db: DataBase) extends TermSource with LazyLogging {
    * Push a matching unfolder to the top of the orStack according to
    * the head of the goal list. 
    * 
-   * @param g0 current goal list.
+   * @param g0 current goal list. If g0 is empty, it doesn't push any unfolder.
    * @return remaining goal list and a return term (mostly null) as a
    * pair.
    */
@@ -193,12 +193,10 @@ class Prog(var db: DataBase) extends TermSource with LazyLogging {
     var newgoal: GOAL = null
     var more = true
     var depth = 0
-    logger.info(s"[Prog getElement] query=${Term.printClause(query)}   |  answer=${Term.printClause(List(answer))}")
+    //logger.info(s"[Prog getElement] query=${Term.printClause(query)}   |  answer=${Term.printClause(List(answer))}")
     //println(s"[Prog getElement] query=${Term.printClause(query)}   |  answer=${Term.printClause(List(answer))}")
     while (more && !orStack.isEmpty && depth<=DEPTH_LIMIT) {
       val step: Unfolder = orStack.top
-      //println("step="+step)
-      newgoal = step.nextGoal()
 
       if (step.isLastClause && !orStack.isEmpty) {
         orStack.pop()
@@ -206,17 +204,25 @@ class Prog(var db: DataBase) extends TermSource with LazyLogging {
       } else
         popped = false
 
-      val res = pushUnfolder(newgoal)
+      if(popped == false) { // Got an inferable unfolder
+        //println("step="+step)
+        newgoal = step.nextGoal()
+     
+        // Don't immediately pop up an exhausted unfolder
+        // This keeps the entire proof of an inference on the stack
 
-      println(s"Pushing an unfolder to the orStack: ${res._1}  {res._2}")
-      println(s"orStack: ${orStack}")
+        val res = pushUnfolder(newgoal)
 
-      if (null != res._2) return res._2
-      newgoal = res._1
+        println(s"Pushing an unfolder to the orStack: ${res._1}  {res._2}")
+        println(s"orStack: ${orStack}")
 
-      if (Nil == newgoal) more = false
-      // "no push when null" eventually stops it but only when orStack.isEmpty
-      depth += 1
+        if (null != res._2) return res._2
+        newgoal = res._1
+
+        if (Nil == newgoal) more = false
+        // "no push when null" eventually stops it but only when orStack.isEmpty
+        depth += 1
+      }
     }
 
     if(depth > DEPTH_LIMIT) {
@@ -238,6 +244,7 @@ class Prog(var db: DataBase) extends TermSource with LazyLogging {
 
     logger.info(s"[Prog getElement] query=${Term.printClause(query)}   |   answer=${Term.printClause(List(answer))}")
     //println(s"[Prog getElement] query=${Term.printClause(query)}   |   answer=${Term.printClause(List(answer))}")
+
     if (query.isEmpty) stop()
     answer
   }

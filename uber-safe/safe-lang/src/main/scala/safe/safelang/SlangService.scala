@@ -29,9 +29,9 @@ class GuardTable(val allGuards: MutableMap[String, Seq[String]], guardType: Muta
     for((guard, gprops) <- gset) {
       val gtype: Int = gprops._1
       val args: Seq[String] = gprops._2
-      if(allGuards.contains(guard) && allGuards(guard).size == args.size) { // Duplicate guard
+      if(allGuards.contains(guard) && allGuards(guard).size == args.size) { // Duplicated guard
         safe.safelog.SafelogException.printLabel('warn)
-        println(s"""Duplicate guard: ${guard}(${args.mkString(",")}); Ignored""")
+        println(s"""Duplicated guard: ${guard}(${args.mkString(",")}); Ignored it""")
       } else {
         allGuards.put(guard, args)
         guardType.put(guard, gtype)
