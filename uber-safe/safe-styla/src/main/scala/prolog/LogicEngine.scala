@@ -1,9 +1,11 @@
 package prolog
+
 import prolog.interp.{Prog, Unfolder}
 import prolog.io.IO
 import prolog.io.TermParser
 import prolog.terms._
 import prolog.fluents.DataBase
+import prolog.ProofService._
 
 import scala.collection.mutable.ListBuffer
 import com.typesafe.scalalogging.LazyLogging
@@ -54,49 +56,10 @@ class LogicEngine(var database: DataBase) extends Prog(database) with LazyLoggin
         println(s"Proof: ${orStack}    ${orStack.toList}") 
         println(s"Substitution trail: ${trail}    ${trail.toList}") 
 
-        println("\n====================== LOGICAL PROOF =====================")
+        // print the logical proof
+        //println( formatLogicalProof(orStack.toList, trail.toList) )
 
-        val proofSteps = orStack.toList
-        val substitutions = trail.toList
-
-        var i = proofSteps.length -1
-        var substIndex = 0
-        while(i >= 0) {
-          val step: Unfolder = proofSteps(i)
-          val goals = step.goal
-          if(step.getOldtop != 0) {
-            var j = substIndex
-            val substsOfStep = ListBuffer[String]()
-            while(j < step.getOldtop) {
-              val s = substitutions(substitutions.length - j - 1)
-              substsOfStep += s"${s.name}=>${s}" 
-              j = j + 1
-            } 
-            if(substsOfStep.length > 0) {
-              val substsAsString = substsOfStep.mkString("; ")
-              substIndex = step.getOldtop  // advance substIndex
-              println(s"          ||          ")
-              prettyPrint("          || ", 70, substsAsString)
-              //println(s"""          || ${substsAsString}""")
-            }
-            println(s"         \\||/          ")
-            println(s"          \\/           \n")
-          }   
-          prettyPrint("     ",  70, goals.toString)
-          //println(s"     ${goals}           ")
-          println(s"\n          ||           ")
-          prettyPrint("          || ", 70, step.previousClause.toString)
-          //println(s"          || ${step.previousClause}")
-          i = i - 1
-        }
-        println(s"          ||           ")
-        println(s"         \\||/          ")
-        println(s"          \\/           \n")
-        println(s"          {}           ")
-        println("\n====================== END OF PROOF =======================\n")
-        
-
-        //scala.io.StdIn.readLine()
+        println( formatLogicalInference(orStack.toList, trail.toList) )
 
         solutions += s
         if(findall != true) {
@@ -120,18 +83,6 @@ class LogicEngine(var database: DataBase) extends Prog(database) with LazyLoggin
       //logger.info(s"[LogicEngine solveQuery] db.factsBySecondary: ${db.factsBySecondary}")
     }
     solutions.toList
-  }
-
-
-  def prettyPrint(linePrefix: String, numCharsPerLine: Int, content: String) {
-    val numLines = content.length / numCharsPerLine + 1
-    var i = 0
-    while (i < numLines-1) {
-      println(s"${linePrefix}${content.substring(i*numCharsPerLine, (i+1)*numCharsPerLine)}")
-      i = i + 1
-    }
-    // i == numLines - 1
-    println(s"${linePrefix}${content.substring(i*numCharsPerLine, content.length)}")
   }
 }
 

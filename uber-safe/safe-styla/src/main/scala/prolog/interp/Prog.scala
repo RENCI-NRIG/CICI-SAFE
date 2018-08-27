@@ -208,7 +208,7 @@ class Prog(var db: DataBase) extends TermSource with LazyLogging {
         //println("step="+step)
         newgoal = step.nextGoal()
      
-        // Don't immediately pop up an exhausted unfolder
+        // Don't immediately pop an exhausted unfolder
         // This keeps the entire proof of an inference on the stack
 
         val res = pushUnfolder(newgoal)
