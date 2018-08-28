@@ -15,12 +15,6 @@ import exoplex.sdx.network.RoutingManager;
 import exoplex.sdx.network.Link;
 
 import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.Option;
-import org.apache.commons.cli.Options;
-import org.apache.commons.cli.CommandLineParser;
-import org.apache.commons.cli.DefaultParser;
-import org.apache.commons.cli.HelpFormatter;
-import org.apache.commons.cli.ParseException;
 
 import java.util.*;
 import java.util.concurrent.locks.ReentrantLock;
@@ -139,9 +133,13 @@ public class SdxManager extends SliceManager {
     logPrefix += "[" + sliceName + "]";
     //runCmdSlice(serverSlice, "ovs-ofctl del-flows br0", "(^c\\d+)", false, true);
 
-    configSdnControllerAddr(serverSlice.getComputeNode(plexusName).getManagementIP());
+    if(plexusAndSafeInSlice){
+      configSdnControllerAddr(serverSlice.getComputeNode(plexusName).getManagementIP());
+    }else {
+      configSdnControllerAddr(conf.getString("config.plexusserver"));
+    }
     if(safeEnabled) {
-      if(safeInSlice) {
+      if(plexusAndSafeInSlice) {
         setSafeServerIp(serverSlice.getComputeNode("safe-server").getManagementIP());
       }else{
         setSafeServerIp(conf.getString("config.safeserver"));
@@ -157,6 +155,7 @@ public class SdxManager extends SliceManager {
   public void startSdxServer(String[] args) throws TransportException, Exception {
     logger.info(logPrefix + "Carrier Slice server with Service API: START");
     CommandLine cmd = ServerOptions.parseCmd(args);
+    initializeExoGENIContexts(cmd.getOptionValue("config"));
     if (cmd.hasOption('r')) {
       clearSdx();
     }

@@ -8,13 +8,7 @@ import org.apache.commons.cli.CommandLine;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.renci.ahab.libndl.resources.request.ComputeNode;
-import org.renci.ahab.libndl.resources.request.InterfaceNode2Net;
-import org.renci.ahab.libndl.resources.request.Network;
-import org.renci.ahab.libtransport.SSHAccessToken;
-import org.renci.ahab.libtransport.SliceAccessContext;
-import org.renci.ahab.libtransport.util.SSHAccessTokenFileFactory;
 import org.renci.ahab.libtransport.util.TransportException;
-import org.renci.ahab.libtransport.util.UtilTransportException;
 
 import java.util.ArrayList;
 
@@ -152,7 +146,7 @@ public class ClientSlice extends SliceManager {
       }
     }
     if (safeEnabled) {
-      if(safeInSlice) {
+      if(plexusAndSafeInSlice) {
         s.addSafeServer(serverSite, riakIp);
       }
     }

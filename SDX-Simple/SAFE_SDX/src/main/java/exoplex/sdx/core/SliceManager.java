@@ -17,7 +17,6 @@ import org.renci.ahab.libtransport.SliceAccessContext;
 import org.renci.ahab.libtransport.util.SSHAccessTokenFileFactory;
 import org.renci.ahab.libtransport.util.UtilTransportException;
 import exoplex.sdx.network.Link;
-import safe.AuthorityMock;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -145,7 +144,7 @@ public class SliceManager extends SliceCommon {
       //Make sure that plexus container is running
       SDNControllerIP = carrier.getComputeNode(plexusName).getManagementIP();
       if(safeEnabled){
-        if(safeInSlice) {
+        if(plexusAndSafeInSlice) {
           setSafeServerIp(carrier.getComputeNode("safe-server").getManagementIP());
         }else {
           setSafeServerIp(conf.getString("config.safeserver"));
@@ -229,7 +228,7 @@ public class SliceManager extends SliceCommon {
     tlist.add(new Thread(){
       @Override
       public void run() {
-        if(safeInSlice) {
+        if(plexusAndSafeInSlice) {
           setSdnControllerIp(serverSlice.getComputeNode(plexusName).getManagementIP());
         }else {
           setSdnControllerIp(conf.getString("config.plexusserver"));
@@ -238,7 +237,7 @@ public class SliceManager extends SliceCommon {
       }
     });
     if(safeEnabled){
-      if(safeInSlice) {
+      if(plexusAndSafeInSlice) {
         setSafeServerIp(serverSlice.getComputeNode("safe-server").getManagementIP());
       }else{
         setSafeServerIp(conf.getString("config.safeserver"));
@@ -401,7 +400,7 @@ public class SliceManager extends SliceCommon {
       Link logLink = addLink(s, linkname, node0, node1, bw);
       links.put(linkname, logLink);
     }
-    if(safeInSlice) {
+    if(plexusAndSafeInSlice) {
       if (safeEnabled) {
         s.addSafeServer(serverSite, riakIp);
       }

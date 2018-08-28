@@ -88,7 +88,7 @@ public class TridentSlice extends SliceManager{
       }
     }
     Random rand = new Random();
-    if(safeInSlice) {
+    if(plexusAndSafeInSlice) {
       slice.addPlexusController(SiteBase.get(TridentSetting.sites.get(rand.nextInt(TridentSetting
           .sites.size())
         )),
