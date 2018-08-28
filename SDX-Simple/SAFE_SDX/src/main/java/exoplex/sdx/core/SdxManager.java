@@ -929,7 +929,8 @@ public class SdxManager extends SliceManager {
           thread.start();
           tlist.add(thread);
         } catch (Exception e) {
-          logger.error("exception when copying config file");
+          logger.error("Exception when configuring routers");
+          logger.error(e.getMessage());
         }
       }
     }
