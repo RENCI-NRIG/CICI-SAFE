@@ -6,7 +6,6 @@ import exoplex.common.utils.SafeUtils;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import sun.awt.windows.ThemeReader;
 
 public class SafeManager {
   final static Logger logger = LogManager.getLogger(SafeManager.class);
