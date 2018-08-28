@@ -2,7 +2,6 @@ package exoplex.common.slice;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
-import org.apache.commons.cli.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.renci.ahab.libndl.resources.request.*;
@@ -35,7 +34,6 @@ public abstract class SliceCommon {
   protected String type;
   protected String topofile = null;
   protected Config conf;
-  protected CommandLine cmd;
   protected ArrayList<String> clientSites;
   protected String controllerSite;
   protected List<String> sitelist;
@@ -45,6 +43,7 @@ public abstract class SliceCommon {
   protected String safeKeyFile;
   protected String safeKeyHash = null;
   protected boolean safeEnabled = false;
+  protected boolean safeInSlice = false;
   protected String riakIp = null;
   protected HashMap<String, Link> links = new HashMap<String, Link>();
   protected HashMap<String, ArrayList<String>> computenodes = new HashMap<String, ArrayList<String>>();
@@ -55,42 +54,12 @@ public abstract class SliceCommon {
     return SDNControllerIP;
   }
 
-  protected CommandLine parseCmd(String[] args) {
-    Options options = new Options();
-    Option config = new Option("c", "config", true, "configuration file path");
-    Option config1 = new Option("d", "delete", false, "delete the slice");
-    Option config2 = new Option("e", "exec", true, "command to exec");
-    Option config3 = new Option("r", "reset", false, "command to exec");
-    config.setRequired(true);
-    config1.setRequired(false);
-    config2.setRequired(false);
-    config3.setRequired(false);
-    options.addOption(config);
-    options.addOption(config1);
-    options.addOption(config2);
-    options.addOption(config3);
-    CommandLineParser parser = new DefaultParser();
-    HelpFormatter formatter = new HelpFormatter();
-    CommandLine cmd = null;
-
-    try {
-      cmd = parser.parse(options, args);
-    } catch (ParseException e) {
-      logger.error(e.getMessage());
-      formatter.printHelp("utility-name", options);
-
-      System.exit(1);
-      return cmd;
-    }
-
-    return cmd;
-  }
 
   public String getSliceName() {
     return sliceName;
   }
 
-  private void readConfig(String configfilepath) {
+  public void readConfig(String configfilepath) {
     File myConfigFile = new File(configfilepath);
     Config fileConfig = ConfigFactory.parseFile(myConfigFile);
     conf = ConfigFactory.load(fileConfig);
@@ -134,6 +103,9 @@ public abstract class SliceCommon {
     if(conf.hasPath("config.safe")){
       safeEnabled = conf.getBoolean("config.safe");
     }
+    if(conf.hasPath("config.safeinslice")){
+      safeInSlice = conf.getBoolean("config.safeinslice");
+    }
     if(conf.hasPath("config.safekey")){
       safeKeyFile = conf.getString("config.safekey");
     }
@@ -156,14 +128,9 @@ public abstract class SliceCommon {
       e.printStackTrace();
     }
   }
-  protected void initializeExoGENIContexts(String[] args){
-    cmd = parseCmd(args);
+  protected void initializeExoGENIContexts(String configFilePath){
 
-    logger.debug("cmd " + cmd);
-
-    String configfilepath = cmd.getOptionValue("config");
-
-    readConfig(configfilepath);
+    readConfig(configFilePath);
 
     //SSH context
     getSshContext();
@@ -171,15 +138,12 @@ public abstract class SliceCommon {
     sliceProxy = SafeSlice.getSliceProxy(pemLocation, keyLocation, controllerUrl);
   }
 
-  protected void initializeExoGENIContexts(String configfilepath){
-    readConfig(configfilepath);
-
-    //SSH context
-    getSshContext();
+  protected  void setSdnControllerIp(String sdnControllerIp){
+    SDNControllerIP = sdnControllerIp;
   }
 
-  protected void configSafeServerIp(SafeSlice serverSlice){
-    safeServerIp = serverSlice.getComputeNode("safe-server").getManagementIP();
+  protected void setSafeServerIp(String safeServerIp){
+    this.safeServerIp = safeServerIp;
     safeServer = safeServerIp + ":7777";
   }
 

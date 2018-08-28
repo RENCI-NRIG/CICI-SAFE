@@ -4,6 +4,7 @@ import exoplex.common.slice.SafeSlice;
 import exoplex.common.slice.Scripts;
 import exoplex.common.slice.SliceCommon;
 import exoplex.common.utils.Exec;
+import exoplex.common.utils.ServerOptions;
 import exoplex.sdx.safe.SafeManager;
 import org.apache.commons.cli.CommandLine;
 import org.apache.logging.log4j.LogManager;
@@ -60,12 +61,19 @@ public class SliceManager extends SliceCommon {
     return sshkey;
   }
 
-  public  void parseConfig(String[] args){
-    super.initializeExoGENIContexts(args);
-    bw = conf.getLong("config.bw");
-    IPPrefix = conf.getString("config.ipprefix");
-    serverurl = conf.getString("config.serverurl");
-    computeIP(IPPrefix);
+  @Override
+  public void readConfig(String configFilePath) {
+    super.readConfig(configFilePath);
+    if (conf.hasPath("config.bw")) {
+      bw = conf.getLong("config.bw");
+    }
+    if(conf.hasPath("config.ipprefix")) {
+      IPPrefix = conf.getString("config.ipprefix");
+      computeIP(IPPrefix);
+    }
+    if(conf.hasPath("config.serverurl")) {
+      serverurl = conf.getString("config.serverurl");
+    }
   }
 
   protected void getSshContext(){
@@ -85,7 +93,9 @@ public class SliceManager extends SliceCommon {
   public void run(String[] args) {
     logger.info("SDX-Simple " + args[0]);
 
-    initializeExoGENIContexts(args);
+    CommandLine cmd = ServerOptions.parseCmd(args);
+    String configFilePath = cmd.getOptionValue("config");
+    initializeExoGENIContexts(configFilePath);
 
     //type=conf.getString("config.type");
     if (cmd.hasOption('d')) type = "delete";
@@ -135,7 +145,11 @@ public class SliceManager extends SliceCommon {
       //Make sure that plexus container is running
       SDNControllerIP = carrier.getComputeNode(plexusName).getManagementIP();
       if(safeEnabled){
-        configSafeServerIp(carrier);
+        if(safeInSlice) {
+          setSafeServerIp(carrier.getComputeNode("safe-server").getManagementIP());
+        }else {
+          setSafeServerIp(conf.getString("config.safeserver"));
+        }
       }
       //SDNControllerIP = "152.3.136.36";
       Thread.sleep(10000);
@@ -215,12 +229,20 @@ public class SliceManager extends SliceCommon {
     tlist.add(new Thread(){
       @Override
       public void run() {
-        SDNControllerIP = serverSlice.getComputeNode(plexusName).getManagementIP();
+        if(safeInSlice) {
+          setSdnControllerIp(serverSlice.getComputeNode(plexusName).getManagementIP());
+        }else {
+          setSdnControllerIp(conf.getString("config.plexusserver"));
+        }
         checkPlexus(SDNControllerIP);
       }
     });
     if(safeEnabled){
-      configSafeServerIp(serverSlice);
+      if(safeInSlice) {
+        setSafeServerIp(serverSlice.getComputeNode("safe-server").getManagementIP());
+      }else{
+        setSafeServerIp(conf.getString("config.safeserver"));
+      }
       tlist.add(new Thread(){
         @Override
         public void run() {
@@ -240,6 +262,17 @@ public class SliceManager extends SliceCommon {
     });
     logger.debug("Finished checking prerequisites");
   }
+
+  /*
+  protected  void configSdnControllerIp(SafeSlice serverSlice, String plexusName){
+    SDNControllerIP = serverSlice.getComputeNode(plexusName).getManagementIP();
+  }
+
+  protected void configSafeServerIp(SafeSlice serverSlice){
+    safeServerIp = serverSlice.getComputeNode("safe-server").getManagementIP();
+    safeServer = safeServerIp + ":7777";
+  }
+  */
 
   public void checkOVS(SafeSlice serverSlice, String nodeName){
     String mip = serverSlice.getComputeNode(nodeName).getManagementIP();
@@ -368,10 +401,12 @@ public class SliceManager extends SliceCommon {
       Link logLink = addLink(s, linkname, node0, node1, bw);
       links.put(linkname, logLink);
     }
-    if(safeEnabled){
-      s.addSafeServer(serverSite, riakIp);
+    if(safeInSlice) {
+      if (safeEnabled) {
+        s.addSafeServer(serverSite, riakIp);
+      }
+      s.addPlexusController(controllerSite, plexusName);
     }
-    s.addPlexusController(controllerSite, plexusName);
     return s;
   }
 

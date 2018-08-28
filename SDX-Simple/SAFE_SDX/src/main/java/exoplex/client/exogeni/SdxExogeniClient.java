@@ -8,6 +8,7 @@ import exoplex.common.slice.SliceCommon;
 import exoplex.common.utils.Exec;
 import exoplex.common.utils.HttpUtil;
 import exoplex.common.utils.SafeUtils;
+import exoplex.common.utils.ServerOptions;
 import exoplex.sdx.core.SliceManager;
 import exoplex.sdx.safe.SafeManager;
 import org.apache.commons.cli.CommandLine;
@@ -35,14 +36,18 @@ public class SdxExogeniClient extends SliceCommon{
   private String ipIprefix;
   private SafeSlice serverSlice = null;
   private boolean safeChecked = false;
+  private CommandLine cmd;
 
   public static void main(String[] args){
+
     SdxExogeniClient sdxExogeniClient = new SdxExogeniClient(args);
     sdxExogeniClient.run(args);
   }
 
   public SdxExogeniClient(String sliceName, String IPPrefix, String safeKeyFile, String[] args){
-    initializeExoGENIContexts(args);
+    CommandLine cmd = ServerOptions.parseCmd(args);
+    String configFilePath = cmd.getOptionValue("config");
+    initializeExoGENIContexts(configFilePath);
     this.ipIprefix = IPPrefix;
     this.safeKeyFile = safeKeyFile;
     this.sliceName = sliceName;
@@ -59,7 +64,9 @@ public class SdxExogeniClient extends SliceCommon{
     //sshkey=args[6];
     //keyhash=args[7];
 
-    initializeExoGENIContexts(args);
+    CommandLine cmd = ServerOptions.parseCmd(args);
+    String configFilePath = cmd.getOptionValue("config");
+    initializeExoGENIContexts(configFilePath);
 
     sliceProxy = SafeSlice.getSliceProxy(pemLocation, keyLocation, controllerUrl);
 
@@ -71,7 +78,11 @@ public class SdxExogeniClient extends SliceCommon{
   public void run(String[] args) {
     try {
       SafeSlice s = SafeSlice.loadManifestFile(sliceName, pemLocation, keyLocation, controllerUrl);
-      configSafeServerIp(s);
+      if(s.getComputeNode("safe-server")!= null) {
+        setSafeServerIp(s.getComputeNode("safe-server").getManagementIP());
+      }else {
+        setSafeServerIp(conf.getString("config.safeserver"));
+      }
     }catch (Exception e){
       e.printStackTrace();
     }
@@ -156,9 +167,13 @@ public class SdxExogeniClient extends SliceCommon{
     try {
       if(safeEnabled) {
         if (!safeChecked) {
-          configSafeServerIp(serverSlice);
+          if(serverSlice.getComputeNode("safe-server")!=null){
+            setSafeServerIp(serverSlice.getComputeNode("safe-server").getManagementIP());
+          }else {
+            setSafeServerIp(conf.getString("config.safeserver"));
+          }
           SafeManager sm = new SafeManager(safeServerIp, safeKeyFile, sshkey);
-          sm.verifySafeInstallation(riakIp);
+          //sm.verifySafeInstallation(riakIp);
           safeKeyHash = SafeUtils.getPrincipalId(safeServer, safeKeyFile);
           safeChecked = true;
         }
@@ -228,7 +243,11 @@ public class SdxExogeniClient extends SliceCommon{
       }
       if(safeEnabled) {
         if(!safeChecked) {
-          configSafeServerIp(serverSlice);
+          if(serverSlice.getComputeNode("safe-server")!= null){
+            setSafeServerIp(serverSlice.getComputeNode("safe-server").getManagementIP());
+          }else {
+            setSafeServerIp(conf.getString("config.safeserver"));
+          }
           SafeManager sm = new SafeManager(safeServerIp, safeKeyFile, sshkey);
           sm.verifySafeInstallation(riakIp);
           safeChecked = true;

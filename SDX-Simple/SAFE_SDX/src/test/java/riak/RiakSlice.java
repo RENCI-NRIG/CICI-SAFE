@@ -3,10 +3,13 @@ package riak;
 import exoplex.common.slice.SafeSlice;
 import exoplex.common.slice.Scripts;
 import exoplex.common.slice.SliceCommon;
+import exoplex.common.utils.ServerOptions;
 import org.renci.ahab.libtransport.SSHAccessToken;
 import org.renci.ahab.libtransport.SliceAccessContext;
 import org.renci.ahab.libtransport.util.SSHAccessTokenFileFactory;
 import org.renci.ahab.libtransport.util.UtilTransportException;
+
+import org.apache.commons.cli.CommandLine;
 
 public class RiakSlice extends SliceCommon{
   public static void main(String[] args) throws  Exception{
@@ -21,8 +24,8 @@ public class RiakSlice extends SliceCommon{
     if(args.length<1){
       args = new String[]{"-c", "config/riak.conf"};
     }
-    RiakSlice slice = new RiakSlice();
-    initializeExoGENIContexts(args);
+    CommandLine cmd = ServerOptions.parseCmd(args);
+    initializeExoGENIContexts(cmd.getOptionValue("config"));
     //SSH context
     sctx = new SliceAccessContext<>();
     try {

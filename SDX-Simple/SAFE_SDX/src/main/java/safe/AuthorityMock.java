@@ -1,6 +1,5 @@
 package safe;
 
-import com.hp.hpl.jena.tdb.store.Hash;
 import exoplex.common.utils.SafeUtils;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.Logger;
@@ -8,9 +7,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.LoggerContext;
 import org.apache.logging.log4j.core.config.Configuration;
 import org.apache.logging.log4j.core.config.LoggerConfig;
-import sun.jvm.hotspot.jdi.SADebugServer;
 
-import javax.xml.soap.SAAJMetaFactory;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;

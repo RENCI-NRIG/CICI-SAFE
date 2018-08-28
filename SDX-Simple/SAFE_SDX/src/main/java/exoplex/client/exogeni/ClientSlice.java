@@ -2,6 +2,7 @@ package exoplex.client.exogeni;
 
 import exoplex.common.slice.SafeSlice;
 import exoplex.common.utils.Exec;
+import exoplex.common.utils.ServerOptions;
 import exoplex.sdx.core.SliceManager;
 import org.apache.commons.cli.CommandLine;
 import org.apache.logging.log4j.LogManager;
@@ -36,7 +37,10 @@ public class ClientSlice extends SliceManager {
 
     logger.debug("SDX-Simple " + args[0]);
 
-    initializeExoGENIContexts(args);
+    CommandLine cmd = ServerOptions.parseCmd(args);
+    String configFilePath = cmd.getOptionValue("config");
+
+    initializeExoGENIContexts(configFilePath);
 
     type = conf.getString("config.type");
     if (cmd.hasOption('d')) {
@@ -148,7 +152,9 @@ public class ClientSlice extends SliceManager {
       }
     }
     if (safeEnabled) {
-      s.addSafeServer(serverSite, riakIp);
+      if(safeInSlice) {
+        s.addSafeServer(serverSite, riakIp);
+      }
     }
     return s;
   }

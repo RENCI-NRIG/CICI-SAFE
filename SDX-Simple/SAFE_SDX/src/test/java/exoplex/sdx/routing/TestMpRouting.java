@@ -1,5 +1,6 @@
 package exoplex.sdx.routing;
 import exoplex.common.slice.*;
+import exoplex.common.utils.ServerOptions;
 import exoplex.experiment.ExperimentBase;
 import org.apache.commons.cli.CommandLine;
 import org.apache.logging.log4j.LogManager;
@@ -28,12 +29,16 @@ public class TestMpRouting extends SdxManager {
   }
 
   public  void test() throws Exception {
-    initializeExoGENIContexts(arg1);
+    CommandLine cmd = ServerOptions.parseCmd(arg1);
+    String configFilePath = cmd.getOptionValue("config");
+    initializeExoGENIContexts(configFilePath);
     createNetwork();
   }
 
   public void initNetwork() throws Exception {
-    initializeExoGENIContexts(arg1);
+    CommandLine cmd = ServerOptions.parseCmd(arg1);
+    String configFilePath = cmd.getOptionValue("config");
+    initializeExoGENIContexts(configFilePath);
     plexusName = "plexuscontroller";
     initializeSdx();
     delFlows();
