@@ -26,7 +26,7 @@ public class TridentTest {
   final static String[] clientArgs = new String[]{"-c", "client-config/client.conf"};
 
   public static void main(String[] args) throws  Exception{
-    SdxServer.run(sdxArgs2);
+    SdxServer.run(sdxArgs);
     postSafeCertificates();
     for(String clientSlice: TridentSetting.clientSlices){
       exogeniClients.put(clientSlice, new SdxExogeniClient(clientSlice,

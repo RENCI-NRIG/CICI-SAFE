@@ -43,7 +43,7 @@ public abstract class SliceCommon {
   protected String safeKeyFile;
   protected String safeKeyHash = null;
   protected boolean safeEnabled = false;
-  protected boolean safeInSlice = false;
+  protected boolean plexusAndSafeInSlice = true;
   protected String riakIp = null;
   protected HashMap<String, Link> links = new HashMap<String, Link>();
   protected HashMap<String, ArrayList<String>> computenodes = new HashMap<String, ArrayList<String>>();
@@ -104,7 +104,7 @@ public abstract class SliceCommon {
       safeEnabled = conf.getBoolean("config.safe");
     }
     if(conf.hasPath("config.safeinslice")){
-      safeInSlice = conf.getBoolean("config.safeinslice");
+      plexusAndSafeInSlice = conf.getBoolean("config.serverinslice");
     }
     if(conf.hasPath("config.safekey")){
       safeKeyFile = conf.getString("config.safekey");
