@@ -78,6 +78,7 @@ resources:
 
            WORKING_DIR=/root
            {
+           echo "PermitRootLogin yes" >>/etc/ssh/sshd_config
            yum install -y docker vim mlocate git maven
            systemctl start docker
  

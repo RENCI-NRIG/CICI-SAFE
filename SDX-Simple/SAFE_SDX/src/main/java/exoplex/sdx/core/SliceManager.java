@@ -323,35 +323,39 @@ public class SliceManager extends SliceCommon {
   }
 
   protected boolean checkSafeServer(String safeIP, String riakIp) {
-    SafeManager sm = new SafeManager(safeIP, safeKeyFile, sshkey);
-    sm.verifySafeInstallation(riakIp);
+    if(plexusAndSafeInSlice) {
+      SafeManager sm = new SafeManager(safeIP, safeKeyFile, sshkey);
+      sm.verifySafeInstallation(riakIp);
+    }
     return true;
   }
 
   protected boolean checkPlexus(String SDNControllerIP) {
-    String result = Exec.sshExec("root", SDNControllerIP, "docker ps", sshkey)[0];
-    if (result.contains("plexus")) {
-      logger.debug("plexus controller has started");
-    } else {
-      logger.debug("plexus controller hasn't started, restarting it");
-      result = Exec.sshExec("root", SDNControllerIP, "docker images", sshkey)[0];
-      if (result.contains("yaoyj11/plexus")) {
-        logger.debug("found plexus image, starting plexus container");
-        Exec.sshExec("root", SDNControllerIP, "docker run -i -t -d -p 8080:8080 "
-            + " -p 6633:6633 -p 3000:3000 -h plexus --name plexus yaoyj11/plexus", sshkey);
-      } else {
-
-        logger.debug("plexus image not found, downloading...");
-        Exec.sshExec("root", SDNControllerIP, "docker pull yaoyj11/plexus", sshkey);
-        Exec.sshExec("root", SDNControllerIP, "docker run -i -t -d -p 8080:8080 -p"
-            + " 6633:6633 -p 3000:3000 -h plexus --name plexus yaoyj11/plexus", sshkey);
-      }
-      result = Exec.sshExec("root", SDNControllerIP, "docker ps", sshkey)[0];
+    if(plexusAndSafeInSlice) {
+      String result = Exec.sshExec("root", SDNControllerIP, "docker ps", sshkey)[0];
       if (result.contains("plexus")) {
         logger.debug("plexus controller has started");
       } else {
-        logger.debug("Failed to start plexus controller, exit - " + result);
-        return false;
+        logger.debug("plexus controller hasn't started, restarting it");
+        result = Exec.sshExec("root", SDNControllerIP, "docker images", sshkey)[0];
+        if (result.contains("yaoyj11/plexus")) {
+          logger.debug("found plexus image, starting plexus container");
+          Exec.sshExec("root", SDNControllerIP, "docker run -i -t -d -p 8080:8080 "
+            + " -p 6633:6633 -p 3000:3000 -h plexus --name plexus yaoyj11/plexus", sshkey);
+        } else {
+
+          logger.debug("plexus image not found, downloading...");
+          Exec.sshExec("root", SDNControllerIP, "docker pull yaoyj11/plexus", sshkey);
+          Exec.sshExec("root", SDNControllerIP, "docker run -i -t -d -p 8080:8080 -p"
+            + " 6633:6633 -p 3000:3000 -h plexus --name plexus yaoyj11/plexus", sshkey);
+        }
+        result = Exec.sshExec("root", SDNControllerIP, "docker ps", sshkey)[0];
+        if (result.contains("plexus")) {
+          logger.debug("plexus controller has started");
+        } else {
+          logger.debug("Failed to start plexus controller, exit - " + result);
+          return false;
+        }
       }
     }
     return true;
