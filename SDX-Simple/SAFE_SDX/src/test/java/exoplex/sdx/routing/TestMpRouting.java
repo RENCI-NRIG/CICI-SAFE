@@ -25,7 +25,7 @@ public class TestMpRouting extends SdxManager {
     mpr.sendTraffic();
     mpr.getGroupStats();
     mpr.logFlowTables();
-    System.out.println("end");
+    logger.debug("end");
   }
 
   public  void test() throws Exception {
