@@ -144,7 +144,7 @@ trait InferenceImpl extends safe.safelog.InferenceImpl with KeyPairManager with 
   override def solveAQuery(
      query: Statement
    , isInteractive: Boolean = false
-   , findAllSolutions: Boolean = true  // Because slang Inference extends slog Inference, we need the "findAllSolutions" para
+   , findAllSolutions: Boolean = true  // Because slang Inference extends slog Inference, we need the "findAllSolutions"
   )( envContext: MutableMap[StrLit, EnvValue]
    , subcontexts: Seq[Subcontext]
   ): Iterable[Term => Term] = {

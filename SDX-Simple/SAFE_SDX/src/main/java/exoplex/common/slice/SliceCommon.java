@@ -43,7 +43,7 @@ public abstract class SliceCommon {
   protected String safeKeyFile;
   protected String safeKeyHash = null;
   protected boolean safeEnabled = false;
-  protected boolean plexusAndSafeInSlice = true;
+  protected boolean plexusAndSafeInSlice = false;
   protected String riakIp = null;
   protected HashMap<String, Link> links = new HashMap<String, Link>();
   protected HashMap<String, ArrayList<String>> computenodes = new HashMap<String, ArrayList<String>>();

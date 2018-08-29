@@ -1,9 +1,11 @@
 package prolog
-import prolog.interp.Prog
+
+import prolog.interp.{Prog, Unfolder}
 import prolog.io.IO
 import prolog.io.TermParser
 import prolog.terms._
 import prolog.fluents.DataBase
+import prolog.ProofService._
 
 import scala.collection.mutable.ListBuffer
 import com.typesafe.scalalogging.LazyLogging
@@ -50,10 +52,14 @@ class LogicEngine(var database: DataBase) extends Prog(database) with LazyLoggin
         //val s = answer.tcopy(cleancopier)
         val s = LogicEngine.copyTerm(answer, cleancopier)
 
-        //println(s"Answer to styla query: $s")
-        //println(s"Proof: ${orStack}") 
-        //println(s"Substitution trail: ${trail}")
-        //scala.io.StdIn.readLine()
+        println(s"Answer to styla query: $s")
+        println(s"Proof: ${orStack}    ${orStack.toList}") 
+        println(s"Substitution trail: ${trail}    ${trail.toList}") 
+
+        // print the logical proof
+        //println( formatLogicalProof(orStack.toList, trail.toList) )
+
+        println( formatLogicalInference(orStack.toList, trail.toList) )
 
         solutions += s
         if(findall != true) {
@@ -62,7 +68,7 @@ class LogicEngine(var database: DataBase) extends Prog(database) with LazyLoggin
       }
     } 
     //println(s"[LogicEngine solveQuery] db=${db}")
-    //println(s"[LogicEngine solveQuery] solutions=${solutions}")
+    println(s"[LogicEngine solveQuery] ${solutions.size} solutions are found: ${solutions}")
     //val solhead = solutions.head
     //println(s"[LogicEngine solveQuery] solutions.head=${solhead}   solutions.head.getClass=${solhead.getClass}")
     //trail.unwind(0)
@@ -78,7 +84,6 @@ class LogicEngine(var database: DataBase) extends Prog(database) with LazyLoggin
     }
     solutions.toList
   }
-
 }
 
 object LogicEngine {
@@ -97,7 +102,7 @@ object LogicEngine {
       case v: Var =>
         val root = v.ref 
         if(root == v) {
-          copier.getOrElseUpdate(v, new Var())
+          copier.getOrElseUpdate(v, new Var(v.name))
         } else {
           copyTerm(root, copier)
         }

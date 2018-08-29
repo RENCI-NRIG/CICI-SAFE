@@ -20,6 +20,10 @@ case class Subcontext(
     res
   }
 
+  def isSlangSubcontext(): Boolean = {
+    return id.name.equals("_object")
+  }
+
   def setRefreshableUntil(refreshable: DateTime): Option[DateTime] = {
     refreshableUntil = Some(refreshable)
     refreshableUntil
@@ -53,8 +57,10 @@ case class Subcontext(
       val stmtSet: OrderedSet[Statement] = stmts(index)
       for(stmt <- stmtSet) {
         if(stmt.isFact) { // Index into facts
+          //println(s"Indexing fact     index: ${index}    stmt: ${stmt}")
           indexStmt(facts, index, stmt)   // TODO: add the secondary index for the fact as well
         } else { // Index into rules
+          //println(s"Indexing rule     index: ${index}    stmt: ${stmt}")
           indexStmt(rules, index, stmt) 
         }
       }
@@ -66,9 +72,20 @@ case class Subcontext(
     if(index.name == RETRACTION_INDEX || index.name == LINK_INDEX) return
     stmtsMap.get(index) match {
       case Some(stmtSet: OrderedSet[Statement]) => 
+        //if(index.name=="defguard0") {
+        //    println("[" + Console.BLUE + "Add defguard" + Console.RESET + s"]   ${index}    ->    $stmt            hashcode: ${stmt.hashCode}")
+        //    println("[" + Console.BLUE + "Existing guards" + Console.RESET + s"]   index: ${index}")
+        //    stmtSet.foreach(stmt => println(s"$stmt        hashcode: ${stmt.hashCode}"))
+        //} 
         if(stmtSet.contains(stmt)) {  
-          // Duplicate
-          println("[" + Console.RED + "Duplicated stmt" + Console.RESET + s"]: $stmt")
+         // Duplicated stmt
+          if( isSlangSubcontext() ) {
+            println("[" + Console.RED + "Duplicated Slang construct" + Console.RESET + s"]  ${index}   ->   $stmt     stmt hashcode: ${stmt.hashCode}")
+            //println("[" + Console.BLUE + "Existing statements" + Console.RESET + s"]   index: ${index}")
+            //stmtSet.foreach(stmt => println(s"$stmt        hashcode: ${stmt.hashCode}"))
+          } else {
+            println("[" + Console.RED + "Duplicated stmt" + Console.RESET + s"]: $stmt")
+          }
         } else {
           stmtSet += stmt
         }

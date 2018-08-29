@@ -97,6 +97,7 @@ trait SafelangService extends InferenceService
     assert(c.isDefined, s"Slang program context must be in context cache: ${c}")
     val slangcnt: Subcontext = c.get
     slangcnt.addStatements(stmts)
+    //println(s"slang subcontext: ${slangcnt}")
   }
 
   /**
@@ -188,6 +189,7 @@ class SafelangManager(keypairDir: String) extends KeyPairManager with LazyLoggin
   
   private val safelangCount: AtomicInteger = new AtomicInteger(-1)
 
+  // Initialize slang subcontext
   val slangcnt = Subcontext("_object")
   contextCache.put(Token("_object"), slangcnt)  // placeholder
 

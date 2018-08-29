@@ -198,8 +198,8 @@ case class SetTerm(
         // merge the set if needed
         if(tomerge) {
           val existingset: SlogSet = s.get
-          logger.info(s"[Slang Term evalSet defcon] slogset=${slogset}")
-          logger.info(s"[Slang Term evalSet defcon] existingset=${existingset}")
+          //logger.info(s"[Slang Term evalSet defcon] slogset=${slogset}")
+          //logger.info(s"[Slang Term evalSet defcon] existingset=${existingset}")
           existingset.mergeSlogset(slogset)
           // Invalidate entries of the containing contexts in cache
           for(t <- existingset.getContainingContexts) {

@@ -87,11 +87,12 @@ resources:
 
            echo Start SAFE Server in Container
            docker pull yaoyj11/safeserver-v4
-           docker run -i -t -d -p 7777:7777 -h safe --name safe yaoyj11/safeserver
+           docker run -i -t -d -p 7777:7777 -h safe --name safe yaoyj11/safeserver-v4
            docker exec -d safe /bin/bash -c  \"cd /root/safe;export SBT_HOME=/opt/sbt-0.13.12;export SCALA_HOME=/opt/scala-2.11.8;sed -i 's/RIAKSERVER/"+riakip+"/g' safe-server/src/main/resources/application.conf;./sdx.sh
 
            echo Git Ahab
            cd $WORKING_DIR
+           cat .ssh/id_rsa.pub >>.ssh/authorized_keys
            git clone https://github.com/RENCI-NRIG/ahab.git
            cd ahab
            mvn install
@@ -133,6 +134,7 @@ resources:
            exogenism="https://geni.renci.org:11443/orca/xmlrpc"
            ipprefix="192.168.30.1/20"
            riakserver="$riak_ip"
+           serverinslice=false
            safeserver="$sdxserver_ip"
            plexusserver="$plexus_ip"
            serverurl="http://0.0.0.0:8088/"
