@@ -167,7 +167,7 @@ public class SdxExogeniClient extends SliceCommon{
     try {
       if(safeEnabled) {
         if (!safeChecked) {
-          if(serverSlice.getComputeNode("safe-server")!=null){
+          if(serverSlice.getResourceByName("safe-server")!=null){
             setSafeServerIp(serverSlice.getComputeNode("safe-server").getManagementIP());
           }else {
             setSafeServerIp(conf.getString("config.safeserver"));
@@ -243,7 +243,7 @@ public class SdxExogeniClient extends SliceCommon{
       }
       if(safeEnabled) {
         if(!safeChecked) {
-          if(serverSlice.getComputeNode("safe-server")!= null){
+          if(serverSlice.getResourceByName("safe-server")!= null){
             setSafeServerIp(serverSlice.getComputeNode("safe-server").getManagementIP());
           }else {
             setSafeServerIp(conf.getString("config.safeserver"));

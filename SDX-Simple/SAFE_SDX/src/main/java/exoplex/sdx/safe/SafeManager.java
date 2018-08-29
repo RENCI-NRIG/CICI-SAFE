@@ -105,7 +105,7 @@ public class SafeManager {
   }
 
   public boolean verifySafeInstallation(String riakIp){
-    if(safeServerAlice()){
+    if(safeServerAlive()){
       return true;
     }
     while(true) {
@@ -126,7 +126,7 @@ public class SafeManager {
     }
     Exec.sshExec("root", safeServerIp, Scripts.restartSafe_v1(), sshKey);
     while (true){
-      if(safeServerAlice()){
+      if(safeServerAlive()){
         break;
       }else{
         try{
@@ -138,7 +138,7 @@ public class SafeManager {
     return true;
   }
 
-  private boolean safeServerAlice(){
+  private boolean safeServerAlive(){
     try{
       SafeUtils.getPrincipalId(safeServer, "sdx");
     }catch (Exception e){

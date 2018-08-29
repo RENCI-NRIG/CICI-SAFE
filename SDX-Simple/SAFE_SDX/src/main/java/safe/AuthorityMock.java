@@ -342,7 +342,7 @@ public class AuthorityMock {
         assert (authorize(authZByUserAttr, "sdx", new String[]{userKey, ip, peerKey, peerIp}));
       }
     }
-    System.out.println("end");
+    logger.debug("end");
   }
 
 
