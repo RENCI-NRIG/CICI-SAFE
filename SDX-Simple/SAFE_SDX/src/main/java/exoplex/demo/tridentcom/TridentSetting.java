@@ -12,11 +12,11 @@ public class TridentSetting {
 
   static {
     //sites.add("RENCI");
-    sites.add("TAMU");
+    //sites.add("TAMU");
     sites.add("UFL");
     sites.add("UH");
     sites.add("UNF");
-    sites.add("SL");
+    //sites.add("SL");
     //sites.add("GWU");
     //sites.add("UMASS");
     //sites.add("UNF");

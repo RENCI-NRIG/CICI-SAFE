@@ -79,6 +79,14 @@
                             <mainClass>exoplex.client.stitchport.SdxExogeniClient</mainClass>
                             <name>SafeSdxStitchPortClient</name>
                         </program>
+                        <program>
+                            <mainClass>exoplex.demo.tridentcom.TridentSlice</mainClass>
+                            <name>TridentSlice</name>
+                        </program>
+                        <program>
+                            <mainClass>exoplex.demo.tridentcom.TridentTest</mainClass>
+                            <name>TridentTest</name>
+                        </program>
                     </programs>
                 </configuration>
             </plugin>
