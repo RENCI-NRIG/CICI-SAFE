@@ -2,6 +2,7 @@ package exoplex.common.slice;
 
 import exoplex.common.utils.Exec;
 import exoplex.common.utils.NetworkUtil;
+import exoplex.common.utils.PathUtil;
 import exoplex.common.utils.ScpTo;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -15,6 +16,7 @@ import org.renci.ahab.libtransport.xmlrpc.XMLRPCProxyFactory;
 import org.renci.ahab.libtransport.xmlrpc.XMLRPCTransportException;
 
 import java.net.URL;
+import java.nio.file.Path;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.locks.ReentrantLock;
@@ -885,31 +887,40 @@ public class SafeSlice {
         + String.valueOf(t2 - t1) + "\n");
   }
 
-  public void configBroNode(String nodeName, String edgeRouter, String resourceDir, String SDNControllerIP, String serverurl, String sshkey) {
+  public void configBroNode(String nodeName, String edgeRouter, String resourceDir, String
+    SDNControllerIP, String serverurl, String sshkey) {
     // Bro uses 'eth1"
-    Exec.sshExec("root", getComputeNode(nodeName).getManagementIP(),"sed -i 's/eth0/eth1/' /opt/bro/etc/node.cfg", sshkey);
+    Exec.sshExec("root", getComputeNode(nodeName).getManagementIP(),"sed -i 's/eth0/eth1/' " +
+      "/opt/bro/etc/node.cfg", sshkey);
 
-    copyFile2Node(resourceDir + "bro/test.bro", "/root/test.bro", sshkey, nodeName);
-    copyFile2Node(resourceDir + "bro/test-all-policy.bro", "/root/test-all-policy.bro", sshkey, nodeName);
-    copyFile2Node(resourceDir + "bro/detect.bro", "/root/detect.bro", sshkey, nodeName);
-    copyFile2Node(resourceDir + "bro/detect-all-policy.bro",
+    copyFile2Node(PathUtil.joinFilePath(resourceDir, "bro/test.bro"), "/root/test.bro", sshkey,
+      nodeName);
+    copyFile2Node(PathUtil.joinFilePath(resourceDir, "bro/test-all-policy.bro"),
+      "/root/test-all-policy.bro",
+      sshkey, nodeName);
+    copyFile2Node(PathUtil.joinFilePath(resourceDir, "bro/detect.bro"), "/root/detect.bro",
+      sshkey,
+      nodeName);
+    copyFile2Node(PathUtil.joinFilePath(resourceDir, "bro/detect-all-policy.bro"),
         "/root/detect-all-policy.bro", sshkey, nodeName);
-    copyFile2Node(resourceDir + "bro/evil.txt", "/root/evil.txt", sshkey,
+    copyFile2Node(PathUtil.joinFilePath(resourceDir, "bro/evil.txt"), "/root/evil.txt", sshkey,
         nodeName);
-    copyFile2Node(resourceDir + "bro/reporter.py", "/root/reporter.py", sshkey,
-        nodeName);
-    copyFile2Slice(resourceDir + "bro/cpu_percentage.sh", "/root/cpu_percentage.sh",
+    copyFile2Node(PathUtil.joinFilePath(resourceDir, "bro/reporter.py"), "/root/reporter.py",
+      sshkey, nodeName);
+    copyFile2Slice(PathUtil.joinFilePath(resourceDir, "bro/cpu_percentage.sh"),
+      "/root/cpu_percentage.sh",
         sshkey, nodeName);
 
-    Exec.sshExec("root", getComputeNode(nodeName).getManagementIP(), "sed -i 's/bogus_addr/" + SDNControllerIP + "/' *.bro",
-        sshkey);
+    Exec.sshExec("root", getComputeNode(nodeName).getManagementIP(), "sed -i 's/bogus_addr/" +
+      SDNControllerIP + "/' *.bro", sshkey);
 
     String url = serverurl.replace("/", "\\/");
-    Exec.sshExec("root", getComputeNode(nodeName).getManagementIP(),"sed -i 's/bogus_addr/" + url + "/g' reporter.py", sshkey);
+    Exec.sshExec("root", getComputeNode(nodeName).getManagementIP(),"sed -i 's/bogus_addr/" +
+      url + "/g' reporter.py", sshkey);
 
     String dpid = getDpid(edgeRouter, sshkey);
-    Exec.sshExec("root", getComputeNode(nodeName).getManagementIP(), "sed -i 's/bogus_dpid/" + Long.parseLong
-        (dpid, 16) + "/' *.bro", sshkey);
+    Exec.sshExec("root", getComputeNode(nodeName).getManagementIP(), "sed -i 's/bogus_dpid/" +
+      Long.parseLong(dpid, 16) + "/' *.bro", sshkey);
     Exec.sshExec("root", getComputeNode(nodeName).getManagementIP(), "broctl deploy&", sshkey);
     Exec.sshExec("root", getComputeNode(nodeName).getManagementIP(),"python reporter & disown", sshkey);
     Exec.sshExec("root", getComputeNode(nodeName).getManagementIP(),

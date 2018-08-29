@@ -14,7 +14,7 @@ public class TridentTest {
 
   static Logger logger = LogManager.getLogger(TridentTest.class);
 
-  static SdxManager sdxManager = new SdxManager();
+  static SdxManager sdxManager;
 
   static HashMap<String, SdxExogeniClient> exogeniClients = new HashMap<>();
 
@@ -26,6 +26,7 @@ public class TridentTest {
 
   public static void main(String[] args) throws  Exception{
     SdxServer.run(sdxArgs);
+    sdxManager = SdxServer.sdxManager;
     postSafeCertificates();
     for(String clientSlice: TridentSetting.clientSlices){
       exogeniClients.put(clientSlice, new SdxExogeniClient(clientSlice,

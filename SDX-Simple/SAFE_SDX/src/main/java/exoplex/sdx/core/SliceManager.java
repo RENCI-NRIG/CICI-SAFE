@@ -4,6 +4,7 @@ import exoplex.common.slice.SafeSlice;
 import exoplex.common.slice.Scripts;
 import exoplex.common.slice.SliceCommon;
 import exoplex.common.utils.Exec;
+import exoplex.common.utils.PathUtil;
 import exoplex.common.utils.ServerOptions;
 import exoplex.sdx.safe.SafeManager;
 import org.apache.commons.cli.CommandLine;
@@ -20,6 +21,7 @@ import exoplex.sdx.network.Link;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -138,9 +140,11 @@ public class SliceManager extends SliceCommon {
       }
       logger.info(String.format("Slice %s active now, making configurations", sliceName));
       carrier.runCmdSlice( Scripts.getOVSScript(), sshkey, routerPattern, true);
-      carrier.copyFile2Slice(scriptsdir + "dpid.sh", "~/dpid.sh", sshkey);
-      carrier.copyFile2Slice(scriptsdir + "ifaces.sh", "~/ifaces.sh", sshkey);
-      carrier.copyFile2Slice(scriptsdir + "ovsbridge.sh", "~/ovsbridge.sh", sshkey);
+      carrier.copyFile2Slice(PathUtil.joinFilePath(scriptsdir, "dpid.sh"), "~/dpid.sh", sshkey);
+      carrier.copyFile2Slice(PathUtil.joinFilePath(scriptsdir, "ifaces.sh"), "~/ifaces.sh",
+        sshkey);
+      carrier.copyFile2Slice(PathUtil.joinFilePath(scriptsdir, "ovsbridge.sh"), "~/ovsbridge.sh",
+        sshkey);
       //Make sure that plexus container is running
       SDNControllerIP = carrier.getComputeNode(plexusName).getManagementIP();
       if(safeEnabled){
@@ -180,7 +184,10 @@ public class SliceManager extends SliceCommon {
     carrier.runCmdSlice("/bin/sed -i \"s/pam_service_name=vsftpd/pam_service_name=ftp/\" " +
         "/etc/vsftpd.conf; service vsftpd restart", sshkey, nodePattern, true);
     String resource_dir = conf.getString("config.resourcedir");
-    carrier.copyFile2Slice(resource_dir + "bro/evil.txt", "/home/" + username + "/evil.txt",
+    carrier.copyFile2Slice(PathUtil.joinFilePath(resource_dir, "bro/evil.txt"), "/home/" +
+        username +
+        "/evil" +
+        ".txt",
         sshkey, nodePattern);
   }
 
@@ -295,18 +302,22 @@ public class SliceManager extends SliceCommon {
 
   public void copyRouterScript(SafeSlice s, String node) {
     scriptsdir = conf.getString("config.scriptsdir");
-    s.copyFile2Node(scriptsdir + "dpid.sh", "~/dpid.sh", sshkey, node);
-    s.copyFile2Node(scriptsdir + "ifaces.sh", "~/ifaces.sh", sshkey, node);
-    s.copyFile2Node(scriptsdir + "ovsbridge.sh", "~/ovsbridge.sh", sshkey,  node);
+    s.copyFile2Node(PathUtil.joinFilePath(scriptsdir, "dpid.sh"), "~/dpid.sh", sshkey, node);
+    s.copyFile2Node(PathUtil.joinFilePath(scriptsdir, "ifaces.sh"), "~/ifaces.sh", sshkey, node);
+    s.copyFile2Node(PathUtil.joinFilePath(scriptsdir, "ovsbridge.sh"), "~/ovsbridge.sh", sshkey,
+      node);
     //Make sure that plexus container is running
     logger.debug("Finished copying ovs scripts");
   }
 
   public void copyRouterScript(SafeSlice s) {
     scriptsdir = conf.getString("config.scriptsdir");
-    s.copyFile2Slice(scriptsdir + "dpid.sh", "~/dpid.sh", sshkey, routerPattern);
-    s.copyFile2Slice(scriptsdir + "ifaces.sh", "~/ifaces.sh", sshkey, routerPattern);
-    s.copyFile2Slice(scriptsdir + "ovsbridge.sh", "~/ovsbridge.sh", sshkey, routerPattern);
+    s.copyFile2Slice(PathUtil.joinFilePath(scriptsdir, "dpid.sh"), "~/dpid.sh", sshkey,
+      routerPattern);
+    s.copyFile2Slice(PathUtil.joinFilePath(scriptsdir, "ifaces.sh"), "~/ifaces.sh", sshkey,
+      routerPattern);
+    s.copyFile2Slice(PathUtil.joinFilePath(scriptsdir, "ovsbridge.sh"), "~/ovsbridge.sh", sshkey,
+      routerPattern);
     //Make sure that plexus container is running
     logger.debug("Finished copying ovs scripts");
   }

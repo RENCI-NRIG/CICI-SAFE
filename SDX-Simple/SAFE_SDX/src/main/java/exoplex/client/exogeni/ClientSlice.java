@@ -102,7 +102,7 @@ public class ClientSlice extends SliceManager {
       SafeSlice c1 = createCustomerSlice(customerName, 2, IPPrefix, curip, bw, true);
       c1.commitAndWait();
       c1.refresh();
-      if(safeEnabled){
+      if(safeEnabled && plexusAndSafeInSlice){
         String safeIp = c1.getComputeNode("safe-server").getManagementIP();
         checkSafeServer(safeIp, riakIp);
       }

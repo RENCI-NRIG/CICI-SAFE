@@ -3,6 +3,7 @@ package exoplex.demo.cnert;
 import exoplex.common.slice.SafeSlice;
 import exoplex.common.slice.Scripts;
 import exoplex.common.utils.Exec;
+import exoplex.common.utils.PathUtil;
 import exoplex.common.utils.ServerOptions;
 import org.apache.commons.cli.CommandLine;
 import org.apache.logging.log4j.LogManager;
@@ -64,8 +65,9 @@ public class TestSlice extends SliceManager {
       //Slice carrier = createCarrierSliceWithCustomerNodes(carrierName, 4, 10, 1000000, 1);
       carrier.commitAndWait();
       carrier.refresh();
-      carrier.copyFile2Slice(scriptsdir + "dpid.sh", "~/dpid.sh", sshkey);
-      carrier.copyFile2Slice(scriptsdir + "ovsbridge.sh", "~/ovsbridge.sh", sshkey);
+      carrier.copyFile2Slice(PathUtil.joinFilePath(scriptsdir, "dpid.sh"), "~/dpid.sh", sshkey);
+      carrier.copyFile2Slice(PathUtil.joinFilePath(scriptsdir, "ovsbridge.sh"), "~/ovsbridge.sh",
+        sshkey);
       //Make sure that plexus container is running
       //SDNControllerIP = "152.3.136.36";
       SDNControllerIP = carrier.getComputeNode("plexuscontroller").getManagementIP();
@@ -102,13 +104,12 @@ public class TestSlice extends SliceManager {
       }
 
       configFTPService(carrier, "(node\\d+)", "ftpuser", "ftp");
-      carrier.copyFile2Slice(resource_dir + "bro/evil.txt", "/home/ftpuser/evil.txt",
-          sshkey, "(node\\d+)");
-
-      carrier.copyFile2Slice(resource_dir + "scripts/getnfiles.sh", "~/getnfiles.sh",
-          sshkey, "(node\\d+)");
-      carrier.copyFile2Slice(resource_dir + "scripts/getfiles.sh", "~/getfiles.sh",
-          sshkey, "(node\\d+)");
+      carrier.copyFile2Slice(PathUtil.joinFilePath(resource_dir, "bro/evil.txt"),
+        "/home/ftpuser/evil.txt", sshkey, "(node\\d+)");
+      carrier.copyFile2Slice(PathUtil.joinFilePath(resource_dir, "scripts/getnfiles.sh"),
+        "~/getnfiles.sh", sshkey, "(node\\d+)");
+      carrier.copyFile2Slice(PathUtil.joinFilePath(resource_dir, "scripts/getfiles.sh"),
+        "~/getfiles.sh", sshkey, "(node\\d+)");
       //}
     } catch (Exception e) {
       e.printStackTrace();
@@ -165,13 +166,12 @@ public class TestSlice extends SliceManager {
       }
 
       carrier.runCmdSlice("mkdir /home/ftp", sshkey, "(node\\d+)", true);
-      carrier.copyFile2Slice(resource_dir + "bro/evil.txt", "/home/ftp/evil.txt",
-          sshkey, "(node\\d+)");
-      carrier.copyFile2Slice(resource_dir + "scripts/getonefile.sh", "~/getonefile.sh",
-          sshkey, "(node\\d+)");
-      carrier.copyFile2Slice(resource_dir + "scripts/getfiles.sh", "~/getfiles.sh",
-          sshkey, "(node\\d+)");
-      //}
+      carrier.copyFile2Slice(PathUtil.joinFilePath(resource_dir, "bro/evil.txt"),
+        "/home/ftp/evil.txt", sshkey, "(node\\d+)");
+      carrier.copyFile2Slice(PathUtil.joinFilePath(resource_dir, "scripts/getonefile.sh"),
+        "~/getonefile.sh", sshkey, "(node\\d+)");
+      carrier.copyFile2Slice(PathUtil.joinFilePath(resource_dir, "scripts/getfiles.sh"),
+        "~/getfiles.sh", sshkey, "(node\\d+)");
     } catch (Exception e) {
       e.printStackTrace();
     }
@@ -194,8 +194,9 @@ public class TestSlice extends SliceManager {
       //Slice carrier = createCarrierSliceWithCustomerNodes(carrierName, 4, 10, 1000000, 1);
       carrier.commitAndWait();
       carrier.refresh();
-      carrier.copyFile2Slice(scriptsdir + "dpid.sh", "~/dpid.sh", sshkey);
-      carrier.copyFile2Slice(scriptsdir + "ovsbridge.sh", "~/ovsbridge.sh", sshkey);
+      carrier.copyFile2Slice(PathUtil.joinFilePath(scriptsdir, "dpid.sh"), "~/dpid.sh", sshkey);
+      carrier.copyFile2Slice(PathUtil.joinFilePath(scriptsdir, "ovsbridge.sh"), "~/ovsbridge.sh",
+        sshkey);
       //Make sure that plexus container is running
       SDNControllerIP = carrier.getComputeNode("plexuscontroller").getManagementIP();
       //SDNControllerIP = "152.3.136.36";
@@ -244,15 +245,16 @@ public class TestSlice extends SliceManager {
       //Slice carrier = createCarrierSliceWithCustomerNodes(carrierName, 4, 10, 1000000, 1);
       carrier.commitAndWait(1);
       carrier.refresh();
-      carrier.copyFile2Slice(scriptsdir + "dpid.sh", "~/dpid.sh", sshkey);
-      carrier.copyFile2Slice(scriptsdir + "ovsbridge.sh", "~/ovsbridge.sh", sshkey);
+      carrier.copyFile2Slice(PathUtil.joinFilePath(scriptsdir, "dpid.sh"), "~/dpid.sh", sshkey);
+      carrier.copyFile2Slice(PathUtil.joinFilePath(scriptsdir, "ovsbridge.sh"), "~/ovsbridge.sh",
+        sshkey);
       carrier.runCmdSlice("mkdir /home/ftp", sshkey, "(node\\d+)", true);
-      carrier.copyFile2Slice(resource_dir + "bro/evil.txt", "/home/ftp/evil.txt",
-          sshkey, "(node\\d+)");
-      carrier.copyFile2Slice(resource_dir + "scripts/getonefile.sh", "~/getonefile.sh",
-          sshkey, "(node\\d+)");
-      carrier.copyFile2Slice(resource_dir + "scripts/getfiles.sh", "~/getfiles.sh",
-          sshkey, "(node\\d+)");
+      carrier.copyFile2Slice(PathUtil.joinFilePath(resource_dir, "bro/evil.txt"),
+        "/home/ftp/evil.txt", sshkey, "(node\\d+)");
+      carrier.copyFile2Slice(PathUtil.joinFilePath(resource_dir, "scripts/getonefile.sh"),
+        "~/getonefile.sh", sshkey, "(node\\d+)");
+      carrier.copyFile2Slice(PathUtil.joinFilePath(resource_dir, "scripts/getfiles.sh"),
+        "~/getfiles.sh", sshkey, "(node\\d+)");
       //Make sure that plexus container is running
       SDNControllerIP = carrier.getComputeNode("plexuscontroller").getManagementIP();
       //SDNControllerIP = "152.3.136.36";
