@@ -92,6 +92,7 @@ resources:
 
            echo Git Ahab
            cd $WORKING_DIR
+           cat .ssh/id_rsa.pub >>.ssh/authorized_keys
            git clone https://github.com/RENCI-NRIG/ahab.git
            cd ahab
            mvn install
