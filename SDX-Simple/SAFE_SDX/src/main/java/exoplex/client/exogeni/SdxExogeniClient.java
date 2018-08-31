@@ -45,7 +45,7 @@ public class SdxExogeniClient extends SliceCommon{
   }
 
   public SdxExogeniClient(String sliceName, String IPPrefix, String safeKeyFile, String[] args){
-    CommandLine cmd = ServerOptions.parseCmd(args);
+    cmd = ServerOptions.parseCmd(args);
     String configFilePath = cmd.getOptionValue("config");
     initializeExoGENIContexts(configFilePath);
     this.ipIprefix = IPPrefix;
@@ -64,7 +64,7 @@ public class SdxExogeniClient extends SliceCommon{
     //sshkey=args[6];
     //keyhash=args[7];
 
-    CommandLine cmd = ServerOptions.parseCmd(args);
+    cmd = ServerOptions.parseCmd(args);
     String configFilePath = cmd.getOptionValue("config");
     initializeExoGENIContexts(configFilePath);
 
