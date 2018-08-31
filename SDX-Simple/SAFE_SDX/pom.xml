@@ -76,7 +76,7 @@
                             <name>SafeSdxExogeniClient</name>
                         </program>
                         <program>
-                            <mainClass>exoplex.client.stitchport.SdxExogeniClient</mainClass>
+                            <mainClass>exoplex.client.stitchport.SdxStitchPortClient</mainClass>
                             <name>SafeSdxStitchPortClient</name>
                         </program>
                         <program>
