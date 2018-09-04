@@ -106,7 +106,7 @@
         <Logger name="exoplex.client.exogeni.SdxExogeniClient" level="info" additivity="false">
             <AppenderRef ref="Console"/>
         </Logger>
-        <Logger name="exoplex.client.exogeni.ClientSlice" level="info" additivity="false">
+        <Logger name="exoplex.client.exogeni.ExogeniClientSlice" level="info" additivity="false">
             <AppenderRef ref="Console"/>
         </Logger>
         <Logger name="exoplex.common.slice.SafeSlice" level="warn" additivity="true">

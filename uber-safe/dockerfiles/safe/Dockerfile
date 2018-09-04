@@ -9,8 +9,8 @@ RUN apt-get install -y libssl1.0.0
 RUN apt-get install -y libpam0g-dev
 RUN apt-get install -y libssl-dev
 
-COPY start.sh   /root/
-COPY test.sh    /root/
+#COPY start.sh   /root/
+#COPY test.sh    /root/
 
 # Install sbt
 ENV SBT_VERSION 0.13.12
@@ -20,5 +20,5 @@ RUN cd ~/ && tar -zxvf sbt-${SBT_VERSION}.tgz
 # Download and SAFE
 RUN cd ~/ && git clone https://github.com/RENCI-NRIG/SAFE.git
 
-ENTRYPOINT ["/bin/bash", "/root/start.sh"]
+#ENTRYPOINT ["/bin/bash", "/root/start.sh"]
 #ENTRYPOINT ["/bin/sh", "-c"]

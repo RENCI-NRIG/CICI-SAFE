@@ -15,19 +15,19 @@ import java.util.ArrayList;
 /**
  * @author geni-orca
  */
-public class ClientSlice extends SliceManager {
+public class ExogeniClientSlice extends SliceManager {
   static private long bw = 1000000;
-  final Logger logger = LogManager.getLogger(ClientSlice.class);
+  final Logger logger = LogManager.getLogger(ExogeniClientSlice.class);
   private String mask = "/24";
   private String type;
   private String subnet;
   private String routerSite = "";
 
-  public ClientSlice() {
+  public ExogeniClientSlice() {
   }
 
 
-  public ClientSlice(String[] args) {
+  public ExogeniClientSlice(String[] args) {
 
     logger.debug("SDX-Simple " + args[0]);
 
@@ -40,6 +40,11 @@ public class ClientSlice extends SliceManager {
     if (cmd.hasOption('d')) {
       type = "delete";
     }
+  }
+
+  public static void main(String[] args)throws  Exception {
+    ExogeniClientSlice cs = new ExogeniClientSlice(args);
+    cs.run();
   }
 
   public void run() throws Exception {

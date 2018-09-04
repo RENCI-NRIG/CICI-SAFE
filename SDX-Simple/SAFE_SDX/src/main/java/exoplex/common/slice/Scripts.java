@@ -47,7 +47,7 @@ public class Scripts {
 
   public static String getSafeScript_v1(String riakip) {
     String script = "apt-get update\n"
-        + "docker pull yaoyj11/safeserver\n"
+        + "docker pull yaoyj11/safeserver-v4\n"
         + "docker run -i -t -d -p 7777:7777 -h safe --name safe yaoyj11/safeserver-v4\n"
         + "docker exec -d safe /bin/bash -c  \"cd /root/safe;"
         + "sed -i 's/http:\\/\\/.*:8098/http:\\/\\/" + riakip + ":8098/g' "

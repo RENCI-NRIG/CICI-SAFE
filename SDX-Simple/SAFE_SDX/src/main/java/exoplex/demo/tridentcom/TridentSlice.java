@@ -1,6 +1,6 @@
 package exoplex.demo.tridentcom;
 
-import exoplex.client.exogeni.ClientSlice;
+import exoplex.client.exogeni.ExogeniClientSlice;
 import exoplex.common.slice.SafeSlice;
 import exoplex.common.slice.SiteBase;
 import exoplex.common.utils.ServerOptions;
@@ -127,7 +127,7 @@ public class TridentSlice extends SliceManager{
   }
 
   private boolean createClientSlice(String clientSlice){
-    ClientSlice cs = new ClientSlice(clientArgs);
+    ExogeniClientSlice cs = new ExogeniClientSlice(clientArgs);
     int times=0;
     while (true) {
       try {
@@ -150,7 +150,7 @@ public class TridentSlice extends SliceManager{
   }
 
   private void deleteClientSlices(){
-    ClientSlice cs  = new ClientSlice(clientArgs);
+    ExogeniClientSlice cs  = new ExogeniClientSlice(clientArgs);
     for(String clientSlice: TridentSetting.clientSlices) {
       deleteSlice(clientSlice);
     }

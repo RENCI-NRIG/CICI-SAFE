@@ -44,7 +44,6 @@ public class RiakSlice extends SliceCommon{
   public void createRiakSlice() throws  Exception{
     SafeSlice s = SafeSlice.create(sliceName, pemLocation, keyLocation, controllerUrl, sctx);
     s.addRiakServer(serverSite, "riak");
-    //s.addComputeNode("node0");
     s.commitAndWait();
     s.reloadSlice();
     s.runCmdNode(Scripts.getRiakScripts(), sshkey, "riak", false);
