@@ -23,7 +23,7 @@ public class RestService {
   public StitchResult stitchRequest(StitchRequest sr) {
     logger.debug("got sittch request ");
     try {
-      String[] res = SdxServer.sdxManager.stitchRequest(sr.sdxslice, sr.sdxsite, sr.ckeyhash, sr.cslice,
+      String[] res = SdxServer.sdxManager.stitchRequest(sr.sdxsite, sr.ckeyhash, sr.cslice,
           sr.creservid, sr.secret, sr.sdxnode);
       return new StitchResult(res[0], res[1]);
     } catch (Exception e) {
@@ -55,7 +55,7 @@ public class RestService {
   public String stitchChameleon(StitchChameleon sr) {
     logger.debug("got chameleon stitch request: \n" + sr.toString());
     logger.debug(String.format("got chameleon stitch request from %s", sr.ckeyhash));
-    String res = SdxServer.sdxManager.stitchChameleon(sr.sdxslice, sr.sdxnode,
+    String res = SdxServer.sdxManager.stitchChameleon(sr.sdxsite, sr.sdxnode,
         sr.ckeyhash, sr.stitchport, sr.vlan, sr.gateway, sr.ip);
     return res;
   }
@@ -91,7 +91,7 @@ public class RestService {
 }
 
 class StitchChameleon {
-  public String sdxslice;
+  public String sdxsite;
   public String sdxnode;
   public String ckeyhash;
   public String stitchport;
@@ -99,26 +99,13 @@ class StitchChameleon {
   public String gateway;
   public String ip;
 
-  public StitchChameleon() {
-  }
-
-  public StitchChameleon(String sdxslice, String sdxnode, String ckeyhash, String stitchport, String vlan, String gateway, String ip) {
-    this.sdxslice = sdxslice;
-    this.sdxnode = sdxnode;
-    this.ckeyhash = ckeyhash;
-    this.stitchport = stitchport;
-    this.vlan = vlan;
-    this.gateway = gateway;
-    this.ip = ip;
-  }
-
   public String toString() {
-    return "{\"sdxslice\": " + sdxslice + ", \"sdxnode\": " + sdxnode + ", \"ckeyhash\":" + ckeyhash + ", \"stitchport\":" + stitchport + ", \"vlan\":" + vlan + "\"gateway\":" + gateway + "}";
+    return "{\"sdxslice\": " + sdxsite + ", \"sdxnode\": " + sdxnode + ", \"ckeyhash\":" + ckeyhash
+      + ", \"stitchport\":" + stitchport + ", \"vlan\":" + vlan + "\"gateway\":" + gateway + "}";
   }
 }
 
 class StitchRequest {
-  public String sdxslice;
   public String sdxsite;
   //customer Safe key hash
   public String ckeyhash;
@@ -129,7 +116,7 @@ class StitchRequest {
 
   @Override
   public String toString(){
-    return String.format("%s %s %s %s %s", sdxslice, sdxsite, cslice, creservid, sdxnode);
+    return String.format("%s %s %s %s", sdxsite, cslice, creservid, sdxnode);
   }
 }
 
