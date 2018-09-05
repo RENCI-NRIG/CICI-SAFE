@@ -353,7 +353,7 @@ public class SliceManager extends SliceCommon {
         if (result.contains("plexus")) {
           logger.debug("plexus controller has started");
         } else {
-          logger.debug("Failed to start plexus controller, exit - " + result);
+          logger.error("Failed to start plexus controller, exit - " + result);
           return false;
         }
       }

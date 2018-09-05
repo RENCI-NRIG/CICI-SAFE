@@ -233,13 +233,12 @@ public class SdxExogeniClient extends SliceCommon{
       String sdxsite = node0_s2.getDomain();
       //post stitch request to SAFE
       JSONObject jsonparams = new JSONObject();
-      jsonparams.put("sdxslice", params[2]);
       jsonparams.put("sdxsite", sdxsite);
       jsonparams.put("cslice", sliceName);
       jsonparams.put("creservid", node0_s2_stitching_GUID);
       jsonparams.put("secret", secret);
-      if (params.length > 3) {
-        jsonparams.put("sdxnode", params[3]);
+      if (params.length > 2) {
+        jsonparams.put("sdxnode", params[2]);
       }
       if(safeEnabled) {
         if(!safeChecked) {

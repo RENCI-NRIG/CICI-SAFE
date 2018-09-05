@@ -2,7 +2,7 @@ package exoplex.demo.cnert;
 
 import exoplex.client.exogeni.ExogeniClientSlice;
 import exoplex.client.exogeni.SdxExogeniClient;
-import exoplex.client.stitchport.SdxStitchPortClientManager;
+import exoplex.client.stitchport.SdxStitchPortClient;
 import org.apache.commons.cli.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -189,7 +189,7 @@ public class TestMain {
     SdxExogeniClient client2 = new SdxExogeniClient(clientarg2);
     SdxExogeniClient client3 = new SdxExogeniClient(clientarg3);
     SdxExogeniClient client4 = new SdxExogeniClient(clientarg4);
-    SdxStitchPortClientManager cc = new SdxStitchPortClientManager(clientarg5);
+    SdxStitchPortClient cc = new SdxStitchPortClient(clientarg5);
     if (stitch) {
       //client1.processCmd("stitch CNode0 " + sdx + " c0");
       client2.processCmd("stitch CNode0 " + sdx + " c1");

@@ -93,6 +93,7 @@ public class ExogeniClientSlice extends SliceManager {
     String Prefix = subnet.split("/")[0];
     String mip = c1.getComputeNode("CNode1").getManagementIP();
     Exec.sshExec("root", mip, "echo \"ip route 192.168.1.1/16 " + Prefix + "\" >>/etc/quagga/zebra.conf  ", sshkey);
+    Exec.sshExec("root", mip, "sed -i -- 's/zebra=no/zebra=yes/g' /etc/quagga/daemons\n", sshkey);
     Exec.sshExec("root", mip, "/etc/init.d/quagga restart", sshkey);
   }
 
