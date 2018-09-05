@@ -309,7 +309,7 @@ public class SdxManager extends SliceManager {
       Network net = null;
       ComputeNode node = null;
       int ip_to_use = 0;
-      if (sdxnode != null) {
+      if (sdxnode != null && serverSlice.getResourceByName(sdxnode)!= null) {
         node = serverSlice.getComputeNode(sdxnode);
         ip_to_use = getAvailableIP();
         stitchname = "stitch_" + node.getName() + "_" + ip_to_use;

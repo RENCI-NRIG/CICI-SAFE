@@ -79,8 +79,7 @@ public class TridentTest {
 
   private static void stitchSlices(){
     for(String clientSlice: TridentSetting.clientSlices){
-      String gw = exogeniClients.get(clientSlice).processCmd(String.format("stitch CNode0 %s",
-        TridentSetting.sdxName));
+      String gw = exogeniClients.get(clientSlice).processCmd("stitch CNode0");
 
       exogeniClients.get(clientSlice).processCmd(String.format("route %s %s",
         TridentSetting.clientIpMap.get(clientSlice),
