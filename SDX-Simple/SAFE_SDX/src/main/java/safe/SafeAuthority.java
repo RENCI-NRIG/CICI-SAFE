@@ -201,8 +201,8 @@ public class SafeAuthority {
 
     //authorizeStitchByUid
     for (String slice: clientSlices) {
-      assert authorize(authorizeStitchByUID, "sdx",
-        new String[]{principalMap.get(sliceKeyMap.get(slice))});
+      authorize(authorizeStitchByUID, "sdx",
+        new String[]{principalMap.get(sliceKeyMap.get(slice)), sliceScid.get(slice)});
     }
 
     //MakeIp Delegation

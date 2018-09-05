@@ -46,7 +46,7 @@ public class DockerServerSlice extends SliceManager{
 
   public void createSafeAndPlexusSlice() throws  Exception{
     SafeSlice s = SafeSlice.create(sliceName, pemLocation, keyLocation, controllerUrl, sctx);
-    s.addSafeServer(SiteBase.get("BBN"), "safe-server");
+    s.addSafeServer(SiteBase.get("BBN"), conf.getString("config.riak"));
     s.addPlexusController(SiteBase.get("BBN"),"plexus");
     s.commitAndWait();
     s.reloadSlice();
