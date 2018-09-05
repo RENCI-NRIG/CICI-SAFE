@@ -45,7 +45,7 @@ public class SdxExogeniClient extends SliceCommon{
   }
 
   public SdxExogeniClient(String sliceName, String IPPrefix, String safeKeyFile, String[] args){
-    CommandLine cmd = ServerOptions.parseCmd(args);
+    cmd = ServerOptions.parseCmd(args);
     String configFilePath = cmd.getOptionValue("config");
     initializeExoGENIContexts(configFilePath);
     this.ipIprefix = IPPrefix;
@@ -64,7 +64,7 @@ public class SdxExogeniClient extends SliceCommon{
     //sshkey=args[6];
     //keyhash=args[7];
 
-    CommandLine cmd = ServerOptions.parseCmd(args);
+    cmd = ServerOptions.parseCmd(args);
     String configFilePath = cmd.getOptionValue("config");
     initializeExoGENIContexts(configFilePath);
 
@@ -78,7 +78,7 @@ public class SdxExogeniClient extends SliceCommon{
   public void run(String[] args) {
     try {
       SafeSlice s = SafeSlice.loadManifestFile(sliceName, pemLocation, keyLocation, controllerUrl);
-      if(s.getComputeNode("safe-server")!= null) {
+      if(s.getResourceByName("safe-server")!= null) {
         setSafeServerIp(s.getComputeNode("safe-server").getManagementIP());
       }else {
         setSafeServerIp(conf.getString("config.safeserver"));
@@ -273,7 +273,6 @@ public class SdxExogeniClient extends SliceCommon{
         String result = Exec.sshExec("root", mip, "ifconfig eth2 " + ip, sshkey)[0];
         Exec.sshExec("root", mip, "echo \"ip route 192.168.1.1/16 " + res.getString("gateway").split("/")[0] + "\" >>/etc/quagga/zebra.conf  ", sshkey);
         Exec.sshExec("root", mip, "/etc/init.d/quagga restart", sshkey);
-        ComputeNode node1 = serverSlice.getComputeNode("CNode1");
         logger.info(logPrefix + "stitch completed.");
         return ip.split("/")[0];
       }

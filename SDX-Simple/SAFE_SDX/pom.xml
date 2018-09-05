@@ -60,7 +60,7 @@
                             <name>SafeSdxSliceServer</name>
                         </program>
                         <program>
-                            <mainClass>exoplex.client.exogeni.CreateClientSlice</mainClass>
+                            <mainClass>exoplex.client.exogeni.ExogeniClientSlice</mainClass>
                             <name>SafeSdxClientSliceServer</name>
                         </program>
                         <program>

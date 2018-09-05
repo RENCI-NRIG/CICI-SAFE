@@ -24,9 +24,9 @@ public class SdxStitchPortClientManager extends SliceCommon {
   private String type;
 
   public SdxStitchPortClientManager(String[] args) {
-    CommandLine cmd = ServerOptions.parseCmd(args);
+    cmd = ServerOptions.parseCmd(args);
     String configFilePath = cmd.getOptionValue("config");
-    initializeExoGENIContexts(configFilePath);
+    readConfig(configFilePath);
     System.out.println("Client start");
   }
 
@@ -49,7 +49,8 @@ public class SdxStitchPortClientManager extends SliceCommon {
     try {
       java.io.BufferedReader stdin = new java.io.BufferedReader(new java.io.InputStreamReader(System.in));
       while (true) {
-        System.out.print("Enter Commands:stitch stitchport vlan sdx_slice  sdx_node gateway ip\n Or advertise route: route dest gateway sdx_slice_name routername,\n$>");
+        System.out.print("Enter Commands:stitch stitchport vlan gateway ip sdx_site sdx_node \n" +
+          " Or advertise route: route dest gateway sdx_slice_name routername,\n$>");
         input = stdin.readLine();
         System.out.print("continue?[y/n]\n$>" + input);
 
@@ -100,10 +101,14 @@ public class SdxStitchPortClientManager extends SliceCommon {
       JSONObject jsonparams = new JSONObject();
       jsonparams.put("stitchport", params[1]);
       jsonparams.put("vlan", params[2]);
-      jsonparams.put("sdxslice", params[3]);
-      jsonparams.put("sdxnode", params[4]);
-      jsonparams.put("gateway", params[5]);
-      jsonparams.put("ip", params[6]);
+      jsonparams.put("gateway", params[3]);
+      jsonparams.put("ip", params[4]);
+      jsonparams.put("sdxsite", params[5]);
+      try {
+        jsonparams.put("sdxnode", params[6]);
+      }catch (Exception e){
+        jsonparams.put("sdxnode",(String)null);
+      }
       jsonparams.put("ckeyhash", safeKeyHash);
       if(safeEnabled){
         postSafeStitchRequest(safeKeyHash,jsonparams.getString("gateway"),jsonparams.getString("sdxslice"),jsonparams.getString("sdxnode"),jsonparams.getString("stitchport"),jsonparams.getString("vlan"));

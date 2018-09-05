@@ -1,6 +1,6 @@
 package exoplex.demo.cnert;
 
-import exoplex.client.exogeni.ClientSlice;
+import exoplex.client.exogeni.ExogeniClientSlice;
 import exoplex.client.exogeni.SdxExogeniClient;
 import exoplex.client.stitchport.SdxStitchPortClientManager;
 import org.apache.commons.cli.*;
@@ -215,11 +215,11 @@ public class TestMain {
 
   public static void deleteSlice() {
     TestSlice ts = new TestSlice(arg1);
-    ClientSlice s1 = new ClientSlice(clientarg1);
-    ClientSlice s2 = new ClientSlice(clientarg2);
-    ClientSlice s3 = new ClientSlice(clientarg3);
-    ClientSlice s4 = new ClientSlice(clientarg4);
-    ClientSlice s6 = new ClientSlice(clientarg6);
+    ExogeniClientSlice s1 = new ExogeniClientSlice(clientarg1);
+    ExogeniClientSlice s2 = new ExogeniClientSlice(clientarg2);
+    ExogeniClientSlice s3 = new ExogeniClientSlice(clientarg3);
+    ExogeniClientSlice s4 = new ExogeniClientSlice(clientarg4);
+    ExogeniClientSlice s6 = new ExogeniClientSlice(clientarg6);
     ts.delete();
     s1.delete();
     s2.delete();
@@ -247,7 +247,7 @@ public class TestMain {
       Thread thread2 = new Thread() {
         @Override
         public void run() {
-          ClientSlice s1 = new ClientSlice(arg);
+          ExogeniClientSlice s1 = new ExogeniClientSlice(arg);
           try {
             s1.run();
           }catch (Exception e){

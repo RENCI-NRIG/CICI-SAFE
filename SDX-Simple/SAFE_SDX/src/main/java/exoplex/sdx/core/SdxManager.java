@@ -285,20 +285,20 @@ public class SdxManager extends SliceManager {
     return num;
   }
 
-  public String[] stitchRequest(String sdxslice,
-                                String site,
-                                String customerSafeKeyHash,
-                                String customerSlice,
-                                String ResrvID,
-                                String secret,
-                                String sdxnode) throws TransportException, Exception{
+  public String[] stitchRequest(
+    String site,
+    String customerSafeKeyHash,
+    String customerSlice,
+    String ResrvID,
+    String secret,
+    String sdxnode) throws TransportException, Exception{
     long start = System.currentTimeMillis();
     String[] res = new String[2];
     res[0] = null;
     res[1] = null;
-    logger.info(logPrefix + "new stitch request from " + customerSlice+ " for " + sdxslice + " at " +
+    logger.info(logPrefix + "new stitch request from " + customerSlice+ " for " + sliceName + " at " +
         "" + site);
-    logger.debug("new stitch request for " + sdxslice + " at " + site);
+    logger.debug("new stitch request for " + sliceName + " at " + site);
     //if(!safeEnabled || authorizeStitchRequest(customer_slice,customerName,ResrvID, safeKeyHash,
     if(!safeEnabled || safeManager.authorizeStitchRequest(customerSafeKeyHash,customerSlice)){
       if (safeEnabled) {
@@ -694,7 +694,8 @@ public class SdxManager extends SliceManager {
     return res;
   }
 
-  public String stitchChameleon(String sdxslice, String nodeName, String customer_keyhash, String stitchport,
+  public String stitchChameleon(String sdxsite, String nodeName, String customer_keyhash, String
+    stitchport,
                                 String vlan, String gateway, String ip) {
     String res = "Stitch request unauthorized";
     if (!safeEnabled || authorizeStitchChameleon(customer_keyhash, stitchport, vlan, gateway, sliceName, nodeName)) {
@@ -705,7 +706,7 @@ public class SdxManager extends SliceManager {
         logger.info(logPrefix + "Chameleon Stitch Request from " + customer_keyhash + " Authorized");
         SafeSlice s = null;
         try {
-          s = SafeSlice.loadManifestFile(sdxslice, pemLocation, keyLocation, controllerUrl);
+          s = SafeSlice.loadManifestFile(sliceName, pemLocation, keyLocation, controllerUrl);
         } catch (ContextTransportException e) {
           // TODO Auto-generated catch block
           res = "Stitch request failed.\n SdxServer exception in loadManiFestFile";
@@ -715,17 +716,55 @@ public class SdxManager extends SliceManager {
           // TODO Auto-generated catch block
           e.printStackTrace();
         }
+        ComputeNode node = null;
+        if (nodeName != null) {
+          node = serverSlice.getComputeNode(nodeName);
+        } else if (nodeName == null && edgeRouters.containsKey(sdxsite) && edgeRouters.get(sdxsite)
+          .size() >
+          0) {
+          node = serverSlice.getComputeNode(edgeRouters.get(sdxsite).get(0));
+        } else {
+          //if node not exists, add another node to the slice
+          //add a node and configure it as a router.
+          //later when a customer requests connection between site a and site b, we add another logLink to meet
+          // the requirments
+          logger.debug("No existing router at requested site, adding new router");
+          String eRouterName = allcoateERouterName(sdxsite);
+          String cRouterName = allcoateCRouterName(sdxsite);
+          String eLinkName = allocateELinkName();
+          serverSlice.lockSlice();
+          serverSlice.reloadSlice();
+          serverSlice.addCoreEdgeRouterPair(sdxsite, cRouterName, eRouterName, eLinkName, bw);
+          node = (ComputeNode) serverSlice.getResourceByName(eRouterName);
+          serverSlice.commitAndWait(10, Arrays.asList(new String[]{cRouterName, eRouterName, eLinkName}));
+          serverSlice.reloadSlice();
+          copyRouterScript(serverSlice, cRouterName);
+          configRouter(cRouterName);
+          copyRouterScript(serverSlice, eRouterName);
+          configRouter(eRouterName);
+          Link internal_Log_link = new Link(eLinkName, cRouterName, eRouterName);
+          int ip_1 = getAvailableIP();
+          internal_Log_link.setIP(IPPrefix + String.valueOf(ip_1));
+          links.put(eLinkName, internal_Log_link);
+          routingmanager.newInternalLink(internal_Log_link.getLinkName(),
+            internal_Log_link.getIP(1),
+            internal_Log_link.getNodeA(),
+            internal_Log_link.getIP(2),
+            internal_Log_link.getNodeB(),
+            SDNController,
+            bw);
+          logger.debug("Configured the new router in RoutingManager");
+        }
         String stitchname = "sp-" + nodeName + "-" + ip.replace("/", "__").replace(".", "_");
         logger.info(logPrefix + "Stitching to Chameleon {" + "stitchname: " + stitchname + " vlan:" +
             vlan + " stithport: " + stitchport + "}");
         StitchPort mysp = s.addStitchPort(stitchname, vlan, stitchport, bw);
-        ComputeNode mynode = (ComputeNode) s.getResourceByName(nodeName);
-        mysp.stitch(mynode);
+        mysp.stitch(node);
         s.commit();
         s.waitTillActive();
         updateOvsInterface(serverSlice, nodeName);
         //routingmanager.replayCmds(routingmanager.getDPID(nodeName));
-        Exec.sshExec("root", mynode.getManagementIP(), "ifconfig;ovs-vsctl list port", sshkey);
+        Exec.sshExec("root", node.getManagementIP(), "ifconfig;ovs-vsctl list port", sshkey);
         routingmanager.newExternalLink(stitchname, ip, nodeName, gateway, SDNController);
         res = "Stitch operation Completed";
         logger.info(logPrefix + res);
