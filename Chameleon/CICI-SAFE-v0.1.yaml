@@ -85,6 +85,7 @@ resources:
            echo Start Plexus Controller in Container
            docker pull yaoyj11/plexus
            docker run -i -t -d -p 8080:8080 -p 6633:6633 -p 3000:3000 -h plexus --name plexus yaoyj11/plexus
+           docker exec -d plexus /bin/bash -c  "cd /root;pkill ryu-manager; ryu-manager ryu/ryu/app/rest_conf_switch.py ryu/ryu/app/rest_qos.py ryu/ryu/app/rest_router_mirror.py ryu/ryu/app/ofctl_rest.py"
 
            echo Start SAFE Server in Container
            docker pull yaoyj11/safeserver-v4
@@ -138,7 +139,7 @@ resources:
            serverinslice=false
            safeserver="$sdxserver_ip"
            plexusserver="$plexus_ip"
-           serverurl="http://0.0.0.0:8088/"
+           serverurl="http://0.0.0.0:8888/"
            scriptsdir="${WORKING_DIR}/CICI-SAFE/SDX-Simple/SAFE_SDX/src/main/resources/scripts/"
            clientsites:"TAMU (College Station, TX, USA) XO Rack:RENCI (Chapel Hill, NC USA) XO Rack:SL (Chicago, IL USA) XO Rack:UFL (Gainesville, FL USA) XO Rack"
            controllersite:"RENCI (Chapel Hill, NC USA) XO Rack"
