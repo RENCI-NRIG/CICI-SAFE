@@ -513,7 +513,8 @@ public class SafeSlice {
       refresh();
       logger.debug("SafeSlice: " + getAllResources());
       for (ComputeNode c : getComputeNodes()) {
-        logger.debug("Resource: " + c.getName() + ", state: " + c.getState());
+        logger.debug("[" + sliceName + "] Resource: " + c.getName() + ", state: " + c
+                .getState());
         if (resources.contains(c.getName())) {
           if(c.getState().contains("Closed")){
             throw new Exception(String.format("Slice %s closed", sliceName));

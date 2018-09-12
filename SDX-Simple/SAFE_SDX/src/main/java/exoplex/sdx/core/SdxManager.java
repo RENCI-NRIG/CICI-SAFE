@@ -986,62 +986,11 @@ public class SdxManager extends SliceManager {
     routingmanager.waitTillAllOvsConnected(SDNController);
   }
 
-  /*
-  public void waitTillAllOvsConnected() {
-    logger.debug("Wait until all ovs bridges have connected to SDN controller");
-    ArrayList<Thread> tlist = new ArrayList<Thread>();
-    for (String k : computenodes.keySet()) {
-      for (final String cname : computenodes.get(k)) {
-        final ComputeNode node = serverSlice.getComputeNode(cname);
-        final String mip = node.getManagementIP();
-        try {
-          //      logger.debug(mip+" run commands:"+cmd);
-          //      //ScpTo.Scp(lfile,"root",mip,rfile,privkey);
-          Thread thread = new Thread() {
-            @Override
-            public void run() {
-              try {
-                String cmd = "ovs-vsctl show";
-                String res = serverSlice.runCmdNode(cmd, sshkey, cname, true);
-                while (!res.contains("is_connected: true")) {
-                  sleep(5000);
-                  res = serverSlice.runCmdNode(cmd, sshkey, cname, true);
-                }
-                logger.debug(node.getName() + " connected");
-              } catch (Exception e) {
-                e.printStackTrace();
-              }
-            }
-          };
-          thread.start();
-          tlist.add(thread);
-        } catch (Exception e) {
-          logger.error(logPrefix + "exception when copying config file");
-        }
-      }
-    }
-    try {
-      for (Thread t : tlist) {
-        t.join();
-      }
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
-  }
-*/
 
   public String setMirror(String routerName, String source, String dst) {
     setMirror(routerName, source, dst, 100000000);
     return "Mirroring job submitted";
   }
-
-  /*
-  public String setMirror(String routerName, String source, String dst, String broIP) {
-    String res = routingmanager.setMirror(SDNController, dpid, source, dst, broIP);
-    res += routingmanager.setMirror(SDNController, dpid, dst, source, broIP);
-    return res;
-  }
-  */
 
   public String setMirror(String routerName, String source, String dst, long bw) {
     try {
@@ -1065,7 +1014,9 @@ public class SdxManager extends SliceManager {
   public void configRouting(SafeSlice s, String ovscontroller, String httpcontroller, String
       routerpattern, String stitchportpattern) {
     logger.debug("Configurating Routing");
-    restartPlexus(SDNControllerIP);
+    if(plexusAndSafeInSlice) {
+      restartPlexus(SDNControllerIP);
+    }
     // run ovsbridge scritps to add the all interfaces to the ovsbridge br0, if new interface is
     // added to the ovs bridge, then we reset the controller?
     // FIXME: maybe this is not the best way to do.

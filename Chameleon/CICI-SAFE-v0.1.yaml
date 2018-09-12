@@ -100,10 +100,10 @@ resources:
 
            echo Git SDX
            cd $WORKING_DIR
-           git clone --single-branch -b master https://github.com/RENCI-NRIG/SAFE.git
+           git clone --single-branch -b master https://github.com/RENCI-NRIG/CICI-SAFE.git
 
            echo Build SDX
-           cd ${WORKING_DIR}/SAFE/SDX-Simple/SAFE_SDX
+           cd ${WORKING_DIR}/CICI-SAFE/SDX-Simple/SAFE_SDX
            mvn  clean package appassembler:assemble
 
            echo Wait for GENI pem file
@@ -139,7 +139,7 @@ resources:
            safeserver="$sdxserver_ip"
            plexusserver="$plexus_ip"
            serverurl="http://0.0.0.0:8088/"
-           scriptsdir="${WORKING_DIR}/SAFE/SDX-Simple/SAFE_SDX/src/main/resources/scripts/"
+           scriptsdir="${WORKING_DIR}/CICI-SAFE/SDX-Simple/SAFE_SDX/src/main/resources/scripts/"
            clientsites:"TAMU (College Station, TX, USA) XO Rack:RENCI (Chapel Hill, NC USA) XO Rack:SL (Chicago, IL USA) XO Rack:UFL (Gainesville, FL USA) XO Rack"
            controllersite:"RENCI (Chapel Hill, NC USA) XO Rack"
            serversite:"RENCI (Chapel Hill, NC USA) XO Rack"
@@ -147,7 +147,7 @@ resources:
            EOF
 
            echo Start SDX
-           cd ${WORKING_DIR}/SAFE/SDX-Simple
+           cd ${WORKING_DIR}/CICI-SAFE/SDX-Simple
            ./scripts/createslice.sh -c $SDX_CONFIG
 
            echo Boot Script Done!
