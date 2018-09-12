@@ -85,11 +85,12 @@ resources:
            echo Start Plexus Controller in Container
            docker pull yaoyj11/plexus
            docker run -i -t -d -p 8080:8080 -p 6633:6633 -p 3000:3000 -h plexus --name plexus yaoyj11/plexus
+           docker exec -d plexus /bin/bash -c  "cd /root;pkill ryu-manager; ryu-manager ryu/ryu/app/rest_conf_switch.py ryu/ryu/app/rest_qos.py ryu/ryu/app/rest_router_mirror.py ryu/ryu/app/ofctl_rest.py"
 
            echo Start SAFE Server in Container
            docker pull yaoyj11/safeserver-v4
            docker run -i -t -d -p 7777:7777 -h safe --name safe yaoyj11/safeserver-v4
-           docker exec -d safe /bin/bash -c  \"cd /root/safe;export SBT_HOME=/opt/sbt-0.13.12;export SCALA_HOME=/opt/scala-2.11.8;sed -i 's/RIAKSERVER/127.0.0.1/g' safe-server/src/main/resources/application.conf;./sdx.sh
+           docker exec -d safe /bin/bash -c  \"cd /root/safe;export SBT_HOME=/opt/sbt-0.13.12;export SCALA_HOME=/opt/scala-2.11.8;sed -i 's/RIAKSERVER/127.0.0.1/g' safe-server/src/main/resources/application.conf;./prdn.sh
 
            echo Git Ahab
            cd $WORKING_DIR
@@ -100,10 +101,10 @@ resources:
 
            echo Git SDX
            cd $WORKING_DIR
-           git clone --single-branch -b master https://github.com/RENCI-NRIG/SAFE.git
+           git clone --single-branch -b master https://github.com/RENCI-NRIG/CICI-SAFE.git
 
            echo Build SDX
-           cd ${WORKING_DIR}/SAFE/SDX-Simple/SAFE_SDX
+           cd ${WORKING_DIR}/CICI-SAFE/SDX-Simple/SAFE_SDX
            mvn  clean package appassembler:assemble
 
            echo Wait for GENI pem file
@@ -138,8 +139,8 @@ resources:
            serverinslice=false
            safeserver="$sdxserver_ip"
            plexusserver="$plexus_ip"
-           serverurl="http://0.0.0.0:8088/"
-           scriptsdir="${WORKING_DIR}/SAFE/SDX-Simple/SAFE_SDX/src/main/resources/scripts/"
+           serverurl="http://0.0.0.0:8888/"
+           scriptsdir="${WORKING_DIR}/CICI-SAFE/SDX-Simple/SAFE_SDX/src/main/resources/scripts/"
            clientsites:"TAMU (College Station, TX, USA) XO Rack:RENCI (Chapel Hill, NC USA) XO Rack:SL (Chicago, IL USA) XO Rack:UFL (Gainesville, FL USA) XO Rack"
            controllersite:"RENCI (Chapel Hill, NC USA) XO Rack"
            serversite:"RENCI (Chapel Hill, NC USA) XO Rack"
@@ -147,7 +148,7 @@ resources:
            EOF
 
            echo Start SDX
-           cd ${WORKING_DIR}/SAFE/SDX-Simple
+           cd ${WORKING_DIR}/CICI-SAFE/SDX-Simple
            ./scripts/createslice.sh -c $SDX_CONFIG
 
            echo Boot Script Done!
