@@ -12,6 +12,8 @@ public class PathUtil {
       dirPath = Paths.get(System.getProperty("user.dir"),dir.replaceFirst("\\./",""));
     }else if(!dir.startsWith("/")){
       dirPath = Paths.get(System.getProperty("user.dir"),dir);
+    }else{
+      dirPath = Paths.get(dir);
     }
     return Paths.get(dirPath.toString(), file).toString();
   }

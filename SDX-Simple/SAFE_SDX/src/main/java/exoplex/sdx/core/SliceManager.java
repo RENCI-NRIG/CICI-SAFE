@@ -145,20 +145,6 @@ public class SliceManager extends SliceCommon {
         sshkey);
       carrier.copyFile2Slice(PathUtil.joinFilePath(scriptsdir, "ovsbridge.sh"), "~/ovsbridge.sh",
         sshkey);
-      //Make sure that plexus container is running
-      SDNControllerIP = carrier.getComputeNode(plexusName).getManagementIP();
-      if(safeEnabled){
-        if(plexusAndSafeInSlice) {
-          setSafeServerIp(carrier.getComputeNode("safe-server").getManagementIP());
-        }else {
-          setSafeServerIp(conf.getString("config.safeserver"));
-        }
-      }
-      //SDNControllerIP = "152.3.136.36";
-      Thread.sleep(10000);
-      if (!SDNControllerIP.equals("152.3.136.36") && !checkPlexus(SDNControllerIP)) {
-        System.exit(-1);
-      }
       checkPrerequisites(carrier);
 
       logger.debug("Plexus Controller IP: " + SDNControllerIP);
