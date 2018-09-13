@@ -56,7 +56,7 @@
                             <name>SafeSdxServer</name>
                         </program>
                         <program>
-                            <mainClass>exoplex.sdx.core.SliceServer</mainClass>
+                            <mainClass>exoplex.sdx.core.SliceManager</mainClass>
                             <name>SafeSdxSliceServer</name>
                         </program>
                         <program>
@@ -86,6 +86,10 @@
                         <program>
                             <mainClass>exoplex.demo.tridentcom.TridentTest</mainClass>
                             <name>TridentTest</name>
+                        </program>
+                        <program>
+                            <mainClass>safe.AuthorityMock</mainClass>
+                            <name>AuthorityMock</name>
                         </program>
                     </programs>
                 </configuration>
