@@ -80,6 +80,8 @@ To run the SDX demo, first we creat a SDX slice and two customer slices on exoge
     The customerIpPrefix is the Ip prefix of the customer network
     The safeserverIP is the IP address of the safe server container
 
+    By default, those safekey and slice pairs are allowed for stitching, (key_p5, c0-tri),(key_p6, c1-tri), (key_p7, c2-tri),(key_p8, c3-tri)
+
   [7]. advertise prefix
     alice tells sdx controller its address space
     $>route 192.168.10.1/24 192.168.33.2
