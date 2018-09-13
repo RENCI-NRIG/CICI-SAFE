@@ -228,8 +228,8 @@ public class SliceManager extends SliceCommon {
         @Override
         public void run() {
           checkSafeServer(safeServerIp, riakIp);
-          AuthorityMock mock = new AuthorityMock(safeServerIp + ":7777");
-          mock.makeSafePreparation();
+          //AuthorityMock mock = new AuthorityMock(safeServerIp + ":7777");
+          //mock.makeSafePreparation();
         }
       });
     }
