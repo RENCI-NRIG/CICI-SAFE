@@ -237,7 +237,7 @@ public class AuthorityMock {
   }
 
   void addUserSlice(String userKeyFile, String slice, String userIP) {
-    slices.add(slice);
+    //slices.add(slice);
     sliceKeyMap.put(slice, userKeyFile);
     //PI delegate to users
     if (!principalMap.containsKey(userKeyFile)) {

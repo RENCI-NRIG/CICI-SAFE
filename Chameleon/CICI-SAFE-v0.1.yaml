@@ -101,7 +101,7 @@ resources:
 
            echo Git SDX
            cd $WORKING_DIR
-           git clone --single-branch -b master https://github.com/RENCI-NRIG/CICI-SAFE.git
+           git clone --single-branch -b tridentcom https://github.com/RENCI-NRIG/CICI-SAFE.git
 
            echo Build SDX
            cd ${WORKING_DIR}/CICI-SAFE/SDX-Simple/SAFE_SDX
