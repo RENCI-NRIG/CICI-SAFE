@@ -67,7 +67,7 @@ public class ExogeniClientSlice extends SliceManager {
         c1.commitAndWait();
       }
       c1.refresh();
-      if(safeEnabled){
+      if(safeEnabled&&plexusAndSafeInSlice){
         String safeIp = c1.getComputeNode("safe-server").getManagementIP();
         checkSafeServer(safeIp, riakIp);
       }
