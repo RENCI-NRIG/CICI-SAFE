@@ -90,7 +90,7 @@ resources:
            echo Start SAFE Server in Container
            docker pull yaoyj11/safeserver-v4
            docker run -i -t -d -p 7777:7777 -h safe --name safe yaoyj11/safeserver-v4
-           docker exec -d safe /bin/bash -c  \"cd /root/safe;export SBT_HOME=/opt/sbt-0.13.12;export SCALA_HOME=/opt/scala-2.11.8;sed -i 's/RIAKSERVER/127.0.0.1/g' safe-server/src/main/resources/application.conf;./sdx.sh
+           docker exec -d safe /bin/bash -c  \"cd /root/safe;export SBT_HOME=/opt/sbt-0.13.12;export SCALA_HOME=/opt/scala-2.11.8;sed -i 's/RIAKSERVER/127.0.0.1/g' safe-server/src/main/resources/application.conf;./prdn.sh
 
            echo Git Ahab
            cd $WORKING_DIR
