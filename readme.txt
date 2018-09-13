@@ -73,6 +73,13 @@ To run the SDX demo, first we creat a SDX slice and two customer slices on exoge
     ./scripts/sdxclient.sh -c client-config/alice.conf -e "stitch CNode0"
     ./scripts/sdxclient.sh -c client-config/bob.conf -e "stitch CNode0"
 
+    [NOTE] With safe authorization, to enable stitch to a customer slice. First we need to set up delegations to the user and slice with AuthorityMock:
+    $>./scripts/auth.sh customerkeyfile customerslice customerIPPrefix safeServerIp
+    The customer key file is the name of the customer's safe key (which should be put in the safe server container). For the demo, available keys are "key_p5, key_p6, key_p7,....."
+    The customerslice is the name of the customer slice
+    The customerIpPrefix is the Ip prefix of the customer network
+    The safeserverIP is the IP address of the safe server container
+
   [7]. advertise prefix
     alice tells sdx controller its address space
     $>route 192.168.10.1/24 192.168.33.2

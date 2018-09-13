@@ -113,7 +113,7 @@ public class AuthorityMock {
       authorityMock.initializeGeniAuth();
       authorityMock.checkAuthorization();
     }
-    else if(args.length==3){
+    else if(args.length==4){
       String userKeyFile = args[0];
       String slice = args[1];
       String ip = args[2];
@@ -121,7 +121,10 @@ public class AuthorityMock {
       logger.info(String.format("UserKeyFile:%s sliceName:%s IpPrefix:%s SafeServer:%s",
           userKeyFile, slice, ip, ss));
       AuthorityMock mock = new AuthorityMock(ss);
+      mock.addPrincipals();
+      mock.initPrincipals();
       mock.addUserSlice(userKeyFile, slice, ip);
+      mock.checkAuthorization();
     }else {
       logger.info("Usage: userKeyFile sliceName IPPrefix safeServerIP\n");
     }
@@ -234,6 +237,7 @@ public class AuthorityMock {
   }
 
   void addUserSlice(String userKeyFile, String slice, String userIP) {
+    slices.add(slice);
     sliceKeyMap.put(slice, userKeyFile);
     //PI delegate to users
     if (!principalMap.containsKey(userKeyFile)) {
@@ -324,7 +328,6 @@ public class AuthorityMock {
 
       }
     }
-
   }
 
   String safePost(String method, String principal) {
