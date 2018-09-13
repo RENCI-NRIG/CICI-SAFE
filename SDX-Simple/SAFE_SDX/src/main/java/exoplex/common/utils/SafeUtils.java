@@ -58,7 +58,7 @@ public class SafeUtils {
 
 
   public static String postSafeStatements(String safeserver, String requestName, String
-      principal, String[] othervalues) {
+      principal, Object[] othervalues) {
     return postSafeStatements(safeserver, requestName, principal, emptyEnvs, othervalues);
   }
 
@@ -74,7 +74,7 @@ public class SafeUtils {
   }
 
   public static String postSafeStatements(String safeserver, String requestName, String
-      principal, HashMap<String, String> envs, String[] othervalues) {
+      principal, HashMap<String, String> envs, Object[] othervalues) {
     /** Post to remote safesets using apache httpclient */
     String res = null;
     try {
@@ -86,10 +86,18 @@ public class SafeUtils {
       params = params.replace("PRINCIPAL", principal);
       String others = "";
       if (othervalues.length > 0) {
-        others = others + "\"" + othervalues[0] + "\"";
+        if(othervalues[0] instanceof String) {
+          others = others + "\"" + othervalues[0] + "\"";
+        }else if(othervalues[0] instanceof Boolean){
+          others = String.valueOf(othervalues[0]);
+        }
       }
       for (int i = 1; i < othervalues.length; i++) {
-        others = others + ",\"" + othervalues[i] + "\"";
+        if(othervalues[i] instanceof String) {
+          others = others + ",\"" + othervalues[i] + "\"";
+        }else if(othervalues[i] instanceof Boolean){
+          others = others + ",\"" + othervalues[i]+"\"";
+        }
       }
       params = params.replace("OTHER", others);
       logger.debug(requestName + "  " + params);
@@ -133,8 +141,13 @@ public class SafeUtils {
   public static boolean authorize(String safeServer, String requestName, String principal, String[]
       otherValues,  HashMap<String, String> envs){
     String message = postSafeStatements(safeServer, requestName, principal, envs, otherValues);
-    if(message == null || message.contains("Query failed")){
+    if(message.contains("Unsatisfied") || message.contains("Failed")){
       return false;
+    }
+    for(String val: otherValues) {
+      if (!message.contains(val)) {
+        return false;
+      }
     }
     return true;
   }

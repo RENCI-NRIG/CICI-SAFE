@@ -260,6 +260,7 @@ public class SdxExogeniClient extends SliceCommon{
       }
       logger.debug("Sending stitch request to Sdx server");
       String r = HttpUtil.postJSON(serverurl + "sdx/stitchrequest", jsonparams);
+      logger.debug(r);
       JSONObject res = new JSONObject(r);
       logger.info(logPrefix + "Got Stitch Information From Server:\n " + res.toString());
       if (!res.getBoolean("result")) {
