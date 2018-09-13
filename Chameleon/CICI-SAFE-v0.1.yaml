@@ -141,7 +141,7 @@ resources:
            plexusserver="$plexus_ip"
            serverurl="http://0.0.0.0:8888/"
            scriptsdir="${WORKING_DIR}/CICI-SAFE/SDX-Simple/SAFE_SDX/src/main/resources/scripts/"
-           clientsites:"TAMU (College Station, TX, USA) XO Rack:RENCI (Chapel Hill, NC USA) XO Rack:SL (Chicago, IL USA) XO Rack:UFL (Gainesville, FL USA) XO Rack"
+           clientsites:"TAMU (College Station, TX, USA) XO Rack:UH (Houston, TX USA) XO Rack:SL (Chicago, IL USA) XO Rack:UFL (Gainesville, FL USA) XO Rack"
            controllersite:"RENCI (Chapel Hill, NC USA) XO Rack"
            serversite:"RENCI (Chapel Hill, NC USA) XO Rack"
            }
