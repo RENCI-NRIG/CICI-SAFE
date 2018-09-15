@@ -99,7 +99,8 @@ public class SdxExogeniClient extends SliceCommon{
 //	 			logger.info(logPrefix + obj.sayHello());
       BufferedReader stdin = new BufferedReader(new InputStreamReader(System.in));
       while (true) {
-        System.out.print("Enter Commands:stitch client_resource_name  server_slice_name\n\t " +
+        System.out.print("Enter Commands:stitch client_resource_name\n\t " +
+            "unstitch client_resource_name\n\t" +
             "advertise route: route dest gateway\n\t link site1[RENCI] " +
             "site2[SL] \n" + cmdprefix);
         input = stdin.readLine();
@@ -123,6 +124,8 @@ public class SdxExogeniClient extends SliceCommon{
         return processStitchCmd(params);
       } else if (params[0].equals("link")) {
         processConnectionCmd(params);
+      }else if(params[0].equals("unstitch")){
+        processUnStitchCmd(params);
       } else {
         processPrefixCmd(params);
       }
@@ -167,6 +170,7 @@ public class SdxExogeniClient extends SliceCommon{
 
   private void processConnectionCmd(String[] params) {
     try {
+      JSONObject jsonparams = new JSONObject();
       if(safeEnabled) {
         if (!safeChecked) {
           if(serverSlice.getResourceByName("safe-server")!=null){
@@ -179,9 +183,9 @@ public class SdxExogeniClient extends SliceCommon{
           safeKeyHash = SafeUtils.getPrincipalId(safeServer, safeKeyFile);
           safeChecked = true;
         }
+      }else {
+        jsonparams.put("ckeyhash", sliceName);
       }
-      JSONObject jsonparams = new JSONObject();
-      String site1 = null, site2 = null;
       jsonparams.put("self_prefix", params[1]);
       jsonparams.put("target_prefix", params[2]);
       jsonparams.put("ckeyhash", safeKeyHash);
@@ -201,7 +205,22 @@ public class SdxExogeniClient extends SliceCommon{
     JSONObject paramsobj = new JSONObject();
     paramsobj.put("dest", params[1]);
     paramsobj.put("gateway", params[2]);
-    paramsobj.put("customer", safeKeyHash);
+    if(safeEnabled) {
+      if (!safeChecked) {
+        if(serverSlice.getResourceByName("safe-server")!=null){
+          setSafeServerIp(serverSlice.getComputeNode("safe-server").getManagementIP());
+        }else {
+          setSafeServerIp(conf.getString("config.safeserver"));
+        }
+        SafeManager sm = new SafeManager(safeServerIp, safeKeyFile, sshkey);
+        //sm.verifySafeInstallation(riakIp);
+        safeKeyHash = SafeUtils.getPrincipalId(safeServer, safeKeyFile);
+        safeChecked = true;
+      }
+      paramsobj.put("customer", safeKeyHash);
+    }else {
+      paramsobj.put("customer", sliceName);
+    }
     String res = HttpUtil.postJSON(serverurl + "sdx/notifyprefix", paramsobj);
     if (res.equals("")) {
       logger.warn(logPrefix + "Prefix not accepted (authorization failed)");
@@ -259,6 +278,8 @@ public class SdxExogeniClient extends SliceCommon{
         postSafeStitchRequest(safeKeyHash, sliceName, node0_s2_stitching_GUID, params[2],
             params[3]);
         */
+      }else {
+        jsonparams.put("ckeyhash", sliceName);
       }
       logger.debug("Sending stitch request to Sdx server");
       String r = HttpUtil.postJSON(serverurl + "sdx/stitchrequest", jsonparams);
@@ -278,6 +299,51 @@ public class SdxExogeniClient extends SliceCommon{
         logger.info(logPrefix + "stitch completed.");
         return ip.split("/")[0];
       }
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+    return null;
+  }
+
+  private String processUnStitchCmd(String[] params) {
+    if(serverSlice==null){
+      try {
+        serverSlice = SafeSlice.loadManifestFile(sliceName, pemLocation, keyLocation, controllerUrl);
+      }catch (Exception e){
+        logger.error(e.getMessage());
+      }
+    }
+    try {
+      ComputeNode node0_s2 = (ComputeNode) serverSlice.getResourceByName(params[1]);
+      String node0_s2_stitching_GUID = node0_s2.getStitchingGUID();
+      logger.debug("node0_s2_stitching_GUID: " + node0_s2_stitching_GUID);
+      JSONObject jsonparams = new JSONObject();
+      jsonparams.put("cslice", sliceName);
+      jsonparams.put("creservid", node0_s2_stitching_GUID);
+      if(safeEnabled) {
+        if(!safeChecked) {
+          if(serverSlice.getResourceByName("safe-server")!= null){
+            setSafeServerIp(serverSlice.getComputeNode("safe-server").getManagementIP());
+          }else {
+            setSafeServerIp(conf.getString("config.safeserver"));
+          }
+          SafeManager sm = new SafeManager(safeServerIp, safeKeyFile, sshkey);
+          sm.verifySafeInstallation(riakIp);
+          safeChecked = true;
+        }
+        safeKeyHash = SafeUtils.getPrincipalId(safeServer, safeKeyFile);
+        jsonparams.put("ckeyhash", safeKeyHash);
+        /*
+        postSafeStitchRequest(safeKeyHash, sliceName, node0_s2_stitching_GUID, params[2],
+            params[3]);
+        */
+      }else{
+        jsonparams.put("ckeyhash", sliceName);
+      }
+      logger.debug("Sending unstitch request to Sdx server");
+      String r = HttpUtil.postJSON(serverurl + "sdx/undostitch", jsonparams);
+      logger.debug(r);
+      logger.info(logPrefix + "Unstitch result:\n " + r);
     } catch (Exception e) {
       e.printStackTrace();
     }

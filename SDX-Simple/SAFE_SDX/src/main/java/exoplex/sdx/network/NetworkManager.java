@@ -63,10 +63,23 @@ public class NetworkManager {
     linkMap.put(l.getLinkName(), l);
   }
 
+  private void removeLink(String linkName){
+    if(linkMap.containsKey(linkName)){
+      linkMap.remove(linkName);
+    }
+  }
+
   private void putInterface(Interface intf){
     interfaceMap.put(intf.getName(), intf);
     if(intf.getIp()!= null){
       ipInterfaceMap.put(intf.getIp(), intf);
+    }
+  }
+
+  private void removeInterface(String linkName, String routerName){
+    String intfName = NetworkUtil.computeInterfaceName(routerName, linkName);
+    if(interfaceMap.containsKey(intfName)){
+      interfaceMap.remove(intfName);
     }
   }
 
@@ -106,6 +119,18 @@ public class NetworkManager {
     if (logRouter != null) {
       logRouter.addGateway(gw);
       logRouter.addInterface(intf.getName());
+      putRouter(logRouter);
+      //logRouters.put(ra,logRouter);
+    }
+  }
+
+  public void delLink(String linkName, String routerName, String gw){
+    removeLink(linkName);
+    removeInterface(linkName, routerName);
+    Router logRouter = getRouter(routerName);
+    if (logRouter != null) {
+      logRouter.delGateway(gw);
+      logRouter.delInterface(NetworkUtil.computeInterfaceName(routerName, linkName));
       putRouter(logRouter);
       //logRouters.put(ra,logRouter);
     }

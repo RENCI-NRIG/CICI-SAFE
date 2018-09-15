@@ -33,6 +33,22 @@ public class RestService {
   }
 
   @POST
+  @Path("/undostitch")
+  @Consumes(MediaType.APPLICATION_JSON)
+  @Produces(MediaType.TEXT_PLAIN)
+  public String undoStitch(UndoStitchRequest sr) {
+    logger.debug("got undoStitch request ");
+    try {
+      String res = SdxServer.sdxManager.undoStitch(sr.ckeyhash, sr.cslice,
+          sr.creservid);
+      return res;
+    } catch (Exception e) {
+      e.printStackTrace();
+      return String.format("UndoStitch Failed: %s", e.getMessage());
+    }
+  }
+
+  @POST
   @Path("/connectionrequest")
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.TEXT_PLAIN)
@@ -117,6 +133,16 @@ class StitchRequest {
   @Override
   public String toString(){
     return String.format("%s %s %s %s", sdxsite, cslice, creservid, sdxnode);
+  }
+}
+
+class UndoStitchRequest {
+  public String ckeyhash;
+  public String cslice;
+  public String creservid;
+  @Override
+  public String toString(){
+    return String.format("%s%s %s", ckeyhash, cslice, creservid);
   }
 }
 

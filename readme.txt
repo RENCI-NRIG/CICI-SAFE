@@ -98,7 +98,13 @@ To run the SDX demo, first we creat a SDX slice and two customer slices on exoge
     OR the following commands are equivalent:
     ./scripts/sdx_exogeni_client.sh -c client-config/alice.conf -e "link 192.168.10.1/24 192.168.20.1/24"
 
-  9. [OPTIONAL]
+  [9] undo stitching for exogeni client slice
+      Run SDX exogeni client to undo stitching. Use the command "unstitch nodename". For example:
+      $./scripts/sdx_exogeni_client.sh -c client-config/alice.conf -e "unstitch CNode0"
+
+      This operation will undo the stitching, delete the broadcast link in Sdx slice, revoke all IP prefixes advertised with the stitching client node as gateway, and delete all routes related with the prefix. After undoing the stitching, SDX server can keep runnning and there is no need to restart plexus controller
+
+  [10]. [OPTIONAL]
     For sdx demo, I added scripts to automatically configure the routing table with quagga in client slice. These scripts depends on the IP addresses assigned to client slice, the topology of client slice, which node in client slice is stitched to sdx slice, and the gateway in sdx slice.
     
     Setup routing in client side:
@@ -111,7 +117,7 @@ To run the SDX demo, first we creat a SDX slice and two customer slices on exoge
     CNode1-bob$  ip route add 192.168.10.2/32 via 192.168.20.1
     CNode0-bob$ ip route add 192.168.10.2/32 via 192.168.34.1
 
-  10. Delete a slice
+  [11]. Delete a slice
     We can delete a slice with command: ./scripts/createslice.sh -c configFile -d
     For exmaple: ./scripts/createslice.sh -c client-config/alice.conf -d
 

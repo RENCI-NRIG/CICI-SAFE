@@ -16,7 +16,14 @@ import exoplex.sdx.network.Link;
 
 import org.apache.commons.cli.CommandLine;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Optional;
+import java.util.Collections;
+import java.util.Set;
+import java.util.Arrays;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -63,9 +70,22 @@ public class SdxManager extends SliceManager {
   private String logPrefix = "";
   private HashSet<Integer> usedip = new HashSet<Integer>();
 
-  private HashMap<String, String> prefixgateway = new HashMap<String, String>();
+  private ConcurrentHashMap<String, String> prefixGateway = new ConcurrentHashMap<String, String>();
+  private ConcurrentHashMap<String, HashSet<String>> gatewayPrefixes = new ConcurrentHashMap();
+  private ConcurrentHashMap<String, String> customerGateway = new ConcurrentHashMap<String,
+      String>();
 
-  private HashMap<String, String> prefixKeyHash = new HashMap<String, String>();
+
+  private ConcurrentHashMap<String, String> prefixKeyHash = new ConcurrentHashMap<String, String>();
+
+  //the ip prefixes that a customer has advertised
+  private ConcurrentHashMap<String, HashSet<String>> customerPrefixes = new ConcurrentHashMap();
+
+  //The node reservation IDs that a customer has stitched to SDX
+  private ConcurrentHashMap<String, HashSet<String>> customerNodes = new ConcurrentHashMap<>();
+
+  //The name of the link in SDX slice stitched to customer node
+  private ConcurrentHashMap<String, String> stitchNet = new ConcurrentHashMap<>();
 
   public SafeSlice getSdxSlice() {
     return serverSlice;
@@ -289,7 +309,7 @@ public class SdxManager extends SliceManager {
     String site,
     String customerSafeKeyHash,
     String customerSlice,
-    String ResrvID,
+    String reserveId,
     String secret,
     String sdxnode) throws TransportException, Exception{
     long start = System.currentTimeMillis();
@@ -299,7 +319,7 @@ public class SdxManager extends SliceManager {
     logger.info(logPrefix + "new stitch request from " + customerSlice+ " for " + sliceName + " at " +
         "" + site);
     logger.debug("new stitch request for " + sliceName + " at " + site);
-    //if(!safeEnabled || authorizeStitchRequest(customer_slice,customerName,ResrvID, safeKeyHash,
+    //if(!safeEnabled || authorizeStitchRequest(customer_slice,customerName,reserveId, safeKeyHash,
     if(!safeEnabled || safeManager.authorizeStitchRequest(customerSafeKeyHash,customerSlice)){
       if (safeEnabled) {
         logger.info("Authorized: stitch request for " + sliceName + " and " + sdxnode);
@@ -386,7 +406,7 @@ public class SdxManager extends SliceManager {
       links.put(stitchname, logLink);
       String gw = logLink.getIP(1);
       String ip = logLink.getIP(2);
-      serverSlice.stitch(net1_stitching_GUID, customerSlice, ResrvID, secret, ip);
+      serverSlice.stitch(net1_stitching_GUID, customerSlice, reserveId, secret, ip);
       res[0] = gw;
       res[1] = ip;
       sleep(15);
@@ -399,8 +419,58 @@ public class SdxManager extends SliceManager {
       //routingmanager.configurePath(ip,node.getName(),ip.split("/")[0],SDNController);
       logger.info(logPrefix + "stitching operation  completed, time elapsed(s): " + (System
           .currentTimeMillis() - start) / 1000);
+
+      //update states
+      stitchNet.put(reserveId, stitchname);
+      if(!customerNodes.containsKey(customerSafeKeyHash)){
+        customerNodes.put(customerSafeKeyHash, new HashSet<>());
+      }
+      customerNodes.get(customerSafeKeyHash).add(reserveId);
+      customerGateway.put(reserveId, ip.split("/")[0]);
+
     }
     return res;
+  }
+
+  public String undoStitch( String customerSafeKeyHash, String customerSlice, String
+      customerReserveId) throws TransportException, Exception {
+    logger.debug("ndllib TestDriver: START");
+    logger.info(String.format("Undostitch request from %s for (%s, %s)", customerSafeKeyHash,
+      customerSlice, customerReserveId));
+    if(customerNodes.containsKey(customerSafeKeyHash) && customerNodes.get(customerSafeKeyHash)
+        .contains(customerReserveId)){
+
+    }else{
+      return String.format("%s in slice %s is not stitched to SDX", customerReserveId,
+          customerSlice);
+    }
+
+    Long t1 = System.currentTimeMillis();
+
+    serverSlice.reloadSlice();
+
+    BroadcastNetwork net = (BroadcastNetwork) serverSlice.getResourceByName(stitchNet.get(customerReserveId));
+    String stitchNetReserveId = net.getStitchingGUID();
+    sliceProxy.undoSliceStitch(sliceName, stitchNetReserveId,customerSlice,
+        customerReserveId);
+
+    //clean status after undo stitching
+    customerNodes.get(customerSafeKeyHash).remove(customerReserveId);
+    String stitchName = stitchNet.remove(customerReserveId);
+    String gateway = customerGateway.get(customerReserveId);
+    if(gatewayPrefixes.containsKey(gateway)) {
+      for (String prefix: gatewayPrefixes.get(gateway)){
+        revokePrefix(customerSafeKeyHash, prefix);
+      }
+    }
+    Long t2 = System.currentTimeMillis();
+    net.delete();
+    serverSlice.commitAndWait();
+    routingmanager.removeExternalLink(stitchName, stitchName.split("_")[1], SDNController);
+    releaseIP(Integer.valueOf(stitchName.split("_")[2]));
+    logger.debug("Finished UnStitching, time elapsed: " + String.valueOf(t2 - t1) + "\n");
+    logger.info("Finished UnStitching, time elapsed: " + String.valueOf(t2 - t1) + "\n");
+    return "Finished Unstitching";
   }
 
   private String updateOvsInterface(SafeSlice slice, String routerName){
@@ -589,8 +659,8 @@ public class SdxManager extends SliceManager {
         logger.info("Authorized connection request");
       }
     }
-    String n1 = routingmanager.getEdgeRouterByGateway(prefixgateway.get(self_prefix));
-    String n2 = routingmanager.getEdgeRouterByGateway(prefixgateway.get(target_prefix));
+    String n1 = routingmanager.getEdgeRouterByGateway(prefixGateway.get(self_prefix));
+    String n2 = routingmanager.getEdgeRouterByGateway(prefixGateway.get(target_prefix));
     if (n1 == null || n2 == null) {
       return "Prefix unrecognized.";
     }
@@ -646,9 +716,9 @@ public class SdxManager extends SliceManager {
     if (res) {
       writeLinks(topofile);
       logger.debug("Link added successfully, configuring routes");
-      if (routingmanager.configurePath(self_prefix, n1, target_prefix, n2, prefixgateway.get
+      if (routingmanager.configurePath(self_prefix, n1, target_prefix, n2, prefixGateway.get
           (self_prefix), SDNController, bandwidth) &&
-          routingmanager.configurePath(target_prefix, n2, self_prefix, n1, prefixgateway.get
+          routingmanager.configurePath(target_prefix, n2, self_prefix, n1, prefixGateway.get
               (target_prefix), SDNController, 0)) {
         logger.info(logPrefix + "Routing set up for " + self_prefix + " and " + target_prefix);
         logger.debug(logPrefix + "Routing set up for " + self_prefix + " and " + target_prefix);
@@ -685,13 +755,32 @@ public class SdxManager extends SliceManager {
     String res = "received notification for " + dest;
     boolean flag = false;
     String router = routingmanager.getEdgeRouterByGateway(gateway);
-    prefixgateway.put(dest, gateway);
-    prefixKeyHash.put(dest, customer_keyhash);
     if (router == null) {
       logger.warn(logPrefix + "Cannot find a router with cusotmer gateway" + gateway);
       res = res + " Cannot find a router with customer gateway " + gateway;
+    }else {
+      prefixGateway.put(dest, gateway);
+      prefixKeyHash.put(dest, customer_keyhash);
+      if(!customerPrefixes.containsKey(customer_keyhash)){
+        customerPrefixes.put(customer_keyhash, new HashSet<>());
+      }
+      customerPrefixes.get(customer_keyhash).add(dest);
+      if(!gatewayPrefixes.containsKey(gateway)){
+        gatewayPrefixes.put(gateway, new HashSet());
+      }
+      gatewayPrefixes.get(gateway).add(dest);
     }
     return res;
+  }
+
+  private void revokePrefix(String customerSafeKeyHash, String prefix){
+    prefixGateway.remove(prefix);
+    prefixKeyHash.remove(prefix);
+    if(customerPrefixes.containsKey(customerSafeKeyHash) && customerPrefixes.get
+        (customerSafeKeyHash).contains(prefix)){
+      customerPrefixes.get(customerSafeKeyHash).remove(prefix);
+    }
+    routingmanager.revokePrefix(prefix, SDNController);
   }
 
   public String stitchChameleon(String sdxsite, String nodeName, String customer_keyhash, String
@@ -1099,48 +1188,17 @@ public class SdxManager extends SliceManager {
     return ip_to_use;
   }
 
-  public void undoStitch(String sdxslice, String customerName, String netName, String nodeName) {
-    logger.debug("ndllib TestDriver: START");
-
-    //Main Example Code
-
-    SafeSlice s1 = null;
-    SafeSlice s2 = null;
-
+  private void releaseIP(int ip){
+    iplock.lock();
     try {
-      s1 = SafeSlice.loadManifestFile(sdxslice, pemLocation, keyLocation, controllerUrl);
-      s2 = SafeSlice.loadManifestFile(customerName, pemLocation, keyLocation, controllerUrl);
-    } catch (ContextTransportException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
-    } catch (TransportException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
+      if(usedip.contains(ip)){
+        usedip.remove(ip);
+      }
+    } finally {
+      iplock.unlock();
     }
-
-    Network net1 = (Network) s1.getResourceByName(netName);
-    String net1_stitching_GUID = net1.getStitchingGUID();
-
-    ComputeNode node0_s2 = (ComputeNode) s2.getResourceByName(nodeName);
-    String node0_s2_stitching_GUID = node0_s2.getStitchingGUID();
-
-    logger.debug("net1_stitching_GUID: " + net1_stitching_GUID);
-    logger.debug("node0_s2_stitching_GUID: " + node0_s2_stitching_GUID);
-    Long t1 = System.currentTimeMillis();
-
-    try {
-      //s1
-      //sliceProxy.permitSliceStitch(sdxslice, net1_stitching_GUID, "stitchSecret");
-      //s2
-      sliceProxy.undoSliceStitch(customerName, node0_s2_stitching_GUID, sdxslice,
-          net1_stitching_GUID);
-    } catch (TransportException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
-    }
-    Long t2 = System.currentTimeMillis();
-    logger.debug("Finished UnStitching, time elapsed: " + String.valueOf(t2 - t1) + "\n");
   }
+
 
   public String getFlowInstallationTime(String routername, String flowPattern) {
     logger.debug("Get flow installation time on " + routername + " for " + flowPattern);

@@ -75,6 +75,15 @@ public class SdnUtil {
     return res;
   }
 
+  static String[] delAddrCMD(String addrId, String dpid, String controller){
+    String[] cmd = new String[3];
+    cmd[0] = "http://" + controller + "/router/" + dpid;
+    cmd[1] = "{\"address_id\":\"" + addrId + "\"}";
+    cmd[2] = "delete";
+    return cmd;
+
+  }
+
   static String[] delMirrorCMD(String routeId, String dpid, String controller) {
     String[] cmd = new String[3];
     cmd[0] = "http://" + controller + "/router/" + dpid;

@@ -25,13 +25,25 @@ public class Router {
     return interfaces;
   }
 
-  public void addInterface(String interfaceIP) {
-    interfaces.add(interfaceIP);
+  public void addInterface(String interfaceName) {
+    interfaces.add(interfaceName);
+  }
+
+  public void delInterface(String interfaceName){
+    if(interfaces.contains(interfaceName)){
+      interfaces.remove(interfaceName);
+    }
   }
 
   public void addGateway(String gw) {
     logger.debug("Gateway " + gw + " added to " + routerName);
     customergateways.add(gw);
+  }
+
+  public void delGateway(String gw){
+    if(customergateways.contains(gw)){
+      customergateways.remove(gw);
+    }
   }
 
   public boolean hasGateway(String gw) {
