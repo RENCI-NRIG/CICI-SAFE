@@ -77,9 +77,9 @@ public class SdxExogeniClient extends SliceCommon{
 
   public void run(String[] args) {
     try {
-      SafeSlice s = SafeSlice.loadManifestFile(sliceName, pemLocation, keyLocation, controllerUrl);
-      if(s.getResourceByName("safe-server")!= null) {
-        setSafeServerIp(s.getComputeNode("safe-server").getManagementIP());
+      serverSlice = SafeSlice.loadManifestFile(sliceName, pemLocation, keyLocation, controllerUrl);
+      if(serverSlice.getResourceByName("safe-server")!= null) {
+        setSafeServerIp(serverSlice.getComputeNode("safe-server").getManagementIP());
       }else {
         setSafeServerIp(conf.getString("config.safeserver"));
       }
