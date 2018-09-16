@@ -14,6 +14,26 @@
                 <SizeBasedTriggeringPolicy size="250 MB"/>
             </Policies>
         </RollingFile>
+        <RollingFile name="ClientRollingFile" fileName="log/client.log"
+                     filePattern="log/$${date:yyyy-MM}/app-%d{MM-dd-yyyy}-%i.log.gz" append="false">
+            <PatternLayout>
+                <Pattern>%d %p %c{1.} [%t] %m%n</Pattern>
+            </PatternLayout>
+            <Policies>
+                <TimeBasedTriggeringPolicy/>
+                <SizeBasedTriggeringPolicy size="250 MB"/>
+            </Policies>
+        </RollingFile>
+        <RollingFile name="AuthRollingFile" fileName="log/auth.log"
+                     filePattern="log/$${date:yyyy-MM}/app-%d{MM-dd-yyyy}-%i.log.gz" append="false">
+            <PatternLayout>
+                <Pattern>%d %p %c{1.} [%t] %m%n</Pattern>
+            </PatternLayout>
+            <Policies>
+                <TimeBasedTriggeringPolicy/>
+                <SizeBasedTriggeringPolicy size="250 MB"/>
+            </Policies>
+        </RollingFile>
         <RollingFile name="NetworkRollingFile" fileName="log/network-manager.log"
                      filePattern="log/$${date:yyyy-MM}/app-%d{MM-dd-yyyy}-%i.log.gz" append="false">
             <PatternLayout>
@@ -82,6 +102,9 @@
         <Logger name="exoplex.sdx.core.SdxManager" level="info" additivity="false">
             <AppenderRef ref="Console"/>
         </Logger>
+        <Logger name="safe.AuthorityMock" level="debug" additivity="false">
+            <AppenderRef ref="AuthRollingFile"/>
+        </Logger>
         <Logger name="exoplex.common.utils.SafeUtils" level="debug" additivity="false">
             <AppenderRef ref="RollingFile"/>
         </Logger>
@@ -108,6 +131,12 @@
         </Logger>
         <Logger name="exoplex.client.exogeni.ExogeniClientSlice" level="info" additivity="false">
             <AppenderRef ref="Console"/>
+        </Logger>
+        <Logger name="exoplex.client.exogeni.SdxExogeniClient" level="debug" additivity="false">
+            <AppenderRef ref="ClientRollingFile"/>
+        </Logger>
+        <Logger name="exoplex.client.exogeni.ExogeniClientSlice" level="debug" additivity="false">
+            <AppenderRef ref="ClientRollingFile"/>
         </Logger>
         <Logger name="exoplex.common.slice.SafeSlice" level="warn" additivity="true">
             <AppenderRef ref="Console"/>

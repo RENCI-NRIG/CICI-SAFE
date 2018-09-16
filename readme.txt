@@ -12,13 +12,17 @@ Enter SAFE_HOME
 
    About configuration files in SDX-Simple/config and SDX-Simple/client-config: 
         slicename       Name of the slice
+        safekey         Principal ID (safe key hash) or the file name of safe key
         sshkey          the location of your sshkey, used for logging onto ExoGENI node
         exogenipem      Your ExoGENI pem file
         serverurl       The ip address and port number of vSDX slice controller
         scritpsdir      /Path/to/SDX/SDX-Simple/SAFE_SDX/src/main/resources/
-        topodir         /Path/to/SDX/SDX-Simple/topo/
-        Generally, you need to change the above configuration fields, and leave the rest alone.
+        safe            Whether safe authorization is enabled or not
+        safeserver      Ip address of safe server
+        serverinslice   Whether safe server and plexus controller is in the exogeni slice
+        plexusserver    IP address of plexus server
 
+        Generally, you need to change the above configuration fields, and leave the rest alone.
         clientsites     the expected sites of clients where we need to launch some routers when we create the slice
         routernum       The number of routers to be launched when creating the slice
         controllersite  The site of plexus sdn controller
@@ -28,69 +32,6 @@ Enter SAFE_HOME
         bro             whether deploy bro when creating the vsdx or not
 
    For demo with Both ExoGENI and Chameleon, [to be updated]
-
-3. There is two version of Demo. One is java code in TestMain. In TestMain we run server controllers and multiple client controllers in the same program, and client controllers interact with server controllers via HTTP restful APIs.
-   cd SAFE_HOME/SDX-Simple
-   Run: ./scripts/test.sh  [Options]
-           Options:
-             -s/--slice     use existing slice
-             -r/--reset     Clear SDX slice and undo previous operations
-
-   Note: In the demo, the is a vSDX slice controller, and multiple client slice controllers. The client controllers interact with vSDX controller via HTTP Restful APIs. The test program mimics the work flow in real case, the ip addresses and slice names are specific to the test demo. If you change the IP prefix in the configuration files, you need to change them in the test code accordingly.
-
-   The work flow in real case, (1) we start vSDX controller independently, (2) start multiple client controllers,(3) clients enter command-line commands for request for network stitching, and get the IP address of the gateway in SDX slice (for example 192.168.130.1/24), and set the IP address in customer node an IP address in the same subnet, say 192.168.130.2/24 (4) advertise IP prefix to vSDX controller (5) request for connections between two IP prefixes.
-   
-   Another version of the demo is implemented with bash scripts, it runs the controllers seperately [To be tested, the command for vsdx server might never return, as there is http server listening all the time. If so, you might split the scripts into two files and run clients code after the server code completes].
-   cd SAFE_HOME/SDX-Simple
-   ./scripts/cnert-slices.sh
-   ./scripts/cnert-server.sh [Options]
-           Options:
-                -r//--reset  Clear SDX slice and undo previous operations
-   ./scripts/cnert-client.sh [wait until vsdx server starts]
-
-4. Bro intrusion detection
-   SdxController will restart bro instances each time it restarts. After the mirroring flows have been set up, we can transfer evil files between customer nodes with ftp and Bro will detect it and cut the connection.
-   Example command to transfer the file:
-   [on c3]$ wget ftp://ftpuser:ftp@192.168.40.2/evil.txt
-   After about 5 seconds, the connection between 192.168.30.2 and 192.168.40.2 will be cut
-
-A few example scenerios and related commands:
-Enter SAFE_HOME/SDX_Simple
-Scenerio 1: Start from nothing
-    option 1:
-    ./scripts/test.sh
-    option 2:
-    ./scripts/cnert-slices.sh
-    ./scripts/cnert-server.sh
-    ./scripts/cnert-client.sh
-
-Scenerio 2: After stitching client slices and deploying bro nodes, we want to remove the stitching and bro nodes and run the demo again.
-    option 1:
-    ./scripts/test.sh -r -s
-
-    option 2:
-    ./scripts/cnert-server.sh -r
-    ./scripts/cnert-client.sh
-
-Scenerio 3: Rerun the demo to set up connection again, while using previous stitching and bro nodes.
-    ./scripts/cnert-server.sh
-    ./scripts/sdx_exogeni_client.sh -c client-config/c1.conf -e  "route 192.168.10.1/24 192.168.130.2"
-    ./scripts/sdx_exogeni_client.sh -c client-config/c2.conf -e "route 192.168.20.1/24 192.168.131.2"
-    ./scripts/sdx_exogeni_client.sh -c client-config/c3.conf -e  "route 192.168.30.1/24 192.168.132.2"
-    ./scripts/sdx_exogeni_client.sh -c client-config/c4.conf -e "route 192.168.40.1/24 192.168.133.2"
-
-    ./scripts/sdx_exogeni_client.sh -c client-config/c1.conf -e  "link 192.168.10.1/24 192.168.20.1/24"
-    ./scripts/sdx_exogeni_client.sh -c client-config/c3.conf -e  "link 192.168.30.1/24 192.168.40.1/24"
-
-
-
--------------- Bro Experiment --------------------
-To run the bro experiment, we transmit a file with known signature via FTP service. The TestSlice code should have already set up FTP service when it creates the slice. 
-1. create the test slice: [1] modify TestMain to call emulationSlice() in main(). [2] modify configuration files to specify two sites. Since we need large bandwdith between two sites. It's highly suggested to choose UH-TAMU, or any pair from (UFL, UNF, FIU). [3] run TestMain to create the emulation slice
-2. Run BroMain for the experiment.
-   ./scripts/bro.sh
-
-
 
 ---------------SAFE-SDX-----------------------------
 To run the SDX demo, first we creat a SDX slice and two customer slices on exogeni.
@@ -117,17 +58,29 @@ To run the SDX demo, first we creat a SDX slice and two customer slices on exoge
       $./scripts/sdxserver.sh -c config/sdx.conf
 
   [4] Configure the address of SDX server controller ("config.sdxserver") in configuration files and run controller for alice and bob, 
-     $./scripts/sdxclient.sh -c client-config/alice.conf
-     $./scripts/sdxclient.sh -c client-config/bob.conf
+     $./scripts/sdx_exogeni_client.sh -c client-config/alice.conf
+     $./scripts/sdx_exogeni_client.sh -c client-config/bob.conf
 
   [6]. alice stitch CNode0 to sdx/c0, in alice's controller, run:
-    $>stitch CNode0 [optional, the name of router in vsdx slice if the client knows exactly which router it wants to stitch to, e.g., c0]
+    $>stitch CNode0 
+
+    [optional, the name of router in vsdx slice if the client knows exactly which router it wants to stitch to, e.g., c0], this is useful
+    when there is multiple routers on the same site
     bob stitch CNode0 to sdx/c3, in bob's controller run:
-    $>stitch CNode
+    $>stitch CNode0 c3
     
     OR the following commands are equivalent:
     ./scripts/sdxclient.sh -c client-config/alice.conf -e "stitch CNode0"
     ./scripts/sdxclient.sh -c client-config/bob.conf -e "stitch CNode0"
+
+    [NOTE] With safe authorization, to enable stitch to a customer slice. First we need to set up delegations to the user and slice with AuthorityMock:
+    $>./scripts/auth.sh customerkeyfile customerslice customerIPPrefix safeServerIp
+    The customer key file is the name of the customer's safe key (which should be put in the safe server container). For the demo, available keys are "key_p5, key_p6, key_p7,....."
+    The customerslice is the name of the customer slice
+    The customerIpPrefix is the Ip prefix of the customer network
+    The safeserverIP is the IP address of the safe server container
+
+    By default, those safekey and slice pairs are allowed for stitching, (key_p5, c0-tri),(key_p6, c1-tri), (key_p7, c2-tri),(key_p8, c3-tri)
 
   [7]. advertise prefix
     alice tells sdx controller its address space
@@ -136,16 +89,22 @@ To run the SDX demo, first we creat a SDX slice and two customer slices on exoge
     $>route 192.168.20.1/24 192.168.34.2
     
     OR the following commands are equivalent:
-    ./scripts/sdxclient.sh -c client-config/alice.conf -e "route 192.168.10.1/24 192.168.33.2"
-    ./scripts/sdxclient.sh -c client-config/bob.conf -e "route 192.168.20.1/24 192.168.34.2"
+    ./scripts/sdx_exogeni_client.sh -c client-config/alice.conf -e "route 192.168.10.1/24 192.168.33.2"
+    ./scripts/sdx_exogeni_client.sh -c client-config/bob.conf -e "route 192.168.20.1/24 192.168.34.2"
 
   [8] customer connection request
     $>link [IP Prefix 1, e.g 192.168.10.1/24] [IP Prefix 2, e.g. 192.168.20.1/24]
 
     OR the following commands are equivalent:
-    ./scripts/sdxclient.sh -c client-config/alice.conf -e "link 192.168.10.1/24 192.168.20.1/24"
+    ./scripts/sdx_exogeni_client.sh -c client-config/alice.conf -e "link 192.168.10.1/24 192.168.20.1/24"
 
-  9. [OPTIONAL]
+  [9] undo stitching for exogeni client slice
+      Run SDX exogeni client to undo stitching. Use the command "unstitch nodename". For example:
+      $./scripts/sdx_exogeni_client.sh -c client-config/alice.conf -e "unstitch CNode0"
+
+      This operation will undo the stitching, delete the broadcast link in Sdx slice, revoke all IP prefixes advertised with the stitching client node as gateway, and delete all routes related with the prefix. After undoing the stitching, SDX server can keep runnning and there is no need to restart plexus controller
+
+  [10]. [OPTIONAL]
     For sdx demo, I added scripts to automatically configure the routing table with quagga in client slice. These scripts depends on the IP addresses assigned to client slice, the topology of client slice, which node in client slice is stitched to sdx slice, and the gateway in sdx slice.
     
     Setup routing in client side:
@@ -158,55 +117,43 @@ To run the SDX demo, first we creat a SDX slice and two customer slices on exoge
     CNode1-bob$  ip route add 192.168.10.2/32 via 192.168.20.1
     CNode0-bob$ ip route add 192.168.10.2/32 via 192.168.34.1
 
-  10. Delete a slice
+  [11]. Delete a slice
     We can delete a slice with command: ./scripts/createslice.sh -c configFile -d
     For exmaple: ./scripts/createslice.sh -c client-config/alice.conf -d
 
 
     ============Stitching External Sites (Chameleon, Duke, ESNet...) to Exogeni=============
-
-[1] Run riak-server
-    Launch a riak server with code and instructions in SAFE-Riak-Server
-
-Configuration: set variables in "SAFE/configure" and run it. It will generate configuration files for sdx, alice and bob and put them in their config directory
-
-[2] Create a SDX slice
-  a) $cd SDX-Simple
-  b) Edit configuration file for sdx slice "config/sdx.conf"
-  c) build
-     $./scripts/build.sh
-  d) create SDX slice
-     $./scritps/createslice.sh -c config/sdx.conf
-
-[3] Run sdx server controller, configure the address and port number that sdx server will listen on ("config.serverurl").
+1. Run sdx server controller, configure the address and port number that sdx server will listen on ("config.serverurl").
      $./scripts/sdxserver.sh -c config/sdx.conf
      
      NOTE: when running HTTP server on ExoGENI, use serverurl=0.0.0.0:8080.
 
-[4] Specify the ip address of safe server for Chameleon controller in SDX-Client-StitchPort/config/carrot.conf
-    Configure the address of SDX server controller ("config.sdxserver") in SDX-Client-StitchPort/config/carrot.conf 
-
-[5] Stitching Chameleon Node to  SDX slice
+2.  Stitching Chameleon Node to  SDX slice
     1) First, create a Chameleon node, using vlan tag "3298"
     2) For Chameleon slice, we need another safe server for it (In this demo, we use the SAFE server in SDX slice for everything, therefore, this step is skipped). 
     3) Build chameleon controller:
-       a) ./scripts/build.sh
-       b) $ ./scripts/run.sh -c config/carol.conf
+       b) $ ./scripts/sdx_stitchport_client.sh -c config/chameleon.conf
         >stitch http://geni-orca.renci.org/owl/ion.rdf#AL2S/Chameleon/Cisco/6509/GigabitEthernet/1/1 3298 [Cameleon_Node_IP] 10.32.98.200/24 [SDX_SITE_NAME] [Optional: sdx node name] 
         OR
         $./scripts/run.sh -c config/carol.conf -e "stitch http://geni-orca.renci.org/owl/ion.rdf#AL2S/Chameleon/Cisco/6509/GigabitEthernet/1/1 3298  10.32.98.204 10.32.98.200/24 [SDX_SITE_NAME] [STITCH_POINT, e.g., c3]"
 
 [6] When stitching a chameleon node to exogeni node, we know the ip address of the chameleon node, say "10.32.98.204". 
     In the stitching request, we tell the sdx controller what IP address it should use for the new interface on c3 to the stitchport, we can specify any address in the same subnet as the chameleon node, say "10.32.98.200"
-        The topology is like this:
-        c0-c1-c2-c3 (10.32.98.200/24)----stitchport----(10.32.98.204/24)ChameleonNode
-        Note that in sdx server, we use SDN controller to configure the ip address. The ip address is not configured for the physical interface, so we can't ping from exogeni node to chameleon node. But we can ping from the Chameleon node to the exogeni node.
-
-      a) Chameleon slice advertises its ip prefixes in the same way as ExoGENI slice does
-        $./scripts/run.sh -c config/carol.conf -e "route 10.32.98.1/24 10.32.98.204 [SDX_SLICE_NAME, e.g., sdx] [STITCH_POINT, e.g., c3]"
+    Note that in sdx server, we use SDN controller to configure the ip address. The ip address is not configured for the physical interface, so we can't ping from exogeni node to chameleon node. But we can ping from the Chameleon node to the exogeni node.
+      a) Chameleon slice advertises its ip prefixes in the same way as ExoGENI slice does [not tested]
+        $./scripts/sdx_stitchport_client.sh -c config/carol.conf -e "route 10.32.98.1/24 10.32.98.204 [SDX_SLICE_NAME, e.g., sdx] [STITCH_POINT, e.g., c3]"
       b) Chameleon node set up routing table when it wants to talk with exogeni slices in different subnets
 
 NOTE: Now we have "-n" option for sdx server and both clients, which can be used to DISABLE SAFE AUTHORIZATION
+
+-------------- Bro Experiment --------------------
+To run the bro experiment, we transmit a file with known signature via FTP service. The TestSlice code should have already set up FTP service when it creates the slice. 
+1. create the test slice: [1] modify TestMain to call emulationSlice() in main(). [2] modify configuration files to specify two sites. Since we need large bandwdith between two sites. It's highly suggested to choose UH-TAMU, or any pair from (UFL, UNF, FIU). [3] run TestMain to create the emulation slice
+2. Run BroMain for the experiment.
+   ./scripts/bro.sh
+
+
+
 
 
 

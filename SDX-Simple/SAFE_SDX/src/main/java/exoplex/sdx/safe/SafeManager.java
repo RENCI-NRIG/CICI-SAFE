@@ -85,15 +85,9 @@ public class SafeManager {
     String[] othervalues=new String[2];
     othervalues[0]=customerSafeKeyHash;
     String saHash = SafeUtils.getPrincipalId(safeServer, "key_p3");
+    String sdxHash = SafeUtils.getPrincipalId(safeServer, "sdx");
     othervalues[1]=saHash + ":" + customerSlice;
-    String message= SafeUtils.postSafeStatements(safeServer,"authorizeStitchByUID",
-      getSafeKeyHash(),
-      othervalues);
-    if(message ==null || message.contains("Unsatisfied") || message.contains("Query failed")){
-      return false;
-    }
-    else
-      return true;
+    return SafeUtils.authorize(safeServer, "authorizeStitchByUID", sdxHash, othervalues);
   }
 
   public void restartSafeServer(){

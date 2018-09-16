@@ -18,6 +18,7 @@ import org.renci.ahab.libtransport.SliceAccessContext;
 import org.renci.ahab.libtransport.util.SSHAccessTokenFileFactory;
 import org.renci.ahab.libtransport.util.UtilTransportException;
 import exoplex.sdx.network.Link;
+import safe.AuthorityMock;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -77,27 +78,15 @@ public class SliceManager extends SliceCommon {
     }
   }
 
-  protected void getSshContext(){
-    sctx = new SliceAccessContext<>();
-    try {
-      SSHAccessTokenFileFactory fac;
-      fac = new SSHAccessTokenFileFactory("~/.ssh/id_rsa.pub", false);
-      SSHAccessToken t = fac.getPopulatedToken();
-      sctx.addToken("root", "root", t);
-      sctx.addToken("root", t);
-    } catch (UtilTransportException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
-    }
+  public static void main(String[] args) throws  Exception{
+    SliceManager sm = new SliceManager();
+    sm.run(args);
   }
 
   public void run(String[] args) {
-    logger.info("SDX-Simple " + args[0]);
-
     CommandLine cmd = ServerOptions.parseCmd(args);
     String configFilePath = cmd.getOptionValue("config");
     initializeExoGENIContexts(configFilePath);
-
     //type=conf.getString("config.type");
     if (cmd.hasOption('d')) type = "delete";
 
@@ -145,20 +134,6 @@ public class SliceManager extends SliceCommon {
         sshkey);
       carrier.copyFile2Slice(PathUtil.joinFilePath(scriptsdir, "ovsbridge.sh"), "~/ovsbridge.sh",
         sshkey);
-      //Make sure that plexus container is running
-      SDNControllerIP = carrier.getComputeNode(plexusName).getManagementIP();
-      if(safeEnabled){
-        if(plexusAndSafeInSlice) {
-          setSafeServerIp(carrier.getComputeNode("safe-server").getManagementIP());
-        }else {
-          setSafeServerIp(conf.getString("config.safeserver"));
-        }
-      }
-      //SDNControllerIP = "152.3.136.36";
-      Thread.sleep(10000);
-      if (!SDNControllerIP.equals("152.3.136.36") && !checkPlexus(SDNControllerIP)) {
-        System.exit(-1);
-      }
       checkPrerequisites(carrier);
 
       logger.debug("Plexus Controller IP: " + SDNControllerIP);
@@ -253,11 +228,8 @@ public class SliceManager extends SliceCommon {
         @Override
         public void run() {
           checkSafeServer(safeServerIp, riakIp);
-          /*
           AuthorityMock mock = new AuthorityMock(safeServerIp + ":7777");
-          if(!mock.verifySafePreparation()){
-            mock.makeSafePreparation();
-          }*/
+          mock.makeSafePreparation();
         }
       });
     }
