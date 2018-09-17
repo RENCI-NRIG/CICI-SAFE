@@ -15,13 +15,10 @@ import org.apache.logging.log4j.Logger;
 import safe.SafeAuthority;
 import org.apache.commons.cli.CommandLine;
 
-public class TridentSlice extends SliceManager{
+public class TridentSlice extends TridentSetting{
 
   final static Logger logger = LogManager.getLogger(TridentSlice.class);
 
-  final static String[] clientArgs = new String[]{"-c", "client-config/client.conf"};
-
-  final static String[] sdxArgs = new String[]{"-c", "config/tri.conf"};
 
   public TridentSlice(){
 
@@ -39,11 +36,38 @@ public class TridentSlice extends SliceManager{
     clientSlice.createClientSlices();
   }
 
-  @Override
-  public void run(String[] args){
+  public static void createSlices(String riakIP){
+    TridentSlice tridentSlice = new TridentSlice();
+    tridentSlice.run(sdxArgs, riakIP);
+
+    TridentSlice clientSlice = new TridentSlice();
+    CommandLine cmd = ServerOptions.parseCmd(clientArgs);
+    String configFilePath = cmd.getOptionValue("config");
+    clientSlice.initializeExoGENIContexts(configFilePath);
+    //clientSlice.deleteClientSlices();
+    clientSlice.createClientSlices();
+  }
+
+  public static void deleteTestSlices(){
+    //Delete client slices
+    TridentSlice clientSlice = new TridentSlice();
+    CommandLine cmd = ServerOptions.parseCmd(clientArgs);
+    String configFilePath = cmd.getOptionValue("config");
+    clientSlice.initializeExoGENIContexts(configFilePath);
+    clientSlice.deleteClientSlices();
+
+    //delete SDX slice
+    TridentSlice tridentSlice = new TridentSlice();
+    tridentSlice.run(sdxDelArgs);
+  }
+
+  public void run(String[] args, String myRiakIP){
     CommandLine cmd = ServerOptions.parseCmd(args);
     String configFilePath = cmd.getOptionValue("config");
     initializeExoGENIContexts(configFilePath);
+    if(myRiakIP != null){
+      riakIp = myRiakIP;
+    }
     SafeSlice slice = null;
     try {
       slice = createTridentTestSlice();

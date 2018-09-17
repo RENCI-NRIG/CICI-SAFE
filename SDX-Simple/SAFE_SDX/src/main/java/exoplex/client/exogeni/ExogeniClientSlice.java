@@ -94,6 +94,14 @@ public class ExogeniClientSlice extends SliceManager {
     String mip = c1.getComputeNode("CNode1").getManagementIP();
     Exec.sshExec("root", mip, "echo \"ip route 192.168.1.1/16 " + Prefix + "\" >>/etc/quagga/zebra.conf  ", sshkey);
     Exec.sshExec("root", mip, "sed -i -- 's/zebra=no/zebra=yes/g' /etc/quagga/daemons\n", sshkey);
+    String res[] = Exec.sshExec("root", mip, "ls /etc/quagga", sshkey);
+    while(!res[0].contains("zebra.conf")|| !res[0].contains("zebra.conf")){
+      c1.runCmdSlice("apt-get update; apt-get install -y quagga iperf", sshkey, "CNode\\d+",
+        true);
+      res = Exec.sshExec("root", mip, "ls /etc/quagga", sshkey);
+      Exec.sshExec("root", mip, "echo \"ip route 192.168.1.1/16 " + Prefix + "\" >>/etc/quagga/zebra.conf  ", sshkey);
+      Exec.sshExec("root", mip, "sed -i -- 's/zebra=no/zebra=yes/g' /etc/quagga/daemons\n", sshkey);
+    }
     Exec.sshExec("root", mip, "/etc/init.d/quagga restart", sshkey);
   }
 
@@ -115,7 +123,7 @@ public class ExogeniClientSlice extends SliceManager {
       //copyFile2Slice(c1, "/home/yaoyj11/project/exo-geni/SAFE_SDX/src/main/resources/scripts/configospffornewif.sh","~/configospffornewif.sh","~/.ssh/id_rsa");
       //copyFile2Slice(c1, "/home/yaoyj11/project/exo-geni/SAFE_SDX/src/main/resources/scripts/configospffornewif.sh","~/configospffornewif.sh","~/.ssh/id_rsa");
       //runCmdSlice(c1,"/bin/bash ~/ospfautoconfig.sh","~/.ssh/id_rsa");
-      configFTPService(c1, "(CNode1)", "ftpuser", "ftp");
+      //configFTPService(c1, "(CNode1)", "ftpuser", "ftp");
       configQuaggaRouting(c1);
       logger.info("Slice active now: " + customerName);
       c1.printNetworkInfo();
