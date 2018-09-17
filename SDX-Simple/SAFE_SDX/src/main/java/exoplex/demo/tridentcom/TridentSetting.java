@@ -13,9 +13,11 @@ public class TridentSetting extends SliceManager{
 
   static String userDir = System.getProperty("user.dir");
   static String sdxSimpleDir = userDir.split("SDX-Simple")[0] + "SDX-Simple/";
-  static String[] sdxArgs = new String[]{"-c", sdxSimpleDir + "config/tri.conf"};
-  final static String[] sdxDelArgs = new String[]{"-c", "config/tri.conf", "-d"};
-  static String[] clientArgs = new String[]{"-c", sdxSimpleDir + "client-config/client.conf"};
+  public final static String[] sdxArgs = new String[]{"-c", sdxSimpleDir + "config/tri.conf"};
+  public final static String[] sdxDelArgs = new String[]{"-c", sdxSimpleDir + "config/tri.conf",
+    "-d"};
+  public static String[] clientArgs = new String[]{"-c", sdxSimpleDir + "client-config/client" +
+    ".conf"};
 
   static {
     //sites.add("RENCI");

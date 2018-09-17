@@ -75,6 +75,10 @@ public class SdxExogeniClient extends SliceCommon{
     logger.info(logPrefix + "Client start");
   }
 
+  public void setSafeServer(String safeIP){
+    setSafeServerIp(safeIP);
+    safeChecked = true;
+  }
   public void run(String[] args) {
     try {
       serverSlice = SafeSlice.loadManifestFile(sliceName, pemLocation, keyLocation, controllerUrl);
@@ -84,6 +88,7 @@ public class SdxExogeniClient extends SliceCommon{
           }else {
             setSafeServerIp(conf.getString("config.safeserver"));
           }
+          safeChecked = true;
       }
     }catch (Exception e){
       e.printStackTrace();
