@@ -60,7 +60,7 @@ resources:
 
            echo Git SDX
            cd $WORKING_DIR
-           git clone --single-branch -b tridentcom https://github.com/RENCI-NRIG/CICI-SAFE.git
+           git clone --single-branch -b $branch https://github.com/RENCI-NRIG/CICI-SAFE.git
 
            echo Build SDX
            cd ${WORKING_DIR}/CICI-SAFE/SDX-Simple/SAFE_SDX
@@ -94,7 +94,7 @@ resources:
          params:
            $sdxserver: { get_param: sdx_server }
            $plexus_ip: { get_attr: [sdx_floating_ip, ip] }
-
+           $branch: { get_param: github_branch }
 
 
 # The parameters section gathers configuration from the user.
@@ -122,7 +122,10 @@ parameters:
   sdx_server:
     type: string
     description: IP/port of the sdx server
-    default: 127.0.0.1:8888
+  github_branch:
+    type: string
+    description: Github branch of code to use
+    default: master
 
 outputs:
   controller_ip:

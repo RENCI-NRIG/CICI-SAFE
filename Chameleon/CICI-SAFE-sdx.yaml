@@ -81,7 +81,7 @@ resources:
            echo "PermitRootLogin yes" >>/etc/ssh/sshd_config
            yum install -y docker vim mlocate git maven
            systemctl start docker
- 
+
            echo Start Plexus Controller in Container
            docker pull yaoyj11/plexus
            docker run -i -t -d -p 8080:8080 -p 6633:6633 -p 3000:3000 -h plexus --name plexus yaoyj11/plexus
@@ -101,7 +101,7 @@ resources:
 
            echo Git SDX
            cd $WORKING_DIR
-           git clone --single-branch -b tridentcom https://github.com/RENCI-NRIG/CICI-SAFE.git
+           git clone --single-branch -b $branch https://github.com/RENCI-NRIG/CICI-SAFE.git
 
            echo Build SDX
            cd ${WORKING_DIR}/CICI-SAFE/SDX-Simple/SAFE_SDX
@@ -110,7 +110,7 @@ resources:
            echo Wait for GENI pem file
            PEM_FILE=/home/cc/geni.pem
            while true
-           do     
+           do
              if [ -f $PEM_FILE ]; then
                echo "Found pem file $PEM_FILE "
                break
@@ -121,7 +121,7 @@ resources:
            done
 
            echo Create ssh key
-           ssh-keygen -t rsa -b 4096  -P "" -f "/root/.ssh/id_rsa"  -q 
+           ssh-keygen -t rsa -b 4096  -P "" -f "/root/.ssh/id_rsa"  -q
            cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys2
            chmod 600 ~/.ssh/authorized_keys2
 
@@ -159,6 +159,7 @@ resources:
            $riak_ip: { get_attr: [riak_floating_ip, ip] }
            $sdxserver_ip: { get_attr: [sdx_floating_ip, ip] }
            $plexus_ip: { get_attr: [sdx_floating_ip, ip] }
+           $branch: { get_param: github_branch }
 
 
 
@@ -180,10 +181,13 @@ parameters:
     default: sharednet1
     constraints:
     - custom_constraint: neutron.network
+  github_branch:
+    type: string
+    description: Github branch of code to use
+    default: master
+
 
 outputs:
   controller_ip:
     description: Public IP address of the NFS server
     value: { get_attr: [riak_floating_ip, ip] }
-
-
