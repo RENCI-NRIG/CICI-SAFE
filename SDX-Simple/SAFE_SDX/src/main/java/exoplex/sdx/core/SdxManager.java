@@ -107,6 +107,10 @@ public class SdxManager extends SliceManager {
     return safeServer;
   }
 
+  public String getSafeServerIP(){
+    return safeServerIp;
+  }
+
   private void addEntry_HashList(HashMap<String, ArrayList<String>> map, String key, String entry) {
     if (map.containsKey(key)) {
       ArrayList<String> l = map.get(key);
@@ -1193,6 +1197,9 @@ public class SdxManager extends SliceManager {
     try {
       if(usedip.contains(ip)){
         usedip.remove(ip);
+        if(curip>ip){
+          curip = ip;
+        }
       }
     } finally {
       iplock.unlock();
