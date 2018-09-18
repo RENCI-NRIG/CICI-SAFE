@@ -90,6 +90,12 @@ public class ExogeniClientSlice extends SliceManager {
   public void configQuaggaRouting(SafeSlice c1){
     c1.runCmdSlice("apt-get update; apt-get install -y quagga iperf", sshkey, "CNode\\d+",
       true);
+    for(ComputeNode node : c1.getComputeNodes()){
+      String res[] = Exec.sshExec("root", node.getManagementIP(), "ls /etc/init.d", sshkey);
+      while(!res[0].contains("quagga")){
+        res = Exec.sshExec("root", node.getManagementIP(), "apt-get install -y quagga", sshkey);
+      }
+    }
     String Prefix = subnet.split("/")[0];
     String mip = c1.getComputeNode("CNode1").getManagementIP();
     Exec.sshExec("root", mip, "echo \"ip route 192.168.1.1/16 " + Prefix + "\" >>/etc/quagga/zebra.conf  ", sshkey);

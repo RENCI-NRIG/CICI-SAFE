@@ -40,7 +40,6 @@ public class SdxTest {
     System.out.println("after");
   }
 
-  @Ignore
   @Test
   public void TestSDX() throws Exception{
     SdxServer.run(TridentSetting.sdxArgs);

@@ -115,9 +115,11 @@ public class SdxStitchPortClient extends SliceCommon {
         jsonparams.put("sdxnode",(String)null);
       }
       jsonparams.put("ckeyhash", safeKeyHash);
+      /*
       if(safeEnabled){
         postSafeStitchRequest(safeKeyHash,jsonparams.getString("gateway"),jsonparams.getString("sdxslice"),jsonparams.getString("sdxnode"),jsonparams.getString("stitchport"),jsonparams.getString("vlan"));
       }
+      */
       logger.debug("posted stitch request, requesting to Sdx server");
       String res = HttpUtil.postJSON(serverurl + "sdx/stitchchameleon", jsonparams);
       logger.debug(res);
