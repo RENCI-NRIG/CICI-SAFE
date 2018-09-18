@@ -40,7 +40,7 @@ Once the Chameleon cluster is up, configure an ExoGENI slice of workers, install
 * Run HIC_HQ workflow:
 	
 	```
-	$ cd HIC-HQ-Workflow
+	$ cd HIC-HQ-Workflow/workflow/
 	$ chmod 777 run.sh
 	$ ./run.sh
 	```
