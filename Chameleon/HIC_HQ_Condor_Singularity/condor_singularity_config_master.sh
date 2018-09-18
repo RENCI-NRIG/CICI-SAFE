@@ -55,7 +55,7 @@ dpkg -i --force-depends condor_8.6.12-446077-ubuntu14_amd64.deb
 # Install singularity
 #singularity dependencies
 sudo apt-get update
-sudo apt-get install libarchive-dev python dh-autoreconf build-essential
+sudo apt-get -y install libarchive-dev python dh-autoreconf build-essential squashfs-tools
 
 # install the maste branch
 git clone https://github.com/singularityware/singularity.git
@@ -68,6 +68,12 @@ git checkout vault/release-2.5
 ./configure --prefix=/usr/local
 make
 sudo make install
+
+# Install pegasus
+wget -O - http://download.pegasus.isi.edu/pegasus/gpg.txt | apt-key add -
+echo 'deb http://download.pegasus.isi.edu/pegasus/ubuntu trusty main' >/etc/apt/sources.list.d/pegasus.list
+apt-get update
+apt-get -y install pegasus
 
 
 #iptables -A INPUT -p tcp --dport 9618 -j ACCEPT

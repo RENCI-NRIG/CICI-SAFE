@@ -60,7 +60,7 @@ resources:
               template: |
                 #!/bin/bash
                 echo nameserver 8.8.8.8 >> /etc/resolv.conf   
-                wget http://geni-images.renci.org/images/cwang/Condor/scripts/condor_singularity_config_worker.sh
+                wget http://geni-images.renci.org/images/cwang/Condor/scripts/Condor_singularity/condor_singularity_config_worker.sh
                 chmod +x condor_singularity_config_worker.sh
                 ./condor_singularity_config_worker.sh >> /tmp/boot.log 2>&1
               params:
@@ -81,7 +81,7 @@ resources:
           template: |
             #!/bin/bash
             echo nameserver 8.8.8.8 >> /etc/resolv.conf 
-            wget http://geni-images.renci.org/images/cwang/Condor/scripts/condor_singularity_config_master.sh
+            wget http://geni-images.renci.org/images/cwang/Condor/scripts/Condor_singularity/condor_singularity_config_master.sh
             chmod +x condor_singularity_config_master.sh
             
             echo $worker_ips > /tmp/client_ips.txt
