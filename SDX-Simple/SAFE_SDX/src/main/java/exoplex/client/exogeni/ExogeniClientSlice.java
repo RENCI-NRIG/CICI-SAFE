@@ -96,6 +96,8 @@ public class ExogeniClientSlice extends SliceManager {
         res = Exec.sshExec("root", node.getManagementIP(), "apt-get install -y quagga", sshkey);
       }
     }
+    c1.runCmdSlice("sed -i -- 's/zebra=no/zebra=yes/g' /etc/quagga/daemons", sshkey, "CNode\\d+",
+      true);
     String Prefix = subnet.split("/")[0];
     String mip = c1.getComputeNode("CNode1").getManagementIP();
     Exec.sshExec("root", mip, "echo \"ip route 192.168.1.1/16 " + Prefix + "\" >>/etc/quagga/zebra.conf  ", sshkey);
@@ -103,10 +105,6 @@ public class ExogeniClientSlice extends SliceManager {
     String res[] = Exec.sshExec("root", mip, "ls /etc/quagga", sshkey);
     if(!res[0].contains("zebra.conf")){
       Exec.sshExec("root", mip, "echo \"ip route 192.168.1.1/16 " + Prefix + "\" >>/etc/quagga/zebra.conf  ", sshkey);
-    }
-    res = Exec.sshExec("root", mip, "cat /etc/quagga/daemons", sshkey);
-    if(!res[0].contains("zebra=yes")){
-      Exec.sshExec("root", mip, "sed -i -- 's/zebra=no/zebra=yes/g' /etc/quagga/daemons\n", sshkey);
     }
     Exec.sshExec("root", mip, "/etc/init.d/quagga restart", sshkey);
   }
