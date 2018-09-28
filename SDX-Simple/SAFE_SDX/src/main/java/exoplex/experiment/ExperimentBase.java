@@ -64,10 +64,25 @@ public class ExperimentBase {
   }
 
   public void addUdpFlow(String client, String server, String bw) {
+    this.addUdpFlow(client, server, bw, 1);
+  }
+
+  public void addTcpFlow(String client, String server, String bw) {
+    addTcpFlow(client, server, bw, 1);
+  }
+
+  public void addUdpFlow(String client, String server, String bw, int threads) {
     final String mip1 = clients.get(client)[0];
     final String mip2 = clients.get(server)[0];
     final String dip2 = clients.get(server)[1];
-    flowManager.addUdpFlow(mip1, mip2, dip2, bw);
+    flowManager.addUdpFlow(mip1, mip2, dip2, bw, threads);
+  }
+
+  public void addTcpFlow(String client, String server, String bw, int threads) {
+    final String mip1 = clients.get(client)[0];
+    final String mip2 = clients.get(server)[0];
+    final String dip2 = clients.get(server)[1];
+    flowManager.addTcpFlow(mip1, mip2, dip2, bw, threads);
   }
 
   public void clearFlows() {

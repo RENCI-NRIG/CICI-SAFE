@@ -85,19 +85,19 @@ public abstract class SliceCommon {
       topofile = topodir + sliceName + ".topo";
     }
     if (conf.hasPath("config.serversite")) {
-      serverSite = conf.getString("config.serversite");
+      serverSite = SiteBase.get(conf.getString("config.serversite"));
     }
     if(conf.hasPath("config.riak")){
       riakIp = conf.getString("config.riak");
     }
     if (conf.hasPath("config.controllersite")) {
-      controllerSite = conf.getString("config.controllersite");
+      controllerSite = SiteBase.get(conf.getString("config.controllersite"));
     }
     if (conf.hasPath("config.clientsites")) {
       String clientSitesStr = conf.getString("config.clientsites");
       clientSites = new ArrayList<String>();
       for (String site : clientSitesStr.split(":")) {
-        clientSites.add(site);
+        clientSites.add(SiteBase.get(site));
       }
     }
     if(conf.hasPath("config.safe")){
@@ -163,7 +163,7 @@ public abstract class SliceCommon {
       }
       br.close();
     } catch (Exception e) {
-      logger.error(e.getMessage());
+      logger.warn(e.getMessage());
     }
     return res;
   }
@@ -191,7 +191,7 @@ public abstract class SliceCommon {
       }
       br.close();
     } catch (Exception e) {
-      logger.error("Topology not save to file");
+      logger.warn("Topology not save to file");
     }
   }
 

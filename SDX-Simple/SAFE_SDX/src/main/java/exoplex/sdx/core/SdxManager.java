@@ -185,7 +185,7 @@ public class SdxManager extends SliceManager {
       clearSdx();
     }
     initializeSdx();
-    configRouting(serverSlice, OVSController, SDNController, routerPattern, stitchPortPattern);
+    configRouting(OVSController, SDNController, routerPattern, stitchPortPattern);
     startBro();
   }
 
@@ -200,7 +200,8 @@ public class SdxManager extends SliceManager {
 
 
   public void delFlows() {
-    serverSlice.runCmdSlice("ovs-ofctl del-flows br0", sshkey, routerPattern, false);
+    serverSlice.runCmdSlice("ovs-ofctl -O OpenFlow15 del-flows br0", sshkey, routerPattern,
+      false);
   }
 
   private void clearSdx() throws TransportException, Exception{
@@ -1107,10 +1108,10 @@ public class SdxManager extends SliceManager {
   }
 
   public void configRouting() {
-    configRouting(serverSlice, OVSController, SDNController, routerPattern, stitchPortPattern);
+    configRouting(OVSController, SDNController, routerPattern, stitchPortPattern);
   }
 
-  public void configRouting(SafeSlice s, String ovscontroller, String httpcontroller, String
+  public void configRouting(String ovscontroller, String httpcontroller, String
       routerpattern, String stitchportpattern) {
     logger.debug("Configurating Routing");
     if(plexusAndSafeInSlice) {
@@ -1120,7 +1121,7 @@ public class SdxManager extends SliceManager {
     // added to the ovs bridge, then we reset the controller?
     // FIXME: maybe this is not the best way to do.
     //add all interfaces other than eth0 to ovs bridge br0
-    configRouters(s);
+    configRouters(serverSlice);
 
     routingmanager.waitTillAllOvsConnected(SDNController);
 
@@ -1213,7 +1214,7 @@ public class SdxManager extends SliceManager {
     logger.debug("Get flow installation time on " + routername + " for " + flowPattern);
     try {
       String result = Exec.sshExec("root", getManagementIP(routername), getEchoTimeCMD() +
-          "ovs-ofctl dump-flows br0", sshkey)[0];
+          "ovs-ofctl -O OpenFlow15 dump-flows br0", sshkey)[0];
       String[] parts = result.split("\n");
       String curMillis = parts[0].split(":")[1];
       String flow = "";
@@ -1240,7 +1241,7 @@ public class SdxManager extends SliceManager {
 
   public int getNumRouteEntries(String routerName, String flowPattern) {
     String result = Exec.sshExec("root", getManagementIP(routerName), getEchoTimeCMD() +
-        "ovs-ofctl dump-flows br0", sshkey)[0];
+        "ovs-ofctl -O OpenFlow15 dump-flows br0", sshkey)[0];
     String[] parts = result.split("\n");
     String curMillis = parts[0].split(":")[1];
     int num = 0;
@@ -1265,7 +1266,7 @@ public class SdxManager extends SliceManager {
       logger.debug("------------------");
       logger.debug("Flow table: " + node);
       String result = Exec.sshExec("root", getManagementIP(node), getEchoTimeCMD() +
-          "ovs-ofctl dump-flows br0", sshkey)[0];
+          "ovs-ofctl -O OpenFlow15 dump-flows br0", sshkey)[0];
       String[] parts = result.split("\n");
       for (String s : parts) {
         logger.debug(s);
