@@ -7,19 +7,42 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import exoplex.sdx.core.SdxManager;
 import exoplex.sdx.network.SdnUtil;
+import junit.framework.Assert;
+import org.junit.*;
 
 import java.util.HashMap;
 
+@Ignore
 public class TestMpRouting extends SdxManager {
   static Logger logger = LogManager.getLogger(TestMpRouting.class);
-  static String[] arg1 = {"-c", "config/test-mptcp.conf"};
   static String site= SiteBase.get("TAMU");
+  static String userDir = System.getProperty("user.dir");
+  static String sdxSimpleDir = userDir.split("SDX-Simple")[0] + "SDX-Simple/";
+  static String[] arg1 = {"-c", sdxSimpleDir + "config/test-mptcp.conf"};
+  static TestMpRouting mpr;
+
+  @BeforeClass
+  public static void setUp() throws  Exception{
+    mpr = new TestMpRouting();
+    mpr.test();
+  }
+
+  @AfterClass
+  public static void cleanUp(){
+    mpr.delete();
+  }
 
   public static void main(String[] args) throws Exception {
-    TestMpRouting mpr = new TestMpRouting();
-    //create the network
-    //mpr.test();
+    mpr.initNetwork();
+    mpr.installTestGroup();
+    mpr.sendTraffic();
+    mpr.getGroupStats();
+    mpr.logFlowTables();
+    logger.debug("end");
+  }
 
+  @Test
+  public void testMpRouting() throws Exception {
     mpr.initNetwork();
     mpr.installTestGroup();
     mpr.sendTraffic();
@@ -80,7 +103,7 @@ public class TestMpRouting extends SdxManager {
   }
 
   public SafeSlice createTestSlice(){
-    SafeSlice slice = SafeSlice.create("test-yyj", pemLocation, keyLocation, controllerUrl, sctx);
+    SafeSlice slice = SafeSlice.create(sliceName, pemLocation, keyLocation, controllerUrl, sctx);
     slice.addComputeNode(site, "CNode0");
     slice.addComputeNode(site,"CNode1");
     slice.addComputeNode(site,"CNode2");

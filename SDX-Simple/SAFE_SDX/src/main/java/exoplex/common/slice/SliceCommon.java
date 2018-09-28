@@ -163,7 +163,7 @@ public abstract class SliceCommon {
       }
       br.close();
     } catch (Exception e) {
-      logger.error(e.getMessage());
+      logger.warn(e.getMessage());
     }
     return res;
   }
@@ -191,7 +191,7 @@ public abstract class SliceCommon {
       }
       br.close();
     } catch (Exception e) {
-      logger.error("Topology not save to file");
+      logger.warn("Topology not save to file");
     }
   }
 
