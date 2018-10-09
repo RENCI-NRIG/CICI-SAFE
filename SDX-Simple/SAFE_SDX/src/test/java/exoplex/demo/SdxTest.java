@@ -29,6 +29,7 @@ public class SdxTest {
     //create RiakSlice
     RiakSlice riakSlice = new RiakSlice();
     String riakIP = riakSlice.run(riakArgs);
+    //Sdx and client slices
     TridentSlice.createSlices(riakIP);
   }
 
