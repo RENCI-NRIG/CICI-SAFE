@@ -39,7 +39,6 @@ public class TridentSlice extends TridentSetting{
   public static void createSlices(String riakIP){
     TridentSlice tridentSlice = new TridentSlice();
     tridentSlice.run(sdxArgs, riakIP);
-
     TridentSlice clientSlice = new TridentSlice();
     CommandLine cmd = ServerOptions.parseCmd(clientArgs);
     String configFilePath = cmd.getOptionValue("config");

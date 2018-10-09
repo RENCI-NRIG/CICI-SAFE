@@ -29,6 +29,11 @@ public class SiteBase {
     }else if(sites.containsValue(site)){
       return site;
     }else{
+      for(String geniSite: sites.values()){
+        if(geniSite.contains(site)){
+          return geniSite;
+        }
+      }
       return null;
     }
   }

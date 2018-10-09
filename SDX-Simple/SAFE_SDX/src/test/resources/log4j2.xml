@@ -131,8 +131,10 @@
         <Logger name="exoplex.common.slice.SafeSlice" level="debug" additivity="true">
             <AppenderRef ref="RollingFile"/>
         </Logger>
+        <Logger name="exoplex.common.utils.Exec" level="debug" additivity="false">
+            <AppenderRef ref="RollingFile"/>
+        </Logger>
         <Logger name="org.apache.commons.httpclient.HttpClient" level="debug" additivity="false">
             <AppenderRef ref="RollingFile"/>
         </Logger>
-    </Loggers>
-</Configuration>
+    </Loggers></Configuration>

@@ -1,6 +1,7 @@
 package exoplex.sdx.core;
 
 import exoplex.common.slice.SafeSlice;
+import exoplex.common.slice.SiteBase;
 import exoplex.common.utils.Exec;
 import exoplex.common.utils.SafeUtils;
 import exoplex.common.utils.ServerOptions;
@@ -787,10 +788,11 @@ public class SdxManager extends SliceManager {
     routingmanager.revokePrefix(prefix, SDNController);
   }
 
-  public String stitchChameleon(String sdxsite, String nodeName, String customer_keyhash, String
+  public String stitchChameleon(String site, String nodeName, String customer_keyhash, String
     stitchport,
                                 String vlan, String gateway, String ip) {
     String res = "Stitch request unauthorized";
+    String sdxsite = SiteBase.get(site);
     /*
     if (!safeEnabled || authorizeStitchChameleon(customer_keyhash, stitchport, vlan, gateway,
         sliceName, nodeName)) {

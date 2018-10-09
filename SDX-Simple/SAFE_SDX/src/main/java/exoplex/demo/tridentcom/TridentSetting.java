@@ -21,8 +21,8 @@ public class TridentSetting extends SliceManager{
 
   static {
     //sites.add("RENCI");
-    //sites.add("TAMU");
-    sites.add("UFL");
+    sites.add("TAMU");
+    //sites.add("UFL");
     sites.add("UH");
     sites.add("UNF");
     //sites.add("SL");
