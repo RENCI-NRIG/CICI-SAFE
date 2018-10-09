@@ -52,6 +52,7 @@ CWD=`pwd`
 
 # Install condor
 cd /home/condor
+apt-get update
 curl http://geni-images.renci.org/images/cwang/Condor/installation-packages/condor_8.6.12-446077-ubuntu14_amd64.deb -o condor_8.6.12-446077-ubuntu14_amd64.deb              
 dpkg -i --force-depends condor_8.6.12-446077-ubuntu14_amd64.deb
 apt-get -f -y install
@@ -92,7 +93,7 @@ cd $CWD
 
 sed -i 's/127.0.1.1/127.0.0.1/gI' /etc/hosts
 
-MY_IP=`ifconfig eno1 | grep netmask | tr -s ' ' | cut -d " " -f 3`
+MY_IP=`ifconfig eth0 | grep Mask | tr -s ' ' | cut -d " " -f 3 | cut -d ":" -f 2`
 echo ""  > /home/condor/.ssh/config
 cat > /home/condor/.ssh/config <<EOF
 Host `echo $MY_IP  | sed 's/.[0-9][0-9]*$//g'`.* 0.0.0.0 master worker*

@@ -47,6 +47,7 @@ chmod 600 /home/condor/.ssh/*
 chown condor:condor /home/condor/.ssh/*
 
 # Install condor
+apt-get update
 curl http://geni-images.renci.org/images/cwang/Condor/installation-packages/condor_8.6.12-446077-ubuntu14_amd64.deb > condor_8.6.12-446077-ubuntu14_amd64.deb              
 dpkg -i --force-depends condor_8.6.12-446077-ubuntu14_amd64.deb
 apt-get -f -y install
