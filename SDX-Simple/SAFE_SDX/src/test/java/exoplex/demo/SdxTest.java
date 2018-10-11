@@ -26,6 +26,7 @@ public class SdxTest {
   @BeforeClass
   public static void before() throws Exception{
     System.out.println("before test");
+    after();
     //create RiakSlice
     RiakSlice riakSlice = new RiakSlice();
     String riakIP = riakSlice.run(riakArgs);
@@ -69,7 +70,10 @@ public class SdxTest {
         TridentSetting.clientIpMap.get(clientSlice),
         SdxServer.sdxManager.getSafeServer().split(":")[0]});
 
-      String gw = exogeniClients.get(clientSlice).processCmd("stitch CNode0");
+      String clientGateWay = TridentSetting.clientIpMap.get(clientSlice).replace(".1/24", ".2");
+      String sdxIP = TridentSetting.clientIpMap.get(clientSlice).replace(".1/24", ".1/24");
+      String gw = exogeniClients.get(clientSlice).processCmd(String.format("stitch CNode1 %s %s",
+        clientGateWay, sdxIP));
       exogeniClients.get(clientSlice).processCmd(String.format("route %s %s",
         TridentSetting.clientIpMap.get(clientSlice),
         gw));
@@ -78,7 +82,7 @@ public class SdxTest {
 
   private  void unStitchSlices(){
     for(String clientSlice: TridentSetting.clientSlices){
-      exogeniClients.get(clientSlice).processCmd("unstitch CNode0");
+      exogeniClients.get(clientSlice).processCmd("unstitch CNode1");
     }
   }
 

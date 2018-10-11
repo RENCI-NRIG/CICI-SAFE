@@ -48,14 +48,14 @@ public class IperfFlow extends AsyncTask{
     cmd = cmd + " -c " + serverIp;
     if (proto.equals(IperfServer.UDP)) {
       cmd = cmd + " -u";
+      cmd = cmd + " -b " + bw;
     }
     if (seconds > 0) {
       cmd = cmd + " -t " + seconds;
     }
     if(this.threads>1){
-      cmd = cmd + " -p " + this.threads;
+      cmd = cmd + " -P " + this.threads;
     }
-    cmd = cmd + " -b " + bw;
     results.add(Exec.sshExec("root", managementIp, cmd, sshKey));
   }
 

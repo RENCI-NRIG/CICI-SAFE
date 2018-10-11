@@ -154,8 +154,9 @@ public class ExperimentBase {
   }
 
 
-  public void  printOut(List<String[]> result) {
-    for (String[] s : result) {
+  public void  printFlowServerResult() {
+
+    for (String[] s : flowManager.getServerResults()) {
       System.out.println(s[0]);
       System.out.println(s[1]);
     }

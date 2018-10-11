@@ -121,7 +121,7 @@ public class ExogeniClientSlice extends SliceManager {
       subnet = ipPrefix;
       computeIP(subnet);
       logger.info("Client start");
-      SafeSlice c1 = createCustomerSlice(customerName, 2, IPPrefix, curip, bw, true);
+      SafeSlice c1 = createCustomerSlice(customerName, 1, IPPrefix, curip, bw, true);
       c1.commitAndWait();
       c1.refresh();
       if(safeEnabled && plexusAndSafeInSlice){
@@ -152,12 +152,12 @@ public class ExogeniClientSlice extends SliceManager {
 
     ArrayList<ComputeNode> nodelist = new ArrayList<ComputeNode>();
     for (int i = 0; i < num; i++) {
-      ComputeNode node0 = s.addComputeNode(routerSite, "CNode" + String.valueOf(i));
+      ComputeNode node0 = s.addComputeNode(routerSite, "CNode" + String.valueOf(i + 1));
       nodelist.add(node0);
     }
     if(network){
       for(int i=0; i < nodelist.size() - 1; i++){
-        s.addLink("clink" + i,
+        s.addLink("clink" + (i + 1),
           IPPrefix + (start +i) + ".1",
           IPPrefix + (start +i) + ".2",
           "255.255.255.0",

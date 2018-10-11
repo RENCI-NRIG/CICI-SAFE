@@ -317,7 +317,9 @@ public class SdxManager extends SliceManager {
     String customerSlice,
     String reserveId,
     String secret,
-    String sdxnode) throws TransportException, Exception{
+    String sdxnode,
+    String gateway,
+    String ip) throws TransportException, Exception{
     long start = System.currentTimeMillis();
     String[] res = new String[2];
     res[0] = null;
@@ -334,12 +336,8 @@ public class SdxManager extends SliceManager {
       String stitchname = null;
       Network net = null;
       ComputeNode node = null;
-      int ip_to_use = 0;
       if (sdxnode != null && serverSlice.getResourceByName(sdxnode)!= null) {
         node = serverSlice.getComputeNode(sdxnode);
-        ip_to_use = getAvailableIP();
-        stitchname = "stitch_" + node.getName() + "_" + ip_to_use;
-        usedip.add(ip_to_use);
       /*
       serverSlice.lockSlice();
       serverSlice.addLink(stitchname,  node.getName(), bw);
@@ -350,9 +348,8 @@ public class SdxManager extends SliceManager {
       } else if (sdxnode == null && edgeRouters.containsKey(site) && edgeRouters.get(site).size() >
           0) {
         node = serverSlice.getComputeNode(edgeRouters.get(site).get(0));
-        ip_to_use = getAvailableIP();
-        stitchname = "stitch_" + node.getName() + "_" + ip_to_use;
-        usedip.add(ip_to_use);
+        String sname = ip.replace(".", "_").replace("/","_");
+        stitchname = "stitch_" + node.getName() + "_" + sname;
       /*
       serverSlice.lockSlice();
       serverSlice.addLink(stitchname, node.getName(), bw);
@@ -374,12 +371,11 @@ public class SdxManager extends SliceManager {
         serverSlice.reloadSlice();
         serverSlice.addCoreEdgeRouterPair(site, cRouterName, eRouterName, eLinkName, bw);
         node = (ComputeNode) serverSlice.getResourceByName(eRouterName);
-        ip_to_use = getAvailableIP();
-        stitchname = "stitch_" + node.getName() + "_" + ip_to_use;
-        usedip.add(ip_to_use);
+        String sname = ip.replace(".", "_").replace("/","_");
+        stitchname = "stitch_" + node.getName() + "_" + sname;
         net = serverSlice.addBroadcastLink(stitchname, bw);
         InterfaceNode2Net ifaceNode0 = (InterfaceNode2Net) net.stitch(node);
-        ifaceNode0.setIpAddress("192.168." + String.valueOf(ip_to_use) + ".1");
+        ifaceNode0.setIpAddress(ip);
         ifaceNode0.setNetmask("255.255.255.0");
         serverSlice.commitAndWait(10, Arrays.asList(new String[]{stitchname, cRouterName, eRouterName, eLinkName}));
         serverSlice.reloadSlice();
@@ -407,20 +403,16 @@ public class SdxManager extends SliceManager {
       Link logLink = new Link();
       logLink.setName(stitchname);
       logLink.addNode(node.getName());
-      logLink.setIP(IPPrefix + String.valueOf(ip_to_use));
-      logLink.setMask(mask);
       links.put(stitchname, logLink);
-      String gw = logLink.getIP(1);
-      String ip = logLink.getIP(2);
       serverSlice.stitch(net1_stitching_GUID, customerSlice, reserveId, secret, ip);
-      res[0] = gw;
-      res[1] = ip;
+      res[0] = ip;
+      res[1] = gateway;
       sleep(15);
       updateOvsInterface(serverSlice, node.getName());
       routingmanager.newExternalLink(logLink.getLinkName(),
-          logLink.getIP(1),
+          ip,
           logLink.getNodeA(),
-          ip.split("/")[0],
+          gateway,
           SDNController);
       //routingmanager.configurePath(ip,node.getName(),ip.split("/")[0],SDNController);
       logger.info(logPrefix + "stitching operation  completed, time elapsed(s): " + (System
@@ -432,8 +424,7 @@ public class SdxManager extends SliceManager {
         customerNodes.put(customerSafeKeyHash, new HashSet<>());
       }
       customerNodes.get(customerSafeKeyHash).add(reserveId);
-      customerGateway.put(reserveId, ip.split("/")[0]);
-
+      customerGateway.put(reserveId, gateway);
     }
     return res;
   }

@@ -24,7 +24,7 @@ public class RestService {
     logger.debug("got sittch request ");
     try {
       String[] res = SdxServer.sdxManager.stitchRequest(sr.sdxsite, sr.ckeyhash, sr.cslice,
-          sr.creservid, sr.secret, sr.sdxnode);
+          sr.creservid, sr.secret, sr.sdxnode, sr.gateway, sr.ip);
       return new StitchResult(res[0], res[1]);
     } catch (Exception e) {
       e.printStackTrace();
@@ -124,6 +124,8 @@ class StitchChameleon {
 class StitchRequest {
   public String sdxsite;
   //customer Safe key hash
+  public String gateway;
+  public String ip;
   public String ckeyhash;
   public String cslice;
   public String creservid;
@@ -132,7 +134,7 @@ class StitchRequest {
 
   @Override
   public String toString(){
-    return String.format("%s %s %s %s", sdxsite, cslice, creservid, sdxnode);
+    return String.format("%s %s %s %s %s %s", sdxsite, cslice, creservid, sdxnode, gateway, ip);
   }
 }
 

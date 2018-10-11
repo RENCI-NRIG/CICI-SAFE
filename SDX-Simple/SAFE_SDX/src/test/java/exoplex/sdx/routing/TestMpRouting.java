@@ -150,8 +150,8 @@ public class TestMpRouting extends SdxManager {
   public void installTestGroup(){
     //===>>c0 =>c1 c2
     HashMap<String, Integer> nbs = new HashMap<>();
-    int weight1 = 50;
-    int weight2 = 50;
+    int weight1 = 2;
+    int weight2 = 1;
     nbs.put("c1", weight1);
     nbs.put("c2", weight2);
     int groupId = 1;
@@ -230,14 +230,15 @@ public class TestMpRouting extends SdxManager {
         "192.168.30.2");
     experiment.addTcpFlow("CNode0", "CNode1", "1m", 20);
     experiment.addTcpFlow("CNode0", "CNode2", "1m", 20);
-    experiment.addTcpFlow("CNode2", "CNode0", "1m", 20);
-    experiment.addTcpFlow("CNode1", "CNode0", "1m", 20);
+    //experiment.addTcpFlow("CNode2", "CNode0", "1m", 20);
+    //experiment.addTcpFlow("CNode1", "CNode0", "1m", 20);
     experiment.setLatencyTask("CNode0", "CNode1");
     experiment.startLatencyTask();
     experiment.startFlows(10);
     logger.warn(String.format("start time %s", System.currentTimeMillis()/1000));
     sleep(15);
     experiment.stopFlows();
+    experiment.printFlowServerResult();
     experiment.stopLatencyTask();
     experiment.printLatencyResult();
     logger.warn(String.format("stop time %s", System.currentTimeMillis()/1000));

@@ -63,15 +63,13 @@ To run the SDX demo, first we creat a SDX slice and two customer slices on exoge
 
   [6]. alice stitch CNode0 to sdx/c0, in alice's controller, run:
     $>stitch CNode0 
-
-    [optional, the name of router in vsdx slice if the client knows exactly which router it wants to stitch to, e.g., c0], this is useful
-    when there is multiple routers on the same site
-    bob stitch CNode0 to sdx/c3, in bob's controller run:
-    $>stitch CNode0 c3
+    or $>stitch CNode0 192.168.10.2 192.168.10.1/24
+    The first IP address without netmask is the address of the interface in customer network. Sdx will communicate with the customer using this address as gateway
+    The second IP address with netmask is the address of the interface in SDX slice, the netmask is required.
     
     OR the following commands are equivalent:
     ./scripts/sdxclient.sh -c client-config/alice.conf -e "stitch CNode0"
-    ./scripts/sdxclient.sh -c client-config/bob.conf -e "stitch CNode0"
+    ./scripts/sdxclient.sh -c client-config/bob.conf -e "stitch CNode0 192.168.10.2 192.168.10.1/24"
 
     [NOTE] With safe authorization, to enable stitch to a customer slice. First we need to set up delegations to the user and slice with AuthorityMock:
     $>./scripts/auth.sh customerkeyfile customerslice customerIPPrefix safeServerIp
