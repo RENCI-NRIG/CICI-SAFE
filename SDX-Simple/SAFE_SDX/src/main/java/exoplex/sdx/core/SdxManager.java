@@ -404,7 +404,8 @@ public class SdxManager extends SliceManager {
       logLink.setName(stitchname);
       logLink.addNode(node.getName());
       links.put(stitchname, logLink);
-      serverSlice.stitch(net1_stitching_GUID, customerSlice, reserveId, secret, ip);
+      serverSlice.stitch(net1_stitching_GUID, customerSlice, reserveId, secret, gateway + "/" +  ip
+        .split("/")[1]);
       res[0] = ip;
       res[1] = gateway;
       sleep(15);

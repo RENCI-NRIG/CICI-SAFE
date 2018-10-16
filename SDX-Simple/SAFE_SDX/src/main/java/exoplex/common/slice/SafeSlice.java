@@ -190,7 +190,7 @@ public class SafeSlice {
   }
 
   public ComputeNode addComputeNode(String site, String name) {
-    logger.debug("Adding new compute node " + slice.getName());
+    logger.debug(String.format("Adding new compute node %s to slice %s", name, slice.getName()));
     NodeBaseInfo ninfo = NodeBase.getImageInfo(CustomerVMVersion);
     String nodeImageShortName = ninfo.nisn;
     String nodeImageURL = ninfo.niurl;
