@@ -1,6 +1,7 @@
 package exoplex.client.exogeni;
 
 import exoplex.common.slice.SafeSlice;
+import exoplex.common.slice.SiteBase;
 import exoplex.common.utils.Exec;
 import exoplex.common.utils.ServerOptions;
 import exoplex.sdx.core.SliceManager;
@@ -53,7 +54,7 @@ public class ExogeniClientSlice extends SliceManager {
 
 
     if (type.equals("client")) {
-      routerSite = conf.getString("config.routersite");
+      routerSite = SiteBase.get(conf.getString("config.routersite"));
       subnet = conf.getString("config.ipprefix");
       computeIP(subnet);
       logger.info("Client start");
