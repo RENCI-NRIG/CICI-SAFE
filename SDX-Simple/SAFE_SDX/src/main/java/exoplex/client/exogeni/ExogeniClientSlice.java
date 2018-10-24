@@ -59,12 +59,12 @@ public class ExogeniClientSlice extends SliceManager {
       computeIP(subnet);
       logger.info("Client start");
       String customerName = sliceName;
-      SafeSlice c1 = createCustomerSlice(customerName, 2, IPPrefix, curip, bw, true);
+      SafeSlice c1 = createCustomerSlice(customerName, 1, IPPrefix, curip, bw, true);
       try {
         c1.commitAndWait();
       } catch (Exception e) {
         e.printStackTrace();
-        c1 = createCustomerSlice(customerName, 2, IPPrefix, curip, bw, true);
+        c1 = createCustomerSlice(customerName, 1, IPPrefix, curip, bw, true);
         c1.commitAndWait();
       }
       c1.refresh();

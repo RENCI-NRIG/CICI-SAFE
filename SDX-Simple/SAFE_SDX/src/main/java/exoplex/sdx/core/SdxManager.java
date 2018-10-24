@@ -8,6 +8,7 @@ import exoplex.common.utils.ServerOptions;
 import exoplex.sdx.safe.SafeManager;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.json.JSONObject;
 import org.renci.ahab.libndl.resources.request.*;
 import org.renci.ahab.libtransport.util.ContextTransportException;
 import org.renci.ahab.libtransport.util.TransportException;
@@ -311,7 +312,7 @@ public class SdxManager extends SliceManager {
     return num;
   }
 
-  public String[] stitchRequest(
+  public JSONObject stitchRequest(
     String site,
     String customerSafeKeyHash,
     String customerSlice,
@@ -321,9 +322,11 @@ public class SdxManager extends SliceManager {
     String gateway,
     String ip) throws TransportException, Exception{
     long start = System.currentTimeMillis();
-    String[] res = new String[2];
-    res[0] = null;
-    res[1] = null;
+    JSONObject res = new JSONObject();
+    res.put("ip", "");
+    res.put("gateway", "");
+    res.put("message", "");
+
     logger.info(logPrefix + "new stitch request from " + customerSlice+ " for " + sliceName + " at " +
         "" + site);
     logger.debug("new stitch request for " + sliceName + " at " + site);
@@ -406,8 +409,8 @@ public class SdxManager extends SliceManager {
       links.put(stitchname, logLink);
       serverSlice.stitch(net1_stitching_GUID, customerSlice, reserveId, secret, gateway + "/" +  ip
         .split("/")[1]);
-      res[0] = ip;
-      res[1] = gateway;
+      res.put("ip", ip);
+      res.put("gateway", gateway);
       sleep(15);
       updateOvsInterface(serverSlice, node.getName());
       routingmanager.newExternalLink(logLink.getLinkName(),
@@ -426,6 +429,9 @@ public class SdxManager extends SliceManager {
       }
       customerNodes.get(customerSafeKeyHash).add(reserveId);
       customerGateway.put(reserveId, gateway);
+    }else{
+      res.put("message", String.format("Unauthorized stitch request from (%s, %s)",
+        customerSafeKeyHash, customerSlice));
     }
     return res;
   }
