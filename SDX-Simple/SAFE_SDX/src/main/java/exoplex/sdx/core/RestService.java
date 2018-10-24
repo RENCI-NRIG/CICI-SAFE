@@ -1,7 +1,9 @@
 package exoplex.sdx.core;
 
+import org.apache.jena.atlas.json.JSON;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.json.JSONObject;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
@@ -21,14 +23,14 @@ public class RestService {
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.APPLICATION_JSON)
   public StitchResult stitchRequest(StitchRequest sr) {
-    logger.debug("got sittch request ");
+    logger.debug(String.format("got sittch request %s", sr));
     try {
-      String[] res = SdxServer.sdxManager.stitchRequest(sr.sdxsite, sr.ckeyhash, sr.cslice,
+      JSONObject res = SdxServer.sdxManager.stitchRequest(sr.sdxsite, sr.ckeyhash, sr.cslice,
           sr.creservid, sr.secret, sr.sdxnode, sr.gateway, sr.ip);
-      return new StitchResult(res[0], res[1]);
+      return new StitchResult(res);
     } catch (Exception e) {
       e.printStackTrace();
-      return new StitchResult(null, null);
+      return new StitchResult();
     }
   }
 
@@ -70,7 +72,6 @@ public class RestService {
   @Produces(MediaType.TEXT_PLAIN)
   public String stitchChameleon(StitchChameleon sr) {
     logger.debug("got chameleon stitch request: \n" + sr.toString());
-    logger.debug(String.format("got chameleon stitch request from %s", sr.ckeyhash));
     String res = SdxServer.sdxManager.stitchChameleon(sr.sdxsite, sr.sdxnode,
         sr.ckeyhash, sr.stitchport, sr.vlan, sr.gateway, sr.ip);
     return res;
@@ -116,7 +117,7 @@ class StitchChameleon {
   public String ip;
 
   public String toString() {
-    return "{\"sdxslice\": " + sdxsite + ", \"sdxnode\": " + sdxnode + ", \"ckeyhash\":" + ckeyhash
+    return "{\"sdxsite\": " + sdxsite + ", \"sdxnode\": " + sdxnode + ", \"ckeyhash\":" + ckeyhash
       + ", \"stitchport\":" + stitchport + ", \"vlan\":" + vlan + "\"gateway\":" + gateway + "}";
   }
 }
@@ -174,17 +175,19 @@ class StitchResult {
   public boolean result;
   public String gateway;
   public String ip;
+  public String message;
 
   public StitchResult() {
   }
 
-  public StitchResult(String gw, String ip) {
-    this.gateway = gw;
-    this.ip = ip;
-    if (gateway != null && ip != null)
+  public StitchResult(JSONObject res) {
+    this.gateway = res.getString("gateway");
+    this.ip = res.getString("ip");
+    if (!gateway.equals("") && !ip.equals(""))
       result = true;
     else
       result = false;
+    this.message = res.getString("message");
   }
 }
 

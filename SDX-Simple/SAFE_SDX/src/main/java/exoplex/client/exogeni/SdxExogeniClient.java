@@ -184,17 +184,16 @@ public class SdxExogeniClient extends SliceCommon{
           }else {
             setSafeServerIp(conf.getString("config.safeserver"));
           }
-          SafeManager sm = new SafeManager(safeServerIp, safeKeyFile, sshkey);
           //sm.verifySafeInstallation(riakIp);
-          safeKeyHash = SafeUtils.getPrincipalId(safeServer, safeKeyFile);
           safeChecked = true;
         }
+        safeKeyHash = SafeUtils.getPrincipalId(safeServer, safeKeyFile);
+        jsonparams.put("ckeyhash", safeKeyHash);
       }else {
         jsonparams.put("ckeyhash", sliceName);
       }
       jsonparams.put("self_prefix", params[1]);
       jsonparams.put("target_prefix", params[2]);
-      jsonparams.put("ckeyhash", safeKeyHash);
       try {
         jsonparams.put("bandwidth", Long.valueOf(params[3]));
       } catch (Exception e) {
@@ -218,11 +217,9 @@ public class SdxExogeniClient extends SliceCommon{
         }else {
           setSafeServerIp(conf.getString("config.safeserver"));
         }
-        SafeManager sm = new SafeManager(safeServerIp, safeKeyFile, sshkey);
-        //sm.verifySafeInstallation(riakIp);
-        safeKeyHash = SafeUtils.getPrincipalId(safeServer, safeKeyFile);
         safeChecked = true;
       }
+      safeKeyHash = SafeUtils.getPrincipalId(safeServer, safeKeyFile);
       paramsobj.put("customer", safeKeyHash);
     }else {
       paramsobj.put("customer", sliceName);

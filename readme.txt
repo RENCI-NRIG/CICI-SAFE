@@ -68,8 +68,8 @@ To run the SDX demo, first we creat a SDX slice and two customer slices on exoge
     The second IP address with netmask is the address of the interface in SDX slice, the netmask is required.
     
     OR the following commands are equivalent:
-    ./scripts/sdxclient.sh -c client-config/alice.conf -e "stitch CNode0"
-    ./scripts/sdxclient.sh -c client-config/bob.conf -e "stitch CNode0 192.168.10.2 192.168.10.1/24"
+    ./scripts/sdx_exogeni_client.sh -c client-config/alice.conf -e "stitch CNode0"
+    ./scripts/sdx_exogeni_client.sh -c client-config/bob.conf -e "stitch CNode0 192.168.10.2 192.168.10.1/24"
 
     [NOTE] With safe authorization, to enable stitch to a customer slice. First we need to set up delegations to the user and slice with AuthorityMock:
     $>./scripts/auth.sh customerkeyfile customerslice customerIPPrefix safeServerIp
