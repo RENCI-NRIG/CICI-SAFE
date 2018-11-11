@@ -133,7 +133,7 @@ To run the SDX demo, first we creat a SDX slice and two customer slices on exoge
        b) $ ./scripts/sdx_stitchport_client.sh -c config/chameleon.conf
         >stitch http://geni-orca.renci.org/owl/ion.rdf#AL2S/Chameleon/Cisco/6509/GigabitEthernet/1/1 3298 [Cameleon_Node_IP] 10.32.98.200/24 [SDX_SITE_NAME] [Optional: sdx node name] 
         OR
-        $./scripts/run.sh -c config/carol.conf -e "stitch http://geni-orca.renci.org/owl/ion.rdf#AL2S/Chameleon/Cisco/6509/GigabitEthernet/1/1 3298  10.32.98.204 10.32.98.200/24 [SDX_SITE_NAME] [STITCH_POINT, e.g., c3]"
+        $./scripts/sdx_stitchport_client.sh -c config/carol.conf -e "stitch http://geni-orca.renci.org/owl/ion.rdf#AL2S/Chameleon/Cisco/6509/GigabitEthernet/1/1 3298  10.32.98.204 10.32.98.200/24 [SDX_SITE_NAME] [STITCH_POINT, e.g., c3]"
 
 [6] When stitching a chameleon node to exogeni node, we know the ip address of the chameleon node, say "10.32.98.204". 
     In the stitching request, we tell the sdx controller what IP address it should use for the new interface on c3 to the stitchport, we can specify any address in the same subnet as the chameleon node, say "10.32.98.200"

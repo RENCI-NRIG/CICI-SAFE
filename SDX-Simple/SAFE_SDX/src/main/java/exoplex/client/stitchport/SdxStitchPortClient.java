@@ -1,5 +1,6 @@
 package exoplex.client.stitchport;
 
+import exoplex.common.slice.SiteBase;
 import exoplex.common.slice.SliceCommon;
 import exoplex.common.utils.Exec;
 import exoplex.common.utils.HttpUtil;
@@ -83,6 +84,8 @@ public class SdxStitchPortClient extends SliceCommon {
         JSONObject paramsobj = new JSONObject();
         paramsobj.put("dest", params[1]);
         paramsobj.put("gateway", params[2]);
+        setSafeServerIp(conf.getString("config.safeserver"));
+        safeKeyHash = SafeUtils.getPrincipalId(safeServer, safeKeyFile);
         paramsobj.put("customer", safeKeyHash);
         String res = HttpUtil.postJSON(serverurl + "sdx/notifyprefix", paramsobj);
         if (res.equals("")) {
@@ -108,7 +111,7 @@ public class SdxStitchPortClient extends SliceCommon {
       jsonparams.put("vlan", params[2]);
       jsonparams.put("gateway", params[3]);
       jsonparams.put("ip", params[4]);
-      jsonparams.put("sdxsite", params[5]);
+      jsonparams.put("sdxsite", SiteBase.get(params[5]));
       try {
         jsonparams.put("sdxnode", params[6]);
       }catch (Exception e){

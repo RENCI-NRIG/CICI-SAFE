@@ -301,6 +301,45 @@ public class SdxManager extends SliceManager {
     return true;
   }
 
+  private boolean addStitchPort(String spName, String nodeName, String stitchUrl, String vlan, long
+                                bw) throws
+    TransportException, Exception{
+    String ip = serverSlice.getComputeNode(nodeName).getManagementIP();
+    int numInterfaces = getInterfaceNum(ip);
+    serverSlice.lockSlice();
+    serverSlice.reloadSlice();
+    int times = 1;
+    ComputeNode node = serverSlice.getComputeNode(nodeName);
+    while(true) {
+      StitchPort mysp = serverSlice.addStitchPort(spName, vlan, stitchUrl, bw);
+      mysp.stitch(node);
+      serverSlice.commitAndWait(10, Arrays.asList(new String[]{spName}));
+      sleep(10);
+      int newNum = getInterfaceNum(ip);
+      if(newNum > numInterfaces){
+        if(times>1){
+          logger.warn(String.format("Tried %s times to add a stitchlink", times));
+        }
+        break;
+      }else{
+        sleep(30);
+        newNum = getInterfaceNum(ip);
+        if(newNum > numInterfaces) {
+          if (times > 1) {
+            logger.warn(String.format("Tried %s times to add a stitchlink", times));
+          }
+          break;
+        }
+        serverSlice.getResourceByName(spName).delete();
+        serverSlice.commitAndWait();
+        serverSlice.refresh();
+        times++;
+      }
+    }
+    updateMacAddr();
+    return true;
+  }
+
   private int getInterfaceNum(String ip){
     //String res[] = Exec.sshExec("root", ip, "ifconfig -a|grep \"eth\"|grep" +
     //    " " +
@@ -845,10 +884,11 @@ public class SdxManager extends SliceManager {
         String stitchname = "sp-" + nodeName + "-" + ip.replace("/", "__").replace(".", "_");
         logger.info(logPrefix + "Stitching to Chameleon {" + "stitchname: " + stitchname + " vlan:" +
             vlan + " stithport: " + stitchport + "}");
-        StitchPort mysp = serverSlice.addStitchPort(stitchname, vlan, stitchport, bw);
-        mysp.stitch(node);
-        serverSlice.commit();
-        serverSlice.waitTillActive();
+        addStitchPort(stitchname, nodeName, vlan, stitchport, bw);
+        //StitchPort mysp = serverSlice.addStitchPort(stitchname, vlan, stitchport, bw);
+        //mysp.stitch(node);
+        //serverSlice.commit();
+        //serverSlice.waitTillActive();
         updateOvsInterface(serverSlice, nodeName);
         //routingmanager.replayCmds(routingmanager.getDPID(nodeName));
         Exec.sshExec("root", node.getManagementIP(), "ifconfig;ovs-vsctl list port", sshkey);
