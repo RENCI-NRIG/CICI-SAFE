@@ -313,7 +313,7 @@ public class SdxManager extends SliceManager {
     while(true) {
       StitchPort mysp = serverSlice.addStitchPort(spName, vlan, stitchUrl, bw);
       mysp.stitch(node);
-      serverSlice.commitAndWait(10, Arrays.asList(new String[]{spName}));
+      serverSlice.commitAndWait(10, Arrays.asList(new String[]{spName + "-net"}));
       sleep(10);
       int newNum = getInterfaceNum(ip);
       if(newNum > numInterfaces){
@@ -372,7 +372,7 @@ public class SdxManager extends SliceManager {
     //if(!safeEnabled || authorizeStitchRequest(customer_slice,customerName,reserveId, safeKeyHash,
     if(!safeEnabled || safeManager.authorizeStitchRequest(customerSafeKeyHash,customerSlice)){
       if (safeEnabled) {
-        logger.info("Authorized: stitch request for " + sliceName + " and " + sdxnode);
+        logger.info("Authorized: stitch request for " + sliceName);
       }
       serverSlice.reloadSlice();
       String stitchname = null;
@@ -831,11 +831,8 @@ public class SdxManager extends SliceManager {
                                 String vlan, String gateway, String ip) {
     String res = "Stitch request unauthorized";
     String sdxsite = SiteBase.get(site);
-    /*
-    if (!safeEnabled || authorizeStitchChameleon(customer_keyhash, stitchport, vlan, gateway,
-        sliceName, nodeName)) {
-        */
-    if(true){
+    if (!safeEnabled || safeManager.authorizeChameleonStitchRequest(customer_keyhash, stitchport,
+      vlan)) {
       //FIX ME: do stitching
       System.out.println("Chameleon Stitch Request from " + customer_keyhash + " Authorized");
       try {
@@ -884,7 +881,7 @@ public class SdxManager extends SliceManager {
         String stitchname = "sp-" + nodeName + "-" + ip.replace("/", "__").replace(".", "_");
         logger.info(logPrefix + "Stitching to Chameleon {" + "stitchname: " + stitchname + " vlan:" +
             vlan + " stithport: " + stitchport + "}");
-        addStitchPort(stitchname, nodeName, vlan, stitchport, bw);
+        addStitchPort(stitchname, nodeName, stitchport, vlan, bw);
         //StitchPort mysp = serverSlice.addStitchPort(stitchname, vlan, stitchport, bw);
         //mysp.stitch(node);
         //serverSlice.commit();
@@ -1312,28 +1309,6 @@ public class SdxManager extends SliceManager {
 
   protected String getEchoTimeCMD() {
     return "echo currentMillis:$(/bin/date \"+%s%3N\");";
-  }
-
-
-
-  public boolean authorizeStitchChameleon(String customer_keyhash,String stitchport,String vlan,String gateway,String slicename, String nodename){
-    /** Post to remote safesets using apache httpclient */
-    String[] othervalues=new String[6];
-    othervalues[0]=customer_keyhash;
-    othervalues[1]=stitchport;
-    othervalues[2]=vlan;
-    othervalues[3]=gateway;
-    othervalues[4]=slicename;
-    othervalues[5]=nodename;
-
-    String message= SafeUtils.postSafeStatements(safeServer,"verifyChameleonStitch",
-        safeManager.getSafeKeyHash(),
-        othervalues);
-    if(message ==null || message.contains("Unsatisfied")){
-      return false;
-    }
-    else
-      return true;
   }
 }
 
