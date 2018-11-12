@@ -78,9 +78,34 @@ public class SdxStitchPortClient extends SliceCommon {
       if (params[0].equals("stitch")) {
         logger.debug(params.length);
         processStitchCmd(params);
-      } else {
+      } else if (params[0].equals("route")){
         processPrefixCmd(params);
+      } else{
+        processConnectionCmd(params);
       }
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+  }
+
+  private void processConnectionCmd(String[] params) {
+    try {
+      JSONObject jsonparams = new JSONObject();
+      if(safeEnabled) {
+        safeKeyHash = SafeUtils.getPrincipalId(safeServer, safeKeyFile);
+        jsonparams.put("ckeyhash", safeKeyHash);
+      }else {
+        jsonparams.put("ckeyhash", sliceName);
+      }
+      jsonparams.put("self_prefix", params[1]);
+      jsonparams.put("target_prefix", params[2]);
+      try {
+        jsonparams.put("bandwidth", Long.valueOf(params[3]));
+      } catch (Exception e) {
+      }
+      String res = HttpUtil.postJSON(serverurl + "sdx/connectionrequest", jsonparams);
+      logger.info("get connection result from server:\n" + res);
+      logger.debug(res);
     } catch (Exception e) {
       e.printStackTrace();
     }
