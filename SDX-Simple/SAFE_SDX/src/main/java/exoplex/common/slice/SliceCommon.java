@@ -103,6 +103,10 @@ public abstract class SliceCommon {
     if(conf.hasPath("config.safe")){
       safeEnabled = conf.getBoolean("config.safe");
     }
+    if(conf.hasPath("config.safeserver")){
+      safeServerIp = conf.getString("config.safeserver");
+      setSafeServerIp(safeServerIp);
+    }
     if(conf.hasPath("config.serverinslice")){
       plexusAndSafeInSlice = conf.getBoolean("config.serverinslice");
     }
