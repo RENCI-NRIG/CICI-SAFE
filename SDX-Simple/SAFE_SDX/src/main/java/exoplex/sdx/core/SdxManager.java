@@ -834,7 +834,7 @@ public class SdxManager extends SliceManager {
     if (!safeEnabled || safeManager.authorizeChameleonStitchRequest(customer_keyhash, stitchport,
       vlan)) {
       //FIX ME: do stitching
-      System.out.println("Chameleon Stitch Request from " + customer_keyhash + " Authorized");
+      logger.info("Chameleon Stitch Request from " + customer_keyhash + " Authorized");
       try {
         //FIX ME: do stitching
         logger.info(logPrefix + "Chameleon Stitch Request from " + customer_keyhash + " Authorized");
