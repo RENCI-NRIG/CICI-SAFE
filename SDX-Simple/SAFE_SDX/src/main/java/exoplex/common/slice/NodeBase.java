@@ -6,22 +6,6 @@ import org.renci.ahab.libndl.resources.request.ComputeNode;
 import java.util.HashMap;
 import java.util.Map;
 
-class NodeBaseInfo {
-  public String nisn;
-  public String niurl;
-  public String nihash;
-  public String ntype;
-  public String domain;
-
-  public NodeBaseInfo(String nisn, String niurl, String nihash, String ntype, String domain) {
-    this.nisn = nisn;
-    this.niurl = niurl;
-    this.nihash = nihash;
-    this.ntype = ntype;
-    this.domain = domain;
-  }
-}
-
 public class NodeBase {
 
   public static final String CENTOS_BRO = "Centos 7.4 Bro";
@@ -31,7 +15,7 @@ public class NodeBase {
   public static final String Docker = "Ubuntu 14.04 Docker";
   public static final String xoMedium = "XO Medium";
   public static final String xoLarge = "XO Large";
-  public static final String xoExtraLarge = "XO Extra Large";
+  public static final String xoExtraLarge = "XO Extra large";
 
   private static Map<String, NodeBaseInfo> images = new HashMap<>();
 
