@@ -65,11 +65,12 @@ public class SdxTest {
 
   private  void stitchSlices(){
     for(String clientSlice: TridentSetting.clientSlices){
-      AuthorityMock.main(new String[]{TridentSetting.clientKeyMap.get(clientSlice),
-        clientSlice,
-        TridentSetting.clientIpMap.get(clientSlice),
-        SdxServer.sdxManager.getSafeServer().split(":")[0]});
-
+      if(SdxServer.sdxManager.safeEnabled) {
+        AuthorityMock.main(new String[]{TridentSetting.clientKeyMap.get(clientSlice),
+          clientSlice,
+          TridentSetting.clientIpMap.get(clientSlice),
+          SdxServer.sdxManager.getSafeServer().split(":")[0]});
+      }
       String clientGateWay = TridentSetting.clientIpMap.get(clientSlice).replace(".1/24", ".2");
       String sdxIP = TridentSetting.clientIpMap.get(clientSlice).replace(".1/24", ".1/24");
       String gw = exogeniClients.get(clientSlice).processCmd(String.format("stitch CNode1 %s %s",

@@ -42,7 +42,7 @@ public abstract class SliceCommon {
   protected String safeServerIp;
   protected String safeKeyFile;
   protected String safeKeyHash = null;
-  protected boolean safeEnabled = false;
+  public boolean safeEnabled = false;
   protected boolean plexusAndSafeInSlice = false;
   protected String riakIp = null;
   protected HashMap<String, Link> links = new HashMap<String, Link>();
