@@ -3,14 +3,13 @@ package exoplex.sdx.core;
 import exoplex.common.slice.SafeSlice;
 import exoplex.common.slice.SiteBase;
 import exoplex.common.utils.Exec;
-import exoplex.common.utils.SafeUtils;
+import exoplex.common.utils.HttpUtil;
 import exoplex.common.utils.ServerOptions;
 import exoplex.sdx.safe.SafeManager;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.json.JSONObject;
 import org.renci.ahab.libndl.resources.request.*;
-import org.renci.ahab.libtransport.util.ContextTransportException;
 import org.renci.ahab.libtransport.util.TransportException;
 import exoplex.sdx.bro.BroManager;
 import exoplex.sdx.network.RoutingManager;
@@ -172,7 +171,7 @@ public class SdxManager extends SliceManager {
       }
       safeManager = new SafeManager(safeServerIp, safeKeyFile, sshkey);
     }
-    checkPrerequisites(serverSlice);
+    checkSdxPrerequisites(serverSlice);
     //configRouting(serverslice,OVSController,SDNController,"(c\\d+)","(sp-c\\d+.*)");
     loadSdxNetwork(serverSlice, routerPattern, stitchPortPattern, broPattern);
   }
@@ -182,6 +181,19 @@ public class SdxManager extends SliceManager {
     logger.info(logPrefix + "Carrier Slice server with Service API: START");
     CommandLine cmd = ServerOptions.parseCmd(args);
     initializeExoGENIContexts(cmd.getOptionValue("config"));
+    if (cmd.hasOption('r')) {
+      clearSdx();
+    }
+    initializeSdx();
+    configRouting(OVSController, SDNController, routerPattern, stitchPortPattern);
+    startBro();
+  }
+
+  public void startSdxServer(String[] args, String sliceName) throws TransportException, Exception {
+    logger.info(logPrefix + "Carrier Slice server with Service API: START");
+    CommandLine cmd = ServerOptions.parseCmd(args);
+    initializeExoGENIContexts(cmd.getOptionValue("config"));
+    this.sliceName = sliceName;
     if (cmd.hasOption('r')) {
       clearSdx();
     }
@@ -206,23 +218,29 @@ public class SdxManager extends SliceManager {
   }
 
   private void clearSdx() throws TransportException, Exception{
+    boolean flag = false;
     if(serverSlice ==null) {
       serverSlice = SafeSlice.loadManifestFile(sliceName, pemLocation, keyLocation, controllerUrl);
     }
     for (ComputeNode node : serverSlice.getComputeNodes()) {
       if (node.getName().matches(broPattern)) {
         node.delete();
+        flag = true;
       }
     }
     for (Network link : serverSlice.getBroadcastLinks()) {
       if (link.getName().matches(broLinkPattern)) {
         link.delete();
+        flag = true;
       }
       if (link.getName().matches(stosVlanPattern)) {
         link.delete();
+        flag = true;
       }
     }
-    serverSlice.commitAndWait();
+    if(flag) {
+      serverSlice.commitAndWait();
+    }
   }
 
 
@@ -351,6 +369,139 @@ public class SdxManager extends SliceManager {
     return num;
   }
 
+  public String adminCmd(String operation, String[]params){
+    String[] supportedOperations = new String[]{"stitch"};
+    if(operation.equals("stitch")){
+      return processStitchCmd(params);
+
+    }else{
+      return String.format("Unrecognized operation: %s\n Supported Operations: %s", operation,
+        String.join(",",supportedOperations));
+    }
+  }
+
+  /*
+  Params:
+  params [serverURI, myNode, myAddress, urAddressPrefix]
+   */
+  private String processStitchCmd(String[] params) {
+    if(serverSlice==null){
+      try {
+        serverSlice = SafeSlice.loadManifestFile(sliceName, pemLocation, keyLocation, controllerUrl);
+      }catch (Exception e){
+        logger.error(e.getMessage());
+      }
+    }
+    try {
+      if(params.length<2){
+        return "Missing parameters: [serverURI, myNode]";
+      }
+      String serverURI = params[0];
+      String myNode = params[1];
+      Link l1 = new Link();
+      l1.addNode(myNode);
+      //Set link capacity here
+      l1.setMask(mask);
+      int ip_to_use = getAvailableIP();
+      l1.setIP(IPPrefix + ip_to_use);
+      l1.setName(allocateStitchLinkName(l1.getIP(2), myNode));
+      String ip = l1.getIP(2);
+      String myAddress = ip.split("/")[0];
+      String urAddressPrefix = l1.getIP(1);
+
+      ComputeNode node0_s2 = (ComputeNode) serverSlice.getResourceByName(myNode);
+      String node0_s2_stitching_GUID = node0_s2.getStitchingGUID();
+      String secret = "mysecret";
+      logger.debug("node0_s2_stitching_GUID: " + node0_s2_stitching_GUID);
+      try {
+        serverSlice.permitStitch(secret, node0_s2_stitching_GUID);
+      } catch (TransportException e) {
+        // TODO Auto-generated catch block
+        logger.warn(logPrefix + "Failed to permit stitch");
+        e.printStackTrace();
+        return null;
+      }
+      String sdxsite = node0_s2.getDomain();
+      //post stitch request to SAFE
+      JSONObject jsonparams = new JSONObject();
+      jsonparams.put("sdxsite", sdxsite);
+      jsonparams.put("cslice", sliceName);
+      jsonparams.put("creservid", node0_s2_stitching_GUID);
+      jsonparams.put("secret", secret);
+      jsonparams.put("gateway", myAddress);
+      jsonparams.put("ip", urAddressPrefix);
+
+      if(safeEnabled) {
+        jsonparams.put("ckeyhash", safeKeyHash);
+        /*
+        postSafeStitchRequest(safeKeyHash, sliceName, node0_s2_stitching_GUID, params[2],
+            params[3]);
+        */
+      }else {
+        jsonparams.put("ckeyhash", sliceName);
+      }
+      logger.debug("Sending stitch request to Sdx server");
+      String r = HttpUtil.postJSON(serverURI + "sdx/stitchrequest", jsonparams);
+      logger.debug(r);
+      JSONObject res = new JSONObject(r);
+      logger.info(logPrefix + "Got Stitch Information From Server:\n " + res.toString());
+      if (!res.getBoolean("result")) {
+        logger.warn(logPrefix + "stitch request failed");
+      } else {
+        links.put(l1.getLinkName(), l1);
+        logger.info(logPrefix + "set IP address of the stitch interface to " + ip);
+        sleep(5);
+        String mip = node0_s2.getManagementIP();
+        String result = Exec.sshExec("root", mip, "ifconfig eth1 " + ip, sshkey)[0];
+        String gateway = urAddressPrefix.split("/")[0];
+        Exec.sshExec("root", mip, "echo \"ip route 192.168.1.1/16 " + gateway+ "\" " +
+          ">>/etc/quagga/zebra.conf  ", sshkey);
+        Exec.sshExec("root", mip, "/etc/init.d/quagga restart", sshkey);
+        updateOvsInterface(serverSlice, myNode);
+        routingmanager.newExternalLink(l1.getLinkName(), ip, myNode, gateway, SDNController);
+        logger.info(logPrefix + "stitch completed.");
+        return myAddress;
+      }
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+    return null;
+  }
+
+  private String processUnStitchCmd(String[] params) {
+    if(serverSlice==null){
+      try {
+        serverSlice = SafeSlice.loadManifestFile(sliceName, pemLocation, keyLocation, controllerUrl);
+      }catch (Exception e){
+        logger.error(e.getMessage());
+      }
+    }
+    try {
+      ComputeNode node0_s2 = (ComputeNode) serverSlice.getResourceByName(params[1]);
+      String node0_s2_stitching_GUID = node0_s2.getStitchingGUID();
+      logger.debug("node0_s2_stitching_GUID: " + node0_s2_stitching_GUID);
+      JSONObject jsonparams = new JSONObject();
+      jsonparams.put("cslice", sliceName);
+      jsonparams.put("creservid", node0_s2_stitching_GUID);
+      if(safeEnabled) {
+        jsonparams.put("ckeyhash", safeKeyHash);
+        /*
+        postSafeStitchRequest(safeKeyHash, sliceName, node0_s2_stitching_GUID, params[2],
+            params[3]);
+        */
+      }else{
+        jsonparams.put("ckeyhash", sliceName);
+      }
+      logger.debug("Sending unstitch request to Sdx server");
+      String r = HttpUtil.postJSON(serverurl + "sdx/undostitch", jsonparams);
+      logger.debug(r);
+      logger.info(logPrefix + "Unstitch result:\n " + r);
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+    return null;
+  }
+
   public JSONObject stitchRequest(
     String site,
     String customerSafeKeyHash,
@@ -390,8 +541,7 @@ public class SdxManager extends SliceManager {
       } else if (sdxnode == null && edgeRouters.containsKey(site) && edgeRouters.get(site).size() >
           0) {
         node = serverSlice.getComputeNode(edgeRouters.get(site).get(0));
-        String sname = ip.replace(".", "_").replace("/","_");
-        stitchname = "stitch_" + node.getName() + "_" + sname;
+        stitchname = allocateStitchLinkName(ip, node.getName());
       /*
       serverSlice.lockSlice();
       serverSlice.addLink(stitchname, node.getName(), bw);
@@ -413,8 +563,7 @@ public class SdxManager extends SliceManager {
         serverSlice.reloadSlice();
         serverSlice.addOVSRouter(site, eRouterName);
         node = (ComputeNode) serverSlice.getResourceByName(eRouterName);
-        String sname = ip.replace(".", "_").replace("/","_");
-        stitchname = "stitch_" + node.getName() + "_" + sname;
+        stitchname = allocateStitchLinkName(ip, node.getName());
         net = serverSlice.addBroadcastLink(stitchname, bw);
         InterfaceNode2Net ifaceNode0 = (InterfaceNode2Net) net.stitch(node);
         ifaceNode0.setIpAddress(ip);
@@ -618,6 +767,11 @@ public class SdxManager extends SliceManager {
       linklock.unlock();
     }
     return linkname;
+  }
+
+  private String allocateStitchLinkName(String ip, String nodeName){
+    String sname = ip.replace(".", "_").replace("/","_");
+    return "stitch_" + nodeName + "_" + sname;
   }
 
   private String allcoateCRouterName(String site) {

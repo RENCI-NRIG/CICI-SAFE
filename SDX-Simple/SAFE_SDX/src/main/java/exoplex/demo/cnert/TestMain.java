@@ -3,6 +3,7 @@ package exoplex.demo.cnert;
 import exoplex.client.exogeni.ExogeniClientSlice;
 import exoplex.client.exogeni.SdxExogeniClient;
 import exoplex.client.stitchport.SdxStitchPortClient;
+import exoplex.sdx.core.SdxManager;
 import org.apache.commons.cli.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -29,6 +30,7 @@ public class TestMain {
   static String[] clientarg4 = {"-c", "client-config/c4.conf"};
   static String[] clientarg6 = {"-c", "client-config/c6.conf"};
   static String[] clientarg5 = {"-c", "chameleon-config/c1.conf"};
+  static SdxManager sdxManager;
   static boolean stitch = true;
 
   public static void main(String[] args) throws Exception {
@@ -105,11 +107,11 @@ public class TestMain {
     // Start Sdx Server
     //./scripts/sdxserver.sh -c config/sdx.conf
     if (reset) {
-      SdxServer.run (arg2);
+      sdxManager = SdxServer.run (arg2);
     } else {
-      SdxServer.run(arg1);
+      sdxManager = SdxServer.run(arg1);
     }
-    sdx = SdxServer.sdxManager.getSliceName();
+    sdx = sdxManager.getSliceName();
     SdxExogeniClient client1 = new SdxExogeniClient(clientarg1);
     SdxExogeniClient client2 = new SdxExogeniClient(clientarg2);
     SdxExogeniClient client3 = new SdxExogeniClient(clientarg3);
@@ -143,13 +145,13 @@ public class TestMain {
     // Client request for connection between prefixes
     client1.processCmd("link 192.168.10.1/24 192.168.20.1/24");
     if( !client1.checkConnectivity("CNode1", "192.168.20.2")){
-      SdxServer.sdxManager.checkFlowTableForPair("192.168.10.0/24", "192.168.20.0/24",
+      sdxManager.checkFlowTableForPair("192.168.10.0/24", "192.168.20.0/24",
           "192.168.10.1/24", "192.168.20.1/24");
     }
     client3.processCmd("link 192.168.30.1/24 192.168.40.1/24");
 
     if( !client3.checkConnectivity("CNode1", "192.168.40.2")){
-      SdxServer.sdxManager.checkFlowTableForPair("192.168.30.0/24", "192.168.40.0/24",
+      sdxManager.checkFlowTableForPair("192.168.30.0/24", "192.168.40.0/24",
       "192.168.30.1/24", "192.168.40.1/24");
     }
 
@@ -158,12 +160,12 @@ public class TestMain {
     client6.processCmd("route 192.168.60.1/24 " + gateways[4]);
     client6.processCmd("link 192.168.60.1/24 192.168.10.1/24");
     if(!client6.checkConnectivity("CNode1", "192.168.10.2")){
-      SdxServer.sdxManager.checkFlowTableForPair("192.168.10.0/24", "192.168.60.0/24",
+      sdxManager.checkFlowTableForPair("192.168.10.0/24", "192.168.60.0/24",
       "192.168.10.1/24", "192.168.60.1/24");
     }
     client6.processCmd("link 192.168.60.1/24 192.168.20.1/24");
     if(!client6.checkConnectivity("CNode1", "192.168.20.2")){
-      SdxServer.sdxManager.checkFlowTableForPair("192.168.20.0/24", "192.168.60.0/24",
+      sdxManager.checkFlowTableForPair("192.168.20.0/24", "192.168.60.0/24",
       "192.168.20.1/24", "192.168.60.1/24");
     }
     //SdxServer.sdxManager.logFlowTables();
@@ -239,7 +241,7 @@ public class TestMain {
     };
     thread1.start();
     tlist.add(thread1);
-    SdxServer.sdxManager.sleep(10);
+    sdxManager.sleep(10);
 
     String[][] args = {clientarg1, clientarg2, clientarg3, clientarg4, clientarg6};
     for (int i = 0; i < 5; i++) {
@@ -258,7 +260,7 @@ public class TestMain {
       };
       thread2.start();
       tlist.add(thread2);
-      SdxServer.sdxManager.sleep(10);
+      sdxManager.sleep(10);
     }
 
     try {
@@ -291,18 +293,18 @@ public class TestMain {
     client.processCmd("link 192.168.10.1/24 192.168.30.1/24");
     client.processCmd("link 192.168.20.1/24 192.168.40.1/24");
 
-    SdxServer.sdxManager.setMirror("c0", "192.168.10.1/24",
+    sdxManager.setMirror("c0", "192.168.10.1/24",
         "192.168.30.1/24");
 
     if (!cmd.hasOption('s')) {
       try {
-        SdxServer.sdxManager.deployBro("c0");
+        sdxManager.deployBro("c0");
       } catch (TransportException e) {
         e.printStackTrace();
         return;
       }
     }
-    SdxServer.sdxManager.setMirror("c0", "192.168.20.1/24",
+    sdxManager.setMirror("c0", "192.168.20.1/24",
         "192.168.40.1/24");
 
     System.exit(0);

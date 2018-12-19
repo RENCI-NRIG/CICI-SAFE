@@ -9,23 +9,46 @@ import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.UriInfo;
 
 /**
  * Root resource (exposed at "myresource" path)
+ *
+ * Call with curl:
+ * curl -X POST -H "Content-Type: application/json" -d '{"operation":"stitch", "params":["1","2",
+ * "3"]}' http://localhost:8880/sdx/admin
  */
 @Path("sdx")
 public class RestService {
   final static Logger logger = LogManager.getLogger(RestService.class);
 
   @POST
+  @Path("/admin")
+  @Consumes(MediaType.APPLICATION_JSON)
+  @Produces(MediaType.TEXT_PLAIN)
+  public String stitchRequest(@Context UriInfo uriInfo, AdminCmd cmd) {
+    logger.debug(uriInfo.getBaseUri());
+    logger.debug(String.format("got sittch request %s", cmd));
+    SdxManager sdxManager = SdxServer.sdxManagerMap.get(uriInfo.getBaseUri().getPort());
+    try {
+      return sdxManager.adminCmd(cmd.operation, cmd.params);
+    } catch (Exception e) {
+      e.printStackTrace();
+      return e.getMessage();
+    }
+  }
+
+  @POST
   @Path("/stitchrequest")
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.APPLICATION_JSON)
-  public StitchResult stitchRequest(StitchRequest sr) {
+  public StitchResult stitchRequest(@Context UriInfo uriInfo, StitchRequest sr) {
     logger.debug(String.format("got sittch request %s", sr));
+    SdxManager sdxManager = SdxServer.sdxManagerMap.get(uriInfo.getBaseUri().getPort());
     try {
-      JSONObject res = SdxServer.sdxManager.stitchRequest(sr.sdxsite, sr.ckeyhash, sr.cslice,
+      JSONObject res = sdxManager.stitchRequest(sr.sdxsite, sr.ckeyhash, sr.cslice,
           sr.creservid, sr.secret, sr.sdxnode, sr.gateway, sr.ip);
       return new StitchResult(res);
     } catch (Exception e) {
@@ -38,10 +61,11 @@ public class RestService {
   @Path("/undostitch")
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.TEXT_PLAIN)
-  public String undoStitch(UndoStitchRequest sr) {
+  public String undoStitch(@Context UriInfo uriInfo, UndoStitchRequest sr) {
     logger.debug("got undoStitch request ");
+    SdxManager sdxManager = SdxServer.sdxManagerMap.get(uriInfo.getBaseUri().getPort());
     try {
-      String res = SdxServer.sdxManager.undoStitch(sr.ckeyhash, sr.cslice,
+      String res = sdxManager.undoStitch(sr.ckeyhash, sr.cslice,
           sr.creservid);
       return res;
     } catch (Exception e) {
@@ -54,10 +78,11 @@ public class RestService {
   @Path("/connectionrequest")
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.TEXT_PLAIN)
-  public String connectionRequest(ConnectionRequest sr) {
+  public String connectionRequest(@Context UriInfo uriInfo, ConnectionRequest sr) {
     logger.debug("got link request between " + sr.self_prefix + " and " + sr.target_prefix);
+    SdxManager sdxManager = SdxServer.sdxManagerMap.get(uriInfo.getBaseUri().getPort());
     try {
-      String res = SdxServer.sdxManager.connectionRequest(sr.ckeyhash, sr.self_prefix,
+      String res = sdxManager.connectionRequest(sr.ckeyhash, sr.self_prefix,
           sr.target_prefix, sr.bandwidth);
       return res;
     } catch (Exception e) {
@@ -70,9 +95,10 @@ public class RestService {
   @Path("/stitchchameleon")
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.TEXT_PLAIN)
-  public String stitchChameleon(StitchChameleon sr) {
+  public String stitchChameleon(@Context UriInfo uriInfo, StitchChameleon sr) {
     logger.debug("got chameleon stitch request: \n" + sr.toString());
-    String res = SdxServer.sdxManager.stitchChameleon(sr.sdxsite, sr.sdxnode,
+    SdxManager sdxManager = SdxServer.sdxManagerMap.get(uriInfo.getBaseUri().getPort());
+    String res = sdxManager.stitchChameleon(sr.sdxsite, sr.sdxnode,
         sr.ckeyhash, sr.stitchport, sr.vlan, sr.gateway, sr.ip);
     return res;
   }
@@ -81,9 +107,10 @@ public class RestService {
   @Path("/notifyprefix")
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.TEXT_PLAIN)
-  public String notifyPrefix(PrefixNotification pn) {
+  public String notifyPrefix(@Context UriInfo uriInfo, PrefixNotification pn) {
     logger.debug("got notifyprefix");
-    String res = SdxServer.sdxManager.notifyPrefix(pn.dest, pn.gateway, pn.customer);
+    SdxManager sdxManager = SdxServer.sdxManagerMap.get(uriInfo.getBaseUri().getPort());
+    String res = sdxManager.notifyPrefix(pn.dest, pn.gateway, pn.customer);
     logger.debug(res);
     return res;
   }
@@ -92,18 +119,33 @@ public class RestService {
   @Path("/broload")
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.TEXT_PLAIN)
-  public String broload(BroLoad bl)  {
+  public String broload(@Context UriInfo uriInfo, BroLoad bl)  {
     logger.debug("got broload");
+    SdxManager sdxManager = SdxServer.sdxManagerMap.get(uriInfo.getBaseUri().getPort());
     double load = Double.parseDouble(bl.usage);
     String res = null;
     try {
-      res = SdxServer.sdxManager.broload(bl.broip, load);
+      res = sdxManager.broload(bl.broip, load);
     } catch (Exception e) {
       e.printStackTrace();
       res = "Failed to get Bro Load";
       logger.warn(res);
     }
     return res;
+  }
+}
+
+/*
+Admin command, in routing scenerio, the sdx can work as a client to peer with other sdx networks.
+SDX server provides this interface for administrator to issue commands for peering.
+ */
+class AdminCmd{
+  public String operation;
+  public String[] params;
+
+  public String toString(){
+    String parameters= String.join(",", params);
+    return String.format("{\"operation\":\"%s\", \"params:\":[%s]}",operation, parameters);
   }
 }
 

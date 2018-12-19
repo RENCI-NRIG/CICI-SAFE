@@ -47,6 +47,10 @@ public class SliceManager extends SliceCommon {
   public SliceManager() {
   }
 
+  public void setRiakIP(String riakIP){
+    this.riakIp = riakIP;
+  }
+
   protected void computeIP(String prefix) {
     logger.debug(prefix);
     String[] ip_mask = prefix.split("/");
@@ -131,7 +135,7 @@ public class SliceManager extends SliceCommon {
         sshkey);
       carrier.copyFile2Slice(PathUtil.joinFilePath(scriptsdir, "ovsbridge.sh"), "~/ovsbridge.sh",
         sshkey);
-      checkPrerequisites(carrier);
+      checkSdxPrerequisites(carrier);
 
       logger.debug("Plexus Controller IP: " + SDNControllerIP);
       carrier.runCmdSlice("/bin/bash ~/ovsbridge.sh " + SDNControllerIP + ":6633", sshkey,
@@ -188,7 +192,7 @@ public class SliceManager extends SliceCommon {
     }
   }
 
-  public void checkPrerequisites(SafeSlice serverSlice){
+  public void checkSdxPrerequisites(SafeSlice serverSlice){
     //check if openvswitch is installed on all ovs nodes
     logger.debug("Start checking prerequisites");
     ArrayList<Thread> tlist = new ArrayList<>();
@@ -343,6 +347,14 @@ public class SliceManager extends SliceCommon {
     } catch (IOException e) {
       e.printStackTrace();
     }
+  }
+
+  public void setClientSites(ArrayList<String> clientSites){
+    this.clientSites = clientSites;
+  }
+
+  public void setSliceName(String sliceName){
+    this.sliceName = sliceName;
   }
 
   public SafeSlice createCarrierSlice(String sliceName, int num, long bw) {

@@ -69,6 +69,30 @@ public class SafeSlice {
     this.slice = null;
   }
 
+  public void permitStitch(String secret, String GUID) throws TransportException{
+    int times = 0;
+    while (times < COMMIT_COUNT) {
+      try {
+        //s1
+        sliceProxy = getSliceProxy(pemLocation, keyLocation, controllerUrl);
+        sliceProxy.permitSliceStitch(sliceName, GUID, secret);
+        break;
+      } catch (TransportException e) {
+        // TODO Auto-generated catch block
+        logger.warn( "Failed to permit stitch, retry");
+        times ++;
+        if(times == COMMIT_COUNT){
+          throw e;
+        }
+        try {
+          Thread.sleep((long) (INTERVAL * 1000));
+        } catch (InterruptedException var6) {
+          Thread.currentThread().interrupt();
+        }
+      }
+    }
+  }
+
   public void lockSlice(){
     lock.lock();
   }
@@ -110,6 +134,7 @@ public class SafeSlice {
         } catch (InterruptedException var6) {
           Thread.currentThread().interrupt();
         }
+        sliceProxy = getSliceProxy(pemLocation, keyLocation, controllerUrl);
       }
       i++;
       slice = null;
@@ -164,6 +189,7 @@ public class SafeSlice {
         }
       }
       i++;
+      s.sliceProxy = getSliceProxy(pemLocation, keyLocation, controllerUrl);
     }while (i<COMMIT_COUNT);
     if(i==COMMIT_COUNT){
       logger.warn("failed to load slice, slice = null");
@@ -184,7 +210,7 @@ public class SafeSlice {
     ComputeNode node0 = this.slice.addComputeNode(name);
     node0.setImage(nodeImageURL, nodeImageHash, nodeImageShortName);
     node0.setNodeType(nodeNodeType);
-    node0.setDomain(site);
+    node0.setDomain(SiteBase.get(site));
     if(nodePostBootScript != null) {
       node0.setPostBootScript(nodePostBootScript);
     }
@@ -203,7 +229,7 @@ public class SafeSlice {
     ComputeNode node0 = slice.addComputeNode(name);
     node0.setImage(nodeImageURL, nodeImageHash, nodeImageShortName);
     node0.setNodeType(nodeNodeType);
-    node0.setDomain(site);
+    node0.setDomain(SiteBase.get(site));
     node0.setPostBootScript(nodePostBootScript);
     return node0;
   }

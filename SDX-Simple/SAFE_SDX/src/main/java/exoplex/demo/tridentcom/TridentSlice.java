@@ -4,7 +4,6 @@ import exoplex.client.exogeni.ExogeniClientSlice;
 import exoplex.common.slice.SafeSlice;
 import exoplex.common.slice.SiteBase;
 import exoplex.common.utils.ServerOptions;
-import exoplex.sdx.core.SliceManager;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -72,7 +71,7 @@ public class TridentSlice extends TridentSetting{
     try {
       slice = createTridentTestSlice();
       slice.reloadSlice();
-      checkPrerequisites(slice);
+      checkSdxPrerequisites(slice);
     }catch (Exception e){
     }
   }

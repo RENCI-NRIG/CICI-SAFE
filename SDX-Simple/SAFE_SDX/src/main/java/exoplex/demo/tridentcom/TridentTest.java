@@ -8,6 +8,7 @@ import safe.SafeAuthority;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.net.URI;
 import java.util.HashMap;
 
 public class TridentTest extends TridentSetting{
@@ -20,8 +21,7 @@ public class TridentTest extends TridentSetting{
 
 
   public static void main(String[] args) throws  Exception{
-    SdxServer.run(sdxArgs);
-    sdxManager = SdxServer.sdxManager;
+    sdxManager = SdxServer.run(sdxArgs);
     postSafeCertificates();
     for(String clientSlice: TridentSetting.clientSlices){
       exogeniClients.put(clientSlice, new SdxExogeniClient(clientSlice,
@@ -95,7 +95,7 @@ public class TridentTest extends TridentSetting{
 
         if(!exogeniClients.get(client).checkConnectivity("CNode1",
           peerIp.replace(".1/24", ".2"))){
-          SdxServer.sdxManager.checkFlowTableForPair(clientIp.replace(".1/24", ".0/24"),
+          sdxManager.checkFlowTableForPair(clientIp.replace(".1/24", ".0/24"),
             peerIp.replace(".1/24", ".0/24"),
             clientIp, peerIp);
         }

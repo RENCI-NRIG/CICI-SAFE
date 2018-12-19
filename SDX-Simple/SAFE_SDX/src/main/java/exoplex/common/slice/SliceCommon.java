@@ -132,7 +132,7 @@ public abstract class SliceCommon {
       e.printStackTrace();
     }
   }
-  protected void initializeExoGENIContexts(String configFilePath){
+  public void initializeExoGENIContexts(String configFilePath){
 
     readConfig(configFilePath);
 

@@ -4,6 +4,7 @@ package exoplex.demo;
 import exoplex.client.exogeni.SdxExogeniClient;
 import exoplex.demo.tridentcom.TridentSetting;
 import exoplex.demo.tridentcom.TridentSlice;
+import exoplex.sdx.core.SdxManager;
 import exoplex.sdx.core.SdxServer;
 import org.junit.*;
 import riak.RiakSlice;
@@ -20,6 +21,7 @@ public class SdxTest {
   static String sdxSimpleDir = userDir.split("SDX-Simple")[0] + "SDX-Simple/";
   static String[] riakArgs = new String[]{"-c", sdxSimpleDir + "config/riak.conf"};
   static String[] riakDelArgs = new String[]{"-c", sdxSimpleDir + "config/riak.conf", "-d"};
+  static SdxManager sdxManager;
   HashMap<String, SdxExogeniClient> exogeniClients = new HashMap<>();
   static boolean deleteSlice = true;
 
@@ -50,8 +52,8 @@ public class SdxTest {
   }
 
   @Test
-  public void testSDX() throws Exception{
-    SdxServer.run(TridentSetting.sdxArgs);
+  public void TestSDX() throws Exception{
+    sdxManager = SdxServer.run(TridentSetting.sdxArgs);
     for(String clientSlice: TridentSetting.clientSlices){
       exogeniClients.put(clientSlice, new SdxExogeniClient(clientSlice,
         TridentSetting.clientIpMap.get(clientSlice),
@@ -60,7 +62,7 @@ public class SdxTest {
       ));
     }
     for(SdxExogeniClient client: exogeniClients.values()){
-      client.setSafeServer(SdxServer.sdxManager.getSafeServerIP());
+      client.setSafeServer(sdxManager.getSafeServerIP());
     }
     stitchSlices();
     connectCustomerNetwork();
@@ -72,11 +74,11 @@ public class SdxTest {
 
   private  void stitchSlices(){
     for(String clientSlice: TridentSetting.clientSlices){
-      if(SdxServer.sdxManager.safeEnabled) {
-        AuthorityMockSdx.main(new String[]{TridentSetting.clientKeyMap.get(clientSlice),
+      if(sdxManager.safeEnabled) {
+        AuthorityMock.main(new String[]{TridentSetting.clientKeyMap.get(clientSlice),
           clientSlice,
           TridentSetting.clientIpMap.get(clientSlice),
-          SdxServer.sdxManager.getSafeServer().split(":")[0]});
+          sdxManager.getSafeServer().split(":")[0]});
       }
       String clientGateWay = TridentSetting.clientIpMap.get(clientSlice).replace(".1/24", ".2");
       String sdxIP = TridentSetting.clientIpMap.get(clientSlice).replace(".1/24", ".1/24");
@@ -107,7 +109,7 @@ public class SdxTest {
 
         if(!exogeniClients.get(client).checkConnectivity("CNode1",
           peerIp.replace(".1/24", ".2"))){
-          SdxServer.sdxManager.checkFlowTableForPair(clientIp.replace(".1/24", ".0/24"),
+          sdxManager.checkFlowTableForPair(clientIp.replace(".1/24", ".0/24"),
             peerIp.replace(".1/24", ".0/24"),
             clientIp, peerIp);
           deleteSlice = false;
