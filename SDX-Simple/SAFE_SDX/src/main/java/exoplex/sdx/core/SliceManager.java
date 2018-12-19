@@ -13,16 +13,11 @@ import org.apache.logging.log4j.Logger;
 import org.renci.ahab.libndl.resources.request.ComputeNode;
 import org.renci.ahab.libndl.resources.request.InterfaceNode2Net;
 import org.renci.ahab.libndl.resources.request.Network;
-import org.renci.ahab.libtransport.SSHAccessToken;
-import org.renci.ahab.libtransport.SliceAccessContext;
-import org.renci.ahab.libtransport.util.SSHAccessTokenFileFactory;
-import org.renci.ahab.libtransport.util.UtilTransportException;
 import exoplex.sdx.network.Link;
 import safe.AuthorityMock;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -49,6 +44,10 @@ public class SliceManager extends SliceCommon {
   protected String scriptsdir;
   protected boolean BRO = false;
   public SliceManager() {
+  }
+
+  public void setRiakIP(String riakIP){
+    this.riakIp = riakIP;
   }
 
   protected void computeIP(String prefix) {
@@ -135,7 +134,7 @@ public class SliceManager extends SliceCommon {
         sshkey);
       carrier.copyFile2Slice(PathUtil.joinFilePath(scriptsdir, "ovsbridge.sh"), "~/ovsbridge.sh",
         sshkey);
-      checkPrerequisites(carrier);
+      checkSdxPrerequisites(carrier);
 
       logger.debug("Plexus Controller IP: " + SDNControllerIP);
       carrier.runCmdSlice("/bin/bash ~/ovsbridge.sh " + SDNControllerIP + ":6633", sshkey,
@@ -192,7 +191,7 @@ public class SliceManager extends SliceCommon {
     }
   }
 
-  public void checkPrerequisites(SafeSlice serverSlice){
+  public void checkSdxPrerequisites(SafeSlice serverSlice){
     //check if openvswitch is installed on all ovs nodes
     logger.debug("Start checking prerequisites");
     ArrayList<Thread> tlist = new ArrayList<>();
@@ -346,6 +345,14 @@ public class SliceManager extends SliceCommon {
     } catch (IOException e) {
       e.printStackTrace();
     }
+  }
+
+  public void setClientSites(ArrayList<String> clientSites){
+    this.clientSites = clientSites;
+  }
+
+  public void setSliceName(String sliceName){
+    this.sliceName = sliceName;
   }
 
   public SafeSlice createCarrierSlice(String sliceName, int num, long bw) {
