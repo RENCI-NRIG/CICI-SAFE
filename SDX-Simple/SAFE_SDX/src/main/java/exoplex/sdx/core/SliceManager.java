@@ -31,7 +31,7 @@ public class SliceManager extends SliceCommon {
   protected static String eRouterPattern = "(^e\\d+)";
   protected static String broPattern = "(bro\\d+_e\\d+)";
   protected static String stitchPortPattern = "(^sp-e\\d+.*)";
-  protected static String stosVlanPattern = "(^stitch_(c|e)\\d+_\\d+)";
+  protected static String stosVlanPattern = "(^stitch_(c|e)\\d+_\\d+.*)";
   protected static String linkPattern = "(^(c|e)link\\d+)";
   protected static String cLinkPattern = "(^clink\\d+)";
   protected static String eLinkPattern = "(^elink\\d+)";
@@ -229,9 +229,8 @@ public class SliceManager extends SliceCommon {
         @Override
         public void run() {
           checkSafeServer(safeServerIp, riakIp);
-          AuthorityBase mock;
-          mock = new AuthorityMockSdx(safeServerIp + ":7777");
-          mock.makeSafePreparation();
+          AuthorityMock mock = new AuthorityMock(safeServerIp + ":7777");
+          mock.makeCnert2019SafePreparation();
         }
       });
     }

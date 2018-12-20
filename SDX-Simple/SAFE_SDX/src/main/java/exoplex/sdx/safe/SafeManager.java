@@ -96,7 +96,7 @@ public class SafeManager {
     String[] othervalues=new String[2];
     othervalues[0]=customerSafeKeyHash;
     String saHash = SafeUtils.getPrincipalId(safeServer, "key_p3");
-    String sdxHash = SafeUtils.getPrincipalId(safeServer, "sdx");
+    String sdxHash = SafeUtils.getPrincipalId(safeServer, this.safeKeyFile);
     othervalues[1]=saHash + ":" + customerSlice;
     return SafeUtils.authorize(safeServer, "authorizeStitchByUID", sdxHash, othervalues);
   }

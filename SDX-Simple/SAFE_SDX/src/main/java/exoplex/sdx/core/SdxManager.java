@@ -4,6 +4,7 @@ import exoplex.common.slice.SafeSlice;
 import exoplex.common.slice.SiteBase;
 import exoplex.common.utils.Exec;
 import exoplex.common.utils.HttpUtil;
+import exoplex.common.utils.SafeUtils;
 import exoplex.common.utils.ServerOptions;
 import exoplex.sdx.safe.SafeManager;
 import org.apache.logging.log4j.LogManager;
@@ -69,6 +70,7 @@ public class SdxManager extends SliceManager {
   private String OVSController;
   private int groupID = 0;
   private String logPrefix = "";
+  private boolean safeChecked = false;
   private HashSet<Integer> usedip = new HashSet<Integer>();
 
   private ConcurrentHashMap<String, String> prefixGateway = new ConcurrentHashMap<String, String>();
@@ -432,7 +434,16 @@ public class SdxManager extends SliceManager {
       jsonparams.put("ip", urAddressPrefix);
 
       if(safeEnabled) {
-        jsonparams.put("ckeyhash", safeKeyHash);
+        if (!safeChecked) {
+          if(serverSlice.getResourceByName("safe-server")!=null){
+            setSafeServerIp(serverSlice.getComputeNode("safe-server").getManagementIP());
+          }else {
+            setSafeServerIp(conf.getString("config.safeserver"));
+          }
+          //sm.verifySafeInstallation(riakIp);
+          safeChecked = true;
+        }
+        jsonparams.put("ckeyhash", safeManager.getSafeKeyHash());
         /*
         postSafeStitchRequest(safeKeyHash, sliceName, node0_s2_stitching_GUID, params[2],
             params[3]);
@@ -459,6 +470,16 @@ public class SdxManager extends SliceManager {
         Exec.sshExec("root", mip, "/etc/init.d/quagga restart", sshkey);
         updateOvsInterface(serverSlice, myNode);
         routingmanager.newExternalLink(l1.getLinkName(), ip, myNode, gateway, SDNController);
+
+        String remoteGUID = res.getString("reservID");
+        String remoteSafeKeyHash = res.getString("safeKeyHash");
+        //Todo: be careful when we want to unstitch from the link side. as the net is virtual
+        stitchNet.put(remoteGUID, l1.getLinkName());
+        if(!customerNodes.containsKey(remoteSafeKeyHash)){
+          customerNodes.put(remoteSafeKeyHash, new HashSet<>());
+        }
+        customerNodes.get(remoteSafeKeyHash).add(remoteGUID);
+        customerGateway.put(remoteGUID, gateway);
         logger.info(logPrefix + "stitch completed.");
         return myAddress;
       }
@@ -484,7 +505,7 @@ public class SdxManager extends SliceManager {
       jsonparams.put("cslice", sliceName);
       jsonparams.put("creservid", node0_s2_stitching_GUID);
       if(safeEnabled) {
-        jsonparams.put("ckeyhash", safeKeyHash);
+        jsonparams.put("ckeyhash", safeManager.getSafeKeyHash());
         /*
         postSafeStitchRequest(safeKeyHash, sliceName, node0_s2_stitching_GUID, params[2],
             params[3]);
@@ -586,6 +607,8 @@ public class SdxManager extends SliceManager {
         .split("/")[1]);
       res.put("ip", ip);
       res.put("gateway", gateway);
+      res.put("reservID", net1_stitching_GUID);
+      res.put("safeKeyHash", safeManager.getSafeKeyHash());
       sleep(15);
       updateOvsInterface(serverSlice, node.getName());
       routingmanager.newExternalLink(logLink.getLinkName(),

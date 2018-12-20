@@ -10,6 +10,7 @@ public class Cnert2019Setting extends SliceManager{
   public static final ArrayList<String> sdxConfs = new ArrayList<>();
   public static final ArrayList<String> sdxSliceNames = new ArrayList<>();
   public static final HashMap<String, String> sdxKeyMap = new HashMap<>();
+  public static final HashMap<String, String> sdxIpMap = new HashMap<>();
   public static final ArrayList<String> sdxUrls = new ArrayList<>();
   public static final int numSdx = 2;
 
@@ -36,6 +37,7 @@ public class Cnert2019Setting extends SliceManager{
 
   static{
     int sdxKeyBase = 100;
+    int sdxIpBase = 100;
 
     for (int i = 0; i< numSdx; i++){
       sdxConfs.add(String.format("%ssdx%s.conf", sdxConfigDir, i + 1));
@@ -43,6 +45,8 @@ public class Cnert2019Setting extends SliceManager{
       sdxSliceNames.add(sdxSliceName);
       sdxKeyMap.put(sdxSliceName, String.format("key_p%s", sdxKeyBase + i));
       sdxUrls.add(String.format("http://127.0.0.1:888%s/", i));
+      sdxIpMap.put(sdxSliceName, String.format("192.168.%s.1/24", sdxIpBase));
+      sdxIpBase += 20;
     }
   }
 
