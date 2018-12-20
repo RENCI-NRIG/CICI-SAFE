@@ -1,6 +1,7 @@
 package safe;
 
 import exoplex.common.utils.SafeUtils;
+import exoplex.demo.cnert2019.Cnert2019Setting;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.LogManager;
@@ -138,6 +139,22 @@ public class AuthorityMock {
     checkAuthorization();
   }
 
+  public void makeCnert2019SafePreparation() {
+    cnert2019Setting();
+    addPrincipals();
+    initPrincipals();
+    initializeCnert2019Auth();
+    //checkAuthorization();
+  }
+
+  private void cnert2019Setting() {
+    slices.addAll(Cnert2019Setting.sdxSliceNames);
+    for(String key: Cnert2019Setting.sdxKeyMap.keySet()){
+      sliceKeyMap.put(key, Cnert2019Setting.sdxKeyMap.get(key));
+      sliceIpMap.put(key, Cnert2019Setting.sdxIpMap.get(key));
+    }
+  }
+
   private void customSetting() {
     slices.addAll(Arrays.asList(new String[]{"c0-tri", "c1-tri", "c2-tri",
         "c3-tri", "c4-tri"}));
@@ -167,6 +184,9 @@ public class AuthorityMock {
     principals.add("key_p3");
     //PI
     principals.add("key_p4");
+    for (String key: sliceKeyMap.values()){
+      principals.add(key);
+    }
   }
 
   private void initPrincipals() {
@@ -190,6 +210,55 @@ public class AuthorityMock {
     }catch (Exception e){
       logger.error(e.getMessage());
     }
+  }
+
+  private void initializeCnert2019Auth(){
+    String token;
+    simpleEndorseMent(postMAEndorsement, "geniroot", "key_p1", "MA");
+    simpleEndorseMent(postPAEndorsement, "geniroot", "key_p2", "PA");
+    simpleEndorseMent(postSAEndorsement, "geniroot", "key_p3", "SA");
+
+    String piCap = simpleEndorseMent(postPIEndorsement, "key_p1", "key_p4", "PI");
+
+    for(String key: Cnert2019Setting.sdxKeyMap.values()) {
+      simpleEndorseMent(postUserEndorsement, "key_p1", key, "User");
+    }
+
+    HashMap<String, String> envs = new HashMap<>();
+    envs.put(subject, principalMap.get("key_p4"));
+    envs.put(bearerRef, piCap);
+    authorize(createProject, "key_p2", new String[]{}, envs);
+    String paMemberSetRef = safePost(postMemberSet, "key_p2");
+    String projectId = principalMap.get("key_p2") + ":project1";
+    String projectToken = safePost(postProjectSet, "key_p2",
+      new String[]{principalMap.get("key_p4"), projectId,
+        paMemberSetRef});
+    List<String> piProjectTokens = SafeUtils.getTokens(passDelegation("key_p4", projectToken,
+      projectId));
+
+    envs.clear();
+    //Authorize that PI can create slice
+    envs.put(subject, principalMap.get("key_p4"));
+    //bearerRef should be subject set, as it contains both project token and MA token
+    envs.put(bearerRef, piProjectTokens.get(1));
+    assert authorize(createSlice, "key_p3", new String[]{projectId}, envs);
+    String sliceControlRef = safePost(postStandardSliceControlSet, "key_p3");
+    String slicePrivRef = safePost(postStandardSliceDefaultPrivilegeSet, "key_p3");
+    //post authorize policy
+    for(String key: Cnert2019Setting.sdxKeyMap.values()) {
+      safePost(postStitchPolicy, key);
+    }
+
+    //MakeIp Delegation
+    safePost(postMakeIPTokenSet, "rpkiroot", new String[]{"192.1.1.1/24"});
+
+    for (String slice : slices) {
+      String userKeyFile = sliceKeyMap.get(slice);
+      String userIP = sliceIpMap.get(slice);
+      addCnert2019UserSlice(userKeyFile, slice, userIP);
+    }
+    logger.debug("end");
+
   }
 
   private void initializeGeniAuth() {
@@ -234,6 +303,79 @@ public class AuthorityMock {
       addUserSlice(userKeyFile, slice, userIP);
     }
     logger.debug("end");
+  }
+
+  /*
+  Allow stitching to all SDX slices
+   */
+  void addCnert2019UserSlice(String userKeyFile, String slice, String userIP) {
+    //slices.add(slice);
+    sliceKeyMap.put(slice, userKeyFile);
+    if (!principalMap.containsKey(userKeyFile)) {
+      principals.add(userKeyFile);
+      initIdSetSubjectSet(userKeyFile);
+      principalMap.put(userKeyFile, SafeUtils.getPrincipalId(safeServer, userKeyFile));
+    }
+    //User membership
+    simpleEndorseMent(postUserEndorsement, "key_p1", userKeyFile, "User");
+    //PI delegate to users
+    HashMap<String, String> envs = new HashMap<>();
+    String userKey = principalMap.get(userKeyFile);
+    String projectId = principalMap.get("key_p2") + ":project1";
+    String pmToken = safePost(postProjectMembership, "key_p4", new String[]{userKey,
+      projectId, "true"});
+    List<String> tokens = SafeUtils.getTokens(passDelegation(userKeyFile, pmToken,
+      projectId));
+    envs.clear();
+    envs.put(subject, userKey);
+    envs.put(bearerRef, tokens.get(1));
+    assert authorize(createSlice, "key_p3", new String[]{projectId}, envs);
+
+    /*
+    The previous part is the common geni trust structure.
+    The next is specific to our example
+
+     */
+    //create slices.
+    String sliceControlRef = safePost(postStandardSliceControlSet, "key_p3");
+    String slicePrivRef = safePost(postStandardSliceDefaultPrivilegeSet, "key_p3");
+    String sliceId = principalMap.get("key_p3") + ":" + slice;
+    sliceScid.put(slice, sliceId);
+    sliceToken.put(slice, safePost(postSliceSet, "key_p3",
+      new String[]{principalMap.get(sliceKeyMap.get(slice)), sliceId, projectId,
+        sliceControlRef,
+        slicePrivRef}));
+    List<String> sliceTokens = SafeUtils.getTokens(passDelegation(sliceKeyMap.get(slice),
+      sliceToken.get(slice), sliceId));
+
+    //UserAcl
+    for(String sdxKey: Cnert2019Setting.sdxKeyMap.values()) {
+      safePost(postUserAclEntry, sdxKey, new String[]{principalMap.get(sliceKeyMap.get
+        (slice))});
+    }
+
+
+    String parentPrefix = "192.1.1.1/24";
+    String ipToken = safePost(postIPAllocate, "rpkiroot", new String[]{userKey, userIP,
+      parentPrefix});
+    safePost(postDlgToken, userKeyFile, new String[]{ipToken, userIP});
+    safePost(updateSubjectSet, userKeyFile, new String[]{ipToken});
+    for(String sdxKey: Cnert2019Setting.sdxKeyMap.values()) {
+      authorize(authorizeOwnPrefix, sdxKey, new String[]{userKey, userIP});
+    }
+
+    //Tag delegation
+    String tag = principalMap.get("tagauthority") + ":tag0";
+    safePost(postTagSet, "tagauthority", new String[]{tag});
+    String tagToken = safePost(postGrantTagPriv, "tagauthority", new Object[]{userKey, tag, true});
+    safePost(updateTagSet, userKeyFile, new String[]{tagToken, tag});
+
+    //userTagAcl
+    //user post Connect policy
+    safePost(postUserTagAclEntry, userKeyFile, new String[]{tag});
+    safePost(postCustomerConnectionPolicy, userKeyFile, new String[]{});
+    safePost(postTagPrivilegePolicy, userKeyFile, new String[]{});
+    safePost(postCustomerPolicy, userKeyFile, new String[]{});
   }
 
   void addUserSlice(String userKeyFile, String slice, String userIP) {
