@@ -18,7 +18,7 @@ public class Cnert2019Setting extends SliceManager{
   static String userDir = System.getProperty("user.dir");
   static String sdxSimpleDir = userDir.split("SDX-Simple")[0] + "SDX-Simple/";
   public final static String sdxConfigDir = sdxSimpleDir + "config/cnert2019/";
-  public final static String[] sdxArg = new String[]{"-c", sdxConfigDir + "sdx1.conf", "-r"};
+  public final static ArrayList<String[]> sdxArgs = new ArrayList<>();
   public static String[] clientArgs = new String[]{"-c", sdxSimpleDir + "client-config/client" +
     ".conf"};
 
@@ -41,6 +41,8 @@ public class Cnert2019Setting extends SliceManager{
 
     for (int i = 0; i< numSdx; i++){
       sdxConfs.add(String.format("%ssdx%s.conf", sdxConfigDir, i + 1));
+      String[] sdxArg = new String[]{"-c", sdxConfs.get(i), "-r"};
+      sdxArgs.add(sdxArg);
       String sdxSliceName = String.format("sdx-%s-cnert", i + 1);
       sdxSliceNames.add(sdxSliceName);
       sdxKeyMap.put(sdxSliceName, String.format("key_p%s", sdxKeyBase + i));
@@ -59,7 +61,7 @@ public class Cnert2019Setting extends SliceManager{
   public static final HashMap<String, String> clientIpMap = new HashMap<>();
 
   static {
-    int keyBase = 5;
+    int keyBase = 10;
     int ipBase = 10;
     for (int i=0; i<clientSites.size(); i++){
       String clientName = "c" + i + "-tri";

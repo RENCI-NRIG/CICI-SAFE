@@ -232,6 +232,10 @@ public class SdxExogeniClient extends SliceCommon{
     }
   }
 
+  public void setServerUrl(String url){
+    this.serverurl = url;
+  }
+
   private String processStitchCmd(String[] params) {
     if(serverSlice==null){
       try {
