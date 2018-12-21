@@ -72,6 +72,7 @@ public class SdxServer {
     System.out.println("starting exoplex.sdx server");
     SdxManager sdxManager = new SdxManager();
     sdxManager.startSdxServer(args, sliceName);
+    sdxManager.serverurl = url;
     URI uri = URI.create(url);
     sdxManagerMap.put(uri.getPort(), sdxManager);
     logger.debug("Starting on " + url);

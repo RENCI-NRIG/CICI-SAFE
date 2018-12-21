@@ -6,6 +6,8 @@ import exoplex.common.utils.Exec;
 import exoplex.common.utils.HttpUtil;
 import exoplex.common.utils.SafeUtils;
 import exoplex.common.utils.ServerOptions;
+import exoplex.sdx.bgp.BgpAdvertise;
+import exoplex.sdx.bgp.BgpManager;
 import exoplex.sdx.safe.SafeManager;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -62,6 +64,7 @@ public class SdxManager extends SliceManager {
   protected HashMap<String, ArrayList<String>> edgeRouters = new HashMap<String, ArrayList<String>>();
   int curip = 128;
   protected RoutingManager routingmanager = new RoutingManager();
+  protected BgpManager bgpManager;
   protected SafeManager safeManager = null;
   private BroManager broManager = null;
   private String mask = "/24";
@@ -78,7 +81,6 @@ public class SdxManager extends SliceManager {
   private ConcurrentHashMap<String, String> customerGateway = new ConcurrentHashMap<String,
       String>();
 
-
   private ConcurrentHashMap<String, String> prefixKeyHash = new ConcurrentHashMap<String, String>();
 
   //the ip prefixes that a customer has advertised
@@ -86,6 +88,8 @@ public class SdxManager extends SliceManager {
 
   //The node reservation IDs that a customer has stitched to SDX
   private ConcurrentHashMap<String, HashSet<String>> customerNodes = new ConcurrentHashMap<>();
+
+  private ConcurrentHashMap<String, String> peerUrls = new ConcurrentHashMap<>();
 
   //The name of the link in SDX slice stitched to customer node
   private ConcurrentHashMap<String, String> stitchNet = new ConcurrentHashMap<>();
@@ -172,6 +176,7 @@ public class SdxManager extends SliceManager {
         setSafeServerIp(conf.getString("config.safeserver"));
       }
       safeManager = new SafeManager(safeServerIp, safeKeyFile, sshkey);
+      bgpManager = new BgpManager(safeManager.getSafeKeyHash());
     }
     checkSdxPrerequisites(serverSlice);
     //configRouting(serverslice,OVSController,SDNController,"(c\\d+)","(sp-c\\d+.*)");
@@ -460,14 +465,7 @@ public class SdxManager extends SliceManager {
         logger.warn(logPrefix + "stitch request failed");
       } else {
         links.put(l1.getLinkName(), l1);
-        logger.info(logPrefix + "set IP address of the stitch interface to " + ip);
-        sleep(5);
-        String mip = node0_s2.getManagementIP();
-        String result = Exec.sshExec("root", mip, "ifconfig eth1 " + ip, sshkey)[0];
         String gateway = urAddressPrefix.split("/")[0];
-        Exec.sshExec("root", mip, "echo \"ip route 192.168.1.1/16 " + gateway+ "\" " +
-          ">>/etc/quagga/zebra.conf  ", sshkey);
-        Exec.sshExec("root", mip, "/etc/init.d/quagga restart", sshkey);
         updateOvsInterface(serverSlice, myNode);
         routingmanager.newExternalLink(l1.getLinkName(), ip, myNode, gateway, SDNController);
 
@@ -481,12 +479,39 @@ public class SdxManager extends SliceManager {
         customerNodes.get(remoteSafeKeyHash).add(remoteGUID);
         customerGateway.put(remoteGUID, gateway);
         logger.info(logPrefix + "stitch completed.");
+
+        //Peer
+        PeerRequest peerRequest = new PeerRequest();
+        peerRequest.peerPID = safeManager.getSafeKeyHash();
+        peerRequest.peerUrl = this.serverurl;
+        String peerRes = HttpUtil.postJSON(serverURI + "sdx/peer", peerRequest.toJsonObject());
+        PeerRequest newPeer = new PeerRequest(peerRes);
+        if(newPeer.peerPID!=""){
+          updatePeer(newPeer);
+        }
         return myAddress;
       }
     } catch (Exception e) {
       e.printStackTrace();
     }
     return null;
+  }
+
+  private void updatePeer(PeerRequest newPeer){
+    this.peerUrls.put(newPeer.peerPID, newPeer.peerUrl);
+    ArrayList<BgpAdvertise> advertises = bgpManager.getAllAdvertises();
+    for(BgpAdvertise bgpAdvertise: advertises){
+      if(!bgpAdvertise.advertiserPID.equals(newPeer)){
+        if(!bgpAdvertise.route.contains(newPeer.peerPID)) {
+          advertiseBgp(newPeer.peerUrl, bgpAdvertise);
+        }
+      }
+    }
+    //Todo: make advertisements
+  }
+
+  private void advertiseBgp(String peerUrl, BgpAdvertise advertise){
+    HttpUtil.postJSON(peerUrl + "sdx/bgp", advertise.toJsonObject());
   }
 
   private String processUnStitchCmd(String[] params) {
@@ -859,7 +884,17 @@ public class SdxManager extends SliceManager {
     //String n1=computenodes.get(site1).get(0);
     //String n2=computenodes.get(site2).get(0);
     if(safeEnabled) {
-      String targetHash = prefixKeyHash.get(target_prefix);
+      String targetHash = null;
+      if(prefixKeyHash.containsKey(target_prefix)) {
+        targetHash = prefixKeyHash.get(target_prefix);
+      }else {
+        BgpAdvertise advertise = bgpManager.getAdvertise(target_prefix);
+        if(advertise == null){
+          return "target prefix unrecognized.";
+        }else {
+          targetHash = advertise.ownerPID;
+        }
+      }
       if(! safeManager.authorizeConnectivity(ckeyhash, self_prefix, targetHash, target_prefix)){
         logger.info("Unauthorized connection request");
         return "Unauthorized connection request";
@@ -868,7 +903,16 @@ public class SdxManager extends SliceManager {
       }
     }
     String n1 = routingmanager.getEdgeRouterByGateway(prefixGateway.get(self_prefix));
-    String n2 = routingmanager.getEdgeRouterByGateway(prefixGateway.get(target_prefix));
+    String n2 = null;
+    if(prefixGateway.containsKey(target_prefix)){
+      n2 = routingmanager.getEdgeRouterByGateway(prefixGateway.get(target_prefix));
+    }else{
+      BgpAdvertise advertise = bgpManager.getAdvertise(target_prefix);
+      if(advertise!= null) {
+        String peerNode = customerNodes.get(advertise.advertiserPID).iterator().next();
+        n2 = routingmanager.getEdgeRouterByGateway(customerGateway.get(peerNode));
+      }
+    }
     if (n1 == null || n2 == null) {
       return "Prefix unrecognized.";
     }
@@ -925,9 +969,12 @@ public class SdxManager extends SliceManager {
       writeLinks(topofile);
       logger.debug("Link added successfully, configuring routes");
       if (routingmanager.configurePath(self_prefix, n1, target_prefix, n2, prefixGateway.get
-          (self_prefix), SDNController, bandwidth) &&
-          routingmanager.configurePath(target_prefix, n2, self_prefix, n1, prefixGateway.get
-              (target_prefix), SDNController, 0)) {
+          (self_prefix), SDNController, bandwidth)
+        //&&
+        //  routingmanager.configurePath(target_prefix, n2, self_prefix, n1, prefixGateway.get
+        //      (target_prefix), SDNController, 0)){
+        ){
+
         logger.info(logPrefix + "Routing set up for " + self_prefix + " and " + target_prefix);
         logger.debug(logPrefix + "Routing set up for " + self_prefix + " and " + target_prefix);
         //TODO: auto select edge router
@@ -958,6 +1005,33 @@ public class SdxManager extends SliceManager {
     logger.info("SDX network reset");
   }
 
+  public String processBgpAdvertise(BgpAdvertise bgpAdvertise){
+    BgpAdvertise newAdvertise = bgpManager.receiveAdvertise(bgpAdvertise);
+    if(newAdvertise == null) {
+      //No change
+      return "";
+    }else{
+      //Updates
+      //Update routings
+      //TODO: now use both source prefix and dst prefix, but this is not necessary
+      routingmanager.revokePrefix(bgpAdvertise.prefix, SDNController);
+      String customerReservId = customerNodes.get(bgpAdvertise.advertiserPID).iterator().next();
+      String gateway = customerGateway.get(customerReservId);
+      String edgeNode = routingmanager.getEdgeRouterByGateway(gateway);
+      routingmanager.configurePath(bgpAdvertise.prefix, edgeNode, gateway, getSDNController());
+      propagateBgpAdvertise(newAdvertise);
+      return newAdvertise.toString();
+    }
+  }
+
+  public PeerRequest processPeerRequest(PeerRequest peerRequest){
+    updatePeer(peerRequest);
+    PeerRequest reply = new PeerRequest();
+    reply.peerUrl = serverurl;
+    reply.peerPID = safeManager.getSafeKeyHash();
+    return reply;
+  }
+
   public String notifyPrefix(String dest, String gateway, String customer_keyhash) {
     logger.info(logPrefix + "received notification for ip prefix " + dest);
     String res = "received notification for " + dest;
@@ -977,8 +1051,20 @@ public class SdxManager extends SliceManager {
         gatewayPrefixes.put(gateway, new HashSet());
       }
       gatewayPrefixes.get(gateway).add(dest);
+      BgpAdvertise advertise = bgpManager.initAdvertise(customer_keyhash, dest);
+      propagateBgpAdvertise(advertise);
     }
     return res;
+  }
+
+  private void propagateBgpAdvertise(BgpAdvertise advertise){
+    for(String peer: peerUrls.keySet()){
+      if(!peer.equals(advertise.ownerPID) && !peer.equals(advertise.advertiserPID)){
+        if(!advertise.route.contains(peer)) {
+          advertiseBgp(peerUrls.get(peer), advertise);
+        }
+      }
+    }
   }
 
   private void revokePrefix(String customerSafeKeyHash, String prefix){

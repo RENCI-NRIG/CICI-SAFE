@@ -72,7 +72,7 @@ public class SafeAuthority implements SdxRoutingSlang, SafeLang {
   static final String whoami = "whoami";
   static final String postTagAclEntry = "postTagAclEntry";
   static final String postSubjectSet = "postSubjectSet";
-  ;
+  static boolean authorizationMade = false;
 
   String safeServer = "128.194.6.138:7777";
 
@@ -119,19 +119,26 @@ public class SafeAuthority implements SdxRoutingSlang, SafeLang {
     sliceIpMap = clientIpMap;
   }
 
-  public void initGeniTrustBase(){
-    addPrincipals();
-    initPrincipals();
-    initializeGeniAuth();
-    checkAuthorization();
+  public void makeSafePreparation() {
+    if(!authorizationMade) {
+      customSetting();
+      addPrincipals();
+      initPrincipals();
+      initializeGeniAuth();
+      checkAuthorization();
+      authorizationMade = true;
+    }
   }
 
   public void makeCnert2019SafePreparation() {
-    cnert2019Setting();
-    addPrincipals();
-    initPrincipals();
-    initializeCnert2019Auth();
-    //checkAuthorization();
+    if(!authorizationMade) {
+      cnert2019Setting();
+      addPrincipals();
+      initPrincipals();
+      initializeCnert2019Auth();
+      //checkAuthorization();
+      authorizationMade = true;
+    }
   }
 
   private void cnert2019Setting() {
@@ -139,6 +146,11 @@ public class SafeAuthority implements SdxRoutingSlang, SafeLang {
     for(String key: Cnert2019Setting.sdxKeyMap.keySet()){
       sliceKeyMap.put(key, Cnert2019Setting.sdxKeyMap.get(key));
       sliceIpMap.put(key, Cnert2019Setting.sdxIpMap.get(key));
+    }
+    for(String key: Cnert2019Setting.clientSlices){
+      sliceKeyMap.put(key, Cnert2019Setting.clientKeyMap.get(key));
+      sliceIpMap.put(key, Cnert2019Setting.clientIpMap.get(key));
+      slices.add(key);
     }
   }
 

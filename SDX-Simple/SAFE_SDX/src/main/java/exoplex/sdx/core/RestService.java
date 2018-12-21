@@ -1,5 +1,6 @@
 package exoplex.sdx.core;
 
+import exoplex.sdx.bgp.BgpAdvertise;
 import org.apache.jena.atlas.json.JSON;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -28,7 +29,7 @@ public class RestService {
   @Path("/admin")
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.TEXT_PLAIN)
-  public String stitchRequest(@Context UriInfo uriInfo, AdminCmd cmd) {
+  public String processAdminCmd(@Context UriInfo uriInfo, AdminCmd cmd) {
     logger.debug(uriInfo.getBaseUri());
     logger.debug(String.format("got sittch request %s", cmd));
     SdxManager sdxManager = SdxServer.sdxManagerMap.get(uriInfo.getBaseUri().getPort());
@@ -37,6 +38,38 @@ public class RestService {
     } catch (Exception e) {
       e.printStackTrace();
       return e.getMessage();
+    }
+  }
+
+  @POST
+  @Path("/bgp")
+  @Consumes(MediaType.APPLICATION_JSON)
+  @Produces(MediaType.TEXT_PLAIN)
+  public String receiveBgpAdvertise(@Context UriInfo uriInfo, BgpAdvertise bgpAdvertise) {
+    logger.debug(uriInfo.getBaseUri());
+    logger.debug(String.format("got bgp advertisement %s", bgpAdvertise));
+    SdxManager sdxManager = SdxServer.sdxManagerMap.get(uriInfo.getBaseUri().getPort());
+    try {
+      return sdxManager.processBgpAdvertise(bgpAdvertise);
+    } catch (Exception e) {
+      e.printStackTrace();
+      return e.getMessage();
+    }
+  }
+
+  @POST
+  @Path("/peer")
+  @Consumes(MediaType.APPLICATION_JSON)
+  @Produces(MediaType.APPLICATION_JSON)
+  public PeerRequest peer(@Context UriInfo uriInfo, PeerRequest peerRequest) {
+    logger.debug(uriInfo.getBaseUri());
+    logger.debug(String.format("got peer request %s", peerRequest));
+    SdxManager sdxManager = SdxServer.sdxManagerMap.get(uriInfo.getBaseUri().getPort());
+    try {
+      return sdxManager.processPeerRequest(peerRequest);
+    } catch (Exception e) {
+      e.printStackTrace();
+      return new PeerRequest();
     }
   }
 
@@ -188,6 +221,37 @@ class UndoStitchRequest {
   @Override
   public String toString(){
     return String.format("%s%s %s", ckeyhash, cslice, creservid);
+  }
+}
+
+class PeerRequest {
+  public String peerUrl;
+  public String peerPID;
+
+  public PeerRequest(){
+    peerPID = "";
+    peerUrl = "";
+  }
+
+  public PeerRequest(String json){
+    JSONObject obj = new JSONObject(json);
+    peerUrl = obj.getString("peerUrl");
+    peerPID = obj.getString("peerPID");
+  }
+
+  public JSONObject toJsonObject(){
+    JSONObject jsonObject = new JSONObject();
+    jsonObject.put("peerUrl", peerUrl);
+    jsonObject.put("peerPID", peerPID);
+    return jsonObject;
+  }
+
+  @Override
+  public String toString(){
+    JSONObject obj = new JSONObject();
+    obj.put("peerUrl", peerUrl);
+    obj.put("peerPID", peerPID);
+    return obj.toString();
   }
 }
 
