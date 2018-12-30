@@ -4,6 +4,7 @@ import exoplex.common.slice.SafeSlice;
 import exoplex.common.slice.SiteBase;
 import exoplex.common.utils.ServerOptions;
 import exoplex.sdx.core.SliceManager;
+import exoplex.sdx.safe.SafeManager;
 import org.apache.commons.cli.CommandLine;
 import org.renci.ahab.libtransport.SSHAccessToken;
 import org.renci.ahab.libtransport.SliceAccessContext;
@@ -46,7 +47,8 @@ public class DockerServerSlice extends SliceManager{
 
   public void createSafeAndPlexusSlice() throws  Exception{
     SafeSlice s = SafeSlice.create(sliceName, pemLocation, keyLocation, controllerUrl, sctx);
-    s.addSafeServer(SiteBase.get("BBN"), conf.getString("config.riak"));
+    s.addSafeServer(SiteBase.get("BBN"), conf.getString("config.riak"), SafeManager
+      .safeDockerImage, SafeManager.safeServerScript);
     s.addPlexusController(SiteBase.get("BBN"),"plexus");
     s.commitAndWait();
     s.reloadSlice();

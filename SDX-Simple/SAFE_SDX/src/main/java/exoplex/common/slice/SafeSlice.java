@@ -861,8 +861,10 @@ public class SafeSlice {
 
   }
 
-  public void addSafeServer(String siteName,  String riakIp) {
-    addDocker(siteName, "safe-server", Scripts.getSafeScript_v1(riakIp), NodeBase.xoMedium);
+  public void addSafeServer(String siteName,  String riakIp, String safeDockerImage, String
+    safeServerScript) {
+    addDocker(siteName, "safe-server", Scripts.getSafeScript_v1(riakIp, safeDockerImage,
+      safeServerScript), NodeBase.xoMedium);
   }
 
   public void addPlexusController(String controllerSite, String name) {

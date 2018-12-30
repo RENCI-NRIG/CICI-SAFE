@@ -9,6 +9,7 @@ import exoplex.common.utils.Exec;
 import exoplex.common.utils.HttpUtil;
 import exoplex.common.utils.SafeUtils;
 import exoplex.common.utils.ServerOptions;
+import exoplex.sdx.bgp.BgpAdvertise;
 import exoplex.sdx.core.SliceManager;
 import exoplex.sdx.safe.SafeManager;
 import org.apache.commons.cli.CommandLine;
@@ -23,6 +24,7 @@ import org.renci.ahab.libtransport.util.ContextTransportException;
 import org.renci.ahab.libtransport.util.SSHAccessTokenFileFactory;
 import org.renci.ahab.libtransport.util.TransportException;
 import org.renci.ahab.libtransport.util.UtilTransportException;
+import safe.SdxRoutingSlang;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -206,6 +208,10 @@ public class SdxExogeniClient extends SliceCommon{
     }
   }
 
+  private void advertiseBgp(String peerUrl, BgpAdvertise advertise){
+    HttpUtil.postJSON(peerUrl + "sdx/bgp", advertise.toJsonObject());
+  }
+
   private void processPrefixCmd(String[] params) {
     JSONObject paramsobj = new JSONObject();
     paramsobj.put("dest", params[1]);
@@ -221,13 +227,40 @@ public class SdxExogeniClient extends SliceCommon{
       }
       safeKeyHash = SafeUtils.getPrincipalId(safeServer, safeKeyFile);
       paramsobj.put("customer", safeKeyHash);
+
+
     }else {
       paramsobj.put("customer", sliceName);
     }
     String res = HttpUtil.postJSON(serverurl + "sdx/notifyprefix", paramsobj);
-    if (res.equals("")) {
+    JSONObject jsonRes = new JSONObject(res);
+    if (!jsonRes.getBoolean("result")) {
       logger.warn(logPrefix + "Prefix not accepted (authorization failed)");
     } else {
+      if(safeEnabled) {
+        //Make initRoute advertisement
+        //dstip, path, targeas, length
+        String[] safeparams = new String[4];
+        safeparams[0] = String.format("ipv4\\\"%s\\\"", params[1]);
+        safeparams[1] = String.format("[%s]", safeKeyHash);
+        String sdxSafeKeyHash = jsonRes.getString("safeKeyHash");
+        if(sdxSafeKeyHash.equals("")){
+          logger.warn("SDX safekeyhash empty");
+        }
+        safeparams[2] = sdxSafeKeyHash;
+        safeparams[3] = String.valueOf(1);
+        String token = SafeUtils.getToken(SafeUtils.postSafeStatements(safeServer, SdxRoutingSlang
+            .postInitRoute, safeKeyHash, safeparams));
+        BgpAdvertise advertise = new BgpAdvertise();
+        advertise.safeToken = token;
+        advertise.advertiserPID = safeKeyHash;
+        advertise.route.add(safeKeyHash);
+        advertise.ownerPID = safeKeyHash;
+        advertise.prefix = params[1];
+        //pass the token when making bgpAdvertise
+        advertiseBgp(serverurl,advertise);
+        logger.debug("posted initRoute statement");
+      }
       logger.info(logPrefix + res);
     }
   }

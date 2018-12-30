@@ -4,8 +4,10 @@ import exoplex.common.slice.Scripts;
 import exoplex.common.utils.Exec;
 import exoplex.common.utils.SafeUtils;
 
+import exoplex.sdx.bgp.BgpAdvertise;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import safe.SdxRoutingSlang;
 
 public class SafeManager {
   final static Logger logger = LogManager.getLogger(SafeManager.class);
@@ -14,6 +16,10 @@ public class SafeManager {
   private String safeKeyFile;
   private String sshKey=null;
   private String safeKeyHash= null;
+  //was v4
+  public final static String safeDockerImage = "safeserver-v6";
+  //was prdn.sh
+  public final static String safeServerScript = "sdx-routing.sh";
 
   public SafeManager(String ip, String safeKeyFile, String sshKey){
     safeServerIp = ip;
@@ -47,11 +53,20 @@ public class SafeManager {
   public boolean authorizeConnectivity(String srchash, String srcip, String dsthash, String dstip){
     String[] othervalues=new String[4];
     othervalues[0]=srchash;
-    othervalues[1]=srcip;
+    othervalues[1]= String.format("ipv4\\\"%s\\\"", srcip);
     othervalues[2]=dsthash;
-    othervalues[3]=dstip;
+    othervalues[3]= String.format("ipv4\\\"%s\\\"", dstip);
     return SafeUtils.authorize(safeServer, "authZByUserAttr", getSafeKeyHash(),
       othervalues);
+  }
+
+  public void postPathToken(BgpAdvertise advertise){
+    String[] params = new String[4];
+    params[0] = advertise.safeToken;
+    params[1] = advertise.getPrefix();
+    params[2] = advertise.advertiserPID;
+    params[3] = String.valueOf(advertise.route.size());
+    post(SdxRoutingSlang.postPathToken, params);
   }
 
   public boolean authorizeStitchRequest(String customer_slice,
@@ -76,6 +91,20 @@ public class SafeManager {
     }
     else
       return true;
+  }
+
+  public String post(String operation, String[] params){
+    String res = SafeUtils.postSafeStatements(safeServer, operation, getSafeKeyHash(), params);
+    return SafeUtils.getToken(res);
+  }
+
+  public boolean authorizeBgpAdvertise(BgpAdvertise bgpAdvertise){
+    String[] othervalues=new String[4];
+    othervalues[0] = bgpAdvertise.ownerPID;
+    othervalues[1] = bgpAdvertise.getPrefix();
+    othervalues[2] = bgpAdvertise.getPath();
+    othervalues[3] = bgpAdvertise.safeToken;
+    return SafeUtils.authorize(safeServer, SdxRoutingSlang.verifyRoute, getSafeKeyHash(), othervalues);
   }
 
   public boolean authorizeStitchRequest(String customerSafeKeyHash,
@@ -104,7 +133,7 @@ public class SafeManager {
   }
 
   public void restartSafeServer(){
-    Exec.sshExec("root", safeServerIp, Scripts.restartSafe_v1(),sshKey);
+    Exec.sshExec("root", safeServerIp, Scripts.restartSafe_v1(safeServerScript),sshKey);
   }
 
   public void deploySafeScripts(){
@@ -117,10 +146,11 @@ public class SafeManager {
     }
     while(true) {
       String result = Exec.sshExec("root", safeServerIp, "docker images", sshKey)[0];
-      if(result.contains("safeserver")){
+      if(result.contains(safeDockerImage)){
         break;
       }else{
-        Exec.sshExec("root", safeServerIp, Scripts.getSafeScript_v1(riakIp), sshKey);
+        Exec.sshExec("root", safeServerIp, Scripts.getSafeScript_v1(riakIp, safeDockerImage,
+          safeServerScript), sshKey);
       }
     }
     while(true){
@@ -128,10 +158,12 @@ public class SafeManager {
       if(result.contains("safe")){
         break;
       }else{
-        Exec.sshExec("root", safeServerIp, Scripts.getSafeScript_v1(riakIp), sshKey);
+        Exec.sshExec("root", safeServerIp, Scripts.getSafeScript_v1(riakIp, safeDockerImage,
+          safeServerScript),
+          sshKey);
       }
     }
-    Exec.sshExec("root", safeServerIp, Scripts.restartSafe_v1(), sshKey);
+    Exec.sshExec("root", safeServerIp, Scripts.restartSafe_v1(safeServerScript), sshKey);
     while (true){
       if(safeServerAlive()){
         break;

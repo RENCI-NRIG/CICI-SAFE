@@ -397,7 +397,7 @@ public class SliceManager extends SliceCommon {
     }
     if(plexusAndSafeInSlice) {
       if (safeEnabled) {
-        s.addSafeServer(serverSite, riakIp);
+        s.addSafeServer(serverSite, riakIp, SafeManager.safeDockerImage, SafeManager.safeServerScript);
       }
       s.addPlexusController(controllerSite, plexusName);
     }

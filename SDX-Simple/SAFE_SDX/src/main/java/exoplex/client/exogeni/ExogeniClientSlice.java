@@ -5,6 +5,7 @@ import exoplex.common.slice.SiteBase;
 import exoplex.common.utils.Exec;
 import exoplex.common.utils.ServerOptions;
 import exoplex.sdx.core.SliceManager;
+import exoplex.sdx.safe.SafeManager;
 import org.apache.commons.cli.CommandLine;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -124,6 +125,7 @@ public class ExogeniClientSlice extends SliceManager {
       logger.info("Client start");
       sliceName = customerName;
       SafeSlice c1 = createCustomerSlice(sliceName, 1, IPPrefix, curip, bw, true);
+
       c1.commitAndWait();
       c1.refresh();
       if(safeEnabled && plexusAndSafeInSlice){
@@ -171,7 +173,7 @@ public class ExogeniClientSlice extends SliceManager {
     }
     if (safeEnabled) {
       if(plexusAndSafeInSlice) {
-        s.addSafeServer(serverSite, riakIp);
+        s.addSafeServer(serverSite, riakIp, SafeManager.safeDockerImage, SafeManager.safeServerScript);
       }
     }
     return s;

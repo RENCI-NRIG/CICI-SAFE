@@ -11,7 +11,7 @@ public class Cnert2019Setting extends SliceManager{
   public static final ArrayList<String> sdxSliceNames = new ArrayList<>();
   public static final HashMap<String, String> sdxKeyMap = new HashMap<>();
   public static final HashMap<String, String> sdxIpMap = new HashMap<>();
-  public static final ArrayList<String> sdxUrls = new ArrayList<>();
+  public static final HashMap<String, String> sdxUrls = new HashMap<>();
   public static final int numSdx = 2;
 
   final static String sdxName = "sdx-tri";
@@ -46,7 +46,7 @@ public class Cnert2019Setting extends SliceManager{
       String sdxSliceName = String.format("sdx-%s-cnert", i + 1);
       sdxSliceNames.add(sdxSliceName);
       sdxKeyMap.put(sdxSliceName, String.format("key_p%s", sdxKeyBase + i));
-      sdxUrls.add(String.format("http://127.0.0.1:888%s/", i));
+      sdxUrls.put(sdxSliceName, String.format("http://127.0.0.1:888%s/", i));
       sdxIpMap.put(sdxSliceName, String.format("192.168.%s.1/24", sdxIpBase));
       sdxIpBase += 20;
     }
@@ -60,6 +60,8 @@ public class Cnert2019Setting extends SliceManager{
 
   public static final HashMap<String, String> clientIpMap = new HashMap<>();
 
+  public static final HashMap<String, String> clientSdxMap = new HashMap<>();
+
   static {
     int keyBase = 10;
     int ipBase = 10;
@@ -69,6 +71,8 @@ public class Cnert2019Setting extends SliceManager{
       clientKeyMap.put(clientName, "key_p" + (keyBase + i));
       clientSiteMap.put(clientName, clientSites.get(i));
       clientIpMap.put(clientName, "192.168." + ipBase + ".1/24");
+      clientSdxMap.put(clientName, Cnert2019Setting.sdxSliceNames.get(((i+1)/Cnert2019Setting
+        .sdxSliceNames.size())));
       ipBase += 10;
     }
   }

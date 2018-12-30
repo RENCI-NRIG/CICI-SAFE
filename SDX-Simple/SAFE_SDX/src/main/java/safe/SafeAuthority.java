@@ -9,7 +9,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 
-public class SafeAuthority {
+public class SafeAuthority extends SdxRoutingSlang {
   static Logger logger = LogManager.getLogger(SafeAuthority.class);
 
   static final String bearerRef = "bearerRef";
@@ -18,58 +18,6 @@ public class SafeAuthority {
 
   static String exampleSafeServer = "128.194.6.138:7777";
 
-  static final String postMakeIPTokenSet = "postMakeIPTokenSet";
-  static final String postUserAclEntry = "postUserAclEntry";
-  static final String postUserTagAclEntry = "postUserTagAclEntry";
-  static final String postCustomerPolicy = "postCustomerPolicy";
-  static final String updateTagSet = "updateTagSet";
-  static final String postStandardSliceDefaultPrivilegeSet = "postStandardSliceDefaultPrivilegeSet";
-  static final String updateSubjectSet = "updateSubjectSet";
-  static final String postOwnPrefixPolicy = "postOwnPrefixPolicy";
-  static final String postMAEndorsement = "postMAEndorsement";
-  static final String postStitchPolicy = "postStitchPolicy";
-  static final String postObjectTagSet = "postObjectTagSet";
-  static final String postProjectMembership = "postProjectMembership";
-  static final String postSAEndorsement = "postSAEndorsement";
-  static final String authZByPID = "authZByPID";
-  static final String createSlice = "createSlice";
-  static final String authorizeStitchByPID = "authorizeStitchByPID";
-  static final String authZByUserAttr = "authZByUserAttr";
-  static final String postAssignTag = "postAssignTag";
-  static final String postCustomerConnectionPolicy = "postCustomerConnectionPolicy";
-  static final String postSliceTagAclEntry = "postSliceTagAclEntry";
-  static final String postPIEndorsement = "postPIEndorsement";
-  static final String postProjectIDAcl = "postProjectIDAcl";
-  static final String postCPEndorsement = "postCPEndorsement";
-  static final String authZByProjectAttr = "authZByProjectAttr";
-  static final String postProjectSet = "postProjectSet";
-  static final String postPAEndorsement = "postPAEndorsement";
-  static final String authorizeStitchByUID = "authorizeStitchByUID";
-  static final String postTagSet = "postTagSet";
-  static final String postTagPrivilegePolicy = "postTagPrivilegePolicy";
-  static final String createProject = "createProject";
-  static final String postAclEntrySet = "postAclEntrySet";
-  static final String postUserEndorsement = "postUserEndorsement";
-  static final String postMemberSet = "postMemberSet";
-  static final String authorizeOwnPrefix = "authorizeOwnPrefix";
-  static final String authorizeStitchByProjectAttr = "authorizeStitchByProjectAttr";
-  static final String passDelegation = "passDelegation";
-  static final String authorizeStitchBySliceAttr = "authorizeStitchBySliceAttr";
-  static final String postSliceControl = "postSliceControl";
-  static final String postLinkTagSetToProject = "postLinkTagSetToProject";
-  static final String postSliceSet = "postSliceSet";
-  static final String authorizeStitchByUserAttr = "authorizeStitchByUserAttr";
-  static final String createSliver = "createSliver";
-  static final String postIdSet = "postIdSet";
-  static final String postDlgToken = "postDlgToken";
-  static final String postGrantTagPriv = "postGrantTagPriv";
-  static final String postUpdateObjectTagSet = "postUpdateObjectTagSet";
-  static final String postStandardSliceControlSet = "postStandardSliceControlSet";
-  static final String postLinkTagSetToSlice = "postLinkTagSetToSlice";
-  static final String postIPAllocate = "postIPAllocate";
-  static final String whoami = "whoami";
-  static final String postTagAclEntry = "postTagAclEntry";
-  static final String postSubjectSet = "postSubjectSet";
   ;
 
   String safeServer = "128.194.6.138:7777";
