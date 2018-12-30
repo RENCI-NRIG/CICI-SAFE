@@ -23,7 +23,7 @@ public class SafeUtils {
   final static HashMap<String, String> emptyEnvs = new HashMap<>();
 
   private static String getMessage(String message) {
-    Pattern pattern = Pattern.compile("\"message\": \"(.*?)\"");
+    Pattern pattern = Pattern.compile("\"message\": \"(.*?)\"}$");
     Matcher matcher = pattern.matcher(message);
     String token = null;
     if (matcher.find()) {

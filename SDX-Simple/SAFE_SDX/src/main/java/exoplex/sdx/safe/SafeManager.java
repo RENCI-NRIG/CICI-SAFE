@@ -4,8 +4,10 @@ import exoplex.common.slice.Scripts;
 import exoplex.common.utils.Exec;
 import exoplex.common.utils.SafeUtils;
 
+import exoplex.sdx.bgp.BgpAdvertise;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import safe.SdxRoutingSlang;
 
 public class SafeManager {
   final static Logger logger = LogManager.getLogger(SafeManager.class);
@@ -50,14 +52,21 @@ public class SafeManager {
 
   public boolean authorizeConnectivity(String srchash, String srcip, String dsthash, String dstip){
     String[] othervalues=new String[4];
-    othervalues[0] = srchash;
+    othervalues[0]=srchash;
     othervalues[1]= String.format("ipv4\\\"%s\\\"", srcip);
-    //othervalues[1] = srcip;
-    othervalues[2] = dsthash;
+    othervalues[2]=dsthash;
     othervalues[3]= String.format("ipv4\\\"%s\\\"", dstip);
-    //othervalues[3] = dstip;
     return SafeUtils.authorize(safeServer, "authZByUserAttr", getSafeKeyHash(),
       othervalues);
+  }
+
+  public void postPathToken(BgpAdvertise advertise){
+    String[] params = new String[4];
+    params[0] = advertise.safeToken;
+    params[1] = advertise.getPrefix();
+    params[2] = advertise.advertiserPID;
+    params[3] = String.valueOf(advertise.route.size());
+    post(SdxRoutingSlang.postPathToken, params);
   }
 
   public boolean authorizeStitchRequest(String customer_slice,
@@ -87,6 +96,15 @@ public class SafeManager {
   public String post(String operation, String[] params){
     String res = SafeUtils.postSafeStatements(safeServer, operation, getSafeKeyHash(), params);
     return SafeUtils.getToken(res);
+  }
+
+  public boolean authorizeBgpAdvertise(BgpAdvertise bgpAdvertise){
+    String[] othervalues=new String[4];
+    othervalues[0] = bgpAdvertise.ownerPID;
+    othervalues[1] = bgpAdvertise.getPrefix();
+    othervalues[2] = bgpAdvertise.getPath();
+    othervalues[3] = bgpAdvertise.safeToken;
+    return SafeUtils.authorize(safeServer, SdxRoutingSlang.verifyRoute, getSafeKeyHash(), othervalues);
   }
 
   public boolean authorizeStitchRequest(String customerSafeKeyHash,

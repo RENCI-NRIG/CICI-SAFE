@@ -19,6 +19,7 @@ import exoplex.sdx.network.RoutingManager;
 import exoplex.sdx.network.Link;
 
 import org.apache.commons.cli.CommandLine;
+import safe.SdxRoutingSlang;
 
 import java.util.HashSet;
 import java.util.ArrayList;
@@ -164,6 +165,7 @@ public class SdxManager extends SliceManager {
     logPrefix += "[" + sliceName + "]";
     //runCmdSlice(serverSlice, "ovs-ofctl del-flows br0", "(^c\\d+)", false, true);
 
+    checkSdxPrerequisites(serverSlice);
     if(plexusAndSafeInSlice){
       configSdnControllerAddr(serverSlice.getComputeNode(plexusName).getManagementIP());
     }else {
@@ -178,7 +180,6 @@ public class SdxManager extends SliceManager {
       safeManager = new SafeManager(safeServerIp, safeKeyFile, sshkey);
       bgpManager = new BgpManager(safeManager.getSafeKeyHash());
     }
-    checkSdxPrerequisites(serverSlice);
     //configRouting(serverslice,OVSController,SDNController,"(c\\d+)","(sp-c\\d+.*)");
     loadSdxNetwork(serverSlice, routerPattern, stitchPortPattern, broPattern);
   }
@@ -1005,8 +1006,14 @@ public class SdxManager extends SliceManager {
     logger.info("SDX network reset");
   }
 
+
   public String processBgpAdvertise(BgpAdvertise bgpAdvertise){
+    if(safeEnabled && !safeManager.authorizeBgpAdvertise(bgpAdvertise)){
+      logger.warn(String.format("Unauthorized bgpAdvertise :%s", bgpAdvertise));
+      return "";
+    }
     BgpAdvertise newAdvertise = bgpManager.receiveAdvertise(bgpAdvertise);
+    safeManager.postPathToken(bgpAdvertise);
     if(newAdvertise == null) {
       //No change
       return "";
@@ -1019,7 +1026,7 @@ public class SdxManager extends SliceManager {
       String gateway = customerGateway.get(customerReservId);
       String edgeNode = routingmanager.getEdgeRouterByGateway(gateway);
       routingmanager.configurePath(bgpAdvertise.prefix, edgeNode, gateway, getSDNController());
-      propagateBgpAdvertise(newAdvertise);
+      propagateBgpAdvertise(newAdvertise, bgpAdvertise.advertiserPID);
       return newAdvertise.toString();
     }
   }
@@ -1032,14 +1039,16 @@ public class SdxManager extends SliceManager {
     return reply;
   }
 
-  public String notifyPrefix(String dest, String gateway, String customer_keyhash) {
+  public NotifyResult notifyPrefix(String dest, String gateway, String customer_keyhash) {
     logger.info(logPrefix + "received notification for ip prefix " + dest);
-    String res = "received notification for " + dest;
+    NotifyResult notifyResult = new NotifyResult();
+    notifyResult.message = "received notification for " + dest;
     boolean flag = false;
     String router = routingmanager.getEdgeRouterByGateway(gateway);
     if (router == null) {
       logger.warn(logPrefix + "Cannot find a router with cusotmer gateway" + gateway);
-      res = res + " Cannot find a router with customer gateway " + gateway;
+      notifyResult.message = notifyResult.message + " Cannot find a router with customer gateway " +
+        gateway;
     }else {
       prefixGateway.put(dest, gateway);
       prefixKeyHash.put(dest, customer_keyhash);
@@ -1051,20 +1060,32 @@ public class SdxManager extends SliceManager {
         gatewayPrefixes.put(gateway, new HashSet());
       }
       gatewayPrefixes.get(gateway).add(dest);
-      BgpAdvertise advertise = bgpManager.initAdvertise(customer_keyhash, dest);
-      propagateBgpAdvertise(advertise);
+      //BgpAdvertise advertise = bgpManager.initAdvertise(customer_keyhash, dest);
+      //propagateBgpAdvertise(advertise);
+      notifyResult.result= true;
+      notifyResult.safeKeyHash = safeManager.getSafeKeyHash();
     }
-    return res;
+    return notifyResult;
   }
 
-  private void propagateBgpAdvertise(BgpAdvertise advertise){
+  private void propagateBgpAdvertise(BgpAdvertise advertise, String srcPid){
     for(String peer: peerUrls.keySet()){
       if(!peer.equals(advertise.ownerPID) && !peer.equals(advertise.advertiserPID)){
         if(!advertise.route.contains(peer)) {
+          String path = advertise.getPath();
+          String[] params = new String[5];
+          params[0] = advertise.getPrefix();
+          params[1] = path;
+          params[2] = peer;
+          params[3] = srcPid;
+          params[4] = advertise.getLength(1);
+          String token = safeManager.post(SdxRoutingSlang.postAdvertise, params);
+          advertise.safeToken = token;
           advertiseBgp(peerUrls.get(peer), advertise);
         }
       }
     }
+
   }
 
   private void revokePrefix(String customerSafeKeyHash, String prefix){

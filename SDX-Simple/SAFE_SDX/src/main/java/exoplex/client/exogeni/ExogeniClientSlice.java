@@ -125,6 +125,7 @@ public class ExogeniClientSlice extends SliceManager {
       logger.info("Client start");
       sliceName = customerName;
       SafeSlice c1 = createCustomerSlice(sliceName, 1, IPPrefix, curip, bw, true);
+
       c1.commitAndWait();
       c1.refresh();
       if(safeEnabled && plexusAndSafeInSlice){
