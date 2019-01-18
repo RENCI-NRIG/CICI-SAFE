@@ -1,7 +1,7 @@
 package exoplex.demo.tridentcom;
 
 import exoplex.client.exogeni.ExogeniClientSlice;
-import exoplex.common.slice.SafeSlice;
+import exoplex.common.slice.SliceManager;
 import exoplex.common.slice.SiteBase;
 import exoplex.common.utils.ServerOptions;
 
@@ -67,7 +67,7 @@ public class TridentSlice extends TridentSetting{
     if(myRiakIP != null){
       riakIp = myRiakIP;
     }
-    SafeSlice slice = null;
+    SliceManager slice = null;
     try {
       slice = createTridentTestSlice();
       slice.reloadSlice();
@@ -84,9 +84,9 @@ public class TridentSlice extends TridentSetting{
     safeAuthority.initGeniTrustBase();
   }
 
-  private SafeSlice createTridentTestSlice() throws Exception{
+  private SliceManager createTridentTestSlice() throws Exception{
     ArrayList<String> sites = TridentSetting.sites;
-    SafeSlice slice = SafeSlice.create(TridentSetting.sdxName, pemLocation, keyLocation, controllerUrl,
+    SliceManager slice = SliceManager.create(TridentSetting.sdxName, pemLocation, keyLocation, controllerUrl,
       sctx);
     HashMap<String, String> coreRouterMap = new HashMap<>();
     int i = 0;

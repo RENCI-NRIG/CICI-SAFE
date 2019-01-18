@@ -7,6 +7,7 @@ import org.apache.logging.log4j.Logger;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.lang.reflect.Array;
 import java.util.*;
 
 public class RoutingManager {
@@ -249,7 +250,7 @@ public class RoutingManager {
     }
   }
 
-  public void revokePrefix(String prefix, String sdnController) {
+  public void retriveRouteOfPrefix(String prefix, String sdnController) {
     if (prefixPaths.containsKey(prefix)) {
       for (String pathId : prefixPaths.get(prefix)) {
         removePathId(pathId, sdnController);
@@ -551,6 +552,27 @@ public class RoutingManager {
       }
     }
     return res;
+  }
+
+  public List<String> getFlowsOnRouter(Map<String, String> fieldMap, String ip, String sshKey){
+    String result = Exec.sshExec("root", ip,
+      "ovs-ofctl -O OpenFlow15 dump-flows br0", sshKey)[0];
+    String[] parts = result.split("\n");
+    ArrayList<String> res = new ArrayList<>();
+    for (String s : parts) {
+      boolean flag = true;
+      for(String filed: fieldMap.keySet()){
+        if(!s.contains(String.format("%s=%s", filed, fieldMap.get(filed)))){
+          flag = false;
+          break;
+        }
+      }
+      if (flag){
+        res.add(s);
+      }
+    }
+    return res;
+
   }
 
   public void deleteAllFlows(String controller) {

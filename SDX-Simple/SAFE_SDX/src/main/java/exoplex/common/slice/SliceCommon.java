@@ -139,7 +139,7 @@ public abstract class SliceCommon {
     //SSH context
     getSshContext();
 
-    sliceProxy = SafeSlice.getSliceProxy(pemLocation, keyLocation, controllerUrl);
+    sliceProxy = SliceManager.getSliceProxy(pemLocation, keyLocation, controllerUrl);
   }
 
   protected  void setSdnControllerIp(String sdnControllerIp){
@@ -210,7 +210,7 @@ public abstract class SliceCommon {
 
   protected void deleteSlice(String sliceName) {
     logger.info(String.format("deleting slice %s", sliceName));
-    SafeSlice s2 = new SafeSlice(sliceName, pemLocation, keyLocation, controllerUrl);
+    SliceManager s2 = new SliceManager(sliceName, pemLocation, keyLocation, controllerUrl);
     s2.delete();
   }
 

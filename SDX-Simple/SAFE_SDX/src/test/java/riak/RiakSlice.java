@@ -1,6 +1,6 @@
 package riak;
 
-import exoplex.common.slice.SafeSlice;
+import exoplex.common.slice.SliceManager;
 import exoplex.common.slice.Scripts;
 import exoplex.common.slice.SliceCommon;
 import exoplex.common.utils.ServerOptions;
@@ -45,7 +45,7 @@ public class RiakSlice extends SliceCommon{
   }
 
   public String createRiakSlice() throws  Exception{
-    SafeSlice s = SafeSlice.create(sliceName, pemLocation, keyLocation, controllerUrl, sctx);
+    SliceManager s = SliceManager.create(sliceName, pemLocation, keyLocation, controllerUrl, sctx);
     s.addRiakServer(serverSite, "riak");
     s.commitAndWait();
     s.reloadSlice();

@@ -1,10 +1,10 @@
 package exoplex.client.exogeni;
 
-import exoplex.common.slice.SafeSlice;
+import exoplex.common.slice.SliceManager;
 import exoplex.common.slice.SiteBase;
 import exoplex.common.utils.Exec;
 import exoplex.common.utils.ServerOptions;
-import exoplex.sdx.core.SliceManager;
+import exoplex.sdx.core.SliceHelper;
 import exoplex.sdx.safe.SafeManager;
 import org.apache.commons.cli.CommandLine;
 import org.apache.logging.log4j.LogManager;
@@ -17,7 +17,7 @@ import java.util.ArrayList;
 /**
  * @author geni-orca
  */
-public class ExogeniClientSlice extends SliceManager {
+public class ExogeniClientSlice extends SliceHelper {
   static private long bw = 1000000;
   final Logger logger = LogManager.getLogger(ExogeniClientSlice.class);
   private String mask = "/24";
@@ -60,7 +60,7 @@ public class ExogeniClientSlice extends SliceManager {
       computeIP(subnet);
       logger.info("Client start");
       String customerName = sliceName;
-      SafeSlice c1 = createCustomerSlice(customerName, 1, IPPrefix, curip, bw, true);
+      SliceManager c1 = createCustomerSlice(customerName, 1, IPPrefix, curip, bw, true);
       try {
         c1.commitAndWait();
       } catch (Exception e) {
@@ -82,14 +82,14 @@ public class ExogeniClientSlice extends SliceManager {
       c1.printNetworkInfo();
       return;
     } else if (type.equals("delete")) {
-      SafeSlice s2 = null;
+      SliceManager s2 = null;
       logger.info("deleting slice " + sliceName);
-      s2 = SafeSlice.loadManifestFile(sliceName, pemLocation, keyLocation, controllerUrl);
+      s2 = SliceManager.loadManifestFile(sliceName, pemLocation, keyLocation, controllerUrl);
       s2.delete();
     }
   }
 
-  public void configQuaggaRouting(SafeSlice c1){
+  public void configQuaggaRouting(SliceManager c1){
     c1.runCmdSlice("apt-get update; apt-get install -y quagga iperf", sshkey, "CNode\\d+",
       true);
     for(ComputeNode node : c1.getComputeNodes()){
@@ -124,7 +124,7 @@ public class ExogeniClientSlice extends SliceManager {
       computeIP(subnet);
       logger.info("Client start");
       sliceName = customerName;
-      SafeSlice c1 = createCustomerSlice(sliceName, 1, IPPrefix, curip, bw, true);
+      SliceManager c1 = createCustomerSlice(sliceName, 1, IPPrefix, curip, bw, true);
 
       c1.commitAndWait();
       c1.refresh();
@@ -141,18 +141,18 @@ public class ExogeniClientSlice extends SliceManager {
       c1.printNetworkInfo();
       return;
     } else if (type.equals("delete")) {
-      SafeSlice s2 = null;
+      SliceManager s2 = null;
       logger.info("deleting slice " + sliceName);
-      s2 = SafeSlice.loadManifestFile(sliceName, pemLocation, keyLocation, controllerUrl);
+      s2 = SliceManager.loadManifestFile(sliceName, pemLocation, keyLocation, controllerUrl);
       s2.delete();
     }
   }
 
-  public SafeSlice createCustomerSlice(String sliceName, int num, String prefix, int start, long bw, boolean network)
+  public SliceManager createCustomerSlice(String sliceName, int num, String prefix, int start, long bw, boolean network)
       throws TransportException {//=1, String subnet="")
     //Main Example Code
 
-    SafeSlice s = SafeSlice.create(sliceName, pemLocation, keyLocation, controllerUrl, sctx);
+    SliceManager s = SliceManager.create(sliceName, pemLocation, keyLocation, controllerUrl, sctx);
 
     ArrayList<ComputeNode> nodelist = new ArrayList<ComputeNode>();
     for (int i = 0; i < num; i++) {

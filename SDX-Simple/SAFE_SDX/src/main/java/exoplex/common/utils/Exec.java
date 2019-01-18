@@ -166,7 +166,7 @@ public class Exec {
       channel.disconnect();
       session.disconnect();
     } catch (Exception e) {
-      System.out.println(host+ " " + command);
+      logger.debug(host+ " " + command);
       logger.debug(e.getMessage());
       e.printStackTrace();
       return new String[]{null, null};
