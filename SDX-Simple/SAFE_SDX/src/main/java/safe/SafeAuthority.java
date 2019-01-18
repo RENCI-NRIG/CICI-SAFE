@@ -200,6 +200,9 @@ public class SafeAuthority extends SdxRoutingSlang {
     //post authorize policy
     for(String key: Cnert2019Setting.sdxKeyMap.values()) {
       safePost(postStitchPolicy, key);
+      safePost(postOwnPrefixPolicy, key);
+      safePost(postRoutingPolicy, key);
+      safePost(postVerifyASPolicy, key);
     }
 
     //MakeIp Delegation
@@ -211,7 +214,19 @@ public class SafeAuthority extends SdxRoutingSlang {
       addCnert2019UserSlice(userKeyFile, slice, userIP);
     }
     logger.debug("end");
-
+    for(String sdxslice: Cnert2019Setting.sdxSliceNames) {
+      for(String t: Cnert2019Setting.sdxASTags.get(sdxslice)) {
+        String tag = principalMap.get("tagauthority") + ":" + t;
+        safePost(postTagSet, "tagauthority", new String[]{tag});
+        String sdxKeyFile = Cnert2019Setting.sdxKeyMap.get(sdxslice);
+        String sdxKey = principalMap.get(sdxKeyFile);
+        String tagToken = safePost(postGrantTagPriv, "tagauthority", new Object[]{sdxKey, tag,
+          true});
+        safePost(updateTagSet, sdxKeyFile, new String[]{tagToken, tag});
+      }
+    }
+    //post user's authorized AS attr acls
+    for(String slice: Cnert2019Setting.clientSlices){
   }
 
   private void initializeGeniAuth() {
@@ -321,14 +336,27 @@ public class SafeAuthority extends SdxRoutingSlang {
     }
 
     //Tag delegation
-    String tag = principalMap.get("tagauthority") + ":tag0";
-    safePost(postTagSet, "tagauthority", new String[]{tag});
-    String tagToken = safePost(postGrantTagPriv, "tagauthority", new Object[]{userKey, tag, true});
-    safePost(updateTagSet, userKeyFile, new String[]{tagToken, tag});
 
     //userTagAcl
     //user post Connect policy
-    safePost(postUserTagAclEntry, userKeyFile, new String[]{tag});
+    if(Cnert2019Setting.userTags.containsKey(slice)) {
+      for(String t: Cnert2019Setting.userTags.get(slice)) {
+        String tag = principalMap.get("tagauthority") + ":" + t;
+        safePost(postTagSet, "tagauthority", new String[]{tag});
+        String tagToken = safePost(postGrantTagPriv, "tagauthority", new Object[]{userKey, tag, true});
+        safePost(updateTagSet, userKeyFile, new String[]{tagToken, tag});
+        safePost(updateSubjectSet, userKeyFile, new String[]{tagToken});
+        safePost(postUserTagAclEntry, userKeyFile, new String[]{tag});
+      }
+    }
+
+    //post AS tag acls
+    if(Cnert2019Setting.userASTagAcls.containsKey(slice)) {
+      for(String t: Cnert2019Setting.userASTagAcls.get(slice)) {
+        String astag = principalMap.get("tagauthority") + ":" + t;
+        safePost(postASTagAclEntry, userKeyFile, new String[]{astag, uip});
+      }
+    }
     safePost(postCustomerConnectionPolicy, userKeyFile, new String[]{});
     safePost(postTagPrivilegePolicy, userKeyFile, new String[]{});
     safePost(postCustomerPolicy, userKeyFile, new String[]{});

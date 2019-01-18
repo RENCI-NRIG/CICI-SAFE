@@ -1,17 +1,22 @@
 package exoplex.demo.cnert2019;
 
-import exoplex.sdx.core.SliceManager;
+import exoplex.sdx.core.SliceHelper;
 
   import java.util.ArrayList;
-  import java.util.HashMap;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
 
-public class Cnert2019Setting extends SliceManager{
+public class Cnert2019Setting extends SliceHelper {
   public static final ArrayList<String> clientSites = new ArrayList<>();
   public static final ArrayList<String> sdxConfs = new ArrayList<>();
   public static final ArrayList<String> sdxSliceNames = new ArrayList<>();
   public static final HashMap<String, String> sdxKeyMap = new HashMap<>();
   public static final HashMap<String, String> sdxIpMap = new HashMap<>();
   public static final HashMap<String, String> sdxUrls = new HashMap<>();
+  public static final HashMap<String, List<String>> sdxASTags = new HashMap<>();
+  public static final HashMap<String, List<String>> userASTagAcls = new HashMap<>();
+  public static final HashMap<String, List<String>> userTags = new HashMap<>();
   public static final int numSdx = 4;
 
   final static String sdxName = "sdx-tri";
@@ -30,8 +35,8 @@ public class Cnert2019Setting extends SliceManager{
     clientSites.add("UNF");
     clientSites.add("UNF");
     //clientSites.add("SL");
-    //clientSites.add("GWU");
-    //clientSites.add("UMASS");
+    //clientSites.add("SL");
+    //clientSites.add("SL");
     //clientSites.add("UNF");
     //clientSites.add("WSU");
   }
@@ -60,6 +65,7 @@ public class Cnert2019Setting extends SliceManager{
       sdxIpBase += 20;
     }
   }
+
 
   public static final ArrayList<String> clientSlices = new ArrayList<>();
 
@@ -90,5 +96,25 @@ public class Cnert2019Setting extends SliceManager{
     clientSdxMap.put(clientSlices.get(1), sdxSliceNames.get(0));
     clientSdxMap.put(clientSlices.get(2), sdxSliceNames.get(3));
     clientSdxMap.put(clientSlices.get(3), sdxSliceNames.get(3));
+  }
+
+  static {
+    sdxASTags.put(sdxSliceNames.get(0), Arrays.asList(new String[]{"astag0", "astag1"}));
+    sdxASTags.put(sdxSliceNames.get(1), Arrays.asList(new String[]{"astag0"}));
+    sdxASTags.put(sdxSliceNames.get(2), Arrays.asList(new String[]{"astag1"}));
+    sdxASTags.put(sdxSliceNames.get(3), Arrays.asList(new String[]{"astag0", "astag1"}));
+  }
+  static {
+    userASTagAcls.put(clientSlices.get(0), Arrays.asList(new String[]{"astag0"}));
+    userASTagAcls.put(clientSlices.get(2), Arrays.asList(new String[]{"astag0"}));
+    userASTagAcls.put(clientSlices.get(1), Arrays.asList(new String[]{"astag1"}));
+    userASTagAcls.put(clientSlices.get(3), Arrays.asList(new String[]{"astag1"}));
+  }
+
+  static {
+    userTags.put(clientSlices.get(0), Arrays.asList(new String[]{"tag0"}));
+    userTags.put(clientSlices.get(2), Arrays.asList(new String[]{"tag0"}));
+    userTags.put(clientSlices.get(1), Arrays.asList(new String[]{"tag1"}));
+    userTags.put(clientSlices.get(3), Arrays.asList(new String[]{"tag1"}));
   }
 }

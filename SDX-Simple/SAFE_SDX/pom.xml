@@ -56,7 +56,7 @@
                             <name>SafeSdxServer</name>
                         </program>
                         <program>
-                            <mainClass>exoplex.sdx.core.SliceManager</mainClass>
+                            <mainClass>exoplex.sdx.core.SliceHelper</mainClass>
                             <name>SafeSdxSliceServer</name>
                         </program>
                         <program>

@@ -1,6 +1,6 @@
 package exoplex.sdx.core;
 
-import exoplex.common.slice.SafeSlice;
+import exoplex.common.slice.SliceManager;
 import exoplex.common.slice.Scripts;
 import exoplex.common.slice.SliceCommon;
 import exoplex.common.utils.Exec;
@@ -25,7 +25,7 @@ import java.util.List;
 /**
  * @author geni-orca
  */
-public class SliceManager extends SliceCommon {
+public class SliceHelper extends SliceCommon {
   protected static String routerPattern = "(^(c|e)\\d+)";
   protected static String cRouterPattern = "(^c\\d+)";
   protected static String eRouterPattern = "(^e\\d+)";
@@ -38,17 +38,25 @@ public class SliceManager extends SliceCommon {
   protected static String broLinkPattern = "(^blink_bro\\d+_e\\d+_\\d+)";
   protected  static String plexusName = "plexuscontroller";
   protected long bw = 1000000000;
-  final Logger logger = LogManager.getLogger(SliceManager.class);
+  final Logger logger = LogManager.getLogger(SliceHelper.class);
   protected int curip = 128;
   protected String IPPrefix = "192.168.";
   protected String mask = "/24";
   protected String scriptsdir;
   protected boolean BRO = false;
-  public SliceManager() {
+  public SliceHelper() {
   }
 
   public void setRiakIP(String riakIP){
     this.riakIp = riakIP;
+  }
+
+  public void resetHostNames(SliceManager slice){
+    try {
+      slice.resetHostNames(sshkey);
+    }catch (Exception e){
+
+    }
   }
 
   protected void computeIP(String prefix) {
@@ -79,7 +87,7 @@ public class SliceManager extends SliceCommon {
   }
 
   public static void main(String[] args) throws  Exception{
-    SliceManager sm = new SliceManager();
+    SliceHelper sm = new SliceHelper();
     sm.run(args);
     System.exit(0);
   }
@@ -120,7 +128,7 @@ public class SliceManager extends SliceCommon {
     try {
       String carrierName = sliceName;
       //Create the slice
-      SafeSlice carrier = createCarrierSlice(carrierName, routerNum, bw);
+      SliceManager carrier = createCarrierSlice(carrierName, routerNum, bw);
       carrier.commitAndWait();
       try {
         carrier.reloadSlice();
@@ -152,7 +160,7 @@ public class SliceManager extends SliceCommon {
 
   }
 
-  public void configFTPService(SafeSlice carrier, String nodePattern, String username, String passwd) {
+  public void configFTPService(SliceManager carrier, String nodePattern, String username, String passwd) {
     carrier.runCmdSlice("apt-get install -y vsftpd", sshkey, nodePattern, true);
     carrier.runCmdSlice("/usr/sbin/useradd " + username + "; echo -e \"" + passwd + "\\n" +
         passwd + "\\n\" | passwd " + username, sshkey, nodePattern, true);
@@ -167,7 +175,7 @@ public class SliceManager extends SliceCommon {
         sshkey, nodePattern);
   }
 
-  public void configBroNodes(SafeSlice carrier, String bropattern) {
+  public void configBroNodes(SliceManager carrier, String bropattern) {
     String resource_dir = conf.getString("config.resourcedir");
     List<Thread> tlist = new ArrayList<Thread>();
     for (ComputeNode c : carrier.getComputeNodes()) {
@@ -192,7 +200,7 @@ public class SliceManager extends SliceCommon {
     }
   }
 
-  public void checkSdxPrerequisites(SafeSlice serverSlice){
+  public void checkSdxPrerequisites(SliceManager serverSlice){
     //check if openvswitch is installed on all ovs nodes
     logger.debug("Start checking prerequisites");
     ArrayList<Thread> tlist = new ArrayList<>();
@@ -243,17 +251,17 @@ public class SliceManager extends SliceCommon {
   }
 
   /*
-  protected  void configSdnControllerIp(SafeSlice serverSlice, String plexusName){
+  protected  void configSdnControllerIp(SliceManager serverSlice, String plexusName){
     SDNControllerIP = serverSlice.getComputeNode(plexusName).getManagementIP();
   }
 
-  protected void configSafeServerIp(SafeSlice serverSlice){
+  protected void configSafeServerIp(SliceManager serverSlice){
     safeServerIp = serverSlice.getComputeNode("safe-server").getManagementIP();
     safeServer = safeServerIp + ":7777";
   }
   */
 
-  public void checkOVS(SafeSlice serverSlice, String nodeName){
+  public void checkOVS(SliceManager serverSlice, String nodeName){
     String mip = serverSlice.getComputeNode(nodeName).getManagementIP();
     String res = serverSlice.runCmdNode("ovs-vsctl show", sshkey, nodeName, false);
     if(res.contains("ovs-vsctl: command not found")){
@@ -266,14 +274,14 @@ public class SliceManager extends SliceCommon {
     }
   }
 
-  public void checkScripts(SafeSlice serverSlice, String nodeName){
+  public void checkScripts(SliceManager serverSlice, String nodeName){
     String res = serverSlice.runCmdNode("ls", sshkey, nodeName, false);
-    if(!res.contains("ovsbridge.sh") || !res.contains("dpid.sh")){
+    if(!res.contains("ovsbridge.sh") || !res.contains("dpid.sh")||!res.contains("ifaces.sh")){
       copyRouterScript(serverSlice, nodeName);
     }
   }
 
-  public void copyRouterScript(SafeSlice s, String node) {
+  public void copyRouterScript(SliceManager s, String node) {
     scriptsdir = conf.getString("config.scriptsdir");
     s.copyFile2Node(PathUtil.joinFilePath(scriptsdir, "dpid.sh"), "~/dpid.sh", sshkey, node);
     s.copyFile2Node(PathUtil.joinFilePath(scriptsdir, "ifaces.sh"), "~/ifaces.sh", sshkey, node);
@@ -283,7 +291,7 @@ public class SliceManager extends SliceCommon {
     logger.debug("Finished copying ovs scripts");
   }
 
-  public void copyRouterScript(SafeSlice s) {
+  public void copyRouterScript(SliceManager s) {
     scriptsdir = conf.getString("config.scriptsdir");
     s.copyFile2Slice(PathUtil.joinFilePath(scriptsdir, "dpid.sh"), "~/dpid.sh", sshkey,
       routerPattern);
@@ -356,10 +364,10 @@ public class SliceManager extends SliceCommon {
     this.sliceName = sliceName;
   }
 
-  public SafeSlice createCarrierSlice(String sliceName, int num, long bw) {
+  public SliceManager createCarrierSlice(String sliceName, int num, long bw) {
     //,String stitchsubnet="", String slicesubnet="")
     logger.debug("ndllib TestDriver: START");
-    SafeSlice s = SafeSlice.create(sliceName, pemLocation, keyLocation, controllerUrl, sctx);
+    SliceManager s = SliceManager.create(sliceName, pemLocation, keyLocation, controllerUrl, sctx);
     //String nodePostBootScript="apt-get update;apt-get -y  install quagga\n"
     //  +"sed -i -- 's/zebra=no/zebra=yes/g' /etc/quagga/daemons\n"
     //  +"sed -i -- 's/ospfd=no/ospfd=yes/g' /etc/quagga/daemons\n";
@@ -406,8 +414,8 @@ public class SliceManager extends SliceCommon {
   }
 
 
-  private Link addLink(SafeSlice s, String linkname, ComputeNode node0, ComputeNode node1,
-                          Long bw) {
+  private Link addLink(SliceManager s, String linkname, ComputeNode node0, ComputeNode node1,
+                       Long bw) {
     Network net2 = s.addBroadcastLink(linkname, bw);
     InterfaceNode2Net ifaceNode1 = (InterfaceNode2Net) net2.stitch(node0);
     InterfaceNode2Net ifaceNode2 = (InterfaceNode2Net) net2.stitch(node1);

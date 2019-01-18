@@ -3,14 +3,13 @@
  */
 package exoplex.client.exogeni;
 
-import exoplex.common.slice.SafeSlice;
+import exoplex.common.slice.SliceManager;
 import exoplex.common.slice.SliceCommon;
 import exoplex.common.utils.Exec;
 import exoplex.common.utils.HttpUtil;
 import exoplex.common.utils.SafeUtils;
 import exoplex.common.utils.ServerOptions;
 import exoplex.sdx.bgp.BgpAdvertise;
-import exoplex.sdx.core.SliceManager;
 import exoplex.sdx.safe.SafeManager;
 import org.apache.commons.cli.CommandLine;
 import org.apache.logging.log4j.LogManager;
@@ -18,12 +17,8 @@ import org.apache.logging.log4j.Logger;
 import org.json.JSONObject;
 import org.renci.ahab.libndl.resources.request.ComputeNode;
 import org.renci.ahab.libndl.resources.request.Network;
-import org.renci.ahab.libtransport.SSHAccessToken;
-import org.renci.ahab.libtransport.SliceAccessContext;
 import org.renci.ahab.libtransport.util.ContextTransportException;
-import org.renci.ahab.libtransport.util.SSHAccessTokenFileFactory;
 import org.renci.ahab.libtransport.util.TransportException;
-import org.renci.ahab.libtransport.util.UtilTransportException;
 import safe.SdxRoutingSlang;
 
 import java.io.BufferedReader;
@@ -36,7 +31,7 @@ public class SdxExogeniClient extends SliceCommon{
   final Logger logger = LogManager.getLogger(SdxExogeniClient.class);
   private String logPrefix = "";
   private String ipIprefix;
-  private SafeSlice serverSlice = null;
+  private SliceManager serverSlice = null;
   private boolean safeChecked = false;
   private CommandLine cmd;
 
@@ -70,7 +65,7 @@ public class SdxExogeniClient extends SliceCommon{
     String configFilePath = cmd.getOptionValue("config");
     initializeExoGENIContexts(configFilePath);
 
-    sliceProxy = SafeSlice.getSliceProxy(pemLocation, keyLocation, controllerUrl);
+    sliceProxy = SliceManager.getSliceProxy(pemLocation, keyLocation, controllerUrl);
 
     logPrefix = "[" + sliceName + "] ";
 
@@ -83,7 +78,7 @@ public class SdxExogeniClient extends SliceCommon{
   }
   public void run(String[] args) {
     try {
-      serverSlice = SafeSlice.loadManifestFile(sliceName, pemLocation, keyLocation, controllerUrl);
+      serverSlice = SliceManager.loadManifestFile(sliceName, pemLocation, keyLocation, controllerUrl);
       if(safeEnabled){
           if(serverSlice.getResourceByName("safe-server")!= null) {
             setSafeServerIp(serverSlice.getComputeNode("safe-server").getManagementIP());
@@ -146,7 +141,7 @@ public class SdxExogeniClient extends SliceCommon{
   public boolean ping(String nodeName, String ip) {
 
     try {
-      serverSlice = SafeSlice.loadManifestFile(sliceName, pemLocation, keyLocation, controllerUrl);
+      serverSlice = SliceManager.loadManifestFile(sliceName, pemLocation, keyLocation, controllerUrl);
     } catch (Exception e) {
       logger.warn(e.getMessage());
       if(serverSlice == null) {
@@ -160,7 +155,7 @@ public class SdxExogeniClient extends SliceCommon{
   }
 
   public boolean checkConnectivity(String nodeName, String ip) {
-    for (int i = 0; i < 5; i++) {
+    for (int i = 0; i < 2; i++) {
       if (ping(nodeName, ip)) {
         logger.info(String.format("%s connect to %s: Ok", logPrefix, ip));
         return true;
@@ -272,7 +267,7 @@ public class SdxExogeniClient extends SliceCommon{
   private String processStitchCmd(String[] params) {
     if(serverSlice==null){
       try {
-        serverSlice = SafeSlice.loadManifestFile(sliceName, pemLocation, keyLocation, controllerUrl);
+        serverSlice = SliceManager.loadManifestFile(sliceName, pemLocation, keyLocation, controllerUrl);
       }catch (Exception e){
         logger.error(e.getMessage());
       }
@@ -352,7 +347,7 @@ public class SdxExogeniClient extends SliceCommon{
   private String processUnStitchCmd(String[] params) {
     if(serverSlice==null){
       try {
-        serverSlice = SafeSlice.loadManifestFile(sliceName, pemLocation, keyLocation, controllerUrl);
+        serverSlice = SliceManager.loadManifestFile(sliceName, pemLocation, keyLocation, controllerUrl);
       }catch (Exception e){
         logger.error(e.getMessage());
       }
@@ -403,12 +398,12 @@ public class SdxExogeniClient extends SliceCommon{
 
     //Main Example Code
 
-    SafeSlice s1 = null;
-    SafeSlice s2 = null;
+    SliceManager s1 = null;
+    SliceManager s2 = null;
 
     try {
-      s1 = SafeSlice.loadManifestFile(carrierName, pemLocation, keyLocation, controllerUrl);
-      s2 = SafeSlice.loadManifestFile(customerName, pemLocation, keyLocation, controllerUrl);
+      s1 = SliceManager.loadManifestFile(carrierName, pemLocation, keyLocation, controllerUrl);
+      s2 = SliceManager.loadManifestFile(customerName, pemLocation, keyLocation, controllerUrl);
     } catch (ContextTransportException e) {
       // TODO Auto-generated catch block
       e.printStackTrace();

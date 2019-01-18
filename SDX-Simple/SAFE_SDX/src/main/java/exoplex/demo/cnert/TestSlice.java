@@ -1,6 +1,6 @@
 package exoplex.demo.cnert;
 
-import exoplex.common.slice.SafeSlice;
+import exoplex.common.slice.SliceManager;
 import exoplex.common.slice.Scripts;
 import exoplex.common.utils.Exec;
 import exoplex.common.utils.PathUtil;
@@ -18,11 +18,11 @@ import org.renci.ahab.libtransport.util.SSHAccessTokenFileFactory;
 import org.renci.ahab.libtransport.util.TransportException;
 import org.renci.ahab.libtransport.util.UtilTransportException;
 import org.renci.ahab.libtransport.xmlrpc.XMLRPCTransportException;
-import exoplex.sdx.core.SliceManager;
+import exoplex.sdx.core.SliceHelper;
 
 import java.util.ArrayList;
 
-public class TestSlice extends SliceManager {
+public class TestSlice extends SliceHelper {
   final Logger logger = LogManager.getLogger(Exec.class);
 
   public TestSlice(String[] args) {
@@ -60,7 +60,7 @@ public class TestSlice extends SliceManager {
       if (conf.hasPath("config.bw")) {
         bw = conf.getLong("config.bw");
       }
-      SafeSlice carrier = createTestSliceWithTwoPairs(carrierName, routernum, bw);
+      SliceManager carrier = createTestSliceWithTwoPairs(carrierName, routernum, bw);
       String resource_dir = conf.getString("config.resourcedir");
       //Slice carrier = createCarrierSliceWithCustomerNodes(carrierName, 4, 10, 1000000, 1);
       carrier.commitAndWait();
@@ -139,7 +139,7 @@ public class TestSlice extends SliceManager {
       ////if (!checkPlexus(SDNControllerIP)) {
       ////  System.exit(-1);
       ////}
-      SafeSlice carrier = SafeSlice.loadManifestFile(sliceName, pemLocation, keyLocation, controllerUrl);
+      SliceManager carrier = SliceManager.loadManifestFile(sliceName, pemLocation, keyLocation, controllerUrl);
       SDNControllerIP = carrier.getComputeNode("plexuscontroller").getManagementIP();
       System.out.println("Plexus Controler IP: " + SDNControllerIP);
       carrier.runCmdSlice("/bin/bash ~/ovsbridge.sh " + SDNControllerIP + ":6633", sshkey, "(^c\\d+)",
@@ -189,7 +189,7 @@ public class TestSlice extends SliceManager {
       if (conf.hasPath("config.bw")) {
         bw = conf.getLong("config.bw");
       }
-      SafeSlice carrier = createTestSliceWithDynamicLinks(carrierName, routernum, bw);
+      SliceManager carrier = createTestSliceWithDynamicLinks(carrierName, routernum, bw);
       String resource_dir = conf.getString("config.resourcedir");
       //Slice carrier = createCarrierSliceWithCustomerNodes(carrierName, 4, 10, 1000000, 1);
       carrier.commitAndWait();
@@ -240,7 +240,7 @@ public class TestSlice extends SliceManager {
       if (conf.hasPath("config.bw")) {
         bw = conf.getLong("config.bw");
       }
-      SafeSlice carrier = createTestSliceWithBroAndChameleon(carrierName, routernum, bw);
+      SliceManager carrier = createTestSliceWithBroAndChameleon(carrierName, routernum, bw);
       String resource_dir = conf.getString("config.resourcedir");
       //Slice carrier = createCarrierSliceWithCustomerNodes(carrierName, 4, 10, 1000000, 1);
       carrier.commitAndWait(1);
@@ -287,12 +287,12 @@ public class TestSlice extends SliceManager {
     }
   }
 
-  public SafeSlice createTestSliceWithTwoPairs(String sliceName, int num, long bw) {
+  public SliceManager createTestSliceWithTwoPairs(String sliceName, int num, long bw) {
     String nodeImageShortName = "Ubuntu 14.04";
     String nodeImageURL = "http://geni-orca.renci.org/owl/9dfe179d-3736-41bf-8084-f0cd4a520c2f#Ubuntu+14.04";//http://geni-images.renci.org/images/standard/ubuntu/ub1304-ovs-opendaylight-v1.0.0.xml
     String nodeImageHash = "9394ca154aa35eb55e604503ae7943ddaecc6ca5";
     String nodeNodeType = "XO Extra large";
-    SafeSlice s = createCarrierSlice(sliceName, num, bw);
+    SliceManager s = createCarrierSlice(sliceName, num, bw);
     long cnodebw = 1000000000;
     //Now add two customer node to c0 and c3
     ComputeNode c0 = (ComputeNode) s.getResourceByName("c0");
@@ -358,12 +358,12 @@ public class TestSlice extends SliceManager {
     return s;
   }
 
-  public SafeSlice createTestSliceWithDynamicLinks(String sliceName, int num, long bw) {
+  public SliceManager createTestSliceWithDynamicLinks(String sliceName, int num, long bw) {
     String nodeImageShortName = "Ubuntu 14.04";
     String nodeImageURL = "http://geni-orca.renci.org/owl/9dfe179d-3736-41bf-8084-f0cd4a520c2f#Ubuntu+14.04";//http://geni-images.renci.org/images/standard/ubuntu/ub1304-ovs-opendaylight-v1.0.0.xml
     String nodeImageHash = "9394ca154aa35eb55e604503ae7943ddaecc6ca5";
     String nodeNodeType = "XO Extra large";
-    SafeSlice s = createCarrierSlice(sliceName, num, bw);
+    SliceManager s = createCarrierSlice(sliceName, num, bw);
     //Now add two customer node to c0 and c3
     ComputeNode c0 = (ComputeNode) s.getResourceByName("c0");
     ComputeNode c1 = (ComputeNode) s.getResourceByName("c1");
@@ -408,12 +408,12 @@ public class TestSlice extends SliceManager {
     return s;
   }
 
-  public SafeSlice createTestSliceWithBroAndCNode(String sliceName, int num, long bw) {
+  public SliceManager createTestSliceWithBroAndCNode(String sliceName, int num, long bw) {
     String nodeImageShortName = "Ubuntu 14.04";
     String nodeImageURL = "http://geni-orca.renci.org/owl/9dfe179d-3736-41bf-8084-f0cd4a520c2f#Ubuntu+14.04";//http://geni-images.renci.org/images/standard/ubuntu/ub1304-ovs-opendaylight-v1.0.0.xml
     String nodeImageHash = "9394ca154aa35eb55e604503ae7943ddaecc6ca5";
     String nodeNodeType = "XO Extra large";
-    SafeSlice s = createCarrierSlice(sliceName, num, bw);
+    SliceManager s = createCarrierSlice(sliceName, num, bw);
     //Now add two customer node to c0 and c3
     ComputeNode c0 = (ComputeNode) s.getResourceByName("c0");
     ComputeNode c3 = (ComputeNode) s.getResourceByName("c" + (num - 1));
@@ -456,12 +456,12 @@ public class TestSlice extends SliceManager {
     return s;
   }
 
-  public SafeSlice createTestSliceWithBroAndChameleon(String sliceName, int num, long bw) throws TransportException, Exception {
+  public SliceManager createTestSliceWithBroAndChameleon(String sliceName, int num, long bw) throws TransportException, Exception {
     String nodeImageShortName = "Ubuntu 14.04";
     String nodeImageURL = "http://geni-orca.renci.org/owl/9dfe179d-3736-41bf-8084-f0cd4a520c2f#Ubuntu+14.04";//http://geni-images.renci.org/images/standard/ubuntu/ub1304-ovs-opendaylight-v1.0.0.xml
     String nodeImageHash = "9394ca154aa35eb55e604503ae7943ddaecc6ca5";
     String nodeNodeType = "XO Extra large";
-    SafeSlice s = createCarrierSlice(sliceName, num, bw);
+    SliceManager s = createCarrierSlice(sliceName, num, bw);
     //Now add two customer node to c0 and c3
     ComputeNode c0 = (ComputeNode) s.getResourceByName("c0");
     ComputeNode cnode0 = s.addComputeNode("node0");
@@ -492,11 +492,11 @@ public class TestSlice extends SliceManager {
     return s;
   }
 
-  public SafeSlice createCarrierSliceWithCustomerNodes(String sliceName, int num, int start,
-                                                       long bw, int numstitches) {//,String stitchsubnet="", String slicesubnet="")
+  public SliceManager createCarrierSliceWithCustomerNodes(String sliceName, int num, int start,
+                                                          long bw, int numstitches) {//,String stitchsubnet="", String slicesubnet="")
     System.out.println("ndllib TestDriver: START");
 
-    SafeSlice s = SafeSlice.create(sliceName, pemLocation, keyLocation, controllerUrl, sctx);
+    SliceManager s = SliceManager.create(sliceName, pemLocation, keyLocation, controllerUrl, sctx);
 
     String nodeImageShortName = "Ubuntu 14.04";
     String nodeImageURL = "http://geni-orca.renci.org/owl/9dfe179d-3736-41bf-8084-f0cd4a520c2f#Ubuntu+14.04";//http://geni-images.renci.org/images/standard/ubuntu/ub1304-ovs-opendaylight-v1.0.0.xml

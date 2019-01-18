@@ -16,7 +16,6 @@ import org.renci.ahab.libtransport.xmlrpc.XMLRPCProxyFactory;
 import org.renci.ahab.libtransport.xmlrpc.XMLRPCTransportException;
 
 import java.net.URL;
-import java.nio.file.Path;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.locks.ReentrantLock;
@@ -24,7 +23,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-public class SafeSlice {
+public class SliceManager {
   private static final int COMMIT_COUNT = 5;
   private static final int INTERVAL = 10;
   public static final String VMVersion = "Ubuntu 16.04";
@@ -32,7 +31,7 @@ public class SafeSlice {
   public static final String CustomerVMVersion = "Ubuntu 14.04";
   private ReentrantLock lock = new ReentrantLock();
   final static long DEFAULT_BW = 10000000;
-  final static Logger logger = LogManager.getLogger(SafeSlice.class);
+  final static Logger logger = LogManager.getLogger(SliceManager.class);
   private ISliceTransportAPIv1 sliceProxy;
   private SliceAccessContext<SSHAccessToken> sctx;
   private String pemLocation;
@@ -43,7 +42,7 @@ public class SafeSlice {
   private HashSet<String> reachableNodes = new HashSet<>();
 
 
-  public SafeSlice(String pemLocation, String keyLocation, String controllerUrl, SliceAccessContext<SSHAccessToken> sctx) {
+  public SliceManager(String pemLocation, String keyLocation, String controllerUrl, SliceAccessContext<SSHAccessToken> sctx) {
     this.pemLocation = pemLocation;
     this.keyLocation = keyLocation;
     this.controllerUrl = controllerUrl;
@@ -52,7 +51,7 @@ public class SafeSlice {
     this.slice = null;
   }
 
-  public SafeSlice(String pemLocation, String keyLocation, String controllerUrl) {
+  public SliceManager(String pemLocation, String keyLocation, String controllerUrl) {
     this.pemLocation = pemLocation;
     this.keyLocation = keyLocation;
     this.controllerUrl = controllerUrl;
@@ -60,7 +59,7 @@ public class SafeSlice {
     this.slice = null;
   }
 
-  public SafeSlice(String sliceName, String pemLocation, String keyLocation, String controllerUrl) {
+  public SliceManager(String sliceName, String pemLocation, String keyLocation, String controllerUrl) {
     this.sliceName = sliceName;
     this.pemLocation = pemLocation;
     this.keyLocation = keyLocation;
@@ -122,7 +121,7 @@ public class SafeSlice {
       } catch (XMLRPCTransportException e) {
         logger.warn(e.getMessage());
         try {
-          Thread.sleep((long) (INTERVAL * 1000));
+          Thread.sleep((long) (INTERVAL * 1000 * (i + 1)));
         } catch (InterruptedException var6) {
           Thread.currentThread().interrupt();
         }
@@ -130,7 +129,7 @@ public class SafeSlice {
       } catch (TransportException ex) {
         logger.warn(ex.getMessage());
         try {
-          Thread.sleep((long) (INTERVAL * 1000));
+          Thread.sleep((long) (INTERVAL * 1000 * (i + 1)));
         } catch (InterruptedException var6) {
           Thread.currentThread().interrupt();
         }
@@ -144,24 +143,24 @@ public class SafeSlice {
 
   }
 
-  public static SafeSlice create(String sliceName, String pemLocation, String keyLocation, String controllerUrl, SliceAccessContext<SSHAccessToken>sctx) {
+  public static SliceManager create(String sliceName, String pemLocation, String keyLocation, String controllerUrl, SliceAccessContext<SSHAccessToken>sctx) {
     logger.info(String.format("create %s", sliceName));
-    SafeSlice safeSlice = new SafeSlice(pemLocation, keyLocation, controllerUrl, sctx);
-    safeSlice.sliceName = sliceName;
-    safeSlice.sliceProxy = getSliceProxy(pemLocation, keyLocation, controllerUrl);
-    safeSlice.sctx = sctx;
-    safeSlice.slice = Slice.create(safeSlice.sliceProxy, sctx, sliceName);
-    return safeSlice;
+    SliceManager sliceManager = new SliceManager(pemLocation, keyLocation, controllerUrl, sctx);
+    sliceManager.sliceName = sliceName;
+    sliceManager.sliceProxy = getSliceProxy(pemLocation, keyLocation, controllerUrl);
+    sliceManager.sctx = sctx;
+    sliceManager.slice = Slice.create(sliceManager.sliceProxy, sctx, sliceName);
+    return sliceManager;
   }
 
   public static Collection<String> getDomains() {
     return Slice.getDomains();
   }
 
-  public static SafeSlice loadManifestFile(String sliceName, String pemLocation, String keyLocation, String controllerUrl)
+  public static SliceManager loadManifestFile(String sliceName, String pemLocation, String keyLocation, String controllerUrl)
       throws org.renci.ahab.libtransport.util.TransportException {
     logger.info(String.format("loadSlice %s", sliceName));
-    SafeSlice s = new SafeSlice(pemLocation, keyLocation, controllerUrl);
+    SliceManager s = new SliceManager(pemLocation, keyLocation, controllerUrl);
     s.sliceName = sliceName;
     s.sliceProxy = getSliceProxy(pemLocation, keyLocation, controllerUrl);
     s.pemLocation = pemLocation;
@@ -196,6 +195,13 @@ public class SafeSlice {
       s.slice = null;
     }
     return s;
+  }
+
+  public void resetHostNames(String sshKey){
+    for(ComputeNode node: slice.getComputeNodes()){
+      runCmdByIP(String.format("hostnamectl set-hostname %s-%s", sliceName, node.getName()), sshKey,
+        node.getManagementIP(), false);
+    }
   }
 
   public ComputeNode addComputeNode(String name) {
@@ -539,7 +545,7 @@ public class SafeSlice {
     while (true) {
       ArrayList<String> activeResources = new ArrayList<>();
       refresh();
-      logger.debug("SafeSlice: " + getAllResources());
+      logger.debug("SliceManager: " + getAllResources());
       for (ComputeNode c : getComputeNodes()) {
         logger.debug("[" + sliceName + "] Resource: " + c.getName() + ", state: " + c
                 .getState());

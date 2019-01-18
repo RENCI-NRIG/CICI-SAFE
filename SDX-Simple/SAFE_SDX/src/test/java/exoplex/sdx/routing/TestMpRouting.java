@@ -7,7 +7,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import exoplex.sdx.core.SdxManager;
 import exoplex.sdx.network.SdnUtil;
-import junit.framework.Assert;
 import org.junit.*;
 
 import java.util.HashMap;
@@ -89,7 +88,7 @@ public class TestMpRouting extends SdxManager {
     configRouters(serverSlice);
   }
 
-  public void configTestSlice(SafeSlice carrier){
+  public void configTestSlice(SliceManager carrier){
     carrier.runCmdSlice("apt-get update;apt-get -y install quagga", sshkey,"(CNode\\d+)", true);
     carrier.runCmdSlice("sed -i -- 's/zebra=no/zebra=yes/g' /etc/quagga/daemons", sshkey, "(CNode\\d+)", true);
     //carrier.runCmdSlice("sed -i -- 's/ospfd=no/ospfd=yes/g' /etc/quagga/daemons", sshkey,
@@ -111,8 +110,8 @@ public class TestMpRouting extends SdxManager {
     carrier.runCmdSlice("/etc/init.d/quagga restart", sshkey, "(CNode\\d+)", true);
   }
 
-  public SafeSlice createTestSlice(){
-    SafeSlice slice = SafeSlice.create(sliceName, pemLocation, keyLocation, controllerUrl, sctx);
+  public SliceManager createTestSlice(){
+    SliceManager slice = SliceManager.create(sliceName, pemLocation, keyLocation, controllerUrl, sctx);
     slice.addComputeNode(site, "CNode0");
     slice.addComputeNode(site,"CNode1");
     slice.addComputeNode(site,"CNode2");

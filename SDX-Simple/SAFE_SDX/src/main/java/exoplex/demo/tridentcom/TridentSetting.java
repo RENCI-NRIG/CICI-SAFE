@@ -1,12 +1,11 @@
 package exoplex.demo.tridentcom;
 
-import com.hp.hpl.jena.tdb.store.Hash;
-import exoplex.sdx.core.SliceManager;
+import exoplex.sdx.core.SliceHelper;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 
-public class TridentSetting extends SliceManager{
+public class TridentSetting extends SliceHelper {
   public static final ArrayList<String> sites = new ArrayList<>();
 
   final static String sdxName = "sdx-tri";

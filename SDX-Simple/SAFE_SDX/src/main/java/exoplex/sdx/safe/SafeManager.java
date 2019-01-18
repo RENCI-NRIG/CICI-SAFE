@@ -119,6 +119,18 @@ public class SafeManager {
     return SafeUtils.authorize(safeServer, "authorizeStitchByUID", sdxHash, othervalues);
   }
 
+  public boolean verifyAS(String owner, String dstIP, String as, String token)
+  {
+    /** Post to remote safesets using apache httpclient */
+    String[] othervalues=new String[4];
+    othervalues[0]= owner;
+    othervalues[1] = dstIP;
+    othervalues[2] = as;
+    othervalues[3] = token;
+    String sdxHash = SafeUtils.getPrincipalId(safeServer, this.safeKeyFile);
+    return SafeUtils.authorize(safeServer, "verifyAS", sdxHash, othervalues);
+  }
+
   public boolean authorizeChameleonStitchRequest(String customerSafeKeyHash,
     String stitchPort,
     String vlan

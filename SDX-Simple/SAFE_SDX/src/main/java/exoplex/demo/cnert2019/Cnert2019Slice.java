@@ -1,19 +1,12 @@
 package exoplex.demo.cnert2019;
 
 import exoplex.client.exogeni.ExogeniClientSlice;
-import exoplex.common.slice.SafeSlice;
+import exoplex.common.slice.SliceManager;
 import exoplex.common.slice.SiteBase;
 import exoplex.common.utils.Exec;
-import exoplex.common.utils.ServerOptions;
-import exoplex.demo.tridentcom.TridentSetting;
-import exoplex.sdx.core.SliceManager;
-import org.apache.commons.cli.CommandLine;
+import exoplex.sdx.core.SliceHelper;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.renci.ahab.libtransport.SSHAccessToken;
-import org.renci.ahab.libtransport.SliceAccessContext;
-import org.renci.ahab.libtransport.util.SSHAccessTokenFileFactory;
-import org.renci.ahab.libtransport.util.UtilTransportException;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -78,7 +71,7 @@ public class Cnert2019Slice {
 
   public void deleteClientSlices(){
     ExogeniClientSlice cs  = new ExogeniClientSlice(Cnert2019Setting.clientArgs);
-    for(String clientSlice: TridentSetting.clientSlices) {
+    for(String clientSlice: Cnert2019Setting.clientSlices) {
       cs.setSliceName(clientSlice);
       cs.delete();
     }
@@ -122,31 +115,31 @@ public class Cnert2019Slice {
       final String configFile = Cnert2019Setting.sdxConfs.get(i);
       //Set SDX sites here
       final ArrayList<String> clientSites = null;
-      SliceManager sliceManager = new SliceManager();
-      sliceManager.initializeExoGENIContexts(configFile);
-      sliceManager.setSliceName(sliceName);
-      sliceManager.delete();
+      SliceHelper sliceHelper = new SliceHelper();
+      sliceHelper.initializeExoGENIContexts(configFile);
+      sliceHelper.setSliceName(sliceName);
+      sliceHelper.delete();
     }
   }
 
   private void createAndConfigSdxSlice(String sliceName, String configFile, String riakIP,
     List<String>
     clientSites) throws Exception{
-    SliceManager sliceManager = new SliceManager();
-    sliceManager.initializeExoGENIContexts(configFile);
+    SliceHelper sliceHelper = new SliceHelper();
+    sliceHelper.initializeExoGENIContexts(configFile);
     if(riakIP != null) {
-      sliceManager.setRiakIP(riakIP);
+      sliceHelper.setRiakIP(riakIP);
     }
     if(sliceName != null) {
-      sliceManager.setSliceName(sliceName);
+      sliceHelper.setSliceName(sliceName);
     }
     if (clientSites != null){
-      sliceManager.setClientSites(clientSites);
+      sliceHelper.setClientSites(clientSites);
     }
-    SafeSlice slice = sliceManager.createCarrierSlice(sliceManager.getSliceName(), 2, 100000000);
+    SliceManager slice = sliceHelper.createCarrierSlice(sliceHelper.getSliceName(), 2, 100000000);
     slice.commitAndWait();
-    slice.reloadSlice();
-    sliceManager.checkSdxPrerequisites(slice);
+    sliceHelper.resetHostNames(slice);
+    sliceHelper.checkSdxPrerequisites(slice);
   }
 }
 
