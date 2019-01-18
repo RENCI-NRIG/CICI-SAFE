@@ -96,6 +96,10 @@ public class AuthorityMock extends SdxRoutingSlang{
         addCnert2019UserSlice(Cnert2019Setting.clientKeyMap.get(slice), slice, Cnert2019Setting
           .clientIpMap.get(slice));
       }
+      for(String slice: Cnert2019Setting.sdxSliceNames){
+        addCnert2019UserSlice(Cnert2019Setting.sdxKeyMap.get(slice), slice, Cnert2019Setting
+          .sdxIpMap.get(slice));
+      }
       //checkAuthorization();
       authorizationMade = true;
     }

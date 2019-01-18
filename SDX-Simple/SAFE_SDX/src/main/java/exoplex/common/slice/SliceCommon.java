@@ -34,7 +34,7 @@ public abstract class SliceCommon {
   protected String type;
   protected String topofile = null;
   protected Config conf;
-  protected ArrayList<String> clientSites;
+  protected List<String> clientSites;
   protected String controllerSite;
   protected List<String> sitelist;
   protected String serverSite;
