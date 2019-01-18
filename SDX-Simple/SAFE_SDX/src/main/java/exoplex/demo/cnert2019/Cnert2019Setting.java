@@ -12,7 +12,7 @@ public class Cnert2019Setting extends SliceManager{
   public static final HashMap<String, String> sdxKeyMap = new HashMap<>();
   public static final HashMap<String, String> sdxIpMap = new HashMap<>();
   public static final HashMap<String, String> sdxUrls = new HashMap<>();
-  public static final int numSdx = 2;
+  public static final int numSdx = 4;
 
   final static String sdxName = "sdx-tri";
   static String userDir = System.getProperty("user.dir");
@@ -25,14 +25,23 @@ public class Cnert2019Setting extends SliceManager{
   static {
     //clientSites.add("RENCI");
     clientSites.add("TAMU");
-    clientSites.add("UFL");
+    clientSites.add("TAMU");
     //clientSites.add("UH");
+    clientSites.add("UNF");
     clientSites.add("UNF");
     //clientSites.add("SL");
     //clientSites.add("GWU");
     //clientSites.add("UMASS");
     //clientSites.add("UNF");
     //clientSites.add("WSU");
+  }
+
+  public static ArrayList<String[]> sdxSites = new ArrayList<>();
+  static {
+    sdxSites.add(new String[]{"TAMU", "SL"});
+    sdxSites.add(new String[]{"SL", "UFL"});
+    sdxSites.add(new String[]{"SL", "UFL"});
+    sdxSites.add(new String[]{"UFL", "UNF"});
   }
 
   static{
@@ -75,5 +84,11 @@ public class Cnert2019Setting extends SliceManager{
         .sdxSliceNames.size())));
       ipBase += 10;
     }
+  }
+  static {
+    clientSdxMap.put(clientSlices.get(0), sdxSliceNames.get(0));
+    clientSdxMap.put(clientSlices.get(1), sdxSliceNames.get(0));
+    clientSdxMap.put(clientSlices.get(2), sdxSliceNames.get(3));
+    clientSdxMap.put(clientSlices.get(3), sdxSliceNames.get(3));
   }
 }

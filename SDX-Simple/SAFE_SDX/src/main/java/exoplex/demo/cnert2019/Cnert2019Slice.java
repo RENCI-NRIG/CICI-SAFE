@@ -16,6 +16,8 @@ import org.renci.ahab.libtransport.util.SSHAccessTokenFileFactory;
 import org.renci.ahab.libtransport.util.UtilTransportException;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 public class Cnert2019Slice {
   final Logger logger = LogManager.getLogger(Exec.class);
@@ -30,7 +32,7 @@ public class Cnert2019Slice {
 
   public void createClientSlices() {
     ArrayList<Thread> tlist = new ArrayList<>();
-    for (String clientSlice : TridentSetting.clientSlices) {
+    for (String clientSlice : Cnert2019Setting.clientSlices) {
       Thread t = new Thread() {
         @Override
         public void run() {
@@ -88,13 +90,7 @@ public class Cnert2019Slice {
       final String sliceName = Cnert2019Setting.sdxSliceNames.get(i);
       final String configFile = Cnert2019Setting.sdxConfs.get(i);
       //Set SDX sites here
-      final ArrayList<String> clientSites = new ArrayList<>();
-      int numSitesPerSdx = Cnert2019Setting.clientSites.size()/Cnert2019Setting.sdxSliceNames
-        .size() + 1;
-      for( int j = 0; j < numSitesPerSdx; j++){
-        clientSites.add(Cnert2019Setting.clientSites.get((i+j)%Cnert2019Setting.clientSites.size
-          ()));
-      }
+      final List<String> clientSites = Arrays.asList(Cnert2019Setting.sdxSites.get(i));
 
       Thread t = new Thread(){
         @Override
@@ -134,7 +130,7 @@ public class Cnert2019Slice {
   }
 
   private void createAndConfigSdxSlice(String sliceName, String configFile, String riakIP,
-    ArrayList<String>
+    List<String>
     clientSites) throws Exception{
     SliceManager sliceManager = new SliceManager();
     sliceManager.initializeExoGENIContexts(configFile);

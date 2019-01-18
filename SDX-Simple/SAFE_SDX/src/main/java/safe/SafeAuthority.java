@@ -82,6 +82,14 @@ public class SafeAuthority extends SdxRoutingSlang {
       addPrincipals();
       initPrincipals();
       initializeCnert2019Auth();
+      for(String slice: Cnert2019Setting.clientSlices){
+        addCnert2019UserSlice(Cnert2019Setting.clientKeyMap.get(slice), slice, Cnert2019Setting
+          .clientIpMap.get(slice));
+      }
+      for(String slice: Cnert2019Setting.sdxSliceNames){
+        addCnert2019UserSlice(Cnert2019Setting.sdxKeyMap.get(slice), slice, Cnert2019Setting
+          .sdxIpMap.get(slice));
+      }
       //checkAuthorization();
       authorizationMade = true;
     }

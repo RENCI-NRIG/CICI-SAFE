@@ -145,11 +145,11 @@ public class SdxExogeniClient extends SliceCommon{
 
   public boolean ping(String nodeName, String ip) {
 
-    if(serverSlice==null) {
-      try {
-        serverSlice = SafeSlice.loadManifestFile(sliceName, pemLocation, keyLocation, controllerUrl);
-      } catch (Exception e) {
-        logger.warn(e.getMessage());
+    try {
+      serverSlice = SafeSlice.loadManifestFile(sliceName, pemLocation, keyLocation, controllerUrl);
+    } catch (Exception e) {
+      logger.warn(e.getMessage());
+      if(serverSlice == null) {
         return false;
       }
     }

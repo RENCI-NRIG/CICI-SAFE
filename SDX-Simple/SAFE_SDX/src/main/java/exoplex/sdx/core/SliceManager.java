@@ -348,7 +348,7 @@ public class SliceManager extends SliceCommon {
     }
   }
 
-  public void setClientSites(ArrayList<String> clientSites){
+  public void setClientSites(List<String> clientSites){
     this.clientSites = clientSites;
   }
 

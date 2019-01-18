@@ -728,7 +728,7 @@ public class SafeSlice {
   public String runCmdByIP(final String cmd, final String sshkey, String mip, boolean repeat){
     logger.debug(mip + " run commands:" + cmd);
     String res[] = Exec.sshExec("root", mip, cmd, sshkey);
-    while(repeat && res[0].startsWith("error")){
+    while(repeat && (res[0]==null ||res[0].startsWith("error"))){
       logger.debug(res[1]);
       res = Exec.sshExec("root", mip, cmd, sshkey);
       if(res[0].startsWith("error")){

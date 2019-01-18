@@ -512,6 +512,7 @@ public class SdxManager extends SliceManager {
   }
 
   private void advertiseBgp(String peerUrl, BgpAdvertise advertise){
+    logger.info(String.format("advertiseBgp %s", advertise.toString()));
     HttpUtil.postJSON(peerUrl + "sdx/bgp", advertise.toJsonObject());
   }
 
@@ -1318,6 +1319,7 @@ public class SdxManager extends SliceManager {
   }
 
   protected void configRouter(String nodeName) {
+    logger.info(String.format("Configuring router %s", nodeName));
     String mip = serverSlice.getComputeNode(nodeName).getManagementIP();
     checkOVS(serverSlice, nodeName);
     checkScripts(serverSlice, nodeName);
