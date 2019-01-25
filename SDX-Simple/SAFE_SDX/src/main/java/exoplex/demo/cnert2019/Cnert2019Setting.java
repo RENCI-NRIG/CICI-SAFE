@@ -57,7 +57,7 @@ public class Cnert2019Setting extends SliceHelper {
       sdxConfs.add(String.format("%ssdx%s.conf", sdxConfigDir, i + 1));
       String[] sdxArg = new String[]{"-c", sdxConfs.get(i), "-r"};
       sdxArgs.add(sdxArg);
-      String sdxSliceName = String.format("sdx-%s-cnert", i + 1);
+      String sdxSliceName = String.format("sdx-%s-cn", i + 1);
       sdxSliceNames.add(sdxSliceName);
       sdxKeyMap.put(sdxSliceName, String.format("key_p%s", sdxKeyBase + i));
       sdxUrls.put(sdxSliceName, String.format("http://127.0.0.1:888%s/", i));
@@ -81,7 +81,7 @@ public class Cnert2019Setting extends SliceHelper {
     int keyBase = 10;
     int ipBase = 10;
     for (int i=0; i<clientSites.size(); i++){
-      String clientName = "c" + i + "-tri";
+      String clientName = "c" + i + "-cn";
       clientSlices.add(clientName);
       clientKeyMap.put(clientName, "key_p" + (keyBase + i));
       clientSiteMap.put(clientName, clientSites.get(i));
