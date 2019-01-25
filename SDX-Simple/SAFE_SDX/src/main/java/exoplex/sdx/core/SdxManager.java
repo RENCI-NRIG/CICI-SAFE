@@ -1159,6 +1159,7 @@ public class SdxManager extends SliceHelper {
           serverSlice.reloadSlice();
           copyRouterScript(serverSlice, eRouterName);
           configRouter(eRouterName);
+          nodeName = node.getName();
           logger.debug("Configured the new router in RoutingManager");
         }
         String stitchname = "sp-" + nodeName + "-" + ip.replace("/", "__").replace(".", "_");

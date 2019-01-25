@@ -1,12 +1,13 @@
 package safe;
 
-public interface SdxRoutingSlang {
+public class SdxRoutingSlang {
   public static final String postMakeIPTokenSet = "postMakeIPTokenSet";
   public static final String postUserAclEntry = "postUserAclEntry";
   public static final String postUserTagAclEntry = "postUserTagAclEntry";
   public static final String postCustomerPolicy = "postCustomerPolicy";
   public static final String updateTagSet = "updateTagSet";
   public static final String postStandardSliceDefaultPrivilegeSet = "postStandardSliceDefaultPrivilegeSet";
+  public static final String updateSubjectSet = "updateSubjectSet";
   public static final String postOwnPrefixPolicy = "postOwnPrefixPolicy";
   public static final String postMAEndorsement = "postMAEndorsement";
   public static final String postStitchPolicy = "postStitchPolicy";
@@ -37,12 +38,14 @@ public interface SdxRoutingSlang {
   public static final String postMemberSet = "postMemberSet";
   public static final String authorizeOwnPrefix = "authorizeOwnPrefix";
   public static final String authorizeStitchByProjectAttr = "authorizeStitchByProjectAttr";
+  public static final String passDelegation = "passDelegation";
   public static final String authorizeStitchBySliceAttr = "authorizeStitchBySliceAttr";
   public static final String postSliceControl = "postSliceControl";
   public static final String postLinkTagSetToProject = "postLinkTagSetToProject";
   public static final String postSliceSet = "postSliceSet";
   public static final String authorizeStitchByUserAttr = "authorizeStitchByUserAttr";
   public static final String createSliver = "createSliver";
+  public static final String postIdSet = "postIdSet";
   public static final String postDlgToken = "postDlgToken";
   public static final String postGrantTagPriv = "postGrantTagPriv";
   public static final String postUpdateObjectTagSet = "postUpdateObjectTagSet";

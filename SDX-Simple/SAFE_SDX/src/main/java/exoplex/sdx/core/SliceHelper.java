@@ -378,7 +378,7 @@ public class SliceHelper extends SliceCommon {
       BRO = conf.getBoolean("config.bro");
     }
     for (int i = 0; i < num; i++) {
-      s.addOVSRouter(clientSites.get(i % clientSites.size()),  "e" + i);
+      s.addOVSRouter(clientSites.get(i % clientSites.size()), "e" + i);
       nodelist.add((ComputeNode) s.getResourceByName("e" + i));
       if (BRO && i == 0) {
         long brobw = conf.getLong("config.brobw");
