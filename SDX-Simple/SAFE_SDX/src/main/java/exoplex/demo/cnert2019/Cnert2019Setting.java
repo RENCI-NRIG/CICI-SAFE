@@ -23,9 +23,23 @@ public class Cnert2019Setting extends SliceHelper {
   static String userDir = System.getProperty("user.dir");
   static String sdxSimpleDir = userDir.split("SDX-Simple")[0] + "SDX-Simple/";
   public final static String sdxConfigDir = sdxSimpleDir + "config/cnert2019/";
-  public final static ArrayList<String[]> sdxArgs = new ArrayList<>();
+  public final static HashMap<String, String[]> sdxArgs = new HashMap<>();
   public static String[] clientArgs = new String[]{"-c", sdxSimpleDir + "client-config/client" +
     ".conf"};
+  public static ArrayList<Integer[]> sdxNeighbor = new ArrayList<>();
+  public static ArrayList<Integer[]> customerConnectionPairs = new ArrayList<>();
+
+  static {
+    sdxNeighbor.add(new Integer[]{0,1});
+    sdxNeighbor.add(new Integer[]{1,2});
+    sdxNeighbor.add(new Integer[]{0,2});
+    sdxNeighbor.add(new Integer[]{2,3});
+  }
+
+  static {
+    customerConnectionPairs.add(new Integer[]{0,2});
+    customerConnectionPairs.add(new Integer[]{1,3});
+  }
 
   static {
     //clientSites.add("RENCI");
@@ -56,7 +70,7 @@ public class Cnert2019Setting extends SliceHelper {
     for (int i = 0; i< numSdx; i++){
       sdxConfs.add(String.format("%ssdx%s.conf", sdxConfigDir, i + 1));
       String[] sdxArg = new String[]{"-c", sdxConfs.get(i), "-r"};
-      sdxArgs.add(sdxArg);
+      sdxArgs.put(sdxSliceNames.get(i), sdxArg);
       String sdxSliceName = String.format("sdx-%s-cn", i + 1);
       sdxSliceNames.add(sdxSliceName);
       sdxKeyMap.put(sdxSliceName, String.format("key_p%s", sdxKeyBase + i));

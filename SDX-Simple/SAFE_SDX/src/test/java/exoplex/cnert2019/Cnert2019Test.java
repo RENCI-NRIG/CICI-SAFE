@@ -1,17 +1,17 @@
 package exoplex.cnert2019;
 import exoplex.client.exogeni.SdxExogeniClient;
 import exoplex.demo.SdxTest;
-import exoplex.demo.tridentcom.Cnert2019Setting;
-import exoplex.demo.tridentcom.Cnert2019Slice;
+import exoplex.demo.cnert2019.Cnert2019Slice;
+import exoplex.demo.cnert2019.Cnert2019Setting;
 import exoplex.sdx.core.SdxManager;
 import exoplex.sdx.core.SdxServer;
-import junit.framework.Assert;
 import org.junit.*;
 import riak.RiakSlice;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import safe.AuthorityMock;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 
 public class Cnert2019Test {
@@ -20,8 +20,9 @@ public class Cnert2019Test {
   static String sdxSimpleDir = userDir.split("SDX-Simple")[0] + "SDX-Simple/";
   static String[] riakArgs = new String[]{"-c", sdxSimpleDir + "config/riak.conf"};
   static String[] riakDelArgs = new String[]{"-c", sdxSimpleDir + "config/riak.conf", "-d"};
-  static SdxManager sdxManager;
+  static HashMap<String, SdxManager>  sdxManagerMap = new HashMap<>();
   HashMap<String, SdxExogeniClient> exogeniClients = new HashMap<>();
+  static Cnert2019Slice cnert2019Slice = new Cnert2019Slice();
 
   @BeforeClass
   public static void before() throws Exception{
@@ -31,21 +32,48 @@ public class Cnert2019Test {
     RiakSlice riakSlice = new RiakSlice();
     String riakIP = riakSlice.run(riakArgs);
     //Sdx and client slices
-    Cnert2019Slice.createSdxSlices(riakIP);
+    cnert2019Slice.createSdxSlices(riakIP);
+    cnert2019Slice.createClientSlices();
 
   }
 
   @AfterClass
   public static void after()throws Exception{
     RiakSlice riakSlice = new RiakSlice();
-    String riakIP = riakSlice.run(riakDelArgs);
-    Cnert2019Slice.deleteTestSlices();
-    System.out.println("after");
+    riakSlice.run(riakDelArgs);
+    cnert2019Slice.deleteSdxSlices();
+    cnert2019Slice.deleteSdxSlices();
   }
 
   @Test
   public void TestSDX() throws Exception{
-    sdxManager = SdxServer.run(Cnert2019Setting.sdxArgs);
+    ArrayList<Thread> tlist = new ArrayList<>();
+    for (String slice : Cnert2019Setting.sdxSliceNames) {
+      Thread t = new Thread() {
+        @Override
+        public void run() {
+          try {
+            SdxManager sdxManager = SdxServer.run(Cnert2019Setting.sdxArgs.get(slice), Cnert2019Setting.sdxUrls.get
+                            (slice), slice);
+            sdxManagerMap.put(slice, sdxManager);
+          }catch (Exception e){
+
+          }
+        }
+      };
+      tlist.add(t);
+    }
+    for (Thread t : tlist) {
+      t.start();
+    }
+    try {
+      for (Thread t : tlist) {
+        t.join();
+      }
+    } catch (Exception e) {
+
+    }
+
     for(String clientSlice: Cnert2019Setting.clientSlices){
       exogeniClients.put(clientSlice, new SdxExogeniClient(clientSlice,
         Cnert2019Setting.clientIpMap.get(clientSlice),
@@ -53,25 +81,33 @@ public class Cnert2019Test {
         Cnert2019Setting.clientArgs
       ));
     }
-    for(SdxExogeniClient client: exogeniClients.values()){
-      client.setSafeServer(sdxManager.getSafeServerIP());
+    for(String clientSlice: Cnert2019Setting.clientSlices){
+      SdxExogeniClient client = exogeniClients.get(clientSlice);
+      client.setSafeServer(sdxManagerMap.values().iterator().next().getSafeServerIP());
+      client.setServerUrl(Cnert2019Setting.sdxUrls.get(Cnert2019Setting.clientSdxMap.get(clientSlice)));
     }
-    stitchSlices();
+    //stitch sdx slices
+
+    stitchSdxSlices();
+
+    stitchCustomerSlices();
+
     connectCustomerNetwork();
-    unStitchSlices();
-    stitchSlices();
-    connectCustomerNetwork();
-    unStitchSlices();
   }
 
-  private  void stitchSlices(){
-    for(String clientSlice: Cnert2019Setting.clientSlices){
-      if(sdxManager.safeEnabled) {
-        AuthorityMock.main(new String[]{Cnert2019Setting.clientKeyMap.get(clientSlice),
-          clientSlice,
-          Cnert2019Setting.clientIpMap.get(clientSlice),
-          sdxManager.getSafeServer().split(":")[0]});
+  private void stitchSdxSlices(){
+      for(Integer[] edge: Cnert2019Setting.sdxNeighbor){
+        int i = edge[0];
+        int j = edge[1];
+        String slice1 = Cnert2019Setting.sdxSliceNames.get(0);
+        String slice2 = Cnert2019Setting.sdxSliceNames.get(1);
+        sdxManagerMap.get(slice1).adminCmd("stitch", new String[]{Cnert2019Setting.sdxUrls.get(slice2), "e1"});
       }
+  }
+
+
+  private  void stitchCustomerSlices(){
+    for(String clientSlice: Cnert2019Setting.clientSlices){
       String clientGateWay = Cnert2019Setting.clientIpMap.get(clientSlice).replace(".1/24", ".2");
       String sdxIP = Cnert2019Setting.clientIpMap.get(clientSlice).replace(".1/24", ".1/24");
       String gw = exogeniClients.get(clientSlice).processCmd(String.format("stitch CNode1 %s %s",
@@ -89,23 +125,16 @@ public class Cnert2019Test {
   }
 
   private void connectCustomerNetwork(){
-    for(int i=0; i<Cnert2019Setting.clientSlices.size(); i++){
+    for(Integer[] pair : Cnert2019Setting.customerConnectionPairs){
+      int i = pair[0];
+      int j = pair[1];
       String client = Cnert2019Setting.clientSlices.get(i);
       String clientIp = Cnert2019Setting.clientIpMap.get(client);
-      for(int j = i + 1; j<Cnert2019Setting.clientSlices.size(); j++){
-        String peer = Cnert2019Setting.clientSlices.get(j);
-        String peerIp = Cnert2019Setting.clientIpMap.get(peer);
-        exogeniClients.get(client).processCmd(String.format("link %s %s",
-          Cnert2019Setting.clientIpMap.get(client),
-          Cnert2019Setting.clientIpMap.get(peer)));
-
-        if(!exogeniClients.get(client).checkConnectivity("CNode1",
-          peerIp.replace(".1/24", ".2"))){
-          sdxManager.checkFlowTableForPair(clientIp.replace(".1/24", ".0/24"),
-            peerIp.replace(".1/24", ".0/24"),
-            clientIp, peerIp);
-          assert false;
-        }
+      String peer = Cnert2019Setting.clientSlices.get(j);
+      String peerIp = Cnert2019Setting.clientIpMap.get(peer);
+      exogeniClients.get(client).processCmd(String.format("link %s %s", clientIp, peerIp));
+      if(!exogeniClients.get(client).checkConnectivity("CNode1",
+              peerIp.replace(".1/24", ".2"))){
       }
     }
   }
