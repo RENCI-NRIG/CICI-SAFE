@@ -1,7 +1,7 @@
 package safe;
 
 import exoplex.common.utils.SafeUtils;
-import exoplex.demo.cnert2019.Cnert2019Setting;
+import exoplex.demo.multisdx.MultiSdxSetting;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.LogManager;
@@ -82,12 +82,12 @@ public class SafeAuthority extends SdxRoutingSlang {
       addPrincipals();
       initPrincipals();
       initializeCnert2019Auth();
-      for(String slice: Cnert2019Setting.clientSlices){
-        addCnert2019UserSlice(Cnert2019Setting.clientKeyMap.get(slice), slice, Cnert2019Setting
+      for(String slice: MultiSdxSetting.clientSlices){
+        addCnert2019UserSlice(MultiSdxSetting.clientKeyMap.get(slice), slice, MultiSdxSetting
           .clientIpMap.get(slice));
       }
-      for(String slice: Cnert2019Setting.sdxSliceNames){
-        addCnert2019UserSlice(Cnert2019Setting.sdxKeyMap.get(slice), slice, Cnert2019Setting
+      for(String slice: MultiSdxSetting.sdxSliceNames){
+        addCnert2019UserSlice(MultiSdxSetting.sdxKeyMap.get(slice), slice, MultiSdxSetting
           .sdxIpMap.get(slice));
       }
       //checkAuthorization();
@@ -96,14 +96,14 @@ public class SafeAuthority extends SdxRoutingSlang {
   }
 
   private void cnert2019Setting() {
-    slices.addAll(Cnert2019Setting.sdxSliceNames);
-    for(String key: Cnert2019Setting.sdxKeyMap.keySet()){
-      sliceKeyMap.put(key, Cnert2019Setting.sdxKeyMap.get(key));
-      sliceIpMap.put(key, Cnert2019Setting.sdxIpMap.get(key));
+    slices.addAll(MultiSdxSetting.sdxSliceNames);
+    for(String key: MultiSdxSetting.sdxKeyMap.keySet()){
+      sliceKeyMap.put(key, MultiSdxSetting.sdxKeyMap.get(key));
+      sliceIpMap.put(key, MultiSdxSetting.sdxIpMap.get(key));
     }
-    for(String key: Cnert2019Setting.clientSlices){
-      sliceKeyMap.put(key, Cnert2019Setting.clientKeyMap.get(key));
-      sliceIpMap.put(key, Cnert2019Setting.clientIpMap.get(key));
+    for(String key: MultiSdxSetting.clientSlices){
+      sliceKeyMap.put(key, MultiSdxSetting.clientKeyMap.get(key));
+      sliceIpMap.put(key, MultiSdxSetting.clientIpMap.get(key));
       slices.add(key);
     }
   }
@@ -173,7 +173,7 @@ public class SafeAuthority extends SdxRoutingSlang {
 
     String piCap = simpleEndorseMent(postPIEndorsement, "key_p1", "key_p4", "PI");
 
-    for(String key: Cnert2019Setting.sdxKeyMap.values()) {
+    for(String key: MultiSdxSetting.sdxKeyMap.values()) {
       simpleEndorseMent(postUserEndorsement, "key_p1", key, "User");
     }
 
@@ -198,7 +198,7 @@ public class SafeAuthority extends SdxRoutingSlang {
     String sliceControlRef = safePost(postStandardSliceControlSet, "key_p3");
     String slicePrivRef = safePost(postStandardSliceDefaultPrivilegeSet, "key_p3");
     //post authorize policy
-    for(String key: Cnert2019Setting.sdxKeyMap.values()) {
+    for(String key: MultiSdxSetting.sdxKeyMap.values()) {
       safePost(postStitchPolicy, key);
       safePost(postOwnPrefixPolicy, key);
       safePost(postRoutingPolicy, key);
@@ -214,11 +214,11 @@ public class SafeAuthority extends SdxRoutingSlang {
       addCnert2019UserSlice(userKeyFile, slice, userIP);
     }
     logger.debug("end");
-    for(String sdxslice: Cnert2019Setting.sdxSliceNames) {
-      for(String t: Cnert2019Setting.sdxASTags.get(sdxslice)) {
+    for(String sdxslice: MultiSdxSetting.sdxSliceNames) {
+      for(String t: MultiSdxSetting.sdxASTags.get(sdxslice)) {
         String tag = principalMap.get("tagauthority") + ":" + t;
         safePost(postTagSet, "tagauthority", new String[]{tag});
-        String sdxKeyFile = Cnert2019Setting.sdxKeyMap.get(sdxslice);
+        String sdxKeyFile = MultiSdxSetting.sdxKeyMap.get(sdxslice);
         String sdxKey = principalMap.get(sdxKeyFile);
         String tagToken = safePost(postGrantTagPriv, "tagauthority", new Object[]{sdxKey, tag,
           true});
@@ -226,7 +226,9 @@ public class SafeAuthority extends SdxRoutingSlang {
       }
     }
     //post user's authorized AS attr acls
-    for(String slice: Cnert2019Setting.clientSlices){
+    for(String slice: MultiSdxSetting.clientSlices){
+
+    }
   }
 
   private void initializeGeniAuth() {
@@ -320,7 +322,7 @@ public class SafeAuthority extends SdxRoutingSlang {
       sliceToken.get(slice), sliceId));
 
     //UserAcl
-    for(String sdxKey: Cnert2019Setting.sdxKeyMap.values()) {
+    for(String sdxKey: MultiSdxSetting.sdxKeyMap.values()) {
       safePost(postUserAclEntry, sdxKey, new String[]{principalMap.get(sliceKeyMap.get
         (slice))});
     }
@@ -331,16 +333,21 @@ public class SafeAuthority extends SdxRoutingSlang {
       parentPrefix});
     safePost(postDlgToken, userKeyFile, new String[]{ipToken, userIP});
     safePost(updateSubjectSet, userKeyFile, new String[]{ipToken});
+<<<<<<< HEAD:SDX-Simple/SAFE_SDX/src/main/java/safe/SafeAuthority.java
     for(String sdxKey: Cnert2019Setting.sdxKeyMap.values()) {
       authorize(authorizeOwnPrefix, sdxKey, new String[]{userKey, userIP});
+=======
+    for(String sdxKey: MultiSdxSetting.sdxKeyMap.values()) {
+      authorize(authorizeOwnPrefix, sdxKey, new String[]{userKey, uip});
+>>>>>>> [wip] renamed and re factored multisdx:SDX-Simple/SAFE_SDX/src/main/java/safe/AuthorityMock.java
     }
 
     //Tag delegation
 
     //userTagAcl
     //user post Connect policy
-    if(Cnert2019Setting.userTags.containsKey(slice)) {
-      for(String t: Cnert2019Setting.userTags.get(slice)) {
+    if(MultiSdxSetting.userTags.containsKey(slice)) {
+      for(String t: MultiSdxSetting.userTags.get(slice)) {
         String tag = principalMap.get("tagauthority") + ":" + t;
         safePost(postTagSet, "tagauthority", new String[]{tag});
         String tagToken = safePost(postGrantTagPriv, "tagauthority", new Object[]{userKey, tag, true});
@@ -351,8 +358,8 @@ public class SafeAuthority extends SdxRoutingSlang {
     }
 
     //post AS tag acls
-    if(Cnert2019Setting.userASTagAcls.containsKey(slice)) {
-      for(String t: Cnert2019Setting.userASTagAcls.get(slice)) {
+    if(MultiSdxSetting.userASTagAcls.containsKey(slice)) {
+      for(String t: MultiSdxSetting.userASTagAcls.get(slice)) {
         String astag = principalMap.get("tagauthority") + ":" + t;
         safePost(postASTagAclEntry, userKeyFile, new String[]{astag, uip});
       }
