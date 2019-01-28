@@ -2,11 +2,10 @@ package exoplex.demo;
 
 
 import exoplex.client.exogeni.SdxExogeniClient;
-import exoplex.demo.cnert2019.Cnert2019Setting;
+import exoplex.demo.tridentcom.TridentSetting;
 import exoplex.demo.tridentcom.TridentSlice;
 import exoplex.sdx.core.SdxManager;
 import exoplex.sdx.core.SdxServer;
-import junit.framework.Assert;
 import org.junit.*;
 import riak.RiakSlice;
 import org.apache.logging.log4j.LogManager;
@@ -46,12 +45,12 @@ public class SdxTest {
 
   @Test
   public void TestSDX() throws Exception{
-    sdxManager = SdxServer.run(Cnert2019Setting.sdxArgs);
-    for(String clientSlice: Cnert2019Setting.clientSlices){
+    sdxManager = SdxServer.run(TridentSetting.sdxArgs);
+    for(String clientSlice: TridentSetting.clientSlices){
       exogeniClients.put(clientSlice, new SdxExogeniClient(clientSlice,
-        Cnert2019Setting.clientIpMap.get(clientSlice),
-        Cnert2019Setting.clientKeyMap.get(clientSlice),
-        Cnert2019Setting.clientArgs
+        TridentSetting.clientIpMap.get(clientSlice),
+        TridentSetting.clientKeyMap.get(clientSlice),
+        TridentSetting.clientArgs
       ));
     }
     for(SdxExogeniClient client: exogeniClients.values()){
@@ -66,39 +65,39 @@ public class SdxTest {
   }
 
   private  void stitchSlices(){
-    for(String clientSlice: Cnert2019Setting.clientSlices){
+    for(String clientSlice: TridentSetting.clientSlices){
       if(sdxManager.safeEnabled) {
-        AuthorityMock.main(new String[]{Cnert2019Setting.clientKeyMap.get(clientSlice),
+        AuthorityMock.main(new String[]{TridentSetting.clientKeyMap.get(clientSlice),
           clientSlice,
-          Cnert2019Setting.clientIpMap.get(clientSlice),
+          TridentSetting.clientIpMap.get(clientSlice),
           sdxManager.getSafeServer().split(":")[0]});
       }
-      String clientGateWay = Cnert2019Setting.clientIpMap.get(clientSlice).replace(".1/24", ".2");
-      String sdxIP = Cnert2019Setting.clientIpMap.get(clientSlice).replace(".1/24", ".1/24");
+      String clientGateWay = TridentSetting.clientIpMap.get(clientSlice).replace(".1/24", ".2");
+      String sdxIP = TridentSetting.clientIpMap.get(clientSlice).replace(".1/24", ".1/24");
       String gw = exogeniClients.get(clientSlice).processCmd(String.format("stitch CNode1 %s %s",
         clientGateWay, sdxIP));
       exogeniClients.get(clientSlice).processCmd(String.format("route %s %s",
-        Cnert2019Setting.clientIpMap.get(clientSlice),
+        TridentSetting.clientIpMap.get(clientSlice),
         gw));
     }
   }
 
   private  void unStitchSlices(){
-    for(String clientSlice: Cnert2019Setting.clientSlices){
+    for(String clientSlice: TridentSetting.clientSlices){
       exogeniClients.get(clientSlice).processCmd("unstitch CNode1");
     }
   }
 
   private void connectCustomerNetwork(){
-    for(int i=0; i<Cnert2019Setting.clientSlices.size(); i++){
-      String client = Cnert2019Setting.clientSlices.get(i);
-      String clientIp = Cnert2019Setting.clientIpMap.get(client);
-      for(int j = i + 1; j<Cnert2019Setting.clientSlices.size(); j++){
-        String peer = Cnert2019Setting.clientSlices.get(j);
-        String peerIp = Cnert2019Setting.clientIpMap.get(peer);
+    for(int i = 0; i< TridentSetting.clientSlices.size(); i++){
+      String client = TridentSetting.clientSlices.get(i);
+      String clientIp = TridentSetting.clientIpMap.get(client);
+      for(int j = i + 1; j< TridentSetting.clientSlices.size(); j++){
+        String peer = TridentSetting.clientSlices.get(j);
+        String peerIp = TridentSetting.clientIpMap.get(peer);
         exogeniClients.get(client).processCmd(String.format("link %s %s",
-          Cnert2019Setting.clientIpMap.get(client),
-          Cnert2019Setting.clientIpMap.get(peer)));
+          TridentSetting.clientIpMap.get(client),
+          TridentSetting.clientIpMap.get(peer)));
 
         if(!exogeniClients.get(client).checkConnectivity("CNode1",
           peerIp.replace(".1/24", ".2"))){

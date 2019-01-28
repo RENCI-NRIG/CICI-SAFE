@@ -1,4 +1,4 @@
-package exoplex.demo.cnert2019;
+package exoplex.demo.multisdx;
 
 import exoplex.client.exogeni.ExogeniClientSlice;
 import exoplex.common.slice.SliceManager;
@@ -12,20 +12,20 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class Cnert2019Slice {
+public class MultiSdxSlice {
   final Logger logger = LogManager.getLogger(Exec.class);
 
-  public Cnert2019Slice() {
+  public MultiSdxSlice() {
   }
 
   public static void main(String[] args){
-    Cnert2019Slice cnert2019Slice = new Cnert2019Slice();
-    cnert2019Slice.createSdxSlices(null);
+    MultiSdxSlice multiSdxSlice = new MultiSdxSlice();
+    multiSdxSlice.createSdxSlices(null);
   }
 
   public void createClientSlices() {
     ArrayList<Thread> tlist = new ArrayList<>();
-    for (String clientSlice : Cnert2019Setting.clientSlices) {
+    for (String clientSlice : MultiSdxSetting.clientSlices) {
       Thread t = new Thread() {
         @Override
         public void run() {
@@ -47,12 +47,12 @@ public class Cnert2019Slice {
   }
 
   private boolean createClientSlice(String clientSlice){
-    ExogeniClientSlice cs = new ExogeniClientSlice(Cnert2019Setting.clientArgs);
+    ExogeniClientSlice cs = new ExogeniClientSlice(MultiSdxSetting.clientArgs);
     int times=0;
     while (true) {
       try {
-        cs.run(clientSlice, Cnert2019Setting.clientIpMap.get(clientSlice),
-          SiteBase.get(Cnert2019Setting.clientSiteMap.get(clientSlice)));
+        cs.run(clientSlice, MultiSdxSetting.clientIpMap.get(clientSlice),
+          SiteBase.get(MultiSdxSetting.clientSiteMap.get(clientSlice)));
         break;
       } catch (Exception e) {
         try {
@@ -70,8 +70,8 @@ public class Cnert2019Slice {
   }
 
   public void deleteClientSlices(){
-    ExogeniClientSlice cs  = new ExogeniClientSlice(Cnert2019Setting.clientArgs);
-    for(String clientSlice: Cnert2019Setting.clientSlices) {
+    ExogeniClientSlice cs  = new ExogeniClientSlice(MultiSdxSetting.clientArgs);
+    for(String clientSlice: MultiSdxSetting.clientSlices) {
       cs.setSliceName(clientSlice);
       cs.delete();
     }
@@ -79,11 +79,11 @@ public class Cnert2019Slice {
 
   public void createSdxSlices(String riakIP){
     ArrayList<Thread> tlist = new ArrayList<>();
-    for(int i  = 0; i < Cnert2019Setting.sdxSliceNames.size(); i++){
-      final String sliceName = Cnert2019Setting.sdxSliceNames.get(i);
-      final String configFile = Cnert2019Setting.sdxConfs.get(i);
+    for(int i = 0; i < MultiSdxSetting.sdxSliceNames.size(); i++){
+      final String sliceName = MultiSdxSetting.sdxSliceNames.get(i);
+      final String configFile = MultiSdxSetting.sdxConfs.get(i);
       //Set SDX sites here
-      final List<String> clientSites = Arrays.asList(Cnert2019Setting.sdxSites.get(i));
+      final List<String> clientSites = Arrays.asList(MultiSdxSetting.sdxSites.get(i));
 
       Thread t = new Thread(){
         @Override
@@ -110,9 +110,9 @@ public class Cnert2019Slice {
   }
 
   public void deleteSdxSlices(){
-    for(int i  = 0; i < Cnert2019Setting.sdxSliceNames.size(); i++) {
-      final String sliceName = Cnert2019Setting.sdxSliceNames.get(i);
-      final String configFile = Cnert2019Setting.sdxConfs.get(i);
+    for(int i = 0; i < MultiSdxSetting.sdxSliceNames.size(); i++) {
+      final String sliceName = MultiSdxSetting.sdxSliceNames.get(i);
+      final String configFile = MultiSdxSetting.sdxConfs.get(i);
       //Set SDX sites here
       final ArrayList<String> clientSites = null;
       SliceHelper sliceHelper = new SliceHelper();

@@ -60,4 +60,5 @@ public class SdxRoutingSlang {
   public static final String verifyRoute = "verifyRoute";
   public static final String postPathToken = "postPathToken";
   public static final String postAdvertise = "postAdvertise";
+  public static final String postInitRoute = "postInitRoute";
 }

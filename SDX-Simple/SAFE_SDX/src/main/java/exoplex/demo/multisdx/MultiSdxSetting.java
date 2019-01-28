@@ -1,4 +1,4 @@
-package exoplex.demo.cnert2019;
+package exoplex.demo.multisdx;
 
 import exoplex.sdx.core.SliceHelper;
 
@@ -7,7 +7,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
-public class Cnert2019Setting extends SliceHelper {
+public class MultiSdxSetting extends SliceHelper {
   public static final ArrayList<String> clientSites = new ArrayList<>();
   public static final ArrayList<String> sdxConfs = new ArrayList<>();
   public static final ArrayList<String> sdxSliceNames = new ArrayList<>();
@@ -70,9 +70,9 @@ public class Cnert2019Setting extends SliceHelper {
     for (int i = 0; i< numSdx; i++){
       sdxConfs.add(String.format("%ssdx%s.conf", sdxConfigDir, i + 1));
       String[] sdxArg = new String[]{"-c", sdxConfs.get(i), "-r"};
-      sdxArgs.put(sdxSliceNames.get(i), sdxArg);
       String sdxSliceName = String.format("sdx-%s-cn", i + 1);
       sdxSliceNames.add(sdxSliceName);
+      sdxArgs.put(sdxSliceName, sdxArg);
       sdxKeyMap.put(sdxSliceName, String.format("key_p%s", sdxKeyBase + i));
       sdxUrls.put(sdxSliceName, String.format("http://127.0.0.1:888%s/", i));
       sdxIpMap.put(sdxSliceName, String.format("192.168.%s.1/24", sdxIpBase));
@@ -100,7 +100,7 @@ public class Cnert2019Setting extends SliceHelper {
       clientKeyMap.put(clientName, "key_p" + (keyBase + i));
       clientSiteMap.put(clientName, clientSites.get(i));
       clientIpMap.put(clientName, "192.168." + ipBase + ".1/24");
-      clientSdxMap.put(clientName, Cnert2019Setting.sdxSliceNames.get(((i+1)/Cnert2019Setting
+      clientSdxMap.put(clientName, MultiSdxSetting.sdxSliceNames.get(((i+1)/ MultiSdxSetting
         .sdxSliceNames.size())));
       ipBase += 10;
     }
