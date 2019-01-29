@@ -568,6 +568,7 @@ public class SliceManager {
         logger.debug("Resource: " + l.getName() + ", state: " + l.getState());
         if (resources.contains(l.getName())) {
           if(l.getState().contains("Failed") || l.getState().contains("Closed")){
+            logger.warn(String.format("link %s failed or closed", l.getName()));
             return false;
           }
           if (l.getState().equals("Active")) {
@@ -972,7 +973,8 @@ public class SliceManager {
   }
 
   public ComputeNode addOVSRouter(String site, String name) {
-    logger.debug("Adding new OVS router to slice " + slice.getName());
+    logger.debug(String.format("Adding new OVS router to slice %s on site %s", slice.getName(),
+      site));
     NodeBaseInfo ninfo = NodeBase.getImageInfo(VMVersion);
     String nodeImageShortName = ninfo.nisn;
     String nodeImageURL = ninfo.niurl;
@@ -983,7 +985,7 @@ public class SliceManager {
     ComputeNode node0 = slice.addComputeNode(name);
     node0.setImage(nodeImageURL, nodeImageHash, nodeImageShortName);
     node0.setNodeType(nodeNodeType);
-    node0.setDomain(site);
+    node0.setDomain(SiteBase.get(site));
     node0.setPostBootScript(nodePostBootScript);
     return node0;
   }

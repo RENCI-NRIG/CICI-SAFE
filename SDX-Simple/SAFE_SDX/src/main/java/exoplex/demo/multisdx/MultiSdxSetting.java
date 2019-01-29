@@ -31,7 +31,7 @@ public class MultiSdxSetting extends SliceHelper {
 
   static {
     sdxNeighbor.add(new Integer[]{0,1});
-    sdxNeighbor.add(new Integer[]{1,2});
+    sdxNeighbor.add(new Integer[]{1,3});
     sdxNeighbor.add(new Integer[]{0,2});
     sdxNeighbor.add(new Integer[]{2,3});
   }
@@ -45,14 +45,14 @@ public class MultiSdxSetting extends SliceHelper {
     //clientSites.add("RENCI");
     clientSites.add("TAMU");
     clientSites.add("TAMU");
-    //clientSites.add("UH");
+    //clientSites.add("SL");
     clientSites.add("UNF");
     clientSites.add("UNF");
     //clientSites.add("SL");
     //clientSites.add("SL");
     //clientSites.add("SL");
     //clientSites.add("UNF");
-    //clientSites.add("WSU");
+    //clientSites.add("SL");
   }
 
   public static ArrayList<String[]> sdxSites = new ArrayList<>();

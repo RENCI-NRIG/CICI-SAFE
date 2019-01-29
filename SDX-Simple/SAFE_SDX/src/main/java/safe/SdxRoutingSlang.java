@@ -55,6 +55,7 @@ public class SdxRoutingSlang {
   public static final String whoami = "whoami";
   public static final String postTagAclEntry = "postTagAclEntry";
   public static final String postASTagAclEntry = "postASTagAclEntry";
+  public static final String postSubjectSet = "postSubjectSet";
   public static final String postAuthZASPolicy = "postAuthorizeASPolicy";
   public static final String verifyRoute = "verifyRoute";
   public static final String postPathToken = "postPathToken";

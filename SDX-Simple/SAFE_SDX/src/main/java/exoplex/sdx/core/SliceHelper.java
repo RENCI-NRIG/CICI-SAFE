@@ -366,7 +366,6 @@ public class SliceHelper extends SliceCommon {
 
   public SliceManager createCarrierSlice(String sliceName, int num, long bw) {
     //,String stitchsubnet="", String slicesubnet="")
-    logger.debug("ndllib TestDriver: START");
     SliceManager s = SliceManager.create(sliceName, pemLocation, keyLocation, controllerUrl, sctx);
     //String nodePostBootScript="apt-get update;apt-get -y  install quagga\n"
     //  +"sed -i -- 's/zebra=no/zebra=yes/g' /etc/quagga/daemons\n"
