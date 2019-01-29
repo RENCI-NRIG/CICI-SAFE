@@ -627,8 +627,25 @@ public class SdxManager extends SliceHelper {
         ifaceNode0.setNetmask("255.255.255.0");
         serverSlice.commitAndWait(10, Arrays.asList(new String[]{stitchname, eRouterName}));
         serverSlice.reloadSlice();
+        copyRouterScript(serverSlice, cRouterName);
+        configRouter(cRouterName);
         copyRouterScript(serverSlice, eRouterName);
         configRouter(eRouterName);
+
+        /*
+        Link internal_Log_link = new Link(eLinkName, cRouterName, eRouterName);
+        int ip_1 = getAvailableIP();
+        internal_Log_link.setIP(IPPrefix + String.valueOf(ip_1));
+        links.put(eLinkName, internal_Log_link);
+        routingmanager.newInternalLink(internal_Log_link.getLinkName(),
+            internal_Log_link.getIP(1),
+            internal_Log_link.getNodeA(),
+            internal_Log_link.getIP(2),
+            internal_Log_link.getNodeB(),
+            SDNController,
+            bw);
+        ///
+        */
         logger.debug("Configured the new router in RoutingManager");
       }
 
@@ -1155,7 +1172,8 @@ public class SdxManager extends SliceHelper {
           serverSlice.reloadSlice();
           serverSlice.addOVSRouter(sdxsite,eRouterName);
           node = (ComputeNode) serverSlice.getResourceByName(eRouterName);
-          serverSlice.commitAndWait(10, Arrays.asList(new String[]{eRouterName}));
+          //serverSlice.commitAndWait(10, Arrays.asList(new String[]{eRouterName}));
+          serverSlice.commitAndWait(10, Arrays.asList(new String[]{cRouterName, eRouterName, eLinkName}));
           serverSlice.reloadSlice();
           copyRouterScript(serverSlice, eRouterName);
           configRouter(eRouterName);
