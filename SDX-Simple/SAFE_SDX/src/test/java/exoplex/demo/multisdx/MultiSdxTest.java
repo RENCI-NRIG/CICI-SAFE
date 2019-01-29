@@ -39,11 +39,21 @@ public class MultiSdxTest {
     RiakSlice riakSlice = new RiakSlice();
     riakSlice.run(riakDelArgs);
     multiSdxSlice.deleteSdxSlices();
-    multiSdxSlice.deleteSdxSlices();
+    multiSdxSlice.deleteClientSlices();
+  }
+
+  public static void main(String[] args){
+    MultiSdxTest multiSdxTest = new MultiSdxTest();
+    try {
+      multiSdxTest.testMultiSdx();
+    }catch (Exception e){
+
+    }
+
   }
 
   @Test
-  public void TestMultiSdx() throws Exception{
+  public void testMultiSdx() throws Exception{
     ArrayList<Thread> tlist = new ArrayList<>();
     for (String slice : MultiSdxSetting.sdxSliceNames) {
       Thread t = new Thread() {
@@ -96,8 +106,8 @@ public class MultiSdxTest {
       for(Integer[] edge: MultiSdxSetting.sdxNeighbor){
         int i = edge[0];
         int j = edge[1];
-        String slice1 = MultiSdxSetting.sdxSliceNames.get(0);
-        String slice2 = MultiSdxSetting.sdxSliceNames.get(1);
+        String slice1 = MultiSdxSetting.sdxSliceNames.get(i);
+        String slice2 = MultiSdxSetting.sdxSliceNames.get(j);
         sdxManagerMap.get(slice1).adminCmd("stitch", new String[]{MultiSdxSetting.sdxUrls.get(slice2), "e1"});
       }
   }
@@ -130,9 +140,11 @@ public class MultiSdxTest {
       String peer = MultiSdxSetting.clientSlices.get(j);
       String peerIp = MultiSdxSetting.clientIpMap.get(peer);
       exogeniClients.get(client).processCmd(String.format("link %s %s", clientIp, peerIp));
+      exogeniClients.get(peer).processCmd(String.format("link %s %s", peerIp, clientIp));
       if(!exogeniClients.get(client).checkConnectivity("CNode1",
               peerIp.replace(".1/24", ".2"))){
       }
     }
+    logger.debug("connection ends");
   }
 }
