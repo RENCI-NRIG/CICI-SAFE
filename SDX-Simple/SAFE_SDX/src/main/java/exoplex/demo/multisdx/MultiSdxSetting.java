@@ -24,6 +24,7 @@ public class MultiSdxSetting extends SliceHelper {
   static String sdxSimpleDir = userDir.split("SDX-Simple")[0] + "SDX-Simple/";
   public final static String sdxConfigDir = sdxSimpleDir + "config/cnert2019/";
   public final static HashMap<String, String[]> sdxArgs = new HashMap<>();
+  public final static HashMap<String, String[]> sdxNoResetArgs = new HashMap<>();
   public static String[] clientArgs = new String[]{"-c", sdxSimpleDir + "client-config/client" +
     ".conf"};
   public static ArrayList<Integer[]> sdxNeighbor = new ArrayList<>();
@@ -70,9 +71,11 @@ public class MultiSdxSetting extends SliceHelper {
     for (int i = 0; i< numSdx; i++){
       sdxConfs.add(String.format("%ssdx%s.conf", sdxConfigDir, i + 1));
       String[] sdxArg = new String[]{"-c", sdxConfs.get(i), "-r"};
+      String[] sdxNRArg = new String[]{"-c", sdxConfs.get(i)};
       String sdxSliceName = String.format("sdx-%s-cn", i + 1);
       sdxSliceNames.add(sdxSliceName);
       sdxArgs.put(sdxSliceName, sdxArg);
+      sdxNoResetArgs.put(sdxSliceName, sdxNRArg);
       sdxKeyMap.put(sdxSliceName, String.format("key_p%s", sdxKeyBase + i));
       sdxUrls.put(sdxSliceName, String.format("http://127.0.0.1:888%s/", i));
       sdxIpMap.put(sdxSliceName, String.format("192.168.%s.1/24", sdxIpBase));
