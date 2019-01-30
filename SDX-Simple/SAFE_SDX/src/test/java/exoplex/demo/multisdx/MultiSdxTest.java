@@ -132,6 +132,7 @@ public class MultiSdxTest {
   }
 
   private void connectCustomerNetwork(){
+    boolean flag = true;
     for(Integer[] pair : MultiSdxSetting.customerConnectionPairs){
       int i = pair[0];
       int j = pair[1];
@@ -143,8 +144,10 @@ public class MultiSdxTest {
       exogeniClients.get(peer).processCmd(String.format("link %s %s", peerIp, clientIp));
       if(!exogeniClients.get(client).checkConnectivity("CNode1",
               peerIp.replace(".1/24", ".2"))){
+        flag = false;
       }
     }
     logger.debug("connection ends");
+    assert flag;
   }
 }
