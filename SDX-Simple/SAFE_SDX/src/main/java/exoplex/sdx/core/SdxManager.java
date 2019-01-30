@@ -224,13 +224,19 @@ public class SdxManager extends SliceHelper {
 
 
   public void delFlows() {
-    serverSlice.runCmdSlice("ovs-ofctl -O OpenFlow15 del-flows br0", sshkey, routerPattern,
-      false);
+    routingmanager.deleteAllFlows(getSDNController());
+    //serverSlice.runCmdSlice("ovs-ofctl -O OpenFlow15 del-flows br0", sshkey, routerPattern,
+    //  false);
   }
 
   public void delBridges() {
+    routingmanager = new RoutingManager();
     serverSlice.runCmdSlice("ovs-vsctl del-br br0", sshkey, routerPattern,
       false);
+  }
+
+  public void initBridges() {
+    configRouters(serverSlice);
   }
 
   private void clearSdx() throws TransportException, Exception{
@@ -257,7 +263,6 @@ public class SdxManager extends SliceHelper {
     if(flag) {
       serverSlice.commitAndWait();
     }
-    delBridges();
   }
 
 
@@ -1245,7 +1250,7 @@ public class SdxManager extends SliceHelper {
 
   public void restartPlexus() {
     SDNControllerIP = serverSlice.getComputeNode(plexusName).getManagementIP();
-    restartPlexus(SDNControllerIP, "rest_router");
+    restartPlexus(SDNControllerIP);
   }
 
   private void putComputeNode(ComputeNode node) {

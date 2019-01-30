@@ -3,6 +3,8 @@ import exoplex.client.exogeni.SdxExogeniClient;
 import exoplex.demo.SdxTest;
 import exoplex.sdx.core.SdxManager;
 import exoplex.sdx.core.SdxServer;
+import exoplex.sdx.network.RoutingManager;
+import exoplex.sdx.network.SdnReplay;
 import org.junit.*;
 import riak.RiakSlice;
 import org.apache.logging.log4j.LogManager;
@@ -45,10 +47,47 @@ public class MultiSdxTest {
   public static void main(String[] args){
     MultiSdxTest multiSdxTest = new MultiSdxTest();
     try {
-      multiSdxTest.testMultiSdx();
+      //multiSdxTest.testMultiSdx();
+      multiSdxTest.replaySdnConfiguration();
     }catch (Exception e){
       e.printStackTrace();
     }
+  }
+
+  public void replaySdnConfiguration(){
+    ArrayList<Thread> tlist = new ArrayList<>();
+    for (String slice : MultiSdxSetting.sdxSliceNames) {
+      Thread t = new Thread() {
+        @Override
+        public void run() {
+          try {
+            SdxManager sdxManager = SdxServer.run(MultiSdxSetting.sdxNoResetArgs.get(slice),
+              MultiSdxSetting.sdxUrls.get
+              (slice), slice);
+            sdxManager.delFlows();
+            sdxManager.restartPlexus();
+            Thread.sleep(5000);
+            sdxManager.waitTillAllOvsConnected();
+            sdxManagerMap.put(slice, sdxManager);
+          }catch (Exception e){
+            e.printStackTrace();
+          }
+        }
+      };
+      tlist.add(t);
+    }
+    for (Thread t : tlist) {
+      t.start();
+    }
+    try {
+      for (Thread t : tlist) {
+        t.join();
+      }
+    } catch (Exception e) {
+
+    }
+    SdnReplay.replay("/home/yaoyj11/CICI-SAFE/SDX-Simple/log/sdn.log");
+    logger.info("replay done");
 
   }
 

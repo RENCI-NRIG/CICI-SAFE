@@ -140,6 +140,14 @@ public class RoutingManager {
     return res;
   }
 
+  public static String postSdnCmd(String cmd, JSONObject params, boolean logging){
+    if(logging) {
+      sdnLogger.info(String.format("%s\n%s", cmd, params.toString()));
+    }
+    String res = HttpUtil.postJSON(cmd, params);
+    return res;
+  }
+
   /**
    * configure path for destIP in the network.
    *
