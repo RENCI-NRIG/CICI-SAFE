@@ -54,6 +54,26 @@
                 <SizeBasedTriggeringPolicy size="250 MB"/>
             </Policies>
         </RollingFile>
+        <RollingFile name="SdnRollingFile" fileName="log/sdn-cmds.log"
+                     filePattern="log/$${date:yyyy-MM}/app-%d{MM-dd-yyyy}-%i.log.gz" append="false">
+            <PatternLayout>
+                <Pattern>%m%n</Pattern>
+            </PatternLayout>
+
+            <Filters>
+                <!-- Now deny warn, error and fatal messages -->
+                <ThresholdFilter level="warn" onMatch="DENY" onMismatch="NEUTRAL"/>
+                <ThresholdFilter level="error" onMatch="DENY" onMismatch="NEUTRAL"/>
+                <ThresholdFilter level="fatal" onMatch="DENY" onMismatch="NEUTRAL"/>
+
+                <!-- This filter accepts info, warn, error, fatal and denies debug/trace -->
+                <ThresholdFilter level="info" onMatch="ACCEPT" onMismatch="DENY"/>
+            </Filters>
+            <Policies>
+                <TimeBasedTriggeringPolicy/>
+                <SizeBasedTriggeringPolicy size="250 MB"/>
+            </Policies>
+        </RollingFile>
         <RollingFile name="SliceRollingFile" fileName="log/test-slice.log"
                      filePattern="log/$${date:yyyy-MM}/slice-%d{MM-dd-yyyy}-%i.log.gz" append="false">
             <PatternLayout>
@@ -91,6 +111,9 @@
         </Logger>
         <Logger name="exoplex.sdx.network.RoutingManager" level="warn" additivity="false">
             <AppenderRef ref="Console"/>
+        </Logger>
+        <Logger name="SdnCmds" level="info" additivity="false">
+            <AppenderRef ref="SdnRollingFile"/>
         </Logger>
         <Logger name="exoplex.sdx.network.NetworkManager" level="warn" additivity="false">
             <AppenderRef ref="Console"/>

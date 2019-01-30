@@ -1260,7 +1260,7 @@ public class SdxManager extends SliceHelper {
 
   public void restartPlexus() {
     SDNControllerIP = serverSlice.getComputeNode(plexusName).getManagementIP();
-    restartPlexus(SDNControllerIP);
+    restartPlexus(SDNControllerIP, "rest_router");
   }
 
   private void putComputeNode(ComputeNode node) {

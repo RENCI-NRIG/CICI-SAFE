@@ -12,6 +12,7 @@ import java.util.*;
 
 public class RoutingManager {
   final static Logger logger = LogManager.getLogger(RoutingManager.class);
+  final static Logger sdnLogger = LogManager.getLogger("SdnCmds");
   private NetworkManager networkManager;
 
   final static int MAX_RATE = 2000000;
@@ -64,7 +65,7 @@ public class RoutingManager {
     String dpid = networkManager.getRouter(routerA).getDPID();
     String cmd[] = SdnUtil.addrCMD(ipa, dpid, controller);
     boolean result = true;
-    String res = HttpUtil.postJSON(cmd[0], new JSONObject(cmd[1]));
+    String res = postSdnCmd(cmd[0], new JSONObject(cmd[1]));
     logger.debug(res);
     cmd[cmd.length - 1] = res;
     if (res.toString().contains("success")) {
@@ -112,7 +113,7 @@ public class RoutingManager {
     String dpid = getDPID(routerA);
     String[] cmd = SdnUtil.addrCMD(ipa, dpid, controller);
     boolean result = true;
-    String res = HttpUtil.postJSON(cmd[0], new JSONObject(cmd[1]));
+    String res = postSdnCmd(cmd[0], new JSONObject(cmd[1]));
     logger.debug(res);
     cmd[cmd.length - 1] = res;
     if (res.toString().contains("success")) {
@@ -122,7 +123,7 @@ public class RoutingManager {
     }
     dpid = getDPID(routerB);
     cmd = SdnUtil.addrCMD(ipb, dpid, controller);
-    res = HttpUtil.postJSON(cmd[0], new JSONObject(cmd[1]));
+    res = postSdnCmd(cmd[0], new JSONObject(cmd[1]));
     if (res.toString().contains("success")) {
       addEntry_HashList(sdncmds, dpid, cmd);
       logger.debug(res);
@@ -131,6 +132,12 @@ public class RoutingManager {
       result = false;
     }
     return result;
+  }
+
+  public static String postSdnCmd(String cmd, JSONObject params){
+    sdnLogger.info(String.format("%s\n%s", cmd, params.toString()));
+    String res = HttpUtil.postJSON(cmd, params);
+    return res;
   }
 
   /**
@@ -262,7 +269,7 @@ public class RoutingManager {
     logger.info(String.format("setMirror %s %s %s %s %s", controller, dpid, source, dst, gw));
     String[] cmd = SdnUtil.mirrorCMD(controller, dpid, source, dst, gw);
     addEntry_HashList(sdncmds, dpid, cmd);
-    String res = HttpUtil.postJSON(cmd[0], new JSONObject(cmd[1]));
+    String res = postSdnCmd(cmd[0], new JSONObject(cmd[1]));
     logger.debug(res);
     if (res.contains("success")) {
       int id = Integer.valueOf(res.split("mirror_id=")[1].split("]")[0]);
@@ -293,7 +300,7 @@ public class RoutingManager {
 
   public String singleStepRouting(String dest, String gateway, String dpid, String controller) {
     String[] cmd = SdnUtil.routingCMD(dest, gateway, dpid, controller);
-    String res = HttpUtil.postJSON(cmd[0], new JSONObject(cmd[1]));
+    String res = postSdnCmd(cmd[0], new JSONObject(cmd[1]));
     if (res.contains("success")) {
       logger.debug(res);
     } else {
@@ -497,11 +504,11 @@ public class RoutingManager {
     router_queues.get(dpid).add(bw);
     String qurl = SdnUtil.queueURL(controller, dpid);
     JSONObject qdata = SdnUtil.queueData(MAX_RATE, router_queues.get(dpid));
-    String res = HttpUtil.postJSON(qurl, qdata);
+    String res = postSdnCmd(qurl, qdata);
     logger.debug(res);
     String qosurl = SdnUtil.qosRuleURL(controller, dpid);
     JSONObject qosdata = SdnUtil.qosRuleData(match, router_queues.get(dpid).size() - 1);
-    String qosres = HttpUtil.postJSON(qosurl, qosdata);
+    String qosres = postSdnCmd(qosurl, qosdata);
     logger.debug(qosres);
   }
 
@@ -512,7 +519,7 @@ public class RoutingManager {
       for (String[] cmd : l) {
         logger.debug("Replay:" + cmd[0] + cmd[1]);
         if (cmd[2].equals("postJSON")) {
-          String result = HttpUtil.postJSON(cmd[0], new JSONObject(cmd[1]));
+          String result = postSdnCmd(cmd[0], new JSONObject(cmd[1]));
           if (result.contains("success")) {
             logger.debug(result);
           } else {
@@ -591,7 +598,7 @@ public class RoutingManager {
   private boolean addRoute(String destIp, String gateWay, String dpid, String
     pathId, String controller) {
     String[] cmd = SdnUtil.routingCMD(destIp, gateWay, dpid, controller);
-    String res = HttpUtil.postJSON(cmd[0], new JSONObject(cmd[1]));
+    String res = postSdnCmd(cmd[0], new JSONObject(cmd[1]));
     logger.debug(String.join("\n" + cmd));
     logger.debug(res);
     if (res.contains("success")) {
@@ -608,7 +615,7 @@ public class RoutingManager {
   private boolean addRoute(String destIp, String srcIp, String gateWay, String dpid, String
     pathId, String controller) {
     String[] cmd = SdnUtil.routingCMD(destIp, srcIp, gateWay, dpid, controller);
-    String res = HttpUtil.postJSON(cmd[0], new JSONObject(cmd[1]));
+    String res = postSdnCmd(cmd[0], new JSONObject(cmd[1]));
     logger.debug(String.join("\n" + cmd));
     logger.debug(res);
     if (res.contains("success")) {
