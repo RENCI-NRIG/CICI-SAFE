@@ -47,7 +47,7 @@ public class MultiSdxTest {
     try {
       multiSdxTest.testMultiSdx();
     }catch (Exception e){
-
+      e.printStackTrace();
     }
 
   }
@@ -64,7 +64,7 @@ public class MultiSdxTest {
                             (slice), slice);
             sdxManagerMap.put(slice, sdxManager);
           }catch (Exception e){
-
+            e.printStackTrace();
           }
         }
       };
