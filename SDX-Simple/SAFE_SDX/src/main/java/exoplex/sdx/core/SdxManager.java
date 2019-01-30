@@ -618,36 +618,31 @@ public class SdxManager extends SliceHelper {
         String eLinkName = allocateELinkName();
         serverSlice.lockSlice();
         serverSlice.reloadSlice();
-        //serverSlice.addOVSRouter(site, eRouterName);
-        serverSlice.addCoreEdgeRouterPair(site, cRouterName, eRouterName, eLinkName, bw);
+        serverSlice.addOVSRouter(site, eRouterName);
+        //serverSlice.addCoreEdgeRouterPair(site, cRouterName, eRouterName, eLinkName, bw);
         node = (ComputeNode) serverSlice.getResourceByName(eRouterName);
         stitchname = allocateStitchLinkName(ip, node.getName());
         net = serverSlice.addBroadcastLink(stitchname, bw);
         InterfaceNode2Net ifaceNode0 = (InterfaceNode2Net) net.stitch(node);
         ifaceNode0.setIpAddress(ip);
         ifaceNode0.setNetmask("255.255.255.0");
-        //serverSlice.commitAndWait(10, Arrays.asList(new String[]{stitchname, eRouterName}));
-        serverSlice.commitAndWait(10, Arrays.asList(new String[]{stitchname, cRouterName,
-          eRouterName, eLinkName}));
+        serverSlice.commitAndWait(10, Arrays.asList(new String[]{stitchname, eRouterName}));
+        //serverSlice.commitAndWait(10, Arrays.asList(new String[]{stitchname, cRouterName,
+        //  eRouterName, eLinkName}));
         serverSlice.reloadSlice();
-        copyRouterScript(serverSlice, cRouterName);
-        configRouter(cRouterName);
         copyRouterScript(serverSlice, eRouterName);
         configRouter(eRouterName);
-
-        ///
-        Link internal_Log_link = new Link(eLinkName, cRouterName, eRouterName);
-        int ip_1 = getAvailableIP();
-        internal_Log_link.setIP(IPPrefix + String.valueOf(ip_1));
-        links.put(eLinkName, internal_Log_link);
-        routingmanager.newInternalLink(internal_Log_link.getLinkName(),
-            internal_Log_link.getIP(1),
-            internal_Log_link.getNodeA(),
-            internal_Log_link.getIP(2),
-            internal_Log_link.getNodeB(),
-            SDNController,
-            bw);
-        ///
+        //Link internal_Log_link = new Link(eLinkName, cRouterName, eRouterName);
+        //int ip_1 = getAvailableIP();
+        //internal_Log_link.setIP(IPPrefix + String.valueOf(ip_1));
+        //links.put(eLinkName, internal_Log_link);
+        //routingmanager.newInternalLink(internal_Log_link.getLinkName(),
+        //    internal_Log_link.getIP(1),
+        //    internal_Log_link.getNodeA(),
+        //    internal_Log_link.getIP(2),
+        //    internal_Log_link.getNodeB(),
+        //    SDNController,
+        //    bw);
         logger.debug("Configured the new router in RoutingManager");
       }
 
@@ -1173,27 +1168,26 @@ public class SdxManager extends SliceHelper {
           String eLinkName = allocateELinkName();
           serverSlice.lockSlice();
           serverSlice.reloadSlice();
-          //serverSlice.addOVSRouter(sdxsite, eRouterName);
-          serverSlice.addCoreEdgeRouterPair(sdxsite, cRouterName, eRouterName, eLinkName, bw);
+          serverSlice.addOVSRouter(sdxsite, eRouterName);
+          //serverSlice.addCoreEdgeRouterPair(sdxsite, cRouterName, eRouterName, eLinkName, bw);
           node = (ComputeNode) serverSlice.getResourceByName(eRouterName);
-          //serverSlice.commitAndWait(10, Arrays.asList(new String[]{eRouterName}));
-          serverSlice.commitAndWait(10, Arrays.asList(new String[]{cRouterName, eRouterName, eLinkName}));
+          serverSlice.commitAndWait(10, Arrays.asList(new String[]{eRouterName}));
           serverSlice.reloadSlice();
-          copyRouterScript(serverSlice, cRouterName);
-          configRouter(cRouterName);
+          //copyRouterScript(serverSlice, cRouterName);
+          //configRouter(cRouterName);
           copyRouterScript(serverSlice, eRouterName);
           configRouter(eRouterName);
-          Link internal_Log_link = new Link(eLinkName, cRouterName, eRouterName);
-          int ip_1 = getAvailableIP();
-          internal_Log_link.setIP(IPPrefix + String.valueOf(ip_1));
-          links.put(eLinkName, internal_Log_link);
-          routingmanager.newInternalLink(internal_Log_link.getLinkName(),
-            internal_Log_link.getIP(1),
-            internal_Log_link.getNodeA(),
-            internal_Log_link.getIP(2),
-            internal_Log_link.getNodeB(),
-            SDNController,
-            bw);
+          //Link internal_Log_link = new Link(eLinkName, cRouterName, eRouterName);
+          //int ip_1 = getAvailableIP();
+          //internal_Log_link.setIP(IPPrefix + String.valueOf(ip_1));
+          //links.put(eLinkName, internal_Log_link);
+          //routingmanager.newInternalLink(internal_Log_link.getLinkName(),
+          //  internal_Log_link.getIP(1),
+          //  internal_Log_link.getNodeA(),
+          //  internal_Log_link.getIP(2),
+          //  internal_Log_link.getNodeB(),
+          //  SDNController,
+          //  bw);
           nodeName = node.getName();
           logger.debug("Configured the new router in RoutingManager");
         }
