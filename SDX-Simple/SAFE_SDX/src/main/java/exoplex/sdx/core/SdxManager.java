@@ -1018,7 +1018,7 @@ public class SdxManager extends SliceHelper {
         logger.info(logPrefix + "Routing set up for " + self_prefix + " and " + target_prefix);
         logger.debug(logPrefix + "Routing set up for " + self_prefix + " and " + target_prefix);
         //TODO: auto select edge router
-        setMirror(n1, self_prefix, target_prefix, bandwidth);
+        //setMirror(n1, self_prefix, target_prefix, bandwidth);
         /*
         TODO: qos
         if (bandwidth > 0) {
@@ -1245,6 +1245,21 @@ public class SdxManager extends SliceHelper {
       // ryu-manager ryu/ryu/app/rest_router.py|tee log\"\n";
     Exec.sshExec("root", plexusip, script, sshkey);
     serverSlice.runCmdByIP(script, sshkey, plexusip, true);
+  }
+
+  private void restartPlexus(String plexusip, String type) {
+    if(type.equals("rest_router")) {
+      logger.debug("Restarting Plexus Controller");
+      logger.info(logPrefix + "Restarting Plexus Controller: " + plexusip);
+      delFlows();
+      String script = "docker exec -d plexus /bin/bash -c  \"cd /root;pkill ryu-manager; " +
+        "ryu-manager ryu/ryu/app/rest_conf_switch.py ryu/ryu/app/rest_router.py " +
+        "ryu/ryu/app/ofctl_rest.py |tee log\"\n";
+      //String script = "docker exec -d plexus /bin/bash -c  \"cd /root;pkill ryu-manager;
+      // ryu-manager ryu/ryu/app/rest_router.py|tee log\"\n";
+      Exec.sshExec("root", plexusip, script, sshkey);
+      serverSlice.runCmdByIP(script, sshkey, plexusip, true);
+    }
   }
 
   public void restartPlexus() {
