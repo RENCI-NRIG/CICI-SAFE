@@ -27,6 +27,7 @@ public class SafeAuthority extends SdxRoutingSlang {
   String sdxKeyFile;
 
   HashSet<String> reservedKeys = new HashSet<String>();
+  public static boolean authorizationMade = false;
 
   ArrayList<String> clientSlices = new ArrayList<>();
 

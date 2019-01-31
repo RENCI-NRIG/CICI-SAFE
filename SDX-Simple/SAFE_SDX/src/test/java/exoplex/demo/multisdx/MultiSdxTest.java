@@ -9,6 +9,7 @@ import org.junit.*;
 import riak.RiakSlice;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import safe.AuthorityMock;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -49,12 +50,20 @@ public class MultiSdxTest {
     try {
       //multiSdxTest.testMultiSdx();
       multiSdxTest.replaySdnConfiguration();
+      logFlowTables();
     }catch (Exception e){
       e.printStackTrace();
     }
   }
 
+  public static void logFlowTables(){
+    for(SdxManager sdxManager: sdxManagerMap.values()){
+      sdxManager.logFlowTables();
+    }
+  }
+
   public void replaySdnConfiguration(){
+    AuthorityMock.authorizationMade = true;
     ArrayList<Thread> tlist = new ArrayList<>();
     for (String slice : MultiSdxSetting.sdxSliceNames) {
       Thread t = new Thread() {
