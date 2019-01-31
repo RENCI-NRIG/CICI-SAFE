@@ -184,7 +184,6 @@ public class SdxManager extends SliceHelper {
 
 
   public void startSdxServer(String[] args) throws TransportException, Exception {
-    logger.info(logPrefix + "Carrier Slice server with Service API: START");
     CommandLine cmd = ServerOptions.parseCmd(args);
     initializeExoGENIContexts(cmd.getOptionValue("config"));
     if(conf.hasPath("config.ipprefix")) {
@@ -201,7 +200,6 @@ public class SdxManager extends SliceHelper {
   }
 
   public void startSdxServer(String[] args, String sliceName) throws TransportException, Exception {
-    logger.info(logPrefix + "Carrier Slice server with Service API: START");
     CommandLine cmd = ServerOptions.parseCmd(args);
     initializeExoGENIContexts(cmd.getOptionValue("config"));
     this.sliceName = sliceName;
@@ -224,9 +222,9 @@ public class SdxManager extends SliceHelper {
 
 
   public void delFlows() {
-    routingmanager.deleteAllFlows(getSDNController());
-    //serverSlice.runCmdSlice("ovs-ofctl -O OpenFlow15 del-flows br0", sshkey, routerPattern,
-    //  false);
+    //routingmanager.deleteAllFlows(getSDNController());
+    serverSlice.runCmdSlice("ovs-ofctl -O OpenFlow15 del-flows br0", sshkey, routerPattern,
+      false);
   }
 
   public void delBridges() {
@@ -263,6 +261,7 @@ public class SdxManager extends SliceHelper {
     if(flag) {
       serverSlice.commitAndWait();
     }
+    delFlows();
   }
 
 
@@ -1607,7 +1606,7 @@ public class SdxManager extends SliceHelper {
 
   public void logFlowTables(String node) {
       logger.debug("------------------");
-      logger.debug("Flow table: " + node);
+      logger.debug(String.format("Flow table: %s - %s", sliceName, node));
       String result = Exec.sshExec("root", getManagementIP(node), getEchoTimeCMD() +
           "ovs-ofctl -O OpenFlow15 dump-flows br0", sshkey)[0];
       String[] parts = result.split("\n");

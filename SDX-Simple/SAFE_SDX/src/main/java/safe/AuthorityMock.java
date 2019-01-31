@@ -24,7 +24,7 @@ public class AuthorityMock extends SdxRoutingSlang{
 
   static String exampleSafeServer = "128.194.6.137:7777";
 
-  static boolean authorizationMade = false;
+  public static boolean authorizationMade = false;
 
   String safeServer;
 
