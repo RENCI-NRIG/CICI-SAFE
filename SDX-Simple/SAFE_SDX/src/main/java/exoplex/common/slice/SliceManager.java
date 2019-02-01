@@ -848,7 +848,7 @@ public class SliceManager {
   }
 
   public void addDocker(String siteName, String nodeName, String script, String size){
-    NodeBaseInfo ninfo = NodeBase.getImageInfo(NodeBase.Docker);
+    NodeBaseInfo ninfo = NodeBase.getImageInfo(NodeBase.U14Docker);
     String dockerImageShortName = ninfo.nisn;
     String dockerImageURL = ninfo.niurl;
     String dockerImageHash = ninfo.nihash;

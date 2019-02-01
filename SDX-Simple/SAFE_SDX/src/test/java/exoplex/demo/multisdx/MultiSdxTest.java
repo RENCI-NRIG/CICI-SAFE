@@ -48,8 +48,8 @@ public class MultiSdxTest {
   public static void main(String[] args){
     MultiSdxTest multiSdxTest = new MultiSdxTest();
     try {
-      //multiSdxTest.testMultiSdx();
-      multiSdxTest.replaySdnConfiguration();
+      multiSdxTest.testMultiSdx();
+      //multiSdxTest.replaySdnConfiguration();
       logFlowTables();
     }catch (Exception e){
       e.printStackTrace();
@@ -93,9 +93,23 @@ public class MultiSdxTest {
         t.join();
       }
     } catch (Exception e) {
+      e.printStackTrace();
+    }
 
+    for(String clientSlice: MultiSdxSetting.clientSlices){
+      exogeniClients.put(clientSlice, new SdxExogeniClient(clientSlice,
+        MultiSdxSetting.clientIpMap.get(clientSlice),
+        MultiSdxSetting.clientKeyMap.get(clientSlice),
+        MultiSdxSetting.clientArgs
+      ));
+    }
+    for(String clientSlice: MultiSdxSetting.clientSlices){
+      SdxExogeniClient client = exogeniClients.get(clientSlice);
+      client.setSafeServer(sdxManagerMap.values().iterator().next().getSafeServerIP());
+      client.setServerUrl(MultiSdxSetting.sdxUrls.get(MultiSdxSetting.clientSdxMap.get(clientSlice)));
     }
     SdnReplay.replay("/home/yaoyj11/CICI-SAFE/SDX-Simple/log/sdn.log");
+    checkConnection();
     logger.info("replay done");
 
   }
@@ -149,6 +163,8 @@ public class MultiSdxTest {
 
     connectCustomerNetwork();
 
+    checkConnection();
+
     logger.info("test done");
   }
 
@@ -182,7 +198,6 @@ public class MultiSdxTest {
   }
 
   private void connectCustomerNetwork(){
-    boolean flag = true;
     for(Integer[] pair : MultiSdxSetting.customerConnectionPairs){
       int i = pair[0];
       int j = pair[1];
@@ -193,6 +208,11 @@ public class MultiSdxTest {
       exogeniClients.get(client).processCmd(String.format("link %s %s", clientIp, peerIp));
       exogeniClients.get(peer).processCmd(String.format("link %s %s", peerIp, clientIp));
     }
+    logger.debug("connection ends");
+  }
+
+  private void checkConnection(){
+    boolean flag = true;
     for(Integer[] pair : MultiSdxSetting.customerConnectionPairs){
       int i = pair[0];
       int j = pair[1];
@@ -205,6 +225,6 @@ public class MultiSdxTest {
         flag = false;
       }
     }
-    logger.debug("connection ends");
+
   }
 }

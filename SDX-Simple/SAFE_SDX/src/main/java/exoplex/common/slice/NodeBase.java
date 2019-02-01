@@ -9,10 +9,10 @@ import java.util.Map;
 public class NodeBase {
 
   public static final String CENTOS_BRO = "Centos 7.4 Bro";
-  public static final String UBUNTU14 = "Ubuntu 14.04 v1.0.3";
+  public static final String UBUNTU14 = "Ubuntu 14.04";
   public static final String UBUNTU16 = "Ubuntu 16.04";
   public static final String UBUNTU17 = "Ubuntu 17.10";
-  public static final String Docker = "Ubuntu 14.04 Docker";
+  public static final String U14Docker = "Ubuntu 14.04 Docker";
   public static final String xoMedium = "XO Medium";
   public static final String xoLarge = "XO Large";
   public static final String xoExtraLarge = "XO Extra large";
