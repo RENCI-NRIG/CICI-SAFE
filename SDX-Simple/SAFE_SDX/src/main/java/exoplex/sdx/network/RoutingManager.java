@@ -558,7 +558,7 @@ public class RoutingManager {
 
   public String getFlowOnRouter(String ip, String srcIp, String destIp, String sshKey) {
     String result = Exec.sshExec("root", ip,
-      "ovs-ofctl dump-flows br0", sshKey)[0];
+      "ovs-ofctl -O OpenFlow15 dump-flows br0", sshKey)[0];
     String[] parts = result.split("\n");
     String res = "";
     for (String s : parts) {
@@ -571,7 +571,7 @@ public class RoutingManager {
 
   public List<String> getFlowsOnRouter(Map<String, String> fieldMap, String ip, String sshKey){
     String result = Exec.sshExec("root", ip,
-      "ovs-ofctl dump-flows br0", sshKey)[0];
+      "ovs-ofctl -O OpenFlow15 dump-flows br0", sshKey)[0];
     String[] parts = result.split("\n");
     ArrayList<String> res = new ArrayList<>();
     for (String s : parts) {
