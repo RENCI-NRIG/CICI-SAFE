@@ -1,5 +1,6 @@
 package exoplex.sdx.core;
 
+import exoplex.common.slice.SliceEnv;
 import exoplex.common.slice.SliceManager;
 import exoplex.common.slice.SiteBase;
 import exoplex.common.utils.Exec;
@@ -11,6 +12,7 @@ import exoplex.sdx.safe.SafeManager;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.json.JSONObject;
+import org.renci.ahab.libndl.Slice;
 import org.renci.ahab.libndl.resources.request.*;
 import org.renci.ahab.libtransport.util.TransportException;
 import exoplex.sdx.bro.BroManager;
@@ -161,7 +163,6 @@ public class SdxManager extends SliceHelper {
     loadSlice();
     broManager = new BroManager(serverSlice, routingmanager, this);
     logPrefix += "[" + sliceName + "]";
-    //runCmdSlice(serverSlice, "ovs-ofctl del-flows br0", "(^c\\d+)", false, true);
 
     checkSdxPrerequisites(serverSlice);
     if(plexusAndSafeInSlice){
@@ -223,13 +224,15 @@ public class SdxManager extends SliceHelper {
 
   public void delFlows() {
     //routingmanager.deleteAllFlows(getSDNController());
-    serverSlice.runCmdSlice("ovs-ofctl -O OpenFlow15 del-flows br0", sshkey, routerPattern,
+    serverSlice.runCmdSlice(String.format("ovs-ofctl %s del-flows br0", SliceEnv.OFP), sshkey,
+      routerPattern,
       false);
   }
 
   public void delBridges() {
     routingmanager = new RoutingManager();
-    serverSlice.runCmdSlice("ovs-vsctl del-br br0", sshkey, routerPattern,
+    serverSlice.runCmdSlice(String.format("ovs-vsctl %s del-br br0", SliceEnv.OFP), sshkey,
+      routerPattern,
       false);
   }
 
@@ -1567,7 +1570,7 @@ public class SdxManager extends SliceHelper {
     logger.debug("Get flow installation time on " + routername + " for " + flowPattern);
     try {
       String result = Exec.sshExec("root", getManagementIP(routername), getEchoTimeCMD() +
-          "ovs-ofctl -O OpenFlow15 dump-flows br0", sshkey)[0];
+        String.format("ovs-ofctl %s dump-flows br0", SliceEnv.OFP), sshkey)[0];
       String[] parts = result.split("\n");
       String curMillis = parts[0].split(":")[1];
       String flow = "";
@@ -1594,7 +1597,7 @@ public class SdxManager extends SliceHelper {
 
   public int getNumRouteEntries(String routerName, String flowPattern) {
     String result = Exec.sshExec("root", getManagementIP(routerName), getEchoTimeCMD() +
-        "ovs-ofctl -O OpenFlow15 dump-flows br0", sshkey)[0];
+      String.format("ovs-ofctl %s dump-flows br0", SliceEnv.OFP), sshkey)[0];
     String[] parts = result.split("\n");
     String curMillis = parts[0].split(":")[1];
     int num = 0;
@@ -1619,7 +1622,7 @@ public class SdxManager extends SliceHelper {
       logger.debug("------------------");
       logger.debug(String.format("Flow table: %s - %s", sliceName, node));
       String result = Exec.sshExec("root", getManagementIP(node), getEchoTimeCMD() +
-          "ovs-ofctl -O OpenFlow15 dump-flows br0", sshkey)[0];
+        String.format("ovs-ofctl %s dump-flows br0", SliceEnv.OFP), sshkey)[0];
       String[] parts = result.split("\n");
       for (String s : parts) {
         logger.debug(s);
