@@ -23,10 +23,13 @@ while read -r line; do
   else
     ifconfig $line up
     ifconfig $line 0
-    ovs-vsctl add-port br0 $line
-    ovs-vsctl del-controller br0
-    ovs-vsctl set-controller br0 tcp:$1
-  fi
+    if [[ $vsinterfaces == *"$line"* ]]; then
+        ovs-vsctl del-port br0 $line
+        ovs-vsctl add-port br0 $line
+    else
+        ovs-vsctl add-port br0 $line
+    fi
+   fi
 done <<< "$interfaces"
 
 

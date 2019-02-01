@@ -12,7 +12,7 @@ if [[ $string == *"br0"* ]]; then
 else
   ovs-vsctl add-br br0
   #ovs-vsctl set Bridge br0 protocols=OpenFlow13,OpenFlow15
-  ovs-vsctl set Bridge br0 protocols=OpenFlow10,OpenFlow11,OpenFlow12,OpenFlow13
+  ovs-vsctl set Bridge br0 protocols=OpenFlow10,OpenFlow11,OpenFlow12,OpenFlow13,OpenFlow15
   # OpenFlow13
   ovs-vsctl set-manager ptcp:6632
   ovs-vsctl set-controller br0 tcp:$1
