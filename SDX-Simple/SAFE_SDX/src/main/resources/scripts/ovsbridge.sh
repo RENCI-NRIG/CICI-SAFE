@@ -11,8 +11,8 @@ if [[ $string == *"br0"* ]]; then
     :
 else
   ovs-vsctl add-br br0
-  ovs-vsctl set Bridge br0 protocols=OpenFlow13,OpenFlow15
-  #ovs-vsctl set Bridge br0 protocols=OpenFlow10,OpenFlow11,OpenFlow12,OpenFlow13,OpenFlow13,
+  #ovs-vsctl set Bridge br0 protocols=OpenFlow13,OpenFlow15
+  ovs-vsctl set Bridge br0 protocols=OpenFlow10,OpenFlow11,OpenFlow12,OpenFlow13
   # OpenFlow13
   ovs-vsctl set-manager ptcp:6632
   ovs-vsctl set-controller br0 tcp:$1
@@ -22,7 +22,8 @@ manageif=$(ifconfig -a| grep -B1 "inet 10.\|inet addr:10." | awk '$1!="inet" && 
 
 interfaces=$(ifconfig -a|grep "ens\|eth"|grep -v "$manageif"|sed 's/[ :\t].*//;/^$/d')
 
-brinterfaces=$(ovs-ofctl -O OpenFlow15 show br0)
+brinterfaces=$(ovs-ofctl show br0)
+#when using -O OpenFlow13, it failed to show interfaces in ovs-ofctl show br0
 vsinterfaces=$(ovs-vsctl show)
 
 newport=0
@@ -40,7 +41,7 @@ while read -r line; do
     fi
   fi
 done <<< "$interfaces"
-dpid=$(ovs-ofctl -O OpenFlow15 show br0| grep "dpid:" |cut -d: -f3)
+dpid=$(ovs-ofctl show br0| grep "dpid:" |cut -d: -f3)
 echo $dpid
 
 
