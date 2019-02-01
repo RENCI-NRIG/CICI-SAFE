@@ -44,7 +44,6 @@ while read -r line; do
   fi
 done <<< "$interfaces"
 
-
 while read -r line; do
   if [[ $interfaces == *"$line"* ]]; then
   :
