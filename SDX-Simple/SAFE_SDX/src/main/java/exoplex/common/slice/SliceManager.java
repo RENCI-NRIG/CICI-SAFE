@@ -26,9 +26,6 @@ import java.util.stream.Collectors;
 public class SliceManager {
   private static final int COMMIT_COUNT = 5;
   private static final int INTERVAL = 10;
-  public static final String VMVersion = "Ubuntu 16.04";
-  public static final String SafeVMVersion = "Ubuntu 14.04 Docker";
-  public static final String CustomerVMVersion = "Ubuntu 14.04";
   private ReentrantLock lock = new ReentrantLock();
   final static long DEFAULT_BW = 10000000;
   final static Logger logger = LogManager.getLogger(SliceManager.class);
@@ -225,7 +222,7 @@ public class SliceManager {
 
   public ComputeNode addComputeNode(String site, String name) {
     logger.debug(String.format("Adding new compute node %s to slice %s", name, slice.getName()));
-    NodeBaseInfo ninfo = NodeBase.getImageInfo(CustomerVMVersion);
+    NodeBaseInfo ninfo = NodeBase.getImageInfo(SliceEnv.CustomerVMVersion);
     String nodeImageShortName = ninfo.nisn;
     String nodeImageURL = ninfo.niurl;
     //http://geni-images.renci.org/images/standard/ubuntu/ub1304-ovs-opendaylight-v1.0.0.xml
@@ -819,7 +816,7 @@ public class SliceManager {
   }
 
   public void addCoreEdgeRouterPair(String site, String router1, String router2, String linkname, long bw) {
-    NodeBaseInfo ninfo = NodeBase.getImageInfo(VMVersion);
+    NodeBaseInfo ninfo = NodeBase.getImageInfo(SliceEnv.VMVersion);
     String nodeImageShortName = ninfo.nisn;
     String nodeImageURL = ninfo.niurl;
     //http://geni-images.renci.org/images/standard/ubuntu/ub1304-ovs-opendaylight-v1.0.0.xml
@@ -838,7 +835,7 @@ public class SliceManager {
   }
 
   public void addOvsRouter(String site, String router1) {
-    NodeBaseInfo ninfo = NodeBase.getImageInfo(VMVersion);
+    NodeBaseInfo ninfo = NodeBase.getImageInfo(SliceEnv.VMVersion);
     String nodeImageShortName = ninfo.nisn;
     String nodeImageURL = ninfo.niurl;
     //http://geni-images.renci.org/images/standard/ubuntu/ub1304-ovs-opendaylight-v1.0.0.xml
@@ -975,7 +972,7 @@ public class SliceManager {
   public ComputeNode addOVSRouter(String site, String name) {
     logger.debug(String.format("Adding new OVS router to slice %s on site %s", slice.getName(),
       site));
-    NodeBaseInfo ninfo = NodeBase.getImageInfo(VMVersion);
+    NodeBaseInfo ninfo = NodeBase.getImageInfo(SliceEnv.VMVersion);
     String nodeImageShortName = ninfo.nisn;
     String nodeImageURL = ninfo.niurl;
     //http://geni-images.renci.org/images/standard/ubuntu/ub1304-ovs-opendaylight-v1.0.0.xml

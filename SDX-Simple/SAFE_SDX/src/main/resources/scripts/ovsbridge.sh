@@ -52,7 +52,6 @@ while read -r line; do
     ovs-vsctl del-port br0 $line
   fi
 done <<< "$vsis"
-
 dpid=$(ovs-ofctl show br0| grep "dpid:" |cut -d: -f3)
 echo $dpid
 
