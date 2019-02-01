@@ -1242,8 +1242,9 @@ public class SdxManager extends SliceHelper {
     logger.info(logPrefix + "Restarting Plexus Controller: " + plexusip);
     delFlows();
     String script = "docker exec -d plexus /bin/bash -c  \"cd /root;pkill ryu-manager; " +
-          "ryu-manager ryu/ryu/app/rest_conf_switch.py ryu/ryu/app/rest_qos.py " +
-          "ryu/ryu/app/rest_router_mirror.py ryu/ryu/app/ofctl_rest.py |tee log\"\n";
+          "ryu-manager --log-file ~/log --default-log-level 1 ryu/ryu/app/rest_conf_switch.py " +
+      "ryu/ryu/app/rest_qos.py " +
+          "ryu/ryu/app/rest_router_mirror.py ryu/ryu/app/ofctl_rest.py\"\n";
       //String script = "docker exec -d plexus /bin/bash -c  \"cd /root;pkill ryu-manager;
       // ryu-manager ryu/ryu/app/rest_router.py|tee log\"\n";
     Exec.sshExec("root", plexusip, script, sshkey);
@@ -1256,8 +1257,8 @@ public class SdxManager extends SliceHelper {
       logger.info(logPrefix + "Restarting Plexus Controller: " + plexusip);
       delFlows();
       String script = "docker exec -d plexus /bin/bash -c  \"cd /root;pkill ryu-manager; " +
-        "ryu-manager ryu/ryu/app/rest_conf_switch.py ryu/ryu/app/rest_router.py " +
-        "ryu/ryu/app/ofctl_rest.py |tee log\"\n";
+        "ryu-manager --log-file ~/log --default-log-level 1 ryu/ryu/app/rest_conf_switch.py ryu/ryu/app/rest_router.py " +
+        "ryu/ryu/app/ofctl_rest.py\"\n";
       //String script = "docker exec -d plexus /bin/bash -c  \"cd /root;pkill ryu-manager;
       // ryu-manager ryu/ryu/app/rest_router.py|tee log\"\n";
       Exec.sshExec("root", plexusip, script, sshkey);

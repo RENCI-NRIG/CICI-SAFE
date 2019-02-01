@@ -91,7 +91,7 @@ public class MultiSdxSlice {
           try {
             createAndConfigSdxSlice(sliceName, configFile, riakIP, clientSites);
           }catch (Exception e){
-
+            e.printStackTrace();
           }
         }
       };
