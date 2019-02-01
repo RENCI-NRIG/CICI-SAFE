@@ -137,6 +137,7 @@ public class ExogeniClientSlice extends SliceHelper {
       //runCmdSlice(c1,"/bin/bash ~/ospfautoconfig.sh","~/.ssh/id_rsa");
       //configFTPService(c1, "(CNode1)", "ftpuser", "ftp");
       configQuaggaRouting(c1);
+      resetHostNames(c1);
       logger.info("Slice active now: " + customerName);
       c1.printNetworkInfo();
       return;
