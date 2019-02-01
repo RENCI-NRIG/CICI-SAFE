@@ -44,24 +44,24 @@ public class MultiSdxSetting extends SliceHelper {
 
   static {
     //clientSites.add("RENCI");
-    clientSites.add("TAMU");
-    clientSites.add("TAMU");
-    //clientSites.add("SL");
-    clientSites.add("UNF");
-    clientSites.add("UNF");
-    //clientSites.add("SL");
-    //clientSites.add("SL");
-    //clientSites.add("SL");
+    clientSites.add("UFL");
+    clientSites.add("UFL");
     //clientSites.add("UNF");
-    //clientSites.add("SL");
+    clientSites.add("UNF");
+    clientSites.add("UNF");
+    //clientSites.add("UNF");
+    //clientSites.add("UNF");
+    //clientSites.add("UNF");
+    //clientSites.add("UNF");
+    //clientSites.add("UNF");
   }
 
   public static ArrayList<String[]> sdxSites = new ArrayList<>();
   static {
-    sdxSites.add(new String[]{"TAMU", "SL"});
-    sdxSites.add(new String[]{"SL", "BBN"});
-    sdxSites.add(new String[]{"SL", "BBN"});
-    sdxSites.add(new String[]{"BBN", "UNF"});
+    sdxSites.add(new String[]{"UFL", "UNF"});
+    sdxSites.add(new String[]{"UNF", "UFL"});
+    sdxSites.add(new String[]{"UNF", "UFL"});
+    sdxSites.add(new String[]{"UFL", "UNF"});
   }
 
   static{
