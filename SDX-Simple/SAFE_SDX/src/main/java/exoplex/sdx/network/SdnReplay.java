@@ -18,7 +18,7 @@ public class SdnReplay {
         JSONObject obj = new JSONObject(params);
         RoutingManager.postSdnCmd(url, obj, false);
         try {
-          Thread.sleep(1000);
+          Thread.sleep(500);
         }catch (Exception e){}
       }
     }catch (IOException e){

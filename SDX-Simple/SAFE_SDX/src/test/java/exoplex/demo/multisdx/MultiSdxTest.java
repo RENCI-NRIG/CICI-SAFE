@@ -148,6 +148,8 @@ public class MultiSdxTest {
     stitchCustomerSlices();
 
     connectCustomerNetwork();
+
+    logger.info("test done");
   }
 
   private void stitchSdxSlices(){
@@ -190,12 +192,19 @@ public class MultiSdxTest {
       String peerIp = MultiSdxSetting.clientIpMap.get(peer);
       exogeniClients.get(client).processCmd(String.format("link %s %s", clientIp, peerIp));
       exogeniClients.get(peer).processCmd(String.format("link %s %s", peerIp, clientIp));
+    }
+    for(Integer[] pair : MultiSdxSetting.customerConnectionPairs){
+      int i = pair[0];
+      int j = pair[1];
+      String client = MultiSdxSetting.clientSlices.get(i);
+      String clientIp = MultiSdxSetting.clientIpMap.get(client);
+      String peer = MultiSdxSetting.clientSlices.get(j);
+      String peerIp = MultiSdxSetting.clientIpMap.get(peer);
       if(!exogeniClients.get(client).checkConnectivity("CNode1",
-              peerIp.replace(".1/24", ".2"))){
+        peerIp.replace(".1/24", ".2"))){
         flag = false;
       }
     }
     logger.debug("connection ends");
-    assert flag;
   }
 }

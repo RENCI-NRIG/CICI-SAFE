@@ -1264,7 +1264,7 @@ public class SdxManager extends SliceHelper {
 
   public void restartPlexus() {
     SDNControllerIP = serverSlice.getComputeNode(plexusName).getManagementIP();
-    restartPlexus(SDNControllerIP);
+    restartPlexus(SDNControllerIP, "rest_router");
   }
 
   private void putComputeNode(ComputeNode node) {
@@ -1472,7 +1472,7 @@ public class SdxManager extends SliceHelper {
       routerpattern, String stitchportpattern) {
     logger.debug("Configurating Routing");
     if(plexusAndSafeInSlice) {
-      restartPlexus(SDNControllerIP);
+      restartPlexus();
     }
     // run ovsbridge scritps to add the all interfaces to the ovsbridge br0, if new interface is
     // added to the ovs bridge, then we reset the controller?
