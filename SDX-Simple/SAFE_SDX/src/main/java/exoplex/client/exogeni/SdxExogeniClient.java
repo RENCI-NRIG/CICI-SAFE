@@ -141,13 +141,14 @@ public class SdxExogeniClient extends SliceCommon{
   }
 
   public boolean ping(String nodeName, String ip) {
-
-    try {
-      serverSlice = SliceManager.loadManifestFile(sliceName, pemLocation, keyLocation, controllerUrl);
-    } catch (Exception e) {
-      logger.warn(e.getMessage());
-      if(serverSlice == null) {
-        return false;
+    if(serverSlice == null) {
+      try {
+        serverSlice = SliceManager.loadManifestFile(sliceName, pemLocation, keyLocation, controllerUrl);
+      } catch (Exception e) {
+        logger.warn(e.getMessage());
+        if (serverSlice == null) {
+          return false;
+        }
       }
     }
     ComputeNode node = serverSlice.getComputeNode(nodeName);
@@ -156,8 +157,25 @@ public class SdxExogeniClient extends SliceCommon{
     return res[0].contains("1 received");
   }
 
+  public String traceRoute(String nodeName, String ip) {
+    if(serverSlice == null) {
+      try {
+        serverSlice = SliceManager.loadManifestFile(sliceName, pemLocation, keyLocation, controllerUrl);
+      } catch (Exception e) {
+        logger.warn(e.getMessage());
+        if (serverSlice == null) {
+          return null;
+        }
+      }
+    }
+    ComputeNode node = serverSlice.getComputeNode(nodeName);
+    String res[] = Exec.sshExec("root", node.getManagementIP(), "traceroute " + ip, sshkey);
+    logger.debug(res[0]);
+    return res[0];
+  }
+
   public boolean checkConnectivity(String nodeName, String ip) {
-    for (int i = 0; i < 2; i++) {
+    for (int i = 0; i < 4; i++) {
       if (ping(nodeName, ip)) {
         logger.info(String.format("%s connect to %s: Ok", logPrefix, ip));
         return true;
