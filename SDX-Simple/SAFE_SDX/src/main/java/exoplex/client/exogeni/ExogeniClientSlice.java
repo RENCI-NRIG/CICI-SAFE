@@ -90,7 +90,8 @@ public class ExogeniClientSlice extends SliceHelper {
   }
 
   public void configQuaggaRouting(SliceManager c1){
-    c1.runCmdSlice("apt-get update; apt-get install -y quagga iperf", sshkey, "CNode\\d+",
+    c1.runCmdSlice("apt-get update; apt-get install -y quagga traceroute iperf", sshkey,
+      "CNode\\d+",
       true);
     for(ComputeNode node : c1.getComputeNodes()){
       String res[] = Exec.sshExec("root", node.getManagementIP(), "ls /etc/init.d", sshkey);

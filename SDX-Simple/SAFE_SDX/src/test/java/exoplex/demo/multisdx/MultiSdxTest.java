@@ -23,9 +23,10 @@ public class MultiSdxTest {
   static HashMap<String, SdxManager>  sdxManagerMap = new HashMap<>();
   HashMap<String, SdxExogeniClient> exogeniClients = new HashMap<>();
   static MultiSdxSlice multiSdxSlice = new MultiSdxSlice();
+  static boolean deleteSlice = true;
 
   @BeforeClass
-  public static void before() throws Exception{
+  public static void before() throws Exception {
     System.out.println("before test");
     after();
     //create RiakSlice
@@ -34,15 +35,16 @@ public class MultiSdxTest {
     //Sdx and client slices
     multiSdxSlice.createSdxSlices(riakIP);
     multiSdxSlice.createClientSlices();
-
   }
 
   @AfterClass
   public static void after()throws Exception{
-    RiakSlice riakSlice = new RiakSlice();
-    riakSlice.run(riakDelArgs);
-    multiSdxSlice.deleteSdxSlices();
-    multiSdxSlice.deleteClientSlices();
+    if(deleteSlice) {
+      RiakSlice riakSlice = new RiakSlice();
+      riakSlice.run(riakDelArgs);
+      multiSdxSlice.deleteSdxSlices();
+      multiSdxSlice.deleteClientSlices();
+    }
   }
 
   public static void main(String[] args){
@@ -156,16 +158,23 @@ public class MultiSdxTest {
       client.setServerUrl(MultiSdxSetting.sdxUrls.get(MultiSdxSetting.clientSdxMap.get(clientSlice)));
     }
     //stitch sdx slices
+    Long t0 = System.currentTimeMillis();
 
     stitchSdxSlices();
+    Long t1 = System.currentTimeMillis();
 
     stitchCustomerSlices();
+    Long t2 = System.currentTimeMillis();
 
     connectCustomerNetwork();
+    Long t3= System.currentTimeMillis();
 
     checkConnection();
+    Long t4 = System.currentTimeMillis();
 
     logger.info("test done");
+    logger.info(String.format("Time\n stitch sdx: %s s\n stitch customers: %s s\n connection: %s s\n check " +
+      "connection: %s s", (t1 - t0)/1000.0, (t2 - t1)/1000.0, (t3 - t2)/1000.0, (t4-t3)/1000.0));
   }
 
   private void stitchSdxSlices(){
@@ -223,6 +232,10 @@ public class MultiSdxTest {
       if(!exogeniClients.get(client).checkConnectivity("CNode1",
         peerIp.replace(".1/24", ".2"))){
         flag = false;
+        deleteSlice = false;
+      }else{
+        System.out.println(exogeniClients.get(client).traceRoute("CNode1",
+          peerIp.replace(".1/24", ".2")));
       }
     }
 
