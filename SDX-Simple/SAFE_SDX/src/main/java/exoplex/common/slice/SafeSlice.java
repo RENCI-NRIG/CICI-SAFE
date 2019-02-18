@@ -208,8 +208,8 @@ public class SafeSlice {
     return node0;
   }
 
-  public StorageNode addStorageNode(String name) {
-    return this.slice.addStorageNode(name);
+  public StorageNode addStorageNode(String name, long capacity, String mountpnt) {
+    return this.slice.addStorageNode(name, capacity, mountpnt);
   }
 
   public StitchPort addStitchPort(String name, String label, String port, long bandwidth) {
