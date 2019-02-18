@@ -81,6 +81,7 @@ public class SliceManager extends SliceCommon {
   public static void main(String[] args) throws  Exception{
     SliceManager sm = new SliceManager();
     sm.run(args);
+    System.exit(0);
   }
 
   public void run(String[] args) {

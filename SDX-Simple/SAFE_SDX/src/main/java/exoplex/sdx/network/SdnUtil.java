@@ -161,6 +161,19 @@ public class SdnUtil {
     return null;
   }
 
+  /*
+  enum ofp_group_type {
+  OFPGT_ALL = 0, /* All (multicast/broadcast) group.
+    OFPGT_SELECT = 1, /* Select group.
+    OFPGT_INDIRECT = 2, /* Indirect group.
+    OFPGT_FF = 3, /* Fast failover group.
+  }
+  enum ofp_group {
+   Last usable group number.
+    OFPG_MAX = 0xffffff00,
+    OFPG_ALL = 0xfffffffc,  Represents all groups for group delete commands.
+    OFPG_ANY = 0xffffffff  Wildcard group used only for flow stats
+  */
   public static String addSelectGroup(String controller, String dpid, int groupId, HashMap<Integer, Integer>ports){
     String url = "http://" + controller + "/stats/groupentry/add";
     JSONObject entity = new JSONObject();

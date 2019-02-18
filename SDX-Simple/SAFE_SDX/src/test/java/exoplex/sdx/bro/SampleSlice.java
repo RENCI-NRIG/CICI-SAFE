@@ -93,7 +93,7 @@ public class SampleSlice extends SliceBase {
           ret = execOnNode(flow, "apt-get install -y openvswitch-switch");
         } while (!ret);
         execOnNode(flow, "ovs-vsctl add-br br0");
-        execOnNode(flow, "ovs-vsctl set bridge br0 protocols=OpenFlow10");
+        execOnNode(flow, "ovs-vsctl set bridge br0 protocols=OpenFlow13");
         execOnNode(flow, "ovs-vsctl set-fail-mode br0 secure");
         execOnNode(flow, "ovs-vsctl set-controller br0 tcp:" + retrieveIP(control) + ":6633");
         execOnNode(flow, "for i in `ifconfig | grep -B1 \"192.168.*\" | awk '$1!=\"inet\" && $1!=\"--\"' | cut -d' ' -f1`\n" +

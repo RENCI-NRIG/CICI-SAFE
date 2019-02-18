@@ -19,10 +19,12 @@ public class IperfFlow extends AsyncTask{
   String bw;
   String proto;
   String sshKey;
+  int threads;
   ArrayList<String[]> results = new ArrayList<>();
   static String baseCmd = "/usr/bin/iperf";
 
-  public IperfFlow(String clientIp, String serverIp, String sshKey, int port, int seconds, String bw, String proto, String iperfServer){
+  public IperfFlow(String clientIp, String serverIp, String sshKey, int port, int seconds, String
+    bw, String proto, int threads, String iperfServer){
     super(UUID.randomUUID(),
       0l,
       TimeUnit.SECONDS,
@@ -36,6 +38,7 @@ public class IperfFlow extends AsyncTask{
     this.bw = bw;
     this.seconds = seconds;
     this.proto = proto;
+    this.threads=threads;
     started = false;
   }
 
@@ -45,11 +48,14 @@ public class IperfFlow extends AsyncTask{
     cmd = cmd + " -c " + serverIp;
     if (proto.equals(IperfServer.UDP)) {
       cmd = cmd + " -u";
+      cmd = cmd + " -b " + bw;
     }
     if (seconds > 0) {
       cmd = cmd + " -t " + seconds;
     }
-    cmd = cmd + " -b " + bw;
+    if(this.threads>1){
+      cmd = cmd + " -P " + this.threads;
+    }
     results.add(Exec.sshExec("root", managementIp, cmd, sshKey));
   }
 

@@ -1,12 +1,14 @@
 package exoplex.sdx.core;
 
 import exoplex.common.slice.SafeSlice;
+import exoplex.common.slice.SiteBase;
 import exoplex.common.utils.Exec;
 import exoplex.common.utils.SafeUtils;
 import exoplex.common.utils.ServerOptions;
 import exoplex.sdx.safe.SafeManager;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.json.JSONObject;
 import org.renci.ahab.libndl.resources.request.*;
 import org.renci.ahab.libtransport.util.ContextTransportException;
 import org.renci.ahab.libtransport.util.TransportException;
@@ -107,6 +109,10 @@ public class SdxManager extends SliceManager {
     return safeServer;
   }
 
+  public String getSafeServerIP(){
+    return safeServerIp;
+  }
+
   private void addEntry_HashList(HashMap<String, ArrayList<String>> map, String key, String entry) {
     if (map.containsKey(key)) {
       ArrayList<String> l = map.get(key);
@@ -180,7 +186,7 @@ public class SdxManager extends SliceManager {
       clearSdx();
     }
     initializeSdx();
-    configRouting(serverSlice, OVSController, SDNController, routerPattern, stitchPortPattern);
+    configRouting(OVSController, SDNController, routerPattern, stitchPortPattern);
     startBro();
   }
 
@@ -195,7 +201,8 @@ public class SdxManager extends SliceManager {
 
 
   public void delFlows() {
-    serverSlice.runCmdSlice("ovs-ofctl del-flows br0", sshkey, routerPattern, false);
+    serverSlice.runCmdSlice("ovs-ofctl -O OpenFlow15 del-flows br0", sshkey, routerPattern,
+      false);
   }
 
   private void clearSdx() throws TransportException, Exception{
@@ -294,6 +301,45 @@ public class SdxManager extends SliceManager {
     return true;
   }
 
+  private boolean addStitchPort(String spName, String nodeName, String stitchUrl, String vlan, long
+                                bw) throws
+    TransportException, Exception{
+    String ip = serverSlice.getComputeNode(nodeName).getManagementIP();
+    int numInterfaces = getInterfaceNum(ip);
+    serverSlice.lockSlice();
+    serverSlice.reloadSlice();
+    int times = 1;
+    ComputeNode node = serverSlice.getComputeNode(nodeName);
+    while(true) {
+      StitchPort mysp = serverSlice.addStitchPort(spName, vlan, stitchUrl, bw);
+      mysp.stitch(node);
+      serverSlice.commitAndWait(10, Arrays.asList(new String[]{spName + "-net"}));
+      sleep(10);
+      int newNum = getInterfaceNum(ip);
+      if(newNum > numInterfaces){
+        if(times>1){
+          logger.warn(String.format("Tried %s times to add a stitchlink", times));
+        }
+        break;
+      }else{
+        sleep(30);
+        newNum = getInterfaceNum(ip);
+        if(newNum > numInterfaces) {
+          if (times > 1) {
+            logger.warn(String.format("Tried %s times to add a stitchlink", times));
+          }
+          break;
+        }
+        serverSlice.getResourceByName(spName).delete();
+        serverSlice.commitAndWait();
+        serverSlice.refresh();
+        times++;
+      }
+    }
+    updateMacAddr();
+    return true;
+  }
+
   private int getInterfaceNum(String ip){
     //String res[] = Exec.sshExec("root", ip, "ifconfig -a|grep \"eth\"|grep" +
     //    " " +
@@ -305,35 +351,35 @@ public class SdxManager extends SliceManager {
     return num;
   }
 
-  public String[] stitchRequest(
+  public JSONObject stitchRequest(
     String site,
     String customerSafeKeyHash,
     String customerSlice,
     String reserveId,
     String secret,
-    String sdxnode) throws TransportException, Exception{
+    String sdxnode,
+    String gateway,
+    String ip) throws TransportException, Exception{
     long start = System.currentTimeMillis();
-    String[] res = new String[2];
-    res[0] = null;
-    res[1] = null;
+    JSONObject res = new JSONObject();
+    res.put("ip", "");
+    res.put("gateway", "");
+    res.put("message", "");
+
     logger.info(logPrefix + "new stitch request from " + customerSlice+ " for " + sliceName + " at " +
         "" + site);
     logger.debug("new stitch request for " + sliceName + " at " + site);
     //if(!safeEnabled || authorizeStitchRequest(customer_slice,customerName,reserveId, safeKeyHash,
     if(!safeEnabled || safeManager.authorizeStitchRequest(customerSafeKeyHash,customerSlice)){
       if (safeEnabled) {
-        logger.info("Authorized: stitch request for " + sliceName + " and " + sdxnode);
+        logger.info("Authorized: stitch request for " + sliceName);
       }
       serverSlice.reloadSlice();
       String stitchname = null;
       Network net = null;
       ComputeNode node = null;
-      int ip_to_use = 0;
       if (sdxnode != null && serverSlice.getResourceByName(sdxnode)!= null) {
         node = serverSlice.getComputeNode(sdxnode);
-        ip_to_use = getAvailableIP();
-        stitchname = "stitch_" + node.getName() + "_" + ip_to_use;
-        usedip.add(ip_to_use);
       /*
       serverSlice.lockSlice();
       serverSlice.addLink(stitchname,  node.getName(), bw);
@@ -344,9 +390,8 @@ public class SdxManager extends SliceManager {
       } else if (sdxnode == null && edgeRouters.containsKey(site) && edgeRouters.get(site).size() >
           0) {
         node = serverSlice.getComputeNode(edgeRouters.get(site).get(0));
-        ip_to_use = getAvailableIP();
-        stitchname = "stitch_" + node.getName() + "_" + ip_to_use;
-        usedip.add(ip_to_use);
+        String sname = ip.replace(".", "_").replace("/","_");
+        stitchname = "stitch_" + node.getName() + "_" + sname;
       /*
       serverSlice.lockSlice();
       serverSlice.addLink(stitchname, node.getName(), bw);
@@ -368,12 +413,11 @@ public class SdxManager extends SliceManager {
         serverSlice.reloadSlice();
         serverSlice.addCoreEdgeRouterPair(site, cRouterName, eRouterName, eLinkName, bw);
         node = (ComputeNode) serverSlice.getResourceByName(eRouterName);
-        ip_to_use = getAvailableIP();
-        stitchname = "stitch_" + node.getName() + "_" + ip_to_use;
-        usedip.add(ip_to_use);
+        String sname = ip.replace(".", "_").replace("/","_");
+        stitchname = "stitch_" + node.getName() + "_" + sname;
         net = serverSlice.addBroadcastLink(stitchname, bw);
         InterfaceNode2Net ifaceNode0 = (InterfaceNode2Net) net.stitch(node);
-        ifaceNode0.setIpAddress("192.168." + String.valueOf(ip_to_use) + ".1");
+        ifaceNode0.setIpAddress(ip);
         ifaceNode0.setNetmask("255.255.255.0");
         serverSlice.commitAndWait(10, Arrays.asList(new String[]{stitchname, cRouterName, eRouterName, eLinkName}));
         serverSlice.reloadSlice();
@@ -401,20 +445,17 @@ public class SdxManager extends SliceManager {
       Link logLink = new Link();
       logLink.setName(stitchname);
       logLink.addNode(node.getName());
-      logLink.setIP(IPPrefix + String.valueOf(ip_to_use));
-      logLink.setMask(mask);
       links.put(stitchname, logLink);
-      String gw = logLink.getIP(1);
-      String ip = logLink.getIP(2);
-      serverSlice.stitch(net1_stitching_GUID, customerSlice, reserveId, secret, ip);
-      res[0] = gw;
-      res[1] = ip;
+      serverSlice.stitch(net1_stitching_GUID, customerSlice, reserveId, secret, gateway + "/" +  ip
+        .split("/")[1]);
+      res.put("ip", ip);
+      res.put("gateway", gateway);
       sleep(15);
       updateOvsInterface(serverSlice, node.getName());
       routingmanager.newExternalLink(logLink.getLinkName(),
-          logLink.getIP(1),
+          ip,
           logLink.getNodeA(),
-          ip.split("/")[0],
+          gateway,
           SDNController);
       //routingmanager.configurePath(ip,node.getName(),ip.split("/")[0],SDNController);
       logger.info(logPrefix + "stitching operation  completed, time elapsed(s): " + (System
@@ -426,8 +467,10 @@ public class SdxManager extends SliceManager {
         customerNodes.put(customerSafeKeyHash, new HashSet<>());
       }
       customerNodes.get(customerSafeKeyHash).add(reserveId);
-      customerGateway.put(reserveId, ip.split("/")[0]);
-
+      customerGateway.put(reserveId, gateway);
+    }else{
+      res.put("message", String.format("Unauthorized stitch request from (%s, %s)",
+        customerSafeKeyHash, customerSlice));
     }
     return res;
   }
@@ -783,32 +826,19 @@ public class SdxManager extends SliceManager {
     routingmanager.revokePrefix(prefix, SDNController);
   }
 
-  public String stitchChameleon(String sdxsite, String nodeName, String customer_keyhash, String
+  public String stitchChameleon(String site, String nodeName, String customer_keyhash, String
     stitchport,
                                 String vlan, String gateway, String ip) {
     String res = "Stitch request unauthorized";
-    /*
-    if (!safeEnabled || authorizeStitchChameleon(customer_keyhash, stitchport, vlan, gateway,
-        sliceName, nodeName)) {
-        */
-    if(true){
+    String sdxsite = SiteBase.get(site);
+    if (!safeEnabled || safeManager.authorizeChameleonStitchRequest(customer_keyhash, stitchport,
+      vlan)) {
       //FIX ME: do stitching
-      System.out.println("Chameleon Stitch Request from " + customer_keyhash + " Authorized");
+      logger.info("Chameleon Stitch Request from " + customer_keyhash + " Authorized");
       try {
         //FIX ME: do stitching
         logger.info(logPrefix + "Chameleon Stitch Request from " + customer_keyhash + " Authorized");
-        SafeSlice s = null;
-        try {
-          s = SafeSlice.loadManifestFile(sliceName, pemLocation, keyLocation, controllerUrl);
-        } catch (ContextTransportException e) {
-          // TODO Auto-generated catch block
-          res = "Stitch request failed.\n SdxServer exception in loadManiFestFile";
-          e.printStackTrace();
-        } catch (TransportException e) {
-          res = "Stitch request failed.\n SdxServer exception in loadManiFestFile";
-          // TODO Auto-generated catch block
-          e.printStackTrace();
-        }
+        serverSlice.reloadSlice();
         ComputeNode node = null;
         if (nodeName != null) {
           node = serverSlice.getComputeNode(nodeName);
@@ -851,10 +881,11 @@ public class SdxManager extends SliceManager {
         String stitchname = "sp-" + nodeName + "-" + ip.replace("/", "__").replace(".", "_");
         logger.info(logPrefix + "Stitching to Chameleon {" + "stitchname: " + stitchname + " vlan:" +
             vlan + " stithport: " + stitchport + "}");
-        StitchPort mysp = s.addStitchPort(stitchname, vlan, stitchport, bw);
-        mysp.stitch(node);
-        s.commit();
-        s.waitTillActive();
+        addStitchPort(stitchname, nodeName, stitchport, vlan, bw);
+        //StitchPort mysp = serverSlice.addStitchPort(stitchname, vlan, stitchport, bw);
+        //mysp.stitch(node);
+        //serverSlice.commit();
+        //serverSlice.waitTillActive();
         updateOvsInterface(serverSlice, nodeName);
         //routingmanager.replayCmds(routingmanager.getDPID(nodeName));
         Exec.sshExec("root", node.getManagementIP(), "ifconfig;ovs-vsctl list port", sshkey);
@@ -1101,10 +1132,10 @@ public class SdxManager extends SliceManager {
   }
 
   public void configRouting() {
-    configRouting(serverSlice, OVSController, SDNController, routerPattern, stitchPortPattern);
+    configRouting(OVSController, SDNController, routerPattern, stitchPortPattern);
   }
 
-  public void configRouting(SafeSlice s, String ovscontroller, String httpcontroller, String
+  public void configRouting(String ovscontroller, String httpcontroller, String
       routerpattern, String stitchportpattern) {
     logger.debug("Configurating Routing");
     if(plexusAndSafeInSlice) {
@@ -1114,7 +1145,7 @@ public class SdxManager extends SliceManager {
     // added to the ovs bridge, then we reset the controller?
     // FIXME: maybe this is not the best way to do.
     //add all interfaces other than eth0 to ovs bridge br0
-    configRouters(s);
+    configRouters(serverSlice);
 
     routingmanager.waitTillAllOvsConnected(SDNController);
 
@@ -1193,6 +1224,9 @@ public class SdxManager extends SliceManager {
     try {
       if(usedip.contains(ip)){
         usedip.remove(ip);
+        if(curip>ip){
+          curip = ip;
+        }
       }
     } finally {
       iplock.unlock();
@@ -1204,7 +1238,7 @@ public class SdxManager extends SliceManager {
     logger.debug("Get flow installation time on " + routername + " for " + flowPattern);
     try {
       String result = Exec.sshExec("root", getManagementIP(routername), getEchoTimeCMD() +
-          "ovs-ofctl dump-flows br0", sshkey)[0];
+          "ovs-ofctl -O OpenFlow15 dump-flows br0", sshkey)[0];
       String[] parts = result.split("\n");
       String curMillis = parts[0].split(":")[1];
       String flow = "";
@@ -1231,7 +1265,7 @@ public class SdxManager extends SliceManager {
 
   public int getNumRouteEntries(String routerName, String flowPattern) {
     String result = Exec.sshExec("root", getManagementIP(routerName), getEchoTimeCMD() +
-        "ovs-ofctl dump-flows br0", sshkey)[0];
+        "ovs-ofctl -O OpenFlow15 dump-flows br0", sshkey)[0];
     String[] parts = result.split("\n");
     String curMillis = parts[0].split(":")[1];
     int num = 0;
@@ -1256,7 +1290,7 @@ public class SdxManager extends SliceManager {
       logger.debug("------------------");
       logger.debug("Flow table: " + node);
       String result = Exec.sshExec("root", getManagementIP(node), getEchoTimeCMD() +
-          "ovs-ofctl dump-flows br0", sshkey)[0];
+          "ovs-ofctl -O OpenFlow15 dump-flows br0", sshkey)[0];
       String[] parts = result.split("\n");
       for (String s : parts) {
         logger.debug(s);
@@ -1275,28 +1309,6 @@ public class SdxManager extends SliceManager {
 
   protected String getEchoTimeCMD() {
     return "echo currentMillis:$(/bin/date \"+%s%3N\");";
-  }
-
-
-
-  public boolean authorizeStitchChameleon(String customer_keyhash,String stitchport,String vlan,String gateway,String slicename, String nodename){
-    /** Post to remote safesets using apache httpclient */
-    String[] othervalues=new String[6];
-    othervalues[0]=customer_keyhash;
-    othervalues[1]=stitchport;
-    othervalues[2]=vlan;
-    othervalues[3]=gateway;
-    othervalues[4]=slicename;
-    othervalues[5]=nodename;
-
-    String message= SafeUtils.postSafeStatements(safeServer,"verifyChameleonStitch",
-        safeManager.getSafeKeyHash(),
-        othervalues);
-    if(message ==null || message.contains("Unsatisfied")){
-      return false;
-    }
-    else
-      return true;
   }
 }
 

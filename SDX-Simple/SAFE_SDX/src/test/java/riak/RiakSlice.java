@@ -20,7 +20,7 @@ public class RiakSlice extends SliceCommon{
     slice.run(args);
   }
 
-  public void run(String[] args) throws  Exception{
+  public String run(String[] args) throws  Exception{
     if(args.length<1){
       args = new String[]{"-c", "config/riak.conf"};
     }
@@ -38,15 +38,25 @@ public class RiakSlice extends SliceCommon{
       // TODO Auto-generated catch block
       e.printStackTrace();
     }
-    createRiakSlice();
+    if(cmd.hasOption('d')){
+      return deleteRiakSlice();
+    }
+    return createRiakSlice();
   }
 
-  public void createRiakSlice() throws  Exception{
+  public String createRiakSlice() throws  Exception{
     SafeSlice s = SafeSlice.create(sliceName, pemLocation, keyLocation, controllerUrl, sctx);
     s.addRiakServer(serverSite, "riak");
     s.commitAndWait();
     s.reloadSlice();
     s.runCmdNode(Scripts.getRiakScripts(), sshkey, "riak", false);
-    System.out.println(String.format("Riak IP %s", s.getComputeNode("riak").getManagementIP()));
+    String riakIP = s.getComputeNode("riak").getManagementIP();
+    System.out.println(String.format("Riak IP %s", riakIP));
+    return  riakIP;
+  }
+
+  private String deleteRiakSlice()throws Exception{
+    deleteSlice(sliceName);
+    return "true";
   }
 }

@@ -239,12 +239,14 @@ public class AuthorityMock {
   void addUserSlice(String userKeyFile, String slice, String userIP) {
     //slices.add(slice);
     sliceKeyMap.put(slice, userKeyFile);
-    //PI delegate to users
     if (!principalMap.containsKey(userKeyFile)) {
       principals.add(userKeyFile);
       initIdSetSubjectSet(userKeyFile);
       principalMap.put(userKeyFile, SafeUtils.getPrincipalId(safeServer, userKeyFile));
     }
+    //User membership
+    simpleEndorseMent(postUserEndorsement, "key_p1", userKeyFile, "User");
+    //PI delegate to users
     HashMap<String, String> envs = new HashMap<>();
     String userKey = principalMap.get(userKeyFile);
     String projectId = principalMap.get("key_p2") + ":project1";
@@ -283,6 +285,7 @@ public class AuthorityMock {
     String ipToken = safePost(postIPAllocate, "rpkiroot", new String[]{userKey, userIP,
         parentPrefix});
     safePost(postDlgToken, userKeyFile, new String[]{ipToken, userIP});
+    safePost(updateSubjectSet, userKeyFile, new String[]{ipToken});
     authorize(authorizeOwnPrefix, "sdx", new String[]{userKey, userIP});
 
     //Tag delegation
