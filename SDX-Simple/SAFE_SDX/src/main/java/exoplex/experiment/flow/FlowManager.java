@@ -33,7 +33,7 @@ public class FlowManager extends AsyncTask{
     this.sshKey = sshKey;
   }
 
-  public boolean addUdpFlow(String c1, String server, String serverDpIP, String bw){
+  public boolean addUdpFlow(String c1, String server, String serverDpIP, String bw, int threads){
     IperfServer iperfServer = new IperfServer(server, DEFAULT_PORT, IperfServer.UDP, this.sshKey);
     if(iperfServers.containsKey(iperfServer.toString())){
       if(!iperfServers.get(iperfServer.toString()).transportProto.equals(IperfServer.UDP)){
@@ -42,7 +42,21 @@ public class FlowManager extends AsyncTask{
     }
     iperfServers.put(iperfServer.toString(), iperfServer);
     IperfFlow flow = new IperfFlow(c1, serverDpIP, sshKey, DEFAULT_PORT,
-        DEFAULT_TIME, bw, IperfServer.UDP, iperfServer.toString());
+        DEFAULT_TIME, bw, IperfServer.UDP, threads, iperfServer.toString());
+    flows.add(flow);
+    return true;
+  }
+
+  public boolean addTcpFlow(String c1, String server, String serverDpIP, String bw, int threads){
+    IperfServer iperfServer = new IperfServer(server, DEFAULT_PORT, IperfServer.TCP, this.sshKey);
+    if(iperfServers.containsKey(iperfServer.toString())){
+      if(!iperfServers.get(iperfServer.toString()).transportProto.equals(IperfServer.TCP)){
+        return false;
+      }
+    }
+    iperfServers.put(iperfServer.toString(), iperfServer);
+    IperfFlow flow = new IperfFlow(c1, serverDpIP, sshKey, DEFAULT_PORT,
+      DEFAULT_TIME, bw, IperfServer.TCP, threads, iperfServer.toString());
     flows.add(flow);
     return true;
   }

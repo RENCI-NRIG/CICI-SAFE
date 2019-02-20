@@ -90,6 +90,19 @@ public class SafeManager {
     return SafeUtils.authorize(safeServer, "authorizeStitchByUID", sdxHash, othervalues);
   }
 
+  public boolean authorizeChameleonStitchRequest(String customerSafeKeyHash,
+    String stitchPort,
+    String vlan
+  ){
+    /** Post to remote safesets using apache httpclient */
+    String[] othervalues=new String[3];
+    othervalues[0]=customerSafeKeyHash;
+    othervalues[1]=stitchPort;
+    othervalues[2]=vlan;
+    String sdxHash = SafeUtils.getPrincipalId(safeServer, "sdx");
+    return SafeUtils.authorize(safeServer, "authorizeChameleonStitchByUID", sdxHash, othervalues);
+  }
+
   public void restartSafeServer(){
     Exec.sshExec("root", safeServerIp, Scripts.restartSafe_v1(),sshKey);
   }

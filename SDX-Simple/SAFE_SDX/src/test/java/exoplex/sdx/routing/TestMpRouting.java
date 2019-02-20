@@ -7,25 +7,52 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import exoplex.sdx.core.SdxManager;
 import exoplex.sdx.network.SdnUtil;
+import junit.framework.Assert;
+import org.junit.*;
 
 import java.util.HashMap;
 
+@Ignore
 public class TestMpRouting extends SdxManager {
   static Logger logger = LogManager.getLogger(TestMpRouting.class);
-  static String[] arg1 = {"-c", "config/test-mptcp.conf"};
   static String site= SiteBase.get("TAMU");
+  static String userDir = System.getProperty("user.dir");
+  static String sdxSimpleDir = userDir.split("SDX-Simple")[0] + "SDX-Simple/";
+  static String[] arg1 = {"-c", sdxSimpleDir + "config/test-mptcp.conf"};
+  static TestMpRouting mpr;
+
+  @BeforeClass
+  public static void setUp() throws  Exception{
+    mpr = new TestMpRouting();
+    mpr.test();
+  }
+
+  @AfterClass
+  public static void cleanUp(){
+    mpr.delete();
+  }
 
   public static void main(String[] args) throws Exception {
-    TestMpRouting mpr = new TestMpRouting();
-    //create the network
-    //mpr.test();
-
     mpr.initNetwork();
     mpr.installTestGroup();
     mpr.sendTraffic();
     mpr.getGroupStats();
     mpr.logFlowTables();
     logger.debug("end");
+  }
+
+  @Test
+  public void testMpRouting() throws Exception {
+    try {
+      mpr.initNetwork();
+      mpr.installTestGroup();
+      mpr.sendTraffic();
+      mpr.getGroupStats();
+      mpr.logFlowTables();
+      logger.debug("end");
+    }catch (Exception e){
+      e.printStackTrace();
+    }
   }
 
   public  void test() throws Exception {
@@ -40,6 +67,7 @@ public class TestMpRouting extends SdxManager {
     String configFilePath = cmd.getOptionValue("config");
     initializeExoGENIContexts(configFilePath);
     plexusName = "plexuscontroller";
+    loadSlice();
     initializeSdx();
     delFlows();
     configRouting();
@@ -47,14 +75,18 @@ public class TestMpRouting extends SdxManager {
   }
 
   public void createNetwork() throws Exception {
-    SafeSlice slice = createTestSlice();
-    slice.commitAndWait();
-    configTestSlice(slice);
-    configSdnControllerAddr(slice.getComputeNode(plexusName).getManagementIP());
-    checkPlexus(slice.getComputeNode(plexusName).getManagementIP());
-    slice.runCmdSlice(Scripts.getOVSScript(), sshkey, routerPattern, true);
-    copyRouterScript(slice);
-    configRouters(slice);
+    serverSlice = createTestSlice();
+    serverSlice.commitAndWait();
+    configTestSlice(serverSlice);
+    if(plexusAndSafeInSlice) {
+      configSdnControllerAddr(serverSlice.getComputeNode(plexusName).getManagementIP());
+      checkPlexus(serverSlice.getComputeNode(plexusName).getManagementIP());
+    }else{
+      configSdnControllerAddr(conf.getString("config.plexusserver"));
+    }
+    serverSlice.runCmdSlice(Scripts.getOVSScript(), sshkey, routerPattern, true);
+    copyRouterScript(serverSlice);
+    configRouters(serverSlice);
   }
 
   public void configTestSlice(SafeSlice carrier){
@@ -80,7 +112,7 @@ public class TestMpRouting extends SdxManager {
   }
 
   public SafeSlice createTestSlice(){
-    SafeSlice slice = SafeSlice.create("test-yyj", pemLocation, keyLocation, controllerUrl, sctx);
+    SafeSlice slice = SafeSlice.create(sliceName, pemLocation, keyLocation, controllerUrl, sctx);
     slice.addComputeNode(site, "CNode0");
     slice.addComputeNode(site,"CNode1");
     slice.addComputeNode(site,"CNode2");
@@ -109,28 +141,37 @@ public class TestMpRouting extends SdxManager {
     slice.addBroadcastLink("stitch_c3_30");
     slice.attach("stitch_c3_30", "CNode2", "192.168.30.2", "255.255.255.0");
     slice.attach("stitch_c3_30", "c3");
-    slice.addPlexusController(controllerSite, plexusName);
+    if(plexusAndSafeInSlice) {
+      slice.addPlexusController(controllerSite, plexusName);
+    }
     return  slice;
   }
 
   public void installTestGroup(){
     //===>>c0 =>c1 c2
     HashMap<String, Integer> nbs = new HashMap<>();
-    nbs.put("c1", 10);
-    nbs.put("c2", 5);
+    int weight1 = 2;
+    int weight2 = 1;
+    nbs.put("c1", weight1);
+    nbs.put("c2", weight2);
     int groupId = 1;
     SdnUtil.deleteGroup(getSDNController(), getDPID("c0"), groupId);
     routingmanager.setNextHops("c0", getSDNController(), groupId, "192.168.20.0/24", nbs);
+    String res = SdnUtil.getGroupDescStats(getSDNController(), getDPID("c0"), groupId);
+    logger.info("get group stats");
+    logger.info(res);
     //==> c1->c3 c2->c3
     nbs.clear();
-    nbs.put("c3", 5);
+    nbs.put("c3", weight2);
     SdnUtil.deleteGroup(getSDNController(), getDPID("c1"), groupId);
     routingmanager.setNextHops("c1", getSDNController(), groupId, "192.168.20.0/24", nbs);
-    String res = SdnUtil.getGroupDescStats(getSDNController(), getDPID("c1"), groupId);
+    res = SdnUtil.getGroupDescStats(getSDNController(), getDPID("c1"), groupId);
+    logger.info("get group stats");
     logger.info(res);
     SdnUtil.deleteGroup(getSDNController(), getDPID("c2"), groupId);
     routingmanager.setNextHops("c2", getSDNController(), groupId, "192.168.20.0/24", nbs);
     res = SdnUtil.getGroupDescStats(getSDNController(), getDPID("c2"), groupId);
+    logger.info("get group stats");
     logger.info(res);
 
     ////last hop
@@ -144,22 +185,25 @@ public class TestMpRouting extends SdxManager {
     //<<==== c3-> c1 c2
     groupId  = 2;
     nbs.clear();
-    nbs.put("c1", 10);
-    nbs.put("c2", 5);
+    nbs.put("c1", weight1);
+    nbs.put("c2", weight2);
     SdnUtil.deleteGroup(getSDNController(), getDPID("c3"), groupId);
     routingmanager.setNextHops("c3", getSDNController(), groupId, "192.168.10.0/24", nbs);
     res = SdnUtil.getGroupDescStats(getSDNController(), getDPID("c3"), groupId);
+    logger.info("get group stats");
     logger.info(res);
     //<<===== c1->c0 c2 -> c0
     nbs.clear();
-    nbs.put("c0", 5);
+    nbs.put("c0", weight2);
     SdnUtil.deleteGroup(getSDNController(), getDPID("c1"), groupId);
     routingmanager.setNextHops("c1", getSDNController(), groupId, "192.168.10.0/24", nbs);
     res = SdnUtil.getGroupDescStats(getSDNController(), getDPID("c1"), groupId);
+    logger.info("get group stats");
     logger.info(res);
     SdnUtil.deleteGroup(getSDNController(), getDPID("c2"), groupId);
     routingmanager.setNextHops("c2", getSDNController(), groupId, "192.168.10.0/24", nbs);
     res = SdnUtil.getGroupDescStats(getSDNController(), getDPID("c2"), groupId);
+    logger.info("get group stats");
     logger.info(res);
     ///<<<===last hop
     //routingmanager.setOutPort("c0", getSDNController(),
@@ -167,7 +211,6 @@ public class TestMpRouting extends SdxManager {
     routingmanager.singleStepRouting("192.168.10.0/24", "192.168.10.2",
         getDPID("c0"), getSDNController());
     logger.info(res);
-
   }
 
   public void logFlowTables(){
@@ -185,13 +228,17 @@ public class TestMpRouting extends SdxManager {
         "192.168.20.2");
     experiment.addClient("CNode2", serverSlice.getComputeNode("CNode2").getManagementIP(),
         "192.168.30.2");
-    experiment.addUdpFlow("CNode0", "CNode1", "1m");
+    experiment.addTcpFlow("CNode0", "CNode1", "1m", 20);
+    experiment.addTcpFlow("CNode0", "CNode2", "1m", 20);
+    //experiment.addTcpFlow("CNode2", "CNode0", "1m", 20);
+    //experiment.addTcpFlow("CNode1", "CNode0", "1m", 20);
     experiment.setLatencyTask("CNode0", "CNode1");
     experiment.startLatencyTask();
     experiment.startFlows(10);
     logger.warn(String.format("start time %s", System.currentTimeMillis()/1000));
     sleep(15);
     experiment.stopFlows();
+    experiment.printFlowServerResult();
     experiment.stopLatencyTask();
     experiment.printLatencyResult();
     logger.warn(String.format("stop time %s", System.currentTimeMillis()/1000));
