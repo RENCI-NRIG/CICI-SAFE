@@ -75,7 +75,7 @@ public class ExogeniClientSlice extends SliceManager {
       //copyFile2Slice(c1, "/home/yaoyj11/project/exo-geni/SAFE_SDX/src/main/resources/scripts/configospffornewif.sh","~/configospffornewif.sh","~/.ssh/id_rsa");
       //copyFile2Slice(c1, "/home/yaoyj11/project/exo-geni/SAFE_SDX/src/main/resources/scripts/configospffornewif.sh","~/configospffornewif.sh","~/.ssh/id_rsa");
       //runCmdSlice(c1,"/bin/bash ~/ospfautoconfig.sh","~/.ssh/id_rsa");
-      configFTPService(c1, "(CNode1)", "ftpuser", "ftp");
+      //configFTPService(c1, "(CNode1)", "ftpuser", "ftp");
       configQuaggaRouting(c1);
       logger.info("Slice active now: " + sliceName);
       c1.printNetworkInfo();
