@@ -1,6 +1,7 @@
 package exoplex.client.exogeni;
 
 import exoplex.common.slice.SafeSlice;
+import exoplex.common.slice.SiteBase;
 import exoplex.common.utils.Exec;
 import exoplex.common.utils.ServerOptions;
 import exoplex.sdx.core.SliceManager;
@@ -53,17 +54,17 @@ public class ExogeniClientSlice extends SliceManager {
 
 
     if (type.equals("client")) {
-      routerSite = conf.getString("config.routersite");
+      routerSite = SiteBase.get(conf.getString("config.routersite"));
       subnet = conf.getString("config.ipprefix");
       computeIP(subnet);
       logger.info("Client start");
       String customerName = sliceName;
-      SafeSlice c1 = createCustomerSlice(customerName, 2, IPPrefix, curip, bw, true);
+      SafeSlice c1 = createCustomerSlice(customerName, 1, IPPrefix, curip, bw, true);
       try {
         c1.commitAndWait();
       } catch (Exception e) {
         e.printStackTrace();
-        c1 = createCustomerSlice(customerName, 2, IPPrefix, curip, bw, true);
+        c1 = createCustomerSlice(customerName, 1, IPPrefix, curip, bw, true);
         c1.commitAndWait();
       }
       c1.refresh();
@@ -74,7 +75,7 @@ public class ExogeniClientSlice extends SliceManager {
       //copyFile2Slice(c1, "/home/yaoyj11/project/exo-geni/SAFE_SDX/src/main/resources/scripts/configospffornewif.sh","~/configospffornewif.sh","~/.ssh/id_rsa");
       //copyFile2Slice(c1, "/home/yaoyj11/project/exo-geni/SAFE_SDX/src/main/resources/scripts/configospffornewif.sh","~/configospffornewif.sh","~/.ssh/id_rsa");
       //runCmdSlice(c1,"/bin/bash ~/ospfautoconfig.sh","~/.ssh/id_rsa");
-      configFTPService(c1, "(CNode1)", "ftpuser", "ftp");
+      //configFTPService(c1, "(CNode1)", "ftpuser", "ftp");
       configQuaggaRouting(c1);
       logger.info("Slice active now: " + sliceName);
       c1.printNetworkInfo();
@@ -90,10 +91,26 @@ public class ExogeniClientSlice extends SliceManager {
   public void configQuaggaRouting(SafeSlice c1){
     c1.runCmdSlice("apt-get update; apt-get install -y quagga iperf", sshkey, "CNode\\d+",
       true);
+    for(ComputeNode node : c1.getComputeNodes()){
+      String res[] = Exec.sshExec("root", node.getManagementIP(), "ls /etc/init.d", sshkey);
+      while(!res[0].contains("quagga")){
+        res = Exec.sshExec("root", node.getManagementIP(), "apt-get install -y quagga", sshkey);
+      }
+    }
+    c1.runCmdSlice("sed -i -- 's/zebra=no/zebra=yes/g' /etc/quagga/daemons", sshkey, "CNode\\d+",
+      true);
     String Prefix = subnet.split("/")[0];
     String mip = c1.getComputeNode("CNode1").getManagementIP();
     Exec.sshExec("root", mip, "echo \"ip route 192.168.1.1/16 " + Prefix + "\" >>/etc/quagga/zebra.conf  ", sshkey);
     Exec.sshExec("root", mip, "sed -i -- 's/zebra=no/zebra=yes/g' /etc/quagga/daemons\n", sshkey);
+    String res[] = Exec.sshExec("root", mip, "ls /etc/quagga", sshkey);
+    while(!res[0].contains("zebra.conf")|| !res[0].contains("zebra.conf")){
+      c1.runCmdSlice("apt-get update; apt-get install -y quagga iperf", sshkey, "CNode\\d+",
+        true);
+      res = Exec.sshExec("root", mip, "ls /etc/quagga", sshkey);
+      Exec.sshExec("root", mip, "echo \"ip route 192.168.1.1/16 " + Prefix + "\" >>/etc/quagga/zebra.conf  ", sshkey);
+      Exec.sshExec("root", mip, "sed -i -- 's/zebra=no/zebra=yes/g' /etc/quagga/daemons\n", sshkey);
+    }
     Exec.sshExec("root", mip, "/etc/init.d/quagga restart", sshkey);
   }
 
@@ -105,7 +122,7 @@ public class ExogeniClientSlice extends SliceManager {
       subnet = ipPrefix;
       computeIP(subnet);
       logger.info("Client start");
-      SafeSlice c1 = createCustomerSlice(customerName, 2, IPPrefix, curip, bw, true);
+      SafeSlice c1 = createCustomerSlice(customerName, 1, IPPrefix, curip, bw, true);
       c1.commitAndWait();
       c1.refresh();
       if(safeEnabled && plexusAndSafeInSlice){
@@ -115,7 +132,7 @@ public class ExogeniClientSlice extends SliceManager {
       //copyFile2Slice(c1, "/home/yaoyj11/project/exo-geni/SAFE_SDX/src/main/resources/scripts/configospffornewif.sh","~/configospffornewif.sh","~/.ssh/id_rsa");
       //copyFile2Slice(c1, "/home/yaoyj11/project/exo-geni/SAFE_SDX/src/main/resources/scripts/configospffornewif.sh","~/configospffornewif.sh","~/.ssh/id_rsa");
       //runCmdSlice(c1,"/bin/bash ~/ospfautoconfig.sh","~/.ssh/id_rsa");
-      configFTPService(c1, "(CNode1)", "ftpuser", "ftp");
+      //configFTPService(c1, "(CNode1)", "ftpuser", "ftp");
       configQuaggaRouting(c1);
       logger.info("Slice active now: " + customerName);
       c1.printNetworkInfo();
@@ -136,12 +153,12 @@ public class ExogeniClientSlice extends SliceManager {
 
     ArrayList<ComputeNode> nodelist = new ArrayList<ComputeNode>();
     for (int i = 0; i < num; i++) {
-      ComputeNode node0 = s.addComputeNode(routerSite, "CNode" + String.valueOf(i));
+      ComputeNode node0 = s.addComputeNode(routerSite, "CNode" + String.valueOf(i + 1));
       nodelist.add(node0);
     }
     if(network){
       for(int i=0; i < nodelist.size() - 1; i++){
-        s.addLink("clink" + i,
+        s.addLink("clink" + (i + 1),
           IPPrefix + (start +i) + ".1",
           IPPrefix + (start +i) + ".2",
           "255.255.255.0",

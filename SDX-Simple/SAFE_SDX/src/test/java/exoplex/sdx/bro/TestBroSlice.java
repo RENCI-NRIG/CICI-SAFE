@@ -177,7 +177,8 @@ public class TestBroSlice extends SliceBase {
 
     threads.clear();
 
-    String dpid = execOnNode(flow, "ovs-ofctl -O OpenFlow13 show br0 | grep -E '[0-9a-f]{16}' -o", true);
+    String dpid = execOnNode(flow, "ovs-ofctl -O OpenFlow13 show br0 | grep -E '[0-9a-f]{16}' " +
+      "-o", true);
 
     threads.add(new Thread(() -> {
       try {

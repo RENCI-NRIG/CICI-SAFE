@@ -318,7 +318,8 @@ public class RoutingManager {
       if (i < paths.size() - 1) {
         dst = networkManager.getRouterByDPID(paths.get(i + 1)[0]).getRouterName();
       }
-      String flow = getFlowOnRouter(networkManager.getRouterByDPID(hop[0]).getManagementIP(), p1, p2, sshKey);
+      String flow = getFlowOnRouter(networkManager.getRouterByDPID(hop[0]).getManagementIP(), p2,
+        p1, sshKey);
       if (flow.contains("actions=CONTROLLER")) {
         logger.warn(String.format("%s %s -> %s: Failure\n %s", hop[0], src, dst, flow));
       } else if (flow.contains("output:")) {
@@ -523,7 +524,7 @@ public class RoutingManager {
 
   public String getFlowOnRouter(String ip, String srcIp, String destIp, String sshKey) {
     String result = Exec.sshExec("root", ip,
-      "ovs-ofctl dump-flows br0", sshKey)[0];
+      "ovs-ofctl -O OpenFlow15 dump-flows br0", sshKey)[0];
     String[] parts = result.split("\n");
     String res = "";
     for (String s : parts) {

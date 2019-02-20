@@ -1,5 +1,6 @@
 package exoplex.client.stitchport;
 
+import exoplex.common.slice.SiteBase;
 import exoplex.common.slice.SliceCommon;
 import exoplex.common.utils.Exec;
 import exoplex.common.utils.HttpUtil;
@@ -77,26 +78,55 @@ public class SdxStitchPortClient extends SliceCommon {
       if (params[0].equals("stitch")) {
         logger.debug(params.length);
         processStitchCmd(params);
-      } else {
-
-        System.out.print(params.length);
-        JSONObject paramsobj = new JSONObject();
-        paramsobj.put("dest", params[1]);
-        paramsobj.put("gateway", params[2]);
-        paramsobj.put("customer", safeKeyHash);
-        String res = HttpUtil.postJSON(serverurl + "sdx/notifyprefix", paramsobj);
-        if (res.equals("")) {
-          logger.debug("Prefix notifcation failed");
-          System.out.println("Prefix notifcation failed");
-        } else {
-          logger.debug(res);
-          System.out.println(res);
-        }
+      } else if (params[0].equals("route")){
+        processPrefixCmd(params);
+      } else{
+        processConnectionCmd(params);
       }
     } catch (Exception e) {
       e.printStackTrace();
     }
+  }
 
+  private void processConnectionCmd(String[] params) {
+    try {
+      JSONObject jsonparams = new JSONObject();
+      if(safeEnabled) {
+        safeKeyHash = SafeUtils.getPrincipalId(safeServer, safeKeyFile);
+        jsonparams.put("ckeyhash", safeKeyHash);
+      }else {
+        jsonparams.put("ckeyhash", sliceName);
+      }
+      jsonparams.put("self_prefix", params[1]);
+      jsonparams.put("target_prefix", params[2]);
+      try {
+        jsonparams.put("bandwidth", Long.valueOf(params[3]));
+      } catch (Exception e) {
+      }
+      String res = HttpUtil.postJSON(serverurl + "sdx/connectionrequest", jsonparams);
+      logger.info("get connection result from server:\n" + res);
+      logger.debug(res);
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+  }
+
+  private void processPrefixCmd(String[] params){
+    System.out.print(params.length);
+    JSONObject paramsobj = new JSONObject();
+    paramsobj.put("dest", params[1]);
+    paramsobj.put("gateway", params[2]);
+    setSafeServerIp(conf.getString("config.safeserver"));
+    safeKeyHash = SafeUtils.getPrincipalId(safeServer, safeKeyFile);
+    paramsobj.put("customer", safeKeyHash);
+    String res = HttpUtil.postJSON(serverurl + "sdx/notifyprefix", paramsobj);
+    if (res.equals("")) {
+      logger.debug("Prefix notifcation failed");
+      System.out.println("Prefix notifcation failed");
+    } else {
+      logger.debug(res);
+      System.out.println(res);
+    }
   }
 
   private void processStitchCmd(String[] params) {
@@ -108,15 +138,17 @@ public class SdxStitchPortClient extends SliceCommon {
       jsonparams.put("vlan", params[2]);
       jsonparams.put("gateway", params[3]);
       jsonparams.put("ip", params[4]);
-      jsonparams.put("sdxsite", params[5]);
+      jsonparams.put("sdxsite", SiteBase.get(params[5]));
       try {
         jsonparams.put("sdxnode", params[6]);
       }catch (Exception e){
         jsonparams.put("sdxnode",(String)null);
       }
-      jsonparams.put("ckeyhash", safeKeyHash);
       if(safeEnabled){
-        postSafeStitchRequest(safeKeyHash,jsonparams.getString("gateway"),jsonparams.getString("sdxslice"),jsonparams.getString("sdxnode"),jsonparams.getString("stitchport"),jsonparams.getString("vlan"));
+        setSafeServerIp(conf.getString("config.safeserver"));
+        safeKeyHash = SafeUtils.getPrincipalId(safeServer, safeKeyFile);
+        jsonparams.put("ckeyhash", safeKeyHash);
+        postSafeStitchRequest(safeKeyHash,jsonparams.getString("stitchport"),jsonparams.getString("vlan"));
       }
       logger.debug("posted stitch request, requesting to Sdx server");
       String res = HttpUtil.postJSON(serverurl + "sdx/stitchchameleon", jsonparams);
@@ -153,14 +185,11 @@ public class SdxStitchPortClient extends SliceCommon {
     }
   }
 
-  private boolean postSafeStitchRequest(String keyhash, String gateway,String slicename, String nodename,String stitchport, String vlan){
+  private boolean postSafeStitchRequest(String keyhash, String stitchport, String vlan){
     /** Post to remote safesets using apache httpclient */
     String[] othervalues=new String[5];
     othervalues[0]=stitchport;
     othervalues[1]=vlan;
-    othervalues[2]=gateway;
-    othervalues[3]=slicename;
-    othervalues[4]=nodename;
     String message= SafeUtils.postSafeStatements(safeServer,"postChameleonStitchRequest",keyhash,othervalues);
     if(message.contains("fail")){
       return false;

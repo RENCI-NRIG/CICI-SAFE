@@ -80,7 +80,7 @@
             <AppenderRef ref="RollingFile"/>
             <AppenderRef ref="Console"/>
         </Root>
-        <Logger name="exoplex.sdx.core.SdxManager" level="info" additivity="false">
+        <Logger name="exoplex.sdx.core.SdxManager" level="debug" additivity="false">
             <AppenderRef ref="Console"/>
         </Logger>
         <Logger name="exoplex.sdx.core.SliceManager" level="info" additivity="false">
@@ -131,8 +131,10 @@
         <Logger name="exoplex.common.slice.SafeSlice" level="debug" additivity="true">
             <AppenderRef ref="RollingFile"/>
         </Logger>
+        <Logger name="exoplex.common.utils.Exec" level="debug" additivity="false">
+            <AppenderRef ref="RollingFile"/>
+        </Logger>
         <Logger name="org.apache.commons.httpclient.HttpClient" level="debug" additivity="false">
             <AppenderRef ref="RollingFile"/>
         </Logger>
-    </Loggers>
-</Configuration>
+    </Loggers></Configuration>

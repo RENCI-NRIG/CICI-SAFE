@@ -75,6 +75,10 @@ public class SdxExogeniClient extends SliceCommon{
     logger.info(logPrefix + "Client start");
   }
 
+  public void setSafeServer(String safeIP){
+    setSafeServerIp(safeIP);
+    safeChecked = true;
+  }
   public void run(String[] args) {
     try {
       serverSlice = SafeSlice.loadManifestFile(sliceName, pemLocation, keyLocation, controllerUrl);
@@ -84,6 +88,7 @@ public class SdxExogeniClient extends SliceCommon{
           }else {
             setSafeServerIp(conf.getString("config.safeserver"));
           }
+          safeChecked = true;
       }
     }catch (Exception e){
       e.printStackTrace();
@@ -99,7 +104,8 @@ public class SdxExogeniClient extends SliceCommon{
 //	 			logger.info(logPrefix + obj.sayHello());
       BufferedReader stdin = new BufferedReader(new InputStreamReader(System.in));
       while (true) {
-        System.out.print("Enter Commands:stitch client_resource_name\n\t " +
+        System.out.print("Enter Commands:stitch client_resource_name [clientIntfIP] " +
+          "[sdxIntfIPw/netmask]\n\t " +
             "unstitch client_resource_name\n\t" +
             "advertise route: route dest gateway\n\t link site1[RENCI] " +
             "site2[SL] \n" + cmdprefix);
@@ -178,17 +184,16 @@ public class SdxExogeniClient extends SliceCommon{
           }else {
             setSafeServerIp(conf.getString("config.safeserver"));
           }
-          SafeManager sm = new SafeManager(safeServerIp, safeKeyFile, sshkey);
           //sm.verifySafeInstallation(riakIp);
-          safeKeyHash = SafeUtils.getPrincipalId(safeServer, safeKeyFile);
           safeChecked = true;
         }
+        safeKeyHash = SafeUtils.getPrincipalId(safeServer, safeKeyFile);
+        jsonparams.put("ckeyhash", safeKeyHash);
       }else {
         jsonparams.put("ckeyhash", sliceName);
       }
       jsonparams.put("self_prefix", params[1]);
       jsonparams.put("target_prefix", params[2]);
-      jsonparams.put("ckeyhash", safeKeyHash);
       try {
         jsonparams.put("bandwidth", Long.valueOf(params[3]));
       } catch (Exception e) {
@@ -212,11 +217,9 @@ public class SdxExogeniClient extends SliceCommon{
         }else {
           setSafeServerIp(conf.getString("config.safeserver"));
         }
-        SafeManager sm = new SafeManager(safeServerIp, safeKeyFile, sshkey);
-        //sm.verifySafeInstallation(riakIp);
-        safeKeyHash = SafeUtils.getPrincipalId(safeServer, safeKeyFile);
         safeChecked = true;
       }
+      safeKeyHash = SafeUtils.getPrincipalId(safeServer, safeKeyFile);
       paramsobj.put("customer", safeKeyHash);
     }else {
       paramsobj.put("customer", sliceName);
@@ -258,8 +261,10 @@ public class SdxExogeniClient extends SliceCommon{
       jsonparams.put("cslice", sliceName);
       jsonparams.put("creservid", node0_s2_stitching_GUID);
       jsonparams.put("secret", secret);
-      if (params.length > 2) {
-        jsonparams.put("sdxnode", params[2]);
+      jsonparams.put("gateway", params[2]);
+      jsonparams.put("ip", params[3]);
+      if (params.length > 4) {
+        jsonparams.put("sdxnode", params[4]);
       }
       if(safeEnabled) {
         if(!safeChecked) {
@@ -289,12 +294,14 @@ public class SdxExogeniClient extends SliceCommon{
       if (!res.getBoolean("result")) {
         logger.warn(logPrefix + "stitch request failed");
       } else {
-        String ip = res.getString("ip");
+        String ip = params[2] + "/" + params[3].split("/")[1];
         logger.info(logPrefix + "set IP address of the stitch interface to " + ip);
         sleep(5);
         String mip = node0_s2.getManagementIP();
-        String result = Exec.sshExec("root", mip, "ifconfig eth2 " + ip, sshkey)[0];
-        Exec.sshExec("root", mip, "echo \"ip route 192.168.1.1/16 " + res.getString("gateway").split("/")[0] + "\" >>/etc/quagga/zebra.conf  ", sshkey);
+        String result = Exec.sshExec("root", mip, "ifconfig eth1 " + ip, sshkey)[0];
+        Exec.sshExec("root", mip, "echo \"ip route 192.168.1.1/16 " + params[3].split("/")[0] +
+          "\"" +
+          " >>/etc/quagga/zebra.conf  ", sshkey);
         Exec.sshExec("root", mip, "/etc/init.d/quagga restart", sshkey);
         logger.info(logPrefix + "stitch completed.");
         return ip.split("/")[0];

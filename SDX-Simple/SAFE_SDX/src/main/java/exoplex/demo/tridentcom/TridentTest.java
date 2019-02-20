@@ -10,7 +10,7 @@ import org.apache.logging.log4j.Logger;
 
 import java.util.HashMap;
 
-public class TridentTest {
+public class TridentTest extends TridentSetting{
 
   static Logger logger = LogManager.getLogger(TridentTest.class);
 
@@ -18,11 +18,6 @@ public class TridentTest {
 
   static HashMap<String, SdxExogeniClient> exogeniClients = new HashMap<>();
 
-  final static String[] sdxArgs = new String[]{"-c", "config/tri.conf"};
-
-  final static String[] sdxArgs2 = {"-c", "config/tri.conf", "-r"};
-
-  final static String[] clientArgs = new String[]{"-c", "client-config/client.conf"};
 
   public static void main(String[] args) throws  Exception{
     SdxServer.run(sdxArgs);
