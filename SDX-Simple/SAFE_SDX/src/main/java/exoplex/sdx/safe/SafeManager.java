@@ -50,10 +50,11 @@ public class SafeManager {
 
   public boolean authorizeConnectivity(String srchash, String srcip, String dsthash, String dstip){
     String[] othervalues=new String[4];
-    othervalues[0]=srchash;
-    othervalues[1]=srcip;
-    othervalues[2]=dsthash;
-    othervalues[3]=dstip;
+    othervalues[0] = srchash;
+    //othervalues[1]= String.format("ipv4\\\"%s\\\"", srcip);
+    othervalues[1] = srcip;
+    othervalues[2] = dsthash;
+    othervalues[3] = dstip;
     return SafeUtils.authorize(safeServer, "authZByUserAttr", getSafeKeyHash(),
       othervalues);
   }
@@ -82,6 +83,11 @@ public class SafeManager {
       return true;
   }
 
+  public String post(String operation, String[] params){
+    String res = SafeUtils.postSafeStatements(safeServer, operation, getSafeKeyHash(), params);
+    return SafeUtils.getToken(res);
+  }
+
   public boolean authorizeStitchRequest(String customerSafeKeyHash,
                                         String customerSlice
   ){
@@ -108,7 +114,7 @@ public class SafeManager {
   }
 
   public void restartSafeServer(){
-    Exec.sshExec("root", safeServerIp, Scripts.restartSafe_v1(),sshKey);
+    Exec.sshExec("root", safeServerIp, Scripts.restartSafe_v1(safeServerScript),sshKey);
   }
 
   public void deploySafeScripts(){
@@ -121,10 +127,11 @@ public class SafeManager {
     }
     while(true) {
       String result = Exec.sshExec("root", safeServerIp, "docker images", sshKey)[0];
-      if(result.contains("safeserver")){
+      if(result.contains(safeDockerImage)){
         break;
       }else{
-        Exec.sshExec("root", safeServerIp, Scripts.getSafeScript_v1(riakIp), sshKey);
+        Exec.sshExec("root", safeServerIp, Scripts.getSafeScript_v1(riakIp, safeDockerImage,
+          safeServerScript), sshKey);
       }
     }
     while(true){
@@ -132,10 +139,12 @@ public class SafeManager {
       if(result.contains("safe")){
         break;
       }else{
-        Exec.sshExec("root", safeServerIp, Scripts.getSafeScript_v1(riakIp), sshKey);
+        Exec.sshExec("root", safeServerIp, Scripts.getSafeScript_v1(riakIp, safeDockerImage,
+          safeServerScript),
+          sshKey);
       }
     }
-    Exec.sshExec("root", safeServerIp, Scripts.restartSafe_v1(), sshKey);
+    Exec.sshExec("root", safeServerIp, Scripts.restartSafe_v1(safeServerScript), sshKey);
     while (true){
       if(safeServerAlive()){
         break;

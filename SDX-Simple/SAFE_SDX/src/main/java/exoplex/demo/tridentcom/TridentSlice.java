@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Random;
 
+import exoplex.sdx.safe.SafeManager;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import safe.SafeAuthority;
@@ -119,7 +120,7 @@ public class TridentSlice extends TridentSetting{
       if (safeEnabled) {
         slice.addSafeServer(SiteBase.get(TridentSetting.sites.get(rand.nextInt(TridentSetting.sites
             .size()))),
-          riakIp);
+          riakIp, SafeManager.safeDockerImage, SafeManager.safeServerScript);
       }
     }
     slice.commitAndWait();

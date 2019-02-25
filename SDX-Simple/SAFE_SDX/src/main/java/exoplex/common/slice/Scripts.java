@@ -45,20 +45,21 @@ public class Scripts {
     return script;
   }
 
-  public static String getSafeScript_v1(String riakip) {
-    String script = "apt-get update\n"
-        + "docker pull yaoyj11/safeserver-v4\n"
-        + "docker run -i -t -d -p 7777:7777 -h safe --name safe yaoyj11/safeserver-v4\n"
-        + "docker exec -d safe /bin/bash -c  \"cd /root/safe;"
-        + "sed -i 's/http:\\/\\/.*:8098/http:\\/\\/" + riakip + ":8098/g' "
-        + "safe-server/src/main/resources/application.conf;"
-        + "./prdn.sh\"\n";
+  public static String getSafeScript_v1(String riakip, String safeDockerImg, String
+    safeServerScript) {
+    String script = String.format("apt-get update\n"
+      + "docker pull yaoyj11/%s\n"
+      + "docker run -i -t -d -p 7777:7777 -h safe --name safe yaoyj11/%s\n"
+      + "docker exec -d safe /bin/bash -c  \"cd /root/safe;"
+      + "sed -i 's/http:\\/\\/.*:8098/http:\\/\\/" + riakip + ":8098/g' "
+      + "safe-server/src/main/resources/application.conf;"
+      + "./%s\"\n", safeDockerImg, safeDockerImg, safeServerScript);
     return script;
   }
 
-  public static String restartSafe_v1(){
-    return "docker exec -d safe /bin/bash -c  \"cd /root/safe;pkill java;"
-            + "./prdn.sh\"\n";
+  public static String restartSafe_v1(String safeServerScript){
+    return String.format("docker exec -d safe /bin/bash -c  \"cd /root/safe;pkill java;"
+      + "./%s\"\n", safeServerScript);
   }
 
   public static String getRiakPreBootScripts(){
