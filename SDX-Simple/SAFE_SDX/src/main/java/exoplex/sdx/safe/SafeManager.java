@@ -14,6 +14,10 @@ public class SafeManager {
   private String safeKeyFile;
   private String sshKey=null;
   private String safeKeyHash= null;
+  //was v4
+  public final static String safeDockerImage = "safeserver-v4";
+  //was prdn.sh
+  public final static String safeServerScript = "prdn.sh";
 
   public SafeManager(String ip, String safeKeyFile, String sshKey){
     safeServerIp = ip;

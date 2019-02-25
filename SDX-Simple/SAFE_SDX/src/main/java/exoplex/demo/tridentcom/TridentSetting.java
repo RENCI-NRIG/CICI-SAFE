@@ -12,6 +12,7 @@ public class TridentSetting extends SliceManager{
   final static String sdxName = "sdx-tri";
 
   static String userDir = System.getProperty("user.dir");
+  static String safeDockerImage = "safeserver-v4";
   static String sdxSimpleDir = userDir.split("SDX-Simple")[0] + "SDX-Simple/";
   public final static String[] sdxArgs = new String[]{"-c", sdxSimpleDir + "config/tri.conf"};
   public final static String[] sdxDelArgs = new String[]{"-c", sdxSimpleDir + "config/tri.conf",
@@ -21,7 +22,7 @@ public class TridentSetting extends SliceManager{
 
   static {
     //sites.add("RENCI");
-    sites.add("TAMU");
+    sites.add("SL");
     sites.add("UFL");
     //sites.add("UH");
     sites.add("UNF");
@@ -44,7 +45,7 @@ public class TridentSetting extends SliceManager{
     int keyBase = 5;
     int ipBase = 10;
     for (int i=0; i<sites.size(); i++){
-      String clientName = "c" + i + "-tri";
+      String clientName = "c" + i + "-test";
       clientSlices.add(clientName);
       clientKeyMap.put(clientName, "key_p" + (keyBase + i));
       clientSiteMap.put(clientName, sites.get(i));
