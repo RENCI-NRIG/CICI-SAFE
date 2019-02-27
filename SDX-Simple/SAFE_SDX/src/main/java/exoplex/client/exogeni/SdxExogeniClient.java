@@ -129,10 +129,12 @@ public class SdxExogeniClient extends SliceCommon{
         return processStitchCmd(params);
       } else if (params[0].equals("link")) {
         processConnectionCmd(params);
-      }else if(params[0].equals("unstitch")){
+      } else if(params[0].equals("unstitch")){
         processUnStitchCmd(params);
-      } else {
+      } else if (params[0].equals("route")){
         processPrefixCmd(params);
+      } else {
+        processBgpCmd(params);
       }
     } catch (Exception e) {
       e.printStackTrace();
@@ -227,6 +229,22 @@ public class SdxExogeniClient extends SliceCommon{
     HttpUtil.postJSON(peerUrl + "sdx/bgp", advertise.toJsonObject());
   }
 
+  private void processBgpCmd(String[] params){
+    if(safeEnabled){
+      String token = null;
+      //Post SAFE sets
+      BgpAdvertise advertise = new BgpAdvertise();
+      advertise.destPrefix = params[1];
+      advertise.srcPrefix = params[2];
+      advertise.advertiserPID = safeKeyHash;
+      advertise.route.add(safeKeyHash);
+      advertise.safeToken = token;
+      advertiseBgp(serverurl, advertise);
+      logger.debug(String.format("posted initRoute statement for dst %s src %s pair", advertise
+        .destPrefix, advertise.srcPrefix));
+    }
+  }
+
   private void processPrefixCmd(String[] params) {
     JSONObject paramsobj = new JSONObject();
     paramsobj.put("dest", params[1]);
@@ -271,7 +289,7 @@ public class SdxExogeniClient extends SliceCommon{
         advertise.advertiserPID = safeKeyHash;
         advertise.route.add(safeKeyHash);
         advertise.ownerPID = safeKeyHash;
-        advertise.prefix = params[1];
+        advertise.destPrefix = params[1];
         //pass the token when making bgpAdvertise
         advertiseBgp(serverurl,advertise);
         logger.debug("posted initRoute statement");

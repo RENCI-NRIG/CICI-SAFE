@@ -63,7 +63,7 @@ public class SafeManager {
   public void postPathToken(BgpAdvertise advertise){
     String[] params = new String[4];
     params[0] = advertise.safeToken;
-    params[1] = advertise.getPrefix();
+    params[1] = advertise.getDestPrefix();
     params[2] = advertise.advertiserPID;
     params[3] = String.valueOf(advertise.route.size());
     post(SdxRoutingSlang.postPathToken, params);
@@ -101,7 +101,7 @@ public class SafeManager {
   public boolean authorizeBgpAdvertise(BgpAdvertise bgpAdvertise){
     String[] othervalues=new String[4];
     othervalues[0] = bgpAdvertise.ownerPID;
-    othervalues[1] = bgpAdvertise.getPrefix();
+    othervalues[1] = bgpAdvertise.getDestPrefix();
     othervalues[2] = bgpAdvertise.getPath();
     othervalues[3] = bgpAdvertise.safeToken;
     return SafeUtils.authorize(safeServer, SdxRoutingSlang.verifyRoute, getSafeKeyHash(), othervalues);
