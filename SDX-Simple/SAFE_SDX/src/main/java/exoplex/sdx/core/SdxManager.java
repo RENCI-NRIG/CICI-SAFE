@@ -11,6 +11,7 @@ import exoplex.sdx.bgp.BgpManager;
 import exoplex.sdx.safe.SafeManager;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.core.net.Advertiser;
 import org.json.JSONObject;
 import org.renci.ahab.libndl.Slice;
 import org.renci.ahab.libndl.resources.request.*;
@@ -33,6 +34,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /*
 
@@ -1052,25 +1054,34 @@ public class SdxManager extends SliceHelper {
       logger.warn(String.format("Unauthorized bgpAdvertise :%s", bgpAdvertise));
       return "";
     }
-    BgpAdvertise newAdvertise = bgpManager.receiveAdvertise(bgpAdvertise);
     safeManager.postPathToken(bgpAdvertise);
-    if(newAdvertise == null) {
-      //No change
-      return "";
-    }else{
-      newAdvertise.safeToken = bgpAdvertise.safeToken;
-      //Updates
-      //TODO retrive previous routes, how to to it safely?
-      if(bgpAdvertise.route.size() > 1) {
-        //configure the route if the advertisement is not from a direct customer for access control
-        //routingmanager.retriveRouteOfPrefix(bgpAdvertise.prefix, SDNController);
-        String customerReservId = customerNodes.get(bgpAdvertise.advertiserPID).iterator().next();
-        String gateway = customerGateway.get(customerReservId);
-        String edgeNode = routingmanager.getEdgeRouterByGateway(gateway);
-        routingmanager.configurePath(bgpAdvertise.prefix, edgeNode, gateway, getSDNController());
+    if(!bgpAdvertise.hasSrcPrefix()) {
+      BgpAdvertise newAdvertise = bgpManager.receiveAdvertise(bgpAdvertise);
+      if (newAdvertise == null) {
+        //No change
+        return "";
+      } else {
+        newAdvertise.safeToken = bgpAdvertise.safeToken;
+        //Updates
+        //TODO retrive previous routes, how to to it safely?
+        if (bgpAdvertise.route.size() > 1) {
+          //configure the route if the advertisement is not from a direct customer for access control
+          //routingmanager.retriveRouteOfPrefix(bgpAdvertise.prefix, SDNController);
+          String customerReservId = customerNodes.get(bgpAdvertise.advertiserPID).iterator().next();
+          String gateway = customerGateway.get(customerReservId);
+          String edgeNode = routingmanager.getEdgeRouterByGateway(gateway);
+          routingmanager.configurePath(bgpAdvertise.destPrefix, edgeNode, gateway, getSDNController
+            ());
+        }
+        propagateBgpAdvertise(newAdvertise, bgpAdvertise.advertiserPID);
+        return newAdvertise.toString();
       }
-      propagateBgpAdvertise(newAdvertise, bgpAdvertise.advertiserPID);
-      return newAdvertise.toString();
+    }else{
+      ArrayList<BgpAdvertise> newAdvertises = bgpManager.receiveStAdvertise(bgpAdvertise);
+      for(BgpAdvertise newAdvertise: newAdvertises) {
+        propagateBgpAdvertise(newAdvertise, bgpAdvertise.advertiserPID);
+      }
+      return newAdvertises.stream().map(BgpAdvertise::toString).collect(Collectors.joining(","));
     }
   }
 
@@ -1115,10 +1126,10 @@ public class SdxManager extends SliceHelper {
     for(String peer: peerUrls.keySet()){
       if(!peer.equals(advertise.ownerPID) && !peer.equals(advertise.advertiserPID)){
         if(!advertise.route.contains(peer) && safeManager.verifyAS(advertise.ownerPID, advertise
-          .getPrefix(), peer, advertise.safeToken)) {
+          .getDestPrefix(), peer, advertise.safeToken)) {
           String path = advertise.getPath();
           String[] params = new String[5];
-          params[0] = advertise.getPrefix();
+          params[0] = advertise.getDestPrefix();
           params[1] = path;
           params[2] = peer;
           params[3] = srcPid;
