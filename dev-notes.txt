@@ -1,0 +1,30 @@
+To allow a customer to specify policies for their outgoing traffic. They make route advertisements
+with both source and destination IP addreses specified, and link their network policies in the route
+.
+
+When SDX received such route that has both src and dst ip addreses, it check if there are matching
+routes (i.e. the same src and dst IP pair) from the other direction.
+
+1. If there is no such matching routes, do nothing
+
+2. If there is matching routes, but all doesn't match. Do nothing
+
+3. If there is matching routes and the whole path, which is the conjunction of paths in the two
+advertisements are compliant to network policies of both customers, configure the routing.
+
+4. If there is matching routes, with IP prefixes a super set of the IP addresses in the route (For
+example, a matching route with only destination addresses specified), but the whole path are not
+compliant to the sender's outgoing policies. We need to explicitly install a blocking rule to block
+the traffic. Q: Is this necessary, as we assume that the sender won't send traffic to uncompliant
+paths. Seems to be not necessary.
+
+
+How do we verify the whole path?
+1. Conjunct the path
+2. Link certificates  of both routes to fetch the credentials of all ASes on the path, and the
+policies of both customer networks
+3.
+
+route(Alice, aliceIP, Bob, bobIP, path):-
+   Alice: route(aliceIP, bobIP, path),
+   Bob: route(bobIP, aliceIP, path)
