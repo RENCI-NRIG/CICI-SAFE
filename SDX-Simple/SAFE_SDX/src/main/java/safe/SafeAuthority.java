@@ -269,7 +269,7 @@ public class SafeAuthority extends SdxRoutingSlang {
     envs.put(bearerRef, piProjectTokens.get(1));
     assert authorize(createSlice, "key_p3", new String[]{projectId}, envs);
 
-    //PI delegate to users
+    safePost(postMakeIPTokenSet, "rpkiroot", new String[]{"ipv4\\\"192.1.1.1/24\\\""});
 
     for (String slice : clientSlices) {
       String userKeyFile = sliceKeyMap.get(slice);
@@ -334,13 +334,8 @@ public class SafeAuthority extends SdxRoutingSlang {
       parentPrefix});
     safePost(postDlgToken, userKeyFile, new String[]{ipToken, userIP});
     safePost(updateSubjectSet, userKeyFile, new String[]{ipToken});
-<<<<<<< HEAD:SDX-Simple/SAFE_SDX/src/main/java/safe/SafeAuthority.java
-    for(String sdxKey: Cnert2019Setting.sdxKeyMap.values()) {
-      authorize(authorizeOwnPrefix, sdxKey, new String[]{userKey, userIP});
-=======
     for(String sdxKey: MultiSdxSetting.sdxKeyMap.values()) {
       authorize(authorizeOwnPrefix, sdxKey, new String[]{userKey, uip});
->>>>>>> [wip] renamed and re factored multisdx:SDX-Simple/SAFE_SDX/src/main/java/safe/AuthorityMock.java
     }
 
     //Tag delegation
