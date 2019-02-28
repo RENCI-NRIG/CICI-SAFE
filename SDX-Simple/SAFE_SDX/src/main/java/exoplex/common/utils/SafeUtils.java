@@ -34,7 +34,7 @@ public class SafeUtils {
   }
 
   public static String getToken(String message) {
-    Pattern pattern = Pattern.compile("\\[\\'(.{43}?)\\'?");
+    Pattern pattern = Pattern.compile("\\[\\'(.{43}=?)\\'?");
     Matcher matcher = pattern.matcher(message);
     String token = null;
     if (matcher.find()) {
@@ -46,7 +46,7 @@ public class SafeUtils {
 
   public static List<String> getTokens(String message){
     ArrayList<String> tokens = new ArrayList<String>();
-    Pattern pattern = Pattern.compile("\\'(.{43}?)\\'?");
+    Pattern pattern = Pattern.compile("\\'(.{43}=?)\\'?");
     Matcher matcher = pattern.matcher(message);
     String token = null;
     while (matcher.find()) {
@@ -81,7 +81,7 @@ public class SafeUtils {
       DefaultHttpClient httpClient = new DefaultHttpClient();
       logger.debug(safeserver + "/" + requestName);
       HttpPost postRequest = new HttpPost("http://" + safeserver + "/" + requestName);
-      String params = "{\"principal\":\"PRINCIPAL\",ENVS\"otherValues\":[OTHER]}";
+      String params = "{\"principal\":\"PRINCIPAL\",ENVS\"methodParams\":[OTHER]}";
       params = params.replace("ENVS", getEnvs(envs));
       params = params.replace("PRINCIPAL", principal);
       String others = "";

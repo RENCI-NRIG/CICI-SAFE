@@ -15,7 +15,7 @@ public class SafeManager {
   private String sshKey=null;
   private String safeKeyHash= null;
   //was v4
-  public final static String safeDockerImage = "safeserver-v4";
+  public final static String safeDockerImage = "safeserver-v7";
   //was prdn.sh
   public final static String safeServerScript = "prdn.sh";
 
