@@ -278,7 +278,7 @@ public class AuthorityMock extends SdxRoutingSlang{
     safePost(postStitchPolicy, "sdx");
 
     //MakeIp Delegation
-    safePost(postMakeIPTokenSet, "rpkiroot", new String[]{"192.1.1.1/24"});
+    safePost(postMakeIPTokenSet, "rpkiroot", new String[]{"ipv4\\\"192.1.1.1/24\\\""});
 
     for (String slice : slices) {
       String userKeyFile = sliceKeyMap.get(slice);
