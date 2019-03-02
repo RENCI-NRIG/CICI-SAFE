@@ -9,7 +9,7 @@ import exoplex.common.utils.Exec;
 import exoplex.common.utils.HttpUtil;
 import exoplex.common.utils.SafeUtils;
 import exoplex.common.utils.ServerOptions;
-import exoplex.sdx.bgp.BgpAdvertise;
+import exoplex.sdx.bgp.RouteAdvertise;
 import exoplex.sdx.safe.SafeManager;
 import org.apache.commons.cli.CommandLine;
 import org.apache.logging.log4j.LogManager;
@@ -23,8 +23,6 @@ import safe.SdxRoutingSlang;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
-
-import safe.SdxRoutingSlang;
 
 /**
  * @author geni-orca
@@ -225,7 +223,7 @@ public class SdxExogeniClient extends SliceCommon{
     }
   }
 
-  private void advertiseBgp(String peerUrl, BgpAdvertise advertise){
+  private void advertiseBgp(String peerUrl, RouteAdvertise advertise){
     HttpUtil.postJSON(peerUrl + "sdx/bgp", advertise.toJsonObject());
   }
 
@@ -233,7 +231,7 @@ public class SdxExogeniClient extends SliceCommon{
     if(safeEnabled){
       String token = null;
       //Post SAFE sets
-      BgpAdvertise advertise = new BgpAdvertise();
+      RouteAdvertise advertise = new RouteAdvertise();
       advertise.destPrefix = params[1];
       advertise.srcPrefix = params[2];
       advertise.advertiserPID = safeKeyHash;
@@ -284,7 +282,7 @@ public class SdxExogeniClient extends SliceCommon{
         safeparams[3] = String.valueOf(1);
         String token = SafeUtils.getToken(SafeUtils.postSafeStatements(safeServer, SdxRoutingSlang
             .postInitRoute, safeKeyHash, safeparams));
-        BgpAdvertise advertise = new BgpAdvertise();
+        RouteAdvertise advertise = new RouteAdvertise();
         advertise.safeToken = token;
         advertise.advertiserPID = safeKeyHash;
         advertise.route.add(safeKeyHash);

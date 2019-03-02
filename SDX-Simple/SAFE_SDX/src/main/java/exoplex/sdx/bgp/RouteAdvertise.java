@@ -5,20 +5,23 @@ import org.json.JSONObject;
 
 import java.util.ArrayList;
 
-public class BgpAdvertise {
+public class RouteAdvertise {
   public String ownerPID;
   public String destPrefix;
   public String srcPrefix;
   public String advertiserPID;
   //use PID to represent AS now
   public String safeToken;
+  //use route for destination address based route
   public ArrayList<String> route;
 
-  public BgpAdvertise(){
+  //<dest, src>-> ArrayList<String>
+
+  public RouteAdvertise(){
     route = new ArrayList<>();
   }
 
-  public BgpAdvertise(BgpAdvertise advertise, String myPid){
+  public RouteAdvertise(RouteAdvertise advertise, String myPid){
     this.ownerPID = advertise.ownerPID;
     this.destPrefix = advertise.destPrefix;
     this.srcPrefix = advertise.srcPrefix;
