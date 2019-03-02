@@ -4,7 +4,7 @@ import exoplex.common.slice.Scripts;
 import exoplex.common.utils.Exec;
 import exoplex.common.utils.SafeUtils;
 
-import exoplex.sdx.bgp.BgpAdvertise;
+import exoplex.sdx.bgp.RouteAdvertise;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import safe.SdxRoutingSlang;
@@ -60,7 +60,7 @@ public class SafeManager {
       othervalues);
   }
 
-  public void postPathToken(BgpAdvertise advertise){
+  public void postPathToken(RouteAdvertise advertise){
     String[] params = new String[4];
     params[0] = advertise.safeToken;
     params[1] = advertise.getDestPrefix();
@@ -98,12 +98,12 @@ public class SafeManager {
     return SafeUtils.getToken(res);
   }
 
-  public boolean authorizeBgpAdvertise(BgpAdvertise bgpAdvertise){
+  public boolean authorizeBgpAdvertise(RouteAdvertise routeAdvertise){
     String[] othervalues=new String[4];
-    othervalues[0] = bgpAdvertise.ownerPID;
-    othervalues[1] = bgpAdvertise.getDestPrefix();
-    othervalues[2] = bgpAdvertise.getPath();
-    othervalues[3] = bgpAdvertise.safeToken;
+    othervalues[0] = routeAdvertise.ownerPID;
+    othervalues[1] = routeAdvertise.getDestPrefix();
+    othervalues[2] = routeAdvertise.getPath();
+    othervalues[3] = routeAdvertise.safeToken;
     return SafeUtils.authorize(safeServer, SdxRoutingSlang.verifyRoute, getSafeKeyHash(), othervalues);
   }
 

@@ -1,7 +1,6 @@
 package exoplex.sdx.core;
 
-import exoplex.sdx.bgp.BgpAdvertise;
-import org.apache.jena.atlas.json.JSON;
+import exoplex.sdx.bgp.RouteAdvertise;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.json.JSONObject;
@@ -45,12 +44,12 @@ public class RestService {
   @Path("/bgp")
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.TEXT_PLAIN)
-  public String receiveBgpAdvertise(@Context UriInfo uriInfo, BgpAdvertise bgpAdvertise) {
+  public String receiveBgpAdvertise(@Context UriInfo uriInfo, RouteAdvertise routeAdvertise) {
     logger.debug(uriInfo.getBaseUri());
-    logger.debug(String.format("got bgp advertisement %s", bgpAdvertise));
+    logger.debug(String.format("got bgp advertisement %s", routeAdvertise));
     SdxManager sdxManager = SdxServer.sdxManagerMap.get(uriInfo.getBaseUri().getPort());
     try {
-      return sdxManager.processBgpAdvertise(bgpAdvertise);
+      return sdxManager.processBgpAdvertise(routeAdvertise);
     } catch (Exception e) {
       e.printStackTrace();
       return e.getMessage();

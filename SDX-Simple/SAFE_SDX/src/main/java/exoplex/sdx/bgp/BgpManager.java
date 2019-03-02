@@ -1,7 +1,5 @@
 package exoplex.sdx.bgp;
 
-import sun.reflect.misc.ConstructorUtil;
-
 import java.util.ArrayList;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -13,39 +11,39 @@ public class BgpManager {
     this.myPID = myPID;
   }
 
-  ConcurrentHashMap <String, ArrayList<BgpAdvertise>> bgpTable = new ConcurrentHashMap<String,
-    ArrayList<BgpAdvertise>>();
-  ConcurrentHashMap <String, ConcurrentHashMap<String, ArrayList<BgpAdvertise>>> stPairBgpTable =
+  ConcurrentHashMap <String, ArrayList<RouteAdvertise>> bgpTable = new ConcurrentHashMap<String,
+    ArrayList<RouteAdvertise>>();
+  ConcurrentHashMap <String, ConcurrentHashMap<String, ArrayList<RouteAdvertise>>> stPairBgpTable =
     new ConcurrentHashMap();
 
-  public BgpAdvertise receiveAdvertise(BgpAdvertise bgpAdvertise){
-    String destPrefix = bgpAdvertise.destPrefix;
+  public RouteAdvertise receiveAdvertise(RouteAdvertise routeAdvertise){
+    String destPrefix = routeAdvertise.destPrefix;
     if(bgpTable.containsKey(destPrefix)){
       //Todo: implement stategy for chosing from multiple advertisements here
-      addToBgpTable(bgpAdvertise);
+      addToBgpTable(routeAdvertise);
       return null;
     }else {
-      addToBgpTable(bgpAdvertise);
-      BgpAdvertise propagateAdvertise = new BgpAdvertise(bgpAdvertise, myPID);
+      addToBgpTable(routeAdvertise);
+      RouteAdvertise propagateAdvertise = new RouteAdvertise(routeAdvertise, myPID);
       return propagateAdvertise;
     }
   }
 
-  public ArrayList<BgpAdvertise> receiveStAdvertise(BgpAdvertise bgpAdvertise){
-    ArrayList<BgpAdvertise> newAdvertises = new ArrayList<>();
-    String destPrefix = bgpAdvertise.destPrefix;
-    String srcPrefix = bgpAdvertise.srcPrefix;
-    addToStPairBgpTable(bgpAdvertise);
-    ArrayList<BgpAdvertise> existingAdvertises = stPairBgpTable.get(destPrefix)
+  public ArrayList<RouteAdvertise> receiveStAdvertise(RouteAdvertise routeAdvertise){
+    ArrayList<RouteAdvertise> newAdvertises = new ArrayList<>();
+    String destPrefix = routeAdvertise.destPrefix;
+    String srcPrefix = routeAdvertise.srcPrefix;
+    addToStPairBgpTable(routeAdvertise);
+    ArrayList<RouteAdvertise> existingAdvertises = stPairBgpTable.get(destPrefix)
       .get(srcPrefix);
     for(int i = 0; i < topK; i++){
-      newAdvertises.add(new BgpAdvertise(existingAdvertises.get(i), myPID));
+      newAdvertises.add(new RouteAdvertise(existingAdvertises.get(i), myPID));
     }
     return newAdvertises;
   }
 
-  public BgpAdvertise initAdvertise(String userPid, String destPrefix){
-    BgpAdvertise advertise = new BgpAdvertise();
+  public RouteAdvertise initAdvertise(String userPid, String destPrefix){
+    RouteAdvertise advertise = new RouteAdvertise();
     advertise.route.add(myPID);
     advertise.advertiserPID = myPID;
     advertise.destPrefix = destPrefix;
@@ -54,29 +52,29 @@ public class BgpManager {
     return advertise;
   }
 
-  public void addToBgpTable(BgpAdvertise bgpAdvertise){
-    if(!bgpTable.containsKey(bgpAdvertise.destPrefix)){
-      ArrayList<BgpAdvertise> advertises = new ArrayList<>();
-      bgpTable.put(bgpAdvertise.destPrefix, advertises);
+  public void addToBgpTable(RouteAdvertise routeAdvertise){
+    if(!bgpTable.containsKey(routeAdvertise.destPrefix)){
+      ArrayList<RouteAdvertise> advertises = new ArrayList<>();
+      bgpTable.put(routeAdvertise.destPrefix, advertises);
     }
-    bgpTable.get(bgpAdvertise.destPrefix).add(bgpAdvertise);
+    bgpTable.get(routeAdvertise.destPrefix).add(routeAdvertise);
   }
 
-  public void addToStPairBgpTable(BgpAdvertise bgpAdvertise){
-    stPairBgpTable.getOrDefault(bgpAdvertise.destPrefix, new ConcurrentHashMap<>())
-      .getOrDefault(bgpAdvertise.srcPrefix, new ArrayList<>())
-      .add(bgpAdvertise);
+  public void addToStPairBgpTable(RouteAdvertise routeAdvertise){
+    stPairBgpTable.getOrDefault(routeAdvertise.destPrefix, new ConcurrentHashMap<>())
+      .getOrDefault(routeAdvertise.srcPrefix, new ArrayList<>())
+      .add(routeAdvertise);
   }
 
-  public ArrayList<BgpAdvertise> getAllAdvertises(){
-    ArrayList<BgpAdvertise> advertises = new ArrayList<>();
+  public ArrayList<RouteAdvertise> getAllAdvertises(){
+    ArrayList<RouteAdvertise> advertises = new ArrayList<>();
     for(String destPrefix: bgpTable.keySet()){
       advertises.add(bgpTable.get(destPrefix).get(0));
     }
     return advertises;
   }
 
-  public BgpAdvertise getAdvertise(String destPrefix){
+  public RouteAdvertise getAdvertise(String destPrefix){
     if(bgpTable.containsKey(destPrefix)){
       return bgpTable.get(destPrefix).get(0);
     }else{
@@ -84,8 +82,8 @@ public class BgpManager {
     }
   }
 
-  public BgpAdvertise getStPairAdvertise(String destPrefix, String srcPrefix){
-    ArrayList<BgpAdvertise> advertises =  stPairBgpTable.getOrDefault(destPrefix, new
+  public RouteAdvertise getStPairAdvertise(String destPrefix, String srcPrefix){
+    ArrayList<RouteAdvertise> advertises =  stPairBgpTable.getOrDefault(destPrefix, new
       ConcurrentHashMap<>())
       .getOrDefault(srcPrefix, new ArrayList<>());
     if(advertises.size() > 0){

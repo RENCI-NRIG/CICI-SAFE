@@ -6,14 +6,12 @@ import exoplex.common.slice.SiteBase;
 import exoplex.common.utils.Exec;
 import exoplex.common.utils.HttpUtil;
 import exoplex.common.utils.ServerOptions;
-import exoplex.sdx.bgp.BgpAdvertise;
+import exoplex.sdx.bgp.RouteAdvertise;
 import exoplex.sdx.bgp.BgpManager;
 import exoplex.sdx.safe.SafeManager;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.logging.log4j.core.net.Advertiser;
 import org.json.JSONObject;
-import org.renci.ahab.libndl.Slice;
 import org.renci.ahab.libndl.resources.request.*;
 import org.renci.ahab.libtransport.util.TransportException;
 import exoplex.sdx.bro.BroManager;
@@ -518,18 +516,18 @@ public class SdxManager extends SliceHelper {
 
   private void updatePeer(PeerRequest newPeer){
     this.peerUrls.put(newPeer.peerPID, newPeer.peerUrl);
-    ArrayList<BgpAdvertise> advertises = bgpManager.getAllAdvertises();
-    for(BgpAdvertise bgpAdvertise: advertises){
-      if(!bgpAdvertise.advertiserPID.equals(newPeer)){
-        if(!bgpAdvertise.route.contains(newPeer.peerPID)) {
-          advertiseBgp(newPeer.peerUrl, bgpAdvertise);
+    ArrayList<RouteAdvertise> advertises = bgpManager.getAllAdvertises();
+    for(RouteAdvertise routeAdvertise : advertises){
+      if(!routeAdvertise.advertiserPID.equals(newPeer)){
+        if(!routeAdvertise.route.contains(newPeer.peerPID)) {
+          advertiseBgp(newPeer.peerUrl, routeAdvertise);
         }
       }
     }
     //Todo: make advertisements
   }
 
-  private void advertiseBgp(String peerUrl, BgpAdvertise advertise){
+  private void advertiseBgp(String peerUrl, RouteAdvertise advertise){
     logger.info(String.format("advertiseBgp %s", advertise.toString()));
     HttpUtil.postJSON(peerUrl + "sdx/bgp", advertise.toJsonObject());
   }
@@ -914,7 +912,7 @@ public class SdxManager extends SliceHelper {
     if(prefixGateway.containsKey(prefix)) {
       return prefixGateway.get(prefix);
     }else{
-      BgpAdvertise advertise = bgpManager.getAdvertise(prefix);
+      RouteAdvertise advertise = bgpManager.getAdvertise(prefix);
       if(advertise != null){
         return customerGateway.getOrDefault(advertise.advertiserPID, null);
       }else{
@@ -932,7 +930,7 @@ public class SdxManager extends SliceHelper {
       if(prefixKeyHash.containsKey(target_prefix)) {
         targetHash = prefixKeyHash.get(target_prefix);
       }else {
-        BgpAdvertise advertise = bgpManager.getAdvertise(target_prefix);
+        RouteAdvertise advertise = bgpManager.getAdvertise(target_prefix);
         if(advertise == null){
           return "target prefix unrecognized.";
         }else {
@@ -951,7 +949,7 @@ public class SdxManager extends SliceHelper {
     if(prefixGateway.containsKey(target_prefix)){
       n2 = routingmanager.getEdgeRouterByGateway(prefixGateway.get(target_prefix));
     }else{
-      BgpAdvertise advertise = bgpManager.getAdvertise(target_prefix);
+      RouteAdvertise advertise = bgpManager.getAdvertise(target_prefix);
       if(advertise!= null) {
         String peerNode = customerNodes.get(advertise.advertiserPID).iterator().next();
         n2 = routingmanager.getEdgeRouterByGateway(customerGateway.get(peerNode));
@@ -1049,39 +1047,39 @@ public class SdxManager extends SliceHelper {
   }
 
 
-  public String processBgpAdvertise(BgpAdvertise bgpAdvertise){
-    if(safeEnabled && !safeManager.authorizeBgpAdvertise(bgpAdvertise)){
-      logger.warn(String.format("Unauthorized bgpAdvertise :%s", bgpAdvertise));
+  public String processBgpAdvertise(RouteAdvertise routeAdvertise){
+    if(safeEnabled && !safeManager.authorizeBgpAdvertise(routeAdvertise)){
+      logger.warn(String.format("Unauthorized routeAdvertise :%s", routeAdvertise));
       return "";
     }
-    safeManager.postPathToken(bgpAdvertise);
-    if(!bgpAdvertise.hasSrcPrefix()) {
-      BgpAdvertise newAdvertise = bgpManager.receiveAdvertise(bgpAdvertise);
+    safeManager.postPathToken(routeAdvertise);
+    if(!routeAdvertise.hasSrcPrefix()) {
+      RouteAdvertise newAdvertise = bgpManager.receiveAdvertise(routeAdvertise);
       if (newAdvertise == null) {
         //No change
         return "";
       } else {
-        newAdvertise.safeToken = bgpAdvertise.safeToken;
+        newAdvertise.safeToken = routeAdvertise.safeToken;
         //Updates
         //TODO retrive previous routes, how to to it safely?
-        if (bgpAdvertise.route.size() > 1) {
+        if (routeAdvertise.route.size() > 1) {
           //configure the route if the advertisement is not from a direct customer for access control
-          //routingmanager.retriveRouteOfPrefix(bgpAdvertise.prefix, SDNController);
-          String customerReservId = customerNodes.get(bgpAdvertise.advertiserPID).iterator().next();
+          //routingmanager.retriveRouteOfPrefix(routeAdvertise.prefix, SDNController);
+          String customerReservId = customerNodes.get(routeAdvertise.advertiserPID).iterator().next();
           String gateway = customerGateway.get(customerReservId);
           String edgeNode = routingmanager.getEdgeRouterByGateway(gateway);
-          routingmanager.configurePath(bgpAdvertise.destPrefix, edgeNode, gateway, getSDNController
+          routingmanager.configurePath(routeAdvertise.destPrefix, edgeNode, gateway, getSDNController
             ());
         }
-        propagateBgpAdvertise(newAdvertise, bgpAdvertise.advertiserPID);
+        propagateBgpAdvertise(newAdvertise, routeAdvertise.advertiserPID);
         return newAdvertise.toString();
       }
     }else{
-      ArrayList<BgpAdvertise> newAdvertises = bgpManager.receiveStAdvertise(bgpAdvertise);
-      for(BgpAdvertise newAdvertise: newAdvertises) {
-        propagateBgpAdvertise(newAdvertise, bgpAdvertise.advertiserPID);
+      ArrayList<RouteAdvertise> newAdvertises = bgpManager.receiveStAdvertise(routeAdvertise);
+      for(RouteAdvertise newAdvertise: newAdvertises) {
+        propagateBgpAdvertise(newAdvertise, routeAdvertise.advertiserPID);
       }
-      return newAdvertises.stream().map(BgpAdvertise::toString).collect(Collectors.joining(","));
+      return newAdvertises.stream().map(RouteAdvertise::toString).collect(Collectors.joining(","));
     }
   }
 
@@ -1114,7 +1112,7 @@ public class SdxManager extends SliceHelper {
         gatewayPrefixes.put(gateway, new HashSet());
       }
       gatewayPrefixes.get(gateway).add(dest);
-      //BgpAdvertise advertise = bgpManager.initAdvertise(customer_keyhash, dest);
+      //RouteAdvertise advertise = bgpManager.initAdvertise(customer_keyhash, dest);
       //propagateBgpAdvertise(advertise);
       notifyResult.result= true;
       notifyResult.safeKeyHash = safeManager.getSafeKeyHash();
@@ -1122,7 +1120,7 @@ public class SdxManager extends SliceHelper {
     return notifyResult;
   }
 
-  private void propagateBgpAdvertise(BgpAdvertise advertise, String srcPid){
+  private void propagateBgpAdvertise(RouteAdvertise advertise, String srcPid){
     for(String peer: peerUrls.keySet()){
       if(!peer.equals(advertise.ownerPID) && !peer.equals(advertise.advertiserPID)){
         if(!advertise.route.contains(peer) && safeManager.verifyAS(advertise.ownerPID, advertise
