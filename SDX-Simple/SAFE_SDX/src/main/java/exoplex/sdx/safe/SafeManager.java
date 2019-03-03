@@ -51,10 +51,11 @@ public class SafeManager {
   public boolean authorizeConnectivity(String srchash, String srcip, String dsthash, String dstip){
     String[] othervalues=new String[4];
     othervalues[0] = srchash;
-    //othervalues[1]= String.format("ipv4\\\"%s\\\"", srcip);
-    othervalues[1] = srcip;
+    othervalues[1]= String.format("ipv4\\\"%s\\\"", srcip);
+    //othervalues[1] = srcip;
     othervalues[2] = dsthash;
-    othervalues[3] = dstip;
+    othervalues[3]= String.format("ipv4\\\"%s\\\"", dstip);
+    //othervalues[3] = dstip;
     return SafeUtils.authorize(safeServer, "authZByUserAttr", getSafeKeyHash(),
       othervalues);
   }
