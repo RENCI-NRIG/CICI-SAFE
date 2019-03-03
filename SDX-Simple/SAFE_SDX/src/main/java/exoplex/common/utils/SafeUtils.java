@@ -146,7 +146,7 @@ public class SafeUtils {
     }
     for(String val: otherValues) {
       if (!message.contains(val)) {
-        return false;
+        logger.warn(message);
       }
     }
     return true;
