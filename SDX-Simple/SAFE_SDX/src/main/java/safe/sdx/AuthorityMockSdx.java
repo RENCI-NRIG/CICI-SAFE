@@ -1,4 +1,4 @@
-package safe;
+package safe.sdx;
 
 import exoplex.common.utils.SafeUtils;
 import org.apache.logging.log4j.Level;
@@ -7,81 +7,19 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.LoggerContext;
 import org.apache.logging.log4j.core.config.Configuration;
 import org.apache.logging.log4j.core.config.LoggerConfig;
+import safe.AuthorityBase;
+import safe.SdxRoutingSlang;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
-public class AuthorityMock {
+public class AuthorityMockSdx extends AuthorityBase implements SdxRoutingSlang {
 
-  static Logger logger = LogManager.getLogger(AuthorityMock.class);
+  static Logger logger = LogManager.getLogger(AuthorityMockSdx.class);
 
-  static final String bearerRef = "bearerRef";
-
-  static final String subject = "subject";
-
-  static String exampleSafeServer = "129.114.109.53:7777";
-
-  static final String postMakeIPTokenSet = "postMakeIPTokenSet";
-  static final String postUserAclEntry = "postUserAclEntry";
-  static final String postUserTagAclEntry = "postUserTagAclEntry";
-  static final String postCustomerPolicy = "postCustomerPolicy";
-  static final String updateTagSet = "updateTagSet";
-  static final String postStandardSliceDefaultPrivilegeSet = "postStandardSliceDefaultPrivilegeSet";
-  static final String updateSubjectSet = "updateSubjectSet";
-  static final String postOwnPrefixPolicy = "postOwnPrefixPolicy";
-  static final String postMAEndorsement = "postMAEndorsement";
-  static final String postStitchPolicy = "postStitchPolicy";
-  static final String postObjectTagSet = "postObjectTagSet";
-  static final String postProjectMembership = "postProjectMembership";
-  static final String postSAEndorsement = "postSAEndorsement";
-  static final String authZByPID = "authZByPID";
-  static final String createSlice = "createSlice";
-  static final String authorizeStitchByPID = "authorizeStitchByPID";
-  static final String authZByUserAttr = "authZByUserAttr";
-  static final String postAssignTag = "postAssignTag";
-  static final String postCustomerConnectionPolicy = "postCustomerConnectionPolicy";
-  static final String postSliceTagAclEntry = "postSliceTagAclEntry";
-  static final String postPIEndorsement = "postPIEndorsement";
-  static final String postProjectIDAcl = "postProjectIDAcl";
-  static final String postCPEndorsement = "postCPEndorsement";
-  static final String authZByProjectAttr = "authZByProjectAttr";
-  static final String postProjectSet = "postProjectSet";
-  static final String postPAEndorsement = "postPAEndorsement";
-  static final String authorizeStitchByUID = "authorizeStitchByUID";
-  static final String postTagSet = "postTagSet";
-  static final String postTagPrivilegePolicy = "postTagPrivilegePolicy";
-  static final String createProject = "createProject";
-  static final String postAclEntrySet = "postAclEntrySet";
-  static final String postUserEndorsement = "postUserEndorsement";
-  static final String postMemberSet = "postMemberSet";
-  static final String authorizeOwnPrefix = "authorizeOwnPrefix";
-  static final String authorizeStitchByProjectAttr = "authorizeStitchByProjectAttr";
-  static final String passDelegation = "passDelegation";
-  static final String authorizeStitchBySliceAttr = "authorizeStitchBySliceAttr";
-  static final String postSliceControl = "postSliceControl";
-  static final String postLinkTagSetToProject = "postLinkTagSetToProject";
-  static final String postSliceSet = "postSliceSet";
-  static final String authorizeStitchByUserAttr = "authorizeStitchByUserAttr";
-  static final String createSliver = "createSliver";
-  static final String postIdSet = "postIdSet";
-  static final String postDlgToken = "postDlgToken";
-  static final String postGrantTagPriv = "postGrantTagPriv";
-  static final String postUpdateObjectTagSet = "postUpdateObjectTagSet";
-  static final String postStandardSliceControlSet = "postStandardSliceControlSet";
-  static final String postLinkTagSetToSlice = "postLinkTagSetToSlice";
-  static final String postIPAllocate = "postIPAllocate";
-  static final String whoami = "whoami";
-  static final String postTagAclEntry = "postTagAclEntry";
-  static final String postSubjectSet = "postSubjectSet";
-  ;
-
-  String safeServer;
-
-  ArrayList<String> principals = new ArrayList<>();
-
-  HashMap<String, String> principalMap = new HashMap<>();
+  static String defaultSafeServer = "139.62.242.10:7777";
 
   HashMap<String, String> sliceToken = new HashMap<>();
 
@@ -89,14 +27,12 @@ public class AuthorityMock {
 
   HashMap<String, String> sliceScid = new HashMap<>();
 
-  HashMap<String, String> subjectSet = new HashMap<String, String>();
-
   HashMap<String, String> sliceIpMap = new HashMap<>();
 
   ArrayList<String> slices = new ArrayList<>();
 
-  public AuthorityMock(String safeServer) {
-    this.safeServer = safeServer;
+  public AuthorityMockSdx(String safeServer) {
+    super(safeServer);
   }
 
   public static void main(String[] args) {
@@ -106,12 +42,8 @@ public class AuthorityMock {
       LoggerConfig loggerConfig = config.getLoggerConfig(LogManager.ROOT_LOGGER_NAME);
       loggerConfig.setLevel(Level.DEBUG);
       ctx.updateLoggers();
-      AuthorityMock authorityMock = new AuthorityMock(exampleSafeServer);
-      authorityMock.customSetting();
-      authorityMock.addPrincipals();
-      authorityMock.initPrincipals();
-      authorityMock.initializeGeniAuth();
-      authorityMock.checkAuthorization();
+      AuthorityMockSdx authorityMock = new AuthorityMockSdx(defaultSafeServer);
+      authorityMock.makeSafePreparation();
     }
     else if(args.length==4){
       String userKeyFile = args[0];
@@ -120,22 +52,25 @@ public class AuthorityMock {
       String ss = args[3] + ":7777";
       logger.info(String.format("UserKeyFile:%s sliceName:%s IpPrefix:%s SafeServer:%s",
           userKeyFile, slice, ip, ss));
-      AuthorityMock mock = new AuthorityMock(ss);
+      AuthorityMockSdx mock = new AuthorityMockSdx(ss);
       mock.addPrincipals();
       mock.initPrincipals();
       mock.addUserSlice(userKeyFile, slice, ip);
-      mock.checkAuthorization();
+      //mock.checkAuthorization();
     }else {
       logger.info("Usage: userKeyFile sliceName IPPrefix safeServerIP\n");
     }
   }
 
   public void makeSafePreparation() {
-    customSetting();
-    addPrincipals();
-    initPrincipals();
-    initializeGeniAuth();
-    checkAuthorization();
+    if(!authorizationMade) {
+      customSetting();
+      addPrincipals();
+      initPrincipals();
+      initializeGeniAuth();
+      checkAuthorization();
+      authorizationMade = true;
+    }
   }
 
   private void customSetting() {
@@ -167,20 +102,9 @@ public class AuthorityMock {
     principals.add("key_p3");
     //PI
     principals.add("key_p4");
-  }
-
-  private void initPrincipals() {
-    principals.forEach(p -> {
-      initIdSetSubjectSet(p);
-      principalMap.put(p, SafeUtils.getPrincipalId(safeServer, p));
-    });
-  }
-
-  private void initIdSetSubjectSet(String key) {
-    SafeUtils.postSafeStatements(safeServer, postIdSet, key, new String[]{key});
-    String token = SafeUtils.getToken(SafeUtils.postSafeStatements(safeServer, postSubjectSet, key, new
-        String[]{}));
-    subjectSet.put(key, token);
+    for (String key: sliceKeyMap.values()){
+      principals.add(key);
+    }
   }
 
   private void checkAuthorization() {
@@ -191,6 +115,7 @@ public class AuthorityMock {
       logger.error(e.getMessage());
     }
   }
+
 
   private void initializeGeniAuth() {
     String token;
@@ -226,7 +151,7 @@ public class AuthorityMock {
     safePost(postStitchPolicy, "sdx");
 
     //MakeIp Delegation
-    safePost(postMakeIPTokenSet, "rpkiroot", new String[]{"192.1.1.1/24"});
+    safePost(postMakeIPTokenSet, "rpkiroot", new String[]{"ipv4\\\"192.1.1.1/24\\\""});
 
     for (String slice : slices) {
       String userKeyFile = sliceKeyMap.get(slice);
@@ -235,6 +160,7 @@ public class AuthorityMock {
     }
     logger.debug("end");
   }
+
 
   void addUserSlice(String userKeyFile, String slice, String userIP) {
     //slices.add(slice);
@@ -281,12 +207,13 @@ public class AuthorityMock {
         (slice))});
 
 
-    String parentPrefix = "192.1.1.1/24";
-    String ipToken = safePost(postIPAllocate, "rpkiroot", new String[]{userKey, userIP,
+    String parentPrefix = "ipv4\\\"192.1.1.1/24\\\"";
+    String uip = String.format("ipv4\\\"%s\\\"", userIP);
+    String ipToken = safePost(postIPAllocate, "rpkiroot", new String[]{userKey, uip,
         parentPrefix});
-    safePost(postDlgToken, userKeyFile, new String[]{ipToken, userIP});
+    safePost(postDlgToken, userKeyFile, new String[]{ipToken, uip});
     safePost(updateSubjectSet, userKeyFile, new String[]{ipToken});
-    authorize(authorizeOwnPrefix, "sdx", new String[]{userKey, userIP});
+    authorize(authorizeOwnPrefix, "sdx", new String[]{userKey, uip});
 
     //Tag delegation
     String tag = principalMap.get("tagauthority") + ":tag0";
@@ -315,68 +242,21 @@ public class AuthorityMock {
 
   void verifyAuthZByUserAttr() throws Exception{
     //authZByUserAttr
-    for (int i = 1; i < slices.size(); i++) {
+    for (int i = 0; i < slices.size(); i++) {
       String slice = slices.get(i);
       String user = sliceKeyMap.get(slice);
       String userKey = principalMap.get(user);
-      String ip = sliceIpMap.get(slice);
+      String ip = String.format("ipv4\\\"%s\\\"", sliceIpMap.get(slice));
       for (int j = i + 1; j < slices.size(); j++) {
         String peerSlice = slices.get(j);
         String peer = sliceKeyMap.get(peerSlice);
         String peerKey = principalMap.get(peer);
-        String peerIp = sliceIpMap.get(peerSlice);
+        String peerIp =String.format( "ipv4\\\"%s\\\"",sliceIpMap.get(peerSlice));
         if(!authorize(authZByUserAttr, "sdx", new String[]{userKey, ip, peerKey, peerIp})){
           throw new Exception(String.format("Authorization failed: %s", authZByUserAttr));
         }
 
       }
     }
-  }
-
-  String safePost(String method, String principal) {
-    return safePost(method, principal, new Object[]{});
-  }
-
-  String safePost(String method, String principal, Object[] others) {
-    String p = principalMap.get(principal);
-    return SafeUtils.getToken(
-        SafeUtils.postSafeStatements(safeServer, method, p, others)
-    );
-  }
-
-  boolean authorize(String method, String principal, String[] otherValues) {
-    String p = principalMap.get(principal);
-    return SafeUtils.authorize(safeServer, method, p, otherValues);
-  }
-
-  boolean authorize(String method, String principal, String[] otherValues, HashMap<String,
-      String> envs) {
-    String p = principalMap.get(principal);
-    return SafeUtils.authorize(safeServer, method, p, otherValues, envs);
-  }
-
-  String simpleEndorseMent(String method, String from, String to) {
-    String fp = principalMap.get(from);
-    String tp = principalMap.get(to);
-    return SafeUtils.getToken(SafeUtils.postSafeStatements(safeServer, method, fp, new
-        String[]{tp}));
-  }
-
-  String simpleEndorseMent(String method, String from, String to, String scid) {
-    String fp = principalMap.get(from);
-    String tp = principalMap.get(to);
-    String token = SafeUtils.getToken(SafeUtils.postSafeStatements(safeServer, method, fp, new
-        String[]{tp}));
-    return SafeUtils.getToken(passDelegation(to, token, scid));
-  }
-
-  String passDelegation(String principal, String Token, String scid) {
-    String p = principalMap.get(principal);
-    return SafeUtils.postSafeStatements(safeServer, passDelegation, p, new String[]{Token, scid});
-  }
-
-  String simpleDelegation(String method, String from, String to, String scid) {
-    String token = simpleEndorseMent(method, from, to, scid);
-    return passDelegation(to, token, scid);
   }
 }

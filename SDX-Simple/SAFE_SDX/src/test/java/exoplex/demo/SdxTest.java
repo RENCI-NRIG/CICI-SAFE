@@ -5,12 +5,11 @@ import exoplex.client.exogeni.SdxExogeniClient;
 import exoplex.demo.tridentcom.TridentSetting;
 import exoplex.demo.tridentcom.TridentSlice;
 import exoplex.sdx.core.SdxServer;
-import junit.framework.Assert;
 import org.junit.*;
 import riak.RiakSlice;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import safe.AuthorityMock;
+import safe.sdx.AuthorityMockSdx;
 
 import java.util.HashMap;
 
@@ -22,6 +21,12 @@ public class SdxTest {
   static String[] riakArgs = new String[]{"-c", sdxSimpleDir + "config/riak.conf"};
   static String[] riakDelArgs = new String[]{"-c", sdxSimpleDir + "config/riak.conf", "-d"};
   HashMap<String, SdxExogeniClient> exogeniClients = new HashMap<>();
+  static boolean deleteSlice = true;
+
+  public static void main(String[] args) throws Exception {
+    SdxTest sdxTest = new SdxTest();
+    sdxTest.testSDX();
+  }
 
   @BeforeClass
   public static void before() throws Exception{
@@ -36,14 +41,16 @@ public class SdxTest {
 
   @AfterClass
   public static void after()throws Exception{
-    RiakSlice riakSlice = new RiakSlice();
-    String riakIP = riakSlice.run(riakDelArgs);
-    TridentSlice.deleteTestSlices();
-    System.out.println("after");
+    if(deleteSlice) {
+      RiakSlice riakSlice = new RiakSlice();
+      String riakIP = riakSlice.run(riakDelArgs);
+      TridentSlice.deleteTestSlices();
+      System.out.println("after");
+    }
   }
 
   @Test
-  public void TestSDX() throws Exception{
+  public void testSDX() throws Exception{
     SdxServer.run(TridentSetting.sdxArgs);
     for(String clientSlice: TridentSetting.clientSlices){
       exogeniClients.put(clientSlice, new SdxExogeniClient(clientSlice,
@@ -66,7 +73,7 @@ public class SdxTest {
   private  void stitchSlices(){
     for(String clientSlice: TridentSetting.clientSlices){
       if(SdxServer.sdxManager.safeEnabled) {
-        AuthorityMock.main(new String[]{TridentSetting.clientKeyMap.get(clientSlice),
+        AuthorityMockSdx.main(new String[]{TridentSetting.clientKeyMap.get(clientSlice),
           clientSlice,
           TridentSetting.clientIpMap.get(clientSlice),
           SdxServer.sdxManager.getSafeServer().split(":")[0]});
@@ -103,6 +110,7 @@ public class SdxTest {
           SdxServer.sdxManager.checkFlowTableForPair(clientIp.replace(".1/24", ".0/24"),
             peerIp.replace(".1/24", ".0/24"),
             clientIp, peerIp);
+          deleteSlice = false;
           assert false;
         }
       }

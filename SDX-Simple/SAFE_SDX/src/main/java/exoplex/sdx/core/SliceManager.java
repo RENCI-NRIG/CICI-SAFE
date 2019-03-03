@@ -13,16 +13,12 @@ import org.apache.logging.log4j.Logger;
 import org.renci.ahab.libndl.resources.request.ComputeNode;
 import org.renci.ahab.libndl.resources.request.InterfaceNode2Net;
 import org.renci.ahab.libndl.resources.request.Network;
-import org.renci.ahab.libtransport.SSHAccessToken;
-import org.renci.ahab.libtransport.SliceAccessContext;
-import org.renci.ahab.libtransport.util.SSHAccessTokenFileFactory;
-import org.renci.ahab.libtransport.util.UtilTransportException;
 import exoplex.sdx.network.Link;
-import safe.AuthorityMock;
+import safe.AuthorityBase;
+import safe.sdx.AuthorityMockSdx;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -229,7 +225,8 @@ public class SliceManager extends SliceCommon {
         @Override
         public void run() {
           checkSafeServer(safeServerIp, riakIp);
-          AuthorityMock mock = new AuthorityMock(safeServerIp + ":7777");
+          AuthorityBase mock;
+          mock = new AuthorityMockSdx(safeServerIp + ":7777");
           mock.makeSafePreparation();
         }
       });

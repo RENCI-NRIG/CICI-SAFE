@@ -113,7 +113,7 @@
             <AppenderRef ref="Console"/>
             <AppenderRef ref="ServerRollingFile"/>
         </Logger>
-        <Logger name="safe.AuthorityMock" level="debug" additivity="false">
+        <Logger name="safe.sdx.AuthorityMockSdx" level="debug" additivity="false">
             <AppenderRef ref="AuthRollingFile"/>
         </Logger>
         <Logger name="exoplex.common.utils.SafeUtils" level="debug" additivity="false">

@@ -9,7 +9,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 
-public class SafeAuthority {
+public class SafeAuthority implements SdxRoutingSlang, SafeLang {
   static Logger logger = LogManager.getLogger(SafeAuthority.class);
 
   static final String bearerRef = "bearerRef";
