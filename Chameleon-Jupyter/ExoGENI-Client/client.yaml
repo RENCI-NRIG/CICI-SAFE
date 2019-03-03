@@ -73,47 +73,6 @@ resources:
            cd ${WORKING_DIR}/CICI-SAFE/SDX-Simple/SAFE_SDX
            mvn  clean package appassembler:assemble
            
-           echo Wait for GENI pem file
-           PEM_FILE=/home/cc/geni.pem
-           while true
-           do
-             if [ -f $PEM_FILE ]; then
-               echo "Found pem file $PEM_FILE "
-               break
-             else
-               echo "File $PEM_FILE does not exist. Please copy your GENI pem file to $PEM_FILE"
-             fi
-             sleep 1
-           done
-           
-
-           SDX_CONFIG=${WORKING_DIR}/client.conf
-           cat << EOF > $SDX_CONFIG
-           config{
-             slicename="$slice_name"
-             type="client"
-             sshkey="/root/.ssh/id_rsa"
-             safekey="$safe_keypair"
-             safeserver="127.0.0.1"
-             safe=true
-             serverinslice=false
-             exogenipem="/home/cc/geni.pem"
-             exogenism="https://geni.renci.org:11443/orca/xmlrpc"
-             scriptsdir="~/CICI-SAFE/SDX-Simple/SAFE_SDX/src/main/resources/scripts/"
-             resourcedir="~/CICI-SAFE/SDX-Simple/SAFE_SDX/src/main/resources/"
-             ipprefix="$ip_prefix"
-             serverurl="http://$sdxserver/"
-             scriptsdir=""
-             serversite="TAMU (College Station, TX, USA) XO Rack"
-             routersite="$client_site"
-           }
-           EOF
-           
-           echo Start SDX dataplane Slice
-           cd ${WORKING_DIR}/CICI-SAFE/SDX-Simple
-           ./scripts/build.sh
-           ./scripts/createclientslice.sh -c $SDX_CONFIG
-           
            echo Boot Script Done!
            } > ${WORKING_DIR}/boot.log 2>&1
          params:
