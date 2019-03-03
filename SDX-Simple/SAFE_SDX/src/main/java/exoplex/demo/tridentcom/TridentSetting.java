@@ -20,7 +20,7 @@ public class TridentSetting extends SliceHelper {
 
   static {
     //sites.add("RENCI");
-    sites.add("TAMU");
+    sites.add("UNF");
     sites.add("UFL");
     //sites.add("UH");
     sites.add("UNF");

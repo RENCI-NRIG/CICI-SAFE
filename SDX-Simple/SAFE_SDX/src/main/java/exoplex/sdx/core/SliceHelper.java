@@ -14,7 +14,9 @@ import org.renci.ahab.libndl.resources.request.ComputeNode;
 import org.renci.ahab.libndl.resources.request.InterfaceNode2Net;
 import org.renci.ahab.libndl.resources.request.Network;
 import exoplex.sdx.network.Link;
-import safe.AuthorityMock;
+import safe.AuthorityBase;
+import safe.multisdx.AuthorityMockMultiSdx;
+import safe.sdx.AuthorityMockSdx;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -236,8 +238,13 @@ public class SliceHelper extends SliceCommon {
         @Override
         public void run() {
           checkSafeServer(safeServerIp, riakIp);
-          AuthorityMock mock = new AuthorityMock(safeServerIp + ":7777");
-          mock.makeCnert2019SafePreparation();
+          AuthorityBase mock;
+          if(SafeManager.safeServerScript.equals("sdx-routing.sh")) {
+            mock = new AuthorityMockMultiSdx(safeServerIp + ":7777");
+          }else{
+            mock = new AuthorityMockSdx(safeServerIp + ":7777");
+          }
+          mock.makeSafePreparation();
         }
       });
     }

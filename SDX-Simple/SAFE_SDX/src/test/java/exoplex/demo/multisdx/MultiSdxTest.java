@@ -3,13 +3,12 @@ import exoplex.client.exogeni.SdxExogeniClient;
 import exoplex.demo.SdxTest;
 import exoplex.sdx.core.SdxManager;
 import exoplex.sdx.core.SdxServer;
-import exoplex.sdx.network.RoutingManager;
 import exoplex.sdx.network.SdnReplay;
 import org.junit.*;
 import riak.RiakSlice;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import safe.AuthorityMock;
+import safe.sdx.AuthorityMockSdx;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -65,7 +64,7 @@ public class MultiSdxTest {
   }
 
   public void replaySdnConfiguration(){
-    AuthorityMock.authorizationMade = true;
+    AuthorityMockSdx.authorizationMade = true;
     ArrayList<Thread> tlist = new ArrayList<>();
     for (String slice : MultiSdxSetting.sdxSliceNames) {
       Thread t = new Thread() {
