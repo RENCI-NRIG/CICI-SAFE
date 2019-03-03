@@ -1,6 +1,10 @@
 package safe.sdx;
 
 import exoplex.common.utils.SafeUtils;
+<<<<<<< HEAD
+=======
+import exoplex.demo.multisdx.MultiSdxSetting;
+>>>>>>> Adjust the safeauthority structure
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.LogManager;
@@ -19,7 +23,7 @@ public class AuthorityMockSdx extends AuthorityBase implements SdxRoutingSlang {
 
   static Logger logger = LogManager.getLogger(AuthorityMockSdx.class);
 
-  static String defaultSafeServer = "129.114.108.106:7777";
+  static String defaultSafeServer = "128.194.6.137:7777";
 
   HashMap<String, String> sliceToken = new HashMap<>();
 
@@ -226,6 +230,7 @@ public class AuthorityMockSdx extends AuthorityBase implements SdxRoutingSlang {
     simpleEndorseMent(postUserEndorsement, "key_p1", "sdx", "User");
 
     HashMap<String, String> envs = new HashMap<>();
+<<<<<<< HEAD
     envs.put(subject, getPrincipalId("key_p4"));
     envs.put(bearerRef, piCap);
     authorize(createProject, "key_p2", new String[]{}, envs);
@@ -233,13 +238,26 @@ public class AuthorityMockSdx extends AuthorityBase implements SdxRoutingSlang {
     String projectId = getPrincipalId("key_p2") + ":project1";
     String projectToken = safePost(postProjectSet, "key_p2",
         new String[]{getPrincipalId("key_p4"), projectId,
+=======
+    envs.put(subject, principalMap.get("key_p4"));
+    envs.put(bearerRef, piCap);
+    authorize(createProject, "key_p2", new String[]{}, envs);
+    String paMemberSetRef = safePost(postMemberSet, "key_p2");
+    String projectId = principalMap.get("key_p2") + ":project1";
+    String projectToken = safePost(postProjectSet, "key_p2",
+        new String[]{principalMap.get("key_p4"), projectId,
+>>>>>>> Adjust the safeauthority structure
             paMemberSetRef});
     List<String> piProjectTokens = SafeUtils.getTokens(passDelegation("key_p4", projectToken,
         projectId));
 
     envs.clear();
     //Authorize that PI can create slice
+<<<<<<< HEAD
     envs.put(subject, getPrincipalId("key_p4"));
+=======
+    envs.put(subject, principalMap.get("key_p4"));
+>>>>>>> Adjust the safeauthority structure
     //bearerRef should be subject set, as it contains both project token and MA token
     envs.put(bearerRef, piProjectTokens.get(1));
     assert authorize(createSlice, "key_p3", new String[]{projectId}, envs);
@@ -266,14 +284,23 @@ public class AuthorityMockSdx extends AuthorityBase implements SdxRoutingSlang {
     if (!principalMap.containsKey(userKeyFile)) {
       principals.add(userKeyFile);
       initIdSetSubjectSet(userKeyFile);
+<<<<<<< HEAD
       principalMap.put(userKeyFile, getPrincipalId(userKeyFile));
+=======
+      principalMap.put(userKeyFile, SafeUtils.getPrincipalId(safeServer, userKeyFile));
+>>>>>>> Adjust the safeauthority structure
     }
     //User membership
     simpleEndorseMent(postUserEndorsement, "key_p1", userKeyFile, "User");
     //PI delegate to users
     HashMap<String, String> envs = new HashMap<>();
+<<<<<<< HEAD
     String userKey = getPrincipalId(userKeyFile);
     String projectId = getPrincipalId("key_p2") + ":project1";
+=======
+    String userKey = principalMap.get(userKeyFile);
+    String projectId = principalMap.get("key_p2") + ":project1";
+>>>>>>> Adjust the safeauthority structure
     String pmToken = safePost(postProjectMembership, "key_p4", new String[]{userKey,
         projectId, "true"});
     List<String> tokens = SafeUtils.getTokens(passDelegation(userKeyFile, pmToken,
@@ -291,17 +318,28 @@ public class AuthorityMockSdx extends AuthorityBase implements SdxRoutingSlang {
     //create slices.
     String sliceControlRef = safePost(postStandardSliceControlSet, "key_p3");
     String slicePrivRef = safePost(postStandardSliceDefaultPrivilegeSet, "key_p3");
+<<<<<<< HEAD
     String sliceId = getPrincipalId("key_p3") + ":" + slice;
     sliceScid.put(slice, sliceId);
     sliceToken.put(slice, safePost(postSliceSet, "key_p3",
         new String[]{getPrincipalId(sliceKeyMap.get(slice)), sliceId, projectId,
+=======
+    String sliceId = principalMap.get("key_p3") + ":" + slice;
+    sliceScid.put(slice, sliceId);
+    sliceToken.put(slice, safePost(postSliceSet, "key_p3",
+        new String[]{principalMap.get(sliceKeyMap.get(slice)), sliceId, projectId,
+>>>>>>> Adjust the safeauthority structure
             sliceControlRef,
             slicePrivRef}));
     List<String> sliceTokens = SafeUtils.getTokens(passDelegation(sliceKeyMap.get(slice),
         sliceToken.get(slice), sliceId));
 
     //UserAcl
+<<<<<<< HEAD
     safePost(postUserAclEntry, "sdx", new String[]{getPrincipalId(sliceKeyMap.get
+=======
+    safePost(postUserAclEntry, "sdx", new String[]{principalMap.get(sliceKeyMap.get
+>>>>>>> Adjust the safeauthority structure
         (slice))});
 
 
@@ -314,7 +352,11 @@ public class AuthorityMockSdx extends AuthorityBase implements SdxRoutingSlang {
     authorize(authorizeOwnPrefix, "sdx", new String[]{userKey, uip});
 
     //Tag delegation
+<<<<<<< HEAD
     String tag = getPrincipalId("tagauthority") + ":tag0";
+=======
+    String tag = principalMap.get("tagauthority") + ":tag0";
+>>>>>>> Adjust the safeauthority structure
     safePost(postTagSet, "tagauthority", new String[]{tag});
     String tagToken = safePost(postGrantTagPriv, "tagauthority", new Object[]{userKey, tag, true});
     safePost(updateTagSet, userKeyFile, new String[]{tagToken, tag});
@@ -331,7 +373,11 @@ public class AuthorityMockSdx extends AuthorityBase implements SdxRoutingSlang {
     //authorizeStitchByUid
     for (String slice : slices) {
       if(!authorize(authorizeStitchByUID, "sdx",
+<<<<<<< HEAD
           new String[]{getPrincipalId(sliceKeyMap.get(slice)), sliceScid.get(slice)})){
+=======
+          new String[]{principalMap.get(sliceKeyMap.get(slice)), sliceScid.get(slice)})){
+>>>>>>> Adjust the safeauthority structure
         throw new Exception(String.format("Authorization failed: %s %s ", authorizeStitchByUID,
             slice));
       }
@@ -340,6 +386,7 @@ public class AuthorityMockSdx extends AuthorityBase implements SdxRoutingSlang {
 
   void verifyAuthZByUserAttr() throws Exception{
     //authZByUserAttr
+<<<<<<< HEAD
     for (int i = 0; i < slices.size(); i++) {
       String slice = slices.get(i);
       String user = sliceKeyMap.get(slice);
@@ -349,6 +396,17 @@ public class AuthorityMockSdx extends AuthorityBase implements SdxRoutingSlang {
         String peerSlice = slices.get(j);
         String peer = sliceKeyMap.get(peerSlice);
         String peerKey = getPrincipalId(peer);
+=======
+    for (int i = 1; i < slices.size(); i++) {
+      String slice = slices.get(i);
+      String user = sliceKeyMap.get(slice);
+      String userKey = principalMap.get(user);
+      String ip = sliceIpMap.get(slice);
+      for (int j = i + 1; j < slices.size(); j++) {
+        String peerSlice = slices.get(j);
+        String peer = sliceKeyMap.get(peerSlice);
+        String peerKey = principalMap.get(peer);
+>>>>>>> Adjust the safeauthority structure
         String peerIp =String.format( "ipv4\\\"%s\\\"",sliceIpMap.get(peerSlice));
         if(!authorize(authZByUserAttr, "sdx", new String[]{userKey, ip, peerKey, peerIp})){
           throw new Exception(String.format("Authorization failed: %s", authZByUserAttr));

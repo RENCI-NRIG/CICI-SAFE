@@ -75,7 +75,7 @@ public class SdxTest {
   private  void stitchSlices(){
     for(String clientSlice: TridentSetting.clientSlices){
       if(sdxManager.safeEnabled) {
-        AuthorityMock.main(new String[]{TridentSetting.clientKeyMap.get(clientSlice),
+        AuthorityMockSdx.main(new String[]{TridentSetting.clientKeyMap.get(clientSlice),
           clientSlice,
           TridentSetting.clientIpMap.get(clientSlice),
           sdxManager.getSafeServer().split(":")[0]});
