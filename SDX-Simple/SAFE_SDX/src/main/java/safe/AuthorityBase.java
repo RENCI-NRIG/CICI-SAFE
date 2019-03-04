@@ -44,7 +44,7 @@ public abstract class AuthorityBase implements SafeLang{
   }
 
   public String safePost(String method, String principal, Object[] others) {
-    String p = principalMap.get(principal);
+    String p = principalMap.getOrDefault(principal, principal);
     String msg = SafeUtils.postSafeStatements(safeServer, method, p, others);
     return SafeUtils.getToken(msg);
   }

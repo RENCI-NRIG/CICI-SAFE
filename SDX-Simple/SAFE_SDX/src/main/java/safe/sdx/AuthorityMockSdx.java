@@ -19,7 +19,7 @@ public class AuthorityMockSdx extends AuthorityBase implements SdxRoutingSlang {
 
   static Logger logger = LogManager.getLogger(AuthorityMockSdx.class);
 
-  static String defaultSafeServer = "139.62.242.10:7777";
+  static String defaultSafeServer = "128.194.6.137:7777";
 
   HashMap<String, String> sliceToken = new HashMap<>();
 
@@ -45,21 +45,118 @@ public class AuthorityMockSdx extends AuthorityBase implements SdxRoutingSlang {
       AuthorityMockSdx authorityMock = new AuthorityMockSdx(defaultSafeServer);
       authorityMock.makeSafePreparation();
     }
-    else if(args.length==4){
-      String userKeyFile = args[0];
-      String slice = args[1];
-      String ip = args[2];
-      String ss = args[3] + ":7777";
-      logger.info(String.format("UserKeyFile:%s sliceName:%s IpPrefix:%s SafeServer:%s",
+    else if(args.length>=4) {
+      if(args[0].equals("auth")){
+        String userKey = args[1];
+        String slice = args[2];
+        String ip = args[3];
+        String tag = args[4];
+        String ss = args[5] + ":7777";
+        logger.info(String.format("UserKey:%s sliceName:%s IpPrefix:%s Tag: %s SafeServerIP:%s",
+          userKey, slice, ip, tag, ss));
+        AuthorityMockSdx mock = new AuthorityMockSdx(ss);
+        mock.authorityDelegation(userKey, slice, ip, tag);
+      }else if(args[0].equals("update")) {
+        String userKey = args[1];
+        String method = args[2];
+        String token = args[3];
+        String name = args[4];
+        String ss = args[5] + ":7777";
+        AuthorityMockSdx mock = new AuthorityMockSdx(ss);
+        mock.updateTokens(userKey, method, token, name);
+      }else if(args[0].equals("init")){
+        String userKey = args[1];
+        String tagAcl = args[2];
+        String ss = args[3] + ":7777";
+        AuthorityMockSdx mock = new AuthorityMockSdx(ss);
+        mock.initUser(userKey, tagAcl);
+      }else {
+        String userKeyFile = args[0];
+        String slice = args[1];
+        String ip = args[2];
+        String ss = args[3] + ":7777";
+        String tag = "tag0";
+        logger.info(String.format("UserKeyFile:%s sliceName:%s IpPrefix:%s SafeServerIP:%s Tag: %s",
           userKeyFile, slice, ip, ss));
-      AuthorityMockSdx mock = new AuthorityMockSdx(ss);
-      mock.addPrincipals();
-      mock.initPrincipals();
-      mock.addUserSlice(userKeyFile, slice, ip);
-      //mock.checkAuthorization();
+        AuthorityMockSdx mock = new AuthorityMockSdx(ss);
+        mock.addPrincipals();
+        mock.initPrincipals();
+        mock.addUserSlice(userKeyFile, slice, ip);
+        //mock.checkAuthorization();
+      }
     }else {
-      logger.info("Usage: userKeyFile sliceName IPPrefix safeServerIP\n");
+      logger.info("Usage:\n userKeyFile sliceName IPPrefix safeServerIP  ---- default " +
+        "delegations\n"
+        + "init userKeyFile tag safeServerIP  ---- initialize user, allows connection from " +
+        "peer with the tag\n"
+        + "auth userKeyHash slicename userIp userTag safeserverIP  ---- authorities make " +
+        "delegations to user, sdx allows stitching from user\n"
+        + "update userKeyFile method token name  ---- add delegation tokens to related safe sets\n"
+      );
     }
+  }
+
+  public void authorityDelegation(String userKey, String slice, String userIP, String tag1){
+    sliceKeyMap.put(slice, userKey);
+    //User membership
+    String token = SafeUtils.getToken(SafeUtils.postSafeStatements(safeServer,
+      postUserEndorsement, "key_p1", new String[]{userKey}));
+    System.out.println(String.format("passDelegation %s User", token, "User"));
+    //PI delegate to users
+    HashMap<String, String> envs = new HashMap<>();
+    String projectId = principalMap.get("key_p2") + ":project1";
+    String pmToken = safePost(postProjectMembership, "key_p4", new String[]{userKey,
+      projectId, "true"});
+    System.out.println(String.format("passDelegation %s User", pmToken, projectId));
+    envs.clear();
+
+    /*
+    The previous part is the common geni trust structure.
+    The next is specific to our example
+
+     */
+    //create slices.
+    String sliceControlRef = safePost(postStandardSliceControlSet, "key_p3");
+    String slicePrivRef = safePost(postStandardSliceDefaultPrivilegeSet, "key_p3");
+    String sliceId = principalMap.get("key_p3") + ":" + slice;
+    sliceScid.put(slice, sliceId);
+    sliceToken.put(slice, safePost(postSliceSet, "key_p3",
+      new String[]{userKey, sliceId, projectId,
+        sliceControlRef,
+        slicePrivRef}));
+    System.out.println(String.format("passDelegation %s User", sliceToken.get(slice),
+      sliceId));
+
+    //UserAcl
+    safePost(postUserAclEntry, "sdx", new String[]{userKey});
+
+
+    String parentPrefix = "ipv4\\\"192.1.1.1/24\\\"";
+    String uip = String.format("ipv4\\\"%s\\\"", userIP);
+    String ipToken = safePost(postIPAllocate, "rpkiroot", new String[]{userKey, uip,
+      parentPrefix});
+    System.out.println(String.format("postDlgToken %s %s", ipToken, uip.replace("\\", "\\\\\\")));
+
+    //Tag delegation
+    String tag = SafeUtils.getPrincipalId(safeServer,"tagauthority")+ ":" + tag1;
+    safePost(postTagSet, "tagauthority", new String[]{tag});
+    String tagToken = safePost(postGrantTagPriv, "tagauthority", new Object[]{userKey, tag, true});
+    System.out.println(String.format("updateTagSet %s %s", tagToken, tag));
+  }
+
+  public void updateTokens(String userKey, String method, String token, String name){
+    safePost(method, userKey, new String[]{token, name});
+  }
+
+  public void initUser(String userKey, String tagAcl){
+    //slices.add(slice);
+    initIdSetSubjectSet(userKey);
+    //User membership
+    String tagAuth = SafeUtils.getPrincipalId(safeServer, "tagauthority");
+    safePost(postUserTagAclEntry, userKey, new String[]{tagAuth + ":" + tagAcl});
+    safePost(postCustomerConnectionPolicy, userKey, new String[]{});
+    safePost(postTagPrivilegePolicy, userKey, new String[]{});
+    safePost(postCustomerPolicy, userKey, new String[]{});
   }
 
   public void makeSafePreparation() {
