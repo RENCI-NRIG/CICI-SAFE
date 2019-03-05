@@ -77,7 +77,7 @@ public class AuthorityMockSdx extends AuthorityBase implements SdxRoutingSlang {
         String ss = args[3] + ":7777";
         String tag = "tag0";
         logger.info(String.format("UserKeyFile:%s sliceName:%s IpPrefix:%s SafeServerIP:%s Tag: %s",
-          userKeyFile, slice, ip, ss));
+          userKeyFile, slice, ip, ss, tag));
         AuthorityMockSdx mock = new AuthorityMockSdx(ss);
         mock.addPrincipals();
         mock.initPrincipals();
