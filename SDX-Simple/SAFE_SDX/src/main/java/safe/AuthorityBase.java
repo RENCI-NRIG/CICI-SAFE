@@ -50,25 +50,25 @@ public abstract class AuthorityBase implements SafeLang{
   }
 
   public boolean authorize(String method, String principal, String[] otherValues) {
-    String p = principalMap.get(principal);
+    String p = principalMap.getOrDefault(principal, principal);
     return SafeUtils.authorize(safeServer, method, p, otherValues);
   }
 
   public boolean authorize(String method, String principal, String[] otherValues, HashMap<String,
     String> envs) {
-    String p = principalMap.get(principal);
+    String p = principalMap.getOrDefault(principal, principal);
     return SafeUtils.authorize(safeServer, method, p, otherValues, envs);
   }
 
   public String simpleEndorseMent(String method, String from, String to) {
-    String fp = principalMap.get(from);
+    String fp = principalMap.getOrDefault(from, from);
     String tp = principalMap.get(to);
     return SafeUtils.getToken(SafeUtils.postSafeStatements(safeServer, method, fp, new
       String[]{tp}));
   }
 
   public String simpleEndorseMent(String method, String from, String to, String scid) {
-    String fp = principalMap.get(from);
+    String fp = principalMap.getOrDefault(from, from);
     String tp = principalMap.get(to);
     String token = SafeUtils.getToken(SafeUtils.postSafeStatements(safeServer, method, fp, new
       String[]{tp}));
@@ -76,7 +76,7 @@ public abstract class AuthorityBase implements SafeLang{
   }
 
   public String passDelegation(String principal, String Token, String scid) {
-    String p = principalMap.get(principal);
+    String p = principalMap.getOrDefault(principal, principal);
     return SafeUtils.postSafeStatements(safeServer, passDelegation, p, new String[]{Token, scid});
   }
 
