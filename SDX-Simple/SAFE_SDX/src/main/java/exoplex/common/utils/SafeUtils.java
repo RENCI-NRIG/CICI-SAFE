@@ -46,6 +46,9 @@ public class SafeUtils {
 
   public static List<String> getTokens(String message){
     ArrayList<String> tokens = new ArrayList<String>();
+    if(message.contains("Query failed")){
+      return tokens;
+    }
     Pattern pattern = Pattern.compile("\\'(.{43}=?)\\'?");
     Matcher matcher = pattern.matcher(message);
     String token = null;
