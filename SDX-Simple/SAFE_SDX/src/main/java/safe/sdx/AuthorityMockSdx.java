@@ -104,7 +104,7 @@ public class AuthorityMockSdx extends AuthorityBase implements SdxRoutingSlang {
     System.out.println(String.format("passDelegation %s %s", token, "User"));
     //PI delegate to users
     HashMap<String, String> envs = new HashMap<>();
-    String projectId = principalMap.get("key_p2") + ":project1";
+    String projectId = getPrincipalId("key_p2") + ":project1";
     String pmToken = safePost(postProjectMembership, "key_p4", new String[]{userKey,
       projectId, "true"});
     System.out.println(String.format("passDelegation %s %s", pmToken, projectId));
@@ -118,7 +118,7 @@ public class AuthorityMockSdx extends AuthorityBase implements SdxRoutingSlang {
     //create slices.
     String sliceControlRef = safePost(postStandardSliceControlSet, "key_p3");
     String slicePrivRef = safePost(postStandardSliceDefaultPrivilegeSet, "key_p3");
-    String sliceId = principalMap.get("key_p3") + ":" + slice;
+    String sliceId = getPrincipalId("key_p3") + ":" + slice;
     sliceScid.put(slice, sliceId);
     sliceToken.put(slice, safePost(postSliceSet, "key_p3",
       new String[]{userKey, sliceId, projectId,
@@ -138,7 +138,7 @@ public class AuthorityMockSdx extends AuthorityBase implements SdxRoutingSlang {
     System.out.println(String.format("postDlgToken %s %s", ipToken, uip.replace("\\", "\\\\\\")));
 
     //Tag delegation
-    String tag = SafeUtils.getPrincipalId(safeServer,"tagauthority")+ ":" + tag1;
+    String tag = getPrincipalId("tagauthority")+ ":" + tag1;
     safePost(postTagSet, "tagauthority", new String[]{tag});
     String tagToken = safePost(postGrantTagPriv, "tagauthority", new Object[]{userKey, tag, true});
     System.out.println(String.format("updateTagSet %s %s", tagToken, tag));
@@ -152,7 +152,7 @@ public class AuthorityMockSdx extends AuthorityBase implements SdxRoutingSlang {
     //slices.add(slice);
     initIdSetSubjectSet(userKey);
     //User membership
-    String tagAuth = SafeUtils.getPrincipalId(safeServer, "tagauthority");
+    String tagAuth = getPrincipalId("tagauthority");
     System.out.println(safePost(postUserTagAclEntry, userKey, new String[]{tagAuth + ":" +
       tagAcl}));
     System.out.println(safePost(postCustomerConnectionPolicy, userKey, new String[]{}));
@@ -226,20 +226,20 @@ public class AuthorityMockSdx extends AuthorityBase implements SdxRoutingSlang {
     simpleEndorseMent(postUserEndorsement, "key_p1", "sdx", "User");
 
     HashMap<String, String> envs = new HashMap<>();
-    envs.put(subject, principalMap.get("key_p4"));
+    envs.put(subject, getPrincipalId("key_p4"));
     envs.put(bearerRef, piCap);
     authorize(createProject, "key_p2", new String[]{}, envs);
     String paMemberSetRef = safePost(postMemberSet, "key_p2");
-    String projectId = principalMap.get("key_p2") + ":project1";
+    String projectId = getPrincipalId("key_p2") + ":project1";
     String projectToken = safePost(postProjectSet, "key_p2",
-        new String[]{principalMap.get("key_p4"), projectId,
+        new String[]{getPrincipalId("key_p4"), projectId,
             paMemberSetRef});
     List<String> piProjectTokens = SafeUtils.getTokens(passDelegation("key_p4", projectToken,
         projectId));
 
     envs.clear();
     //Authorize that PI can create slice
-    envs.put(subject, principalMap.get("key_p4"));
+    envs.put(subject, getPrincipalId("key_p4"));
     //bearerRef should be subject set, as it contains both project token and MA token
     envs.put(bearerRef, piProjectTokens.get(1));
     assert authorize(createSlice, "key_p3", new String[]{projectId}, envs);
@@ -266,14 +266,14 @@ public class AuthorityMockSdx extends AuthorityBase implements SdxRoutingSlang {
     if (!principalMap.containsKey(userKeyFile)) {
       principals.add(userKeyFile);
       initIdSetSubjectSet(userKeyFile);
-      principalMap.put(userKeyFile, SafeUtils.getPrincipalId(safeServer, userKeyFile));
+      principalMap.put(userKeyFile, getPrincipalId(userKeyFile));
     }
     //User membership
     simpleEndorseMent(postUserEndorsement, "key_p1", userKeyFile, "User");
     //PI delegate to users
     HashMap<String, String> envs = new HashMap<>();
-    String userKey = principalMap.get(userKeyFile);
-    String projectId = principalMap.get("key_p2") + ":project1";
+    String userKey = getPrincipalId(userKeyFile);
+    String projectId = getPrincipalId("key_p2") + ":project1";
     String pmToken = safePost(postProjectMembership, "key_p4", new String[]{userKey,
         projectId, "true"});
     List<String> tokens = SafeUtils.getTokens(passDelegation(userKeyFile, pmToken,
@@ -291,17 +291,17 @@ public class AuthorityMockSdx extends AuthorityBase implements SdxRoutingSlang {
     //create slices.
     String sliceControlRef = safePost(postStandardSliceControlSet, "key_p3");
     String slicePrivRef = safePost(postStandardSliceDefaultPrivilegeSet, "key_p3");
-    String sliceId = principalMap.get("key_p3") + ":" + slice;
+    String sliceId = getPrincipalId("key_p3") + ":" + slice;
     sliceScid.put(slice, sliceId);
     sliceToken.put(slice, safePost(postSliceSet, "key_p3",
-        new String[]{principalMap.get(sliceKeyMap.get(slice)), sliceId, projectId,
+        new String[]{getPrincipalId(sliceKeyMap.get(slice)), sliceId, projectId,
             sliceControlRef,
             slicePrivRef}));
     List<String> sliceTokens = SafeUtils.getTokens(passDelegation(sliceKeyMap.get(slice),
         sliceToken.get(slice), sliceId));
 
     //UserAcl
-    safePost(postUserAclEntry, "sdx", new String[]{principalMap.get(sliceKeyMap.get
+    safePost(postUserAclEntry, "sdx", new String[]{getPrincipalId(sliceKeyMap.get
         (slice))});
 
 
@@ -314,7 +314,7 @@ public class AuthorityMockSdx extends AuthorityBase implements SdxRoutingSlang {
     authorize(authorizeOwnPrefix, "sdx", new String[]{userKey, uip});
 
     //Tag delegation
-    String tag = principalMap.get("tagauthority") + ":tag0";
+    String tag = getPrincipalId("tagauthority") + ":tag0";
     safePost(postTagSet, "tagauthority", new String[]{tag});
     String tagToken = safePost(postGrantTagPriv, "tagauthority", new Object[]{userKey, tag, true});
     safePost(updateTagSet, userKeyFile, new String[]{tagToken, tag});
@@ -331,7 +331,7 @@ public class AuthorityMockSdx extends AuthorityBase implements SdxRoutingSlang {
     //authorizeStitchByUid
     for (String slice : slices) {
       if(!authorize(authorizeStitchByUID, "sdx",
-          new String[]{principalMap.get(sliceKeyMap.get(slice)), sliceScid.get(slice)})){
+          new String[]{getPrincipalId(sliceKeyMap.get(slice)), sliceScid.get(slice)})){
         throw new Exception(String.format("Authorization failed: %s %s ", authorizeStitchByUID,
             slice));
       }
@@ -343,12 +343,12 @@ public class AuthorityMockSdx extends AuthorityBase implements SdxRoutingSlang {
     for (int i = 0; i < slices.size(); i++) {
       String slice = slices.get(i);
       String user = sliceKeyMap.get(slice);
-      String userKey = principalMap.get(user);
+      String userKey = getPrincipalId(user);
       String ip = String.format("ipv4\\\"%s\\\"", sliceIpMap.get(slice));
       for (int j = i + 1; j < slices.size(); j++) {
         String peerSlice = slices.get(j);
         String peer = sliceKeyMap.get(peerSlice);
-        String peerKey = principalMap.get(peer);
+        String peerKey = getPrincipalId(peer);
         String peerIp =String.format( "ipv4\\\"%s\\\"",sliceIpMap.get(peerSlice));
         if(!authorize(authZByUserAttr, "sdx", new String[]{userKey, ip, peerKey, peerIp})){
           throw new Exception(String.format("Authorization failed: %s", authZByUserAttr));
