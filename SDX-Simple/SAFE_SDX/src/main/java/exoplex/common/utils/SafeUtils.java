@@ -127,11 +127,12 @@ public class SafeUtils {
       return res;
 
     } catch (MalformedURLException e) {
-      logger.debug("malformedURLExcepto");
+      logger.error("malformedURLException when posting safe statement");
     } catch (IOException e) {
-      logger.debug("ioexception");
+      logger.error("http ioexception when posting safe statement");
+      e.printStackTrace();
     } catch (Exception e) {
-      logger.debug("normal Exception");
+      e.printStackTrace();
     }
     return null;
   }
