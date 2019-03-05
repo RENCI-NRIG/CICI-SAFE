@@ -49,7 +49,7 @@ resources:
            echo Start SAFE Server in Container
            docker pull yaoyj11/safeserver-v7
            docker run -i -t -d -p 7777:7777 -h safe --name safe yaoyj11/safeserver-v7
-           docker exec -d safe /bin/bash -c  "cd /root/safe;export SBT_HOME=/opt/sbt-0.13.12;export SCALA_HOME=/opt/scala-2.11.8;sed -i 's/RIAKSERVER/${riak_ip}/g' safe-server/src/main/resources/application.conf;./prdn.sh"
+           docker exec -d safe /bin/bash -c  "cd /root/safe;export SBT_HOME=/opt/sbt-0.13.12;export SCALA_HOME=/opt/scala-2.11.8;sed -i 's/RIAKSERVER/$riak_ip/g' safe-server/src/main/resources/application.conf;./prdn.sh"
            
            echo Git Orca
            cd $WORKING_DIR
