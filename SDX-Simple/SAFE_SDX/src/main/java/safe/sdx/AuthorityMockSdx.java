@@ -101,13 +101,13 @@ public class AuthorityMockSdx extends AuthorityBase implements SdxRoutingSlang {
     //User membership
     String token = SafeUtils.getToken(SafeUtils.postSafeStatements(safeServer,
       postUserEndorsement, "key_p1", new String[]{userKey}));
-    System.out.println(String.format("passDelegation %s User", token, "User"));
+    System.out.println(String.format("passDelegation %s %s", token, "User"));
     //PI delegate to users
     HashMap<String, String> envs = new HashMap<>();
     String projectId = principalMap.get("key_p2") + ":project1";
     String pmToken = safePost(postProjectMembership, "key_p4", new String[]{userKey,
       projectId, "true"});
-    System.out.println(String.format("passDelegation %s User", pmToken, projectId));
+    System.out.println(String.format("passDelegation %s %s", pmToken, projectId));
     envs.clear();
 
     /*
@@ -124,7 +124,7 @@ public class AuthorityMockSdx extends AuthorityBase implements SdxRoutingSlang {
       new String[]{userKey, sliceId, projectId,
         sliceControlRef,
         slicePrivRef}));
-    System.out.println(String.format("passDelegation %s User", sliceToken.get(slice),
+    System.out.println(String.format("passDelegation %s %s", sliceToken.get(slice),
       sliceId));
 
     //UserAcl
