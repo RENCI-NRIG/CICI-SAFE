@@ -19,7 +19,7 @@ public class AuthorityMockSdx extends AuthorityBase implements SdxRoutingSlang {
 
   static Logger logger = LogManager.getLogger(AuthorityMockSdx.class);
 
-  static String defaultSafeServer = "128.194.6.137:7777";
+  static String defaultSafeServer = "129.114.108.106:7777";
 
   HashMap<String, String> sliceToken = new HashMap<>();
 
@@ -145,7 +145,7 @@ public class AuthorityMockSdx extends AuthorityBase implements SdxRoutingSlang {
   }
 
   public void updateTokens(String userKey, String method, String token, String name){
-    safePost(method, userKey, new String[]{token, name});
+    System.out.println(safePost(method, userKey, new String[]{token, name}));
   }
 
   public void initUser(String userKey, String tagAcl){
@@ -153,10 +153,11 @@ public class AuthorityMockSdx extends AuthorityBase implements SdxRoutingSlang {
     initIdSetSubjectSet(userKey);
     //User membership
     String tagAuth = SafeUtils.getPrincipalId(safeServer, "tagauthority");
-    safePost(postUserTagAclEntry, userKey, new String[]{tagAuth + ":" + tagAcl});
-    safePost(postCustomerConnectionPolicy, userKey, new String[]{});
-    safePost(postTagPrivilegePolicy, userKey, new String[]{});
-    safePost(postCustomerPolicy, userKey, new String[]{});
+    System.out.println(safePost(postUserTagAclEntry, userKey, new String[]{tagAuth + ":" +
+      tagAcl}));
+    System.out.println(safePost(postCustomerConnectionPolicy, userKey, new String[]{}));
+    System.out.println(safePost(postTagPrivilegePolicy, userKey, new String[]{}));
+    System.out.println(safePost(postCustomerPolicy, userKey, new String[]{}));
   }
 
   public void makeSafePreparation() {
