@@ -39,6 +39,18 @@ public abstract class AuthorityBase implements SafeLang{
     subjectSet.put(key, token);
   }
 
+  public String getPrincipalId(String safeKey){
+    if(principalMap.containsKey(safeKey)){
+      return principalMap.get(safeKey);
+    }else{
+      String key = SafeUtils.getPrincipalId(safeServer, safeKey);
+      if ( key != null){
+        principalMap.put(safeKey, key);
+      }
+      return key;
+    }
+  }
+
   public String safePost(String method, String principal) {
     return safePost(method, principal, new Object[]{});
   }

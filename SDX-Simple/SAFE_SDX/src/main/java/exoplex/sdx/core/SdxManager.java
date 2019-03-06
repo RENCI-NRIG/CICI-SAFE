@@ -469,6 +469,7 @@ public class SdxManager extends SliceManager {
       customerNodes.get(customerSafeKeyHash).add(reserveId);
       customerGateway.put(reserveId, gateway);
     }else{
+      logger.info("Unauthorized: stitch request for " + sliceName);
       res.put("message", String.format("Unauthorized stitch request from (%s, %s)",
         customerSafeKeyHash, customerSlice));
     }
