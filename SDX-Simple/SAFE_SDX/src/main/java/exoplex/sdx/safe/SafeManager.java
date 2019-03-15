@@ -19,7 +19,7 @@ public class SafeManager {
   //was v4
   public final static String safeDockerImage = "safeserver-v7";
   //was prdn.sh
-  public final static String safeServerScript = "prdn.sh";
+  public final static String safeServerScript = "sdx-routing.sh";
 
   public SafeManager(String ip, String safeKeyFile, String sshKey){
     safeServerIp = ip;

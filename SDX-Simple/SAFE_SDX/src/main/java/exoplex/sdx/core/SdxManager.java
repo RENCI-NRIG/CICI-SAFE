@@ -1056,6 +1056,8 @@ public class SdxManager extends SliceHelper {
     }
     safeManager.postPathToken(routeAdvertise);
     if(!routeAdvertise.hasSrcPrefix()) {
+      // routes with destination address only
+      //TODO: find mathcing pairs and correct the routes
       RouteAdvertise newAdvertise = bgpManager.receiveAdvertise(routeAdvertise);
       if (newAdvertise == null) {
         //No change
@@ -1077,6 +1079,7 @@ public class SdxManager extends SliceHelper {
         return newAdvertise.toString();
       }
     }else{
+      // route with both source and destination address, find matching pairs
       ArrayList<RouteAdvertise> newAdvertises = bgpManager.receiveStAdvertise(routeAdvertise);
       for(RouteAdvertise newAdvertise: newAdvertises) {
         propagateBgpAdvertise(newAdvertise, routeAdvertise.advertiserPID);
