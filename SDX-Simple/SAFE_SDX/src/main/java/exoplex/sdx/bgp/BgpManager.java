@@ -3,6 +3,9 @@ package exoplex.sdx.bgp;
 import java.util.ArrayList;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.apache.commons.lang3.tuple.Pair;
+import org.apache.logging.log4j.core.appender.routing.Route;
+
 public class BgpManager {
   String myPID;
   static int topK = 1;
@@ -15,6 +18,8 @@ public class BgpManager {
     ArrayList<RouteAdvertise>>();
   ConcurrentHashMap <String, ConcurrentHashMap<String, ArrayList<RouteAdvertise>>> stPairBgpTable =
     new ConcurrentHashMap();
+  ConcurrentHashMap <Pair<String, String>, ArrayList<RouteAdvertise>> stPairBgpTable1 = new
+    ConcurrentHashMap<>();
 
   public RouteAdvertise receiveAdvertise(RouteAdvertise routeAdvertise){
     String destPrefix = routeAdvertise.destPrefix;
@@ -61,9 +66,13 @@ public class BgpManager {
   }
 
   public void addToStPairBgpTable(RouteAdvertise routeAdvertise){
-    stPairBgpTable.getOrDefault(routeAdvertise.destPrefix, new ConcurrentHashMap<>())
-      .getOrDefault(routeAdvertise.srcPrefix, new ArrayList<>())
-      .add(routeAdvertise);
+    ConcurrentHashMap<String, ArrayList<RouteAdvertise>> map = stPairBgpTable.getOrDefault
+      (routeAdvertise.destPrefix, new ConcurrentHashMap<>());
+    ArrayList<RouteAdvertise> lists = map.getOrDefault(routeAdvertise.srcPrefix, new ArrayList<>());
+    lists.add(routeAdvertise);
+    map.put(routeAdvertise.srcPrefix, lists);
+    stPairBgpTable.put(routeAdvertise.destPrefix, map);
+    ArrayList<RouteAdvertise> stLists = stPairBgpTable.
   }
 
   public ArrayList<RouteAdvertise> getAllAdvertises(){

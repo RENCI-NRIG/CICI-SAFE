@@ -4,12 +4,14 @@ import exoplex.demo.SdxTest;
 import exoplex.sdx.core.SdxManager;
 import exoplex.sdx.core.SdxServer;
 import exoplex.sdx.network.SdnReplay;
+import org.apache.commons.io.filefilter.FalseFileFilter;
 import org.junit.*;
 import riak.RiakSlice;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import safe.sdx.AuthorityMockSdx;
 
+import javax.xml.stream.FactoryConfigurationError;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -44,6 +46,7 @@ public class MultiSdxTest {
       multiSdxSlice.deleteSdxSlices();
       multiSdxSlice.deleteClientSlices();
     }
+    Thread.sleep(200000);
   }
 
   public static void main(String[] args){
@@ -237,6 +240,7 @@ public class MultiSdxTest {
           peerIp.replace(".1/24", ".2")));
       }
     }
+    deleteSlice = false;
 
   }
 }
