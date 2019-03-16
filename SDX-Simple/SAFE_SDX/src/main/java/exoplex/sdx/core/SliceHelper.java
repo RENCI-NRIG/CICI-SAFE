@@ -220,7 +220,7 @@ public class SliceHelper extends SliceCommon {
     tlist.add(new Thread(){
       @Override
       public void run() {
-        if(plexusAndSafeInSlice) {
+        if(plexusInSlice) {
           setSdnControllerIp(serverSlice.getComputeNode(plexusName).getManagementIP());
         }else {
           setSdnControllerIp(conf.getString("config.plexusserver"));
@@ -229,7 +229,7 @@ public class SliceHelper extends SliceCommon {
       }
     });
     if(safeEnabled){
-      if(plexusAndSafeInSlice) {
+      if(safeInSlice) {
         setSafeServerIp(serverSlice.getComputeNode("safe-server").getManagementIP());
       }else{
         setSafeServerIp(conf.getString("config.safeserver"));
@@ -310,7 +310,7 @@ public class SliceHelper extends SliceCommon {
   }
 
   protected boolean checkSafeServer(String safeIP, String riakIp) {
-    if(plexusAndSafeInSlice) {
+    if(safeInSlice) {
       SafeManager sm = new SafeManager(safeIP, safeKeyFile, sshkey);
       sm.verifySafeInstallation(riakIp);
     }
@@ -318,7 +318,7 @@ public class SliceHelper extends SliceCommon {
   }
 
   protected boolean checkPlexus(String SDNControllerIP) {
-    if(plexusAndSafeInSlice) {
+    if(plexusInSlice) {
       String result = Exec.sshExec("root", SDNControllerIP, "docker ps", sshkey)[0];
       if (result.contains("plexus")) {
         logger.debug("plexus controller has started");
@@ -409,7 +409,7 @@ public class SliceHelper extends SliceCommon {
       Link logLink = addLink(s, linkname, node0, node1, bw);
       links.put(linkname, logLink);
     }
-    if(plexusAndSafeInSlice) {
+    if(safeInSlice) {
       if (safeEnabled) {
         s.addSafeServer(serverSite, riakIp, SafeManager.safeDockerImage, SafeManager.safeServerScript);
       }

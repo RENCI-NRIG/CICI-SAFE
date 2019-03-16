@@ -70,9 +70,11 @@ public class TestVlan extends SdxManager {
     serverSlice = createTestSlice();
     serverSlice.commitAndWait();
     configTestSlice(serverSlice);
-    if(plexusAndSafeInSlice) {
-      configSdnControllerAddr(serverSlice.getComputeNode(plexusName).getManagementIP());
+    if(plexusInSlice){
       checkPlexus(serverSlice.getComputeNode(plexusName).getManagementIP());
+    }
+    if(safeInSlice) {
+      configSdnControllerAddr(serverSlice.getComputeNode(plexusName).getManagementIP());
     }else{
       configSdnControllerAddr(conf.getString("config.plexusserver"));
     }
@@ -115,7 +117,7 @@ public class TestVlan extends SdxManager {
     slice.addBroadcastLink("stitch_c1_20");
     slice.attach("stitch_c1_20", "CNode1", "192.168.20.2", "255.255.255.0");
     slice.attach("stitch_c1_20", "c1");
-    if(plexusAndSafeInSlice) {
+    if(plexusInSlice) {
       slice.addPlexusController(controllerSite, plexusName);
     }
     return  slice;
