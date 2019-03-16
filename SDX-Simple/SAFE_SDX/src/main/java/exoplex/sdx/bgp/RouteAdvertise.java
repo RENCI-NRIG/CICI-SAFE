@@ -5,7 +5,7 @@ import org.json.JSONObject;
 
 import java.util.ArrayList;
 
-public class RouteAdvertise {
+public class RouteAdvertise{
   public String ownerPID;
   public String destPrefix;
   public String srcPrefix;
@@ -80,5 +80,39 @@ public class RouteAdvertise {
     obj.put("route", new JSONArray(route));
     obj.put("safeToken", safeToken);
     return obj;
+  }
+
+  @Override
+  public boolean equals(Object routeAdvertise){
+    if(! (routeAdvertise instanceof RouteAdvertise)){
+      return false;
+    }
+    if(!this.ownerPID.equals(((RouteAdvertise) routeAdvertise).ownerPID)){
+      return false;
+    }
+    if(!this.destPrefix.equals(((RouteAdvertise) routeAdvertise).destPrefix)){
+      return false;
+    }
+    if(this.srcPrefix!= null && !this.srcPrefix.equals(((RouteAdvertise) routeAdvertise).srcPrefix)){
+      return false;
+    }
+    if(this.srcPrefix == null && ((RouteAdvertise) routeAdvertise).srcPrefix!= null){
+      return false;
+    }
+    if(!this.advertiserPID.equals(((RouteAdvertise) routeAdvertise).advertiserPID)){
+      return false;
+    }
+    if(this.safeToken != null && !this.safeToken.equals(((RouteAdvertise) routeAdvertise).safeToken)){
+      return false;
+    }
+    if(this.route.size() != ((RouteAdvertise) routeAdvertise).route.size()){
+      return false;
+    }
+    for(int i=0; i< route.size(); i++){
+      if(this.route.get(i).equals(((RouteAdvertise) routeAdvertise).route.get(i))){
+        return  false;
+      }
+    }
+    return true;
   }
 }

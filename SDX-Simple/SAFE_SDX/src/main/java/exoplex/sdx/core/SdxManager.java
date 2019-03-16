@@ -1123,25 +1123,39 @@ public class SdxManager extends SliceHelper {
     return notifyResult;
   }
 
-  private void propagateBgpAdvertise(RouteAdvertise advertise, String srcPid){
-    for(String peer: peerUrls.keySet()){
-      if(!peer.equals(advertise.ownerPID) && !peer.equals(advertise.advertiserPID)){
-        if(!advertise.route.contains(peer) && safeManager.verifyAS(advertise.ownerPID, advertise
-          .getDestPrefix(), peer, advertise.safeToken)) {
-          String path = advertise.getPath();
-          String[] params = new String[5];
-          params[0] = advertise.getDestPrefix();
-          params[1] = path;
-          params[2] = peer;
-          params[3] = srcPid;
-          params[4] = advertise.getLength(1);
-          String token = safeManager.post(SdxRoutingSlang.postAdvertise, params);
-          advertise.safeToken = token;
-          advertiseBgp(peerUrls.get(peer), advertise);
+  private void propagateBgpAdvertise(RouteAdvertise advertise, String srcPid) {
+    for (String peer : peerUrls.keySet()) {
+      if (!peer.equals(advertise.ownerPID) && !peer.equals(advertise.advertiserPID)) {
+        if (!advertise.route.contains(peer)) {
+          if (advertise.srcPrefix == null && safeManager.verifyAS(advertise.ownerPID, advertise
+            .getDestPrefix(), peer, advertise.safeToken)) {
+            String path = advertise.getPath();
+            String[] params = new String[5];
+            params[0] = advertise.getDestPrefix();
+            params[1] = path;
+            params[2] = peer;
+            params[3] = srcPid;
+            params[4] = advertise.getLength(1);
+            String token = safeManager.post(SdxRoutingSlang.postAdvertise, params);
+            advertise.safeToken = token;
+            advertiseBgp(peerUrls.get(peer), advertise);
+          } else if (safeManager.verifyAS(advertise.ownerPID, advertise.getsrcPrefix(), advertise
+            .getDestPrefix(), peer, advertise.safeToken)) {
+            String path = advertise.getPath();
+            String[] params = new String[5];
+            params[0] = advertise.getDestPrefix();
+            params[1] = path;
+            params[2] = peer;
+            params[3] = srcPid;
+            params[4] = advertise.getLength(1);
+            //TODO: update Safe script and modify this part
+            String token = safeManager.post(SdxRoutingSlang.postAdvertise, params);
+            advertise.safeToken = token;
+            advertiseBgp(peerUrls.get(peer), advertise);
+          }
         }
       }
     }
-
   }
 
   private void revokePrefix(String customerSafeKeyHash, String prefix){

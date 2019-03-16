@@ -21,8 +21,8 @@ public class MultiSdxSetting extends SliceHelper {
 
   final static String sdxName = "sdx-tri";
   static String userDir = System.getProperty("user.dir");
-  static String sdxSimpleDir = userDir.split("SDX-Simple")[0] + "SDX-Simple/";
-  public final static String sdxConfigDir = sdxSimpleDir + "config/cnert2019/";
+  static String sdxSimpleDir = userDir.split("exoplex")[0] + "/exoplex/";
+  public final static String sdxConfigDir = sdxSimpleDir + "config/multisdx/";
   public final static HashMap<String, String[]> sdxArgs = new HashMap<>();
   public final static HashMap<String, String[]> sdxNoResetArgs = new HashMap<>();
   public static String[] clientArgs = new String[]{"-c", sdxSimpleDir + "client-config/client" +

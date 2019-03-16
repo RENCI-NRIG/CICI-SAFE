@@ -103,9 +103,11 @@ public class SdxExogeniClient extends SliceCommon{
       while (true) {
         System.out.print("Enter Commands:stitch client_resource_name [clientIntfIP] " +
           "[sdxIntfIPw/netmask]\n\t " +
-            "unstitch client_resource_name\n\t" +
-            "advertise route: route dest gateway\n\t link site1[RENCI] " +
-            "site2[SL] \n" + cmdprefix);
+          "unstitch client_resource_name\n\t" +
+          "advertise route: route dest gateway\n\t" +
+          "link prefix1 prefix2\n" +
+          ""
+          + cmdprefix);
         input = stdin.readLine();
         System.out.print("continue?[y/n]\n$>" + input);
         input = stdin.readLine();
@@ -131,7 +133,7 @@ public class SdxExogeniClient extends SliceCommon{
         processUnStitchCmd(params);
       } else if (params[0].equals("route")){
         processPrefixCmd(params);
-      } else {
+      } else if (params[0].equals("bgp")){
         processBgpCmd(params);
       }
     } catch (Exception e) {
