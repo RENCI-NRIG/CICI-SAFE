@@ -44,8 +44,8 @@ public class MultiSdxSetting extends SliceHelper {
 
   static {
     //clientSites.add("RENCI");
-    clientSites.add("UFL");
-    clientSites.add("UFL");
+    clientSites.add("UH");
+    clientSites.add("UH");
     //clientSites.add("UNF");
     clientSites.add("UNF");
     clientSites.add("UNF");
@@ -58,9 +58,9 @@ public class MultiSdxSetting extends SliceHelper {
 
   public static ArrayList<String[]> sdxSites = new ArrayList<>();
   static {
-    sdxSites.add(new String[]{"UFL", "UNF"});
-    sdxSites.add(new String[]{"UNF", "UFL"});
-    sdxSites.add(new String[]{"UNF", "UFL"});
+    sdxSites.add(new String[]{"UH", "UMass"});
+    sdxSites.add(new String[]{"UMass", "UFL"});
+    sdxSites.add(new String[]{"UMass", "UFL"});
     sdxSites.add(new String[]{"UFL", "UNF"});
   }
 

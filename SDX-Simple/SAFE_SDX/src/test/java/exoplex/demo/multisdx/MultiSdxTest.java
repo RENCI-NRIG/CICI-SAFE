@@ -46,7 +46,6 @@ public class MultiSdxTest {
       multiSdxSlice.deleteSdxSlices();
       multiSdxSlice.deleteClientSlices();
     }
-    Thread.sleep(200000);
   }
 
   public static void main(String[] args){
