@@ -21,6 +21,7 @@ public class SiteBase {
    sites.put("UVA","UvA (Amsterdam, The Netherlands) XO Rack");
    sites.put("WSU","WSU (Detroit, MI, USA) XO Rack");
    sites.put("WVN","WVN (UCS-B series rack in Morgantown, WV, USA)");
+   sites.put("PSC","PSC (Pittsburgh, PA, USA) XO Rack");
   }
 
   public static String get(String site){
