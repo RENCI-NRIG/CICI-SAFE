@@ -77,9 +77,11 @@ public class TestMpRouting extends SdxManager {
     serverSlice = createTestSlice();
     serverSlice.commitAndWait();
     configTestSlice(serverSlice);
-    if(plexusAndSafeInSlice) {
-      configSdnControllerAddr(serverSlice.getComputeNode(plexusName).getManagementIP());
+    if(plexusInSlice){
       checkPlexus(serverSlice.getComputeNode(plexusName).getManagementIP());
+    }
+    if(safeInSlice) {
+      configSdnControllerAddr(serverSlice.getComputeNode(plexusName).getManagementIP());
     }else{
       configSdnControllerAddr(conf.getString("config.plexusserver"));
     }
@@ -140,7 +142,7 @@ public class TestMpRouting extends SdxManager {
     slice.addBroadcastLink("stitch_c3_30");
     slice.attach("stitch_c3_30", "CNode2", "192.168.30.2", "255.255.255.0");
     slice.attach("stitch_c3_30", "c3");
-    if(plexusAndSafeInSlice) {
+    if(plexusInSlice) {
       slice.addPlexusController(controllerSite, plexusName);
     }
     return  slice;

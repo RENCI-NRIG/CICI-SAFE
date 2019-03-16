@@ -165,13 +165,13 @@ public class SdxManager extends SliceHelper {
     logPrefix += "[" + sliceName + "]";
 
     checkSdxPrerequisites(serverSlice);
-    if(plexusAndSafeInSlice){
+    if(plexusInSlice){
       configSdnControllerAddr(serverSlice.getComputeNode(plexusName).getManagementIP());
     }else {
       configSdnControllerAddr(conf.getString("config.plexusserver"));
     }
     if(safeEnabled) {
-      if(plexusAndSafeInSlice) {
+      if(safeInSlice) {
         setSafeServerIp(serverSlice.getComputeNode("safe-server").getManagementIP());
       }else{
         setSafeServerIp(conf.getString("config.safeserver"));
@@ -1497,7 +1497,7 @@ public class SdxManager extends SliceHelper {
   public void configRouting(String ovscontroller, String httpcontroller, String
       routerpattern, String stitchportpattern) {
     logger.debug("Configurating Routing");
-    if(plexusAndSafeInSlice) {
+    if(plexusInSlice) {
       restartPlexus();
     }
     // run ovsbridge scritps to add the all interfaces to the ovsbridge br0, if new interface is

@@ -69,7 +69,7 @@ public class ExogeniClientSlice extends SliceHelper {
         c1.commitAndWait();
       }
       c1.refresh();
-      if(safeEnabled&&plexusAndSafeInSlice){
+      if(safeEnabled&&safeInSlice){
         String safeIp = c1.getComputeNode("safe-server").getManagementIP();
         checkSafeServer(safeIp, riakIp);
       }
@@ -129,7 +129,7 @@ public class ExogeniClientSlice extends SliceHelper {
 
       c1.commitAndWait();
       c1.refresh();
-      if(safeEnabled && plexusAndSafeInSlice){
+      if(safeEnabled && safeInSlice){
         String safeIp = c1.getComputeNode("safe-server").getManagementIP();
         checkSafeServer(safeIp, riakIp);
       }
@@ -174,7 +174,7 @@ public class ExogeniClientSlice extends SliceHelper {
       }
     }
     if (safeEnabled) {
-      if(plexusAndSafeInSlice) {
+      if(safeInSlice) {
         s.addSafeServer(serverSite, riakIp, SafeManager.safeDockerImage, SafeManager.safeServerScript);
       }
     }
