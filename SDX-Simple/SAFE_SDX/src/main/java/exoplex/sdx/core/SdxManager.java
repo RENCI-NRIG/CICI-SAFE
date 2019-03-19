@@ -6,8 +6,10 @@ import exoplex.common.slice.SiteBase;
 import exoplex.common.utils.Exec;
 import exoplex.common.utils.HttpUtil;
 import exoplex.common.utils.ServerOptions;
-import exoplex.sdx.bgp.RouteAdvertise;
-import exoplex.sdx.bgp.BgpManager;
+import exoplex.sdx.advertise.AdvertiseBase;
+import exoplex.sdx.advertise.PolicyAdvertise;
+import exoplex.sdx.advertise.RouteAdvertise;
+import exoplex.sdx.advertise.AdvertiseManager;
 import exoplex.sdx.safe.SafeManager;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -65,7 +67,7 @@ public class SdxManager extends SliceHelper {
   private static final String dpidPattern = "^[a-f0-9]{16}";
   protected HashMap<String, ArrayList<String>> edgeRouters = new HashMap<String, ArrayList<String>>();
   protected RoutingManager routingmanager = new RoutingManager();
-  protected BgpManager bgpManager;
+  protected AdvertiseManager advertiseManager;
   protected SafeManager safeManager = null;
   private BroManager broManager = null;
   private String mask = "/24";
@@ -80,7 +82,7 @@ public class SdxManager extends SliceHelper {
   private ConcurrentHashMap<String, String> prefixGateway = new ConcurrentHashMap<String, String>();
   private ConcurrentHashMap<String, HashSet<String>> gatewayPrefixes = new ConcurrentHashMap();
   private ConcurrentHashMap<String, String> customerGateway = new ConcurrentHashMap<String,
-      String>();
+    String>();
 
   private ConcurrentHashMap<String, String> prefixKeyHash = new ConcurrentHashMap<String, String>();
 
@@ -111,12 +113,16 @@ public class SdxManager extends SliceHelper {
     return (serverSlice.getComputeNode(nodeName)).getManagementIP();
   }
 
-  public String getSafeServer(){
+  public String getSafeServer() {
     return safeServer;
   }
 
-  public String getSafeServerIP(){
+  public String getSafeServerIP() {
     return safeServerIp;
+  }
+
+  public String getPid(){
+    return safeManager.getSafeKeyHash();
   }
 
   private void addEntry_HashList(HashMap<String, ArrayList<String>> map, String key, String entry) {
@@ -147,7 +153,7 @@ public class SdxManager extends SliceHelper {
     return routingmanager.getDPID(rname);
   }
 
-  protected void configSdnControllerAddr(String ip){
+  protected void configSdnControllerAddr(String ip) {
     SDNControllerIP = ip;
     //SDNControllerIP="152.3.136.36";
     //logger.debug("plexuscontroler managementIP = " + SDNControllerIP);
@@ -165,19 +171,19 @@ public class SdxManager extends SliceHelper {
     logPrefix += "[" + sliceName + "]";
 
     checkSdxPrerequisites(serverSlice);
-    if(plexusInSlice){
+    if (plexusInSlice) {
       configSdnControllerAddr(serverSlice.getComputeNode(plexusName).getManagementIP());
-    }else {
+    } else {
       configSdnControllerAddr(conf.getString("config.plexusserver"));
     }
-    if(safeEnabled) {
-      if(safeInSlice) {
+    if (safeEnabled) {
+      if (safeInSlice) {
         setSafeServerIp(serverSlice.getComputeNode("safe-server").getManagementIP());
-      }else{
+      } else {
         setSafeServerIp(conf.getString("config.safeserver"));
       }
       safeManager = new SafeManager(safeServerIp, safeKeyFile, sshkey);
-      bgpManager = new BgpManager(safeManager.getSafeKeyHash());
+      advertiseManager = new AdvertiseManager(safeManager.getSafeKeyHash(), safeManager);
     }
     //configRouting(serverslice,OVSController,SDNController,"(c\\d+)","(sp-c\\d+.*)");
     loadSdxNetwork(serverSlice, routerPattern, stitchPortPattern, broPattern);
@@ -187,7 +193,7 @@ public class SdxManager extends SliceHelper {
   public void startSdxServer(String[] args) throws TransportException, Exception {
     CommandLine cmd = ServerOptions.parseCmd(args);
     initializeExoGENIContexts(cmd.getOptionValue("config"));
-    if(conf.hasPath("config.ipprefix")) {
+    if (conf.hasPath("config.ipprefix")) {
       IPPrefix = conf.getString("config.ipprefix");
       computeIP(IPPrefix);
     }
@@ -216,7 +222,7 @@ public class SdxManager extends SliceHelper {
     for (ComputeNode node : serverSlice.getComputeNodes()) {
       if (node.getName().matches(broPattern)) {
         Exec.sshExec("root", node.getManagementIP(), "/usr/bin/rm *.log; pkill bro;" +
-            "/usr/bin/screen -d -m /opt/bro/bin/bro -i eth1 test-all-policy.bro", sshkey);
+          "/usr/bin/screen -d -m /opt/bro/bin/bro -i eth1 test-all-policy.bro", sshkey);
       }
     }
   }
@@ -240,9 +246,9 @@ public class SdxManager extends SliceHelper {
     configRouters(serverSlice);
   }
 
-  private void clearSdx() throws TransportException, Exception{
+  private void clearSdx() throws TransportException, Exception {
     boolean flag = false;
-    if(serverSlice ==null) {
+    if (serverSlice == null) {
       serverSlice = SliceManager.loadManifestFile(sliceName, pemLocation, keyLocation, controllerUrl);
     }
     for (ComputeNode node : serverSlice.getComputeNodes()) {
@@ -261,22 +267,23 @@ public class SdxManager extends SliceHelper {
         flag = true;
       }
     }
-    if(flag) {
+    if (flag) {
       serverSlice.commitAndWait();
+      sleep(10);
     }
     delFlows();
   }
 
 
   private boolean addLink(String linkName, String
-      node1, String node2, long bw) throws TransportException, Exception{
+    node1, String node2, long bw) throws TransportException, Exception {
     String ip1 = serverSlice.getComputeNode(node1).getManagementIP();
     String ip2 = serverSlice.getComputeNode(node2).getManagementIP();
     int numInterfaces1 = getInterfaceNum(ip1);
     int numInterfaces2 = getInterfaceNum(ip2);
     serverSlice.lockSlice();
     int times = 1;
-    while(true) {
+    while (true) {
       serverSlice.addLink(linkName, node1, node2, bw);
       if (serverSlice.commitAndWait(10, Arrays.asList(new String[]{linkName}))) {
         sleep(10);
@@ -308,26 +315,30 @@ public class SdxManager extends SliceHelper {
     return true;
   }
 
-  private boolean addLink(String stitchName, String nodeName, long bw) throws  TransportException, Exception{
+  private boolean addLink(String stitchName, String nodeName, long bw) throws TransportException, Exception {
+    //TODO use another SliceManager module that mimic the addition of the stitch link
+    if(serverSlice.getResourceByName(stitchName) != null){
+      return false;
+    }
     String ip = serverSlice.getComputeNode(nodeName).getManagementIP();
     int numInterfaces = getInterfaceNum(ip);
     serverSlice.lockSlice();
     serverSlice.reloadSlice();
     int times = 1;
-    while(true) {
+    while (true) {
       serverSlice.addLink(stitchName, nodeName, bw);
       serverSlice.commitAndWait(10, Arrays.asList(new String[]{stitchName}));
       sleep(10);
       int newNum = getInterfaceNum(ip);
-      if(newNum > numInterfaces){
-        if(times>1){
+      if (newNum > numInterfaces) {
+        if (times > 1) {
           logger.warn(String.format("Tried %s times to add a stitchlink", times));
         }
         break;
-      }else{
+      } else {
         sleep(30);
         newNum = getInterfaceNum(ip);
-        if(newNum > numInterfaces) {
+        if (newNum > numInterfaces) {
           if (times > 1) {
             logger.warn(String.format("Tried %s times to add a stitchlink", times));
           }
@@ -344,29 +355,29 @@ public class SdxManager extends SliceHelper {
   }
 
   private boolean addStitchPort(String spName, String nodeName, String stitchUrl, String vlan, long
-                                bw) throws
-    TransportException, Exception{
+    bw) throws
+    TransportException, Exception {
     String ip = serverSlice.getComputeNode(nodeName).getManagementIP();
     int numInterfaces = getInterfaceNum(ip);
     serverSlice.lockSlice();
     serverSlice.reloadSlice();
     int times = 1;
     ComputeNode node = serverSlice.getComputeNode(nodeName);
-    while(true) {
+    while (true) {
       StitchPort mysp = serverSlice.addStitchPort(spName, vlan, stitchUrl, bw);
       mysp.stitch(node);
       serverSlice.commitAndWait(10, Arrays.asList(new String[]{spName + "-net"}));
       sleep(10);
       int newNum = getInterfaceNum(ip);
-      if(newNum > numInterfaces){
-        if(times>1){
+      if (newNum > numInterfaces) {
+        if (times > 1) {
           logger.warn(String.format("Tried %s times to add a stitchlink", times));
         }
         break;
-      }else{
+      } else {
         sleep(30);
         newNum = getInterfaceNum(ip);
-        if(newNum > numInterfaces) {
+        if (newNum > numInterfaces) {
           if (times > 1) {
             logger.warn(String.format("Tried %s times to add a stitchlink", times));
           }
@@ -382,25 +393,24 @@ public class SdxManager extends SliceHelper {
     return true;
   }
 
-  private int getInterfaceNum(String ip){
+  private int getInterfaceNum(String ip) {
     //String res[] = Exec.sshExec("root", ip, "ifconfig -a|grep \"eth\"|grep" +
     //    " " +
     //    "-v \"eth0\"|sed 's/[ \\t].*//;/^$/d'", sshkey);
     String res[] = Exec.sshExec("root", ip, "/bin/bash /root/ifaces.sh", sshkey);
-    logger.debug("Interfaces before");
-    logger.debug(res[0]);
+    logger.debug(String.format("Interfaces: %s", res[0]));
     int num = res[0].split("\n").length;
     return num;
   }
 
-  public String adminCmd(String operation, String[]params){
+  public String adminCmd(String operation, String[] params) {
     String[] supportedOperations = new String[]{"stitch"};
-    if(operation.equals("stitch")){
+    if (operation.equals("stitch")) {
       return processStitchCmd(params);
 
-    }else{
+    } else {
       return String.format("Unrecognized operation: %s\n Supported Operations: %s", operation,
-        String.join(",",supportedOperations));
+        String.join(",", supportedOperations));
     }
   }
 
@@ -409,15 +419,15 @@ public class SdxManager extends SliceHelper {
   params [serverURI, myNode, myAddress, urAddressPrefix]
    */
   private String processStitchCmd(String[] params) {
-    if(serverSlice==null){
+    if (serverSlice == null) {
       try {
         serverSlice = SliceManager.loadManifestFile(sliceName, pemLocation, keyLocation, controllerUrl);
-      }catch (Exception e){
+      } catch (Exception e) {
         logger.error(e.getMessage());
       }
     }
     try {
-      if(params.length<2){
+      if (params.length < 2) {
         return "Missing parameters: [serverURI, myNode]";
       }
       String serverURI = params[0];
@@ -455,11 +465,11 @@ public class SdxManager extends SliceHelper {
       jsonparams.put("gateway", myAddress);
       jsonparams.put("ip", urAddressPrefix);
 
-      if(safeEnabled) {
+      if (safeEnabled) {
         if (!safeChecked) {
-          if(serverSlice.getResourceByName("safe-server")!=null){
+          if (serverSlice.getResourceByName("safe-server") != null) {
             setSafeServerIp(serverSlice.getComputeNode("safe-server").getManagementIP());
-          }else {
+          } else {
             setSafeServerIp(conf.getString("config.safeserver"));
           }
           //sm.verifySafeInstallation(riakIp);
@@ -470,7 +480,7 @@ public class SdxManager extends SliceHelper {
         postSafeStitchRequest(safeKeyHash, sliceName, node0_s2_stitching_GUID, params[2],
             params[3]);
         */
-      }else {
+      } else {
         jsonparams.put("ckeyhash", sliceName);
       }
       logger.debug("Sending stitch request to Sdx server");
@@ -490,7 +500,7 @@ public class SdxManager extends SliceHelper {
         String remoteSafeKeyHash = res.getString("safeKeyHash");
         //Todo: be careful when we want to unstitch from the link side. as the net is virtual
         stitchNet.put(remoteGUID, l1.getLinkName());
-        if(!customerNodes.containsKey(remoteSafeKeyHash)){
+        if (!customerNodes.containsKey(remoteSafeKeyHash)) {
           customerNodes.put(remoteSafeKeyHash, new HashSet<>());
         }
         customerNodes.get(remoteSafeKeyHash).add(remoteGUID);
@@ -503,7 +513,7 @@ public class SdxManager extends SliceHelper {
         peerRequest.peerUrl = this.serverurl;
         String peerRes = HttpUtil.postJSON(serverURI + "sdx/peer", peerRequest.toJsonObject());
         PeerRequest newPeer = new PeerRequest(peerRes);
-        if(newPeer.peerPID!=""){
+        if (newPeer.peerPID != "") {
           updatePeer(newPeer);
         }
         return myAddress;
@@ -514,29 +524,35 @@ public class SdxManager extends SliceHelper {
     return null;
   }
 
-  private void updatePeer(PeerRequest newPeer){
+  private void updatePeer(PeerRequest newPeer) {
     this.peerUrls.put(newPeer.peerPID, newPeer.peerUrl);
-    ArrayList<RouteAdvertise> advertises = bgpManager.getAllAdvertises();
-    for(RouteAdvertise routeAdvertise : advertises){
-      if(!routeAdvertise.advertiserPID.equals(newPeer)){
-        if(!routeAdvertise.route.contains(newPeer.peerPID)) {
+    ArrayList<RouteAdvertise> advertises = advertiseManager.getAllAdvertises();
+    for (RouteAdvertise routeAdvertise : advertises) {
+      if (!routeAdvertise.advertiserPID.equals(newPeer)) {
+        if (!routeAdvertise.route.contains(newPeer.peerPID)) {
           advertiseBgp(newPeer.peerUrl, routeAdvertise);
         }
       }
     }
     //Todo: make advertisements
+    //TODO: update Policyes
   }
 
-  private void advertiseBgp(String peerUrl, RouteAdvertise advertise){
+  private void advertiseBgp(String peerUrl, RouteAdvertise advertise) {
     logger.info(String.format("advertiseBgp %s", advertise.toString()));
     HttpUtil.postJSON(peerUrl + "sdx/bgp", advertise.toJsonObject());
   }
 
+  private void advertisePolicy(String peerUrl, PolicyAdvertise advertise) {
+    logger.info(String.format("advertisePolicy %s", advertise.toString()));
+    HttpUtil.postJSON(peerUrl + "sdx/policy", advertise.toJsonObject());
+  }
+
   private String processUnStitchCmd(String[] params) {
-    if(serverSlice==null){
+    if (serverSlice == null) {
       try {
         serverSlice = SliceManager.loadManifestFile(sliceName, pemLocation, keyLocation, controllerUrl);
-      }catch (Exception e){
+      } catch (Exception e) {
         logger.error(e.getMessage());
       }
     }
@@ -547,13 +563,13 @@ public class SdxManager extends SliceHelper {
       JSONObject jsonparams = new JSONObject();
       jsonparams.put("cslice", sliceName);
       jsonparams.put("creservid", node0_s2_stitching_GUID);
-      if(safeEnabled) {
+      if (safeEnabled) {
         jsonparams.put("ckeyhash", safeManager.getSafeKeyHash());
         /*
         postSafeStitchRequest(safeKeyHash, sliceName, node0_s2_stitching_GUID, params[2],
             params[3]);
         */
-      }else{
+      } else {
         jsonparams.put("ckeyhash", sliceName);
       }
       logger.debug("Sending unstitch request to Sdx server");
@@ -574,18 +590,18 @@ public class SdxManager extends SliceHelper {
     String secret,
     String sdxnode,
     String gateway,
-    String ip) throws TransportException, Exception{
+    String ip) throws TransportException, Exception {
     long start = System.currentTimeMillis();
     JSONObject res = new JSONObject();
     res.put("ip", "");
     res.put("gateway", "");
     res.put("message", "");
 
-    logger.info(logPrefix + "new stitch request from " + customerSlice+ " for " + sliceName + " at " +
-        "" + site);
+    logger.info(logPrefix + "new stitch request from " + customerSlice + " for " + sliceName + " at " +
+      "" + site);
     logger.debug("new stitch request for " + sliceName + " at " + site);
     //if(!safeEnabled || authorizeStitchRequest(customer_slice,customerName,reserveId, safeKeyHash,
-    if(!safeEnabled || safeManager.authorizeStitchRequest(customerSafeKeyHash,customerSlice)){
+    if (!safeEnabled || safeManager.authorizeStitchRequest(customerSafeKeyHash, customerSlice)) {
       if (safeEnabled) {
         logger.info("Authorized: stitch request for " + sliceName);
       }
@@ -593,7 +609,7 @@ public class SdxManager extends SliceHelper {
       String stitchname = null;
       Network net = null;
       ComputeNode node = null;
-      if (sdxnode != null && serverSlice.getResourceByName(sdxnode)!= null) {
+      if (sdxnode != null && serverSlice.getResourceByName(sdxnode) != null) {
         node = serverSlice.getComputeNode(sdxnode);
       /*
       serverSlice.lockSlice();
@@ -603,7 +619,7 @@ public class SdxManager extends SliceHelper {
         addLink(stitchname, node.getName(), bw);
         serverSlice.refresh();
       } else if (sdxnode == null && edgeRouters.containsKey(site) && edgeRouters.get(site).size() >
-          0) {
+        0) {
         node = serverSlice.getComputeNode(edgeRouters.get(site).get(0));
         stitchname = allocateStitchLinkName(ip, node.getName());
       /*
@@ -657,7 +673,7 @@ public class SdxManager extends SliceHelper {
       logLink.setName(stitchname);
       logLink.addNode(node.getName());
       links.put(stitchname, logLink);
-      serverSlice.stitch(net1_stitching_GUID, customerSlice, reserveId, secret, gateway + "/" +  ip
+      serverSlice.stitch(net1_stitching_GUID, customerSlice, reserveId, secret, gateway + "/" + ip
         .split("/")[1]);
       res.put("ip", ip);
       res.put("gateway", gateway);
@@ -666,17 +682,17 @@ public class SdxManager extends SliceHelper {
       sleep(15);
       updateOvsInterface(serverSlice, node.getName());
       routingmanager.newExternalLink(logLink.getLinkName(),
-          ip,
-          logLink.getNodeA(),
-          gateway,
-          SDNController);
+        ip,
+        logLink.getNodeA(),
+        gateway,
+        SDNController);
       //routingmanager.configurePath(ip,node.getName(),ip.split("/")[0],SDNController);
       logger.info(logPrefix + "stitching operation  completed, time elapsed(s): " + (System
-          .currentTimeMillis() - start) / 1000);
+        .currentTimeMillis() - start) / 1000);
 
       //update states
       stitchNet.put(reserveId, stitchname);
-      if(!customerNodes.containsKey(customerSafeKeyHash)){
+      if (!customerNodes.containsKey(customerSafeKeyHash)) {
         customerNodes.put(customerSafeKeyHash, new HashSet<>());
       }
       customerNodes.get(customerSafeKeyHash).add(reserveId);
@@ -689,34 +705,36 @@ public class SdxManager extends SliceHelper {
     return res;
   }
 
-  public String undoStitch( String customerSafeKeyHash, String customerSlice, String
-      customerReserveId) throws TransportException, Exception {
+  public String undoStitch(String customerSafeKeyHash, String customerSlice, String
+    customerReserveId) throws TransportException, Exception {
     logger.debug("ndllib TestDriver: START");
     logger.info(String.format("Undostitch request from %s for (%s, %s)", customerSafeKeyHash,
       customerSlice, customerReserveId));
-    if(customerNodes.containsKey(customerSafeKeyHash) && customerNodes.get(customerSafeKeyHash)
-        .contains(customerReserveId)){
+    if (customerNodes.containsKey(customerSafeKeyHash) && customerNodes.get(customerSafeKeyHash)
+      .contains(customerReserveId)) {
 
-    }else{
+    } else {
       return String.format("%s in slice %s is not stitched to SDX", customerReserveId,
-          customerSlice);
+        customerSlice);
     }
 
     Long t1 = System.currentTimeMillis();
 
     serverSlice.reloadSlice();
 
-    BroadcastNetwork net = (BroadcastNetwork) serverSlice.getResourceByName(stitchNet.get(customerReserveId));
+    String stitchLinkName = stitchNet.get(customerReserveId);
+    String stitchNodeName = stitchLinkName.split("_")[1];
+    BroadcastNetwork net = (BroadcastNetwork) serverSlice.getResourceByName(stitchLinkName);
     String stitchNetReserveId = net.getStitchingGUID();
-    sliceProxy.undoSliceStitch(sliceName, stitchNetReserveId,customerSlice,
-        customerReserveId);
+    sliceProxy.undoSliceStitch(sliceName, stitchNetReserveId, customerSlice,
+      customerReserveId);
 
     //clean status after undo stitching
     customerNodes.get(customerSafeKeyHash).remove(customerReserveId);
     String stitchName = stitchNet.remove(customerReserveId);
     String gateway = customerGateway.get(customerReserveId);
-    if(gatewayPrefixes.containsKey(gateway)) {
-      for (String prefix: gatewayPrefixes.get(gateway)){
+    if (gatewayPrefixes.containsKey(gateway)) {
+      for (String prefix : gatewayPrefixes.get(gateway)) {
         revokePrefix(customerSafeKeyHash, prefix);
       }
     }
@@ -725,18 +743,20 @@ public class SdxManager extends SliceHelper {
     serverSlice.commitAndWait();
     routingmanager.removeExternalLink(stitchName, stitchName.split("_")[1], SDNController);
     releaseIP(Integer.valueOf(stitchName.split("_")[2]));
+    updateOvsInterface(serverSlice, stitchNodeName);
     logger.debug("Finished UnStitching, time elapsed: " + String.valueOf(t2 - t1) + "\n");
     logger.info("Finished UnStitching, time elapsed: " + String.valueOf(t2 - t1) + "\n");
+
     return "Finished Unstitching";
   }
 
-  private String updateOvsInterface(SliceManager slice, String routerName){
-    String res =  slice.runCmdNode( "/bin/bash ~/ovsbridge.sh " + OVSController, sshkey, routerName, true);
+  private String updateOvsInterface(SliceManager slice, String routerName) {
+    String res = slice.runCmdNode("/bin/bash ~/ovsbridge.sh " + OVSController, sshkey, routerName, true);
     return res;
-   }
+  }
 
   //TODO thread safe operation
-  public String deployBro(String routerName) throws TransportException , Exception{
+  public String deployBro(String routerName) throws TransportException, Exception {
     try {
       brolock.lock();
     } catch (Exception e) {
@@ -754,14 +774,14 @@ public class SdxManager extends SliceHelper {
     ArrayList<String> resources = new ArrayList<String>();
     String linkName = getBroLinkName(broName, ip_to_use);
     serverSlice.addLink(linkName, "192.168." + ip_to_use + ".1", "192.168." +
-        ip_to_use + ".2", "255.255.255.0", routerName, broName, brobw);
+      ip_to_use + ".2", "255.255.255.0", routerName, broName, brobw);
     resources.add(broName);
     resources.add(linkName);
     serverSlice.commitAndWait(10, resources);
     serverSlice.refresh();
     String resource_dir = conf.getString("config.resourcedir");
     serverSlice.configBroNode(broName, routerName, resource_dir, SDNControllerIP, serverurl, sshkey);
-    updateOvsInterface(serverSlice,routerName);
+    updateOvsInterface(serverSlice, routerName);
     Link logLink = new Link();
     logLink.setName(getBroLinkName(broName, ip_to_use));
     logLink.addNode(router.getName());
@@ -769,15 +789,15 @@ public class SdxManager extends SliceHelper {
     logLink.setIP(IPPrefix + ip_to_use);
     logLink.setMask(mask);
     routingmanager.newExternalLink(logLink.getLinkName(),
-        logLink.getIP(1),
-        logLink.getNodeA(),
-        logLink.getIP(2).split("/")[0],
-        SDNController);
+      logLink.getIP(1),
+      logLink.getNodeA(),
+      logLink.getIP(2).split("/")[0],
+      SDNController);
     Long t2 = System.currentTimeMillis();
     logger.info(logPrefix + "Deployed new Bro node successfully, time elapsed: " + (t2 - t1) +
-        "milliseconds");
+      "milliseconds");
     logger.debug(logPrefix + "Deployed new Bro node successfully, time elapsed: " + (t2 - t1) +
-        "milliseconds");
+      "milliseconds");
     brolock.unlock();
     return logLink.getIP(2).split("/")[0];
   }
@@ -846,8 +866,8 @@ public class SdxManager extends SliceHelper {
     return linkname;
   }
 
-  private String allocateStitchLinkName(String ip, String nodeName){
-    String sname = ip.replace(".", "_").replace("/","_");
+  private String allocateStitchLinkName(String ip, String nodeName) {
+    String sname = ip.replace(".", "_").replace("/", "_");
     return "stitch_" + nodeName + "_" + sname;
   }
 
@@ -908,49 +928,49 @@ public class SdxManager extends SliceHelper {
     return routingmanager.getNeighbors(edgeRouterName).get(0);
   }
 
-  private String findGatewayForPrefix(String prefix){
-    if(prefixGateway.containsKey(prefix)) {
+  private String findGatewayForPrefix(String prefix) {
+    if (prefixGateway.containsKey(prefix)) {
       return prefixGateway.get(prefix);
-    }else{
-      RouteAdvertise advertise = bgpManager.getAdvertise(prefix);
-      if(advertise != null){
+    } else {
+      RouteAdvertise advertise = advertiseManager.getAdvertise(prefix);
+      if (advertise != null) {
         return customerGateway.getOrDefault(advertise.advertiserPID, null);
-      }else{
+      } else {
         return null;
       }
     }
   }
 
-  public String connectionRequest(String ckeyhash, String self_prefix, String target_prefix, long bandwidth) throws  Exception{
+  public String connectionRequest(String ckeyhash, String self_prefix, String target_prefix, long bandwidth) throws Exception {
     logger.info(String.format("Connection request between %s and %s", self_prefix, target_prefix));
     //String n1=computenodes.get(site1).get(0);
     //String n2=computenodes.get(site2).get(0);
-    if(safeEnabled) {
+    if (safeEnabled) {
       String targetHash = null;
-      if(prefixKeyHash.containsKey(target_prefix)) {
+      if (prefixKeyHash.containsKey(target_prefix)) {
         targetHash = prefixKeyHash.get(target_prefix);
-      }else {
-        RouteAdvertise advertise = bgpManager.getAdvertise(target_prefix);
-        if(advertise == null){
+      } else {
+        RouteAdvertise advertise = advertiseManager.getAdvertise(target_prefix, self_prefix);
+        if (advertise == null) {
           return "target prefix unrecognized.";
-        }else {
+        } else {
           targetHash = advertise.ownerPID;
         }
       }
-      if(! safeManager.authorizeConnectivity(ckeyhash, self_prefix, targetHash, target_prefix)){
+      if (!safeManager.authorizeConnectivity(ckeyhash, self_prefix, targetHash, target_prefix)) {
         logger.info("Unauthorized connection request");
         return "Unauthorized connection request";
-      }else{
+      } else {
         logger.info("Authorized connection request");
       }
     }
     String n1 = routingmanager.getEdgeRouterByGateway(prefixGateway.get(self_prefix));
     String n2 = null;
-    if(prefixGateway.containsKey(target_prefix)){
+    if (prefixGateway.containsKey(target_prefix)) {
       n2 = routingmanager.getEdgeRouterByGateway(prefixGateway.get(target_prefix));
-    }else{
-      RouteAdvertise advertise = bgpManager.getAdvertise(target_prefix);
-      if(advertise!= null) {
+    } else {
+      RouteAdvertise advertise = advertiseManager.getAdvertise(target_prefix, self_prefix);
+      if (advertise != null) {
         String peerNode = customerNodes.get(advertise.advertiserPID).iterator().next();
         n2 = routingmanager.getEdgeRouterByGateway(customerGateway.get(peerNode));
       }
@@ -997,12 +1017,12 @@ public class SdxManager extends SliceHelper {
 
       //TODO: why nodeb dpid could be null
       res = routingmanager.newInternalLink(l1.getLinkName(),
-          l1.getIP(1),
-          l1.getNodeA(),
-          l1.getIP(2),
-          l1.getNodeB(),
-          SDNController,
-          linkbw);
+        l1.getIP(1),
+        l1.getNodeA(),
+        l1.getIP(2),
+        l1.getNodeB(),
+        SDNController,
+        linkbw);
       //set ip address
       //add link to links
     }
@@ -1011,11 +1031,11 @@ public class SdxManager extends SliceHelper {
       writeLinks(topofile);
       logger.debug("Link added successfully, configuring routes");
       if (routingmanager.configurePath(self_prefix, n1, target_prefix, n2, findGatewayForPrefix
-        (self_prefix) , SDNController, bandwidth)
+        (self_prefix), SDNController, bandwidth)
         //&&
         //  routingmanager.configurePath(target_prefix, n2, self_prefix, n1, prefixGateway.get
         //      (target_prefix), SDNController, 0)){
-        ){
+        ) {
         logger.info(logPrefix + "Routing set up for " + self_prefix + " and " + target_prefix);
         logger.debug(logPrefix + "Routing set up for " + self_prefix + " and " + target_prefix);
         //TODO: auto select edge router
@@ -1032,9 +1052,9 @@ public class SdxManager extends SliceHelper {
         return "route configured: " + res;
       } else {
         logger.info(logPrefix + "Route for " + self_prefix + " and " + target_prefix +
-            "Failed");
+          "Failed");
         logger.debug(logPrefix + "Route for " + self_prefix + " and " + target_prefix +
-            "Failed");
+          "Failed");
       }
     }
     return "route configured: " + res;
@@ -1042,21 +1062,36 @@ public class SdxManager extends SliceHelper {
 
   public void reset() {
     delFlows();
+    //delBridges();
     broManager.reset();
     logger.info("SDX network reset");
   }
 
+  public String processPolicyAdvertise(PolicyAdvertise policyAdvertise) {
+    // route with both source and destination address, find matching pairs
+    ArrayList<AdvertiseBase> newAdvertises = advertiseManager.receiveStPolicy
+      (policyAdvertise);
+    for (AdvertiseBase newAdvertise : newAdvertises) {
+      if(newAdvertise instanceof RouteAdvertise) {
+        propagateBgpAdvertise((RouteAdvertise)newAdvertise, ((RouteAdvertise) newAdvertise).srcPid);
+      }else{
+        //TODO propagate policy advertise
+        propagatePolicyAdvertise((PolicyAdvertise) newAdvertise);
+      }
+    }
+    return newAdvertises.stream().map(AdvertiseBase::toString).collect(Collectors.joining(","));
+  }
 
-  public String processBgpAdvertise(RouteAdvertise routeAdvertise){
-    if(safeEnabled && !safeManager.authorizeBgpAdvertise(routeAdvertise)){
+  public String processBgpAdvertise(RouteAdvertise routeAdvertise) {
+    if (safeEnabled && !safeManager.authorizeBgpAdvertise(routeAdvertise)) {
       logger.warn(String.format("Unauthorized routeAdvertise :%s", routeAdvertise));
       return "";
     }
     safeManager.postPathToken(routeAdvertise);
-    if(!routeAdvertise.hasSrcPrefix()) {
+    if (!routeAdvertise.hasSrcPrefix()) {
       // routes with destination address only
       //TODO: find mathcing pairs and correct the routes
-      RouteAdvertise newAdvertise = bgpManager.receiveAdvertise(routeAdvertise);
+      RouteAdvertise newAdvertise = advertiseManager.receiveAdvertise(routeAdvertise);
       if (newAdvertise == null) {
         //No change
         return "";
@@ -1073,13 +1108,20 @@ public class SdxManager extends SliceHelper {
           routingmanager.configurePath(routeAdvertise.destPrefix, edgeNode, gateway, getSDNController
             ());
         }
-        propagateBgpAdvertise(newAdvertise, routeAdvertise.advertiserPID);
+        propagateBgpAdvertise(newAdvertise, newAdvertise.srcPid);
         return newAdvertise.toString();
       }
-    }else{
+    } else {
       // route with both source and destination address, find matching pairs
-      ArrayList<RouteAdvertise> newAdvertises = bgpManager.receiveStAdvertise(routeAdvertise);
-      for(RouteAdvertise newAdvertise: newAdvertises) {
+      ArrayList<RouteAdvertise> newAdvertises = advertiseManager.receiveStAdvertise(routeAdvertise);
+      if(newAdvertises.size() > 0){
+        String customerReservId = customerNodes.get(routeAdvertise.advertiserPID).iterator().next();
+        String gateway = customerGateway.get(customerReservId);
+        String edgeNode = routingmanager.getEdgeRouterByGateway(gateway);
+        routingmanager.configurePath(routeAdvertise.destPrefix, routeAdvertise.srcPrefix, edgeNode,
+          gateway, getSDNController());
+      }
+      for (RouteAdvertise newAdvertise : newAdvertises) {
         propagateBgpAdvertise(newAdvertise, routeAdvertise.advertiserPID);
       }
       return newAdvertises.stream().map(RouteAdvertise::toString).collect(Collectors.joining(","));
@@ -1115,12 +1157,29 @@ public class SdxManager extends SliceHelper {
         gatewayPrefixes.put(gateway, new HashSet());
       }
       gatewayPrefixes.get(gateway).add(dest);
-      //RouteAdvertise advertise = bgpManager.initAdvertise(customer_keyhash, dest);
+      //RouteAdvertise advertise = advertiseManager.initAdvertise(customer_keyhash, dest);
       //propagateBgpAdvertise(advertise);
       notifyResult.result= true;
       notifyResult.safeKeyHash = safeManager.getSafeKeyHash();
     }
     return notifyResult;
+  }
+
+  private void propagatePolicyAdvertise(PolicyAdvertise advertise) {
+    logger.debug(String.format("Propagate policy advertise %s", advertise));
+    for (String peer : peerUrls.keySet()) {
+      if (!peer.equals(advertise.ownerPID) && !peer.equals(advertise.advertiserPID)) {
+        if (!advertise.route.contains(peer)) {
+          if (advertise.srcPrefix == null && safeManager.verifyAS(advertise.ownerPID, advertise
+            .getDestPrefix(), peer, advertise.safeToken)) {
+            advertisePolicy(peerUrls.get(peer), advertise);
+          } else if (advertise.srcPrefix != null && safeManager.verifyAS(advertise.ownerPID,
+            advertise.getSrcPrefix(), advertise.getDestPrefix(), peer, advertise.safeToken)) {
+            advertisePolicy(peerUrls.get(peer), advertise);
+          }
+        }
+      }
+    }
   }
 
   private void propagateBgpAdvertise(RouteAdvertise advertise, String srcPid) {
@@ -1129,7 +1188,7 @@ public class SdxManager extends SliceHelper {
         if (!advertise.route.contains(peer)) {
           if (advertise.srcPrefix == null && safeManager.verifyAS(advertise.ownerPID, advertise
             .getDestPrefix(), peer, advertise.safeToken)) {
-            String path = advertise.getPath();
+            String path = advertise.getFormattedPath();
             String[] params = new String[5];
             params[0] = advertise.getDestPrefix();
             params[1] = path;
@@ -1139,17 +1198,18 @@ public class SdxManager extends SliceHelper {
             String token = safeManager.post(SdxRoutingSlang.postAdvertise, params);
             advertise.safeToken = token;
             advertiseBgp(peerUrls.get(peer), advertise);
-          } else if (safeManager.verifyAS(advertise.ownerPID, advertise.getsrcPrefix(), advertise
-            .getDestPrefix(), peer, advertise.safeToken)) {
-            String path = advertise.getPath();
-            String[] params = new String[5];
-            params[0] = advertise.getDestPrefix();
-            params[1] = path;
-            params[2] = peer;
-            params[3] = srcPid;
-            params[4] = advertise.getLength(1);
+          } else if (advertise.srcPrefix != null && safeManager.verifyAS(advertise.ownerPID,
+            advertise.getSrcPrefix(), advertise.getDestPrefix(), peer, advertise.safeToken)) {
+            String path = advertise.getFormattedPath();
+            String[] params = new String[6];
+            params[0] = advertise.getSrcPrefix();
+            params[1] = advertise.getDestPrefix();
+            params[2] = path;
+            params[3] = peer;
+            params[4] = srcPid;
+            params[5] = advertise.getLength(1);
             //TODO: update Safe script and modify this part
-            String token = safeManager.post(SdxRoutingSlang.postAdvertise, params);
+            String token = safeManager.post(SdxRoutingSlang.postAdvertiseSD, params);
             advertise.safeToken = token;
             advertiseBgp(peerUrls.get(peer), advertise);
           }

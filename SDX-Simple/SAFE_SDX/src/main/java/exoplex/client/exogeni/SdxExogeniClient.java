@@ -9,7 +9,8 @@ import exoplex.common.utils.Exec;
 import exoplex.common.utils.HttpUtil;
 import exoplex.common.utils.SafeUtils;
 import exoplex.common.utils.ServerOptions;
-import exoplex.sdx.bgp.RouteAdvertise;
+import exoplex.sdx.advertise.RouteAdvertise;
+import exoplex.sdx.advertise.PolicyAdvertise;
 import exoplex.sdx.safe.SafeManager;
 import org.apache.commons.cli.CommandLine;
 import org.apache.logging.log4j.LogManager;
@@ -34,6 +35,7 @@ public class SdxExogeniClient extends SliceCommon{
   private SliceManager serverSlice = null;
   private boolean safeChecked = false;
   private CommandLine cmd;
+  protected SafeManager safeManager = null;
 
   public static void main(String[] args){
 
@@ -79,14 +81,7 @@ public class SdxExogeniClient extends SliceCommon{
   public void run(String[] args) {
     try {
       serverSlice = SliceManager.loadManifestFile(sliceName, pemLocation, keyLocation, controllerUrl);
-      if(safeEnabled){
-          if(serverSlice.getResourceByName("safe-server")!= null) {
-            setSafeServerIp(serverSlice.getComputeNode("safe-server").getManagementIP());
-          }else {
-            setSafeServerIp(conf.getString("config.safeserver"));
-          }
-          safeChecked = true;
-      }
+      checkSafe();
     }catch (Exception e){
       e.printStackTrace();
     }
@@ -135,6 +130,8 @@ public class SdxExogeniClient extends SliceCommon{
         processPrefixCmd(params);
       } else if (params[0].equals("bgp")){
         processBgpCmd(params);
+      } else if (params[0].equals("policy")){
+        processPolicyCmd(params);
       }
     } catch (Exception e) {
       e.printStackTrace();
@@ -229,19 +226,79 @@ public class SdxExogeniClient extends SliceCommon{
     HttpUtil.postJSON(peerUrl + "sdx/bgp", advertise.toJsonObject());
   }
 
+  private void advertisePolicy(String peerUrl, PolicyAdvertise advertise){
+    HttpUtil.postJSON(peerUrl + "sdx/policy", advertise.toJsonObject());
+  }
+
+  private void processPolicyCmd(String[] params){
+    String tagAuthorityPid = SafeUtils.getPrincipalId(safeServer,"tagauthority");
+    String destPrefix = params[1];
+    String srcPrefix = params[2];
+    String astag = params[3];
+    String tag = String.format("%s:%s", tagAuthorityPid, astag);
+
+    PolicyAdvertise policyAdvertise = new PolicyAdvertise();
+    policyAdvertise.srcPrefix = srcPrefix;
+    policyAdvertise.destPrefix = destPrefix;
+    String sdToken = safeManager.postSdPolicySet(tag, policyAdvertise.getSrcPrefix(),
+      policyAdvertise.getDestPrefix());
+    policyAdvertise.ownerPID = safeKeyHash;
+    policyAdvertise.safeToken = sdToken;
+    advertisePolicy(serverurl, policyAdvertise);
+    logger.debug("client posted SD policy set and made policy advertisement");
+  }
+
   private void processBgpCmd(String[] params){
     if(safeEnabled){
       String token = null;
-      //Post SAFE sets
+      checkSafe();
       RouteAdvertise advertise = new RouteAdvertise();
       advertise.destPrefix = params[1];
       advertise.srcPrefix = params[2];
       advertise.advertiserPID = safeKeyHash;
+      advertise.ownerPID = safeKeyHash;
       advertise.route.add(safeKeyHash);
-      advertise.safeToken = token;
+      if(params.length > 3){
+        //need special tag acl
+        // postASTagAclEntrySD
+        String[] vars = new String[3];
+        String tagAuth = SafeUtils.getPrincipalId(safeServer, "tagauthority");
+        String tag = String.format("%s:%s", tagAuth, params[3]);
+        String res = safeManager.postSdPolicySet(tag, advertise.getSrcPrefix(), advertise
+          .getDestPrefix());
+        logger.debug(res);
+      }
+      //Post SAFE sets
+      //postInitRouteSD
+
+      String[] safeparams = new String[5];
+      safeparams[0] = advertise.getSrcPrefix();
+      safeparams[1] = advertise.getDestPrefix();
+      safeparams[2] = advertise.getFormattedPath();
+      String sdxPid = HttpUtil.get(serverurl + "sdx/getpid");
+      safeparams[3] = sdxPid;
+      safeparams[4] = String.valueOf(1);
+      logger.debug(String.format("Safe principal Id of sdx server is %s", sdxPid));
+      String routeToken = SafeUtils.getToken(SafeUtils.postSafeStatements(safeServer,
+        SdxRoutingSlang.postInitRouteSD, safeKeyHash, safeparams));
+      advertise.safeToken = routeToken;
+      //pass the token when making bgpAdvertise
       advertiseBgp(serverurl, advertise);
-      logger.debug(String.format("posted initRoute statement for dst %s src %s pair", advertise
+      logger.debug(String.format("posted initRouteSD statement for dst %s src %s pair", advertise
         .destPrefix, advertise.srcPrefix));
+    }
+  }
+
+  private void checkSafe(){
+    if(safeEnabled){
+      if(safeInSlice && serverSlice.getResourceByName("safe-server")!= null) {
+        setSafeServerIp(serverSlice.getComputeNode("safe-server").getManagementIP());
+      }else {
+        setSafeServerIp(conf.getString("config.safeserver"));
+      }
+      safeManager = new SafeManager(safeServerIp, safeKeyFile, sshkey);
+      safeChecked = true;
+      safeKeyHash = SafeUtils.getPrincipalId(safeServer, safeKeyFile);
     }
   }
 
@@ -250,18 +307,8 @@ public class SdxExogeniClient extends SliceCommon{
     paramsobj.put("dest", params[1]);
     paramsobj.put("gateway", params[2]);
     if(safeEnabled) {
-      if (!safeChecked) {
-        if(serverSlice.getResourceByName("safe-server")!=null){
-          setSafeServerIp(serverSlice.getComputeNode("safe-server").getManagementIP());
-        }else {
-          setSafeServerIp(conf.getString("config.safeserver"));
-        }
-        safeChecked = true;
-      }
-      safeKeyHash = SafeUtils.getPrincipalId(safeServer, safeKeyFile);
+      checkSafe();
       paramsobj.put("customer", safeKeyHash);
-
-
     }else {
       paramsobj.put("customer", sliceName);
     }
@@ -369,11 +416,16 @@ public class SdxExogeniClient extends SliceCommon{
         sleep(5);
         String mip = node0_s2.getManagementIP();
         String result = Exec.sshExec("root", mip, "ifconfig eth1 " + ip, sshkey)[0];
-        Exec.sshExec("root", mip, "echo \"ip route 192.168.1.1/16 " + params[3].split("/")[0] +
-          "\"" +
-          " >>/etc/quagga/zebra.conf  ", sshkey);
+        String gateway = params[3].split("/")[0];
+        Exec.sshExec("root", mip, "echo \"ip route 192.168.1.1/16 " + gateway +
+          "\" >>/etc/quagga/zebra.conf  ", sshkey);
         Exec.sshExec("root", mip, "/etc/init.d/quagga restart", sshkey);
-        logger.info(logPrefix + "stitch completed.");
+        if (ping(node0_s2.getName(), gateway)) {
+          logger.info(String.format("Ping to %s works", gateway));
+          logger.info(logPrefix + "stitch completed.");
+        }else {
+          logger.warn(String.format("Ping to %s doesn't work", gateway));
+        }
         return ip.split("/")[0];
       }
     } catch (Exception e) {

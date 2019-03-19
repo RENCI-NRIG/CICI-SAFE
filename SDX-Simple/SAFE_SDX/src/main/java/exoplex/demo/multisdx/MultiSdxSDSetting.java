@@ -1,14 +1,14 @@
 package exoplex.demo.multisdx;
 
-import exoplex.sdx.core.SliceHelper;
-import org.apache.commons.lang3.tuple.ImmutablePair;
+  import exoplex.sdx.core.SliceHelper;
+  import org.apache.commons.lang3.tuple.ImmutablePair;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
+  import java.util.ArrayList;
+  import java.util.Arrays;
+  import java.util.HashMap;
+  import java.util.List;
 
-public class MultiSdxSetting extends SliceHelper {
+public class MultiSdxSDSetting extends SliceHelper {
   public static final ArrayList<String> clientSites = new ArrayList<>();
   public static final ArrayList<String> sdxConfs = new ArrayList<>();
   public static final ArrayList<String> sdxSliceNames = new ArrayList<>();
@@ -24,7 +24,7 @@ public class MultiSdxSetting extends SliceHelper {
 
   final static String sdxName = "sdx-tri";
   static String userDir = System.getProperty("user.dir");
-  static String sdxSimpleDir = userDir.split("exoplex")[0] + "/exoplex/";
+  static String sdxSimpleDir = userDir.split("SDX-Simple")[0] + "/SDX-Simple/";
   public final static String sdxConfigDir = sdxSimpleDir + "config/multisdx/";
   public final static HashMap<String, String[]> sdxArgs = new HashMap<>();
   public final static HashMap<String, String[]> sdxNoResetArgs = new HashMap<>();
@@ -106,7 +106,7 @@ public class MultiSdxSetting extends SliceHelper {
       clientKeyMap.put(clientName, "key_p" + (keyBase + i));
       clientSiteMap.put(clientName, clientSites.get(i));
       clientIpMap.put(clientName, "192.168." + ipBase + ".1/24");
-      clientSdxMap.put(clientName, MultiSdxSetting.sdxSliceNames.get(((i+1)/ MultiSdxSetting
+      clientSdxMap.put(clientName, MultiSdxSDSetting.sdxSliceNames.get(((i+1)/ MultiSdxSDSetting
         .sdxSliceNames.size())));
       ipBase += 10;
     }
@@ -125,10 +125,18 @@ public class MultiSdxSetting extends SliceHelper {
     sdxASTags.put(sdxSliceNames.get(3), Arrays.asList(new String[]{"astag0", "astag1"}));
   }
   static {
-    userASTagAcls.put(clientSlices.get(0), Arrays.asList(new String[]{"astag0"}));
-    userASTagAcls.put(clientSlices.get(2), Arrays.asList(new String[]{"astag0"}));
-    userASTagAcls.put(clientSlices.get(1), Arrays.asList(new String[]{"astag1"}));
-    userASTagAcls.put(clientSlices.get(3), Arrays.asList(new String[]{"astag1"}));
+    //userASTagAcls.put(clientSlices.get(0), Arrays.asList(new String[]{"astag0"}));
+    //userASTagAcls.put(clientSlices.get(2), Arrays.asList(new String[]{"astag0"}));
+    //userASTagAcls.put(clientSlices.get(1), Arrays.asList(new String[]{"astag1"}));
+    //userASTagAcls.put(clientSlices.get(3), Arrays.asList(new String[]{"astag1"}));
+    userSDASTagAcls.put(clientSlices.get(0), Arrays.asList(new ImmutablePair[]{new
+      ImmutablePair<String, String>("192.168.30.1/24", "astag0")}));
+    userSDASTagAcls.put(clientSlices.get(2), Arrays.asList(new ImmutablePair[]{new
+      ImmutablePair<String, String>("192.168.10.1/24", "astag0")}));
+    userSDASTagAcls.put(clientSlices.get(1), Arrays.asList(new ImmutablePair[]{new
+      ImmutablePair<String, String>("192.168.40.1/24", "astag1")}));
+    userSDASTagAcls.put(clientSlices.get(3), Arrays.asList(new ImmutablePair[]{new
+      ImmutablePair<String, String>("192.168.20.1/24", "astag1")}));
   }
 
   static {

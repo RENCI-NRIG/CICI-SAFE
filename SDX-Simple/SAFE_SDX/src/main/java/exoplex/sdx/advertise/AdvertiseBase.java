@@ -1,11 +1,12 @@
-package exoplex.sdx.bgp;
+package exoplex.sdx.advertise;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
 
-public class RouteAdvertise{
+//TODO: differentiate between policy advertisement and route advertisement
+public class AdvertiseBase {
   public String ownerPID;
   public String destPrefix;
   public String srcPrefix;
@@ -17,16 +18,16 @@ public class RouteAdvertise{
 
   //<dest, src>-> ArrayList<String>
 
-  public RouteAdvertise(){
+  public AdvertiseBase(){
     route = new ArrayList<>();
   }
 
-  public RouteAdvertise(RouteAdvertise advertise, String myPid){
+  public AdvertiseBase(AdvertiseBase advertise, String myPid){
     this.ownerPID = advertise.ownerPID;
     this.destPrefix = advertise.destPrefix;
     this.srcPrefix = advertise.srcPrefix;
-    this.advertiserPID = myPid;
-    this.safeToken = null;
+    //Set the safe token to the previous one first, for authorizing neighbor ASes. May update later.
+    this.safeToken = advertise.safeToken;
     route = new ArrayList<>();
     route.add(myPid);
     route.addAll(advertise.route);
@@ -48,27 +49,20 @@ public class RouteAdvertise{
     return String.format("ipv4\\\"%s\\\"", destPrefix);
   }
 
-  public String getsrcPrefix(){
+  public String getSrcPrefix(){
     if(srcPrefix!= null) {
-      return String.format("ipv4\\\"%s\\\"", destPrefix);
+      return String.format("ipv4\\\"%s\\\"", srcPrefix);
     }else{
       return null;
     }
   }
 
-  public String getPath(){
+  public String getFormattedPath(){
     String path = String.join(",",  route);
     return String.format("[%s]", path);
   }
   public String toString(){
-    JSONObject obj = new JSONObject();
-    obj.put("ownerPID", ownerPID);
-    obj.put("destPrefix", destPrefix);
-    obj.put("srcPrefix", srcPrefix);
-    obj.put("adbertiserPID", advertiserPID);
-    obj.put("safeToken", safeToken);
-    obj.put("route", new JSONArray(route));
-    return obj.toString();
+    return toJsonObject().toString();
   }
 
   public JSONObject toJsonObject(){
@@ -84,32 +78,32 @@ public class RouteAdvertise{
 
   @Override
   public boolean equals(Object routeAdvertise){
-    if(! (routeAdvertise instanceof RouteAdvertise)){
+    if(! (routeAdvertise instanceof AdvertiseBase)){
       return false;
     }
-    if(!this.ownerPID.equals(((RouteAdvertise) routeAdvertise).ownerPID)){
+    if(!this.ownerPID.equals(((AdvertiseBase) routeAdvertise).ownerPID)){
       return false;
     }
-    if(!this.destPrefix.equals(((RouteAdvertise) routeAdvertise).destPrefix)){
+    if(!this.destPrefix.equals(((AdvertiseBase) routeAdvertise).destPrefix)){
       return false;
     }
-    if(this.srcPrefix!= null && !this.srcPrefix.equals(((RouteAdvertise) routeAdvertise).srcPrefix)){
+    if(this.srcPrefix!= null && !this.srcPrefix.equals(((AdvertiseBase) routeAdvertise).srcPrefix)){
       return false;
     }
-    if(this.srcPrefix == null && ((RouteAdvertise) routeAdvertise).srcPrefix!= null){
+    if(this.srcPrefix == null && ((AdvertiseBase) routeAdvertise).srcPrefix!= null){
       return false;
     }
-    if(!this.advertiserPID.equals(((RouteAdvertise) routeAdvertise).advertiserPID)){
+    if(!this.advertiserPID.equals(((AdvertiseBase) routeAdvertise).advertiserPID)){
       return false;
     }
-    if(this.safeToken != null && !this.safeToken.equals(((RouteAdvertise) routeAdvertise).safeToken)){
+    if(this.safeToken != null && !this.safeToken.equals(((AdvertiseBase) routeAdvertise).safeToken)){
       return false;
     }
-    if(this.route.size() != ((RouteAdvertise) routeAdvertise).route.size()){
+    if(this.route.size() != ((AdvertiseBase) routeAdvertise).route.size()){
       return false;
     }
     for(int i=0; i< route.size(); i++){
-      if(this.route.get(i).equals(((RouteAdvertise) routeAdvertise).route.get(i))){
+      if(this.route.get(i).equals(((AdvertiseBase) routeAdvertise).route.get(i))){
         return  false;
       }
     }

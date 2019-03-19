@@ -36,6 +36,7 @@ public class SafeUtils {
   public static String getToken(String message) {
     Pattern pattern = Pattern.compile("\\[\\'(.{43}=?)\\'?");
     Matcher matcher = pattern.matcher(message);
+    logger.debug(message);
     String token = null;
     if (matcher.find()) {
       token = matcher.group(1);
@@ -142,7 +143,9 @@ public class SafeUtils {
   public static boolean authorize(String safeServer, String requestName, String principal, String[]
       otherValues,  HashMap<String, String> envs){
     String message = postSafeStatements(safeServer, requestName, principal, envs, otherValues);
-    if(message.contains("Unsatisfied") || message.contains("Failed")){
+    if(message.contains("Unsatisfied") || message.contains("Failed") || message.contains("Query " +
+      "failed")){
+      logger.warn(message);
       return false;
     }
     for(String val: otherValues) {

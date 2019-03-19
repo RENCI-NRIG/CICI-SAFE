@@ -4,10 +4,12 @@ import exoplex.common.slice.Scripts;
 import exoplex.common.utils.Exec;
 import exoplex.common.utils.SafeUtils;
 
-import exoplex.sdx.bgp.RouteAdvertise;
+import exoplex.sdx.advertise.RouteAdvertise;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import safe.SdxRoutingSlang;
+
+import java.util.List;
 
 public class SafeManager {
   final static Logger logger = LogManager.getLogger(SafeManager.class);
@@ -61,12 +63,22 @@ public class SafeManager {
   }
 
   public void postPathToken(RouteAdvertise advertise){
-    String[] params = new String[4];
-    params[0] = advertise.safeToken;
-    params[1] = advertise.getDestPrefix();
-    params[2] = advertise.advertiserPID;
-    params[3] = String.valueOf(advertise.route.size());
-    post(SdxRoutingSlang.postPathToken, params);
+    if(advertise.srcPrefix == null) {
+      String[] params = new String[4];
+      params[0] = advertise.safeToken;
+      params[1] = advertise.getDestPrefix();
+      params[2] = advertise.advertiserPID;
+      params[3] = String.valueOf(advertise.route.size());
+      post(SdxRoutingSlang.postPathToken, params);
+    }else {
+      String[] params = new String[5];
+      params[0] = advertise.safeToken;
+      params[1] = advertise.getSrcPrefix();
+      params[2] = advertise.getDestPrefix();
+      params[3] = advertise.advertiserPID;
+      params[4] = String.valueOf(advertise.route.size());
+      post(SdxRoutingSlang.postPathTokenSD, params);
+    }
   }
 
   public boolean authorizeStitchRequest(String customer_slice,
@@ -99,12 +111,100 @@ public class SafeManager {
   }
 
   public boolean authorizeBgpAdvertise(RouteAdvertise routeAdvertise){
-    String[] othervalues=new String[4];
-    othervalues[0] = routeAdvertise.ownerPID;
-    othervalues[1] = routeAdvertise.getDestPrefix();
-    othervalues[2] = routeAdvertise.getPath();
-    othervalues[3] = routeAdvertise.safeToken;
-    return SafeUtils.authorize(safeServer, SdxRoutingSlang.verifyRoute, getSafeKeyHash(), othervalues);
+    if(routeAdvertise.srcPrefix == null) {
+      String[] othervalues = new String[4];
+      othervalues[0] = routeAdvertise.ownerPID;
+      othervalues[1] = routeAdvertise.getDestPrefix();
+      othervalues[2] = routeAdvertise.getFormattedPath();
+      othervalues[3] = routeAdvertise.safeToken;
+      return SafeUtils.authorize(safeServer, SdxRoutingSlang.verifyRoute, getSafeKeyHash(), othervalues);
+    }else {
+      String[] othervalues = new String[5];
+      othervalues[0] = routeAdvertise.ownerPID;
+      othervalues[1] = routeAdvertise.getSrcPrefix();
+      othervalues[2] = routeAdvertise.getDestPrefix();
+      othervalues[3] = routeAdvertise.getFormattedPath();
+      othervalues[4] = routeAdvertise.safeToken;
+      return SafeUtils.authorize(safeServer, SdxRoutingSlang.verifyRouteSD, getSafeKeyHash(),
+        othervalues);
+    }
+  }
+
+  public String postSdPolicySet(String tag, String srcIP, String destIP){
+    String[] params = new String[3];
+    params[0] = tag;
+    params[1] = srcIP;
+    params[2] = destIP;
+    String res = SafeUtils.postSafeStatements(safeServer, SdxRoutingSlang.postASTagAclEntrySD,
+      getSafeKeyHash(), params);
+    logger.info(res);
+    List<String> tokens = SafeUtils.getTokens(res);
+    if(tokens.size() == 2){
+      return tokens.get(1);
+    }
+    return null;
+  }
+
+  public boolean verifyCompliantPath(String srcPid, String srcIP, String destIP,  String
+    policyToken, String routeToken, String path){
+    String[] params = new String[6];
+    params[0] = srcPid;
+    params[1] = srcIP;
+    params[2] = destIP;
+    params[3] = path;
+    params[4] = policyToken;
+    params[5] = routeToken;
+    return SafeUtils.authorize(safeServer, SdxRoutingSlang.verifyCompliantPath, getSafeKeyHash(),
+      params);
+  }
+
+  /*
+  public boolean verifyCompliantPath(RouteAdvertise routeAdvertise){
+    if(routeAdvertise.srcPrefix == null) {
+      String[] othervalues = new String[4];
+      othervalues[0] = routeAdvertise.ownerPID;
+      othervalues[1] = routeAdvertise.getDestPrefix();
+      othervalues[2] = routeAdvertise.getFormattedPath();
+      othervalues[3] = routeAdvertise.safeToken;
+      return SafeUtils.authorize(safeServer, SdxRoutingSlang.verifyRoute, getSafeKeyHash(), othervalues);
+    }else {
+      String[] othervalues = new String[5];
+      othervalues[0] = routeAdvertise.ownerPID;
+      othervalues[1] = routeAdvertise.getSrcPrefix();
+      othervalues[2] = routeAdvertise.getDestPrefix();
+      othervalues[3] = routeAdvertise.getFormattedPath();
+      othervalues[4] = routeAdvertise.safeToken;
+      return SafeUtils.authorize(safeServer, SdxRoutingSlang.verifyRouteSD, getSafeKeyHash(),
+        othervalues);
+    }
+  }
+  */
+
+  public RouteAdvertise forwardAdvertise(RouteAdvertise routeAdvertise, String targetPid, String
+    srcPid){
+    if(routeAdvertise.srcPrefix == null) {
+      String[] params = new String[5];
+      params[0] = routeAdvertise.getDestPrefix();
+      params[1] = routeAdvertise.getFormattedPath();
+      params[2] = targetPid;
+      params[3] = srcPid;
+      params[4] = routeAdvertise.getLength(1);
+      String token1 = post(SdxRoutingSlang.postAdvertise, params);
+      routeAdvertise.safeToken = token1;
+      return routeAdvertise;
+    }else{
+      String[] params = new String[6];
+      params[0] = routeAdvertise.getSrcPrefix();
+      params[1] = routeAdvertise.getDestPrefix();
+      params[2] = routeAdvertise.getFormattedPath();
+      params[3] = targetPid;
+      params[4] = srcPid;
+      params[5] = routeAdvertise.getLength(1);
+      String token1 = post(SdxRoutingSlang.postAdvertiseSD, params);
+      routeAdvertise.safeToken = token1;
+      return routeAdvertise;
+
+    }
   }
 
   public boolean authorizeStitchRequest(String customerSafeKeyHash,
@@ -128,19 +228,20 @@ public class SafeManager {
     othervalues[2] = as;
     othervalues[3] = token;
     String sdxHash = SafeUtils.getPrincipalId(safeServer, this.safeKeyFile);
-    return SafeUtils.authorize(safeServer, "verifyAS", sdxHash, othervalues);
+    return SafeUtils.authorize(safeServer, SdxRoutingSlang.verifyAS, sdxHash, othervalues);
   }
 
   public boolean verifyAS(String owner, String srcIP, String dstIP, String as, String token)
   {
     /** Post to remote safesets using apache httpclient */
-    String[] othervalues=new String[4];
+    String[] othervalues=new String[5];
     othervalues[0]= owner;
-    othervalues[1] = dstIP;
-    othervalues[2] = as;
-    othervalues[3] = token;
+    othervalues[1] = srcIP;
+    othervalues[2] = dstIP;
+    othervalues[3] = as;
+    othervalues[4] = token;
     String sdxHash = SafeUtils.getPrincipalId(safeServer, this.safeKeyFile);
-    return SafeUtils.authorize(safeServer, "verifyAS", sdxHash, othervalues);
+    return SafeUtils.authorize(safeServer, SdxRoutingSlang.verifyASSD, sdxHash, othervalues);
   }
 
   public boolean authorizeChameleonStitchRequest(String customerSafeKeyHash,
