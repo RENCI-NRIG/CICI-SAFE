@@ -1,14 +1,12 @@
 package exoplex.sdx.core;
 
-import exoplex.sdx.bgp.RouteAdvertise;
+import exoplex.sdx.advertise.PolicyAdvertise;
+import exoplex.sdx.advertise.RouteAdvertise;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.json.JSONObject;
 
-import javax.ws.rs.Consumes;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
+import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.UriInfo;
@@ -30,8 +28,8 @@ public class RestService {
   @Produces(MediaType.TEXT_PLAIN)
   public String processAdminCmd(@Context UriInfo uriInfo, AdminCmd cmd) {
     logger.debug(uriInfo.getBaseUri());
-    logger.debug(String.format("got sittch request %s", cmd));
     SdxManager sdxManager = SdxServer.sdxManagerMap.get(uriInfo.getBaseUri().getPort());
+    logger.debug(String.format("%s got sittch request %s", sdxManager.getSliceName(), cmd));
     try {
       return sdxManager.adminCmd(cmd.operation, cmd.params);
     } catch (Exception e) {
@@ -46,10 +44,43 @@ public class RestService {
   @Produces(MediaType.TEXT_PLAIN)
   public String receiveBgpAdvertise(@Context UriInfo uriInfo, RouteAdvertise routeAdvertise) {
     logger.debug(uriInfo.getBaseUri());
-    logger.debug(String.format("got bgp advertisement %s", routeAdvertise));
     SdxManager sdxManager = SdxServer.sdxManagerMap.get(uriInfo.getBaseUri().getPort());
+    logger.debug(String.format("%s got bgp advertisement %s", sdxManager
+      .getSliceName(), routeAdvertise));
     try {
       return sdxManager.processBgpAdvertise(routeAdvertise);
+    } catch (Exception e) {
+      e.printStackTrace();
+      return e.getMessage();
+    }
+  }
+
+  @GET
+  @Path("/getpid")
+  @Produces(MediaType.TEXT_PLAIN)
+  public String getPid(@Context UriInfo uriInfo) {
+    logger.debug(uriInfo.getBaseUri());
+    SdxManager sdxManager = SdxServer.sdxManagerMap.get(uriInfo.getBaseUri().getPort());
+    logger.debug(String.format(" %s got bgp pid request", sdxManager.getSliceName()));
+    try {
+      return sdxManager.getPid();
+    } catch (Exception e) {
+      e.printStackTrace();
+      return e.getMessage();
+    }
+  }
+
+  @POST
+  @Path("/policy")
+  @Consumes(MediaType.APPLICATION_JSON)
+  @Produces(MediaType.TEXT_PLAIN)
+  public String receivePolicyAdvertise(@Context UriInfo uriInfo, PolicyAdvertise policyAdvertise) {
+    logger.debug(uriInfo.getBaseUri());
+    SdxManager sdxManager = SdxServer.sdxManagerMap.get(uriInfo.getBaseUri().getPort());
+    logger.debug(String.format("%s got policy advertisement %s", sdxManager.getSliceName(),
+      policyAdvertise));
+    try {
+      return sdxManager.processPolicyAdvertise(policyAdvertise);
     } catch (Exception e) {
       e.printStackTrace();
       return e.getMessage();
@@ -62,8 +93,8 @@ public class RestService {
   @Produces(MediaType.APPLICATION_JSON)
   public PeerRequest peer(@Context UriInfo uriInfo, PeerRequest peerRequest) {
     logger.debug(uriInfo.getBaseUri());
-    logger.debug(String.format("got peer request %s", peerRequest));
     SdxManager sdxManager = SdxServer.sdxManagerMap.get(uriInfo.getBaseUri().getPort());
+    logger.debug(String.format("%s got peer request %s", sdxManager.getSliceName(), peerRequest));
     try {
       return sdxManager.processPeerRequest(peerRequest);
     } catch (Exception e) {
@@ -77,8 +108,8 @@ public class RestService {
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.APPLICATION_JSON)
   public StitchResult stitchRequest(@Context UriInfo uriInfo, StitchRequest sr) {
-    logger.debug(String.format("got sittch request %s", sr));
     SdxManager sdxManager = SdxServer.sdxManagerMap.get(uriInfo.getBaseUri().getPort());
+    logger.debug(String.format("%s got sittch request %s", sdxManager.getSliceName(), sr));
     try {
       JSONObject res = sdxManager.stitchRequest(sr.sdxsite, sr.ckeyhash, sr.cslice,
           sr.creservid, sr.secret, sr.sdxnode, sr.gateway, sr.ip);
@@ -94,8 +125,9 @@ public class RestService {
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.TEXT_PLAIN)
   public String undoStitch(@Context UriInfo uriInfo, UndoStitchRequest sr) {
-    logger.debug("got undoStitch request ");
     SdxManager sdxManager = SdxServer.sdxManagerMap.get(uriInfo.getBaseUri().getPort());
+    logger.debug(String.format("%s got undoStitch request %s ", sdxManager.getSliceName(), sr
+      .toString()));
     try {
       String res = sdxManager.undoStitch(sr.ckeyhash, sr.cslice,
           sr.creservid);
@@ -111,8 +143,9 @@ public class RestService {
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.TEXT_PLAIN)
   public String connectionRequest(@Context UriInfo uriInfo, ConnectionRequest sr) {
-    logger.debug("got link request between " + sr.self_prefix + " and " + sr.target_prefix);
     SdxManager sdxManager = SdxServer.sdxManagerMap.get(uriInfo.getBaseUri().getPort());
+    logger.debug(String.format("%s got link request between %s and %s", sdxManager.getSliceName()
+      , sr.self_prefix, sr.target_prefix));
     try {
       String res = sdxManager.connectionRequest(sr.ckeyhash, sr.self_prefix,
           sr.target_prefix, sr.bandwidth);
@@ -140,8 +173,8 @@ public class RestService {
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.APPLICATION_JSON)
   public NotifyResult notifyPrefix(@Context UriInfo uriInfo, PrefixNotification pn) {
-    logger.debug("got notifyprefix");
     SdxManager sdxManager = SdxServer.sdxManagerMap.get(uriInfo.getBaseUri().getPort());
+    logger.debug(String.format("%s got notifyprefix %s", sdxManager.getSliceName(), pn.toString()));
     NotifyResult res = sdxManager.notifyPrefix(pn.dest, pn.gateway, pn.customer);
     return res;
   }

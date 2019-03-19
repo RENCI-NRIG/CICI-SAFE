@@ -1,22 +1,22 @@
 package exoplex.demo.multisdx;
-import exoplex.client.exogeni.SdxExogeniClient;
-import exoplex.demo.SdxTest;
-import exoplex.sdx.core.SdxManager;
-import exoplex.sdx.core.SdxServer;
-import exoplex.sdx.network.SdnReplay;
-import javafx.util.Pair;
-import org.apache.commons.lang3.tuple.ImmutablePair;
-import org.junit.*;
-import riak.RiakSlice;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import safe.sdx.AuthorityMockSdx;
+  import exoplex.client.exogeni.SdxExogeniClient;
+  import exoplex.demo.SdxTest;
+  import exoplex.sdx.core.SdxManager;
+  import exoplex.sdx.core.SdxServer;
+  import exoplex.sdx.network.SdnReplay;
+  import javafx.util.Pair;
+  import org.apache.commons.lang3.tuple.ImmutablePair;
+  import org.junit.*;
+  import riak.RiakSlice;
+  import org.apache.logging.log4j.LogManager;
+  import org.apache.logging.log4j.Logger;
+  import safe.sdx.AuthorityMockSdx;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
+  import java.util.ArrayList;
+  import java.util.HashMap;
+  import java.util.List;
 
-public class MultiSdxTest {
+public class MultiSdxTestSD {
   final static Logger logger = LogManager.getLogger(SdxTest.class);
   static String userDir = System.getProperty("user.dir");
   static String sdxSimpleDir = userDir.split("SDX-Simple")[0] + "SDX-Simple/";
@@ -31,12 +31,12 @@ public class MultiSdxTest {
   @BeforeClass
   public static void before() throws Exception {
     System.out.println("before test");
-    //after();
+    after();
     //create RiakSlice
-    //RiakSlice riakSlice = new RiakSlice();
-    //String riakIP = riakSlice.run(riakArgs);
+    RiakSlice riakSlice = new RiakSlice();
+    String riakIP = riakSlice.run(riakArgs);
     //Sdx and client slices
-    //multiSdxSlice.createSdxSlices(riakIP);
+    multiSdxSlice.createSdxSlices(riakIP);
     multiSdxSlice.createClientSlices();
   }
 
@@ -52,9 +52,9 @@ public class MultiSdxTest {
 
   public static void main(String[] args){
     reset = true;
-    MultiSdxTest multiSdxTest = new MultiSdxTest();
+    MultiSdxTestSD multiSdxTest = new MultiSdxTestSD();
     try {
-      multiSdxTest.testMultiSdx();
+      multiSdxTest.testMultiSdxSD();
       //multiSdxTest.replaySdnConfiguration();
       logFlowTables();
     }catch (Exception e){
@@ -71,14 +71,14 @@ public class MultiSdxTest {
   public void replaySdnConfiguration(){
     AuthorityMockSdx.authorizationMade = true;
     ArrayList<Thread> tlist = new ArrayList<>();
-    for (String slice : MultiSdxSetting.sdxSliceNames) {
+    for (String slice : MultiSdxSDSetting.sdxSliceNames) {
       Thread t = new Thread() {
         @Override
         public void run() {
           try {
-            SdxManager sdxManager = SdxServer.run(MultiSdxSetting.sdxNoResetArgs.get(slice),
-              MultiSdxSetting.sdxUrls.get
-              (slice), slice);
+            SdxManager sdxManager = SdxServer.run(MultiSdxSDSetting.sdxNoResetArgs.get(slice),
+              MultiSdxSDSetting.sdxUrls.get
+                (slice), slice);
             sdxManager.delFlows();
             sdxManager.restartPlexus();
             Thread.sleep(5000);
@@ -102,17 +102,17 @@ public class MultiSdxTest {
       e.printStackTrace();
     }
 
-    for(String clientSlice: MultiSdxSetting.clientSlices){
+    for(String clientSlice: MultiSdxSDSetting.clientSlices){
       exogeniClients.put(clientSlice, new SdxExogeniClient(clientSlice,
-        MultiSdxSetting.clientIpMap.get(clientSlice),
-        MultiSdxSetting.clientKeyMap.get(clientSlice),
-        MultiSdxSetting.clientArgs
+        MultiSdxSDSetting.clientIpMap.get(clientSlice),
+        MultiSdxSDSetting.clientKeyMap.get(clientSlice),
+        MultiSdxSDSetting.clientArgs
       ));
     }
-    for(String clientSlice: MultiSdxSetting.clientSlices){
+    for(String clientSlice: MultiSdxSDSetting.clientSlices){
       SdxExogeniClient client = exogeniClients.get(clientSlice);
       client.setSafeServer(sdxManagerMap.values().iterator().next().getSafeServerIP());
-      client.setServerUrl(MultiSdxSetting.sdxUrls.get(MultiSdxSetting.clientSdxMap.get(clientSlice)));
+      client.setServerUrl(MultiSdxSDSetting.sdxUrls.get(MultiSdxSDSetting.clientSdxMap.get(clientSlice)));
     }
     SdnReplay.replay("/home/yaoyj11/CICI-SAFE/SDX-Simple/log/sdn.log");
     checkConnection();
@@ -121,7 +121,7 @@ public class MultiSdxTest {
   }
 
   @Test
-  public void testMultiSdx() throws Exception{
+  public void testMultiSdxSD() throws Exception{
     startSdxServersAndClients(reset);
     //stitch sdx slices
     Long t0 = System.currentTimeMillis();
@@ -132,7 +132,7 @@ public class MultiSdxTest {
     stitchCustomerSlices();
     Long t2 = System.currentTimeMillis();
 
-    //advertiseSDRoutesAndPolicies();
+    advertiseSDRoutesAndPolicies();
 
     connectCustomerNetwork();
     Long t3= System.currentTimeMillis();
@@ -147,19 +147,19 @@ public class MultiSdxTest {
 
   private void startSdxServersAndClients(boolean reset) {
     ArrayList<Thread> tlist = new ArrayList<>();
-    for (String slice : MultiSdxSetting.sdxSliceNames) {
+    for (String slice : MultiSdxSDSetting.sdxSliceNames) {
       Thread t = new Thread() {
         @Override
         public void run() {
           try {
             if (reset) {
-              SdxManager sdxManager = SdxServer.run(MultiSdxSetting.sdxArgs.get(slice), MultiSdxSetting.sdxUrls.get
+              SdxManager sdxManager = SdxServer.run(MultiSdxSDSetting.sdxArgs.get(slice), MultiSdxSDSetting.sdxUrls.get
                 (slice), slice);
               sdxManagerMap.put(slice, sdxManager);
             }else{
-              SdxManager sdxManager = SdxServer.run(MultiSdxSetting.sdxNoResetArgs.get(slice),
-                MultiSdxSetting.sdxUrls.get
-                (slice), slice);
+              SdxManager sdxManager = SdxServer.run(MultiSdxSDSetting.sdxNoResetArgs.get(slice),
+                MultiSdxSDSetting.sdxUrls.get
+                  (slice), slice);
               sdxManagerMap.put(slice, sdxManager);
             }
           } catch (Exception e) {
@@ -180,54 +180,54 @@ public class MultiSdxTest {
 
     }
 
-    for (String clientSlice : MultiSdxSetting.clientSlices) {
+    for (String clientSlice : MultiSdxSDSetting.clientSlices) {
       exogeniClients.put(clientSlice, new SdxExogeniClient(clientSlice,
-        MultiSdxSetting.clientIpMap.get(clientSlice),
-        MultiSdxSetting.clientKeyMap.get(clientSlice),
-        MultiSdxSetting.clientArgs
+        MultiSdxSDSetting.clientIpMap.get(clientSlice),
+        MultiSdxSDSetting.clientKeyMap.get(clientSlice),
+        MultiSdxSDSetting.clientArgs
       ));
     }
-    for (String clientSlice : MultiSdxSetting.clientSlices) {
+    for (String clientSlice : MultiSdxSDSetting.clientSlices) {
       SdxExogeniClient client = exogeniClients.get(clientSlice);
       client.setSafeServer(sdxManagerMap.values().iterator().next().getSafeServerIP());
-      client.setServerUrl(MultiSdxSetting.sdxUrls.get(MultiSdxSetting.clientSdxMap.get(clientSlice)));
+      client.setServerUrl(MultiSdxSDSetting.sdxUrls.get(MultiSdxSDSetting.clientSdxMap.get(clientSlice)));
     }
   }
 
   private void stitchSdxSlices(){
-      for(Integer[] edge: MultiSdxSetting.sdxNeighbor){
-        int i = edge[0];
-        int j = edge[1];
-        String slice1 = MultiSdxSetting.sdxSliceNames.get(i);
-        String slice2 = MultiSdxSetting.sdxSliceNames.get(j);
-        sdxManagerMap.get(slice1).adminCmd("stitch", new String[]{MultiSdxSetting.sdxUrls.get(slice2), "e1"});
-      }
+    for(Integer[] edge: MultiSdxSDSetting.sdxNeighbor){
+      int i = edge[0];
+      int j = edge[1];
+      String slice1 = MultiSdxSDSetting.sdxSliceNames.get(i);
+      String slice2 = MultiSdxSDSetting.sdxSliceNames.get(j);
+      sdxManagerMap.get(slice1).adminCmd("stitch", new String[]{MultiSdxSDSetting.sdxUrls.get(slice2), "e1"});
+    }
   }
 
 
   private  void stitchCustomerSlices(){
-    for(String clientSlice: MultiSdxSetting.clientSlices){
-      String clientGateWay = MultiSdxSetting.clientIpMap.get(clientSlice).replace(".1/24", ".2");
-      String sdxIP = MultiSdxSetting.clientIpMap.get(clientSlice).replace(".1/24", ".1/24");
+    for(String clientSlice: MultiSdxSDSetting.clientSlices){
+      String clientGateWay = MultiSdxSDSetting.clientIpMap.get(clientSlice).replace(".1/24", ".2");
+      String sdxIP = MultiSdxSDSetting.clientIpMap.get(clientSlice).replace(".1/24", ".1/24");
       String gw = exogeniClients.get(clientSlice).processCmd(String.format("stitch CNode1 %s %s",
         clientGateWay, sdxIP));
       exogeniClients.get(clientSlice).processCmd(String.format("route %s %s",
-        MultiSdxSetting.clientIpMap.get(clientSlice),
+        MultiSdxSDSetting.clientIpMap.get(clientSlice),
         gw));
     }
   }
 
   private  void unStitchSlices(){
-    for(String clientSlice: MultiSdxSetting.clientSlices){
+    for(String clientSlice: MultiSdxSDSetting.clientSlices){
       exogeniClients.get(clientSlice).processCmd("unstitch CNode1");
     }
   }
 
   private void advertiseSDRoutesAndPolicies(){
-    for(String client :MultiSdxSetting.clientSlices){
-      List<ImmutablePair<String, String>> pairAcls = MultiSdxSetting.userSDASTagAcls.get
+    for(String client :MultiSdxSDSetting.clientSlices){
+      List<ImmutablePair<String, String>> pairAcls = MultiSdxSDSetting.userSDASTagAcls.get
         (client);
-      String clientIp = MultiSdxSetting.clientIpMap.get(client);
+      String clientIp = MultiSdxSDSetting.clientIpMap.get(client);
       for(ImmutablePair<String, String> pair: pairAcls) {
         exogeniClients.get(client).processCmd(String.format("bgp %s %s %s", clientIp, pair
           .getLeft(), pair.getRight()));
@@ -239,13 +239,13 @@ public class MultiSdxTest {
   }
 
   private void connectCustomerNetwork(){
-    for(Integer[] pair : MultiSdxSetting.customerConnectionPairs){
+    for(Integer[] pair : MultiSdxSDSetting.customerConnectionPairs){
       int i = pair[0];
       int j = pair[1];
-      String client = MultiSdxSetting.clientSlices.get(i);
-      String clientIp = MultiSdxSetting.clientIpMap.get(client);
-      String peer = MultiSdxSetting.clientSlices.get(j);
-      String peerIp = MultiSdxSetting.clientIpMap.get(peer);
+      String client = MultiSdxSDSetting.clientSlices.get(i);
+      String clientIp = MultiSdxSDSetting.clientIpMap.get(client);
+      String peer = MultiSdxSDSetting.clientSlices.get(j);
+      String peerIp = MultiSdxSDSetting.clientIpMap.get(peer);
       exogeniClients.get(client).processCmd(String.format("link %s %s", clientIp, peerIp));
       exogeniClients.get(peer).processCmd(String.format("link %s %s", peerIp, clientIp));
     }
@@ -254,13 +254,13 @@ public class MultiSdxTest {
 
   private void checkConnection(){
     boolean flag = true;
-    for(Integer[] pair : MultiSdxSetting.customerConnectionPairs){
+    for(Integer[] pair : MultiSdxSDSetting.customerConnectionPairs){
       int i = pair[0];
       int j = pair[1];
-      String client = MultiSdxSetting.clientSlices.get(i);
-      String clientIp = MultiSdxSetting.clientIpMap.get(client);
-      String peer = MultiSdxSetting.clientSlices.get(j);
-      String peerIp = MultiSdxSetting.clientIpMap.get(peer);
+      String client = MultiSdxSDSetting.clientSlices.get(i);
+      String clientIp = MultiSdxSDSetting.clientIpMap.get(client);
+      String peer = MultiSdxSDSetting.clientSlices.get(j);
+      String peerIp = MultiSdxSDSetting.clientIpMap.get(peer);
       if(!exogeniClients.get(client).checkConnectivity("CNode1",
         peerIp.replace(".1/24", ".2"))){
         flag = false;

@@ -175,7 +175,36 @@ public class RoutingManager {
 
       for (String[] path : paths) {
         String res = singleStepRouting(destIP, path[1], path[0], controller);
-        addRoute(destIP, path[1], path[0], pathId, controller);
+        //addRoute(destIP, path[1], path[0], pathId, controller);
+        //logger.debug(path[0]+" "+path[1]);
+      }
+    }catch (Exception e){
+      e.printStackTrace();
+    }
+  }
+
+  public void configurePath(String destIP, String srcIP, String nodename, String gateway, String
+    controller) {
+    logger.info(String.format("configurePath %s %s %s %s %s", destIP, srcIP, nodename, gateway,
+      controller));
+    String gwdpid = networkManager.getRouter(nodename).getDPID();
+    if (gwdpid == null) {
+      logger.debug("No router named " + nodename + " not found");
+      return;
+    }
+    try {
+      ArrayList<String[]> paths = getBroadcastRoutes(gwdpid, gateway);
+      String pathId = getPathID(null, destIP);
+
+      pairPath.put(pathId, paths);
+      if (!prefixPaths.containsKey(destIP)) {
+        prefixPaths.put(destIP, new HashSet<>());
+      }
+      prefixPaths.get(destIP).add(pathId);
+
+      for (String[] path : paths) {
+        String res = singleStepRouting(destIP, srcIP, path[1], path[0], controller);
+        //addRoute(destIP, path[1], path[0], pathId, controller);
         //logger.debug(path[0]+" "+path[1]);
       }
     }catch (Exception e){
@@ -308,6 +337,20 @@ public class RoutingManager {
 
   public String singleStepRouting(String dest, String gateway, String dpid, String controller) {
     String[] cmd = SdnUtil.routingCMD(dest, gateway, dpid, controller);
+    String res = postSdnCmd(cmd[0], new JSONObject(cmd[1]));
+    if (res.contains("success")) {
+      logger.debug(res);
+    } else {
+      logger.warn(res);
+    }
+    cmd[cmd.length - 1] = res;
+    addEntry_HashList(sdncmds, dpid, cmd);
+    return res;
+  }
+
+  public String singleStepRouting(String dest, String src, String gateway, String dpid, String
+    controller) {
+    String[] cmd = SdnUtil.routingCMD(dest, src, gateway, dpid, controller);
     String res = postSdnCmd(cmd[0], new JSONObject(cmd[1]));
     if (res.contains("success")) {
       logger.debug(res);

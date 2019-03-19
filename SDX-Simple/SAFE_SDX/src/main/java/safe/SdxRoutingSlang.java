@@ -52,9 +52,17 @@ public interface SdxRoutingSlang {
   public static final String whoami = "whoami";
   public static final String postTagAclEntry = "postTagAclEntry";
   public static final String postASTagAclEntry = "postASTagAclEntry";
+  public static final String postASTagAclEntrySD = "postASTagAclEntrySD";
   public static final String postAuthZASPolicy = "postAuthorizeASPolicy";
   public static final String verifyRoute = "verifyRoute";
   public static final String postPathToken = "postPathToken";
   public static final String postAdvertise = "postAdvertise";
+  public static final String postAdvertiseSD = "postAdvertiseSD";
   public static final String postInitRoute = "postInitRoute";
+  public static final String postPathTokenSD = "postPathTokenSD";
+  public static final String verifyRouteSD = "verifyRouteSD";
+  public static final String postInitRouteSD = "postInitRouteSD";
+  public static final String verifyASSD = "verifyASSD";
+  public static final String verifyAS = "verifyAS";
+  public static final String verifyCompliantPath = "verifyCompliantPath";
 }

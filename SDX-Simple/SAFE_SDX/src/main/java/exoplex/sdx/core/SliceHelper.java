@@ -409,10 +409,10 @@ public class SliceHelper extends SliceCommon {
       Link logLink = addLink(s, linkname, node0, node1, bw);
       links.put(linkname, logLink);
     }
-    if(safeInSlice) {
-      if (safeEnabled) {
-        s.addSafeServer(serverSite, riakIp, SafeManager.safeDockerImage, SafeManager.safeServerScript);
-      }
+    if (safeEnabled && safeInSlice) {
+      s.addSafeServer(serverSite, riakIp, SafeManager.safeDockerImage, SafeManager.safeServerScript);
+    }
+    if(plexusInSlice) {
       s.addPlexusController(controllerSite, plexusName);
     }
     return s;

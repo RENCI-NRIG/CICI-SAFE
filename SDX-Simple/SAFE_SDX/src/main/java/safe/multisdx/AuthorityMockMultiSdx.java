@@ -3,6 +3,7 @@ package safe.multisdx;
 
 import exoplex.common.utils.SafeUtils;
 import exoplex.demo.multisdx.MultiSdxSetting;
+import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.LogManager;
@@ -21,17 +22,17 @@ public class AuthorityMockMultiSdx extends AuthorityBase implements SdxRoutingSl
 
   static Logger logger = LogManager.getLogger(AuthorityMockMultiSdx.class);
 
-  static String defaultSafeServer = "128.194.6.137:7777";
+  static String defaultSafeServer = "localhost:7777";
 
-  HashMap<String, String> sliceToken = new HashMap<>();
+  public  HashMap<String, String> sliceToken = new HashMap<>();
 
-  HashMap<String, String> sliceKeyMap = new HashMap<>();
+  public  HashMap<String, String> sliceKeyMap = new HashMap<>();
 
-  HashMap<String, String> sliceScid = new HashMap<>();
+  public  HashMap<String, String> sliceScid = new HashMap<>();
 
-  HashMap<String, String> sliceIpMap = new HashMap<>();
+  public  HashMap<String, String> sliceIpMap = new HashMap<>();
 
-  ArrayList<String> slices = new ArrayList<>();
+  public ArrayList<String> slices = new ArrayList<>();
 
   public AuthorityMockMultiSdx(String safeServer) {
     super(safeServer);
@@ -152,20 +153,20 @@ public class AuthorityMockMultiSdx extends AuthorityBase implements SdxRoutingSl
     }
 
     HashMap<String, String> envs = new HashMap<>();
-    envs.put(subject, principalMap.get("key_p4"));
+    envs.put(subject, getPrincipalId("key_p4"));
     envs.put(bearerRef, piCap);
     authorize(createProject, "key_p2", new String[]{}, envs);
     String paMemberSetRef = safePost(postMemberSet, "key_p2");
-    String projectId = principalMap.get("key_p2") + ":project1";
+    String projectId = getPrincipalId("key_p2") + ":project1";
     String projectToken = safePost(postProjectSet, "key_p2",
-      new String[]{principalMap.get("key_p4"), projectId,
+      new String[]{getPrincipalId("key_p4"), projectId,
         paMemberSetRef});
     List<String> piProjectTokens = SafeUtils.getTokens(passDelegation("key_p4", projectToken,
       projectId));
 
     envs.clear();
     //Authorize that PI can create slice
-    envs.put(subject, principalMap.get("key_p4"));
+    envs.put(subject, getPrincipalId("key_p4"));
     //bearerRef should be subject set, as it contains both project token and MA token
     envs.put(bearerRef, piProjectTokens.get(1));
     assert authorize(createSlice, "key_p3", new String[]{projectId}, envs);
@@ -193,10 +194,10 @@ public class AuthorityMockMultiSdx extends AuthorityBase implements SdxRoutingSl
     logger.debug("end");
     for(String sdxslice: MultiSdxSetting.sdxSliceNames) {
       for(String t: MultiSdxSetting.sdxASTags.get(sdxslice)) {
-        String tag = principalMap.get("tagauthority") + ":" + t;
+        String tag = getPrincipalId("tagauthority") + ":" + t;
         safePost(postTagSet, "tagauthority", new String[]{tag});
         String sdxKeyFile = MultiSdxSetting.sdxKeyMap.get(sdxslice);
-        String sdxKey = principalMap.get(sdxKeyFile);
+        String sdxKey = getPrincipalId(sdxKeyFile);
         String tagToken = safePost(postGrantTagPriv, "tagauthority", new Object[]{sdxKey, tag,
           true});
         safePost(updateTagSet, sdxKeyFile, new String[]{tagToken, tag});
@@ -223,8 +224,8 @@ public class AuthorityMockMultiSdx extends AuthorityBase implements SdxRoutingSl
     simpleEndorseMent(postUserEndorsement, "key_p1", userKeyFile, "User");
     //PI delegate to users
     HashMap<String, String> envs = new HashMap<>();
-    String userKey = principalMap.get(userKeyFile);
-    String projectId = principalMap.get("key_p2") + ":project1";
+    String userKey = getPrincipalId(userKeyFile);
+    String projectId = getPrincipalId("key_p2") + ":project1";
     String pmToken = safePost(postProjectMembership, "key_p4", new String[]{userKey,
       projectId, "true"});
     List<String> tokens = SafeUtils.getTokens(passDelegation(userKeyFile, pmToken,
@@ -242,10 +243,10 @@ public class AuthorityMockMultiSdx extends AuthorityBase implements SdxRoutingSl
     //create slices.
     String sliceControlRef = safePost(postStandardSliceControlSet, "key_p3");
     String slicePrivRef = safePost(postStandardSliceDefaultPrivilegeSet, "key_p3");
-    String sliceId = principalMap.get("key_p3") + ":" + slice;
+    String sliceId = getPrincipalId("key_p3") + ":" + slice;
     sliceScid.put(slice, sliceId);
     sliceToken.put(slice, safePost(postSliceSet, "key_p3",
-      new String[]{principalMap.get(sliceKeyMap.get(slice)), sliceId, projectId,
+      new String[]{getPrincipalId(sliceKeyMap.get(slice)), sliceId, projectId,
         sliceControlRef,
         slicePrivRef}));
     List<String> sliceTokens = SafeUtils.getTokens(passDelegation(sliceKeyMap.get(slice),
@@ -253,7 +254,7 @@ public class AuthorityMockMultiSdx extends AuthorityBase implements SdxRoutingSl
 
     //UserAcl
     for(String sdxKey: MultiSdxSetting.sdxKeyMap.values()) {
-      safePost(postUserAclEntry, sdxKey, new String[]{principalMap.get(sliceKeyMap.get
+      safePost(postUserAclEntry, sdxKey, new String[]{getPrincipalId(sliceKeyMap.get
         (slice))});
     }
 
@@ -274,7 +275,7 @@ public class AuthorityMockMultiSdx extends AuthorityBase implements SdxRoutingSl
     //user post Connect policy
     if(MultiSdxSetting.userTags.containsKey(slice)) {
       for(String t: MultiSdxSetting.userTags.get(slice)) {
-        String tag = principalMap.get("tagauthority") + ":" + t;
+        String tag = getPrincipalId("tagauthority") + ":" + t;
         safePost(postTagSet, "tagauthority", new String[]{tag});
         String tagToken = safePost(postGrantTagPriv, "tagauthority", new Object[]{userKey, tag, true});
         safePost(updateTagSet, userKeyFile, new String[]{tagToken, tag});
@@ -286,8 +287,14 @@ public class AuthorityMockMultiSdx extends AuthorityBase implements SdxRoutingSl
     //post AS tag acls
     if(MultiSdxSetting.userASTagAcls.containsKey(slice)) {
       for(String t: MultiSdxSetting.userASTagAcls.get(slice)) {
-        String astag = principalMap.get("tagauthority") + ":" + t;
+        String astag = getPrincipalId("tagauthority") + ":" + t;
         safePost(postASTagAclEntry, userKeyFile, new String[]{astag, uip});
+      }
+      for(ImmutablePair<String, String> pair: MultiSdxSetting.userSDASTagAcls.getOrDefault(slice,
+        new ArrayList<>())){
+        String astag = getPrincipalId("tagauthority") + ":" + pair.getRight();
+        String srcip = String.format("ipv4\\\"%s\\\"", pair.getLeft());
+        safePost(postASTagAclEntrySD, userKeyFile, new String[]{astag, srcip, uip});
       }
     }
     safePost(postCustomerConnectionPolicy, userKeyFile, new String[]{});
@@ -300,7 +307,7 @@ public class AuthorityMockMultiSdx extends AuthorityBase implements SdxRoutingSl
     //authorizeStitchByUid
     for (String slice : slices) {
       if(!authorize(authorizeStitchByUID, "sdx",
-        new String[]{principalMap.get(sliceKeyMap.get(slice)), sliceScid.get(slice)})){
+        new String[]{getPrincipalId(sliceKeyMap.get(slice)), sliceScid.get(slice)})){
         throw new Exception(String.format("Authorization failed: %s %s ", authorizeStitchByUID,
           slice));
       }
@@ -312,12 +319,12 @@ public class AuthorityMockMultiSdx extends AuthorityBase implements SdxRoutingSl
     for (int i = 1; i < slices.size(); i++) {
       String slice = slices.get(i);
       String user = sliceKeyMap.get(slice);
-      String userKey = principalMap.get(user);
+      String userKey = getPrincipalId(user);
       String ip = sliceIpMap.get(slice);
       for (int j = i + 1; j < slices.size(); j++) {
         String peerSlice = slices.get(j);
         String peer = sliceKeyMap.get(peerSlice);
-        String peerKey = principalMap.get(peer);
+        String peerKey = getPrincipalId(peer);
         String peerIp =String.format( "ipv4\\\"%s\\\"",sliceIpMap.get(peerSlice));
         if(!authorize(authZByUserAttr, "sdx", new String[]{userKey, ip, peerKey, peerIp})){
           throw new Exception(String.format("Authorization failed: %s", authZByUserAttr));
