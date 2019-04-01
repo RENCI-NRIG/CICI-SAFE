@@ -33,7 +33,7 @@ public class TridentSlice extends TridentSetting{
     String configFilePath = cmd.getOptionValue("config");
     clientSlice.initializeExoGENIContexts(configFilePath);
     clientSlice.deleteClientSlices();
-    clientSlice.createClientSlices();
+    clientSlice.createClientSlices(clientSlice.riakIp);
   }
 
   public static void createSlices(String riakIP){
@@ -44,7 +44,7 @@ public class TridentSlice extends TridentSetting{
     String configFilePath = cmd.getOptionValue("config");
     clientSlice.initializeExoGENIContexts(configFilePath);
     //clientSlice.deleteClientSlices();
-    clientSlice.createClientSlices();
+    clientSlice.createClientSlices(riakIP);
   }
 
   public static void deleteTestSlices(){
@@ -126,13 +126,13 @@ public class TridentSlice extends TridentSetting{
     return slice;
   }
 
-  private void createClientSlices(){
+  private void createClientSlices(String riakIp){
     ArrayList<Thread> tlist = new ArrayList<>();
     for(String clientSlice: TridentSetting.clientSlices){
       Thread t = new Thread(){
         @Override
         public void run(){
-          createClientSlice(clientSlice);
+          createClientSlice(clientSlice, riakIp);
         }
       };
       tlist.add(t);
@@ -149,13 +149,13 @@ public class TridentSlice extends TridentSetting{
     }
   }
 
-  private boolean createClientSlice(String clientSlice){
+  private boolean createClientSlice(String clientSlice, String riakIp){
     ExogeniClientSlice cs = new ExogeniClientSlice(clientArgs);
     int times=0;
     while (true) {
       try {
         cs.run(clientSlice, TridentSetting.clientIpMap.get(clientSlice),
-            SiteBase.get(TridentSetting.clientSiteMap.get(clientSlice)));
+            SiteBase.get(TridentSetting.clientSiteMap.get(clientSlice)), riakIp);
         break;
       } catch (Exception e) {
         try {

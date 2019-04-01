@@ -31,13 +31,13 @@ public class MultiSdxTest {
   @BeforeClass
   public static void before() throws Exception {
     System.out.println("before test");
-    //after();
+    after();
     //create RiakSlice
-    //RiakSlice riakSlice = new RiakSlice();
-    //String riakIP = riakSlice.run(riakArgs);
+    RiakSlice riakSlice = new RiakSlice();
+    String riakIP = riakSlice.run(riakArgs);
     //Sdx and client slices
-    //multiSdxSlice.createSdxSlices(riakIP);
-    multiSdxSlice.createClientSlices();
+    multiSdxSlice.createSdxSlices(riakIP);
+    multiSdxSlice.createClientSlices(riakIP);
   }
 
   @AfterClass

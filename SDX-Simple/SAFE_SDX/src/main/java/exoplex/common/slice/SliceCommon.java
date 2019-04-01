@@ -46,6 +46,7 @@ public abstract class SliceCommon {
   protected boolean plexusInSlice = false;
   protected boolean safeInSlice = false;
   protected String riakIp = null;
+
   protected HashMap<String, Link> links = new HashMap<String, Link>();
   protected HashMap<String, ArrayList<String>> computenodes = new HashMap<String, ArrayList<String>>();
   protected ArrayList<StitchPort> stitchports = new ArrayList<>();

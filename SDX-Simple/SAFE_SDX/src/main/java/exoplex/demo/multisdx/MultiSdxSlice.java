@@ -23,13 +23,13 @@ public class MultiSdxSlice {
     multiSdxSlice.createSdxSlices(null);
   }
 
-  public void createClientSlices() {
+  public void createClientSlices(String riakIp) {
     ArrayList<Thread> tlist = new ArrayList<>();
     for (String clientSlice : MultiSdxSetting.clientSlices) {
       Thread t = new Thread() {
         @Override
         public void run() {
-          createClientSlice(clientSlice);
+          createClientSlice(clientSlice, riakIp);
         }
       };
       tlist.add(t);
@@ -46,13 +46,13 @@ public class MultiSdxSlice {
     }
   }
 
-  private boolean createClientSlice(String clientSlice){
+  private boolean createClientSlice(String clientSlice, String riakIP){
     ExogeniClientSlice cs = new ExogeniClientSlice(MultiSdxSetting.clientArgs);
     int times=0;
     while (true) {
       try {
         cs.run(clientSlice, MultiSdxSetting.clientIpMap.get(clientSlice),
-          SiteBase.get(MultiSdxSetting.clientSiteMap.get(clientSlice)));
+          SiteBase.get(MultiSdxSetting.clientSiteMap.get(clientSlice)), riakIP);
         break;
       } catch (Exception e) {
         try {

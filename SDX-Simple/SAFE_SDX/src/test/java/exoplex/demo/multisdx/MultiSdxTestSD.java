@@ -37,7 +37,7 @@ public class MultiSdxTestSD {
     String riakIP = riakSlice.run(riakArgs);
     //Sdx and client slices
     multiSdxSlice.createSdxSlices(riakIP);
-    multiSdxSlice.createClientSlices();
+    multiSdxSlice.createClientSlices(riakIP);
   }
 
   @AfterClass

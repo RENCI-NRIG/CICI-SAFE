@@ -116,7 +116,8 @@ public class ExogeniClientSlice extends SliceHelper {
     Exec.sshExec("root", mip, "/etc/init.d/quagga restart", sshkey);
   }
 
-  public void run(String customerName, String ipPrefix, String site) throws Exception {
+  public void run(String customerName, String ipPrefix, String site, String riakIp) throws
+    Exception {
     //Example usage:   ./target/appassembler/bin/SafeSdxExample  ~/.ssl/geni-pruth1.pem ~/.ssl/geni-pruth1.pem "https://geni.renci.org:11443/orca/xmlrpc" pruth.1 stitch
     //Example usage:   ./target/appassembler/bin/SafeSdxExample  ~/.ssl/geni-pruth1.pem ~/.ssl/geni-pruth1.pem "https://geni.renci.org:11443/orca/xmlrpc" name fournodes
     if (type.equals("client")) {

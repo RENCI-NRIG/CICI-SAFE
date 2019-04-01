@@ -60,7 +60,11 @@ public class SafeUtils {
 
   public static String postSafeStatements(String safeserver, String requestName, String
       principal, Object[] othervalues) {
-    return postSafeStatements(safeserver, requestName, principal, emptyEnvs, othervalues);
+    String res =  postSafeStatements(safeserver, requestName, principal, emptyEnvs, othervalues);
+    if (res.contains("Query failed")){
+      logger.warn(res);
+    }
+    return res;
   }
 
   private static String getEnvs(HashMap<String, String> envs){
