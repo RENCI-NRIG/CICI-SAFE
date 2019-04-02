@@ -1,11 +1,12 @@
 package exoplex.sdx.core;
 
-import exoplex.common.slice.SliceManager;
 import exoplex.common.slice.Scripts;
 import exoplex.common.slice.SliceCommon;
+import exoplex.common.slice.SliceManager;
 import exoplex.common.utils.Exec;
 import exoplex.common.utils.PathUtil;
 import exoplex.common.utils.ServerOptions;
+import exoplex.sdx.network.Link;
 import exoplex.sdx.safe.SafeManager;
 import org.apache.commons.cli.CommandLine;
 import org.apache.logging.log4j.LogManager;
@@ -13,7 +14,6 @@ import org.apache.logging.log4j.Logger;
 import org.renci.ahab.libndl.resources.request.ComputeNode;
 import org.renci.ahab.libndl.resources.request.InterfaceNode2Net;
 import org.renci.ahab.libndl.resources.request.Network;
-import exoplex.sdx.network.Link;
 import safe.AuthorityBase;
 import safe.multisdx.AuthorityMockMultiSdx;
 import safe.sdx.AuthorityMockSdx;
@@ -37,25 +37,32 @@ public class SliceHelper extends SliceCommon {
   protected static String cLinkPattern = "(^clink\\d+)";
   protected static String eLinkPattern = "(^elink\\d+)";
   protected static String broLinkPattern = "(^blink_bro\\d+_e\\d+_\\d+)";
-  protected  static String plexusName = "plexuscontroller";
-  protected long bw = 1000000000;
+  protected static String plexusName = "plexuscontroller";
   final Logger logger = LogManager.getLogger(SliceHelper.class);
+  protected long bw = 1000000000;
   protected int curip = 128;
   protected String IPPrefix = "192.168.";
   protected String mask = "/24";
   protected String scriptsdir;
   protected boolean BRO = false;
+
   public SliceHelper() {
   }
 
-  public void setRiakIP(String riakIP){
+  public static void main(String[] args) throws Exception {
+    SliceHelper sm = new SliceHelper();
+    sm.run(args);
+    System.exit(0);
+  }
+
+  public void setRiakIP(String riakIP) {
     this.riakIp = riakIP;
   }
 
-  public void resetHostNames(SliceManager slice){
+  public void resetHostNames(SliceManager slice) {
     try {
       slice.resetHostNames(sshkey);
-    }catch (Exception e){
+    } catch (Exception e) {
 
     }
   }
@@ -68,7 +75,7 @@ public class SliceHelper extends SliceCommon {
     curip = Integer.valueOf(ip_segs[2]);
   }
 
-  public String getSshKey(){
+  public String getSshKey() {
     return sshkey;
   }
 
@@ -78,19 +85,13 @@ public class SliceHelper extends SliceCommon {
     if (conf.hasPath("config.bw")) {
       bw = conf.getLong("config.bw");
     }
-    if(conf.hasPath("config.ipprefix")) {
+    if (conf.hasPath("config.ipprefix")) {
       IPPrefix = conf.getString("config.ipprefix");
       computeIP(IPPrefix);
     }
-    if(conf.hasPath("config.serverurl")) {
+    if (conf.hasPath("config.serverurl")) {
       serverurl = conf.getString("config.serverurl");
     }
-  }
-
-  public static void main(String[] args) throws  Exception{
-    SliceHelper sm = new SliceHelper();
-    sm.run(args);
-    System.exit(0);
   }
 
   public void run(String[] args) {
@@ -133,12 +134,12 @@ public class SliceHelper extends SliceCommon {
       carrier.commitAndWait();
       try {
         carrier.reloadSlice();
-      }catch (Exception e){
+      } catch (Exception e) {
         carrier = createCarrierSlice(carrierName, routerNum, bw);
         carrier.commitAndWait();
       }
       logger.info(String.format("Slice %s active now, making configurations", sliceName));
-      carrier.runCmdSlice( Scripts.getOVSScript(), sshkey, routerPattern, true);
+      carrier.runCmdSlice(Scripts.getOVSScript(), sshkey, routerPattern, true);
       carrier.copyFile2Slice(PathUtil.joinFilePath(scriptsdir, "dpid.sh"), "~/dpid.sh", sshkey);
       carrier.copyFile2Slice(PathUtil.joinFilePath(scriptsdir, "ifaces.sh"), "~/ifaces.sh",
         sshkey);
@@ -148,7 +149,7 @@ public class SliceHelper extends SliceCommon {
 
       logger.debug("Plexus Controller IP: " + SDNControllerIP);
       carrier.runCmdSlice("/bin/bash ~/ovsbridge.sh " + SDNControllerIP + ":6633", sshkey,
-          routerPattern, true);
+        routerPattern, true);
 
       if (BRO) {
         configBroNodes(carrier, broPattern);
@@ -164,16 +165,16 @@ public class SliceHelper extends SliceCommon {
   public void configFTPService(SliceManager carrier, String nodePattern, String username, String passwd) {
     carrier.runCmdSlice("apt-get install -y vsftpd", sshkey, nodePattern, true);
     carrier.runCmdSlice("/usr/sbin/useradd " + username + "; echo -e \"" + passwd + "\\n" +
-        passwd + "\\n\" | passwd " + username, sshkey, nodePattern, true);
+      passwd + "\\n\" | passwd " + username, sshkey, nodePattern, true);
     carrier.runCmdSlice("mkdir /home/" + username, sshkey, nodePattern, false);
     carrier.runCmdSlice("/bin/sed -i \"s/pam_service_name=vsftpd/pam_service_name=ftp/\" " +
-        "/etc/vsftpd.conf; service vsftpd restart", sshkey, nodePattern, true);
+      "/etc/vsftpd.conf; service vsftpd restart", sshkey, nodePattern, true);
     String resource_dir = conf.getString("config.resourcedir");
     carrier.copyFile2Slice(PathUtil.joinFilePath(resource_dir, "bro/evil.txt"), "/home/" +
         username +
         "/evil" +
         ".txt",
-        sshkey, nodePattern);
+      sshkey, nodePattern);
   }
 
   public void configBroNodes(SliceManager carrier, String bropattern) {
@@ -201,15 +202,15 @@ public class SliceHelper extends SliceCommon {
     }
   }
 
-  public void checkSdxPrerequisites(SliceManager serverSlice){
+  public void checkSdxPrerequisites(SliceManager serverSlice) {
     //check if openvswitch is installed on all ovs nodes
     logger.debug("Start checking prerequisites");
     ArrayList<Thread> tlist = new ArrayList<>();
-    for(ComputeNode node: serverSlice.getComputeNodes()){
-      if(node.getName().matches(routerPattern)){
-        tlist.add(new Thread(){
+    for (ComputeNode node : serverSlice.getComputeNodes()) {
+      if (node.getName().matches(routerPattern)) {
+        tlist.add(new Thread() {
           @Override
-          public void run(){
+          public void run() {
             checkOVS(serverSlice, node.getName());
             checkScripts(serverSlice, node.getName());
           }
@@ -217,41 +218,43 @@ public class SliceHelper extends SliceCommon {
       }
     }
     //checkPlexus
-    tlist.add(new Thread(){
+    tlist.add(new Thread() {
       @Override
       public void run() {
-        if(plexusInSlice) {
+        if (plexusInSlice) {
           setSdnControllerIp(serverSlice.getComputeNode(plexusName).getManagementIP());
-        }else {
+        } else {
           setSdnControllerIp(conf.getString("config.plexusserver"));
         }
         checkPlexus(SDNControllerIP);
       }
     });
-    if(safeEnabled){
-      if(safeInSlice) {
+    if (safeEnabled) {
+      if (safeInSlice) {
         setSafeServerIp(serverSlice.getComputeNode("safe-server").getManagementIP());
-      }else{
+      } else {
         setSafeServerIp(conf.getString("config.safeserver"));
       }
-      tlist.add(new Thread(){
+      tlist.add(new Thread() {
         @Override
         public void run() {
           checkSafeServer(safeServerIp, riakIp);
           AuthorityBase mock;
-          if(SafeManager.safeServerScript.equals("sdx-routing.sh")) {
+          if (SafeManager.safeServerScript.equals("sdx-routing.sh")) {
             mock = new AuthorityMockMultiSdx(safeServerIp + ":7777");
-          }else{
+          } else {
             mock = new AuthorityMockSdx(safeServerIp + ":7777");
           }
           mock.makeSafePreparation();
         }
       });
     }
-    tlist.forEach(t->t.start());
+    tlist.forEach(t -> t.start());
     tlist.forEach(t -> {
-      try{t.join();
-      }catch (Exception e){}
+      try {
+        t.join();
+      } catch (Exception e) {
+      }
     });
     logger.debug("Finished checking prerequisites");
   }
@@ -267,11 +270,11 @@ public class SliceHelper extends SliceCommon {
   }
   */
 
-  public void checkOVS(SliceManager serverSlice, String nodeName){
+  public void checkOVS(SliceManager serverSlice, String nodeName) {
     String mip = serverSlice.getComputeNode(nodeName).getManagementIP();
     String res = serverSlice.runCmdNode("ovs-vsctl show", sshkey, nodeName, false);
-    if(res.contains("ovs-vsctl: command not found")){
-      while(true) {
+    if (res.contains("ovs-vsctl: command not found")) {
+      while (true) {
         String[] result = Exec.sshExec("root", mip, "apt-get install -y openvswitch-switch", sshkey);
         if (!result[0].startsWith("error")) {
           break;
@@ -280,9 +283,9 @@ public class SliceHelper extends SliceCommon {
     }
   }
 
-  public void checkScripts(SliceManager serverSlice, String nodeName){
+  public void checkScripts(SliceManager serverSlice, String nodeName) {
     String res = serverSlice.runCmdNode("ls", sshkey, nodeName, false);
-    if(!res.contains("ovsbridge.sh") || !res.contains("dpid.sh")||!res.contains("ifaces.sh")){
+    if (!res.contains("ovsbridge.sh") || !res.contains("dpid.sh") || !res.contains("ifaces.sh")) {
       copyRouterScript(serverSlice, nodeName);
     }
   }
@@ -310,7 +313,7 @@ public class SliceHelper extends SliceCommon {
   }
 
   protected boolean checkSafeServer(String safeIP, String riakIp) {
-    if(safeInSlice) {
+    if (safeInSlice) {
       SafeManager sm = new SafeManager(safeIP, safeKeyFile, sshkey);
       sm.verifySafeInstallation(riakIp);
     }
@@ -318,7 +321,7 @@ public class SliceHelper extends SliceCommon {
   }
 
   protected boolean checkPlexus(String SDNControllerIP) {
-    if(plexusInSlice) {
+    if (plexusInSlice) {
       String result = Exec.sshExec("root", SDNControllerIP, "docker ps", sshkey)[0];
       if (result.contains("plexus")) {
         logger.debug("plexus controller has started");
@@ -362,11 +365,11 @@ public class SliceHelper extends SliceCommon {
     }
   }
 
-  public void setClientSites(List<String> clientSites){
+  public void setClientSites(List<String> clientSites) {
     this.clientSites = clientSites;
   }
 
-  public void setSliceName(String sliceName){
+  public void setSliceName(String sliceName) {
     this.sliceName = sliceName;
   }
 
@@ -388,7 +391,7 @@ public class SliceHelper extends SliceCommon {
       if (BRO && i == 0) {
         long brobw = conf.getLong("config.brobw");
         ComputeNode node1 = (ComputeNode) s.getResourceByName("e" + i);
-        ComputeNode broNode = s.addBro( "bro0_e" + i, node1.getDomain());
+        ComputeNode broNode = s.addBro("bro0_e" + i, node1.getDomain());
         int ip_to_use = curip++;
         Network bronet = s.addBroadcastLink(getBroLinkName(broNode.getName(),
           ip_to_use),
@@ -412,7 +415,7 @@ public class SliceHelper extends SliceCommon {
     if (safeEnabled && safeInSlice) {
       s.addSafeServer(serverSite, riakIp, SafeManager.safeDockerImage, SafeManager.safeServerScript);
     }
-    if(plexusInSlice) {
+    if (plexusInSlice) {
       s.addPlexusController(controllerSite, plexusName);
     }
     return s;

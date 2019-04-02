@@ -4,15 +4,15 @@ import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.UUID;
 
 public abstract class AsyncTask {
   protected final UUID taskId;
+  protected final List<UUID> dependencies;
   protected Long offSetTime;
   protected TimeUnit timeUnit;
-  protected final List<UUID> dependencies;
   protected Thread thread;
   protected boolean started = false;
   protected ReentrantLock lock;
@@ -20,7 +20,7 @@ public abstract class AsyncTask {
   protected HashMap<UUID, AsyncTask> allTasks;
 
   public AsyncTask(UUID taskId, Long offSetTime, TimeUnit timeUnit, List<UUID> dependencies,
-                   HashMap<UUID, AsyncTask> allTasks){
+                   HashMap<UUID, AsyncTask> allTasks) {
     this.taskId = taskId;
     this.offSetTime = offSetTime;
     this.timeUnit = timeUnit;
@@ -29,7 +29,7 @@ public abstract class AsyncTask {
     this.lock = new ReentrantLock();
   }
 
-  public boolean isStarted(){
+  public boolean isStarted() {
     boolean res;
     lock.lock();
     res = started;
@@ -37,13 +37,13 @@ public abstract class AsyncTask {
     return res;
   }
 
-  public void start(){
+  public void start() {
     lock.lock();
-    if(!started) {
+    if (!started) {
       thread = new Thread() {
         @Override
         public void run() {
-          if(offSetTime > 0) {
+          if (offSetTime > 0) {
             try {
               timeUnit.sleep(offSetTime);
             } catch (Exception e) {
@@ -52,7 +52,7 @@ public abstract class AsyncTask {
           for (UUID taskUUID : dependencies) {
             if (allTasks.containsKey(taskUUID)) {
               AsyncTask parentTask = allTasks.get(taskUUID);
-              if (!parentTask.isStarted()){
+              if (!parentTask.isStarted()) {
                 parentTask.start();
               }
               allTasks.get(taskUUID).waitTillEnd();
@@ -69,24 +69,24 @@ public abstract class AsyncTask {
 
   public abstract void runTask();
 
-  public void terminate(){
-    if(started && !ended){
+  public void terminate() {
+    if (started && !ended) {
       thread.interrupt();
     }
   }
 
-  public void stop(){
+  public void stop() {
     throw new NotImplementedException();
   }
 
-  public void waitTillEnd(){
-    if(ended){
+  public void waitTillEnd() {
+    if (ended) {
       return;
     }
     try {
       thread.join();
-    }catch (Exception e){
-    }finally {
+    } catch (Exception e) {
+    } finally {
       ended = true;
     }
   }

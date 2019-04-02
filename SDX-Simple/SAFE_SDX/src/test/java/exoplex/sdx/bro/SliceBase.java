@@ -251,7 +251,7 @@ public abstract class SliceBase extends SliceCommon {
   private Session makeSshSession(ComputeNode c) throws JSchException {
     String name = c.getName();
     if (!sessions.containsKey(name) ||
-        !sessions.get(name).isConnected()) {
+      !sessions.get(name).isConnected()) {
       String cnodeIp = resourceIPs.get(name);
       System.out.println("Creating session for " + name + ": " + cnodeIp);
 

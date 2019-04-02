@@ -9,11 +9,11 @@ import javax.ws.rs.ext.Provider;
 
 @Provider
 public class MyExceptionMapper implements
-    ExceptionMapper<WebApplicationException> {
+  ExceptionMapper<WebApplicationException> {
   @Override
   public Response toResponse(WebApplicationException ex) {
     return Response.status(500).entity(Exceptions.getStackTraceAsString(ex)).type("text/plain")
-        .build();
+      .build();
   }
 }
 

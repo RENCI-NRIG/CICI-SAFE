@@ -1,11 +1,12 @@
 package exoplex.demo.bro;
 
+import exoplex.sdx.core.SdxManager;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import exoplex.sdx.core.SdxManager;
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -80,9 +81,11 @@ public class BroMain {
     return;
   }
 
-  static void reconfigureSdxNetwork(SdxManager sdxManager) throws  Exception {
+  static void reconfigureSdxNetwork(SdxManager sdxManager) throws Exception {
     sdxManager.delFlows();
-    sdxManager.configRouting();
+    Method configRouting = sdxManager.getClass().getDeclaredMethod("configRouting");
+    configRouting.setAccessible(true);
+    configRouting.invoke(sdxManager);
     if (!configFlows(sdxManager)) {
       System.out.println("Configure routing and mirror failed, retry");
       logger.debug("Configure routing and mirror failed, retry");
@@ -99,7 +102,7 @@ public class BroMain {
     boolean suc = false;
     for (int i = 0; i < 5; i++) {
       if (sdxManager.getNumRouteEntries(routerName, routeFlowPattern) == 8 && sdxManager
-          .getNumRouteEntries(routerNoBro, routeFlowPattern) == 4) {
+        .getNumRouteEntries(routerNoBro, routeFlowPattern) == 4) {
         suc = true;
         break;
       }
@@ -141,7 +144,7 @@ public class BroMain {
         }
         broExp.addFile("node0", "node2", "evil.txt");
         double[] result = broExp.measureMultiMetrics(flowSeconds, filetimes, cputimes, broName,
-            routerName);
+          routerName);
         results.add(result);
         broExp.clearFlows();
         broExp.clearFiles();
@@ -150,7 +153,7 @@ public class BroMain {
         broExp.addUdpFlow("node1", "node3", flow / 2 + "M");
         broExp.addFile("node0", "node2", "evil.txt");
         double[] result = broExp.measureMultiMetrics(flowSeconds, filetimes, cputimes, broName,
-            routerName);
+          routerName);
         results.add(result);
         broExp.clearFlows();
         broExp.clearFiles();

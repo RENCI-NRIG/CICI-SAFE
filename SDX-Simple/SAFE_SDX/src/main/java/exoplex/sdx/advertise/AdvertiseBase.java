@@ -18,11 +18,11 @@ public class AdvertiseBase {
 
   //<dest, src>-> ArrayList<String>
 
-  public AdvertiseBase(){
+  public AdvertiseBase() {
     route = new ArrayList<>();
   }
 
-  public AdvertiseBase(AdvertiseBase advertise, String myPid){
+  public AdvertiseBase(AdvertiseBase advertise, String myPid) {
     this.ownerPID = advertise.ownerPID;
     this.destPrefix = advertise.destPrefix;
     this.srcPrefix = advertise.srcPrefix;
@@ -33,39 +33,40 @@ public class AdvertiseBase {
     route.addAll(advertise.route);
   }
 
-  public String getLength(){
+  public String getLength() {
     return String.valueOf(route.size());
   }
 
-  public String getLength(int i){
+  public String getLength(int i) {
     return String.valueOf(route.size() - i);
   }
 
-  public Boolean hasSrcPrefix(){
+  public Boolean hasSrcPrefix() {
     return srcPrefix != null && !srcPrefix.equals("");
   }
 
-  public String getDestPrefix(){
+  public String getDestPrefix() {
     return String.format("ipv4\\\"%s\\\"", destPrefix);
   }
 
-  public String getSrcPrefix(){
-    if(srcPrefix!= null) {
+  public String getSrcPrefix() {
+    if (srcPrefix != null) {
       return String.format("ipv4\\\"%s\\\"", srcPrefix);
-    }else{
+    } else {
       return null;
     }
   }
 
-  public String getFormattedPath(){
-    String path = String.join(",",  route);
+  public String getFormattedPath() {
+    String path = String.join(",", route);
     return String.format("[%s]", path);
   }
-  public String toString(){
+
+  public String toString() {
     return toJsonObject().toString();
   }
 
-  public JSONObject toJsonObject(){
+  public JSONObject toJsonObject() {
     JSONObject obj = new JSONObject();
     obj.put("ownerPID", ownerPID);
     obj.put("destPrefix", destPrefix);
@@ -77,34 +78,34 @@ public class AdvertiseBase {
   }
 
   @Override
-  public boolean equals(Object routeAdvertise){
-    if(! (routeAdvertise instanceof AdvertiseBase)){
+  public boolean equals(Object routeAdvertise) {
+    if (!(routeAdvertise instanceof AdvertiseBase)) {
       return false;
     }
-    if(!this.ownerPID.equals(((AdvertiseBase) routeAdvertise).ownerPID)){
+    if (!this.ownerPID.equals(((AdvertiseBase) routeAdvertise).ownerPID)) {
       return false;
     }
-    if(!this.destPrefix.equals(((AdvertiseBase) routeAdvertise).destPrefix)){
+    if (!this.destPrefix.equals(((AdvertiseBase) routeAdvertise).destPrefix)) {
       return false;
     }
-    if(this.srcPrefix!= null && !this.srcPrefix.equals(((AdvertiseBase) routeAdvertise).srcPrefix)){
+    if (this.srcPrefix != null && !this.srcPrefix.equals(((AdvertiseBase) routeAdvertise).srcPrefix)) {
       return false;
     }
-    if(this.srcPrefix == null && ((AdvertiseBase) routeAdvertise).srcPrefix!= null){
+    if (this.srcPrefix == null && ((AdvertiseBase) routeAdvertise).srcPrefix != null) {
       return false;
     }
-    if(!this.advertiserPID.equals(((AdvertiseBase) routeAdvertise).advertiserPID)){
+    if (!this.advertiserPID.equals(((AdvertiseBase) routeAdvertise).advertiserPID)) {
       return false;
     }
-    if(this.safeToken != null && !this.safeToken.equals(((AdvertiseBase) routeAdvertise).safeToken)){
+    if (this.safeToken != null && !this.safeToken.equals(((AdvertiseBase) routeAdvertise).safeToken)) {
       return false;
     }
-    if(this.route.size() != ((AdvertiseBase) routeAdvertise).route.size()){
+    if (this.route.size() != ((AdvertiseBase) routeAdvertise).route.size()) {
       return false;
     }
-    for(int i=0; i< route.size(); i++){
-      if(this.route.get(i).equals(((AdvertiseBase) routeAdvertise).route.get(i))){
-        return  false;
+    for (int i = 0; i < route.size(); i++) {
+      if (this.route.get(i).equals(((AdvertiseBase) routeAdvertise).route.get(i))) {
+        return false;
       }
     }
     return true;

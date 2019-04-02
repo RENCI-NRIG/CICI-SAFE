@@ -49,26 +49,26 @@ public class IperfServer extends AsyncTask {
       sshKey));
   }
 
-  public void stop(){
+  public void stop() {
     lock.lock();
-    if(started){
+    if (started) {
       Exec.sshExec("root", ip, "pkill iperf",
-          sshKey);
+        sshKey);
       started = false;
     }
     lock.unlock();
   }
 
-  public List<String[]> getResults(){
+  public List<String[]> getResults() {
     return results;
   }
 
-  public void clearResults(){
+  public void clearResults() {
     results.clear();
   }
 
   @Override
-  public String toString(){
+  public String toString() {
     return String.format("ip %s port", this.ip, this.port);
   }
 }

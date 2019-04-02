@@ -2,7 +2,6 @@ package exoplex.sdx.network;
 
 import exoplex.common.utils.ServerOptions;
 import exoplex.sdx.core.SdxManager;
-
 import org.apache.commons.cli.CommandLine;
 
 import java.io.BufferedReader;
@@ -22,12 +21,14 @@ public class RoutingManagerTest {
       sdxManager.readConfig(cmd.getOptionValue("config"));
       sdxManager.loadSlice();
       sdxManager.initializeSdx();
-      sdxManager.configRouting();
+      Method configRouting = sdxManager.getClass().getDeclaredMethod("configRouting");
+      configRouting.setAccessible(true);
+      configRouting.invoke(sdxManager);
       sdxManager.delFlows();
       sdxManager.restartPlexus();
-      try{
+      try {
         Thread.sleep(10000);
-      }catch (Exception e){
+      } catch (Exception e) {
 
       }
 

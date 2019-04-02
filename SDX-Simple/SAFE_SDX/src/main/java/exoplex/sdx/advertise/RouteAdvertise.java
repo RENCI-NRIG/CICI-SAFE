@@ -2,21 +2,21 @@ package exoplex.sdx.advertise;
 
 import org.json.JSONObject;
 
-public class RouteAdvertise extends AdvertiseBase{
+public class RouteAdvertise extends AdvertiseBase {
   public String srcPid;
 
-  public RouteAdvertise(){
+  public RouteAdvertise() {
     super();
   }
 
-  public RouteAdvertise(RouteAdvertise advertise, String myPid){
+  public RouteAdvertise(RouteAdvertise advertise, String myPid) {
     super(advertise, myPid);
     this.srcPid = advertise.advertiserPID;
     this.advertiserPID = myPid;
   }
 
   @Override
-  public JSONObject toJsonObject(){
+  public JSONObject toJsonObject() {
     JSONObject obj = super.toJsonObject();
     obj.put("srcPid", srcPid);
     return obj;

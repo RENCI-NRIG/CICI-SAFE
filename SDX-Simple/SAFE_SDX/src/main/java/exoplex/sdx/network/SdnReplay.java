@@ -7,7 +7,7 @@ import java.io.FileReader;
 import java.io.IOException;
 
 public class SdnReplay {
-  public static void replay(String fileName){
+  public static void replay(String fileName) {
 
     try (BufferedReader br = new BufferedReader(new FileReader(fileName))) {
       String line;
@@ -19,9 +19,10 @@ public class SdnReplay {
         RoutingManager.postSdnCmd(url, obj, false);
         try {
           Thread.sleep(500);
-        }catch (Exception e){}
+        } catch (Exception e) {
+        }
       }
-    }catch (IOException e){
+    } catch (IOException e) {
       e.printStackTrace();
     }
     //((RoutingManager)obj).deleteAllFlows(sdxManager.getSDNController());

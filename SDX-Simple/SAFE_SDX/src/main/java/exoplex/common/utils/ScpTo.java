@@ -135,10 +135,10 @@ public class ScpTo {
 
   public static class MyUserInfo implements UserInfo, UIKeyboardInteractive {
     final GridBagConstraints gbc =
-        new GridBagConstraints(0, 0, 1, 1, 1, 1,
-            GridBagConstraints.NORTHWEST,
-            GridBagConstraints.NONE,
-            new Insets(0, 0, 0, 0), 0, 0);
+      new GridBagConstraints(0, 0, 1, 1, 1, 1,
+        GridBagConstraints.NORTHWEST,
+        GridBagConstraints.NONE,
+        new Insets(0, 0, 0, 0), 0, 0);
     String passwd;
     JTextField passwordField = (JTextField) new JPasswordField(20);
     private Container panel;
@@ -150,11 +150,11 @@ public class ScpTo {
     public boolean promptYesNo(String str) {
       Object[] options = {"yes", "no"};
       int foo = JOptionPane.showOptionDialog(null,
-          str,
-          "Warning",
-          JOptionPane.DEFAULT_OPTION,
-          JOptionPane.WARNING_MESSAGE,
-          null, options, options[0]);
+        str,
+        "Warning",
+        JOptionPane.DEFAULT_OPTION,
+        JOptionPane.WARNING_MESSAGE,
+        null, options, options[0]);
       return foo == 0;
     }
 
@@ -169,8 +169,8 @@ public class ScpTo {
     public boolean promptPassword(String message) {
       Object[] ob = {passwordField};
       int result =
-          JOptionPane.showConfirmDialog(null, ob, message,
-              JOptionPane.OK_CANCEL_OPTION);
+        JOptionPane.showConfirmDialog(null, ob, message,
+          JOptionPane.OK_CANCEL_OPTION);
       if (result == JOptionPane.OK_OPTION) {
         passwd = passwordField.getText();
         return true;
@@ -219,10 +219,10 @@ public class ScpTo {
       }
 
       if (JOptionPane.showConfirmDialog(null, panel,
-          destination + ": " + name,
-          JOptionPane.OK_CANCEL_OPTION,
-          JOptionPane.QUESTION_MESSAGE)
-          == JOptionPane.OK_OPTION) {
+        destination + ": " + name,
+        JOptionPane.OK_CANCEL_OPTION,
+        JOptionPane.QUESTION_MESSAGE)
+        == JOptionPane.OK_OPTION) {
         String[] response = new String[prompt.length];
         for (int i = 0; i < prompt.length; i++) {
           response[i] = texts[i].getText();

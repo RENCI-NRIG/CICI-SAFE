@@ -7,9 +7,10 @@ import exoplex.sdx.core.SdxManager;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 
 public class ExperimentBase {
   private final static Logger logger = LogManager.getLogger(ExperimentBase.class);
@@ -18,12 +19,12 @@ public class ExperimentBase {
   protected static String ftppw = "ftp";
   protected final ArrayList<String[]> flows;
   protected final ArrayList<String[]> files;
-  protected FlowManager flowManager;
-  protected MeasureLatency latencyTask;
   protected final ArrayList<String[]> ftpClientOut = new ArrayList<String[]>();
   protected final ArrayList<String[]> pingClientOut = new ArrayList<String[]>();
   protected final ArrayList<String[]> routerOut = new ArrayList<String[]>();
   protected final ArrayList<String[]> cpuOut = new ArrayList<String[]>();
+  protected FlowManager flowManager;
+  protected MeasureLatency latencyTask;
   protected HashMap<String, String[]> clients;
   protected ArrayList<Thread> tlist;
   protected SdxManager sdxManager;
@@ -42,7 +43,7 @@ public class ExperimentBase {
     Exec.sshExec("root", managementIP, "apt-get install -y iperf", sshkey);
   }
 
-  public void setLatencyTask(String client, String server){
+  public void setLatencyTask(String client, String server) {
     final String mip1 = clients.get(client)[0];
     final String mip2 = clients.get(server)[0];
     final String dip2 = clients.get(server)[1];
@@ -51,15 +52,15 @@ public class ExperimentBase {
     latencyTask.setTotalTime(30);
   }
 
-  public void startLatencyTask(){
+  public void startLatencyTask() {
     latencyTask.start();
   }
 
-  public void stopLatencyTask(){
+  public void stopLatencyTask() {
     latencyTask.stop();
   }
 
-  public void printLatencyResult(){
+  public void printLatencyResult() {
     latencyTask.printResults();
   }
 
@@ -108,7 +109,19 @@ public class ExperimentBase {
 
   public void resetNetwork() {
     sdxManager.reset();
-    sdxManager.configRouting();
+    try {
+      Method configRouting = sdxManager.getClass().getDeclaredMethod("configRouting");
+      configRouting.setAccessible(true);
+      try {
+        configRouting.invoke(sdxManager);
+      } catch (IllegalAccessException e) {
+        e.printStackTrace();
+      } catch (InvocationTargetException e) {
+        e.printStackTrace();
+      }
+    } catch (NoSuchMethodException e) {
+      e.printStackTrace();
+    }
   }
 
   //TODO: flow length seconds is not used
@@ -138,7 +151,7 @@ public class ExperimentBase {
       final String dip2 = clients.get(file[1])[1];
 
       tlist.add(new Thread(() -> ftpClientOut.add(Exec.sshExec("root", mip1, fetchFileCMD
-          (ftpuser, ftppw, dip2, file[2], times), sshkey))));
+        (ftpuser, ftppw, dip2, file[2], times), sshkey))));
 
       tlist.get(tlist.size() - 1).start();
     }
@@ -147,14 +160,14 @@ public class ExperimentBase {
   public String fetchFileCMD(String ftpuser, String ftppw, String dip, String filename, int times) {
     if (times > 0) {
       return "rm evil.*;/bin/bash getnfiles.sh " + times + " " + ftpuser + " " + ftppw + " " + dip +
-          " " + filename + ";";
+        " " + filename + ";";
     } else {
       return "";
     }
   }
 
 
-  public void  printFlowServerResult() {
+  public void printFlowServerResult() {
 
     for (String[] s : flowManager.getServerResults()) {
       System.out.println(s[0]);
@@ -166,10 +179,10 @@ public class ExperimentBase {
     return "echo currentMillis:$(/bin/date \"+%s%3N\");";
   }
 
-  protected void sleep(int seconds){
-    try{
+  protected void sleep(int seconds) {
+    try {
       sleep(seconds * 1000);
-    }catch (Exception e){
+    } catch (Exception e) {
 
     }
   }

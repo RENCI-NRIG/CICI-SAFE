@@ -1,7 +1,7 @@
 package exoplex;
 
-import exoplex.common.slice.SliceManager;
 import exoplex.common.slice.SiteBase;
+import exoplex.common.slice.SliceManager;
 import exoplex.common.utils.ServerOptions;
 import exoplex.sdx.core.SliceHelper;
 import exoplex.sdx.safe.SafeManager;
@@ -12,16 +12,16 @@ import org.renci.ahab.libtransport.util.SSHAccessTokenFileFactory;
 import org.renci.ahab.libtransport.util.UtilTransportException;
 
 public class DockerServerSlice extends SliceHelper {
-  public static void main(String[] args) throws  Exception{
-    if(args.length<1){
+  public static void main(String[] args) throws Exception {
+    if (args.length < 1) {
       args = new String[]{"-c", "config/docker.conf"};
     }
     DockerServerSlice slice = new DockerServerSlice();
     slice.run(args);
   }
 
-  public void run(String[] args){
-    if(args.length<1){
+  public void run(String[] args) {
+    if (args.length < 1) {
       args = new String[]{"-c", "config/docker.conf"};
     }
     CommandLine cmd = ServerOptions.parseCmd(args);
@@ -40,19 +40,19 @@ public class DockerServerSlice extends SliceHelper {
     }
     try {
       createSafeAndPlexusSlice();
-    }catch (Exception e){
+    } catch (Exception e) {
 
     }
   }
 
-  public void createSafeAndPlexusSlice() throws  Exception{
+  public void createSafeAndPlexusSlice() throws Exception {
     SliceManager s = SliceManager.create(sliceName, pemLocation, keyLocation, controllerUrl, sctx);
     s.addSafeServer(SiteBase.get("BBN"), conf.getString("config.riak"), SafeManager
       .safeDockerImage, SafeManager.safeServerScript);
-    s.addPlexusController(SiteBase.get("BBN"),"plexus");
+    s.addPlexusController(SiteBase.get("BBN"), "plexus");
     s.commitAndWait();
     s.reloadSlice();
-    checkSafeServer(s.getComputeNode("safe-server").getManagementIP(),riakIp);
+    checkSafeServer(s.getComputeNode("safe-server").getManagementIP(), riakIp);
     checkPlexus(s.getComputeNode("plexus").getManagementIP());
     System.out.println(String.format("Safe server IP %s", s.getComputeNode("safe-server")
       .getManagementIP()));

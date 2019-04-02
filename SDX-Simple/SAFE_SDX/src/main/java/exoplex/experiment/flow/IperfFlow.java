@@ -8,9 +8,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.ReentrantLock;
 
-public class IperfFlow extends AsyncTask{
+public class IperfFlow extends AsyncTask {
+  static String baseCmd = "/usr/bin/iperf";
   String iperfServer;
   String managementIp;
   String serverIp;
@@ -21,10 +21,9 @@ public class IperfFlow extends AsyncTask{
   String sshKey;
   int threads;
   ArrayList<String[]> results = new ArrayList<>();
-  static String baseCmd = "/usr/bin/iperf";
 
   public IperfFlow(String clientIp, String serverIp, String sshKey, int port, int seconds, String
-    bw, String proto, int threads, String iperfServer){
+    bw, String proto, int threads, String iperfServer) {
     super(UUID.randomUUID(),
       0l,
       TimeUnit.SECONDS,
@@ -38,7 +37,7 @@ public class IperfFlow extends AsyncTask{
     this.bw = bw;
     this.seconds = seconds;
     this.proto = proto;
-    this.threads=threads;
+    this.threads = threads;
     started = false;
   }
 
@@ -53,26 +52,26 @@ public class IperfFlow extends AsyncTask{
     if (seconds > 0) {
       cmd = cmd + " -t " + seconds;
     }
-    if(this.threads>1){
+    if (this.threads > 1) {
       cmd = cmd + " -P " + this.threads;
     }
     results.add(Exec.sshExec("root", managementIp, cmd, sshKey));
   }
 
-  public void stop(){
+  public void stop() {
     lock.lock();
-    if(started) {
+    if (started) {
       Exec.sshExec("root", managementIp, "pkill iperf", sshKey);
       started = false;
     }
     lock.unlock();
   }
 
-  public List<String[]> getResults(){
+  public List<String[]> getResults() {
     return results;
   }
 
-  public void clearResults(){
+  public void clearResults() {
     results.clear();
   }
 }

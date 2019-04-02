@@ -1,11 +1,11 @@
 package exoplex.sdx.bro;
 
 import com.jcraft.jsch.Session;
+import exoplex.common.slice.NodeBase;
 import org.renci.ahab.libndl.Slice;
 import org.renci.ahab.libndl.resources.request.ComputeNode;
 import org.renci.ahab.libndl.resources.request.InterfaceNode2Net;
 import org.renci.ahab.libndl.resources.request.Network;
-import exoplex.common.slice.NodeBase;
 
 import java.util.*;
 
@@ -20,10 +20,12 @@ public class TestBroSlice extends SliceBase {
   private Slice thisSlice;
   private Map<String, String> resourceIPs = new HashMap<>();
   private Map<String, Session> sessions = new HashMap<>();
+
   public TestBroSlice(String configPath) throws SampleSlice.SliceBaseException {
     super(configPath);
     resource_dir = conf.getString("config.resource_dir");
   }
+
   public TestBroSlice(String configPath, String name) throws SampleSlice.SliceBaseException {
     super(configPath, name);
     resource_dir = conf.getString("config.resource_dir");
@@ -131,9 +133,9 @@ public class TestBroSlice extends SliceBase {
         execOnNode(flow, "ovs-vsctl set-fail-mode br0 secure");
         execOnNode(flow, "ovs-vsctl set-controller br0 tcp:" + retrieveIP(control) + ":6633");
         execOnNode(flow, "for i in `ifconfig | grep -B1 \"192.168.*\" | awk '$1!=\"inet\" && $1!=\"--\"' | cut -d: -f1`\n" +
-            "do\n" +
-            "ovs-vsctl add-port br0 $i\n" +
-            "done\n");
+          "do\n" +
+          "ovs-vsctl add-port br0 $i\n" +
+          "done\n");
       } catch (SampleSlice.SliceBaseException e) {
         throw new RuntimeException(e);
       }
