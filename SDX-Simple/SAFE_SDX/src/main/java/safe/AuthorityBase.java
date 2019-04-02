@@ -1,23 +1,19 @@
 package safe;
 
 import exoplex.common.utils.SafeUtils;
-import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 
-public abstract class AuthorityBase implements SafeLang{
-  static Logger logger = LogManager.getLogger(AuthorityBase.class);
-
-  public String safeServer;
-
+public abstract class AuthorityBase implements SafeLang {
   public static boolean authorizationMade = false;
-
-  public ArrayList<String> principals = new ArrayList<>();
-
   public static HashMap<String, String> principalMap = new HashMap<>();
-
   public static HashMap<String, String> subjectSet = new HashMap<String, String>();
+  static Logger logger = LogManager.getLogger(AuthorityBase.class);
+  public String safeServer;
+  public ArrayList<String> principals = new ArrayList<>();
 
   public AuthorityBase(String safeServer) {
     this.safeServer = safeServer;
@@ -39,12 +35,12 @@ public abstract class AuthorityBase implements SafeLang{
     subjectSet.put(key, token);
   }
 
-  public String getPrincipalId(String safeKey){
-    if(principalMap.containsKey(safeKey)){
+  public String getPrincipalId(String safeKey) {
+    if (principalMap.containsKey(safeKey)) {
       return principalMap.get(safeKey);
-    }else{
+    } else {
       String key = SafeUtils.getPrincipalId(safeServer, safeKey);
-      if ( key != null){
+      if (key != null) {
         principalMap.put(safeKey, key);
       }
       return key;

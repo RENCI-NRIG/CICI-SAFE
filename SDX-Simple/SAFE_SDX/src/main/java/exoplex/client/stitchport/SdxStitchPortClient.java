@@ -78,9 +78,9 @@ public class SdxStitchPortClient extends SliceCommon {
       if (params[0].equals("stitch")) {
         logger.debug(params.length);
         processStitchCmd(params);
-      } else if (params[0].equals("route")){
+      } else if (params[0].equals("route")) {
         processPrefixCmd(params);
-      } else{
+      } else {
         processConnectionCmd(params);
       }
     } catch (Exception e) {
@@ -91,10 +91,10 @@ public class SdxStitchPortClient extends SliceCommon {
   private void processConnectionCmd(String[] params) {
     try {
       JSONObject jsonparams = new JSONObject();
-      if(safeEnabled) {
+      if (safeEnabled) {
         safeKeyHash = SafeUtils.getPrincipalId(safeServer, safeKeyFile);
         jsonparams.put("ckeyhash", safeKeyHash);
-      }else {
+      } else {
         jsonparams.put("ckeyhash", sliceName);
       }
       jsonparams.put("self_prefix", params[1]);
@@ -111,7 +111,7 @@ public class SdxStitchPortClient extends SliceCommon {
     }
   }
 
-  private void processPrefixCmd(String[] params){
+  private void processPrefixCmd(String[] params) {
     System.out.print(params.length);
     JSONObject paramsobj = new JSONObject();
     paramsobj.put("dest", params[1]);
@@ -141,14 +141,14 @@ public class SdxStitchPortClient extends SliceCommon {
       jsonparams.put("sdxsite", SiteBase.get(params[5]));
       try {
         jsonparams.put("sdxnode", params[6]);
-      }catch (Exception e){
-        jsonparams.put("sdxnode",(String)null);
+      } catch (Exception e) {
+        jsonparams.put("sdxnode", (String) null);
       }
-      if(safeEnabled){
+      if (safeEnabled) {
         setSafeServerIp(conf.getString("config.safeserver"));
         safeKeyHash = SafeUtils.getPrincipalId(safeServer, safeKeyFile);
         jsonparams.put("ckeyhash", safeKeyHash);
-        postSafeStitchRequest(safeKeyHash,jsonparams.getString("stitchport"),jsonparams.getString("vlan"));
+        postSafeStitchRequest(safeKeyHash, jsonparams.getString("stitchport"), jsonparams.getString("vlan"));
       }
       logger.debug("posted stitch request, requesting to Sdx server");
       String res = HttpUtil.postJSON(serverurl + "sdx/stitchchameleon", jsonparams);
@@ -185,16 +185,15 @@ public class SdxStitchPortClient extends SliceCommon {
     }
   }
 
-  private boolean postSafeStitchRequest(String keyhash, String stitchport, String vlan){
+  private boolean postSafeStitchRequest(String keyhash, String stitchport, String vlan) {
     /** Post to remote safesets using apache httpclient */
-    String[] othervalues=new String[5];
-    othervalues[0]=stitchport;
-    othervalues[1]=vlan;
-    String message= SafeUtils.postSafeStatements(safeServer,"postChameleonStitchRequest",keyhash,othervalues);
-    if(message.contains("fail")){
+    String[] othervalues = new String[5];
+    othervalues[0] = stitchport;
+    othervalues[1] = vlan;
+    String message = SafeUtils.postSafeStatements(safeServer, "postChameleonStitchRequest", keyhash, othervalues);
+    if (message.contains("fail")) {
       return false;
-    }
-    else
+    } else
       return true;
   }
 
@@ -218,33 +217,33 @@ public class SdxStitchPortClient extends SliceCommon {
 
   private String getQuaggaScript() {
     return "#!/bin/bash\n"
-        // +"mask2cdr()\n{\n"+"local x=${1##*255.}\n"
-        // +" set -- 0^^^128^192^224^240^248^252^254^ $(( (${#1} - ${#x})*2 )) ${x%%.*}\n"
-        // +" x=${1%%$3*}\n"
-        // +"echo $(( $2 + (${#x}/4) ))\n"
-        // +"}\n"
-        + "ipmask()\n"
-        + "{\n"
-        + " echo $1/24\n}\n"
-        + "apt-get update\n"
-        + "apt-get install -y quagga\n"
-        + "sed -i -- 's/zebra=no/zebra=yes/g' /etc/quagga/daemons\n"
-        + "sed -i -- 's/ospfd=no/ospfd=yes/g' /etc/quagga/daemons\n"
-        + "echo \"!zebra configuration file\" >/etc/quagga/zebra.conf\necho \"hostname LogRouter\">>/etc/quagga/zebra.conf\n"
-        + "echo \"enable password zebra\">>/etc/quagga/zebra.conf\n"
-        + "echo \"!ospfd configuration file\" >/etc/quagga/ospfd.conf\n echo \"hostname ospfd\">>/etc/quagga/ospfd.conf\n echo \"enable password zebra\">>/etc/quagga/ospfd.conf\n  echo \"router ospf\">>/etc/quagga/ospfd.conf\n"
-        + "eth=$(ifconfig |grep 'inet addr:'|grep -v 'inet addr:10.' |grep -v '127.0.0.1' |cut -d: -f2|awk '{print $1}')\n"
-        + "eth1=$(echo $eth|cut -f 1 -d \" \")\n"
-        + "echo \"  router-id $eth1\">>/etc/quagga/ospfd.conf\n"
-        + "prefix=$(ifconfig |grep 'inet addr:'|grep -v 'inet addr:10.' |grep -v '127.0.0.1' |cut -d: -f2,4 |awk '{print $1 $2}'| sed 's/Bcast:/\\ /g')\n"
-        + "while read -r line;do\n"
-        + "  echo \"  network\" $(ipmask $line) area 0 >>/etc/quagga/ospfd.conf\n"
-        + "done <<<\"$prefix\"\n"
-        + "echo \"log stdout\">>/etc/quagga/ospfd.conf\n"
-        + "echo \"1\" > /proc/sys/net/ipv4/ip_forward\n"
-        //+"/etc/init.d/quagga restart\napt-get -y install iperf\n"
-        + "/etc/init.d/quagga stop\napt-get -y install iperf\n"
-        ;
+      // +"mask2cdr()\n{\n"+"local x=${1##*255.}\n"
+      // +" set -- 0^^^128^192^224^240^248^252^254^ $(( (${#1} - ${#x})*2 )) ${x%%.*}\n"
+      // +" x=${1%%$3*}\n"
+      // +"echo $(( $2 + (${#x}/4) ))\n"
+      // +"}\n"
+      + "ipmask()\n"
+      + "{\n"
+      + " echo $1/24\n}\n"
+      + "apt-get update\n"
+      + "apt-get install -y quagga\n"
+      + "sed -i -- 's/zebra=no/zebra=yes/g' /etc/quagga/daemons\n"
+      + "sed -i -- 's/ospfd=no/ospfd=yes/g' /etc/quagga/daemons\n"
+      + "echo \"!zebra configuration file\" >/etc/quagga/zebra.conf\necho \"hostname LogRouter\">>/etc/quagga/zebra.conf\n"
+      + "echo \"enable password zebra\">>/etc/quagga/zebra.conf\n"
+      + "echo \"!ospfd configuration file\" >/etc/quagga/ospfd.conf\n echo \"hostname ospfd\">>/etc/quagga/ospfd.conf\n echo \"enable password zebra\">>/etc/quagga/ospfd.conf\n  echo \"router ospf\">>/etc/quagga/ospfd.conf\n"
+      + "eth=$(ifconfig |grep 'inet addr:'|grep -v 'inet addr:10.' |grep -v '127.0.0.1' |cut -d: -f2|awk '{print $1}')\n"
+      + "eth1=$(echo $eth|cut -f 1 -d \" \")\n"
+      + "echo \"  router-id $eth1\">>/etc/quagga/ospfd.conf\n"
+      + "prefix=$(ifconfig |grep 'inet addr:'|grep -v 'inet addr:10.' |grep -v '127.0.0.1' |cut -d: -f2,4 |awk '{print $1 $2}'| sed 's/Bcast:/\\ /g')\n"
+      + "while read -r line;do\n"
+      + "  echo \"  network\" $(ipmask $line) area 0 >>/etc/quagga/ospfd.conf\n"
+      + "done <<<\"$prefix\"\n"
+      + "echo \"log stdout\">>/etc/quagga/ospfd.conf\n"
+      + "echo \"1\" > /proc/sys/net/ipv4/ip_forward\n"
+      //+"/etc/init.d/quagga restart\napt-get -y install iperf\n"
+      + "/etc/init.d/quagga stop\napt-get -y install iperf\n"
+      ;
   }
 
 }

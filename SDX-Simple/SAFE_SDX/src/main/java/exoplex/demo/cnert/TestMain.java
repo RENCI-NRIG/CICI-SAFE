@@ -4,11 +4,11 @@ import exoplex.client.exogeni.ExogeniClientSlice;
 import exoplex.client.exogeni.SdxExogeniClient;
 import exoplex.client.stitchport.SdxStitchPortClient;
 import exoplex.sdx.core.SdxManager;
+import exoplex.sdx.core.SdxServer;
 import org.apache.commons.cli.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.renci.ahab.libtransport.util.TransportException;
-import exoplex.sdx.core.SdxServer;
 
 import java.util.ArrayList;
 
@@ -71,7 +71,7 @@ public class TestMain {
   public static void multiSliceTest(String[] args) throws Exception {
     CommandLine cmd = parseCmd(args);
 
-    if(cmd.hasOption('d')){
+    if (cmd.hasOption('d')) {
       deleteSlice();
       return;
     }
@@ -107,7 +107,7 @@ public class TestMain {
     // Start Sdx Server
     //./scripts/sdxserver.sh -c config/sdx.conf
     if (reset) {
-      sdxManager = SdxServer.run (arg2);
+      sdxManager = SdxServer.run(arg2);
     } else {
       sdxManager = SdxServer.run(arg1);
     }
@@ -119,11 +119,11 @@ public class TestMain {
     SdxExogeniClient client6 = new SdxExogeniClient(clientarg6);
 
     String[] gateways = new String[]{
-        "192.168.132.2",
-        "192.168.133.2",
-        "192.168.134.2",
-        "192.168.135.2",
-        "192.168.137.2"};
+      "192.168.132.2",
+      "192.168.133.2",
+      "192.168.134.2",
+      "192.168.135.2",
+      "192.168.137.2"};
 
     if (stitch) {
       System.out.println("c1 stitches to SDX");
@@ -144,29 +144,29 @@ public class TestMain {
 
     // Client request for connection between prefixes
     client1.processCmd("link 192.168.10.1/24 192.168.20.1/24");
-    if( !client1.checkConnectivity("CNode1", "192.168.20.2")){
+    if (!client1.checkConnectivity("CNode1", "192.168.20.2")) {
       sdxManager.checkFlowTableForPair("192.168.10.0/24", "192.168.20.0/24",
-          "192.168.10.1/24", "192.168.20.1/24");
+        "192.168.10.1/24", "192.168.20.1/24");
     }
     client3.processCmd("link 192.168.30.1/24 192.168.40.1/24");
 
-    if( !client3.checkConnectivity("CNode1", "192.168.40.2")){
+    if (!client3.checkConnectivity("CNode1", "192.168.40.2")) {
       sdxManager.checkFlowTableForPair("192.168.30.0/24", "192.168.40.0/24",
-      "192.168.30.1/24", "192.168.40.1/24");
+        "192.168.30.1/24", "192.168.40.1/24");
     }
 
     gateways[4] = client6.processCmd("stitch CNode0 " + sdx);
     //An IP address will be used when we add new core-edge router pair: 192.168.136.1/24
     client6.processCmd("route 192.168.60.1/24 " + gateways[4]);
     client6.processCmd("link 192.168.60.1/24 192.168.10.1/24");
-    if(!client6.checkConnectivity("CNode1", "192.168.10.2")){
+    if (!client6.checkConnectivity("CNode1", "192.168.10.2")) {
       sdxManager.checkFlowTableForPair("192.168.10.0/24", "192.168.60.0/24",
-      "192.168.10.1/24", "192.168.60.1/24");
+        "192.168.10.1/24", "192.168.60.1/24");
     }
     client6.processCmd("link 192.168.60.1/24 192.168.20.1/24");
-    if(!client6.checkConnectivity("CNode1", "192.168.20.2")){
+    if (!client6.checkConnectivity("CNode1", "192.168.20.2")) {
       sdxManager.checkFlowTableForPair("192.168.20.0/24", "192.168.60.0/24",
-      "192.168.20.1/24", "192.168.60.1/24");
+        "192.168.20.1/24", "192.168.60.1/24");
     }
     //SdxServer.sdxManager.logFlowTables();
     /*
@@ -185,7 +185,7 @@ public class TestMain {
     // Stop Sdx server and exit
   }
 
-  public static void testChameleon() throws TransportException , Exception{
+  public static void testChameleon() throws TransportException, Exception {
     SdxServer.run(arg1);
     SdxExogeniClient client1 = new SdxExogeniClient(clientarg1);
     SdxExogeniClient client2 = new SdxExogeniClient(clientarg2);
@@ -198,8 +198,8 @@ public class TestMain {
       client3.processCmd("stitch CNode0 " + sdx + " c0");
       client4.processCmd("stitch CNode0 " + sdx + " c1");
       cc.processCmd("stitch http://geni-orca.renci.org/owl/ion" +
-          ".rdf#AL2S/Chameleon/Cisco/6509/GigabitEthernet/1/1 3296 " + sdx +
-          "c1 10.32.90.206 10.32.90.200/24 ");
+        ".rdf#AL2S/Chameleon/Cisco/6509/GigabitEthernet/1/1 3296 " + sdx +
+        "c1 10.32.90.206 10.32.90.200/24 ");
     }
 
     // Client slice advertise their prefix
@@ -230,7 +230,7 @@ public class TestMain {
     s6.delete();
   }
 
-  public static void createTestSliceParrallel() throws  Exception{
+  public static void createTestSliceParrallel() throws Exception {
     ArrayList<Thread> tlist = new ArrayList<Thread>();
     Thread thread1 = new Thread() {
       @Override
@@ -252,7 +252,7 @@ public class TestMain {
           ExogeniClientSlice s1 = new ExogeniClientSlice(arg);
           try {
             s1.run();
-          }catch (Exception e){
+          } catch (Exception e) {
             e.printStackTrace();
             return;
           }
@@ -267,10 +267,9 @@ public class TestMain {
       for (Thread t : tlist) {
         t.join();
       }
-    }catch (NullPointerException ex){
+    } catch (NullPointerException ex) {
       throw ex;
-    }
-    catch (Exception e) {
+    } catch (Exception e) {
       e.printStackTrace();
     }
     System.out.println("Finished create vSDX slice and Client slices");
@@ -294,7 +293,7 @@ public class TestMain {
     client.processCmd("link 192.168.20.1/24 192.168.40.1/24");
 
     sdxManager.setMirror("c0", "192.168.10.1/24",
-        "192.168.30.1/24");
+      "192.168.30.1/24");
 
     if (!cmd.hasOption('s')) {
       try {
@@ -305,7 +304,7 @@ public class TestMain {
       }
     }
     sdxManager.setMirror("c0", "192.168.20.1/24",
-        "192.168.40.1/24");
+      "192.168.40.1/24");
 
     System.exit(0);
   }

@@ -7,15 +7,13 @@ import org.apache.logging.log4j.Logger;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import java.lang.reflect.Array;
 import java.util.*;
 
 public class RoutingManager {
   final static Logger logger = LogManager.getLogger(RoutingManager.class);
   final static Logger sdnLogger = LogManager.getLogger("SdnCmds");
-  private NetworkManager networkManager;
-
   final static int MAX_RATE = 2000000;
+  private NetworkManager networkManager;
   private HashMap<String, ArrayList<Long>> router_queues = new HashMap<>();
   private HashMap<String, ArrayList<JSONObject>> router_matches = new HashMap<>();
   private HashMap<String, ArrayList<String[]>> sdncmds = new HashMap<String, ArrayList<String[]>>();
@@ -35,6 +33,20 @@ public class RoutingManager {
   public RoutingManager() {
     logger.debug("initialize network manager");
     networkManager = new NetworkManager();
+  }
+
+  public static String postSdnCmd(String cmd, JSONObject params) {
+    sdnLogger.info(String.format("%s\n%s", cmd, params.toString()));
+    String res = HttpUtil.postJSON(cmd, params);
+    return res;
+  }
+
+  public static String postSdnCmd(String cmd, JSONObject params, boolean logging) {
+    if (logging) {
+      sdnLogger.info(String.format("%s\n%s", cmd, params.toString()));
+    }
+    String res = HttpUtil.postJSON(cmd, params);
+    return res;
   }
 
   synchronized public void newRouter(String routerName, String dpid, String managementIP) {
@@ -85,9 +97,9 @@ public class RoutingManager {
     String cmd[] = SdnUtil.delAddrCMD(String.valueOf(address_id.get(linkName)), getDPID
       (routerName), controller);
     String res = HttpUtil.delete(cmd[0], cmd[1]);
-    if(res.contains("success")){
+    if (res.contains("success")) {
       logger.debug(res);
-    }else{
+    } else {
       logger.warn(res);
     }
   }
@@ -134,20 +146,6 @@ public class RoutingManager {
     return result;
   }
 
-  public static String postSdnCmd(String cmd, JSONObject params){
-    sdnLogger.info(String.format("%s\n%s", cmd, params.toString()));
-    String res = HttpUtil.postJSON(cmd, params);
-    return res;
-  }
-
-  public static String postSdnCmd(String cmd, JSONObject params, boolean logging){
-    if(logging) {
-      sdnLogger.info(String.format("%s\n%s", cmd, params.toString()));
-    }
-    String res = HttpUtil.postJSON(cmd, params);
-    return res;
-  }
-
   /**
    * configure path for destIP in the network.
    *
@@ -178,7 +176,7 @@ public class RoutingManager {
         //addRoute(destIP, path[1], path[0], pathId, controller);
         //logger.debug(path[0]+" "+path[1]);
       }
-    }catch (Exception e){
+    } catch (Exception e) {
       e.printStackTrace();
     }
   }
@@ -207,7 +205,7 @@ public class RoutingManager {
         //addRoute(destIP, path[1], path[0], pathId, controller);
         //logger.debug(path[0]+" "+path[1]);
       }
-    }catch (Exception e){
+    } catch (Exception e) {
       e.printStackTrace();
     }
   }
@@ -278,6 +276,7 @@ public class RoutingManager {
     logger.info(String.format("removePath %s %s", dstIP, controller));
     removePathId(getPathID(null, dstIP), controller);
   }
+
   public void removePath(String srcIP, String dstIP, String controller) {
     logger.info(String.format("removePath %s %s %s", srcIP, dstIP, controller));
     removePathId(getPathID(srcIP, dstIP), controller);
@@ -612,20 +611,20 @@ public class RoutingManager {
     return res;
   }
 
-  public List<String> getFlowsOnRouter(Map<String, String> fieldMap, String ip, String sshKey){
+  public List<String> getFlowsOnRouter(Map<String, String> fieldMap, String ip, String sshKey) {
     String result = Exec.sshExec("root", ip,
       "ovs-ofctl dump-flows br0", sshKey)[0];
     String[] parts = result.split("\n");
     ArrayList<String> res = new ArrayList<>();
     for (String s : parts) {
       boolean flag = true;
-      for(String filed: fieldMap.keySet()){
-        if(!s.contains(String.format("%s=%s", filed, fieldMap.get(filed)))){
+      for (String filed : fieldMap.keySet()) {
+        if (!s.contains(String.format("%s=%s", filed, fieldMap.get(filed)))) {
           flag = false;
           break;
         }
       }
-      if (flag){
+      if (flag) {
         res.add(s);
       }
     }
@@ -695,9 +694,9 @@ public class RoutingManager {
   }
 
   private String getPathID(String src, String dst) {
-    if(src != null) {
+    if (src != null) {
       return src + dst;
-    }else{
+    } else {
       return dst;
     }
   }

@@ -1,10 +1,11 @@
 package exoplex.demo.cnert;
 
-import exoplex.common.slice.SliceManager;
 import exoplex.common.slice.Scripts;
+import exoplex.common.slice.SliceManager;
 import exoplex.common.utils.Exec;
 import exoplex.common.utils.PathUtil;
 import exoplex.common.utils.ServerOptions;
+import exoplex.sdx.core.SliceHelper;
 import org.apache.commons.cli.CommandLine;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -18,7 +19,6 @@ import org.renci.ahab.libtransport.util.SSHAccessTokenFileFactory;
 import org.renci.ahab.libtransport.util.TransportException;
 import org.renci.ahab.libtransport.util.UtilTransportException;
 import org.renci.ahab.libtransport.xmlrpc.XMLRPCTransportException;
-import exoplex.sdx.core.SliceHelper;
 
 import java.util.ArrayList;
 
@@ -90,13 +90,13 @@ public class TestSlice extends SliceHelper {
         e.printStackTrace();
       }
       carrier.runCmdSlice("echo \"ip route 192.168.1.1/16 192.168.10.1\" >>/etc/quagga/zebra" +
-          ".conf", sshkey, "(node0)", true);
+        ".conf", sshkey, "(node0)", true);
       carrier.runCmdSlice("echo \"ip route 192.168.1.1/16 192.168.20.1\" >>/etc/quagga/zebra" +
-          ".conf", sshkey, "(node1)", true);
+        ".conf", sshkey, "(node1)", true);
       carrier.runCmdSlice("echo \"ip route 192.168.1.1/16 192.168.30.1\" >>/etc/quagga/zebra" +
-          ".conf", sshkey, "(node2)", true);
+        ".conf", sshkey, "(node2)", true);
       carrier.runCmdSlice("echo \"ip route 192.168.1.1/16 192.168.40.1\" >>/etc/quagga/zebra" +
-          ".conf", sshkey, "(node3)", true);
+        ".conf", sshkey, "(node3)", true);
       carrier.runCmdSlice("/etc/init.d/quagga restart", sshkey, "(node\\d+)", true);
 
       if (BRO) {
@@ -139,21 +139,22 @@ public class TestSlice extends SliceHelper {
       ////if (!checkPlexus(SDNControllerIP)) {
       ////  System.exit(-1);
       ////}
-      SliceManager carrier = SliceManager.loadManifestFile(sliceName, pemLocation, keyLocation, controllerUrl);
+      SliceManager carrier = new SliceManager(sliceName, pemLocation, keyLocation, controllerUrl);
+      carrier.reloadSlice();
       SDNControllerIP = carrier.getComputeNode("plexuscontroller").getManagementIP();
       System.out.println("Plexus Controler IP: " + SDNControllerIP);
       carrier.runCmdSlice("/bin/bash ~/ovsbridge.sh " + SDNControllerIP + ":6633", sshkey, "(^c\\d+)",
-          true);
+        true);
       carrier.runCmdSlice("apt-get -y install quagga", sshkey, "(node\\d+)", true);
       carrier.runCmdSlice("sed -i -- 's/zebra=no/zebra=yes/g' /etc/quagga/daemons", sshkey, "(node\\d+)", true);
       //carrier.runCmdSlice("sed -i -- 's/ospfd=no/ospfd=yes/g' /etc/quagga/daemons", sshkey,
       // "(node\\d+)", true);
       carrier.runCmdSlice("echo \"1\" > /proc/sys/net/ipv4/ip_forward", sshkey, "(node\\d+)",
-          true);
+        true);
       try {
         carrier.runCmdSlice("ifconfig eth1 192.168.10.2/24 up", sshkey, "(node0)", true);
         carrier.runCmdSlice("ifconfig eth1 192.168.20.2/24 up", sshkey, "(node" + (routernum - 1)
-            + ")", true);
+          + ")", true);
       } catch (Exception e) {
         e.printStackTrace();
       }
@@ -213,11 +214,11 @@ public class TestSlice extends SliceHelper {
       try {
         carrier.runCmdSlice("ifconfig eth1 192.168.10.2/24 up", sshkey, "(node0)", true);
         carrier.runCmdSlice("echo \"ip route 192.168.1.1/16 192.168.10.1\" >>/etc/quagga/zebra" +
-            ".conf", sshkey, "(node0)", true);
+          ".conf", sshkey, "(node0)", true);
         carrier.runCmdSlice("echo \"ip route 192.168.1.1/16 192.168.20.1\" >>/etc/quagga/zebra" +
-            ".conf", sshkey, "(node1)", true);
+          ".conf", sshkey, "(node1)", true);
         carrier.runCmdSlice("echo \"ip route 192.168.1.1/16 192.168.30.1\" >>/etc/quagga/zebra" +
-            ".conf", sshkey, "(node2)", true);
+          ".conf", sshkey, "(node2)", true);
       } catch (Exception e) {
         e.printStackTrace();
       }
@@ -271,7 +272,7 @@ public class TestSlice extends SliceHelper {
       try {
         carrier.runCmdSlice("ifconfig eth1 192.168.10.2/24 up", sshkey, "(node0)", true);
         carrier.runCmdSlice("echo \"ip route 10.32.90.1/24 192.168.10.1\" >>/etc/quagga/zebra" +
-            ".conf", sshkey, "(node0)", true);
+          ".conf", sshkey, "(node0)", true);
       } catch (Exception e) {
         e.printStackTrace();
       }
@@ -483,7 +484,7 @@ public class TestSlice extends SliceHelper {
     String vlan = "3290";
     String stitchport = "http://geni-orca.renci.org/owl/ion.rdf#AL2S/Chameleon/Cisco/6509/GigabitEthernet/1/1";
     String stitchname = "sp-" + c3.getName() + "-" + ip.replace("/", "__").replace(".", "_")
-        + '-' + gateway.split("\\.")[3];
+      + '-' + gateway.split("\\.")[3];
 
     System.out.println("Stitching to Chameleon {" + "stitchname: " + stitchname + " vlan:" + vlan + " stithport: " + stitchport + "}");
     StitchPort mysp = s.addStitchPort(stitchname, vlan, stitchport, bw);

@@ -1,7 +1,7 @@
 package exoplex.client.exogeni;
 
-import exoplex.common.slice.SliceManager;
 import exoplex.common.slice.SiteBase;
+import exoplex.common.slice.SliceManager;
 import exoplex.common.utils.Exec;
 import exoplex.common.utils.ServerOptions;
 import exoplex.sdx.core.SliceHelper;
@@ -44,7 +44,7 @@ public class ExogeniClientSlice extends SliceHelper {
     }
   }
 
-  public static void main(String[] args)throws  Exception {
+  public static void main(String[] args) throws Exception {
     ExogeniClientSlice cs = new ExogeniClientSlice(args);
     cs.run();
   }
@@ -69,7 +69,7 @@ public class ExogeniClientSlice extends SliceHelper {
         c1.commitAndWait();
       }
       c1.refresh();
-      if(safeEnabled&&safeInSlice){
+      if (safeEnabled && safeInSlice) {
         String safeIp = c1.getComputeNode("safe-server").getManagementIP();
         checkSafeServer(safeIp, riakIp);
       }
@@ -84,18 +84,19 @@ public class ExogeniClientSlice extends SliceHelper {
     } else if (type.equals("delete")) {
       SliceManager s2 = null;
       logger.info("deleting slice " + sliceName);
-      s2 = SliceManager.loadManifestFile(sliceName, pemLocation, keyLocation, controllerUrl);
+      s2 = new SliceManager(sliceName, pemLocation, keyLocation, controllerUrl);
+      s2.reloadSlice();
       s2.delete();
     }
   }
 
-  public void configQuaggaRouting(SliceManager c1){
+  public void configQuaggaRouting(SliceManager c1) {
     c1.runCmdSlice("apt-get update; apt-get install -y quagga traceroute iperf", sshkey,
       "CNode\\d+",
       true);
-    for(ComputeNode node : c1.getComputeNodes()){
+    for (ComputeNode node : c1.getComputeNodes()) {
       String res[] = Exec.sshExec("root", node.getManagementIP(), "ls /etc/init.d", sshkey);
-      while(!res[0].contains("quagga")){
+      while (!res[0].contains("quagga")) {
         res = Exec.sshExec("root", node.getManagementIP(), "apt-get install -y quagga", sshkey);
       }
     }
@@ -106,7 +107,7 @@ public class ExogeniClientSlice extends SliceHelper {
     Exec.sshExec("root", mip, "echo \"ip route 192.168.1.1/16 " + Prefix + "\" >>/etc/quagga/zebra.conf  ", sshkey);
     Exec.sshExec("root", mip, "sed -i -- 's/zebra=no/zebra=yes/g' /etc/quagga/daemons\n", sshkey);
     String res[] = Exec.sshExec("root", mip, "ls /etc/quagga", sshkey);
-    while(!res[0].contains("zebra.conf")|| !res[0].contains("zebra.conf")){
+    while (!res[0].contains("zebra.conf") || !res[0].contains("zebra.conf")) {
       c1.runCmdSlice("apt-get update; apt-get install -y quagga iperf", sshkey, "CNode\\d+",
         true);
       res = Exec.sshExec("root", mip, "ls /etc/quagga", sshkey);
@@ -130,7 +131,7 @@ public class ExogeniClientSlice extends SliceHelper {
 
       c1.commitAndWait();
       c1.refresh();
-      if(safeEnabled && safeInSlice){
+      if (safeEnabled && safeInSlice) {
         String safeIp = c1.getComputeNode("safe-server").getManagementIP();
         checkSafeServer(safeIp, riakIp);
       }
@@ -146,13 +147,14 @@ public class ExogeniClientSlice extends SliceHelper {
     } else if (type.equals("delete")) {
       SliceManager s2 = null;
       logger.info("deleting slice " + sliceName);
-      s2 = SliceManager.loadManifestFile(sliceName, pemLocation, keyLocation, controllerUrl);
+      s2 = new SliceManager(sliceName, pemLocation, keyLocation, controllerUrl);
+      s2.reloadSlice();
       s2.delete();
     }
   }
 
   public SliceManager createCustomerSlice(String sliceName, int num, String prefix, int start, long bw, boolean network)
-      throws TransportException {//=1, String subnet="")
+    throws TransportException {//=1, String subnet="")
     //Main Example Code
 
     SliceManager s = SliceManager.create(sliceName, pemLocation, keyLocation, controllerUrl, sctx);
@@ -162,20 +164,20 @@ public class ExogeniClientSlice extends SliceHelper {
       ComputeNode node0 = s.addComputeNode(routerSite, "CNode" + String.valueOf(i + 1));
       nodelist.add(node0);
     }
-    if(network){
-      for(int i=0; i < nodelist.size() - 1; i++){
+    if (network) {
+      for (int i = 0; i < nodelist.size() - 1; i++) {
         s.addLink("clink" + (i + 1),
-          IPPrefix + (start +i) + ".1",
-          IPPrefix + (start +i) + ".2",
+          IPPrefix + (start + i) + ".1",
+          IPPrefix + (start + i) + ".2",
           "255.255.255.0",
           nodelist.get(i).getName(),
           nodelist.get(i + 1).getName(),
           bw
-          );
+        );
       }
     }
     if (safeEnabled) {
-      if(safeInSlice) {
+      if (safeInSlice) {
         s.addSafeServer(serverSite, riakIp, SafeManager.safeDockerImage, SafeManager.safeServerScript);
       }
     }

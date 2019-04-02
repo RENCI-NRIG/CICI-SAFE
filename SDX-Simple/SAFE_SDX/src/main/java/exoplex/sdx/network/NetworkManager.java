@@ -17,9 +17,11 @@ public class NetworkManager {
   private HashMap<String, Link> linkMap = new HashMap<>();
   private HashMap<String, Interface> interfaceMap = new HashMap<>();
   private HashMap<String, Interface> ipInterfaceMap = new HashMap<>();
+
   public NetworkManager() {
     logger.debug("initialize network manager");
   }
+
   public Router getRouter(String routerName) {
     logger.info(String.format("getDPID %s", routerName));
     Router logRouter = nameRouterMap.get(routerName);
@@ -29,26 +31,26 @@ public class NetworkManager {
       return null;
   }
 
-  public Collection<String> getAllRouters(){
+  public Collection<String> getAllRouters() {
     return nameRouterMap.keySet();
   }
 
-  public Collection<String> getAllDpids(){
+  public Collection<String> getAllDpids() {
     return dpidRouterMap.keySet();
   }
 
   public Router getRouterByDPID(String dpid) {
     Router router = dpidRouterMap.get(dpid);
-    if(router != null){
+    if (router != null) {
       return router;
     }
     return null;
   }
 
-  public String getRouterByGateway(String gw){
-    for(Router router: nameRouterMap.values()){
-      if(router.hasGateway(gw)){
-        return  router.getRouterName();
+  public String getRouterByGateway(String gw) {
+    for (Router router : nameRouterMap.values()) {
+      if (router.hasGateway(gw)) {
+        return router.getRouterName();
       }
     }
     return null;
@@ -63,29 +65,29 @@ public class NetworkManager {
     linkMap.put(l.getLinkName(), l);
   }
 
-  private void removeLink(String linkName){
-    if(linkMap.containsKey(linkName)){
+  private void removeLink(String linkName) {
+    if (linkMap.containsKey(linkName)) {
       linkMap.remove(linkName);
     }
   }
 
-  private void putInterface(Interface intf){
+  private void putInterface(Interface intf) {
     interfaceMap.put(intf.getName(), intf);
-    if(intf.getIp()!= null){
+    if (intf.getIp() != null) {
       ipInterfaceMap.put(intf.getIp(), intf);
     }
   }
 
-  private void removeInterface(String linkName, String routerName){
+  private void removeInterface(String linkName, String routerName) {
     String intfName = NetworkUtil.computeInterfaceName(routerName, linkName);
-    if(interfaceMap.containsKey(intfName)){
+    if (interfaceMap.containsKey(intfName)) {
       interfaceMap.remove(intfName);
     }
   }
 
-  public void updateInterface(String name, String port, String mac){
+  public void updateInterface(String name, String port, String mac) {
     Interface intf = interfaceMap.get(name);
-    if(intf!= null) {
+    if (intf != null) {
       intf.setMacAddr(mac);
       intf.setPort(port);
       interfaceMap.put(name, intf);
@@ -94,7 +96,7 @@ public class NetworkManager {
 
   public String getPairIP(String ip) {
     Interface intf = ipInterfaceMap.get(ip);
-    if(intf != null){
+    if (intf != null) {
       Interface pairIntf = interfaceMap.get(linkMap.get(intf.getLinkName()).getPairInterfaceName(intf.getName()));
       return pairIntf.getIp();
     }
@@ -103,7 +105,7 @@ public class NetworkManager {
 
   public String getPairRouter(String ip) {
     Interface intf = ipInterfaceMap.get(ip);
-    if(intf != null){
+    if (intf != null) {
       return linkMap.get(intf.getLinkName()).getPairNodeame(intf.getNodeName());
     }
     return null;
@@ -124,7 +126,7 @@ public class NetworkManager {
     }
   }
 
-  public void delLink(String linkName, String routerName, String gw){
+  public void delLink(String linkName, String routerName, String gw) {
     removeLink(linkName);
     removeInterface(linkName, routerName);
     Router logRouter = getRouter(routerName);
@@ -159,49 +161,49 @@ public class NetworkManager {
     }
   }
 
-  public List<String> getNeighborNodes(String routerName){
+  public List<String> getNeighborNodes(String routerName) {
     ArrayList<String> neighbors = new ArrayList<>();
-    for(Interface intf: getNeighborInterfaces(routerName)){
+    for (Interface intf : getNeighborInterfaces(routerName)) {
       neighbors.add(intf.getNodeName());
     }
     return neighbors;
   }
 
-  public List<Interface> getNeighborInterfaces(String routerName){
+  public List<Interface> getNeighborInterfaces(String routerName) {
     ArrayList<Interface> nintf = new ArrayList<>();
-    for(String intfName: nameRouterMap.get(routerName).getInterfaces()){
+    for (String intfName : nameRouterMap.get(routerName).getInterfaces()) {
       Link link = linkMap.get(interfaceMap.get(intfName).getLinkName());
-      if(intfName.equals(link.getInterfaceB()) && link.getInterfaceA()!= null) {
+      if (intfName.equals(link.getInterfaceB()) && link.getInterfaceA() != null) {
         nintf.add(interfaceMap.get(link.getInterfaceA()));
-      }else if(intfName.equals(link.getInterfaceA()) && link.getInterfaceB()!= null) {
+      } else if (intfName.equals(link.getInterfaceA()) && link.getInterfaceB() != null) {
         nintf.add(interfaceMap.get(link.getInterfaceB()));
       }
     }
     return nintf;
   }
 
-  public String getPairInterface(String iface){
+  public String getPairInterface(String iface) {
     Link link = linkMap.get(interfaceMap.get(iface).getLinkName());
-    return iface.equals(link.getInterfaceA())?link.getInterfaceB():link.getInterfaceA();
+    return iface.equals(link.getInterfaceA()) ? link.getInterfaceB() : link.getInterfaceA();
   }
 
-  public Link getLink(String linkName){
+  public Link getLink(String linkName) {
     return linkMap.get(linkName);
   }
 
-  public Interface getInterface(String interfaceName){
+  public Interface getInterface(String interfaceName) {
     return interfaceMap.get(interfaceName);
   }
 
-  public Collection<Router> getRouters(){
+  public Collection<Router> getRouters() {
     return nameRouterMap.values();
   }
 
-  public Collection<Link> getLinks(){
+  public Collection<Link> getLinks() {
     return linkMap.values();
   }
 
-  public Collection<Interface> getInterfaces(){
+  public Collection<Interface> getInterfaces() {
     return interfaceMap.values();
   }
 }

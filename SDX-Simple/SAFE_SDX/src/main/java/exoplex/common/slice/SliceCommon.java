@@ -2,10 +2,15 @@ package exoplex.common.slice;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import exoplex.sdx.network.Link;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.renci.ahab.libndl.resources.request.*;
-import org.renci.ahab.libtransport.*;
+import org.renci.ahab.libndl.resources.request.StitchPort;
+import org.renci.ahab.libtransport.ISliceTransportAPIv1;
+import org.renci.ahab.libtransport.SSHAccessToken;
+import org.renci.ahab.libtransport.SliceAccessContext;
+import org.renci.ahab.libtransport.util.SSHAccessTokenFileFactory;
+import org.renci.ahab.libtransport.util.UtilTransportException;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -14,21 +19,18 @@ import java.util.List;
 import java.util.Set;
 import java.util.regex.Pattern;
 
-import exoplex.sdx.network.Link;
-import org.renci.ahab.libtransport.util.SSHAccessTokenFileFactory;
-import org.renci.ahab.libtransport.util.UtilTransportException;
-
 
 public abstract class SliceCommon {
   protected final String RequestResource = null;
   final Logger logger = LogManager.getLogger(SliceCommon.class);
+  public String serverurl;
+  public boolean safeEnabled = false;
   protected String controllerUrl;
   protected String SDNControllerIP;
   protected String sliceName;
   protected String pemLocation;
   protected String keyLocation;
   protected String sshkey;
-  public String serverurl;
   protected ISliceTransportAPIv1 sliceProxy;
   protected SliceAccessContext<SSHAccessToken> sctx;
   protected String type;
@@ -42,7 +44,6 @@ public abstract class SliceCommon {
   protected String safeServerIp;
   protected String safeKeyFile;
   protected String safeKeyHash = null;
-  public boolean safeEnabled = false;
   protected boolean plexusInSlice = false;
   protected boolean safeInSlice = false;
   protected String riakIp = null;
@@ -69,7 +70,7 @@ public abstract class SliceCommon {
     if (conf.hasPath("config.exogenism")) {
       controllerUrl = conf.getString("config.exogenism");
     }
-    if(conf.hasPath("config.serverurl")) {
+    if (conf.hasPath("config.serverurl")) {
       serverurl = conf.getString("config.serverurl");
     }
     if (conf.hasPath("config.exogenipem")) {
@@ -89,7 +90,7 @@ public abstract class SliceCommon {
     if (conf.hasPath("config.serversite")) {
       serverSite = SiteBase.get(conf.getString("config.serversite"));
     }
-    if(conf.hasPath("config.riak")){
+    if (conf.hasPath("config.riak")) {
       riakIp = conf.getString("config.riak");
     }
     if (conf.hasPath("config.controllersite")) {
@@ -102,28 +103,28 @@ public abstract class SliceCommon {
         clientSites.add(SiteBase.get(site));
       }
     }
-    if(conf.hasPath("config.safe")){
+    if (conf.hasPath("config.safe")) {
       safeEnabled = conf.getBoolean("config.safe");
     }
-    if(conf.hasPath("config.safeserver")){
+    if (conf.hasPath("config.safeserver")) {
       safeServerIp = conf.getString("config.safeserver");
       setSafeServerIp(safeServerIp);
     }
-    if(conf.hasPath("config.plexusinslice")){
+    if (conf.hasPath("config.plexusinslice")) {
       plexusInSlice = conf.getBoolean("config.plexusinslice");
     }
-    if(conf.hasPath("config.safeinslice")){
+    if (conf.hasPath("config.safeinslice")) {
       safeInSlice = conf.getBoolean("config.safeinslice");
     }
-    if(conf.hasPath("config.safekey")){
+    if (conf.hasPath("config.safekey")) {
       safeKeyFile = conf.getString("config.safekey");
     }
-    if(conf.hasPath("config.sitelist")){
+    if (conf.hasPath("config.sitelist")) {
       sitelist = conf.getStringList("config.sitelist");
     }
   }
 
-  private void getSshContext(){
+  private void getSshContext() {
     //SSH context
     sctx = new SliceAccessContext<>();
     try {
@@ -137,7 +138,8 @@ public abstract class SliceCommon {
       e.printStackTrace();
     }
   }
-  public void initializeExoGENIContexts(String configFilePath){
+
+  public void initializeExoGENIContexts(String configFilePath) {
 
     readConfig(configFilePath);
 
@@ -147,11 +149,11 @@ public abstract class SliceCommon {
     sliceProxy = SliceManager.getSliceProxy(pemLocation, keyLocation, controllerUrl);
   }
 
-  protected  void setSdnControllerIp(String sdnControllerIp){
+  protected void setSdnControllerIp(String sdnControllerIp) {
     SDNControllerIP = sdnControllerIp;
   }
 
-  protected void setSafeServerIp(String safeServerIp){
+  protected void setSafeServerIp(String safeServerIp) {
     this.safeServerIp = safeServerIp;
     safeServer = safeServerIp + ":7777";
   }
@@ -195,7 +197,7 @@ public abstract class SliceCommon {
           Link logLink = links.get(key);
 
           br.write(logLink.getLinkName() + " " + logLink.getNodeA() + " " + logLink.getNodeB() + " " + String.valueOf
-              (logLink.getCapacity()) + "\n");
+            (logLink.getCapacity()) + "\n");
         }
       }
       br.close();

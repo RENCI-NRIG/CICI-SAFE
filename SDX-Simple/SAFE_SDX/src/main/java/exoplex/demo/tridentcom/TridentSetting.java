@@ -7,9 +7,11 @@ import java.util.HashMap;
 
 public class TridentSetting extends SliceHelper {
   public static final ArrayList<String> sites = new ArrayList<>();
-
+  public static final ArrayList<String> clientSlices = new ArrayList<>();
+  public static final HashMap<String, String> clientKeyMap = new HashMap<>();
+  public static final HashMap<String, String> clientSiteMap = new HashMap<>();
+  public static final HashMap<String, String> clientIpMap = new HashMap<>();
   final static String sdxName = "sdx-tri";
-
   static String userDir = System.getProperty("user.dir");
   static String safeDockerImage = "safeserver-v4";
   static String sdxSimpleDir = userDir.split("SDX-Simple")[0] + "SDX-Simple/";
@@ -31,19 +33,11 @@ public class TridentSetting extends SliceHelper {
     //sites.add("WSU");
   }
 
-  public static final ArrayList<String> clientSlices = new ArrayList<>();
-
-  public static final HashMap<String, String> clientKeyMap = new HashMap<>();
-
-  public static final HashMap<String, String> clientSiteMap = new HashMap<>();
-
-  public static final HashMap<String, String> clientIpMap = new HashMap<>();
-
   static {
     int keyBase = 5;
     int ipBase = 10;
-    for (int i=0; i<sites.size(); i++){
-      String clientName = "c" + i + "-test";
+    for (int i = 0; i < sites.size(); i++) {
+      String clientName = "c" + i + "-tri";
       clientSlices.add(clientName);
       clientKeyMap.put(clientName, "key_p" + (keyBase + i));
       clientSiteMap.put(clientName, sites.get(i));

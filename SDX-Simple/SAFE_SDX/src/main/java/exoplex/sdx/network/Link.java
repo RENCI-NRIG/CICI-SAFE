@@ -15,7 +15,7 @@ public class Link {
   }
 
   //Stitch
-  public Link(String linkName, String node){
+  public Link(String linkName, String node) {
     this.linkName = linkName;
     this.nodeA = node;
     interfaceA = NetworkUtil.computeInterfaceName(node, linkName);
@@ -23,11 +23,11 @@ public class Link {
 
   public Link(String linkname, String nodea, String nodeb) {
     this.linkName = linkname;
-    if(nodea != null) {
+    if (nodea != null) {
       this.interfaceA = NetworkUtil.computeInterfaceName(nodea, linkname);
       this.nodeA = nodea;
     }
-    if(nodeb != null){
+    if (nodeb != null) {
       this.interfaceB = NetworkUtil.computeInterfaceName(nodeb, linkname);
       this.nodeB = nodeb;
     }
@@ -35,11 +35,11 @@ public class Link {
 
   public Link(String linkname, String nodea, String nodeb, long cap) {
     this.linkName = linkname;
-    if(nodea != null) {
+    if (nodea != null) {
       this.interfaceA = NetworkUtil.computeInterfaceName(nodea, linkname);
       this.nodeA = nodea;
     }
-    if(nodeb != null){
+    if (nodeb != null) {
       this.interfaceB = NetworkUtil.computeInterfaceName(nodeb, linkname);
       this.nodeB = nodeb;
     }
@@ -47,45 +47,45 @@ public class Link {
     this.usedBw = 0;
   }
 
-  public String getLinkName(){
+  public String getLinkName() {
     return linkName;
   }
 
-  public String getIpPrefix(){
+  public String getIpPrefix() {
     return ipPrefix;
   }
 
-  public String getInterfaceA(){
+  public String getInterfaceA() {
     return interfaceA;
   }
 
-  public String getInterfaceB(){
+  public String getInterfaceB() {
     return interfaceB;
   }
 
-  public String getPairInterfaceName(String ifName){
-    if(ifName.equals(interfaceA)){
+  public String getPairInterfaceName(String ifName) {
+    if (ifName.equals(interfaceA)) {
       return interfaceB;
-    }else if(ifName.equals(interfaceB)){
+    } else if (ifName.equals(interfaceB)) {
       return interfaceA;
     }
     return null;
   }
 
-  public String getPairNodeame(String nodeName){
-    if(nodeName.equals(nodeA)){
+  public String getPairNodeame(String nodeName) {
+    if (nodeName.equals(nodeA)) {
       return nodeB;
-    }else if(nodeName.equals(interfaceB)){
+    } else if (nodeName.equals(interfaceB)) {
       return nodeA;
     }
     return null;
   }
 
-  public String getNodeA(){
-    return  nodeA;
+  public String getNodeA() {
+    return nodeA;
   }
 
-  public String getNodeB(){
+  public String getNodeB() {
     return nodeB;
   }
 
@@ -109,10 +109,6 @@ public class Link {
 
   public void setMask(String m) {
     mask = m;
-  }
-
-  public void setCapacity(long cap) {
-    this.capacity = cap;
   }
 
   public String getIP(int i) {
@@ -140,14 +136,18 @@ public class Link {
   }
 
   public String toString() {
-    return nodeA + ":"  + nodeB + " " + getAvailableBW();
+    return nodeA + ":" + nodeB + " " + getAvailableBW();
   }
 
-  public boolean hasNode(String nodeName){
+  public boolean hasNode(String nodeName) {
     return nodeName.equals(nodeA) || nodeName.equals(nodeB);
   }
 
-  public long getCapacity(){
+  public long getCapacity() {
     return capacity;
+  }
+
+  public void setCapacity(long cap) {
+    this.capacity = cap;
   }
 }

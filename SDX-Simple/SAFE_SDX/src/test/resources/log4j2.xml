@@ -2,7 +2,8 @@
 <Configuration status="warn">
     <Appenders>
         <Console name="Console" target="SYSTEM_OUT">
-            <PatternLayout pattern="%highlight{%d{HH:mm:ss} [%t] %-5level %logger{36} - %msg%n}{FATAL=red, ERROR=red, WARN=yellow, INFO=black, DEBUG=green, TRACE=blue}"/>
+            <PatternLayout
+                    pattern="%highlight{%d{HH:mm:ss} [%t] %-5level %logger{36} - %msg%n}{FATAL=red, ERROR=red, WARN=yellow, INFO=black, DEBUG=green, TRACE=blue}"/>
         </Console>
         <RollingFile name="RollingFile" fileName="log/demo.log"
                      filePattern="log/$${date:yyyy-MM}/app-%d{MM-dd-yyyy}-%i.log.gz" append="false">
@@ -75,7 +76,8 @@
             </Policies>
         </RollingFile>
         <RollingFile name="SliceRollingFile" fileName="log/test-slice.log"
-                     filePattern="log/$${date:yyyy-MM}/slice-%d{MM-dd-yyyy}-%i.log.gz" append="false">
+                     filePattern="log/$${date:yyyy-MM}/slice-%d{MM-dd-yyyy}-%i.log.gz"
+                     append="false">
             <PatternLayout>
                 <Pattern>%m%n</Pattern>
             </PatternLayout>
@@ -160,4 +162,5 @@
         <Logger name="org.apache.commons.httpclient.HttpClient" level="debug" additivity="false">
             <AppenderRef ref="RollingFile"/>
         </Logger>
-    </Loggers></Configuration>
+    </Loggers>
+</Configuration>

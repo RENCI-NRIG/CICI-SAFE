@@ -13,7 +13,7 @@ import javax.ws.rs.core.UriInfo;
 
 /**
  * Root resource (exposed at "myresource" path)
- *
+ * <p>
  * Call with curl:
  * curl -X POST -H "Content-Type: application/json" -d '{"operation":"stitch", "params":["1","2",
  * "3"]}' http://localhost:8880/sdx/admin
@@ -112,7 +112,7 @@ public class RestService {
     logger.debug(String.format("%s got sittch request %s", sdxManager.getSliceName(), sr));
     try {
       JSONObject res = sdxManager.stitchRequest(sr.sdxsite, sr.ckeyhash, sr.cslice,
-          sr.creservid, sr.secret, sr.sdxnode, sr.gateway, sr.ip);
+        sr.creservid, sr.secret, sr.sdxnode, sr.gateway, sr.ip);
       return new StitchResult(res);
     } catch (Exception e) {
       e.printStackTrace();
@@ -130,7 +130,7 @@ public class RestService {
       .toString()));
     try {
       String res = sdxManager.undoStitch(sr.ckeyhash, sr.cslice,
-          sr.creservid);
+        sr.creservid);
       return res;
     } catch (Exception e) {
       e.printStackTrace();
@@ -148,7 +148,7 @@ public class RestService {
       , sr.self_prefix, sr.target_prefix));
     try {
       String res = sdxManager.connectionRequest(sr.ckeyhash, sr.self_prefix,
-          sr.target_prefix, sr.bandwidth);
+        sr.target_prefix, sr.bandwidth);
       return res;
     } catch (Exception e) {
       e.printStackTrace();
@@ -164,7 +164,7 @@ public class RestService {
     logger.debug("got chameleon stitch request: \n" + sr.toString());
     SdxManager sdxManager = SdxServer.sdxManagerMap.get(uriInfo.getBaseUri().getPort());
     String res = sdxManager.stitchChameleon(sr.sdxsite, sr.sdxnode,
-        sr.ckeyhash, sr.stitchport, sr.vlan, sr.gateway, sr.ip);
+      sr.ckeyhash, sr.stitchport, sr.vlan, sr.gateway, sr.ip);
     return res;
   }
 
@@ -183,7 +183,7 @@ public class RestService {
   @Path("/broload")
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.TEXT_PLAIN)
-  public String broload(@Context UriInfo uriInfo, BroLoad bl)  {
+  public String broload(@Context UriInfo uriInfo, BroLoad bl) {
     logger.debug("got broload");
     SdxManager sdxManager = SdxServer.sdxManagerMap.get(uriInfo.getBaseUri().getPort());
     double load = Double.parseDouble(bl.usage);
@@ -203,13 +203,13 @@ public class RestService {
 Admin command, in routing scenerio, the sdx can work as a client to peer with other sdx networks.
 SDX server provides this interface for administrator to issue commands for peering.
  */
-class AdminCmd{
+class AdminCmd {
   public String operation;
   public String[] params;
 
-  public String toString(){
-    String parameters= String.join(",", params);
-    return String.format("{\"operation\":\"%s\", \"params:\":[%s]}",operation, parameters);
+  public String toString() {
+    String parameters = String.join(",", params);
+    return String.format("{\"operation\":\"%s\", \"params:\":[%s]}", operation, parameters);
   }
 }
 
@@ -240,7 +240,7 @@ class StitchRequest {
   public String secret;
 
   @Override
-  public String toString(){
+  public String toString() {
     return String.format("%s %s %s %s %s %s", sdxsite, cslice, creservid, sdxnode, gateway, ip);
   }
 }
@@ -249,8 +249,9 @@ class UndoStitchRequest {
   public String ckeyhash;
   public String cslice;
   public String creservid;
+
   @Override
-  public String toString(){
+  public String toString() {
     return String.format("%s%s %s", ckeyhash, cslice, creservid);
   }
 }
@@ -259,18 +260,18 @@ class PeerRequest {
   public String peerUrl;
   public String peerPID;
 
-  public PeerRequest(){
+  public PeerRequest() {
     peerPID = "";
     peerUrl = "";
   }
 
-  public PeerRequest(String json){
+  public PeerRequest(String json) {
     JSONObject obj = new JSONObject(json);
     peerUrl = obj.getString("peerUrl");
     peerPID = obj.getString("peerPID");
   }
 
-  public JSONObject toJsonObject(){
+  public JSONObject toJsonObject() {
     JSONObject jsonObject = new JSONObject();
     jsonObject.put("peerUrl", peerUrl);
     jsonObject.put("peerPID", peerPID);
@@ -278,7 +279,7 @@ class PeerRequest {
   }
 
   @Override
-  public String toString(){
+  public String toString() {
     JSONObject obj = new JSONObject();
     obj.put("peerUrl", peerUrl);
     obj.put("peerPID", peerPID);
@@ -324,17 +325,17 @@ class StitchResult {
     this.ip = res.getString("ip");
     if (res.has("result")) {
       this.result = res.getBoolean("result");
-    }else{
+    } else {
       this.result = false;
     }
-    if(res.has("safeKeyHash")){
+    if (res.has("safeKeyHash")) {
       this.safeKeyHash = res.getString("safeKeyHash");
-    }else{
+    } else {
       this.safeKeyHash = "";
     }
-    if(res.has("reservID")){
+    if (res.has("reservID")) {
       this.reservID = res.getString("reservID");
-    }else{
+    } else {
       this.reservID = "";
     }
     if (!gateway.equals("") && !ip.equals(""))
@@ -360,18 +361,18 @@ class NotifyResult {
   public NotifyResult(JSONObject res) {
     if (res.has("result")) {
       this.result = res.getBoolean("result");
-    }else{
+    } else {
       this.result = false;
     }
-    if(res.has("safeKeyHash")){
+    if (res.has("safeKeyHash")) {
       this.safeKeyHash = res.getString("safeKeyHash");
-    }else{
+    } else {
       this.safeKeyHash = "";
     }
     this.message = res.getString("message");
   }
 
-  public JSONObject toJsonObject(){
+  public JSONObject toJsonObject() {
     JSONObject json = new JSONObject();
     json.put("result", this.result);
     json.put("safeKeyHash", this.safeKeyHash);

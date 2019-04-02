@@ -1,10 +1,10 @@
 package exoplex.sdx.bro;
 
 import exoplex.common.slice.SliceManager;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import exoplex.sdx.core.SdxManager;
 import exoplex.sdx.network.RoutingManager;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -13,8 +13,8 @@ import java.util.concurrent.locks.ReentrantLock;
 
 
 public class BroManager {
-  final Logger logger = LogManager.getLogger(BroManager.class);
   static final long singleBroCap = 500000000;
+  final Logger logger = LogManager.getLogger(BroManager.class);
   private final ReentrantLock ticketLock = new ReentrantLock();
   SliceManager slice = null;
   RoutingManager networkManager = null;
@@ -31,10 +31,10 @@ public class BroManager {
   }
 
   public void reset() {
-    for(String key:requiredbw.keySet()){
+    for (String key : requiredbw.keySet()) {
       requiredbw.put(key, 0l);
     }
-    for(ArrayList<BroInstance> broInstances: routerBroMap.values()) {
+    for (ArrayList<BroInstance> broInstances : routerBroMap.values()) {
       for (BroInstance bro : broInstances) {
         bro.removeAllBroFlows();
       }
@@ -47,7 +47,7 @@ public class BroManager {
     routerBroMap.put(edgeRouter, broInstances);
   }
 
-  private void deployNewBro(String routerName) throws Exception{
+  private void deployNewBro(String routerName) throws Exception {
     Thread thread = new Thread() {
       @Override
       public void run() {
@@ -86,7 +86,7 @@ public class BroManager {
         }
         try {
           execJobs();
-        }catch (Exception e){
+        } catch (Exception e) {
           e.printStackTrace();
         }
       }
@@ -94,7 +94,7 @@ public class BroManager {
     thread.start();
   }
 
-  private void execJobs() throws Exception{
+  private void execJobs() throws Exception {
     synchronized (jobQueue) {
       ArrayList<BroFlow> toRemove = new ArrayList<>();
       for (BroFlow f : jobQueue) {
@@ -113,7 +113,7 @@ public class BroManager {
         jobQueue.remove(f);
       }
     }
-    for(String router: requiredbw.keySet()) {
+    for (String router : requiredbw.keySet()) {
       if (broOverloaded(router)) {
         deployNewBro(router);
       }
@@ -191,7 +191,7 @@ public class BroManager {
     }
   }
 
-  public void setMirrorAsync(String routerName, String source, String dst, long bw) throws  Exception{
+  public void setMirrorAsync(String routerName, String source, String dst, long bw) throws Exception {
     logger.info(String.format("Mirror job: %s %s %s %s", routerName, source, dst, bw));
     requiredbw.put(routerName, requiredbw.getOrDefault(routerName, 0l));
     synchronized (jobQueue) {

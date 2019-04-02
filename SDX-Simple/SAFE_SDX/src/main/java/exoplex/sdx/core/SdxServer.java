@@ -54,7 +54,7 @@ public class SdxServer {
     System.out.println("Sdx server has started, listening on " + sdxManager.serverurl);
   }
 
-  public static SdxManager run(String[] args) throws TransportException , Exception{
+  public static SdxManager run(String[] args) throws TransportException, Exception {
     System.out.println("starting exoplex.sdx server");
     SdxManager sdxManager = new SdxManager();
     sdxManager.startSdxServer(args);
@@ -68,7 +68,7 @@ public class SdxServer {
   }
 
   public static SdxManager run(String[] args, String url, String sliceName) throws
-    TransportException , Exception{
+    TransportException, Exception {
     System.out.println("starting exoplex.sdx server");
     SdxManager sdxManager = new SdxManager();
     sdxManager.startSdxServer(args, sliceName);

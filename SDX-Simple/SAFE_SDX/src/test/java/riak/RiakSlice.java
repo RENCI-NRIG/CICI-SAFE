@@ -1,27 +1,26 @@
 package riak;
 
-import exoplex.common.slice.SliceManager;
 import exoplex.common.slice.Scripts;
 import exoplex.common.slice.SliceCommon;
+import exoplex.common.slice.SliceManager;
 import exoplex.common.utils.ServerOptions;
+import org.apache.commons.cli.CommandLine;
 import org.renci.ahab.libtransport.SSHAccessToken;
 import org.renci.ahab.libtransport.SliceAccessContext;
 import org.renci.ahab.libtransport.util.SSHAccessTokenFileFactory;
 import org.renci.ahab.libtransport.util.UtilTransportException;
 
-import org.apache.commons.cli.CommandLine;
-
-public class RiakSlice extends SliceCommon{
-  public static void main(String[] args) throws  Exception{
-    if(args.length<1){
+public class RiakSlice extends SliceCommon {
+  public static void main(String[] args) throws Exception {
+    if (args.length < 1) {
       args = new String[]{"-c", "config/riak.conf"};
     }
     RiakSlice slice = new RiakSlice();
     slice.run(args);
   }
 
-  public String run(String[] args) throws  Exception{
-    if(args.length<1){
+  public String run(String[] args) throws Exception {
+    if (args.length < 1) {
       args = new String[]{"-c", "config/riak.conf"};
     }
     CommandLine cmd = ServerOptions.parseCmd(args);
@@ -38,13 +37,13 @@ public class RiakSlice extends SliceCommon{
       // TODO Auto-generated catch block
       e.printStackTrace();
     }
-    if(cmd.hasOption('d')){
+    if (cmd.hasOption('d')) {
       return deleteRiakSlice();
     }
     return createRiakSlice();
   }
 
-  public String createRiakSlice() throws  Exception{
+  public String createRiakSlice() throws Exception {
     SliceManager s = SliceManager.create(sliceName, pemLocation, keyLocation, controllerUrl, sctx);
     s.addRiakServer(serverSite, "riak");
     s.commitAndWait();
@@ -52,14 +51,14 @@ public class RiakSlice extends SliceCommon{
     s.runCmdNode(Scripts.getRiakScripts(), sshkey, "riak", false);
     s.runCmdNode(String.format("echo 'docker rm -f riakserver\n %s' >> start.sh", Scripts
         .getRiakScripts
-        ()), sshkey, "riak",
+          ()), sshkey, "riak",
       false);
     String riakIP = s.getComputeNode("riak").getManagementIP();
     System.out.println(String.format("Riak IP %s", riakIP));
-    return  riakIP;
+    return riakIP;
   }
 
-  private String deleteRiakSlice()throws Exception{
+  private String deleteRiakSlice() throws Exception {
     deleteSlice(sliceName);
     return "true";
   }

@@ -1,19 +1,13 @@
 package exoplex.common.utils;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileFilter;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.zip.GZIPOutputStream;
-
 import org.apache.commons.io.IOUtils;
 import org.kamranzafar.jtar.TarEntry;
 import org.kamranzafar.jtar.TarOutputStream;
+
+import java.io.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.zip.GZIPOutputStream;
 
 public class TarAndGzip {
 
@@ -24,7 +18,7 @@ public class TarAndGzip {
   public static void folder(File pFolder, List<String> pIgnores)
     throws IOException {
     TarOutputStream out = null;
-    processIgnores(pFolder.getName(),pIgnores);
+    processIgnores(pFolder.getName(), pIgnores);
     try {
       out = new TarOutputStream(new BufferedOutputStream(
         new GZIPOutputStream(new FileOutputStream(new File(

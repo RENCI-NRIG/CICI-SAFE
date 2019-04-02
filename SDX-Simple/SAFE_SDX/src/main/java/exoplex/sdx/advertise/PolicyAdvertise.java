@@ -1,11 +1,11 @@
 package exoplex.sdx.advertise;
 
-public class PolicyAdvertise extends AdvertiseBase{
-  public PolicyAdvertise(){
+public class PolicyAdvertise extends AdvertiseBase {
+  public PolicyAdvertise() {
     super();
   }
 
-  public PolicyAdvertise(PolicyAdvertise advertise, String myPid){
+  public PolicyAdvertise(PolicyAdvertise advertise, String myPid) {
     super(advertise, myPid);
     this.advertiserPID = myPid;
   }

@@ -12,12 +12,9 @@ import java.util.HashSet;
 import java.util.List;
 
 public class SafeAuthority implements SdxRoutingSlang, SafeLang {
-  static Logger logger = LogManager.getLogger(SafeAuthority.class);
-
   static final String bearerRef = "bearerRef";
-
   static final String subject = "subject";
-
+  static Logger logger = LogManager.getLogger(SafeAuthority.class);
   static String exampleSafeServer = "128.194.6.138:7777";
 
   String safeServer = "128.194.6.138:7777";
@@ -60,7 +57,7 @@ public class SafeAuthority implements SdxRoutingSlang, SafeLang {
     this.sdxKeyFile = sdxKey;
     sliceKeyMap.put(this.sdxSlice, this.sdxKeyFile);
     this.clientSlices.addAll(clientSlices);
-    for(String key: clientKeyMap.keySet()){
+    for (String key : clientKeyMap.keySet()) {
       sliceKeyMap.put(key, clientKeyMap.get(key));
     }
     sliceIpMap = clientIpMap;
@@ -245,7 +242,7 @@ public class SafeAuthority implements SdxRoutingSlang, SafeLang {
 
     String piCap = simpleEndorseMent(postPIEndorsement, "key_p1", "key_p4", "PI");
 
-    for(int i=10; i<20; i++) {
+    for (int i = 10; i < 20; i++) {
       simpleEndorseMent(postUserEndorsement, "key_p1", "key_p" + i, "User");
     }
     simpleEndorseMent(postUserEndorsement, "key_p1", "sdx", "User");
@@ -404,12 +401,12 @@ public class SafeAuthority implements SdxRoutingSlang, SafeLang {
         new String[]{principalMap.get(sliceKeyMap.get(slice)), sliceId, projectId,
           sliceControlRef,
           slicePrivRef}));
-       SafeUtils.getTokens(passDelegation(sliceKeyMap.get(slice),
-       sliceToken.get(slice), sliceId));
+      SafeUtils.getTokens(passDelegation(sliceKeyMap.get(slice),
+        sliceToken.get(slice), sliceId));
     }
 
     //UserAcl
-    for (String slice: clientSlices) {
+    for (String slice : clientSlices) {
       safePost(postUserAclEntry, "sdx",
         new String[]{principalMap.get(sliceKeyMap.get(slice))});
     }
@@ -418,14 +415,14 @@ public class SafeAuthority implements SdxRoutingSlang, SafeLang {
     safePost(postStitchPolicy, "sdx");
 
     //authorizeStitchByUid
-    for (String slice: clientSlices) {
+    for (String slice : clientSlices) {
       authorize(authorizeStitchByUID, "sdx",
         new String[]{principalMap.get(sliceKeyMap.get(slice)), sliceScid.get(slice)});
     }
 
     //MakeIp Delegation
     safePost(postMakeIPTokenSet, "rpkiroot", new String[]{"192.1.1.1/24"});
-    for (String slice: clientSlices) {
+    for (String slice : clientSlices) {
       String ip = sliceIpMap.get(slice);
       String user = sliceKeyMap.get(slice);
       String userKey = principalMap.get(sliceKeyMap.get(slice));
@@ -438,7 +435,7 @@ public class SafeAuthority implements SdxRoutingSlang, SafeLang {
     //Tag delegation
     String tag = principalMap.get("tagauthority") + ":tag0";
     safePost(postTagSet, "tagauthority", new String[]{tag});
-    for (String slice:clientSlices) {
+    for (String slice : clientSlices) {
       String user = sliceKeyMap.get(slice);
       String userKey = principalMap.get(sliceKeyMap.get(slice));
       String tagToken = safePost(postGrantTagPriv, "tagauthority", new String[]{userKey, tag});
@@ -447,7 +444,7 @@ public class SafeAuthority implements SdxRoutingSlang, SafeLang {
 
     //userTagAcl
     //user post Connect policy
-    for (String slice: clientSlices) {
+    for (String slice : clientSlices) {
       String user = sliceKeyMap.get(slice);
       safePost(postUserTagAclEntry, user, new String[]{tag});
       safePost(postCustomerConnectionPolicy, user, new String[]{});
@@ -474,12 +471,12 @@ public class SafeAuthority implements SdxRoutingSlang, SafeLang {
 
   }
 
-  private String getPrincipalId(String key){
-    if(principalMap.containsKey(key)){
+  private String getPrincipalId(String key) {
+    if (principalMap.containsKey(key)) {
       return principalMap.get(key);
     }
-    String pid =  SafeUtils.getPrincipalId(safeServer, key);
-    if(pid!= null) {
+    String pid = SafeUtils.getPrincipalId(safeServer, key);
+    if (pid != null) {
       principalMap.put(key, pid);
     }
     return pid;

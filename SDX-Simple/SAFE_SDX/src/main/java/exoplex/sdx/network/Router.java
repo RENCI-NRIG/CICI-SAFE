@@ -21,7 +21,7 @@ public class Router {
     this.managementIP = ip;
   }
 
-  public Collection<String> getInterfaces(){
+  public Collection<String> getInterfaces() {
     return interfaces;
   }
 
@@ -29,8 +29,8 @@ public class Router {
     interfaces.add(interfaceName);
   }
 
-  public void delInterface(String interfaceName){
-    if(interfaces.contains(interfaceName)){
+  public void delInterface(String interfaceName) {
+    if (interfaces.contains(interfaceName)) {
       interfaces.remove(interfaceName);
     }
   }
@@ -40,8 +40,8 @@ public class Router {
     customergateways.add(gw);
   }
 
-  public void delGateway(String gw){
-    if(customergateways.contains(gw)){
+  public void delGateway(String gw) {
+    if (customergateways.contains(gw)) {
       customergateways.remove(gw);
     }
   }
