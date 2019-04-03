@@ -1,4 +1,4 @@
-package exoplex.common.slice;
+package exoplex.sdx.slice;
 
 public class Scripts {
   public static String getOVSScript() {

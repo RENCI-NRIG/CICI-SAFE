@@ -1,7 +1,7 @@
 package exoplex.sdx.bro;
 
 import com.jcraft.jsch.Session;
-import exoplex.common.slice.NodeBase;
+import exoplex.sdx.slice.exogeni.NodeBase;
 import org.renci.ahab.libndl.Slice;
 import org.renci.ahab.libndl.resources.request.ComputeNode;
 import org.renci.ahab.libndl.resources.request.InterfaceNode2Net;

@@ -1,15 +1,18 @@
 package exoplex.demo;
 
-
+import com.google.inject.Guice;
+import com.google.inject.Injector;
 import exoplex.client.exogeni.SdxExogeniClient;
 import exoplex.demo.tridentcom.TridentSetting;
 import exoplex.demo.tridentcom.TridentSlice;
 import exoplex.sdx.core.SdxManager;
 import exoplex.sdx.core.SdxServer;
+import exoplex.sdx.safe.SafeManager;
+import injection.TridentTestModule;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import riak.RiakSlice;
@@ -28,17 +31,26 @@ public class SdxTest {
   static String[] riakDelArgs = new String[]{"-c", sdxSimpleDir + "config/riak.conf", "-d"};
   static SdxManager sdxManager;
   HashMap<String, SdxExogeniClient> exogeniClients = new HashMap<>();
-  static boolean deleteSlice = true;
+  Injector injector = Guice.createInjector(new TridentTestModule());
+  TridentSlice tridentSlice = injector.getInstance(TridentSlice.class);
+  boolean deleteSlice = true;
 
-  public static void main(String[] args) throws Exception {
+  public static void main(String[] args) {
+    Injector injector = Guice.createInjector(new TridentTestModule());
     SdxTest sdxTest = new SdxTest();
-    sdxTest.testSDX();
+    try {
+      sdxTest.TestSDX();
+    } catch (Exception e) {
+    }
   }
 
-  @BeforeClass
-  public static void before() throws Exception {
+  @Before
+  public void before() throws Exception {
+    SafeManager.setSafeDockerImage("safeserver-v7");
+    SafeManager.setSafeServerScript("prdn.sh");
     System.out.println("before test");
     after();
+    deleteSlice = false;
     //create RiakSlice
     RiakSlice riakSlice = new RiakSlice();
     String riakIP = riakSlice.run(riakArgs);
@@ -46,9 +58,9 @@ public class SdxTest {
     TridentSlice.createSlices(riakIP);
   }
 
-  @AfterClass
-  public static void after()throws Exception{
-    if(deleteSlice) {
+  @After
+  public void after() throws Exception {
+    if (deleteSlice) {
       RiakSlice riakSlice = new RiakSlice();
       String riakIP = riakSlice.run(riakDelArgs);
       TridentSlice.deleteTestSlices();
@@ -58,7 +70,8 @@ public class SdxTest {
 
   @Test
   public void TestSDX() throws Exception {
-    sdxManager = SdxServer.run(TridentSetting.sdxArgs);
+    SdxServer sdxServer = injector.getProvider(SdxServer.class).get();
+    sdxManager = sdxServer.run(TridentSetting.sdxArgs);
     for (String clientSlice : TridentSetting.clientSlices) {
       exogeniClients.put(clientSlice, new SdxExogeniClient(clientSlice,
         TridentSetting.clientIpMap.get(clientSlice),
@@ -129,6 +142,9 @@ public class SdxTest {
         exogeniClients.get(client).processCmd(String.format("link %s %s",
           TridentSetting.clientIpMap.get(client),
           TridentSetting.clientIpMap.get(peer)));
+        exogeniClients.get(peer).processCmd(String.format("link %s %s",
+          TridentSetting.clientIpMap.get(peer),
+          TridentSetting.clientIpMap.get(client)));
 
         if (!exogeniClients.get(client).checkConnectivity("CNode1",
           peerIp.replace(".1/24", ".2"))) {

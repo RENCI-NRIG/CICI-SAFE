@@ -1,11 +1,15 @@
 package exoplex.safe.multisdx;
 
+import com.google.inject.Guice;
+import com.google.inject.Inject;
+import com.google.inject.Injector;
 import exoplex.common.utils.SafeUtils;
-import exoplex.demo.multisdx.MultiSdxSetting;
+import exoplex.demo.AbstractTestSetting;
 import exoplex.sdx.advertise.AdvertiseManager;
 import exoplex.sdx.advertise.PolicyAdvertise;
 import exoplex.sdx.advertise.RouteAdvertise;
 import exoplex.sdx.safe.SafeManager;
+import injection.MultiSdxModule;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -26,13 +30,15 @@ public class SafeAuthorizationTest extends AuthorityMockMultiSdx {
   HashMap<String, SafeManager> safeManagerHashMap = new HashMap<>();
   //static String safeServer = "139.62.242.15:7777";
 
-  public SafeAuthorizationTest() {
-    super(safeServer);
+  @Inject
+  public SafeAuthorizationTest(AbstractTestSetting testSetting) {
+    super(testSetting);
   }
 
   @BeforeClass
   public static void before() {
-    safeAuthorizationTest = new SafeAuthorizationTest();
+    Injector injector = Guice.createInjector(new MultiSdxModule());
+    safeAuthorizationTest = injector.getInstance(SafeAuthorizationTest.class);
     safeAuthorizationTest.makeSafePreparation();
   }
 
@@ -50,9 +56,9 @@ public class SafeAuthorizationTest extends AuthorityMockMultiSdx {
     String[] safeparams = new String[4];
 
     RouteAdvertise routeAdvertise = new RouteAdvertise();
-    String c0_keyhash = getPrincipalId(sliceKeyMap.get(MultiSdxSetting.clientSlices
+    String c0_keyhash = getPrincipalId(sliceKeyMap.get(testSetting.clientSlices
       .get(0)));
-    String sdx1_keyhash = getPrincipalId(sliceKeyMap.get(MultiSdxSetting.sdxSliceNames.get(0)));
+    String sdx1_keyhash = getPrincipalId(sliceKeyMap.get(testSetting.sdxSliceNames.get(0)));
     routeAdvertise.ownerPID = c0_keyhash;
     routeAdvertise.destPrefix = "192.168.10.1/24";
     routeAdvertise.advertiserPID = c0_keyhash;
@@ -67,39 +73,39 @@ public class SafeAuthorizationTest extends AuthorityMockMultiSdx {
 
     routeAdvertise.safeToken = token;
 
-    SafeManager safeManagerSdx1 = safeManagerHashMap.get(MultiSdxSetting.sdxSliceNames.get(0));
+    SafeManager safeManagerSdx1 = safeManagerHashMap.get(testSetting.sdxSliceNames.get(0));
     assert safeManagerSdx1.authorizeBgpAdvertise(routeAdvertise);
     safeManagerSdx1.postPathToken(routeAdvertise);
 
-    RouteAdvertise advertise1 = bgpManagerHashMap.get(MultiSdxSetting.sdxSliceNames.get(0))
+    RouteAdvertise advertise1 = bgpManagerHashMap.get(testSetting.sdxSliceNames.get(0))
       .receiveAdvertise(routeAdvertise);
 
     advertise1 = safeManagerSdx1.forwardAdvertise(advertise1, getPrincipalId(sliceKeyMap.get
-      (MultiSdxSetting.sdxSliceNames.get(1))), routeAdvertise.advertiserPID);
+      (testSetting.sdxSliceNames.get(1))), routeAdvertise.advertiserPID);
 
 
-    SafeManager safeManagerSdx2 = safeManagerHashMap.get(MultiSdxSetting.sdxSliceNames.get(1));
+    SafeManager safeManagerSdx2 = safeManagerHashMap.get(testSetting.sdxSliceNames.get(1));
     assert safeManagerSdx2.authorizeBgpAdvertise(advertise1);
 
     safeManagerSdx2.postPathToken(advertise1);
 
-    AdvertiseManager advertiseManagerSdx2 = bgpManagerHashMap.get(MultiSdxSetting.sdxSliceNames.get(1));
+    AdvertiseManager advertiseManagerSdx2 = bgpManagerHashMap.get(testSetting.sdxSliceNames.get(1));
 
     RouteAdvertise advertise2 = advertiseManagerSdx2.receiveAdvertise(advertise1);
 
     advertise2 = safeManagerSdx2.forwardAdvertise(advertise2, getPrincipalId(sliceKeyMap.get
-      (MultiSdxSetting.sdxSliceNames.get(3))), advertise1.advertiserPID);
+      (testSetting.sdxSliceNames.get(3))), advertise1.advertiserPID);
 
-    SafeManager safeManagerSdx4 = safeManagerHashMap.get(MultiSdxSetting.sdxSliceNames.get(3));
+    SafeManager safeManagerSdx4 = safeManagerHashMap.get(testSetting.sdxSliceNames.get(3));
     assert safeManagerSdx4.authorizeBgpAdvertise(advertise2);
   }
 
   void testSDRouteAdvertisements() {
     //c0 to sdx-1
     RouteAdvertise routeAdvertise = new RouteAdvertise();
-    String c0_keyhash = getPrincipalId(sliceKeyMap.get(MultiSdxSetting.clientSlices
+    String c0_keyhash = getPrincipalId(sliceKeyMap.get(testSetting.clientSlices
       .get(0)));
-    String sdx1_keyhash = getPrincipalId(sliceKeyMap.get(MultiSdxSetting.sdxSliceNames.get(0)));
+    String sdx1_keyhash = getPrincipalId(sliceKeyMap.get(testSetting.sdxSliceNames.get(0)));
     routeAdvertise.ownerPID = c0_keyhash;
     routeAdvertise.destPrefix = "192.168.10.1/24";
     routeAdvertise.srcPrefix = "192.168.30.1/24";
@@ -117,37 +123,37 @@ public class SafeAuthorizationTest extends AuthorityMockMultiSdx {
 
     routeAdvertise.safeToken = token;
 
-    SafeManager safeManagerSdx1 = safeManagerHashMap.get(MultiSdxSetting.sdxSliceNames.get(0));
+    SafeManager safeManagerSdx1 = safeManagerHashMap.get(testSetting.sdxSliceNames.get(0));
     assert safeManagerSdx1.authorizeBgpAdvertise(routeAdvertise);
     safeManagerSdx1.postPathToken(routeAdvertise);
 
-    ArrayList<RouteAdvertise> advertises = bgpManagerHashMap.get(MultiSdxSetting.sdxSliceNames.get
+    ArrayList<RouteAdvertise> advertises = bgpManagerHashMap.get(testSetting.sdxSliceNames.get
       (0))
       .receiveStAdvertise(routeAdvertise);
 
     RouteAdvertise advertise1 = advertises.get(0);
 
     advertise1 = safeManagerSdx1.forwardAdvertise(advertise1, getPrincipalId(sliceKeyMap.get
-      (MultiSdxSetting.sdxSliceNames.get(1))), routeAdvertise.advertiserPID);
+      (testSetting.sdxSliceNames.get(1))), routeAdvertise.advertiserPID);
 
 
-    SafeManager safeManagerSdx2 = safeManagerHashMap.get(MultiSdxSetting.sdxSliceNames.get(1));
+    SafeManager safeManagerSdx2 = safeManagerHashMap.get(testSetting.sdxSliceNames.get(1));
     assert safeManagerSdx2.authorizeBgpAdvertise(advertise1);
 
     safeManagerSdx2.postPathToken(advertise1);
 
-    AdvertiseManager advertiseManagerSdx2 = bgpManagerHashMap.get(MultiSdxSetting.sdxSliceNames.get(1));
+    AdvertiseManager advertiseManagerSdx2 = bgpManagerHashMap.get(testSetting.sdxSliceNames.get(1));
 
     RouteAdvertise advertise2 = advertiseManagerSdx2.receiveStAdvertise(advertise1).get(0);
 
     advertise2 = safeManagerSdx2.forwardAdvertise(advertise2, getPrincipalId(sliceKeyMap.get
-      (MultiSdxSetting.sdxSliceNames.get(3))), advertise1.advertiserPID);
+      (testSetting.sdxSliceNames.get(3))), advertise1.advertiserPID);
 
-    SafeManager safeManagerSdx4 = safeManagerHashMap.get(MultiSdxSetting.sdxSliceNames.get(3));
+    SafeManager safeManagerSdx4 = safeManagerHashMap.get(testSetting.sdxSliceNames.get(3));
     assert safeManagerSdx4.authorizeBgpAdvertise(advertise2);
 
     if (sdpolicytest) {
-      String slicec0 = MultiSdxSetting.clientSlices.get(0);
+      String slicec0 = testSetting.clientSlices.get(0);
       SafeManager safeManagerC0 = safeManagerHashMap.get(slicec0);
       String tagAuthorityPid = getPrincipalId("tagauthority");
       String tag = String.format("%s:%s", tagAuthorityPid, "astag0");

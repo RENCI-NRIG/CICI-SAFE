@@ -1,4 +1,4 @@
-package exoplex.common.slice;
+package exoplex.sdx.slice.exogeni;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
@@ -6,11 +6,6 @@ import exoplex.sdx.network.Link;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.renci.ahab.libndl.resources.request.StitchPort;
-import org.renci.ahab.libtransport.ISliceTransportAPIv1;
-import org.renci.ahab.libtransport.SSHAccessToken;
-import org.renci.ahab.libtransport.SliceAccessContext;
-import org.renci.ahab.libtransport.util.SSHAccessTokenFileFactory;
-import org.renci.ahab.libtransport.util.UtilTransportException;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -30,9 +25,7 @@ public abstract class SliceCommon {
   protected String sliceName;
   protected String pemLocation;
   protected String keyLocation;
-  protected String sshkey;
-  protected ISliceTransportAPIv1 sliceProxy;
-  protected SliceAccessContext<SSHAccessToken> sctx;
+  protected String sshKey;
   protected String type;
   protected String topofile = null;
   protected Config conf;
@@ -57,7 +50,6 @@ public abstract class SliceCommon {
     return SDNControllerIP;
   }
 
-
   public String getSliceName() {
     return sliceName;
   }
@@ -78,7 +70,7 @@ public abstract class SliceCommon {
       keyLocation = conf.getString("config.exogenipem");
     }
     if (conf.hasPath("config.sshkey")) {
-      sshkey = conf.getString("config.sshkey");
+      sshKey = conf.getString("config.sshkey");
     }
     if (conf.hasPath("config.slicename")) {
       sliceName = conf.getString("config.slicename");
@@ -122,31 +114,6 @@ public abstract class SliceCommon {
     if (conf.hasPath("config.sitelist")) {
       sitelist = conf.getStringList("config.sitelist");
     }
-  }
-
-  private void getSshContext() {
-    //SSH context
-    sctx = new SliceAccessContext<>();
-    try {
-      SSHAccessTokenFileFactory fac;
-      fac = new SSHAccessTokenFileFactory(sshkey + ".pub", false);
-      SSHAccessToken t = fac.getPopulatedToken();
-      sctx.addToken("root", "root", t);
-      sctx.addToken("root", t);
-    } catch (UtilTransportException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
-    }
-  }
-
-  public void initializeExoGENIContexts(String configFilePath) {
-
-    readConfig(configFilePath);
-
-    //SSH context
-    getSshContext();
-
-    sliceProxy = SliceManager.getSliceProxy(pemLocation, keyLocation, controllerUrl);
   }
 
   protected void setSdnControllerIp(String sdnControllerIp) {
@@ -213,16 +180,6 @@ public abstract class SliceCommon {
     } catch (InterruptedException ex) {
       Thread.currentThread().interrupt();
     }
-  }
-
-  protected void deleteSlice(String sliceName) {
-    logger.info(String.format("deleting slice %s", sliceName));
-    SliceManager s2 = new SliceManager(sliceName, pemLocation, keyLocation, controllerUrl);
-    s2.delete();
-  }
-
-  public void delete() {
-    deleteSlice(sliceName);
   }
 
   protected boolean patternMatch(String str, String pattern) {

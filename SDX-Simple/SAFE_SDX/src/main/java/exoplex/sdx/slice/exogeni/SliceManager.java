@@ -1,9 +1,12 @@
-package exoplex.common.slice;
+package exoplex.sdx.slice.exogeni;
 
 import exoplex.common.utils.Exec;
 import exoplex.common.utils.NetworkUtil;
 import exoplex.common.utils.PathUtil;
 import exoplex.common.utils.ScpTo;
+import exoplex.sdx.slice.Scripts;
+import exoplex.sdx.slice.SliceEnv;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.renci.ahab.libndl.Slice;
@@ -11,7 +14,9 @@ import org.renci.ahab.libndl.resources.common.ModelResource;
 import org.renci.ahab.libndl.resources.request.*;
 import org.renci.ahab.libndl.util.IP4Subnet;
 import org.renci.ahab.libtransport.*;
+import org.renci.ahab.libtransport.util.SSHAccessTokenFileFactory;
 import org.renci.ahab.libtransport.util.TransportException;
+import org.renci.ahab.libtransport.util.UtilTransportException;
 import org.renci.ahab.libtransport.xmlrpc.XMLRPCProxyFactory;
 import org.renci.ahab.libtransport.xmlrpc.XMLRPCTransportException;
 
@@ -36,9 +41,22 @@ public class SliceManager {
   private String controllerUrl;
   private String sliceName;
   private Slice slice;
+  private String sshKey;
   private HashSet<String> reachableNodes = new HashSet<>();
 
+  public SliceManager(String sliceName, String pemLocation, String keyLocation, String
+    controllerUrl, String sshKey) {
+    this.sliceName = sliceName;
+    this.pemLocation = pemLocation;
+    this.keyLocation = keyLocation;
+    this.controllerUrl = controllerUrl;
+    this.sshKey = sshKey;
+    this.sliceProxy = getSliceProxy(pemLocation, keyLocation, controllerUrl);
+    refreshSshContext();
+    this.slice = null;
+  }
 
+  /*
   public SliceManager(String pemLocation, String keyLocation, String controllerUrl, SliceAccessContext<SSHAccessToken> sctx) {
     this.pemLocation = pemLocation;
     this.keyLocation = keyLocation;
@@ -64,16 +82,7 @@ public class SliceManager {
     this.sliceProxy = getSliceProxy(pemLocation, keyLocation, controllerUrl);
     this.slice = null;
   }
-
-  public static SliceManager create(String sliceName, String pemLocation, String keyLocation, String controllerUrl, SliceAccessContext<SSHAccessToken> sctx) {
-    logger.info(String.format("create %s", sliceName));
-    SliceManager sliceManager = new SliceManager(pemLocation, keyLocation, controllerUrl, sctx);
-    sliceManager.sliceName = sliceName;
-    sliceManager.sliceProxy = getSliceProxy(pemLocation, keyLocation, controllerUrl);
-    sliceManager.sctx = sctx;
-    sliceManager.slice = Slice.create(sliceManager.sliceProxy, sctx, sliceName);
-    return sliceManager;
-  }
+  */
 
   public static Collection<String> getDomains() {
     return Slice.getDomains();
@@ -91,6 +100,26 @@ public class SliceManager {
       assert (false);
     }
     return sliceProxy;
+  }
+
+  private void refreshSshContext() {
+    //SSH context
+    sctx = new SliceAccessContext<>();
+    try {
+      SSHAccessTokenFileFactory fac;
+      fac = new SSHAccessTokenFileFactory(sshKey + ".pub", false);
+      SSHAccessToken t = fac.getPopulatedToken();
+      sctx.addToken("root", "root", t);
+      sctx.addToken("root", t);
+    } catch (UtilTransportException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+    }
+  }
+
+  public void createSlice() {
+    logger.info(String.format("create %s", sliceName));
+    slice = Slice.create(sliceProxy, sctx, sliceName);
   }
 
   public void permitStitch(String secret, String GUID) throws TransportException {
@@ -115,6 +144,32 @@ public class SliceManager {
         }
       }
     }
+  }
+
+  public String permitStitch(String GUID) throws TransportException {
+    int times = 0;
+    while (times < COMMIT_COUNT) {
+      try {
+        //s1
+        sliceProxy = getSliceProxy(pemLocation, keyLocation, controllerUrl);
+        String secret = RandomStringUtils.randomAlphabetic(10);
+        sliceProxy.permitSliceStitch(sliceName, GUID, secret);
+        return secret;
+      } catch (TransportException e) {
+        // TODO Auto-generated catch block
+        logger.warn("Failed to permit stitch, retry");
+        times++;
+        if (times == COMMIT_COUNT) {
+          throw e;
+        }
+        try {
+          Thread.sleep((long) (INTERVAL * 1000));
+        } catch (InterruptedException var6) {
+          Thread.currentThread().interrupt();
+        }
+      }
+    }
+    return null;
   }
 
   public void lockSlice() {
@@ -161,6 +216,8 @@ public class SliceManager {
         sliceProxy = getSliceProxy(pemLocation, keyLocation, controllerUrl);
       }
       i++;
+      sliceProxy = getSliceProxy(pemLocation, keyLocation, controllerUrl);
+      refreshSshContext();
       slice = null;
     } while (i < COMMIT_COUNT);
     logger.error("failed to reload slice");
@@ -194,7 +251,10 @@ public class SliceManager {
   }
 
   public ComputeNode addComputeNode(String site, String name) {
-    logger.debug(String.format("Adding new compute node %s to slice %s", name, slice.getName()));
+    logger.debug(String.format("Adding new compute node %s to slice %s", name, sliceName));
+    if (slice == null) {
+      createSlice();
+    }
     NodeBaseInfo ninfo = NodeBase.getImageInfo(SliceEnv.CustomerVMVersion);
     String nodeImageShortName = ninfo.nisn;
     String nodeImageURL = ninfo.niurl;
@@ -292,6 +352,17 @@ public class SliceManager {
     return slice.stitch(r1, r2);
   }
 
+  public void unstitch(String stitchLinkName, String customerSlice, String customerGUID) {
+    BroadcastNetwork net = (BroadcastNetwork) slice.getResourceByName(stitchLinkName);
+    String stitchNetReserveId = net.getStitchingGUID();
+    try {
+      sliceProxy.undoSliceStitch(sliceName, stitchNetReserveId, customerSlice,
+        customerGUID);
+    } catch (TransportException e) {
+      e.printStackTrace();
+    }
+  }
+
   public String getName() {
     return sliceName;
   }
@@ -342,6 +413,7 @@ public class SliceManager {
   }
 
   public void delete() {
+    logger.debug(String.format("deleting slice %s", sliceName));
     int i = 0;
     do {
       try {
@@ -749,6 +821,11 @@ public class SliceManager {
     ComputeNode node = (ComputeNode) slice.getResourceByName(nodeName);
     Network net = slice.addBroadcastLink(linkName, bw);
     InterfaceNode2Net ifaceNode0 = (InterfaceNode2Net) net.stitch(node);
+  }
+
+  public void removeLink(String linkName) {
+    BroadcastNetwork net = (BroadcastNetwork) slice.getResourceByName(linkName);
+    net.delete();
   }
 
   public void addLink(String linkName, String ip, String netmask, String nodeName, long

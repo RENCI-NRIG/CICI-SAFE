@@ -1,9 +1,9 @@
 package exoplex.sdx.safe;
 
-import exoplex.common.slice.Scripts;
 import exoplex.common.utils.Exec;
 import exoplex.common.utils.SafeUtils;
 import exoplex.sdx.advertise.RouteAdvertise;
+import exoplex.sdx.slice.Scripts;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import safe.SdxRoutingSlang;
@@ -11,11 +11,11 @@ import safe.SdxRoutingSlang;
 import java.util.List;
 
 public class SafeManager {
-  //was v4
-  public final static String safeDockerImage = "safeserver-v7";
-  //was prdn.sh
-  public final static String safeServerScript = "sdx-routing.sh";
   final static Logger logger = LogManager.getLogger(SafeManager.class);
+  //was v4
+  private static String safeDockerImage = "safeserver-v7";
+  //was prdn.sh
+  private static String safeServerScript = "sdx-routing.sh";
   private String safeServerIp;
   private String safeServer;
   private String safeKeyFile;
@@ -27,6 +27,31 @@ public class SafeManager {
     safeServer = safeServerIp + ":7777";
     this.safeKeyFile = safeKeyFile;
     this.sshKey = sshKey;
+    if (safeKeyFile == null) {
+      logger.warn("safe key file is null");
+    } else {
+      getSafeKeyHash();
+    }
+  }
+
+  public static String getSafeDockerImage() {
+    return safeDockerImage;
+  }
+
+  public static void setSafeDockerImage(String name) {
+    safeDockerImage = name;
+  }
+
+  public static String getSafeServerScript() {
+    return safeServerScript;
+  }
+
+  public static void setSafeServerScript(String name) {
+    safeServerScript = name;
+  }
+
+  public void setSafeServerIp(String safeServerIp) {
+    this.safeServer = safeServerIp + ":7777";
   }
 
   public String getSafeKeyHash() {
@@ -155,28 +180,6 @@ public class SafeManager {
       params);
   }
 
-  /*
-  public boolean verifyCompliantPath(RouteAdvertise routeAdvertise){
-    if(routeAdvertise.srcPrefix == null) {
-      String[] othervalues = new String[4];
-      othervalues[0] = routeAdvertise.ownerPID;
-      othervalues[1] = routeAdvertise.getDestPrefix();
-      othervalues[2] = routeAdvertise.getFormattedPath();
-      othervalues[3] = routeAdvertise.safeToken;
-      return SafeUtils.authorize(safeServer, SdxRoutingSlang.verifyRoute, getSafeKeyHash(), othervalues);
-    }else {
-      String[] othervalues = new String[5];
-      othervalues[0] = routeAdvertise.ownerPID;
-      othervalues[1] = routeAdvertise.getSrcPrefix();
-      othervalues[2] = routeAdvertise.getDestPrefix();
-      othervalues[3] = routeAdvertise.getFormattedPath();
-      othervalues[4] = routeAdvertise.safeToken;
-      return SafeUtils.authorize(safeServer, SdxRoutingSlang.verifyRouteSD, getSafeKeyHash(),
-        othervalues);
-    }
-  }
-  */
-
   public RouteAdvertise forwardAdvertise(RouteAdvertise routeAdvertise, String targetPid, String
     srcPid) {
     if (routeAdvertise.srcPrefix == null) {
@@ -294,6 +297,7 @@ public class SafeManager {
         }
       }
     }
+    logger.debug("Safe server alive now");
     return true;
   }
 

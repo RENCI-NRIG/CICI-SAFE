@@ -1,11 +1,11 @@
 package exoplex.client.stitchport;
 
-import exoplex.common.slice.SiteBase;
-import exoplex.common.slice.SliceCommon;
 import exoplex.common.utils.Exec;
 import exoplex.common.utils.HttpUtil;
 import exoplex.common.utils.SafeUtils;
 import exoplex.common.utils.ServerOptions;
+import exoplex.sdx.slice.exogeni.SiteBase;
+import exoplex.sdx.slice.exogeni.SliceCommon;
 import org.apache.commons.cli.CommandLine;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -43,7 +43,7 @@ public class SdxStitchPortClient extends SliceCommon {
     //keyLocation = args[1];
     //controllerUrl = args[2]; //"https://geni.renci.org:11443/orca/xmlrpc";
     //sliceName = args[3];
-    //sshkey=args[6];
+    //sshKey=args[6];
     //keyhash=args[7];
 
     if (cmd.hasOption('e')) {

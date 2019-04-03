@@ -1,13 +1,19 @@
 package exoplex.demo.tridentcom;
 
+import com.google.inject.Guice;
+import com.google.inject.Inject;
+import com.google.inject.Injector;
+import com.google.inject.Provider;
 import exoplex.client.exogeni.ExogeniClientSlice;
-import exoplex.common.slice.SiteBase;
-import exoplex.common.slice.SliceManager;
 import exoplex.common.utils.ServerOptions;
 import exoplex.sdx.safe.SafeManager;
+import exoplex.sdx.slice.exogeni.SiteBase;
+import exoplex.sdx.slice.exogeni.SliceManager;
+import injection.TridentTestModule;
 import org.apache.commons.cli.CommandLine;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import safe.Authority;
 import safe.SafeAuthority;
 
 import java.util.ArrayList;
@@ -19,50 +25,53 @@ public class TridentSlice extends TridentSetting {
   final static Logger logger = LogManager.getLogger(TridentSlice.class);
 
 
-  public TridentSlice() {
-
+  @Inject
+  public TridentSlice(Provider<Authority> authorityProvider) {
+    super(authorityProvider);
   }
 
   public static void main(String[] args) {
-
-    TridentSlice tridentSlice = new TridentSlice();
+    Injector injector = Guice.createInjector(new TridentTestModule());
+    TridentSlice tridentSlice = injector.getProvider(TridentSlice.class).get();
     tridentSlice.run(sdxArgs);
-    TridentSlice clientSlice = new TridentSlice();
+    TridentSlice clientSlice = injector.getProvider(TridentSlice.class).get();
     CommandLine cmd = ServerOptions.parseCmd(clientArgs);
     String configFilePath = cmd.getOptionValue("config");
-    clientSlice.initializeExoGENIContexts(configFilePath);
+    clientSlice.readConfig(configFilePath);
     clientSlice.deleteClientSlices();
     clientSlice.createClientSlices(clientSlice.riakIp);
   }
 
   public static void createSlices(String riakIP) {
-    TridentSlice tridentSlice = new TridentSlice();
+    Injector injector = Guice.createInjector(new TridentTestModule());
+    TridentSlice tridentSlice = injector.getProvider(TridentSlice.class).get();
     tridentSlice.run(sdxArgs, riakIP);
-    TridentSlice clientSlice = new TridentSlice();
+    TridentSlice clientSlice = injector.getProvider(TridentSlice.class).get();
     CommandLine cmd = ServerOptions.parseCmd(clientArgs);
     String configFilePath = cmd.getOptionValue("config");
-    clientSlice.initializeExoGENIContexts(configFilePath);
+    clientSlice.readConfig(configFilePath);
     //clientSlice.deleteClientSlices();
     clientSlice.createClientSlices(riakIP);
   }
 
   public static void deleteTestSlices() {
     //Delete client slices
-    TridentSlice clientSlice = new TridentSlice();
+    Injector injector = Guice.createInjector(new TridentTestModule());
+    TridentSlice clientSlice = injector.getProvider(TridentSlice.class).get();
     CommandLine cmd = ServerOptions.parseCmd(clientArgs);
     String configFilePath = cmd.getOptionValue("config");
-    clientSlice.initializeExoGENIContexts(configFilePath);
+    clientSlice.readConfig(configFilePath);
     clientSlice.deleteClientSlices();
 
     //delete SDX slice
-    TridentSlice tridentSlice = new TridentSlice();
+    TridentSlice tridentSlice = injector.getProvider(TridentSlice.class).get();
     tridentSlice.run(sdxDelArgs);
   }
 
   public void run(String[] args, String myRiakIP) {
     CommandLine cmd = ServerOptions.parseCmd(args);
     String configFilePath = cmd.getOptionValue("config");
-    initializeExoGENIContexts(configFilePath);
+    this.readConfig(configFilePath);
     if (myRiakIP != null) {
       riakIp = myRiakIP;
     }
@@ -85,8 +94,9 @@ public class TridentSlice extends TridentSetting {
 
   private SliceManager createTridentTestSlice() throws Exception {
     ArrayList<String> sites = TridentSetting.sites;
-    SliceManager slice = SliceManager.create(TridentSetting.sdxName, pemLocation, keyLocation, controllerUrl,
-      sctx);
+    SliceManager slice = new SliceManager(TridentSetting.sdxName, pemLocation, keyLocation,
+      controllerUrl, sshKey);
+    slice.createSlice();
     HashMap<String, String> coreRouterMap = new HashMap<>();
     int i = 0;
     for (String site : sites) {
@@ -118,7 +128,7 @@ public class TridentSlice extends TridentSetting {
       if (safeEnabled) {
         slice.addSafeServer(SiteBase.get(TridentSetting.sites.get(rand.nextInt(TridentSetting.sites
             .size()))),
-          riakIp, SafeManager.safeDockerImage, SafeManager.safeServerScript);
+          riakIp, SafeManager.getSafeDockerImage(), SafeManager.getSafeServerScript());
       }
     }
     slice.commitAndWait();
@@ -158,7 +168,7 @@ public class TridentSlice extends TridentSetting {
         break;
       } catch (Exception e) {
         try {
-          deleteSlice(clientSlice);
+          cs.deleteSlice();
         } catch (Exception ex) {
         }
         logger.warn("%s failed" + clientSlice);

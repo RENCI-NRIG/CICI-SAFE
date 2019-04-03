@@ -68,7 +68,7 @@
                             <name>SafeSdxBro</name>
                         </program>
                         <program>
-                            <mainClass>exoplex.demo.cnert.TestMain</mainClass>
+                            <mainClass>exoplex.demo.cnert.CnertTestMain</mainClass>
                             <name>SafeSdxTest</name>
                         </program>
                         <program>

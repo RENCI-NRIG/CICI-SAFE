@@ -61,7 +61,7 @@ public class SafeUtils {
   public static String postSafeStatements(String safeserver, String requestName, String
     principal, Object[] othervalues) {
     String res = postSafeStatements(safeserver, requestName, principal, emptyEnvs, othervalues);
-    if (res.contains("Query failed")) {
+    if (res.contains("Query failed") || res.contains("Unsatisfied Query")) {
       logger.warn(res);
     }
     return res;
@@ -129,12 +129,11 @@ public class SafeUtils {
       return res;
 
     } catch (MalformedURLException e) {
-      logger.error("malformedURLException when posting safe statement");
+      logger.warn(e.getMessage());
     } catch (IOException e) {
-      logger.error("http ioexception when posting safe statement");
-      e.printStackTrace();
+      logger.warn(e.getMessage());
     } catch (Exception e) {
-      e.printStackTrace();
+      logger.debug(e.getMessage());
     }
     return null;
   }
@@ -162,7 +161,6 @@ public class SafeUtils {
 
   public static String getPrincipalId(String safeServer, String keyFile) {
     String message = SafeUtils.postSafeStatements(safeServer, "whoami", keyFile, new String[]{});
-    logger.info(message);
     return message.split(":")[0].replace("{", "")
       .replace("'", "")
       .replace(" ", "");

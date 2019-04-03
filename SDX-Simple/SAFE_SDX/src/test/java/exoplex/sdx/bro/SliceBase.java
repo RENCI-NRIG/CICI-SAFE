@@ -4,17 +4,14 @@ import com.jcraft.jsch.ChannelExec;
 import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.Session;
-import exoplex.common.slice.SliceCommon;
 import exoplex.common.utils.ScpTo;
+import exoplex.sdx.slice.exogeni.SliceCommon;
+import exoplex.sdx.slice.exogeni.SliceManager;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.renci.ahab.libndl.Slice;
 import org.renci.ahab.libndl.resources.request.ComputeNode;
 import org.renci.ahab.libndl.resources.request.Network;
-import org.renci.ahab.libtransport.SSHAccessToken;
-import org.renci.ahab.libtransport.SliceAccessContext;
-import org.renci.ahab.libtransport.util.SSHAccessTokenFileFactory;
-import org.renci.ahab.libtransport.util.UtilTransportException;
 
 import java.io.BufferedReader;
 import java.io.FileInputStream;
@@ -28,17 +25,16 @@ public abstract class SliceBase extends SliceCommon {
   private final static Logger logger = LogManager.getLogger(SliceBase.class);
 
 
-  private Slice thisSlice;
+  private SliceManager thisSlice;
   private Map<String, String> resourceIPs = new HashMap<>();
   private Map<String, Session> sessions = new HashMap<>();
 
   public SliceBase(String configPath) throws SampleSlice.SliceBaseException {
     try {
       System.out.println("Reading properties...");
-      initializeExoGENIContexts(configPath);
+      readConfig(configPath);
       System.out.println("Making proxy...");
       System.out.println("Setting access context...");
-      loadSliceSSHAccess();
     } catch (Exception e) {
       throw new SampleSlice.SliceBaseException(e);
     }
@@ -47,20 +43,16 @@ public abstract class SliceBase extends SliceCommon {
   public SliceBase(String configPath, String sliceName) throws SampleSlice.SliceBaseException {
     try {
       System.out.println("Reading properties...");
-      initializeExoGENIContexts(configPath);
+      readConfig(configPath);
       System.out.println("Making proxy...");
       System.out.println("Setting access context...");
-      boolean flag = true;
-      while (flag) {
-        flag = false;
-        thisSlice = Slice.loadManifestFile(sliceProxy, sliceName);
-        for (ComputeNode c : thisSlice.getComputeNodes()) {
-          if (c.getManagementIP() == null) {
-            flag = true;
-            break;
-          }
-          resourceIPs.put(c.getName(), c.getManagementIP());
+      thisSlice = new SliceManager(sliceName, pemLocation, keyLocation, controllerUrl, sshKey);
+      thisSlice.reloadSlice();
+      for (ComputeNode c : thisSlice.getComputeNodes()) {
+        if (c.getManagementIP() == null) {
+          break;
         }
+        resourceIPs.put(c.getName(), c.getManagementIP());
       }
     } catch (Exception e) {
       throw new SampleSlice.SliceBaseException(e);
@@ -70,15 +62,14 @@ public abstract class SliceBase extends SliceCommon {
   public void createSlice() throws SampleSlice.SliceBaseException {
     try {
       System.out.println("Creating slice!!...");
-      thisSlice = Slice.create(sliceProxy, sctx, sliceName());
-      createSlice(thisSlice);
+      thisSlice = new SliceManager(sliceName, pemLocation, keyLocation, controllerUrl, sshKey);
+      thisSlice.createSlice();
       // TODO Add the option to ignore this? idk
       try {
-        thisSlice.commit();
+        thisSlice.commitAndWait();
       } catch (Exception e) {
         e.printStackTrace();
       }
-      waitTillActive();
     } catch (Exception e) {
       throw new SampleSlice.SliceBaseException(e);
     }
@@ -165,7 +156,7 @@ public abstract class SliceBase extends SliceCommon {
   public void sftpToNode(ComputeNode c, String path) throws SampleSlice.SliceBaseException {
     String[] pathParts = path.split("/");
     String dstPath = "/root/" + pathParts[pathParts.length - 1];
-    ScpTo.Scp(path, "root", c.getManagementIP(), dstPath, sshkey);
+    ScpTo.Scp(path, "root", c.getManagementIP(), dstPath, sshKey);
 
     /*
     ChannelSftp channel;
@@ -199,22 +190,8 @@ public abstract class SliceBase extends SliceCommon {
     Properties prop = new Properties();
     prop.load(new FileInputStream(configPath));
     pemLocation = prop.getProperty("pemLocation");
-    sshkey = prop.getProperty("sshkey");
+    sshKey = prop.getProperty("sshKey");
     controllerUrl = prop.getProperty("controllerUrl");
-  }
-
-  private void loadSliceSSHAccess() throws UtilTransportException {
-    sctx = new SliceAccessContext<>();
-    try {
-      SSHAccessTokenFileFactory fac;
-      fac = new SSHAccessTokenFileFactory(sshkey + ".pub", false);
-      SSHAccessToken t = fac.getPopulatedToken();
-      sctx.addToken("root", "root", t);
-      sctx.addToken("root", t);
-    } catch (UtilTransportException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
-    }
   }
 
   private void waitTillActive() {
@@ -256,7 +233,7 @@ public abstract class SliceBase extends SliceCommon {
       System.out.println("Creating session for " + name + ": " + cnodeIp);
 
       JSch jsch = new JSch();
-      jsch.addIdentity(sshkey);
+      jsch.addIdentity(sshKey);
       Session session = jsch.getSession("root", cnodeIp, 22);
 
       Properties config = new Properties();

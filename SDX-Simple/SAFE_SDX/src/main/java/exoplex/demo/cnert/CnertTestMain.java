@@ -1,10 +1,15 @@
 package exoplex.demo.cnert;
 
+import com.google.inject.Guice;
+import com.google.inject.Inject;
+import com.google.inject.Injector;
+import com.google.inject.Provider;
 import exoplex.client.exogeni.ExogeniClientSlice;
 import exoplex.client.exogeni.SdxExogeniClient;
 import exoplex.client.stitchport.SdxStitchPortClient;
 import exoplex.sdx.core.SdxManager;
 import exoplex.sdx.core.SdxServer;
+import injection.MultiSdxModule;
 import org.apache.commons.cli.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -12,8 +17,8 @@ import org.renci.ahab.libtransport.util.TransportException;
 
 import java.util.ArrayList;
 
-public class TestMain {
-  private static final Logger logger = LogManager.getLogger(TestMain.class.getName());
+public class CnertTestMain {
+  private static final Logger logger = LogManager.getLogger(CnertTestMain.class.getName());
   /*
   static String state = "fl";
   static String site1 = "ufl";
@@ -32,16 +37,24 @@ public class TestMain {
   static String[] clientarg5 = {"-c", "chameleon-config/c1.conf"};
   static SdxManager sdxManager;
   static boolean stitch = true;
+  final Provider<SdxServer> sdxServerProvider;
+
+  @Inject
+  public CnertTestMain(Provider<SdxServer> sdxServerProvider) {
+    this.sdxServerProvider = sdxServerProvider;
+  }
 
   public static void main(String[] args) throws Exception {
-    multiSliceTest(args);
+    Injector injector = Guice.createInjector(new MultiSdxModule());
+    CnertTestMain testMain = injector.getInstance(CnertTestMain.class);
+    testMain.multiSliceTest(args);
     //emulationTest();
     //testDymanicNetwork();
     //testChameleon();
     //emulationSlice();
   }
 
-  private static CommandLine parseCmd(String[] args) {
+  private CommandLine parseCmd(String[] args) {
     Options options = new Options();
     Option config1 = new Option("s", "slice", false, "run with existing slice");
     Option config2 = new Option("r", "reset", false, "reset SDX slice");
@@ -68,7 +81,7 @@ public class TestMain {
     return cmd;
   }
 
-  public static void multiSliceTest(String[] args) throws Exception {
+  public void multiSliceTest(String[] args) throws Exception {
     CommandLine cmd = parseCmd(args);
 
     if (cmd.hasOption('d')) {
@@ -86,7 +99,7 @@ public class TestMain {
     }
   }
 
-  public static void testDymanicNetwork() {
+  public void testDymanicNetwork() {
     SdxExogeniClient client6 = new SdxExogeniClient(clientarg6);
 
     // Client request for connection between prefixes
@@ -98,7 +111,7 @@ public class TestMain {
     //client6.processCmd("link 192.168.60.1/24 192.168.40.1/24");
   }
 
-  public static void test(boolean reset) throws TransportException, Exception {
+  public void test(boolean reset) throws TransportException, Exception {
     /*
     In this function, we create ahab controller for Sdx slice and Client slices.
     We execute command in Client controller to request network stitching to Sdx slice,
@@ -107,9 +120,11 @@ public class TestMain {
     // Start Sdx Server
     //./scripts/sdxserver.sh -c config/sdx.conf
     if (reset) {
-      sdxManager = SdxServer.run(arg2);
+      SdxServer sdxServer = sdxServerProvider.get();
+      sdxManager = sdxServer.run(arg2);
     } else {
-      sdxManager = SdxServer.run(arg1);
+      SdxServer sdxServer = sdxServerProvider.get();
+      sdxManager = sdxServer.run(arg1);
     }
     sdx = sdxManager.getSliceName();
     SdxExogeniClient client1 = new SdxExogeniClient(clientarg1);
@@ -185,8 +200,9 @@ public class TestMain {
     // Stop Sdx server and exit
   }
 
-  public static void testChameleon() throws TransportException, Exception {
-    SdxServer.run(arg1);
+  public void testChameleon() throws TransportException, Exception {
+    SdxServer sdxServer = sdxServerProvider.get();
+    sdxServer.run(arg1);
     SdxExogeniClient client1 = new SdxExogeniClient(clientarg1);
     SdxExogeniClient client2 = new SdxExogeniClient(clientarg2);
     SdxExogeniClient client3 = new SdxExogeniClient(clientarg3);
@@ -215,27 +231,27 @@ public class TestMain {
     client1.processCmd("link 192.168.10.1/24 192.168.20.1/24");
   }
 
-  public static void deleteSlice() {
-    TestSlice ts = new TestSlice(arg1);
+  public void deleteSlice() {
+    CnertTestSlice ts = new CnertTestSlice(arg1);
     ExogeniClientSlice s1 = new ExogeniClientSlice(clientarg1);
     ExogeniClientSlice s2 = new ExogeniClientSlice(clientarg2);
     ExogeniClientSlice s3 = new ExogeniClientSlice(clientarg3);
     ExogeniClientSlice s4 = new ExogeniClientSlice(clientarg4);
     ExogeniClientSlice s6 = new ExogeniClientSlice(clientarg6);
-    ts.delete();
-    s1.delete();
-    s2.delete();
-    s3.delete();
-    s4.delete();
-    s6.delete();
+    ts.deleteSlice();
+    s1.deleteSlice();
+    s2.deleteSlice();
+    s3.deleteSlice();
+    s4.deleteSlice();
+    s6.deleteSlice();
   }
 
-  public static void createTestSliceParrallel() throws Exception {
+  public void createTestSliceParrallel() throws Exception {
     ArrayList<Thread> tlist = new ArrayList<Thread>();
     Thread thread1 = new Thread() {
       @Override
       public void run() {
-        TestSlice ts = new TestSlice(arg1);
+        CnertTestSlice ts = new CnertTestSlice(arg1);
         ts.run(arg1);
       }
     };
@@ -275,7 +291,7 @@ public class TestMain {
     System.out.println("Finished create vSDX slice and Client slices");
   }
 
-  public static void emulationTest(String[] args) throws Exception {
+  public void emulationTest(String[] args) throws Exception {
     /*
     This function emulates the Sdx slice and customer nodes in the same slice.
      */
@@ -283,7 +299,8 @@ public class TestMain {
     if (!cmd.hasOption('s')) {
       emulationSlice();
     }
-    SdxServer.run(arg1);
+    SdxServer sdxServer = sdxServerProvider.get();
+    sdxServer.run(arg1);
     SdxExogeniClient client = new SdxExogeniClient(clientarg4);
     client.processCmd("route 192.168.10.1/24 192.168.10.2");
     client.processCmd("route 192.168.20.1/24 192.168.20.2");
@@ -309,9 +326,9 @@ public class TestMain {
     System.exit(0);
   }
 
-  public static void emulationSlice() {
-    TestSlice ts = new TestSlice(arg1);
-    ts.delete();
+  public void emulationSlice() {
+    CnertTestSlice ts = new CnertTestSlice(arg1);
+    ts.deleteSlice();
     ts.testBroSliceTwoPairs();
   }
 }
