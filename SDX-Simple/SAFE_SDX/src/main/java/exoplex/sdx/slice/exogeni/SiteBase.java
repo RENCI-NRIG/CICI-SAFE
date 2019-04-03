@@ -1,4 +1,4 @@
-package exoplex.common.slice;
+package exoplex.sdx.slice.exogeni;
 
 import java.util.HashMap;
 

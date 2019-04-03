@@ -1,10 +1,10 @@
 package exoplex.sdx.routing;
 
-import exoplex.common.slice.Scripts;
-import exoplex.common.slice.SiteBase;
-import exoplex.common.slice.SliceManager;
 import exoplex.common.utils.ServerOptions;
 import exoplex.sdx.core.SdxManager;
+import exoplex.sdx.slice.Scripts;
+import exoplex.sdx.slice.exogeni.SiteBase;
+import exoplex.sdx.slice.exogeni.SliceManager;
 import org.apache.commons.cli.CommandLine;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -24,6 +24,10 @@ public class TestVlan extends SdxManager {
   static String[] arg1 = {"-c", sdxSimpleDir + "config/test-vlan.conf"};
   static TestVlan vlan;
 
+  public TestVlan() {
+    super(null);
+  }
+
   @BeforeClass
   public static void setUp() throws Exception {
     vlan = new TestVlan();
@@ -33,7 +37,7 @@ public class TestVlan extends SdxManager {
 
   @AfterClass
   public static void cleanUp() {
-    vlan.delete();
+    vlan.deleteSlice();
   }
 
   public static void main(String[] args) throws Exception {
@@ -60,14 +64,14 @@ public class TestVlan extends SdxManager {
   public void test() throws Exception {
     CommandLine cmd = ServerOptions.parseCmd(arg1);
     String configFilePath = cmd.getOptionValue("config");
-    initializeExoGENIContexts(configFilePath);
+    this.readConfig(configFilePath);
     createNetwork();
   }
 
   public void initNetwork() throws Exception {
     CommandLine cmd = ServerOptions.parseCmd(arg1);
     String configFilePath = cmd.getOptionValue("config");
-    initializeExoGENIContexts(configFilePath);
+    this.readConfig(configFilePath);
     plexusName = "plexuscontroller";
     loadSlice();
     initializeSdx();
@@ -94,32 +98,34 @@ public class TestVlan extends SdxManager {
     } else {
       configSdnControllerAddr(conf.getString("config.plexusserver"));
     }
-    serverSlice.runCmdSlice(Scripts.getOVSScript(), sshkey, routerPattern, true);
+    serverSlice.runCmdSlice(Scripts.getOVSScript(), sshKey, routerPattern, true);
     copyRouterScript(serverSlice);
     configRouters(serverSlice);
   }
 
   public void configTestSlice(SliceManager carrier) {
-    carrier.runCmdSlice("apt-get update;apt-get -y install quagga", sshkey, "(CNode\\d+)", true);
-    carrier.runCmdSlice("sed -i -- 's/zebra=no/zebra=yes/g' /etc/quagga/daemons", sshkey, "(CNode\\d+)", true);
-    //carrier.runCmdSlice("sed -i -- 's/ospfd=no/ospfd=yes/g' /etc/quagga/daemons", sshkey,
+    carrier.runCmdSlice("apt-get update;apt-get -y install quagga", sshKey, "(CNode\\d+)", true);
+    carrier.runCmdSlice("sed -i -- 's/zebra=no/zebra=yes/g' /etc/quagga/daemons", sshKey, "(CNode\\d+)", true);
+    //carrier.runCmdSlice("sed -i -- 's/ospfd=no/ospfd=yes/g' /etc/quagga/daemons", sshKey,
     // "(node\\d+)", true);
-    carrier.runCmdSlice("echo \"1\" > /proc/sys/net/ipv4/ip_forward", sshkey, "(CNode\\d+)", true);
+    carrier.runCmdSlice("echo \"1\" > /proc/sys/net/ipv4/ip_forward", sshKey, "(CNode\\d+)", true);
     try {
-      carrier.runCmdSlice("ifconfig eth1 192.168.10.2/24 up", sshkey, "(CNode0)", true);
-      carrier.runCmdSlice("ifconfig eth1 192.168.20.2/24 up", sshkey, "(CNode1)", true);
+      carrier.runCmdSlice("ifconfig eth1 192.168.10.2/24 up", sshKey, "(CNode0)", true);
+      carrier.runCmdSlice("ifconfig eth1 192.168.20.2/24 up", sshKey, "(CNode1)", true);
     } catch (Exception e) {
       e.printStackTrace();
     }
     carrier.runCmdSlice("echo \"ip route 192.168.1.1/16 192.168.10.1\" >>/etc/quagga/zebra" +
-      ".conf", sshkey, "(CNode0)", true);
+      ".conf", sshKey, "(CNode0)", true);
     carrier.runCmdSlice("echo \"ip route 192.168.1.1/16 192.168.20.1\" >>/etc/quagga/zebra" +
-      ".conf", sshkey, "(CNode1)", true);
-    carrier.runCmdSlice("/etc/init.d/quagga restart", sshkey, "(CNode\\d+)", true);
+      ".conf", sshKey, "(CNode1)", true);
+    carrier.runCmdSlice("/etc/init.d/quagga restart", sshKey, "(CNode\\d+)", true);
   }
 
   public SliceManager createTestSlice() {
-    SliceManager slice = SliceManager.create(sliceName, pemLocation, keyLocation, controllerUrl, sctx);
+    SliceManager slice = new SliceManager(sliceName, pemLocation, keyLocation, controllerUrl,
+      sshKey);
+    slice.createSlice();
     slice.addComputeNode(site, "CNode0");
     slice.addComputeNode(site, "CNode1");
     slice.addOVSRouter(site, "c0");

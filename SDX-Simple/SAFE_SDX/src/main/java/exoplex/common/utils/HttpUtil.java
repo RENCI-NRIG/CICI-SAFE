@@ -25,7 +25,6 @@ public class HttpUtil {
     HttpClient httpClient = HttpClientBuilder.create().build(); //Use this instead
 
     try {
-
       HttpPost request = new HttpPost(serverurl);
       logger.debug(serverurl);
       logger.debug(paramsobj.toString());
@@ -43,7 +42,7 @@ public class HttpUtil {
       return output;
 
     } catch (Exception ex) {
-      ex.printStackTrace();
+      logger.error(ex.getMessage());
       return resobj.toString();
     } finally {
       //Deprecated

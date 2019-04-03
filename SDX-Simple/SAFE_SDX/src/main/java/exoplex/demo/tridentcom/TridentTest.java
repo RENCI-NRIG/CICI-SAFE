@@ -1,11 +1,17 @@
 package exoplex.demo.tridentcom;
 
+import com.google.inject.Guice;
+import com.google.inject.Inject;
+import com.google.inject.Injector;
+import com.google.inject.Provider;
 import exoplex.client.exogeni.SdxExogeniClient;
 import exoplex.sdx.core.SdxManager;
 import exoplex.sdx.core.SdxServer;
+import injection.MultiSdxModule;
 import org.apache.commons.cli.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import safe.Authority;
 import safe.SafeAuthority;
 
 import java.lang.reflect.InvocationTargetException;
@@ -20,9 +26,15 @@ public class TridentTest extends TridentSetting {
 
   static HashMap<String, SdxExogeniClient> exogeniClients = new HashMap<>();
 
+  @Inject
+  public TridentTest(Provider<Authority> authorityProvider) {
+    super(authorityProvider);
+  }
 
   public static void main(String[] args) throws Exception {
-    sdxManager = SdxServer.run(sdxArgs);
+    Injector injector = Guice.createInjector(new MultiSdxModule());
+    SdxServer sdxServer = injector.getProvider(SdxServer.class).get();
+    sdxManager = sdxServer.run(sdxArgs);
     postSafeCertificates();
     for (String clientSlice : TridentSetting.clientSlices) {
       exogeniClients.put(clientSlice, new SdxExogeniClient(clientSlice,

@@ -1,8 +1,8 @@
 package exoplex.sdx.bro;
 
-import exoplex.common.slice.SliceManager;
 import exoplex.sdx.core.SdxManager;
 import exoplex.sdx.network.RoutingManager;
+import exoplex.sdx.slice.exogeni.SliceManager;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 

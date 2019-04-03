@@ -7,15 +7,23 @@ import org.apache.logging.log4j.Logger;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-public abstract class AuthorityBase implements SafeLang {
+public abstract class Authority implements SafeLang {
   public static boolean authorizationMade = false;
   public static HashMap<String, String> principalMap = new HashMap<>();
   public static HashMap<String, String> subjectSet = new HashMap<String, String>();
-  static Logger logger = LogManager.getLogger(AuthorityBase.class);
+  static Logger logger = LogManager.getLogger(Authority.class);
   public String safeServer;
   public ArrayList<String> principals = new ArrayList<>();
 
-  public AuthorityBase(String safeServer) {
+  public Authority() {
+
+  }
+
+  public Authority(String safeServer) {
+    this.safeServer = safeServer;
+  }
+
+  public void setSafeServer(String safeServer) {
     this.safeServer = safeServer;
   }
 

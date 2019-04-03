@@ -1,4 +1,6 @@
-package exoplex.common.slice;
+package exoplex.sdx.slice;
+
+import exoplex.sdx.slice.exogeni.NodeBase;
 
 public class SliceEnv {
   public static final String OFP = "-O OpenFlow13";

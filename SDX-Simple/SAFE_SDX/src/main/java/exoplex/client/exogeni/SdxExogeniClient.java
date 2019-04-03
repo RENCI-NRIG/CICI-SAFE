@@ -3,8 +3,6 @@
  */
 package exoplex.client.exogeni;
 
-import exoplex.common.slice.SliceCommon;
-import exoplex.common.slice.SliceManager;
 import exoplex.common.utils.Exec;
 import exoplex.common.utils.HttpUtil;
 import exoplex.common.utils.SafeUtils;
@@ -12,12 +10,13 @@ import exoplex.common.utils.ServerOptions;
 import exoplex.sdx.advertise.PolicyAdvertise;
 import exoplex.sdx.advertise.RouteAdvertise;
 import exoplex.sdx.safe.SafeManager;
+import exoplex.sdx.slice.exogeni.SliceCommon;
+import exoplex.sdx.slice.exogeni.SliceManager;
 import org.apache.commons.cli.CommandLine;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.json.JSONObject;
 import org.renci.ahab.libndl.resources.request.ComputeNode;
-import org.renci.ahab.libtransport.util.TransportException;
 import safe.SdxRoutingSlang;
 
 import java.io.BufferedReader;
@@ -38,7 +37,7 @@ public class SdxExogeniClient extends SliceCommon {
   public SdxExogeniClient(String sliceName, String IPPrefix, String safeKeyFile, String[] args) {
     cmd = ServerOptions.parseCmd(args);
     String configFilePath = cmd.getOptionValue("config");
-    initializeExoGENIContexts(configFilePath);
+    readConfig(configFilePath);
     this.ipIprefix = IPPrefix;
     this.safeKeyFile = safeKeyFile;
     this.sliceName = sliceName;
@@ -52,14 +51,12 @@ public class SdxExogeniClient extends SliceCommon {
     //keyLocation = args[1];
     //controllerUrl = args[2]; //"https://geni.renci.org:11443/orca/xmlrpc";
     //sliceName = args[3];
-    //sshkey=args[6];
+    //sshKey=args[6];
     //keyhash=args[7];
 
     cmd = ServerOptions.parseCmd(args);
     String configFilePath = cmd.getOptionValue("config");
-    initializeExoGENIContexts(configFilePath);
-
-    sliceProxy = SliceManager.getSliceProxy(pemLocation, keyLocation, controllerUrl);
+    readConfig(configFilePath);
 
     logPrefix = "[" + sliceName + "] ";
 
@@ -74,11 +71,16 @@ public class SdxExogeniClient extends SliceCommon {
 
   public void setSafeServer(String safeIP) {
     setSafeServerIp(safeIP);
+    if (safeManager == null) {
+      safeManager = new SafeManager(safeServerIp, safeKeyFile, sshKey);
+    } else {
+      safeManager.setSafeServerIp(safeServerIp);
+    }
     safeChecked = true;
   }
 
   private void loadSlice() throws Exception {
-    serverSlice = new SliceManager(sliceName, pemLocation, keyLocation, controllerUrl);
+    serverSlice = new SliceManager(sliceName, pemLocation, keyLocation, controllerUrl, sshKey);
     serverSlice.reloadSlice();
   }
 
@@ -155,7 +157,7 @@ public class SdxExogeniClient extends SliceCommon {
       }
     }
     ComputeNode node = serverSlice.getComputeNode(nodeName);
-    String res[] = Exec.sshExec("root", node.getManagementIP(), "ping  -c 1 " + ip, sshkey);
+    String res[] = Exec.sshExec("root", node.getManagementIP(), "ping  -c 1 " + ip, sshKey);
     logger.debug(res[0]);
     return res[0].contains("1 received");
   }
@@ -172,7 +174,7 @@ public class SdxExogeniClient extends SliceCommon {
       }
     }
     ComputeNode node = serverSlice.getComputeNode(nodeName);
-    String res[] = Exec.sshExec("root", node.getManagementIP(), "traceroute " + ip, sshkey);
+    String res[] = Exec.sshExec("root", node.getManagementIP(), "traceroute " + ip, sshKey);
     logger.debug(res[0]);
     return res[0];
   }
@@ -198,17 +200,8 @@ public class SdxExogeniClient extends SliceCommon {
     try {
       JSONObject jsonparams = new JSONObject();
       if (safeEnabled) {
-        if (!safeChecked) {
-          if (serverSlice.getResourceByName("safe-server") != null) {
-            setSafeServerIp(serverSlice.getComputeNode("safe-server").getManagementIP());
-          } else {
-            setSafeServerIp(conf.getString("config.safeserver"));
-          }
-          //sm.verifySafeInstallation(riakIp);
-          safeChecked = true;
-        }
-        safeKeyHash = SafeUtils.getPrincipalId(safeServer, safeKeyFile);
-        jsonparams.put("ckeyhash", safeKeyHash);
+        checkSafe();
+        jsonparams.put("ckeyhash", safeManager.getSafeKeyHash());
       } else {
         jsonparams.put("ckeyhash", sliceName);
       }
@@ -244,9 +237,10 @@ public class SdxExogeniClient extends SliceCommon {
     PolicyAdvertise policyAdvertise = new PolicyAdvertise();
     policyAdvertise.srcPrefix = srcPrefix;
     policyAdvertise.destPrefix = destPrefix;
+    checkSafe();
     String sdToken = safeManager.postSdPolicySet(tag, policyAdvertise.getSrcPrefix(),
       policyAdvertise.getDestPrefix());
-    policyAdvertise.ownerPID = safeKeyHash;
+    policyAdvertise.ownerPID = safeManager.getSafeKeyHash();
     policyAdvertise.safeToken = sdToken;
     advertisePolicy(serverurl, policyAdvertise);
     logger.debug("client posted SD policy set and made policy advertisement");
@@ -294,14 +288,16 @@ public class SdxExogeniClient extends SliceCommon {
   }
 
   private void checkSafe() {
-    if (safeEnabled) {
+    if (safeEnabled && !safeChecked) {
+      safeManager = new SafeManager(safeServerIp, safeKeyFile, sshKey);
       if (safeInSlice && serverSlice.getResourceByName("safe-server") != null) {
         setSafeServerIp(serverSlice.getComputeNode("safe-server").getManagementIP());
       } else {
         setSafeServerIp(conf.getString("config.safeserver"));
       }
-      safeManager = new SafeManager(safeServerIp, safeKeyFile, sshkey);
       safeChecked = true;
+    }
+    if (safeKeyHash == null) {
       safeKeyHash = SafeUtils.getPrincipalId(safeServer, safeKeyFile);
     }
   }
@@ -364,17 +360,8 @@ public class SdxExogeniClient extends SliceCommon {
     try {
       ComputeNode node0_s2 = (ComputeNode) serverSlice.getResourceByName(params[1]);
       String node0_s2_stitching_GUID = node0_s2.getStitchingGUID();
-      String secret = "mysecret";
+      String secret = serverSlice.permitStitch(node0_s2_stitching_GUID);
       logger.debug("node0_s2_stitching_GUID: " + node0_s2_stitching_GUID);
-      try {
-        //s1
-        sliceProxy.permitSliceStitch(sliceName, node0_s2_stitching_GUID, secret);
-      } catch (TransportException e) {
-        // TODO Auto-generated catch block
-        logger.warn(logPrefix + "Failed to permit stitch");
-        e.printStackTrace();
-        return null;
-      }
       String sdxsite = node0_s2.getDomain();
       //post stitch request to SAFE
       JSONObject jsonparams = new JSONObject();
@@ -388,22 +375,8 @@ public class SdxExogeniClient extends SliceCommon {
         jsonparams.put("sdxnode", params[4]);
       }
       if (safeEnabled) {
-        if (!safeChecked) {
-          if (serverSlice.getResourceByName("safe-server") != null) {
-            setSafeServerIp(serverSlice.getComputeNode("safe-server").getManagementIP());
-          } else {
-            setSafeServerIp(conf.getString("config.safeserver"));
-          }
-          SafeManager sm = new SafeManager(safeServerIp, safeKeyFile, sshkey);
-          sm.verifySafeInstallation(riakIp);
-          safeChecked = true;
-        }
-        safeKeyHash = SafeUtils.getPrincipalId(safeServer, safeKeyFile);
-        jsonparams.put("ckeyhash", safeKeyHash);
-        /*
-        postSafeStitchRequest(safeKeyHash, sliceName, node0_s2_stitching_GUID, params[2],
-            params[3]);
-        */
+        checkSafe();
+        jsonparams.put("ckeyhash", safeManager.getSafeKeyHash());
       } else {
         jsonparams.put("ckeyhash", sliceName);
       }
@@ -419,11 +392,11 @@ public class SdxExogeniClient extends SliceCommon {
         logger.info(logPrefix + "set IP address of the stitch interface to " + ip);
         sleep(5);
         String mip = node0_s2.getManagementIP();
-        String result = Exec.sshExec("root", mip, "ifconfig eth1 " + ip, sshkey)[0];
+        String result = Exec.sshExec("root", mip, "ifconfig eth1 " + ip, sshKey)[0];
         String gateway = params[3].split("/")[0];
         Exec.sshExec("root", mip, "echo \"ip route 192.168.1.1/16 " + gateway +
-          "\" >>/etc/quagga/zebra.conf  ", sshkey);
-        Exec.sshExec("root", mip, "/etc/init.d/quagga restart", sshkey);
+          "\" >>/etc/quagga/zebra.conf  ", sshKey);
+        Exec.sshExec("root", mip, "/etc/init.d/quagga restart", sshKey);
         if (ping(node0_s2.getName(), gateway)) {
           logger.info(String.format("Ping to %s works", gateway));
           logger.info(logPrefix + "stitch completed.");
@@ -454,18 +427,8 @@ public class SdxExogeniClient extends SliceCommon {
       jsonparams.put("cslice", sliceName);
       jsonparams.put("creservid", node0_s2_stitching_GUID);
       if (safeEnabled) {
-        if (!safeChecked) {
-          if (serverSlice.getResourceByName("safe-server") != null) {
-            setSafeServerIp(serverSlice.getComputeNode("safe-server").getManagementIP());
-          } else {
-            setSafeServerIp(conf.getString("config.safeserver"));
-          }
-          SafeManager sm = new SafeManager(safeServerIp, safeKeyFile, sshkey);
-          sm.verifySafeInstallation(riakIp);
-          safeChecked = true;
-        }
-        safeKeyHash = SafeUtils.getPrincipalId(safeServer, safeKeyFile);
-        jsonparams.put("ckeyhash", safeKeyHash);
+        checkSafe();
+        jsonparams.put("ckeyhash", safeManager.getSafeKeyHash());
       } else {
         jsonparams.put("ckeyhash", sliceName);
       }

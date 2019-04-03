@@ -1,4 +1,4 @@
-package exoplex.common.slice;
+package exoplex.sdx.slice.exogeni;
 
 public class NodeBaseInfo {
   public String nisn;

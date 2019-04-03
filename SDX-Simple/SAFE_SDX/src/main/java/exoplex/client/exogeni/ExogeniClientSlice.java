@@ -1,16 +1,19 @@
 package exoplex.client.exogeni;
 
-import exoplex.common.slice.SiteBase;
-import exoplex.common.slice.SliceManager;
+import com.google.inject.Inject;
+import com.google.inject.Provider;
 import exoplex.common.utils.Exec;
 import exoplex.common.utils.ServerOptions;
 import exoplex.sdx.core.SliceHelper;
 import exoplex.sdx.safe.SafeManager;
+import exoplex.sdx.slice.exogeni.SiteBase;
+import exoplex.sdx.slice.exogeni.SliceManager;
 import org.apache.commons.cli.CommandLine;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.renci.ahab.libndl.resources.request.ComputeNode;
 import org.renci.ahab.libtransport.util.TransportException;
+import safe.Authority;
 
 import java.util.ArrayList;
 
@@ -25,18 +28,21 @@ public class ExogeniClientSlice extends SliceHelper {
   private String subnet;
   private String routerSite = "";
 
-  public ExogeniClientSlice() {
+  @Inject
+  public ExogeniClientSlice(Provider<Authority> authorityProvider) {
+    super(authorityProvider);
   }
 
 
   public ExogeniClientSlice(String[] args) {
+    super(null);
 
     logger.debug("SDX-Simple " + args[0]);
 
     CommandLine cmd = ServerOptions.parseCmd(args);
     String configFilePath = cmd.getOptionValue("config");
 
-    initializeExoGENIContexts(configFilePath);
+    this.readConfig(configFilePath);
 
     type = conf.getString("config.type");
     if (cmd.hasOption('d')) {
@@ -84,37 +90,37 @@ public class ExogeniClientSlice extends SliceHelper {
     } else if (type.equals("delete")) {
       SliceManager s2 = null;
       logger.info("deleting slice " + sliceName);
-      s2 = new SliceManager(sliceName, pemLocation, keyLocation, controllerUrl);
-      s2.reloadSlice();
+      s2 = new SliceManager(sliceName, pemLocation, keyLocation, controllerUrl, sshKey);
+      //s2.reloadSlice();
       s2.delete();
     }
   }
 
   public void configQuaggaRouting(SliceManager c1) {
-    c1.runCmdSlice("apt-get update; apt-get install -y quagga traceroute iperf", sshkey,
+    c1.runCmdSlice("apt-get update; apt-get install -y quagga traceroute iperf", sshKey,
       "CNode\\d+",
       true);
     for (ComputeNode node : c1.getComputeNodes()) {
-      String res[] = Exec.sshExec("root", node.getManagementIP(), "ls /etc/init.d", sshkey);
+      String res[] = Exec.sshExec("root", node.getManagementIP(), "ls /etc/init.d", sshKey);
       while (!res[0].contains("quagga")) {
-        res = Exec.sshExec("root", node.getManagementIP(), "apt-get install -y quagga", sshkey);
+        res = Exec.sshExec("root", node.getManagementIP(), "apt-get install -y quagga", sshKey);
       }
     }
-    c1.runCmdSlice("sed -i -- 's/zebra=no/zebra=yes/g' /etc/quagga/daemons", sshkey, "CNode\\d+",
+    c1.runCmdSlice("sed -i -- 's/zebra=no/zebra=yes/g' /etc/quagga/daemons", sshKey, "CNode\\d+",
       true);
     String Prefix = subnet.split("/")[0];
     String mip = c1.getComputeNode("CNode1").getManagementIP();
-    Exec.sshExec("root", mip, "echo \"ip route 192.168.1.1/16 " + Prefix + "\" >>/etc/quagga/zebra.conf  ", sshkey);
-    Exec.sshExec("root", mip, "sed -i -- 's/zebra=no/zebra=yes/g' /etc/quagga/daemons\n", sshkey);
-    String res[] = Exec.sshExec("root", mip, "ls /etc/quagga", sshkey);
+    Exec.sshExec("root", mip, "echo \"ip route 192.168.1.1/16 " + Prefix + "\" >>/etc/quagga/zebra.conf  ", sshKey);
+    Exec.sshExec("root", mip, "sed -i -- 's/zebra=no/zebra=yes/g' /etc/quagga/daemons\n", sshKey);
+    String res[] = Exec.sshExec("root", mip, "ls /etc/quagga", sshKey);
     while (!res[0].contains("zebra.conf") || !res[0].contains("zebra.conf")) {
-      c1.runCmdSlice("apt-get update; apt-get install -y quagga iperf", sshkey, "CNode\\d+",
+      c1.runCmdSlice("apt-get update; apt-get install -y quagga iperf", sshKey, "CNode\\d+",
         true);
-      res = Exec.sshExec("root", mip, "ls /etc/quagga", sshkey);
-      Exec.sshExec("root", mip, "echo \"ip route 192.168.1.1/16 " + Prefix + "\" >>/etc/quagga/zebra.conf  ", sshkey);
-      Exec.sshExec("root", mip, "sed -i -- 's/zebra=no/zebra=yes/g' /etc/quagga/daemons\n", sshkey);
+      res = Exec.sshExec("root", mip, "ls /etc/quagga", sshKey);
+      Exec.sshExec("root", mip, "echo \"ip route 192.168.1.1/16 " + Prefix + "\" >>/etc/quagga/zebra.conf  ", sshKey);
+      Exec.sshExec("root", mip, "sed -i -- 's/zebra=no/zebra=yes/g' /etc/quagga/daemons\n", sshKey);
     }
-    Exec.sshExec("root", mip, "/etc/init.d/quagga restart", sshkey);
+    Exec.sshExec("root", mip, "/etc/init.d/quagga restart", sshKey);
   }
 
   public void run(String customerName, String ipPrefix, String site, String riakIp) throws
@@ -124,6 +130,7 @@ public class ExogeniClientSlice extends SliceHelper {
     if (type.equals("client")) {
       routerSite = site;
       subnet = ipPrefix;
+      this.riakIp = riakIp;
       computeIP(subnet);
       logger.info("Client start");
       sliceName = customerName;
@@ -147,8 +154,8 @@ public class ExogeniClientSlice extends SliceHelper {
     } else if (type.equals("delete")) {
       SliceManager s2 = null;
       logger.info("deleting slice " + sliceName);
-      s2 = new SliceManager(sliceName, pemLocation, keyLocation, controllerUrl);
-      s2.reloadSlice();
+      s2 = new SliceManager(sliceName, pemLocation, keyLocation, controllerUrl, sshKey);
+      //s2.reloadSlice();
       s2.delete();
     }
   }
@@ -157,7 +164,9 @@ public class ExogeniClientSlice extends SliceHelper {
     throws TransportException {//=1, String subnet="")
     //Main Example Code
 
-    SliceManager s = SliceManager.create(sliceName, pemLocation, keyLocation, controllerUrl, sctx);
+    SliceManager s = new SliceManager(sliceName, pemLocation, keyLocation, controllerUrl,
+      sshKey);
+    s.createSlice();
 
     ArrayList<ComputeNode> nodelist = new ArrayList<ComputeNode>();
     for (int i = 0; i < num; i++) {
@@ -178,7 +187,8 @@ public class ExogeniClientSlice extends SliceHelper {
     }
     if (safeEnabled) {
       if (safeInSlice) {
-        s.addSafeServer(serverSite, riakIp, SafeManager.safeDockerImage, SafeManager.safeServerScript);
+        s.addSafeServer(serverSite, riakIp, SafeManager.getSafeDockerImage(), SafeManager
+          .getSafeServerScript());
       }
     }
     return s;

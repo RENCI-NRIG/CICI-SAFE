@@ -1,4 +1,4 @@
-package exoplex.common.slice;
+package exoplex.sdx.slice.exogeni;
 
 import org.renci.ahab.libndl.Slice;
 import org.renci.ahab.libndl.resources.request.ComputeNode;

@@ -1,8 +1,8 @@
 package safe.multisdx;
 
-
+import com.google.inject.Inject;
 import exoplex.common.utils.SafeUtils;
-import exoplex.demo.multisdx.MultiSdxSetting;
+import exoplex.demo.AbstractTestSetting;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -10,7 +10,7 @@ import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.LoggerContext;
 import org.apache.logging.log4j.core.config.Configuration;
 import org.apache.logging.log4j.core.config.LoggerConfig;
-import safe.AuthorityBase;
+import safe.Authority;
 import safe.SdxRoutingSlang;
 
 import java.util.ArrayList;
@@ -18,7 +18,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
-public class AuthorityMockMultiSdx extends AuthorityBase implements SdxRoutingSlang {
+public class AuthorityMockMultiSdx extends Authority implements SdxRoutingSlang {
 
   static Logger logger = LogManager.getLogger(AuthorityMockMultiSdx.class);
 
@@ -34,8 +34,15 @@ public class AuthorityMockMultiSdx extends AuthorityBase implements SdxRoutingSl
 
   public ArrayList<String> slices = new ArrayList<>();
 
+  public AbstractTestSetting testSetting;
+
   public AuthorityMockMultiSdx(String safeServer) {
     super(safeServer);
+  }
+
+  @Inject
+  public AuthorityMockMultiSdx(AbstractTestSetting testSetting) {
+    this.testSetting = testSetting;
   }
 
   public static void main(String[] args) {
@@ -64,18 +71,22 @@ public class AuthorityMockMultiSdx extends AuthorityBase implements SdxRoutingSl
     }
   }
 
+  public void setSafeServer(String safeServer) {
+    this.safeServer = safeServer;
+  }
+
   public void makeSafePreparation() {
     if (!authorizationMade) {
       multiSdxSetting();
       addPrincipals();
       initPrincipals();
       initializeMultiSdxAuth();
-      for (String slice : MultiSdxSetting.clientSlices) {
-        addMultiSdxUserSlice(MultiSdxSetting.clientKeyMap.get(slice), slice, MultiSdxSetting
+      for (String slice : testSetting.clientSlices) {
+        addMultiSdxUserSlice(testSetting.clientKeyMap.get(slice), slice, testSetting
           .clientIpMap.get(slice));
       }
-      for (String slice : MultiSdxSetting.sdxSliceNames) {
-        addMultiSdxUserSlice(MultiSdxSetting.sdxKeyMap.get(slice), slice, MultiSdxSetting
+      for (String slice : testSetting.sdxSliceNames) {
+        addMultiSdxUserSlice(testSetting.sdxKeyMap.get(slice), slice, testSetting
           .sdxIpMap.get(slice));
       }
       //checkAuthorization();
@@ -84,14 +95,14 @@ public class AuthorityMockMultiSdx extends AuthorityBase implements SdxRoutingSl
   }
 
   private void multiSdxSetting() {
-    slices.addAll(MultiSdxSetting.sdxSliceNames);
-    for (String key : MultiSdxSetting.sdxKeyMap.keySet()) {
-      sliceKeyMap.put(key, MultiSdxSetting.sdxKeyMap.get(key));
-      sliceIpMap.put(key, MultiSdxSetting.sdxIpMap.get(key));
+    slices.addAll(testSetting.sdxSliceNames);
+    for (String key : testSetting.sdxKeyMap.keySet()) {
+      sliceKeyMap.put(key, testSetting.sdxKeyMap.get(key));
+      sliceIpMap.put(key, testSetting.sdxIpMap.get(key));
     }
-    for (String key : MultiSdxSetting.clientSlices) {
-      sliceKeyMap.put(key, MultiSdxSetting.clientKeyMap.get(key));
-      sliceIpMap.put(key, MultiSdxSetting.clientIpMap.get(key));
+    for (String key : testSetting.clientSlices) {
+      sliceKeyMap.put(key, testSetting.clientKeyMap.get(key));
+      sliceIpMap.put(key, testSetting.clientIpMap.get(key));
       slices.add(key);
     }
   }
@@ -147,7 +158,7 @@ public class AuthorityMockMultiSdx extends AuthorityBase implements SdxRoutingSl
 
     String piCap = simpleEndorseMent(postPIEndorsement, "key_p1", "key_p4", "PI");
 
-    for (String key : MultiSdxSetting.sdxKeyMap.values()) {
+    for (String key : testSetting.sdxKeyMap.values()) {
       simpleEndorseMent(postUserEndorsement, "key_p1", key, "User");
     }
 
@@ -172,7 +183,7 @@ public class AuthorityMockMultiSdx extends AuthorityBase implements SdxRoutingSl
     String sliceControlRef = safePost(postStandardSliceControlSet, "key_p3");
     String slicePrivRef = safePost(postStandardSliceDefaultPrivilegeSet, "key_p3");
     //post authorize policy
-    for (String key : MultiSdxSetting.sdxKeyMap.values()) {
+    for (String key : testSetting.sdxKeyMap.values()) {
       safePost(postStitchPolicy, key);
       safePost(postOwnPrefixPolicy, key);
       safePost(postRoutingPolicy, key);
@@ -191,11 +202,11 @@ public class AuthorityMockMultiSdx extends AuthorityBase implements SdxRoutingSl
 
     //Tag Delegation to SDXes
     logger.debug("end");
-    for (String sdxslice : MultiSdxSetting.sdxSliceNames) {
-      for (String t : MultiSdxSetting.sdxASTags.get(sdxslice)) {
+    for (String sdxslice : testSetting.sdxSliceNames) {
+      for (String t : testSetting.sdxASTags.get(sdxslice)) {
         String tag = getPrincipalId("tagauthority") + ":" + t;
         safePost(postTagSet, "tagauthority", new String[]{tag});
-        String sdxKeyFile = MultiSdxSetting.sdxKeyMap.get(sdxslice);
+        String sdxKeyFile = testSetting.sdxKeyMap.get(sdxslice);
         String sdxKey = getPrincipalId(sdxKeyFile);
         String tagToken = safePost(postGrantTagPriv, "tagauthority", new Object[]{sdxKey, tag,
           true});
@@ -203,7 +214,7 @@ public class AuthorityMockMultiSdx extends AuthorityBase implements SdxRoutingSl
       }
     }
     //post user's authorized AS attr acls
-    for (String slice : MultiSdxSetting.clientSlices) {
+    for (String slice : testSetting.clientSlices) {
 
     }
   }
@@ -252,7 +263,7 @@ public class AuthorityMockMultiSdx extends AuthorityBase implements SdxRoutingSl
       sliceToken.get(slice), sliceId));
 
     //UserAcl
-    for (String sdxKey : MultiSdxSetting.sdxKeyMap.values()) {
+    for (String sdxKey : testSetting.sdxKeyMap.values()) {
       safePost(postUserAclEntry, sdxKey, new String[]{getPrincipalId(sliceKeyMap.get
         (slice))});
     }
@@ -264,7 +275,7 @@ public class AuthorityMockMultiSdx extends AuthorityBase implements SdxRoutingSl
       parentPrefix});
     safePost(postDlgToken, userKeyFile, new String[]{ipToken, uip});
     safePost(updateSubjectSet, userKeyFile, new String[]{ipToken});
-    for (String sdxKey : MultiSdxSetting.sdxKeyMap.values()) {
+    for (String sdxKey : testSetting.sdxKeyMap.values()) {
       authorize(authorizeOwnPrefix, sdxKey, new String[]{userKey, uip});
     }
 
@@ -272,8 +283,8 @@ public class AuthorityMockMultiSdx extends AuthorityBase implements SdxRoutingSl
 
     //userTagAcl
     //user post Connect policy
-    if (MultiSdxSetting.userTags.containsKey(slice)) {
-      for (String t : MultiSdxSetting.userTags.get(slice)) {
+    if (testSetting.clientTags.containsKey(slice)) {
+      for (String t : testSetting.clientTags.get(slice)) {
         String tag = getPrincipalId("tagauthority") + ":" + t;
         safePost(postTagSet, "tagauthority", new String[]{tag});
         String tagToken = safePost(postGrantTagPriv, "tagauthority", new Object[]{userKey, tag, true});
@@ -284,12 +295,12 @@ public class AuthorityMockMultiSdx extends AuthorityBase implements SdxRoutingSl
     }
 
     //post AS tag acls
-    if (MultiSdxSetting.userASTagAcls.containsKey(slice)) {
-      for (String t : MultiSdxSetting.userASTagAcls.get(slice)) {
+    if (testSetting.clientASTagAcls.containsKey(slice)) {
+      for (String t : testSetting.clientASTagAcls.get(slice)) {
         String astag = getPrincipalId("tagauthority") + ":" + t;
         safePost(postASTagAclEntry, userKeyFile, new String[]{astag, uip});
       }
-      for (ImmutablePair<String, String> pair : MultiSdxSetting.userSDASTagAcls.getOrDefault(slice,
+      for (ImmutablePair<String, String> pair : testSetting.clientSDASTagAcls.getOrDefault(slice,
         new ArrayList<>())) {
         String astag = getPrincipalId("tagauthority") + ":" + pair.getRight();
         String srcip = String.format("ipv4\\\"%s\\\"", pair.getLeft());

@@ -1,8 +1,7 @@
 package exoplex.sdx.core;
 
-import exoplex.common.slice.SiteBase;
-import exoplex.common.slice.SliceEnv;
-import exoplex.common.slice.SliceManager;
+import com.google.inject.Inject;
+import com.google.inject.Provider;
 import exoplex.common.utils.Exec;
 import exoplex.common.utils.HttpUtil;
 import exoplex.common.utils.ServerOptions;
@@ -14,12 +13,16 @@ import exoplex.sdx.bro.BroManager;
 import exoplex.sdx.network.Link;
 import exoplex.sdx.network.RoutingManager;
 import exoplex.sdx.safe.SafeManager;
+import exoplex.sdx.slice.SliceEnv;
+import exoplex.sdx.slice.exogeni.SiteBase;
+import exoplex.sdx.slice.exogeni.SliceManager;
 import org.apache.commons.cli.CommandLine;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.json.JSONObject;
 import org.renci.ahab.libndl.resources.request.*;
 import org.renci.ahab.libtransport.util.TransportException;
+import safe.Authority;
 import safe.SdxRoutingSlang;
 
 import java.util.*;
@@ -90,6 +93,11 @@ public class SdxManager extends SliceHelper {
   //The name of the link in SDX slice stitched to customer node
   private ConcurrentHashMap<String, String> stitchNet = new ConcurrentHashMap<>();
 
+  @Inject
+  public SdxManager(Provider<Authority> authorityProvider) {
+    super(authorityProvider);
+  }
+
   public String getSDNControllerIP() {
     return SDNControllerIP;
   }
@@ -127,7 +135,7 @@ public class SdxManager extends SliceHelper {
   }
 
   public void loadSlice() throws TransportException {
-    serverSlice = new SliceManager(sliceName, pemLocation, keyLocation, controllerUrl);
+    serverSlice = new SliceManager(sliceName, pemLocation, keyLocation, controllerUrl, sshKey);
     try {
       serverSlice.reloadSlice();
     } catch (Exception e) {
@@ -152,7 +160,7 @@ public class SdxManager extends SliceHelper {
       } else {
         setSafeServerIp(conf.getString("config.safeserver"));
       }
-      safeManager = new SafeManager(safeServerIp, safeKeyFile, sshkey);
+      safeManager = new SafeManager(safeServerIp, safeKeyFile, sshKey);
       advertiseManager = new AdvertiseManager(safeManager.getSafeKeyHash(), safeManager);
     }
     //configRouting(serverslice,OVSController,SDNController,"(c\\d+)","(sp-c\\d+.*)");
@@ -162,7 +170,7 @@ public class SdxManager extends SliceHelper {
 
   public void startSdxServer(String[] args) throws TransportException, Exception {
     CommandLine cmd = ServerOptions.parseCmd(args);
-    initializeExoGENIContexts(cmd.getOptionValue("config"));
+    this.readConfig(cmd.getOptionValue("config"));
     if (conf.hasPath("config.ipprefix")) {
       IPPrefix = conf.getString("config.ipprefix");
       computeIP(IPPrefix);
@@ -178,7 +186,7 @@ public class SdxManager extends SliceHelper {
 
   void startSdxServer(String[] args, String sliceName) throws TransportException, Exception {
     CommandLine cmd = ServerOptions.parseCmd(args);
-    initializeExoGENIContexts(cmd.getOptionValue("config"));
+    this.readConfig(cmd.getOptionValue("config"));
     this.sliceName = sliceName;
     if (cmd.hasOption('r')) {
       clearSdx();
@@ -192,7 +200,7 @@ public class SdxManager extends SliceHelper {
     for (ComputeNode node : serverSlice.getComputeNodes()) {
       if (node.getName().matches(broPattern)) {
         Exec.sshExec("root", node.getManagementIP(), "/usr/bin/rm *.log; pkill bro;" +
-          "/usr/bin/screen -d -m /opt/bro/bin/bro -i eth1 test-all-policy.bro", sshkey);
+          "/usr/bin/screen -d -m /opt/bro/bin/bro -i eth1 test-all-policy.bro", sshKey);
       }
     }
   }
@@ -200,14 +208,14 @@ public class SdxManager extends SliceHelper {
 
   public void delFlows() {
     //routingmanager.deleteAllFlows(getSDNController());
-    serverSlice.runCmdSlice(String.format("ovs-ofctl %s del-flows br0", SliceEnv.OFP), sshkey,
+    serverSlice.runCmdSlice(String.format("ovs-ofctl %s del-flows br0", SliceEnv.OFP), sshKey,
       routerPattern,
       false);
   }
 
   public void delBridges() {
     routingmanager = new RoutingManager();
-    serverSlice.runCmdSlice(String.format("ovs-vsctl %s del-br br0", SliceEnv.OFP), sshkey,
+    serverSlice.runCmdSlice(String.format("ovs-vsctl %s del-br br0", SliceEnv.OFP), sshKey,
       routerPattern,
       false);
   }
@@ -364,7 +372,7 @@ public class SdxManager extends SliceHelper {
   }
 
   private int getInterfaceNum(String ip) {
-    String res[] = Exec.sshExec("root", ip, "/bin/bash /root/ifaces.sh", sshkey);
+    String res[] = Exec.sshExec("root", ip, "/bin/bash /root/ifaces.sh", sshKey);
     logger.debug(String.format("Interfaces: %s", res[0]));
     int num = res[0].split("\n").length;
     return num;
@@ -408,16 +416,7 @@ public class SdxManager extends SliceHelper {
 
       ComputeNode node0_s2 = (ComputeNode) serverSlice.getResourceByName(myNode);
       String node0_s2_stitching_GUID = node0_s2.getStitchingGUID();
-      String secret = "mysecret";
-      logger.debug("node0_s2_stitching_GUID: " + node0_s2_stitching_GUID);
-      try {
-        serverSlice.permitStitch(secret, node0_s2_stitching_GUID);
-      } catch (TransportException e) {
-        // TODO Auto-generated catch block
-        logger.warn(logPrefix + "Failed to permit stitch");
-        e.printStackTrace();
-        return null;
-      }
+      String secret = serverSlice.permitStitch(node0_s2_stitching_GUID);
       String sdxsite = node0_s2.getDomain();
       //post stitch request to SAFE
       JSONObject jsonparams = new JSONObject();
@@ -676,10 +675,8 @@ public class SdxManager extends SliceHelper {
 
     String stitchLinkName = stitchNet.get(customerReserveId);
     String stitchNodeName = stitchLinkName.split("_")[1];
-    BroadcastNetwork net = (BroadcastNetwork) serverSlice.getResourceByName(stitchLinkName);
-    String stitchNetReserveId = net.getStitchingGUID();
-    sliceProxy.undoSliceStitch(sliceName, stitchNetReserveId, customerSlice,
-      customerReserveId);
+
+    serverSlice.unstitch(stitchLinkName, customerSlice, customerReserveId);
 
     //clean status after undo stitching
     customerNodes.get(customerSafeKeyHash).remove(customerReserveId);
@@ -691,7 +688,7 @@ public class SdxManager extends SliceHelper {
       }
     }
     Long t2 = System.currentTimeMillis();
-    net.delete();
+    serverSlice.removeLink(stitchLinkName);
     serverSlice.commitAndWait();
     routingmanager.removeExternalLink(stitchName, stitchName.split("_")[1], SDNController);
     releaseIP(Integer.valueOf(stitchName.split("_")[2]));
@@ -703,7 +700,7 @@ public class SdxManager extends SliceHelper {
   }
 
   private String updateOvsInterface(SliceManager slice, String routerName) {
-    String res = slice.runCmdNode("/bin/bash ~/ovsbridge.sh " + OVSController, sshkey, routerName, true);
+    String res = slice.runCmdNode("/bin/bash ~/ovsbridge.sh " + OVSController, sshKey, routerName, true);
     return res;
   }
 
@@ -732,7 +729,7 @@ public class SdxManager extends SliceHelper {
     serverSlice.commitAndWait(10, resources);
     serverSlice.refresh();
     String resource_dir = conf.getString("config.resourcedir");
-    serverSlice.configBroNode(broName, routerName, resource_dir, SDNControllerIP, serverurl, sshkey);
+    serverSlice.configBroNode(broName, routerName, resource_dir, SDNControllerIP, serverurl, sshKey);
     updateOvsInterface(serverSlice, routerName);
     Link logLink = new Link();
     logLink.setName(getBroLinkName(broName, ip_to_use));
@@ -1229,7 +1226,7 @@ public class SdxManager extends SliceHelper {
         //serverSlice.waitTillActive();
         updateOvsInterface(serverSlice, nodeName);
         //routingmanager.replayCmds(routingmanager.getDPID(nodeName));
-        Exec.sshExec("root", node.getManagementIP(), "ifconfig;ovs-vsctl list port", sshkey);
+        Exec.sshExec("root", node.getManagementIP(), "ifconfig;ovs-vsctl list port", sshKey);
         routingmanager.newExternalLink(stitchname, ip, nodeName, gateway, SDNController);
         res = "Stitch operation Completed";
         logger.info(logPrefix + res);
@@ -1268,8 +1265,8 @@ public class SdxManager extends SliceHelper {
       "ryu/ryu/app/rest_router_mirror.py ryu/ryu/app/ofctl_rest.py\"\n";
     //String script = "docker exec -d plexus /bin/bash -c  \"cd /root;pkill ryu-manager;
     // ryu-manager ryu/ryu/app/rest_router.py|tee log\"\n";
-    Exec.sshExec("root", plexusip, script, sshkey);
-    serverSlice.runCmdByIP(script, sshkey, plexusip, true);
+    Exec.sshExec("root", plexusip, script, sshKey);
+    serverSlice.runCmdByIP(script, sshKey, plexusip, true);
   }
 
   private void restartPlexus(String plexusip, String type) {
@@ -1282,8 +1279,8 @@ public class SdxManager extends SliceHelper {
         "ryu/ryu/app/ofctl_rest.py\"\n";
       //String script = "docker exec -d plexus /bin/bash -c  \"cd /root;pkill ryu-manager;
       // ryu-manager ryu/ryu/app/rest_router.py|tee log\"\n";
-      Exec.sshExec("root", plexusip, script, sshkey);
-      serverSlice.runCmdByIP(script, sshkey, plexusip, true);
+      Exec.sshExec("root", plexusip, script, sshKey);
+      serverSlice.runCmdByIP(script, sshKey, plexusip, true);
     }
   }
 
@@ -1426,12 +1423,12 @@ public class SdxManager extends SliceHelper {
     checkScripts(serverSlice, nodeName);
     logger.debug(nodeName + " " + mip);
     updateOvsInterface(serverSlice, nodeName);
-    String result = serverSlice.getDpid(nodeName, sshkey);
+    String result = serverSlice.getDpid(nodeName, sshKey);
     logger.debug("Trying to get DPID of the router " + nodeName);
     while (result == null || !validDPID(result)) {
       updateOvsInterface(serverSlice, nodeName);
       sleep(1);
-      result = serverSlice.getDpid(nodeName, sshkey);
+      result = serverSlice.getDpid(nodeName, sshKey);
     }
     result = result.replace("\n", "");
     logger.debug(String.format("Get router info %s %s %s", nodeName, mip, result));
@@ -1593,7 +1590,7 @@ public class SdxManager extends SliceHelper {
     logger.debug("Get flow installation time on " + routername + " for " + flowPattern);
     try {
       String result = Exec.sshExec("root", getManagementIP(routername), getEchoTimeCMD() +
-        String.format("ovs-ofctl %s dump-flows br0", SliceEnv.OFP), sshkey)[0];
+        String.format("ovs-ofctl %s dump-flows br0", SliceEnv.OFP), sshKey)[0];
       String[] parts = result.split("\n");
       String curMillis = parts[0].split(":")[1];
       String flow = "";
@@ -1615,12 +1612,12 @@ public class SdxManager extends SliceHelper {
   }
 
   public void checkFlowTableForPair(String src, String dst, String p1, String p2) {
-    routingmanager.checkFLowTableForPair(p1, p2, src, dst, sshkey, logger);
+    routingmanager.checkFLowTableForPair(p1, p2, src, dst, sshKey, logger);
   }
 
   public int getNumRouteEntries(String routerName, String flowPattern) {
     String result = Exec.sshExec("root", getManagementIP(routerName), getEchoTimeCMD() +
-      String.format("ovs-ofctl %s dump-flows br0", SliceEnv.OFP), sshkey)[0];
+      String.format("ovs-ofctl %s dump-flows br0", SliceEnv.OFP), sshKey)[0];
     String[] parts = result.split("\n");
     String curMillis = parts[0].split(":")[1];
     int num = 0;
@@ -1645,7 +1642,7 @@ public class SdxManager extends SliceHelper {
     logger.debug("------------------");
     logger.debug(String.format("Flow table: %s - %s", sliceName, node));
     String result = Exec.sshExec("root", getManagementIP(node), getEchoTimeCMD() +
-      String.format("ovs-ofctl %s dump-flows br0", SliceEnv.OFP), sshkey)[0];
+      String.format("ovs-ofctl %s dump-flows br0", SliceEnv.OFP), sshKey)[0];
     String[] parts = result.split("\n");
     for (String s : parts) {
       logger.debug(s);

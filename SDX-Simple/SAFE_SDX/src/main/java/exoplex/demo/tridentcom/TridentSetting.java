@@ -1,6 +1,9 @@
 package exoplex.demo.tridentcom;
 
+import com.google.inject.Inject;
+import com.google.inject.Provider;
 import exoplex.sdx.core.SliceHelper;
+import safe.Authority;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -14,6 +17,7 @@ public class TridentSetting extends SliceHelper {
   final static String sdxName = "sdx-tri";
   static String userDir = System.getProperty("user.dir");
   static String sdxSimpleDir = userDir.split("SDX-Simple")[0] + "SDX-Simple/";
+  public final static String sdxConfig = sdxSimpleDir + "config/tri.conf";
   public final static String[] sdxArgs = new String[]{"-c", sdxSimpleDir + "config/tri.conf"};
   public final static String[] sdxDelArgs = new String[]{"-c", sdxSimpleDir + "config/tri.conf",
     "-d"};
@@ -25,7 +29,7 @@ public class TridentSetting extends SliceHelper {
     sites.add("UNF");
     sites.add("UFL");
     //sites.add("UH");
-    sites.add("UNF");
+    sites.add("SL");
     //sites.add("SL");
     //sites.add("GWU");
     //sites.add("UMASS");
@@ -44,5 +48,10 @@ public class TridentSetting extends SliceHelper {
       clientIpMap.put(clientName, "192.168." + ipBase + ".1/24");
       ipBase += 10;
     }
+  }
+
+  @Inject
+  public TridentSetting(Provider<Authority> authorityProvider) {
+    super(authorityProvider);
   }
 }
