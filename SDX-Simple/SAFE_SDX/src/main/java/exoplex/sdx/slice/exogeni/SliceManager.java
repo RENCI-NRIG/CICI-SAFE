@@ -1,9 +1,12 @@
-package exoplex.common.slice;
+package exoplex.sdx.slice.exogeni;
 
 import exoplex.common.utils.Exec;
 import exoplex.common.utils.NetworkUtil;
 import exoplex.common.utils.PathUtil;
 import exoplex.common.utils.ScpTo;
+import exoplex.sdx.slice.Scripts;
+import exoplex.sdx.slice.SliceEnv;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.renci.ahab.libndl.Slice;
@@ -11,12 +14,13 @@ import org.renci.ahab.libndl.resources.common.ModelResource;
 import org.renci.ahab.libndl.resources.request.*;
 import org.renci.ahab.libndl.util.IP4Subnet;
 import org.renci.ahab.libtransport.*;
+import org.renci.ahab.libtransport.util.SSHAccessTokenFileFactory;
 import org.renci.ahab.libtransport.util.TransportException;
+import org.renci.ahab.libtransport.util.UtilTransportException;
 import org.renci.ahab.libtransport.xmlrpc.XMLRPCProxyFactory;
 import org.renci.ahab.libtransport.xmlrpc.XMLRPCTransportException;
 
 import java.net.URL;
-import java.nio.file.Path;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.locks.ReentrantLock;
@@ -24,15 +28,12 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-public class SafeSlice {
+public class SliceManager {
+  final static long DEFAULT_BW = 10000000;
+  final static Logger logger = LogManager.getLogger(SliceManager.class);
   private static final int COMMIT_COUNT = 5;
   private static final int INTERVAL = 10;
-  public static final String VMVersion = "Ubuntu 17.10";
-  public static final String SafeVMVersion = "Ubuntu 14.04 Docker";
-  public static final String CustomerVMVersion = "Ubuntu 14.04";
   private ReentrantLock lock = new ReentrantLock();
-  final static long DEFAULT_BW = 10000000;
-  final static Logger logger = LogManager.getLogger(SafeSlice.class);
   private ISliceTransportAPIv1 sliceProxy;
   private SliceAccessContext<SSHAccessToken> sctx;
   private String pemLocation;
@@ -40,10 +41,23 @@ public class SafeSlice {
   private String controllerUrl;
   private String sliceName;
   private Slice slice;
+  private String sshKey;
   private HashSet<String> reachableNodes = new HashSet<>();
 
+  public SliceManager(String sliceName, String pemLocation, String keyLocation, String
+    controllerUrl, String sshKey) {
+    this.sliceName = sliceName;
+    this.pemLocation = pemLocation;
+    this.keyLocation = keyLocation;
+    this.controllerUrl = controllerUrl;
+    this.sshKey = sshKey;
+    this.sliceProxy = getSliceProxy(pemLocation, keyLocation, controllerUrl);
+    refreshSshContext();
+    this.slice = null;
+  }
 
-  public SafeSlice(String pemLocation, String keyLocation, String controllerUrl, SliceAccessContext<SSHAccessToken> sctx) {
+  /*
+  public SliceManager(String pemLocation, String keyLocation, String controllerUrl, SliceAccessContext<SSHAccessToken> sctx) {
     this.pemLocation = pemLocation;
     this.keyLocation = keyLocation;
     this.controllerUrl = controllerUrl;
@@ -52,7 +66,7 @@ public class SafeSlice {
     this.slice = null;
   }
 
-  public SafeSlice(String pemLocation, String keyLocation, String controllerUrl) {
+  public SliceManager(String pemLocation, String keyLocation, String controllerUrl) {
     this.pemLocation = pemLocation;
     this.keyLocation = keyLocation;
     this.controllerUrl = controllerUrl;
@@ -60,7 +74,7 @@ public class SafeSlice {
     this.slice = null;
   }
 
-  public SafeSlice(String sliceName, String pemLocation, String keyLocation, String controllerUrl) {
+  public SliceManager(String sliceName, String pemLocation, String keyLocation, String controllerUrl) {
     this.sliceName = sliceName;
     this.pemLocation = pemLocation;
     this.keyLocation = keyLocation;
@@ -68,89 +82,126 @@ public class SafeSlice {
     this.sliceProxy = getSliceProxy(pemLocation, keyLocation, controllerUrl);
     this.slice = null;
   }
-
-  public void lockSlice(){
-    lock.lock();
-  }
-
-  public void unLockSlice(){
-    lock.unlock();
-  }
-
-  public void abort(){
-    try {
-      reloadSlice();
-      lock.unlock();
-    }catch (Exception e){
-
-    }
-  }
-
-  public void reloadSlice()throws Exception{
-    int i=0;
-    sliceProxy = getSliceProxy(pemLocation, keyLocation, controllerUrl);
-    do {
-      try {
-        slice = Slice.loadManifestFile(sliceProxy, sliceName);
-        if(slice != null) {
-          return;
-        }
-      } catch (XMLRPCTransportException e) {
-        logger.warn(e.getMessage());
-        try {
-          Thread.sleep((long) (INTERVAL * 1000));
-        } catch (InterruptedException var6) {
-          Thread.currentThread().interrupt();
-        }
-
-      } catch (TransportException ex) {
-        logger.warn(ex.getMessage());
-        try {
-          Thread.sleep((long) (INTERVAL * 1000));
-        } catch (InterruptedException var6) {
-          Thread.currentThread().interrupt();
-        }
-      }
-      i++;
-      slice = null;
-    }while (i<COMMIT_COUNT);
-    logger.error("failed to reload slice");
-    throw  new Exception(String.format("Unable to find %s among active slices", sliceName));
-
-  }
-
-  public static SafeSlice create(String sliceName, String pemLocation, String keyLocation, String controllerUrl, SliceAccessContext<SSHAccessToken>sctx) {
-    logger.info(String.format("create %s", sliceName));
-    SafeSlice safeSlice = new SafeSlice(pemLocation, keyLocation, controllerUrl, sctx);
-    safeSlice.sliceName = sliceName;
-    safeSlice.sliceProxy = getSliceProxy(pemLocation, keyLocation, controllerUrl);
-    safeSlice.sctx = sctx;
-    safeSlice.slice = Slice.create(safeSlice.sliceProxy, sctx, sliceName);
-    return safeSlice;
-  }
+  */
 
   public static Collection<String> getDomains() {
     return Slice.getDomains();
   }
 
-  public static SafeSlice loadManifestFile(String sliceName, String pemLocation, String keyLocation, String controllerUrl)
-      throws org.renci.ahab.libtransport.util.TransportException {
-    logger.info(String.format("loadSlice %s", sliceName));
-    SafeSlice s = new SafeSlice(pemLocation, keyLocation, controllerUrl);
-    s.sliceName = sliceName;
-    s.sliceProxy = getSliceProxy(pemLocation, keyLocation, controllerUrl);
-    s.pemLocation = pemLocation;
-    s.keyLocation = keyLocation;
-    s.controllerUrl = controllerUrl;
-    int i=0;
+  public static ISliceTransportAPIv1 getSliceProxy(String pem, String key, String controllerUrl) {
+    ISliceTransportAPIv1 sliceProxy = null;
+    try {
+      //ExoGENI controller context
+      ITransportProxyFactory ifac = new XMLRPCProxyFactory();
+      TransportContext ctx = new PEMTransportContext("", pem, key);
+      sliceProxy = ifac.getSliceProxy(ctx, new URL(controllerUrl));
+    } catch (Exception e) {
+      e.printStackTrace();
+      assert (false);
+    }
+    return sliceProxy;
+  }
+
+  private void refreshSshContext() {
+    //SSH context
+    sctx = new SliceAccessContext<>();
+    try {
+      SSHAccessTokenFileFactory fac;
+      fac = new SSHAccessTokenFileFactory(sshKey + ".pub", false);
+      SSHAccessToken t = fac.getPopulatedToken();
+      sctx.addToken("root", "root", t);
+      sctx.addToken("root", t);
+    } catch (UtilTransportException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+    }
+  }
+
+  public void createSlice() {
+    logger.info(String.format("create %s", sliceName));
+    slice = Slice.create(sliceProxy, sctx, sliceName);
+  }
+
+  public void permitStitch(String secret, String GUID) throws TransportException {
+    int times = 0;
+    while (times < COMMIT_COUNT) {
+      try {
+        //s1
+        sliceProxy = getSliceProxy(pemLocation, keyLocation, controllerUrl);
+        sliceProxy.permitSliceStitch(sliceName, GUID, secret);
+        break;
+      } catch (TransportException e) {
+        // TODO Auto-generated catch block
+        logger.warn("Failed to permit stitch, retry");
+        times++;
+        if (times == COMMIT_COUNT) {
+          throw e;
+        }
+        try {
+          Thread.sleep((long) (INTERVAL * 1000));
+        } catch (InterruptedException var6) {
+          Thread.currentThread().interrupt();
+        }
+      }
+    }
+  }
+
+  public String permitStitch(String GUID) throws TransportException {
+    int times = 0;
+    while (times < COMMIT_COUNT) {
+      try {
+        //s1
+        sliceProxy = getSliceProxy(pemLocation, keyLocation, controllerUrl);
+        String secret = RandomStringUtils.randomAlphabetic(10);
+        sliceProxy.permitSliceStitch(sliceName, GUID, secret);
+        return secret;
+      } catch (TransportException e) {
+        // TODO Auto-generated catch block
+        logger.warn("Failed to permit stitch, retry");
+        times++;
+        if (times == COMMIT_COUNT) {
+          throw e;
+        }
+        try {
+          Thread.sleep((long) (INTERVAL * 1000));
+        } catch (InterruptedException var6) {
+          Thread.currentThread().interrupt();
+        }
+      }
+    }
+    return null;
+  }
+
+  public void lockSlice() {
+    lock.lock();
+  }
+
+  public void unLockSlice() {
+    lock.unlock();
+  }
+
+  public void abort() {
+    try {
+      reloadSlice();
+      lock.unlock();
+    } catch (Exception e) {
+
+    }
+  }
+
+  public void reloadSlice() throws Exception {
+    int i = 0;
+    sliceProxy = getSliceProxy(pemLocation, keyLocation, controllerUrl);
     do {
       try {
-        s.slice = Slice.loadManifestFile(s.sliceProxy, sliceName);
-        break;
+        slice = Slice.loadManifestFile(sliceProxy, sliceName);
+        if (slice != null) {
+          return;
+        }
       } catch (XMLRPCTransportException e) {
         logger.warn(e.getMessage());
         try {
-          Thread.sleep((long) (INTERVAL * 1000));
+          Thread.sleep((long) (INTERVAL * 1000 * (i + 1)));
         } catch (InterruptedException var6) {
           Thread.currentThread().interrupt();
         }
@@ -158,18 +209,26 @@ public class SafeSlice {
       } catch (TransportException ex) {
         logger.warn(ex.getMessage());
         try {
-          Thread.sleep((long) (INTERVAL * 1000));
+          Thread.sleep((long) (INTERVAL * 1000 * (i + 1)));
         } catch (InterruptedException var6) {
           Thread.currentThread().interrupt();
         }
+        sliceProxy = getSliceProxy(pemLocation, keyLocation, controllerUrl);
       }
       i++;
-    }while (i<COMMIT_COUNT);
-    if(i==COMMIT_COUNT){
-      logger.warn("failed to load slice, slice = null");
-      s.slice = null;
+      sliceProxy = getSliceProxy(pemLocation, keyLocation, controllerUrl);
+      refreshSshContext();
+      slice = null;
+    } while (i < COMMIT_COUNT);
+    logger.error("failed to reload slice");
+    throw new Exception(String.format("Unable to find %s among active slices", sliceName));
+  }
+
+  public void resetHostNames(String sshKey) {
+    for (ComputeNode node : slice.getComputeNodes()) {
+      runCmdByIP(String.format("hostnamectl set-hostname %s-%s", sliceName, node.getName()), sshKey,
+        node.getManagementIP(), false);
     }
-    return s;
   }
 
   public ComputeNode addComputeNode(String name) {
@@ -177,21 +236,26 @@ public class SafeSlice {
     return this.slice.addComputeNode(name);
   }
 
-  private ComputeNode addComputeNode(
-      String name, String nodeImageURL,
-      String nodeImageHash, String nodeImageShortName, String nodeNodeType, String site,
-      String nodePostBootScript) {
+  public ComputeNode addComputeNode(
+    String name, String nodeImageURL,
+    String nodeImageHash, String nodeImageShortName, String nodeNodeType, String site,
+    String nodePostBootScript) {
     ComputeNode node0 = this.slice.addComputeNode(name);
     node0.setImage(nodeImageURL, nodeImageHash, nodeImageShortName);
     node0.setNodeType(nodeNodeType);
-    node0.setDomain(site);
-    node0.setPostBootScript(nodePostBootScript);
+    node0.setDomain(SiteBase.get(site));
+    if (nodePostBootScript != null) {
+      node0.setPostBootScript(nodePostBootScript);
+    }
     return node0;
   }
 
   public ComputeNode addComputeNode(String site, String name) {
-    logger.debug("Adding new compute node " + slice.getName());
-    NodeBaseInfo ninfo = NodeBase.getImageInfo(CustomerVMVersion);
+    logger.debug(String.format("Adding new compute node %s to slice %s", name, sliceName));
+    if (slice == null) {
+      createSlice();
+    }
+    NodeBaseInfo ninfo = NodeBase.getImageInfo(SliceEnv.CustomerVMVersion);
     String nodeImageShortName = ninfo.nisn;
     String nodeImageURL = ninfo.niurl;
     //http://geni-images.renci.org/images/standard/ubuntu/ub1304-ovs-opendaylight-v1.0.0.xml
@@ -201,13 +265,13 @@ public class SafeSlice {
     ComputeNode node0 = slice.addComputeNode(name);
     node0.setImage(nodeImageURL, nodeImageHash, nodeImageShortName);
     node0.setNodeType(nodeNodeType);
-    node0.setDomain(site);
+    node0.setDomain(SiteBase.get(site));
     node0.setPostBootScript(nodePostBootScript);
     return node0;
   }
 
-  public StorageNode addStorageNode(String name) {
-    return this.slice.addStorageNode(name);
+  public StorageNode addStorageNode(String name, long capacity, String mountpnt) {
+    return this.slice.addStorageNode(name, capacity, mountpnt);
   }
 
   public StitchPort addStitchPort(String name, String label, String port, long bandwidth) {
@@ -224,41 +288,41 @@ public class SafeSlice {
     return this.addBroadcastLink(name, DEFAULT_BW);
   }
 
-  public Interface attach(String nodeName, String linkName, String ip, String netmask){
+  public Interface attach(String nodeName, String linkName, String ip, String netmask) {
     ComputeNode node = null;
     BroadcastNetwork link = null;
     RequestResource obj;
-    if((obj = slice.getResourceByName(nodeName)) instanceof  BroadcastNetwork){
+    if ((obj = slice.getResourceByName(nodeName)) instanceof BroadcastNetwork) {
       link = (BroadcastNetwork) obj;
-    }else {
+    } else {
       node = (ComputeNode) obj;
     }
-    if((obj = slice.getResourceByName(linkName)) instanceof  BroadcastNetwork){
+    if ((obj = slice.getResourceByName(linkName)) instanceof BroadcastNetwork) {
       link = (BroadcastNetwork) obj;
-    }else {
+    } else {
       node = (ComputeNode) obj;
     }
 
     InterfaceNode2Net ifaceNode1 = (InterfaceNode2Net) link.stitch(node);
-    if(ip!= null) {
+    if (ip != null) {
       ifaceNode1.setIpAddress(ip);
       ifaceNode1.setNetmask(netmask);
     }
     return ifaceNode1;
   }
 
-  public Interface attach(String nodeName, String linkName){
+  public Interface attach(String nodeName, String linkName) {
     ComputeNode node = null;
     BroadcastNetwork link = null;
     RequestResource obj;
-    if((obj = slice.getResourceByName(nodeName)) instanceof  BroadcastNetwork){
+    if ((obj = slice.getResourceByName(nodeName)) instanceof BroadcastNetwork) {
       link = (BroadcastNetwork) obj;
-    }else {
+    } else {
       node = (ComputeNode) obj;
     }
-    if((obj = slice.getResourceByName(linkName)) instanceof  BroadcastNetwork){
+    if ((obj = slice.getResourceByName(linkName)) instanceof BroadcastNetwork) {
       link = (BroadcastNetwork) obj;
-    }else {
+    } else {
       node = (ComputeNode) obj;
     }
 
@@ -270,22 +334,33 @@ public class SafeSlice {
     return this.slice.getResourceByName(nm);
   }
 
-  public ComputeNode getComputeNode(String nm){
-    ComputeNode node =(ComputeNode) this.slice.getResourceByName(nm);
-    while( node ==null || node.getState() == null ||node.getManagementIP()==null){
+  public ComputeNode getComputeNode(String nm) {
+    ComputeNode node = (ComputeNode) this.slice.getResourceByName(nm);
+    while (node == null || node.getState() == null || node.getManagementIP() == null) {
       logger.debug(String.format("getComputeNode %s", nm));
       try {
         reloadSlice();
-      }catch (Exception e){
+      } catch (Exception e) {
 
       }
-      node =(ComputeNode) this.slice.getResourceByName(nm);
+      node = (ComputeNode) this.slice.getResourceByName(nm);
     }
     return node;
   }
 
   public Interface stitch(RequestResource r1, RequestResource r2) {
     return slice.stitch(r1, r2);
+  }
+
+  public void unstitch(String stitchLinkName, String customerSlice, String customerGUID) {
+    BroadcastNetwork net = (BroadcastNetwork) slice.getResourceByName(stitchLinkName);
+    String stitchNetReserveId = net.getStitchingGUID();
+    try {
+      sliceProxy.undoSliceStitch(sliceName, stitchNetReserveId, customerSlice,
+        customerGUID);
+    } catch (TransportException e) {
+      e.printStackTrace();
+    }
   }
 
   public String getName() {
@@ -312,7 +387,7 @@ public class SafeSlice {
         slice.commit();
         try {
           lock.unlock();
-        }catch (Exception e){
+        } catch (Exception e) {
           ;
         }
         return;
@@ -338,14 +413,15 @@ public class SafeSlice {
   }
 
   public void delete() {
-    int i=0;
+    logger.debug(String.format("deleting slice %s", sliceName));
+    int i = 0;
     do {
       try {
         sliceProxy.deleteSlice(sliceName);
         break;
       } catch (XMLRPCTransportException e) {
         logger.warn(e.getMessage());
-        if(e.getMessage().contains("unable to find slice")){
+        if (e.getMessage().contains("unable to find slice")) {
           break;
         }
         try {
@@ -363,7 +439,7 @@ public class SafeSlice {
         }
       }
       i++;
-    }while (i<COMMIT_COUNT);
+    } while (i < COMMIT_COUNT);
   }
 
   public String enableSliceStitching(RequestResource r, String secret) {
@@ -469,7 +545,7 @@ public class SafeSlice {
   public void commitAndWait() throws TransportException, Exception {
     commit();
     reloadSlice();
-    if(slice == null){
+    if (slice == null) {
       throw new Exception(String.format("Failed to create slice %s", sliceName));
     }
     waitTillActive();
@@ -493,17 +569,16 @@ public class SafeSlice {
     return res;
   }
 
-  public void waitTillActive() throws  Exception{
+  public void waitTillActive() throws Exception {
     waitTillActive(INTERVAL);
   }
 
-  public void waitTillActive(int interval) throws  Exception {
+  public void waitTillActive(int interval) throws Exception {
     List<String> computeNodes = getComputeNodes().stream().map(c -> c.getName()).collect(Collectors.toList());
     List<String> links = getBroadcastLinks().stream().map(c -> c.getName()).collect(Collectors.toList());
     computeNodes.addAll(links);
     waitTillActive(interval, computeNodes);
   }
-
 
   public boolean waitTillActive(int interval, List<String> resources) throws Exception {
     logger.debug("Wait until following resources are active: " + String.join(",", resources));
@@ -511,19 +586,19 @@ public class SafeSlice {
     while (true) {
       ArrayList<String> activeResources = new ArrayList<>();
       refresh();
-      logger.debug("SafeSlice: " + getAllResources());
+      logger.debug("SliceManager: " + getAllResources());
       for (ComputeNode c : getComputeNodes()) {
         logger.debug("[" + sliceName + "] Resource: " + c.getName() + ", state: " + c
-                .getState());
+          .getState());
         if (resources.contains(c.getName())) {
-          if(c.getState().contains("Closed")){
+          if (c.getState().contains("Closed")) {
             throw new Exception(String.format("Slice %s closed", sliceName));
           }
           if (!c.getState().equals("Active") || c.getManagementIP() == null) {
-          }else{
-            if(!reachableNodes.contains(c.getName()) && !NetworkUtil.checkReachability(c.getManagementIP())){
+          } else {
+            if (!reachableNodes.contains(c.getName()) && !NetworkUtil.checkReachability(c.getManagementIP())) {
               logger.warn(String.format("Node %s (%s) unreachable", c.getName(), c.getManagementIP()));
-            }else{
+            } else {
               activeResources.add(c.getName());
               reachableNodes.add(c.getName());
             }
@@ -533,7 +608,8 @@ public class SafeSlice {
       for (Network l : getBroadcastLinks()) {
         logger.debug("Resource: " + l.getName() + ", state: " + l.getState());
         if (resources.contains(l.getName())) {
-          if(l.getState().contains("Failed") || l.getState().contains("Closed")){
+          if (l.getState().contains("Failed") || l.getState().contains("Closed")) {
+            logger.warn(String.format("link %s failed or closed", l.getName()));
             return false;
           }
           if (l.getState().equals("Active")) {
@@ -590,7 +666,6 @@ public class SafeSlice {
     }
   }
 
-
   public void copyFile2Slice(String lfile, String rfile, String privkey,
                              String patn) {
     Pattern pattern = Pattern.compile(patn);
@@ -627,7 +702,6 @@ public class SafeSlice {
       e.printStackTrace();
     }
   }
-
 
   public void copyFile2Node(String lfile, String rfile, String privkey, String nodeName) {
     String ip = getComputeNode(nodeName).getManagementIP();
@@ -674,39 +748,39 @@ public class SafeSlice {
   }
 
   /**
-   *
    * @param mip
    * @param res
    * @param sshkey
    * @return true is there is uninstalled software
    */
-  private boolean processCmdRes(String mip, String res, String sshkey){
-    if(res.contains("ovs-vsctl: command not found") || res.contains("ovs-ofctl: command not found")){
+  private boolean processCmdRes(String mip, String res, String sshkey) {
+    if (res.contains("ovs-vsctl: command not found") || res.contains("ovs-ofctl: command not found")) {
       String[] result = Exec.sshExec("root", mip, "apt-get install -y openvswitch-switch", sshkey);
-      if(result[0].startsWith("error")){
+      if (result[0].startsWith("error")) {
         return true;
-      }else {
+      } else {
         return false;
       }
     }
     return false;
   }
 
-  public String runCmdNode(final String cmd, final String sshkey, String nodeName, boolean repeat){
+  public String runCmdNode(final String cmd, final String sshkey, String nodeName, boolean repeat) {
     String mip = getComputeNode(nodeName).getManagementIP();
     return runCmdByIP(cmd, sshkey, mip, repeat);
   }
 
-  public String runCmdByIP(final String cmd, final String sshkey, String mip, boolean repeat){
+  public String runCmdByIP(final String cmd, final String sshkey, String mip, boolean repeat) {
     logger.debug(mip + " run commands:" + cmd);
     String res[] = Exec.sshExec("root", mip, cmd, sshkey);
-    while(repeat && res[0].startsWith("error")){
+    while (repeat && (res[0] == null || res[0].startsWith("error"))) {
       logger.debug(res[1]);
       res = Exec.sshExec("root", mip, cmd, sshkey);
-      if(res[0].startsWith("error")){
-        try{
+      if (res[0].startsWith("error")) {
+        try {
           Thread.sleep(1000);
-        }catch (Exception e){}
+        } catch (Exception e) {
+        }
       }
     }
     return res[0];
@@ -742,15 +816,20 @@ public class SafeSlice {
   }
 
   public void addLink(String linkName, String nodeName, long
-      bw) {
+    bw) {
     logger.info(String.format("addLink %s %s %s", linkName, nodeName, bw));
     ComputeNode node = (ComputeNode) slice.getResourceByName(nodeName);
     Network net = slice.addBroadcastLink(linkName, bw);
     InterfaceNode2Net ifaceNode0 = (InterfaceNode2Net) net.stitch(node);
   }
 
+  public void removeLink(String linkName) {
+    BroadcastNetwork net = (BroadcastNetwork) slice.getResourceByName(linkName);
+    net.delete();
+  }
+
   public void addLink(String linkName, String ip, String netmask, String nodeName, long
-      bw) {
+    bw) {
     logger.info(String.format("addLink %s %s %s %s %s", linkName, ip, netmask, nodeName, bw));
     ComputeNode node = (ComputeNode) slice.getResourceByName(nodeName);
     Network net = slice.addBroadcastLink(linkName, bw);
@@ -760,7 +839,7 @@ public class SafeSlice {
   }
 
   public void addLink(String linkName, String ip1, String ip2, String netmask, String
-      node1, String node2, long bw) {
+    node1, String node2, long bw) {
     logger.info(String.format("addLink %s %s %s %s %s %s %s", linkName, ip1, ip2, netmask, node1, node2, bw));
     ComputeNode node_1 = (ComputeNode) slice.getResourceByName(node1);
     ComputeNode node_2 = (ComputeNode) slice.getResourceByName(node2);
@@ -774,7 +853,7 @@ public class SafeSlice {
   }
 
   public void addLink(String linkName, String
-      node1, String node2, long bw) {
+    node1, String node2, long bw) {
     logger.info(String.format("addLink %s %s %s %s", linkName, node1, node2, bw));
     ComputeNode node_1 = (ComputeNode) slice.getResourceByName(node1);
     ComputeNode node_2 = (ComputeNode) slice.getResourceByName(node2);
@@ -784,7 +863,7 @@ public class SafeSlice {
   }
 
   public void addCoreEdgeRouterPair(String site, String router1, String router2, String linkname, long bw) {
-    NodeBaseInfo ninfo = NodeBase.getImageInfo(VMVersion);
+    NodeBaseInfo ninfo = NodeBase.getImageInfo(SliceEnv.OVSVersion);
     String nodeImageShortName = ninfo.nisn;
     String nodeImageURL = ninfo.niurl;
     //http://geni-images.renci.org/images/standard/ubuntu/ub1304-ovs-opendaylight-v1.0.0.xml
@@ -792,18 +871,18 @@ public class SafeSlice {
     String nodeNodeType = "XO Medium";
     String nodePostBootScript = Scripts.getOVSScript();
     ComputeNode node0 = addComputeNode(router1, nodeImageURL,
-        nodeImageHash, nodeImageShortName, nodeNodeType, site,
-        nodePostBootScript);
+      nodeImageHash, nodeImageShortName, nodeNodeType, site,
+      nodePostBootScript);
     ComputeNode node1 = addComputeNode(router2, nodeImageURL,
-        nodeImageHash, nodeImageShortName, nodeNodeType, site,
-        nodePostBootScript);
+      nodeImageHash, nodeImageShortName, nodeNodeType, site,
+      nodePostBootScript);
     Network bronet = addBroadcastLink(linkname, bw);
     bronet.stitch(node0);
     bronet.stitch(node1);
   }
 
   public void addOvsRouter(String site, String router1) {
-    NodeBaseInfo ninfo = NodeBase.getImageInfo(VMVersion);
+    NodeBaseInfo ninfo = NodeBase.getImageInfo(SliceEnv.OVSVersion);
     String nodeImageShortName = ninfo.nisn;
     String nodeImageURL = ninfo.niurl;
     //http://geni-images.renci.org/images/standard/ubuntu/ub1304-ovs-opendaylight-v1.0.0.xml
@@ -811,12 +890,12 @@ public class SafeSlice {
     String nodeNodeType = "XO Medium";
     String nodePostBootScript = Scripts.getOVSScript();
     ComputeNode node0 = addComputeNode(router1, nodeImageURL,
-        nodeImageHash, nodeImageShortName, nodeNodeType, site,
-        nodePostBootScript);
+      nodeImageHash, nodeImageShortName, nodeNodeType, site,
+      nodePostBootScript);
   }
 
-  public void addDocker(String siteName, String nodeName, String script, String size){
-    NodeBaseInfo ninfo = NodeBase.getImageInfo(NodeBase.Docker);
+  public void addDocker(String siteName, String nodeName, String script, String size) {
+    NodeBaseInfo ninfo = NodeBase.getImageInfo(NodeBase.U14Docker);
     String dockerImageShortName = ninfo.nisn;
     String dockerImageURL = ninfo.niurl;
     String dockerImageHash = ninfo.nihash;
@@ -828,13 +907,15 @@ public class SafeSlice {
     node0.setPostBootScript(script);
   }
 
-  public void addRiakServer(String siteName, String nodeName){
+  public void addRiakServer(String siteName, String nodeName) {
     addDocker(siteName, nodeName, Scripts.getRiakPreBootScripts(), NodeBase.xoMedium);
 
   }
 
-  public void addSafeServer(String siteName,  String riakIp) {
-    addDocker(siteName, "safe-server", Scripts.getSafeScript_v1(riakIp), NodeBase.xoMedium);
+  public void addSafeServer(String siteName, String riakIp, String safeDockerImage, String
+    safeServerScript) {
+    addDocker(siteName, "safe-server", Scripts.getSafeScript_v1(riakIp, safeDockerImage,
+      safeServerScript), NodeBase.xoMedium);
   }
 
   public void addPlexusController(String controllerSite, String name) {
@@ -845,7 +926,7 @@ public class SafeSlice {
   public ComputeNode addBro(String broname, String domain) {
     String broN = "Centos 7.4 Bro";
     String broURL =
-        "http://geni-images.renci.org/images/standard/centos/centos7.4-bro-v1.0.4/centos7.4-demo.bro-v1.0.4.xml";
+      "http://geni-images.renci.org/images/standard/centos/centos7.4-bro-v1.0.4/centos7.4-demo.bro-v1.0.4.xml";
     String broHash = "50c973571fc6da95c3f70d0f71c9aea1659ff780";
     String broType = "XO Medium";
     ComputeNode bro = addComputeNode(broname);
@@ -854,19 +935,6 @@ public class SafeSlice {
     bro.setNodeType(broType);
     bro.setPostBootScript(Scripts.getBroScripts());
     return bro;
-  }
-  public static ISliceTransportAPIv1 getSliceProxy(String pem, String key, String controllerUrl) {
-    ISliceTransportAPIv1 sliceProxy = null;
-    try {
-      //ExoGENI controller context
-      ITransportProxyFactory ifac = new XMLRPCProxyFactory();
-      TransportContext ctx = new PEMTransportContext("", pem, key);
-      sliceProxy = ifac.getSliceProxy(ctx, new URL(controllerUrl));
-    } catch (Exception e) {
-      e.printStackTrace();
-      assert (false);
-    }
-    return sliceProxy;
   }
 
   public void stitch(String RID, String customerName, String CID, String secret,
@@ -885,13 +953,13 @@ public class SafeSlice {
     }
     Long t2 = System.currentTimeMillis();
     logger.debug("Finished Stitching, set ip address of the new interface to " + newip + "  time elapsed: "
-        + String.valueOf(t2 - t1) + "\n");
+      + String.valueOf(t2 - t1) + "\n");
   }
 
   public void configBroNode(String nodeName, String edgeRouter, String resourceDir, String
     SDNControllerIP, String serverurl, String sshkey) {
     // Bro uses 'eth1"
-    Exec.sshExec("root", getComputeNode(nodeName).getManagementIP(),"sed -i 's/eth0/eth1/' " +
+    Exec.sshExec("root", getComputeNode(nodeName).getManagementIP(), "sed -i 's/eth0/eth1/' " +
       "/opt/bro/etc/node.cfg", sshkey);
 
     copyFile2Node(PathUtil.joinFilePath(resourceDir, "bro/test.bro"), "/root/test.bro", sshkey,
@@ -903,41 +971,42 @@ public class SafeSlice {
       sshkey,
       nodeName);
     copyFile2Node(PathUtil.joinFilePath(resourceDir, "bro/detect-all-policy.bro"),
-        "/root/detect-all-policy.bro", sshkey, nodeName);
+      "/root/detect-all-policy.bro", sshkey, nodeName);
     copyFile2Node(PathUtil.joinFilePath(resourceDir, "bro/evil.txt"), "/root/evil.txt", sshkey,
-        nodeName);
+      nodeName);
     copyFile2Node(PathUtil.joinFilePath(resourceDir, "bro/reporter.py"), "/root/reporter.py",
       sshkey, nodeName);
     copyFile2Slice(PathUtil.joinFilePath(resourceDir, "bro/cpu_percentage.sh"),
       "/root/cpu_percentage.sh",
-        sshkey, nodeName);
+      sshkey, nodeName);
 
     Exec.sshExec("root", getComputeNode(nodeName).getManagementIP(), "sed -i 's/bogus_addr/" +
       SDNControllerIP + "/' *.bro", sshkey);
 
     String url = serverurl.replace("/", "\\/");
-    Exec.sshExec("root", getComputeNode(nodeName).getManagementIP(),"sed -i 's/bogus_addr/" +
+    Exec.sshExec("root", getComputeNode(nodeName).getManagementIP(), "sed -i 's/bogus_addr/" +
       url + "/g' reporter.py", sshkey);
 
     String dpid = getDpid(edgeRouter, sshkey);
     Exec.sshExec("root", getComputeNode(nodeName).getManagementIP(), "sed -i 's/bogus_dpid/" +
       Long.parseLong(dpid, 16) + "/' *.bro", sshkey);
     Exec.sshExec("root", getComputeNode(nodeName).getManagementIP(), "broctl deploy&", sshkey);
-    Exec.sshExec("root", getComputeNode(nodeName).getManagementIP(),"python reporter & disown", sshkey);
+    Exec.sshExec("root", getComputeNode(nodeName).getManagementIP(), "python reporter & disown", sshkey);
     Exec.sshExec("root", getComputeNode(nodeName).getManagementIP(),
-        "/usr/bin/rm *.log; pkill bro; /usr/bin/screen -d -m /opt/bro/bin/bro " +
+      "/usr/bin/rm *.log; pkill bro; /usr/bin/screen -d -m /opt/bro/bin/bro " +
         "-i eth1 " + "test-all-policy.bro", sshkey);
   }
 
-  public String getDpid(String routerName, String sshkey){
+  public String getDpid(String routerName, String sshkey) {
     String[] res = runCmdNode("/bin/bash ~/dpid.sh", sshkey, routerName, true).split(" ");
     res[1] = res[1].replace("\n", "");
-    return  res[1];
+    return res[1];
   }
 
   public ComputeNode addOVSRouter(String site, String name) {
-    logger.debug("Adding new OVS router to slice " + slice.getName());
-    NodeBaseInfo ninfo = NodeBase.getImageInfo(VMVersion);
+    logger.debug(String.format("Adding new OVS router to slice %s on site %s", slice.getName(),
+      site));
+    NodeBaseInfo ninfo = NodeBase.getImageInfo(SliceEnv.OVSVersion);
     String nodeImageShortName = ninfo.nisn;
     String nodeImageURL = ninfo.niurl;
     //http://geni-images.renci.org/images/standard/ubuntu/ub1304-ovs-opendaylight-v1.0.0.xml
@@ -947,7 +1016,7 @@ public class SafeSlice {
     ComputeNode node0 = slice.addComputeNode(name);
     node0.setImage(nodeImageURL, nodeImageHash, nodeImageShortName);
     node0.setNodeType(nodeNodeType);
-    node0.setDomain(site);
+    node0.setDomain(SiteBase.get(site));
     node0.setPostBootScript(nodePostBootScript);
     return node0;
   }
@@ -963,7 +1032,7 @@ public class SafeSlice {
       logger.debug("MacAddr: " + inode2net.getMacAddress());
       logger.debug("GUID: " + i.getGUID());
     }
-    for(BroadcastNetwork link :slice.getBroadcastLinks()){
+    for (BroadcastNetwork link : slice.getBroadcastLinks()) {
       logger.debug(link.getName());
     }
   }

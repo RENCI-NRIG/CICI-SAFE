@@ -1,10 +1,13 @@
 package exoplex.demo.cnert;
 
-import exoplex.common.slice.SafeSlice;
-import exoplex.common.slice.Scripts;
+import com.google.inject.Inject;
+import com.google.inject.Provider;
 import exoplex.common.utils.Exec;
 import exoplex.common.utils.PathUtil;
 import exoplex.common.utils.ServerOptions;
+import exoplex.sdx.core.SliceHelper;
+import exoplex.sdx.slice.Scripts;
+import exoplex.sdx.slice.exogeni.SliceManager;
 import org.apache.commons.cli.CommandLine;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -12,39 +15,28 @@ import org.renci.ahab.libndl.resources.request.ComputeNode;
 import org.renci.ahab.libndl.resources.request.InterfaceNode2Net;
 import org.renci.ahab.libndl.resources.request.Network;
 import org.renci.ahab.libndl.resources.request.StitchPort;
-import org.renci.ahab.libtransport.SSHAccessToken;
-import org.renci.ahab.libtransport.SliceAccessContext;
-import org.renci.ahab.libtransport.util.SSHAccessTokenFileFactory;
 import org.renci.ahab.libtransport.util.TransportException;
-import org.renci.ahab.libtransport.util.UtilTransportException;
 import org.renci.ahab.libtransport.xmlrpc.XMLRPCTransportException;
-import exoplex.sdx.core.SliceManager;
+import safe.Authority;
 
 import java.util.ArrayList;
 
-public class TestSlice extends SliceManager {
+public class CnertTestSlice extends SliceHelper {
   final Logger logger = LogManager.getLogger(Exec.class);
 
-  public TestSlice(String[] args) {
+  @Inject
+  public CnertTestSlice(Provider<Authority> authorityProvider) {
+    super(authorityProvider);
+  }
+
+  public CnertTestSlice(String[] args) {
+    super(null);
     CommandLine cmd = ServerOptions.parseCmd(args);
     String configFilePath = cmd.getOptionValue("config");
-    initializeExoGENIContexts(configFilePath);
+    this.readConfig(configFilePath);
 
     if (cmd.hasOption('d')) {
       type = "delete";
-    }
-
-    //SSH context
-    sctx = new SliceAccessContext<>();
-    try {
-      SSHAccessTokenFileFactory fac;
-      fac = new SSHAccessTokenFileFactory("~/.ssh/id_rsa.pub", false);
-      SSHAccessToken t = fac.getPopulatedToken();
-      sctx.addToken("root", "root", t);
-      sctx.addToken("root", t);
-    } catch (UtilTransportException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
     }
   }
 
@@ -60,14 +52,14 @@ public class TestSlice extends SliceManager {
       if (conf.hasPath("config.bw")) {
         bw = conf.getLong("config.bw");
       }
-      SafeSlice carrier = createTestSliceWithTwoPairs(carrierName, routernum, bw);
+      SliceManager carrier = createTestSliceWithTwoPairs(carrierName, routernum, bw);
       String resource_dir = conf.getString("config.resourcedir");
       //Slice carrier = createCarrierSliceWithCustomerNodes(carrierName, 4, 10, 1000000, 1);
       carrier.commitAndWait();
       carrier.refresh();
-      carrier.copyFile2Slice(PathUtil.joinFilePath(scriptsdir, "dpid.sh"), "~/dpid.sh", sshkey);
+      carrier.copyFile2Slice(PathUtil.joinFilePath(scriptsdir, "dpid.sh"), "~/dpid.sh", sshKey);
       carrier.copyFile2Slice(PathUtil.joinFilePath(scriptsdir, "ovsbridge.sh"), "~/ovsbridge.sh",
-        sshkey);
+        sshKey);
       //Make sure that plexus container is running
       //SDNControllerIP = "152.3.136.36";
       SDNControllerIP = carrier.getComputeNode("plexuscontroller").getManagementIP();
@@ -75,29 +67,29 @@ public class TestSlice extends SliceManager {
         System.exit(-1);
       }
       System.out.println("Plexus Controler IP: " + SDNControllerIP);
-      carrier.runCmdSlice("/bin/bash ~/ovsbridge.sh " + SDNControllerIP + ":6633", sshkey, "(^c\\d+)", true);
-      carrier.runCmdSlice("apt-get -y install quagga", "(node\\d+)", sshkey, true);
-      carrier.runCmdSlice("sed -i -- 's/zebra=no/zebra=yes/g' /etc/quagga/daemons", sshkey, "(node\\d+)", true);
-      //carrier.runCmdSlice("sed -i -- 's/ospfd=no/ospfd=yes/g' /etc/quagga/daemons", sshkey,
+      carrier.runCmdSlice("/bin/bash ~/ovsbridge.sh " + SDNControllerIP + ":6633", sshKey, "(^c\\d+)", true);
+      carrier.runCmdSlice("apt-get -y install quagga", "(node\\d+)", sshKey, true);
+      carrier.runCmdSlice("sed -i -- 's/zebra=no/zebra=yes/g' /etc/quagga/daemons", sshKey, "(node\\d+)", true);
+      //carrier.runCmdSlice("sed -i -- 's/ospfd=no/ospfd=yes/g' /etc/quagga/daemons", sshKey,
       // "(node\\d+)", true);
-      carrier.runCmdSlice("echo \"1\" > /proc/sys/net/ipv4/ip_forward", sshkey, "(node\\d+)", true);
+      carrier.runCmdSlice("echo \"1\" > /proc/sys/net/ipv4/ip_forward", sshKey, "(node\\d+)", true);
       try {
-        carrier.runCmdSlice("ifconfig eth1 192.168.10.2/24 up", sshkey, "(node0)", true);
-        carrier.runCmdSlice("ifconfig eth1 192.168.20.2/24 up", sshkey, "(node1)", true);
-        carrier.runCmdSlice("ifconfig eth1 192.168.30.2/24 up", sshkey, "(node2)", true);
-        carrier.runCmdSlice("ifconfig eth1 192.168.40.2/24 up", sshkey, "(node3)", true);
+        carrier.runCmdSlice("ifconfig eth1 192.168.10.2/24 up", sshKey, "(node0)", true);
+        carrier.runCmdSlice("ifconfig eth1 192.168.20.2/24 up", sshKey, "(node1)", true);
+        carrier.runCmdSlice("ifconfig eth1 192.168.30.2/24 up", sshKey, "(node2)", true);
+        carrier.runCmdSlice("ifconfig eth1 192.168.40.2/24 up", sshKey, "(node3)", true);
       } catch (Exception e) {
         e.printStackTrace();
       }
       carrier.runCmdSlice("echo \"ip route 192.168.1.1/16 192.168.10.1\" >>/etc/quagga/zebra" +
-          ".conf", sshkey, "(node0)", true);
+        ".conf", sshKey, "(node0)", true);
       carrier.runCmdSlice("echo \"ip route 192.168.1.1/16 192.168.20.1\" >>/etc/quagga/zebra" +
-          ".conf", sshkey, "(node1)", true);
+        ".conf", sshKey, "(node1)", true);
       carrier.runCmdSlice("echo \"ip route 192.168.1.1/16 192.168.30.1\" >>/etc/quagga/zebra" +
-          ".conf", sshkey, "(node2)", true);
+        ".conf", sshKey, "(node2)", true);
       carrier.runCmdSlice("echo \"ip route 192.168.1.1/16 192.168.40.1\" >>/etc/quagga/zebra" +
-          ".conf", sshkey, "(node3)", true);
-      carrier.runCmdSlice("/etc/init.d/quagga restart", sshkey, "(node\\d+)", true);
+        ".conf", sshKey, "(node3)", true);
+      carrier.runCmdSlice("/etc/init.d/quagga restart", sshKey, "(node\\d+)", true);
 
       if (BRO) {
         configBroNodes(carrier, "(bro\\d+_c\\d+)");
@@ -105,11 +97,11 @@ public class TestSlice extends SliceManager {
 
       configFTPService(carrier, "(node\\d+)", "ftpuser", "ftp");
       carrier.copyFile2Slice(PathUtil.joinFilePath(resource_dir, "bro/evil.txt"),
-        "/home/ftpuser/evil.txt", sshkey, "(node\\d+)");
+        "/home/ftpuser/evil.txt", sshKey, "(node\\d+)");
       carrier.copyFile2Slice(PathUtil.joinFilePath(resource_dir, "scripts/getnfiles.sh"),
-        "~/getnfiles.sh", sshkey, "(node\\d+)");
+        "~/getnfiles.sh", sshKey, "(node\\d+)");
       carrier.copyFile2Slice(PathUtil.joinFilePath(resource_dir, "scripts/getfiles.sh"),
-        "~/getfiles.sh", sshkey, "(node\\d+)");
+        "~/getfiles.sh", sshKey, "(node\\d+)");
       //}
     } catch (Exception e) {
       e.printStackTrace();
@@ -132,46 +124,48 @@ public class TestSlice extends SliceManager {
       ////Slice carrier = createCarrierSliceWithCustomerNodes(carrierName, 4, 10, 1000000, 1);
       //commitAndWait(carrier);
       //carrier.refresh();
-      //carrier.copyFile2Slice(scriptsdir + "dpid.sh", "~/dpid.sh", sshkey);
-      //carrier.copyFile2Slice(scriptsdir + "ovsbridge.sh", "~/ovsbridge.sh", sshkey);
+      //carrier.copyFile2Slice(scriptsdir + "dpid.sh", "~/dpid.sh", sshKey);
+      //carrier.copyFile2Slice(scriptsdir + "ovsbridge.sh", "~/ovsbridge.sh", sshKey);
       ////Make sure that plexus container is running
       ////SDNControllerIP = "152.3.136.36";
       ////if (!checkPlexus(SDNControllerIP)) {
       ////  System.exit(-1);
       ////}
-      SafeSlice carrier = SafeSlice.loadManifestFile(sliceName, pemLocation, keyLocation, controllerUrl);
+      SliceManager carrier = new SliceManager(sliceName, pemLocation, keyLocation, controllerUrl,
+        sshKey);
+      carrier.reloadSlice();
       SDNControllerIP = carrier.getComputeNode("plexuscontroller").getManagementIP();
       System.out.println("Plexus Controler IP: " + SDNControllerIP);
-      carrier.runCmdSlice("/bin/bash ~/ovsbridge.sh " + SDNControllerIP + ":6633", sshkey, "(^c\\d+)",
-          true);
-      carrier.runCmdSlice("apt-get -y install quagga", sshkey, "(node\\d+)", true);
-      carrier.runCmdSlice("sed -i -- 's/zebra=no/zebra=yes/g' /etc/quagga/daemons", sshkey, "(node\\d+)", true);
-      //carrier.runCmdSlice("sed -i -- 's/ospfd=no/ospfd=yes/g' /etc/quagga/daemons", sshkey,
+      carrier.runCmdSlice("/bin/bash ~/ovsbridge.sh " + SDNControllerIP + ":6633", sshKey, "(^c\\d+)",
+        true);
+      carrier.runCmdSlice("apt-get -y install quagga", sshKey, "(node\\d+)", true);
+      carrier.runCmdSlice("sed -i -- 's/zebra=no/zebra=yes/g' /etc/quagga/daemons", sshKey, "(node\\d+)", true);
+      //carrier.runCmdSlice("sed -i -- 's/ospfd=no/ospfd=yes/g' /etc/quagga/daemons", sshKey,
       // "(node\\d+)", true);
-      carrier.runCmdSlice("echo \"1\" > /proc/sys/net/ipv4/ip_forward", sshkey, "(node\\d+)",
-          true);
+      carrier.runCmdSlice("echo \"1\" > /proc/sys/net/ipv4/ip_forward", sshKey, "(node\\d+)",
+        true);
       try {
-        carrier.runCmdSlice("ifconfig eth1 192.168.10.2/24 up", sshkey, "(node0)", true);
-        carrier.runCmdSlice("ifconfig eth1 192.168.20.2/24 up", sshkey, "(node" + (routernum - 1)
-            + ")", true);
+        carrier.runCmdSlice("ifconfig eth1 192.168.10.2/24 up", sshKey, "(node0)", true);
+        carrier.runCmdSlice("ifconfig eth1 192.168.20.2/24 up", sshKey, "(node" + (routernum - 1)
+          + ")", true);
       } catch (Exception e) {
         e.printStackTrace();
       }
-      carrier.runCmdSlice("echo \"ip route 192.168.1.1/16 192.168.10.1\" >>/etc/quagga/zebra.conf", sshkey, "(node0)", true);
-      carrier.runCmdSlice("echo \"ip route 192.168.1.1/16 192.168.20.1\" >>/etc/quagga/zebra.conf", sshkey, "(node1)", true);
-      carrier.runCmdSlice("/etc/init.d/quagga restart", sshkey, "(node\\d+)", true);
+      carrier.runCmdSlice("echo \"ip route 192.168.1.1/16 192.168.10.1\" >>/etc/quagga/zebra.conf", sshKey, "(node0)", true);
+      carrier.runCmdSlice("echo \"ip route 192.168.1.1/16 192.168.20.1\" >>/etc/quagga/zebra.conf", sshKey, "(node1)", true);
+      carrier.runCmdSlice("/etc/init.d/quagga restart", sshKey, "(node\\d+)", true);
 
       if (BRO) {
         configBroNodes(carrier, "(bro\\d+_c\\d+)");
       }
 
-      carrier.runCmdSlice("mkdir /home/ftp", sshkey, "(node\\d+)", true);
+      carrier.runCmdSlice("mkdir /home/ftp", sshKey, "(node\\d+)", true);
       carrier.copyFile2Slice(PathUtil.joinFilePath(resource_dir, "bro/evil.txt"),
-        "/home/ftp/evil.txt", sshkey, "(node\\d+)");
+        "/home/ftp/evil.txt", sshKey, "(node\\d+)");
       carrier.copyFile2Slice(PathUtil.joinFilePath(resource_dir, "scripts/getonefile.sh"),
-        "~/getonefile.sh", sshkey, "(node\\d+)");
+        "~/getonefile.sh", sshKey, "(node\\d+)");
       carrier.copyFile2Slice(PathUtil.joinFilePath(resource_dir, "scripts/getfiles.sh"),
-        "~/getfiles.sh", sshkey, "(node\\d+)");
+        "~/getfiles.sh", sshKey, "(node\\d+)");
     } catch (Exception e) {
       e.printStackTrace();
     }
@@ -189,14 +183,14 @@ public class TestSlice extends SliceManager {
       if (conf.hasPath("config.bw")) {
         bw = conf.getLong("config.bw");
       }
-      SafeSlice carrier = createTestSliceWithDynamicLinks(carrierName, routernum, bw);
+      SliceManager carrier = createTestSliceWithDynamicLinks(carrierName, routernum, bw);
       String resource_dir = conf.getString("config.resourcedir");
       //Slice carrier = createCarrierSliceWithCustomerNodes(carrierName, 4, 10, 1000000, 1);
       carrier.commitAndWait();
       carrier.refresh();
-      carrier.copyFile2Slice(PathUtil.joinFilePath(scriptsdir, "dpid.sh"), "~/dpid.sh", sshkey);
+      carrier.copyFile2Slice(PathUtil.joinFilePath(scriptsdir, "dpid.sh"), "~/dpid.sh", sshKey);
       carrier.copyFile2Slice(PathUtil.joinFilePath(scriptsdir, "ovsbridge.sh"), "~/ovsbridge.sh",
-        sshkey);
+        sshKey);
       //Make sure that plexus container is running
       SDNControllerIP = carrier.getComputeNode("plexuscontroller").getManagementIP();
       //SDNControllerIP = "152.3.136.36";
@@ -204,24 +198,24 @@ public class TestSlice extends SliceManager {
       //  System.exit(-1);
       //}
       System.out.println("Plexus Controler IP: " + SDNControllerIP);
-      carrier.runCmdSlice("/bin/bash ~/ovsbridge.sh " + SDNControllerIP + ":6633", sshkey, "(c\\d+)", true);
-      carrier.runCmdSlice("apt-get -y install quagga", sshkey, "(node\\d+)", true);
-      carrier.runCmdSlice("sed -i -- 's/zebra=no/zebra=yes/g' /etc/quagga/daemons", sshkey, "(node\\d+)", true);
-      //carrier.runCmdSlice("sed -i -- 's/ospfd=no/ospfd=yes/g' /etc/quagga/daemons", sshkey,
+      carrier.runCmdSlice("/bin/bash ~/ovsbridge.sh " + SDNControllerIP + ":6633", sshKey, "(c\\d+)", true);
+      carrier.runCmdSlice("apt-get -y install quagga", sshKey, "(node\\d+)", true);
+      carrier.runCmdSlice("sed -i -- 's/zebra=no/zebra=yes/g' /etc/quagga/daemons", sshKey, "(node\\d+)", true);
+      //carrier.runCmdSlice("sed -i -- 's/ospfd=no/ospfd=yes/g' /etc/quagga/daemons", sshKey,
       // "(node\\d+)", true);
-      carrier.runCmdSlice("echo \"1\" > /proc/sys/net/ipv4/ip_forward", sshkey, "(node\\d+)", true);
+      carrier.runCmdSlice("echo \"1\" > /proc/sys/net/ipv4/ip_forward", sshKey, "(node\\d+)", true);
       try {
-        carrier.runCmdSlice("ifconfig eth1 192.168.10.2/24 up", sshkey, "(node0)", true);
+        carrier.runCmdSlice("ifconfig eth1 192.168.10.2/24 up", sshKey, "(node0)", true);
         carrier.runCmdSlice("echo \"ip route 192.168.1.1/16 192.168.10.1\" >>/etc/quagga/zebra" +
-            ".conf", sshkey, "(node0)", true);
+          ".conf", sshKey, "(node0)", true);
         carrier.runCmdSlice("echo \"ip route 192.168.1.1/16 192.168.20.1\" >>/etc/quagga/zebra" +
-            ".conf", sshkey, "(node1)", true);
+          ".conf", sshKey, "(node1)", true);
         carrier.runCmdSlice("echo \"ip route 192.168.1.1/16 192.168.30.1\" >>/etc/quagga/zebra" +
-            ".conf", sshkey, "(node2)", true);
+          ".conf", sshKey, "(node2)", true);
       } catch (Exception e) {
         e.printStackTrace();
       }
-      carrier.runCmdSlice("/etc/init.d/quagga restart", sshkey, "(node\\d+)", true);
+      carrier.runCmdSlice("/etc/init.d/quagga restart", sshKey, "(node\\d+)", true);
 
     } catch (Exception e) {
       e.printStackTrace();
@@ -240,21 +234,21 @@ public class TestSlice extends SliceManager {
       if (conf.hasPath("config.bw")) {
         bw = conf.getLong("config.bw");
       }
-      SafeSlice carrier = createTestSliceWithBroAndChameleon(carrierName, routernum, bw);
+      SliceManager carrier = createTestSliceWithBroAndChameleon(carrierName, routernum, bw);
       String resource_dir = conf.getString("config.resourcedir");
       //Slice carrier = createCarrierSliceWithCustomerNodes(carrierName, 4, 10, 1000000, 1);
       carrier.commitAndWait(1);
       carrier.refresh();
-      carrier.copyFile2Slice(PathUtil.joinFilePath(scriptsdir, "dpid.sh"), "~/dpid.sh", sshkey);
+      carrier.copyFile2Slice(PathUtil.joinFilePath(scriptsdir, "dpid.sh"), "~/dpid.sh", sshKey);
       carrier.copyFile2Slice(PathUtil.joinFilePath(scriptsdir, "ovsbridge.sh"), "~/ovsbridge.sh",
-        sshkey);
-      carrier.runCmdSlice("mkdir /home/ftp", sshkey, "(node\\d+)", true);
+        sshKey);
+      carrier.runCmdSlice("mkdir /home/ftp", sshKey, "(node\\d+)", true);
       carrier.copyFile2Slice(PathUtil.joinFilePath(resource_dir, "bro/evil.txt"),
-        "/home/ftp/evil.txt", sshkey, "(node\\d+)");
+        "/home/ftp/evil.txt", sshKey, "(node\\d+)");
       carrier.copyFile2Slice(PathUtil.joinFilePath(resource_dir, "scripts/getonefile.sh"),
-        "~/getonefile.sh", sshkey, "(node\\d+)");
+        "~/getonefile.sh", sshKey, "(node\\d+)");
       carrier.copyFile2Slice(PathUtil.joinFilePath(resource_dir, "scripts/getfiles.sh"),
-        "~/getfiles.sh", sshkey, "(node\\d+)");
+        "~/getfiles.sh", sshKey, "(node\\d+)");
       //Make sure that plexus container is running
       SDNControllerIP = carrier.getComputeNode("plexuscontroller").getManagementIP();
       //SDNControllerIP = "152.3.136.36";
@@ -262,20 +256,20 @@ public class TestSlice extends SliceManager {
       //  System.exit(-1);
       //}
       System.out.println("Plexus Controler IP: " + SDNControllerIP);
-      carrier.runCmdSlice("/bin/bash ~/ovsbridge.sh " + SDNControllerIP + ":6633", sshkey, "(c\\d+)", true);
-      carrier.runCmdSlice("apt-get -y install quagga", sshkey, "(node\\d+)", true);
-      carrier.runCmdSlice("sed -i -- 's/zebra=no/zebra=yes/g' /etc/quagga/daemons", sshkey, "(node\\d+)", true);
-      //carrier.runCmdSlice("sed -i -- 's/ospfd=no/ospfd=yes/g' /etc/quagga/daemons", sshkey,
+      carrier.runCmdSlice("/bin/bash ~/ovsbridge.sh " + SDNControllerIP + ":6633", sshKey, "(c\\d+)", true);
+      carrier.runCmdSlice("apt-get -y install quagga", sshKey, "(node\\d+)", true);
+      carrier.runCmdSlice("sed -i -- 's/zebra=no/zebra=yes/g' /etc/quagga/daemons", sshKey, "(node\\d+)", true);
+      //carrier.runCmdSlice("sed -i -- 's/ospfd=no/ospfd=yes/g' /etc/quagga/daemons", sshKey,
       // "(node\\d+)", true);
-      carrier.runCmdSlice("echo \"1\" > /proc/sys/net/ipv4/ip_forward", sshkey, "(node\\d+)", true);
+      carrier.runCmdSlice("echo \"1\" > /proc/sys/net/ipv4/ip_forward", sshKey, "(node\\d+)", true);
       try {
-        carrier.runCmdSlice("ifconfig eth1 192.168.10.2/24 up", sshkey, "(node0)", true);
+        carrier.runCmdSlice("ifconfig eth1 192.168.10.2/24 up", sshKey, "(node0)", true);
         carrier.runCmdSlice("echo \"ip route 10.32.90.1/24 192.168.10.1\" >>/etc/quagga/zebra" +
-            ".conf", sshkey, "(node0)", true);
+          ".conf", sshKey, "(node0)", true);
       } catch (Exception e) {
         e.printStackTrace();
       }
-      carrier.runCmdSlice("/etc/init.d/quagga restart", sshkey, "(node\\d+)", true);
+      carrier.runCmdSlice("/etc/init.d/quagga restart", sshKey, "(node\\d+)", true);
 
       if (BRO) {
         System.out.println("config bro");
@@ -287,12 +281,12 @@ public class TestSlice extends SliceManager {
     }
   }
 
-  public SafeSlice createTestSliceWithTwoPairs(String sliceName, int num, long bw) {
+  public SliceManager createTestSliceWithTwoPairs(String sliceName, int num, long bw) {
     String nodeImageShortName = "Ubuntu 14.04";
     String nodeImageURL = "http://geni-orca.renci.org/owl/9dfe179d-3736-41bf-8084-f0cd4a520c2f#Ubuntu+14.04";//http://geni-images.renci.org/images/standard/ubuntu/ub1304-ovs-opendaylight-v1.0.0.xml
     String nodeImageHash = "9394ca154aa35eb55e604503ae7943ddaecc6ca5";
     String nodeNodeType = "XO Extra large";
-    SafeSlice s = createCarrierSlice(sliceName, num, bw);
+    SliceManager s = createCarrierSlice(sliceName, num, bw);
     long cnodebw = 1000000000;
     //Now add two customer node to c0 and c3
     ComputeNode c0 = (ComputeNode) s.getResourceByName("c0");
@@ -358,12 +352,12 @@ public class TestSlice extends SliceManager {
     return s;
   }
 
-  public SafeSlice createTestSliceWithDynamicLinks(String sliceName, int num, long bw) {
+  public SliceManager createTestSliceWithDynamicLinks(String sliceName, int num, long bw) {
     String nodeImageShortName = "Ubuntu 14.04";
     String nodeImageURL = "http://geni-orca.renci.org/owl/9dfe179d-3736-41bf-8084-f0cd4a520c2f#Ubuntu+14.04";//http://geni-images.renci.org/images/standard/ubuntu/ub1304-ovs-opendaylight-v1.0.0.xml
     String nodeImageHash = "9394ca154aa35eb55e604503ae7943ddaecc6ca5";
     String nodeNodeType = "XO Extra large";
-    SafeSlice s = createCarrierSlice(sliceName, num, bw);
+    SliceManager s = createCarrierSlice(sliceName, num, bw);
     //Now add two customer node to c0 and c3
     ComputeNode c0 = (ComputeNode) s.getResourceByName("c0");
     ComputeNode c1 = (ComputeNode) s.getResourceByName("c1");
@@ -408,12 +402,12 @@ public class TestSlice extends SliceManager {
     return s;
   }
 
-  public SafeSlice createTestSliceWithBroAndCNode(String sliceName, int num, long bw) {
+  public SliceManager createTestSliceWithBroAndCNode(String sliceName, int num, long bw) {
     String nodeImageShortName = "Ubuntu 14.04";
     String nodeImageURL = "http://geni-orca.renci.org/owl/9dfe179d-3736-41bf-8084-f0cd4a520c2f#Ubuntu+14.04";//http://geni-images.renci.org/images/standard/ubuntu/ub1304-ovs-opendaylight-v1.0.0.xml
     String nodeImageHash = "9394ca154aa35eb55e604503ae7943ddaecc6ca5";
     String nodeNodeType = "XO Extra large";
-    SafeSlice s = createCarrierSlice(sliceName, num, bw);
+    SliceManager s = createCarrierSlice(sliceName, num, bw);
     //Now add two customer node to c0 and c3
     ComputeNode c0 = (ComputeNode) s.getResourceByName("c0");
     ComputeNode c3 = (ComputeNode) s.getResourceByName("c" + (num - 1));
@@ -456,12 +450,12 @@ public class TestSlice extends SliceManager {
     return s;
   }
 
-  public SafeSlice createTestSliceWithBroAndChameleon(String sliceName, int num, long bw) throws TransportException, Exception {
+  public SliceManager createTestSliceWithBroAndChameleon(String sliceName, int num, long bw) throws TransportException, Exception {
     String nodeImageShortName = "Ubuntu 14.04";
     String nodeImageURL = "http://geni-orca.renci.org/owl/9dfe179d-3736-41bf-8084-f0cd4a520c2f#Ubuntu+14.04";//http://geni-images.renci.org/images/standard/ubuntu/ub1304-ovs-opendaylight-v1.0.0.xml
     String nodeImageHash = "9394ca154aa35eb55e604503ae7943ddaecc6ca5";
     String nodeNodeType = "XO Extra large";
-    SafeSlice s = createCarrierSlice(sliceName, num, bw);
+    SliceManager s = createCarrierSlice(sliceName, num, bw);
     //Now add two customer node to c0 and c3
     ComputeNode c0 = (ComputeNode) s.getResourceByName("c0");
     ComputeNode cnode0 = s.addComputeNode("node0");
@@ -483,7 +477,7 @@ public class TestSlice extends SliceManager {
     String vlan = "3290";
     String stitchport = "http://geni-orca.renci.org/owl/ion.rdf#AL2S/Chameleon/Cisco/6509/GigabitEthernet/1/1";
     String stitchname = "sp-" + c3.getName() + "-" + ip.replace("/", "__").replace(".", "_")
-        + '-' + gateway.split("\\.")[3];
+      + '-' + gateway.split("\\.")[3];
 
     System.out.println("Stitching to Chameleon {" + "stitchname: " + stitchname + " vlan:" + vlan + " stithport: " + stitchport + "}");
     StitchPort mysp = s.addStitchPort(stitchname, vlan, stitchport, bw);
@@ -492,11 +486,12 @@ public class TestSlice extends SliceManager {
     return s;
   }
 
-  public SafeSlice createCarrierSliceWithCustomerNodes(String sliceName, int num, int start,
-                                                       long bw, int numstitches) {//,String stitchsubnet="", String slicesubnet="")
+  public SliceManager createCarrierSliceWithCustomerNodes(String sliceName, int num, int start,
+                                                          long bw, int numstitches) {//,String stitchsubnet="", String slicesubnet="")
     System.out.println("ndllib TestDriver: START");
 
-    SafeSlice s = SafeSlice.create(sliceName, pemLocation, keyLocation, controllerUrl, sctx);
+    SliceManager s = new SliceManager(sliceName, pemLocation, keyLocation, controllerUrl,
+      sshKey);
 
     String nodeImageShortName = "Ubuntu 14.04";
     String nodeImageURL = "http://geni-orca.renci.org/owl/9dfe179d-3736-41bf-8084-f0cd4a520c2f#Ubuntu+14.04";//http://geni-images.renci.org/images/standard/ubuntu/ub1304-ovs-opendaylight-v1.0.0.xml

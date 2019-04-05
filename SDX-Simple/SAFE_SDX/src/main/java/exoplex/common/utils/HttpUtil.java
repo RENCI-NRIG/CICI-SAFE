@@ -25,8 +25,9 @@ public class HttpUtil {
     HttpClient httpClient = HttpClientBuilder.create().build(); //Use this instead
 
     try {
-
       HttpPost request = new HttpPost(serverurl);
+      logger.debug(serverurl);
+      logger.debug(paramsobj.toString());
       StringEntity params = new StringEntity(paramsobj.toString());
       request.addHeader("content-type", "application/json");
       request.setEntity(params);
@@ -41,7 +42,7 @@ public class HttpUtil {
       return output;
 
     } catch (Exception ex) {
-      ex.printStackTrace();
+      logger.error(ex.getMessage());
       return resobj.toString();
     } finally {
       //Deprecated
@@ -110,6 +111,7 @@ public class HttpUtil {
     CloseableHttpClient httpClient = HttpClientBuilder.create().build();
     try {
       HttpGet request = new HttpGet(serverurl);
+      logger.debug(serverurl);
       HttpResponse response = httpClient.execute(request);
       //handle response here...
       String output = EntityUtils.toString(response.getEntity());

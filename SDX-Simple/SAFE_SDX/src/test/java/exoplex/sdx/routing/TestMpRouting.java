@@ -1,25 +1,48 @@
 package exoplex.sdx.routing;
-import exoplex.common.slice.*;
+
 import exoplex.common.utils.ServerOptions;
 import exoplex.experiment.ExperimentBase;
+import exoplex.sdx.core.SdxManager;
+import exoplex.sdx.network.SdnUtil;
+import exoplex.sdx.slice.Scripts;
+import exoplex.sdx.slice.exogeni.SiteBase;
+import exoplex.sdx.slice.exogeni.SliceManager;
 import org.apache.commons.cli.CommandLine;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import exoplex.sdx.core.SdxManager;
-import exoplex.sdx.network.SdnUtil;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
+import org.junit.Ignore;
+import org.junit.Test;
 
+import java.lang.reflect.Method;
 import java.util.HashMap;
 
+@Ignore
 public class TestMpRouting extends SdxManager {
   static Logger logger = LogManager.getLogger(TestMpRouting.class);
-  static String[] arg1 = {"-c", "config/test-mptcp.conf"};
-  static String site= SiteBase.get("TAMU");
+  static String site = SiteBase.get("TAMU");
+  static String userDir = System.getProperty("user.dir");
+  static String sdxSimpleDir = userDir.split("SDX-Simple")[0] + "SDX-Simple/";
+  static String[] arg1 = {"-c", sdxSimpleDir + "config/test-mptcp.conf"};
+  static TestMpRouting mpr;
+
+  public TestMpRouting() {
+    super(null);
+  }
+
+  @BeforeClass
+  public static void setUp() throws Exception {
+    mpr = new TestMpRouting();
+    mpr.test();
+  }
+
+  @AfterClass
+  public static void cleanUp() {
+    mpr.deleteSlice();
+  }
 
   public static void main(String[] args) throws Exception {
-    TestMpRouting mpr = new TestMpRouting();
-    //create the network
-    //mpr.test();
-
     mpr.initNetwork();
     mpr.installTestGroup();
     mpr.sendTraffic();
@@ -28,66 +51,92 @@ public class TestMpRouting extends SdxManager {
     logger.debug("end");
   }
 
-  public  void test() throws Exception {
+  @Test
+  public void testMpRouting() throws Exception {
+    try {
+      mpr.initNetwork();
+      mpr.installTestGroup();
+      mpr.sendTraffic();
+      mpr.getGroupStats();
+      mpr.logFlowTables();
+      logger.debug("end");
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+  }
+
+  public void test() throws Exception {
     CommandLine cmd = ServerOptions.parseCmd(arg1);
     String configFilePath = cmd.getOptionValue("config");
-    initializeExoGENIContexts(configFilePath);
+    this.readConfig(configFilePath);
     createNetwork();
   }
 
   public void initNetwork() throws Exception {
     CommandLine cmd = ServerOptions.parseCmd(arg1);
     String configFilePath = cmd.getOptionValue("config");
-    initializeExoGENIContexts(configFilePath);
+    this.readConfig(configFilePath);
     plexusName = "plexuscontroller";
+    loadSlice();
     initializeSdx();
     delFlows();
-    configRouting();
-    updateMacAddr();
+    Method configRouting = super.getClass().getDeclaredMethod("configRouting");
+    configRouting.setAccessible(true);
+    configRouting.invoke(this);
+    Method updateMacAddr = super.getClass().getDeclaredMethod("updateMacAddr");
+    updateMacAddr.setAccessible(true);
+    updateMacAddr.invoke(this);
   }
 
   public void createNetwork() throws Exception {
-    SafeSlice slice = createTestSlice();
-    slice.commitAndWait();
-    configTestSlice(slice);
-    configSdnControllerAddr(slice.getComputeNode(plexusName).getManagementIP());
-    checkPlexus(slice.getComputeNode(plexusName).getManagementIP());
-    slice.runCmdSlice(Scripts.getOVSScript(), sshkey, routerPattern, true);
-    copyRouterScript(slice);
-    configRouters(slice);
+    serverSlice = createTestSlice();
+    serverSlice.commitAndWait();
+    configTestSlice(serverSlice);
+    if (plexusInSlice) {
+      checkPlexus(serverSlice.getComputeNode(plexusName).getManagementIP());
+    }
+    if (safeInSlice) {
+      configSdnControllerAddr(serverSlice.getComputeNode(plexusName).getManagementIP());
+    } else {
+      configSdnControllerAddr(conf.getString("config.plexusserver"));
+    }
+    serverSlice.runCmdSlice(Scripts.getOVSScript(), sshKey, routerPattern, true);
+    copyRouterScript(serverSlice);
+    configRouters(serverSlice);
   }
 
-  public void configTestSlice(SafeSlice carrier){
-    carrier.runCmdSlice("apt-get update;apt-get -y install quagga", sshkey,"(CNode\\d+)", true);
-    carrier.runCmdSlice("sed -i -- 's/zebra=no/zebra=yes/g' /etc/quagga/daemons", sshkey, "(CNode\\d+)", true);
-    //carrier.runCmdSlice("sed -i -- 's/ospfd=no/ospfd=yes/g' /etc/quagga/daemons", sshkey,
+  public void configTestSlice(SliceManager carrier) {
+    carrier.runCmdSlice("apt-get update;apt-get -y install quagga", sshKey, "(CNode\\d+)", true);
+    carrier.runCmdSlice("sed -i -- 's/zebra=no/zebra=yes/g' /etc/quagga/daemons", sshKey, "(CNode\\d+)", true);
+    //carrier.runCmdSlice("sed -i -- 's/ospfd=no/ospfd=yes/g' /etc/quagga/daemons", sshKey,
     // "(node\\d+)", true);
-    carrier.runCmdSlice("echo \"1\" > /proc/sys/net/ipv4/ip_forward", sshkey, "(CNode\\d+)", true);
+    carrier.runCmdSlice("echo \"1\" > /proc/sys/net/ipv4/ip_forward", sshKey, "(CNode\\d+)", true);
     try {
-      carrier.runCmdSlice("ifconfig eth1 192.168.10.2/24 up", sshkey, "(CNode0)", true);
-      carrier.runCmdSlice("ifconfig eth1 192.168.20.2/24 up", sshkey, "(CNode1)", true);
-      carrier.runCmdSlice("ifconfig eth1 192.168.30.2/24 up", sshkey, "(CNode2)", true);
+      carrier.runCmdSlice("ifconfig eth1 192.168.10.2/24 up", sshKey, "(CNode0)", true);
+      carrier.runCmdSlice("ifconfig eth1 192.168.20.2/24 up", sshKey, "(CNode1)", true);
+      carrier.runCmdSlice("ifconfig eth1 192.168.30.2/24 up", sshKey, "(CNode2)", true);
     } catch (Exception e) {
       e.printStackTrace();
     }
     carrier.runCmdSlice("echo \"ip route 192.168.1.1/16 192.168.10.1\" >>/etc/quagga/zebra" +
-        ".conf", sshkey, "(CNode0)", true);
+      ".conf", sshKey, "(CNode0)", true);
     carrier.runCmdSlice("echo \"ip route 192.168.1.1/16 192.168.20.1\" >>/etc/quagga/zebra" +
-        ".conf", sshkey, "(CNode1)", true);
+      ".conf", sshKey, "(CNode1)", true);
     carrier.runCmdSlice("echo \"ip route 192.168.1.1/16 192.168.30.1\" >>/etc/quagga/zebra" +
-        ".conf", sshkey, "(CNode2)", true);
-    carrier.runCmdSlice("/etc/init.d/quagga restart", sshkey, "(CNode\\d+)", true);
+      ".conf", sshKey, "(CNode2)", true);
+    carrier.runCmdSlice("/etc/init.d/quagga restart", sshKey, "(CNode\\d+)", true);
   }
 
-  public SafeSlice createTestSlice(){
-    SafeSlice slice = SafeSlice.create("test-yyj", pemLocation, keyLocation, controllerUrl, sctx);
+  public SliceManager createTestSlice() {
+    SliceManager slice = new SliceManager(sliceName, pemLocation, keyLocation, controllerUrl,
+      sshKey);
     slice.addComputeNode(site, "CNode0");
-    slice.addComputeNode(site,"CNode1");
-    slice.addComputeNode(site,"CNode2");
-    slice.addOVSRouter(site,"c0");
-    slice.addOVSRouter(site,"c1");
-    slice.addOVSRouter(site,"c2");
-    slice.addOVSRouter(site,"c3");
+    slice.addComputeNode(site, "CNode1");
+    slice.addComputeNode(site, "CNode2");
+    slice.addOVSRouter(site, "c0");
+    slice.addOVSRouter(site, "c1");
+    slice.addOVSRouter(site, "c2");
+    slice.addOVSRouter(site, "c3");
     slice.addBroadcastLink("stitch_c0_10");
     slice.attach("CNode0", "stitch_c0_10", "192.168.10.2", "255.255.255.0");
     slice.attach("c0", "stitch_c0_10", null, null);
@@ -109,28 +158,37 @@ public class TestMpRouting extends SdxManager {
     slice.addBroadcastLink("stitch_c3_30");
     slice.attach("stitch_c3_30", "CNode2", "192.168.30.2", "255.255.255.0");
     slice.attach("stitch_c3_30", "c3");
-    slice.addPlexusController(controllerSite, plexusName);
-    return  slice;
+    if (plexusInSlice) {
+      slice.addPlexusController(controllerSite, plexusName);
+    }
+    return slice;
   }
 
-  public void installTestGroup(){
+  public void installTestGroup() {
     //===>>c0 =>c1 c2
     HashMap<String, Integer> nbs = new HashMap<>();
-    nbs.put("c1", 10);
-    nbs.put("c2", 5);
+    int weight1 = 2;
+    int weight2 = 1;
+    nbs.put("c1", weight1);
+    nbs.put("c2", weight2);
     int groupId = 1;
     SdnUtil.deleteGroup(getSDNController(), getDPID("c0"), groupId);
     routingmanager.setNextHops("c0", getSDNController(), groupId, "192.168.20.0/24", nbs);
+    String res = SdnUtil.getGroupDescStats(getSDNController(), getDPID("c0"), groupId);
+    logger.info("get group stats");
+    logger.info(res);
     //==> c1->c3 c2->c3
     nbs.clear();
-    nbs.put("c3", 5);
+    nbs.put("c3", weight2);
     SdnUtil.deleteGroup(getSDNController(), getDPID("c1"), groupId);
     routingmanager.setNextHops("c1", getSDNController(), groupId, "192.168.20.0/24", nbs);
-    String res = SdnUtil.getGroupDescStats(getSDNController(), getDPID("c1"), groupId);
+    res = SdnUtil.getGroupDescStats(getSDNController(), getDPID("c1"), groupId);
+    logger.info("get group stats");
     logger.info(res);
     SdnUtil.deleteGroup(getSDNController(), getDPID("c2"), groupId);
     routingmanager.setNextHops("c2", getSDNController(), groupId, "192.168.20.0/24", nbs);
     res = SdnUtil.getGroupDescStats(getSDNController(), getDPID("c2"), groupId);
+    logger.info("get group stats");
     logger.info(res);
 
     ////last hop
@@ -139,65 +197,79 @@ public class TestMpRouting extends SdxManager {
     //res = SdnUtil.getGroupDescStats(getSDNController(), getDPID("c3"), groupId);
     //logger.info(res);
     routingmanager.singleStepRouting("192.168.20.0/24", "192.168.20.2",
-        getDPID("c3"), getSDNController());
+      getDPID("c3"), getSDNController());
 
     //<<==== c3-> c1 c2
-    groupId  = 2;
+    groupId = 2;
     nbs.clear();
-    nbs.put("c1", 10);
-    nbs.put("c2", 5);
+    nbs.put("c1", weight1);
+    nbs.put("c2", weight2);
     SdnUtil.deleteGroup(getSDNController(), getDPID("c3"), groupId);
     routingmanager.setNextHops("c3", getSDNController(), groupId, "192.168.10.0/24", nbs);
     res = SdnUtil.getGroupDescStats(getSDNController(), getDPID("c3"), groupId);
+    logger.info("get group stats");
     logger.info(res);
     //<<===== c1->c0 c2 -> c0
     nbs.clear();
-    nbs.put("c0", 5);
+    nbs.put("c0", weight2);
     SdnUtil.deleteGroup(getSDNController(), getDPID("c1"), groupId);
     routingmanager.setNextHops("c1", getSDNController(), groupId, "192.168.10.0/24", nbs);
     res = SdnUtil.getGroupDescStats(getSDNController(), getDPID("c1"), groupId);
+    logger.info("get group stats");
     logger.info(res);
     SdnUtil.deleteGroup(getSDNController(), getDPID("c2"), groupId);
     routingmanager.setNextHops("c2", getSDNController(), groupId, "192.168.10.0/24", nbs);
     res = SdnUtil.getGroupDescStats(getSDNController(), getDPID("c2"), groupId);
+    logger.info("get group stats");
     logger.info(res);
     ///<<<===last hop
     //routingmanager.setOutPort("c0", getSDNController(),
     //    "stitch_c0_10","192.168.10.0/24" );
     routingmanager.singleStepRouting("192.168.10.0/24", "192.168.10.2",
-        getDPID("c0"), getSDNController());
+      getDPID("c0"), getSDNController());
     logger.info(res);
-
   }
 
-  public void logFlowTables(){
-    logFlowTables("c0");
-    logFlowTables("c1");
-    logFlowTables("c2");
-    logFlowTables("c3");
+  public void logFlowTables() {
+    try {
+      Class[] cArg = new Class[1];
+      cArg[0] = String.class;
+      Method logFlowTables = this.getClass().getDeclaredMethod("logFlowTables", cArg);
+      logFlowTables.setAccessible(true);
+      logFlowTables.invoke(this, "c0");
+      logFlowTables.invoke(this, "c1");
+      logFlowTables.invoke(this, "c2");
+      logFlowTables.invoke(this, "c3");
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
   }
 
-  public void sendTraffic(){
+  public void sendTraffic() {
     ExperimentBase experiment = new ExperimentBase(this);
     experiment.addClient("CNode0", serverSlice.getComputeNode("CNode0").getManagementIP(),
-        "192.168.10.2");
+      "192.168.10.2");
     experiment.addClient("CNode1", serverSlice.getComputeNode("CNode1").getManagementIP(),
-        "192.168.20.2");
+      "192.168.20.2");
     experiment.addClient("CNode2", serverSlice.getComputeNode("CNode2").getManagementIP(),
-        "192.168.30.2");
-    experiment.addUdpFlow("CNode0", "CNode1", "1m");
+      "192.168.30.2");
+    experiment.addTcpFlow("CNode0", "CNode1", "1m", 20);
+    experiment.addTcpFlow("CNode0", "CNode2", "1m", 20);
+    //experiment.addTcpFlow("CNode2", "CNode0", "1m", 20);
+    //experiment.addTcpFlow("CNode1", "CNode0", "1m", 20);
     experiment.setLatencyTask("CNode0", "CNode1");
     experiment.startLatencyTask();
     experiment.startFlows(10);
-    logger.warn(String.format("start time %s", System.currentTimeMillis()/1000));
+    logger.warn(String.format("start time %s", System.currentTimeMillis() / 1000));
     sleep(15);
     experiment.stopFlows();
+    experiment.printFlowServerResult();
     experiment.stopLatencyTask();
     experiment.printLatencyResult();
-    logger.warn(String.format("stop time %s", System.currentTimeMillis()/1000));
+    logger.warn(String.format("stop time %s", System.currentTimeMillis() / 1000));
   }
 
-  public void getGroupStats(){
+  public void getGroupStats() {
     int gid = 1;
     logger.info("---------------------");
     String res = SdnUtil.getGroupStats(getSDNController(), getDPID("c0"), gid);

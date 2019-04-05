@@ -9,67 +9,12 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 
-public class SafeAuthority {
-  static Logger logger = LogManager.getLogger(SafeAuthority.class);
-
+public class SafeAuthority implements SdxRoutingSlang, SafeLang {
   static final String bearerRef = "bearerRef";
-
   static final String subject = "subject";
-
+  static Logger logger = LogManager.getLogger(SafeAuthority.class);
   static String exampleSafeServer = "128.194.6.138:7777";
 
-  static final String postMakeIPTokenSet = "postMakeIPTokenSet";
-  static final String postUserAclEntry = "postUserAclEntry";
-  static final String postUserTagAclEntry = "postUserTagAclEntry";
-  static final String postCustomerPolicy = "postCustomerPolicy";
-  static final String updateTagSet = "updateTagSet";
-  static final String postStandardSliceDefaultPrivilegeSet = "postStandardSliceDefaultPrivilegeSet";
-  static final String updateSubjectSet = "updateSubjectSet";
-  static final String postOwnPrefixPolicy = "postOwnPrefixPolicy";
-  static final String postMAEndorsement = "postMAEndorsement";
-  static final String postStitchPolicy = "postStitchPolicy";
-  static final String postObjectTagSet = "postObjectTagSet";
-  static final String postProjectMembership = "postProjectMembership";
-  static final String postSAEndorsement = "postSAEndorsement";
-  static final String authZByPID = "authZByPID";
-  static final String createSlice = "createSlice";
-  static final String authorizeStitchByPID = "authorizeStitchByPID";
-  static final String authZByUserAttr = "authZByUserAttr";
-  static final String postAssignTag = "postAssignTag";
-  static final String postCustomerConnectionPolicy = "postCustomerConnectionPolicy";
-  static final String postSliceTagAclEntry = "postSliceTagAclEntry";
-  static final String postPIEndorsement = "postPIEndorsement";
-  static final String postProjectIDAcl = "postProjectIDAcl";
-  static final String postCPEndorsement = "postCPEndorsement";
-  static final String authZByProjectAttr = "authZByProjectAttr";
-  static final String postProjectSet = "postProjectSet";
-  static final String postPAEndorsement = "postPAEndorsement";
-  static final String authorizeStitchByUID = "authorizeStitchByUID";
-  static final String postTagSet = "postTagSet";
-  static final String postTagPrivilegePolicy = "postTagPrivilegePolicy";
-  static final String createProject = "createProject";
-  static final String postAclEntrySet = "postAclEntrySet";
-  static final String postUserEndorsement = "postUserEndorsement";
-  static final String postMemberSet = "postMemberSet";
-  static final String authorizeOwnPrefix = "authorizeOwnPrefix";
-  static final String authorizeStitchByProjectAttr = "authorizeStitchByProjectAttr";
-  static final String passDelegation = "passDelegation";
-  static final String authorizeStitchBySliceAttr = "authorizeStitchBySliceAttr";
-  static final String postSliceControl = "postSliceControl";
-  static final String postLinkTagSetToProject = "postLinkTagSetToProject";
-  static final String postSliceSet = "postSliceSet";
-  static final String authorizeStitchByUserAttr = "authorizeStitchByUserAttr";
-  static final String createSliver = "createSliver";
-  static final String postIdSet = "postIdSet";
-  static final String postDlgToken = "postDlgToken";
-  static final String postGrantTagPriv = "postGrantTagPriv";
-  static final String postUpdateObjectTagSet = "postUpdateObjectTagSet";
-  static final String postStandardSliceControlSet = "postStandardSliceControlSet";
-  static final String postLinkTagSetToSlice = "postLinkTagSetToSlice";
-  static final String postIPAllocate = "postIPAllocate";
-  static final String whoami = "whoami";
-  static final String postTagAclEntry = "postTagAclEntry";
-  static final String postSubjectSet = "postSubjectSet";
   ;
 
   String safeServer = "128.194.6.138:7777";
@@ -111,13 +56,13 @@ public class SafeAuthority {
     this.sdxKeyFile = sdxKey;
     sliceKeyMap.put(this.sdxSlice, this.sdxKeyFile);
     this.clientSlices.addAll(clientSlices);
-    for(String key: clientKeyMap.keySet()){
+    for (String key : clientKeyMap.keySet()) {
       sliceKeyMap.put(key, clientKeyMap.get(key));
     }
     sliceIpMap = clientIpMap;
   }
 
-  public void initGeniTrustBase(){
+  public void initGeniTrustBase() {
     addPrincipals();
     initPrincipals();
     String token;
@@ -132,7 +77,7 @@ public class SafeAuthority {
 
     String piCap = simpleEndorseMent(postPIEndorsement, "key_p1", "key_p4", "PI");
 
-    for(int i=10; i<20; i++) {
+    for (int i = 10; i < 20; i++) {
       simpleEndorseMent(postUserEndorsement, "key_p1", "key_p" + i, "User");
     }
     simpleEndorseMent(postUserEndorsement, "key_p1", "sdx", "User");
@@ -186,12 +131,12 @@ public class SafeAuthority {
         new String[]{principalMap.get(sliceKeyMap.get(slice)), sliceId, projectId,
           sliceControlRef,
           slicePrivRef}));
-       SafeUtils.getTokens(passDelegation(sliceKeyMap.get(slice),
-       sliceToken.get(slice), sliceId));
+      SafeUtils.getTokens(passDelegation(sliceKeyMap.get(slice),
+        sliceToken.get(slice), sliceId));
     }
 
     //UserAcl
-    for (String slice: clientSlices) {
+    for (String slice : clientSlices) {
       safePost(postUserAclEntry, "sdx",
         new String[]{principalMap.get(sliceKeyMap.get(slice))});
     }
@@ -200,14 +145,14 @@ public class SafeAuthority {
     safePost(postStitchPolicy, "sdx");
 
     //authorizeStitchByUid
-    for (String slice: clientSlices) {
+    for (String slice : clientSlices) {
       authorize(authorizeStitchByUID, "sdx",
         new String[]{principalMap.get(sliceKeyMap.get(slice)), sliceScid.get(slice)});
     }
 
     //MakeIp Delegation
     safePost(postMakeIPTokenSet, "rpkiroot", new String[]{"192.1.1.1/24"});
-    for (String slice: clientSlices) {
+    for (String slice : clientSlices) {
       String ip = sliceIpMap.get(slice);
       String user = sliceKeyMap.get(slice);
       String userKey = principalMap.get(sliceKeyMap.get(slice));
@@ -220,7 +165,7 @@ public class SafeAuthority {
     //Tag delegation
     String tag = principalMap.get("tagauthority") + ":tag0";
     safePost(postTagSet, "tagauthority", new String[]{tag});
-    for (String slice:clientSlices) {
+    for (String slice : clientSlices) {
       String user = sliceKeyMap.get(slice);
       String userKey = principalMap.get(sliceKeyMap.get(slice));
       String tagToken = safePost(postGrantTagPriv, "tagauthority", new String[]{userKey, tag});
@@ -229,7 +174,7 @@ public class SafeAuthority {
 
     //userTagAcl
     //user post Connect policy
-    for (String slice: clientSlices) {
+    for (String slice : clientSlices) {
       String user = sliceKeyMap.get(slice);
       safePost(postUserTagAclEntry, user, new String[]{tag});
       safePost(postCustomerConnectionPolicy, user, new String[]{});
@@ -256,12 +201,12 @@ public class SafeAuthority {
 
   }
 
-  private String getPrincipalId(String key){
-    if(principalMap.containsKey(key)){
+  private String getPrincipalId(String key) {
+    if (principalMap.containsKey(key)) {
       return principalMap.get(key);
     }
-    String pid =  SafeUtils.getPrincipalId(safeServer, key);
-    if(pid!= null) {
+    String pid = SafeUtils.getPrincipalId(safeServer, key);
+    if (pid != null) {
       principalMap.put(key, pid);
     }
     return pid;

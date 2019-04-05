@@ -25,39 +25,39 @@ class Interface {
     this.port = port;
   }
 
-  public String getName(){
+  public String getName() {
     return name;
   }
 
-  public String getNodeName(){
+  public String getNodeName() {
     return nodeName;
   }
 
-  public String getLinkName(){
+  public String getLinkName() {
     return linkName;
   }
 
-  public String getMacAddr(){
+  public String getMacAddr() {
     return macAddr;
   }
 
-  public String getPort(){
-    return port;
-  }
-
-  public String getIp(){
-    return ip;
-  }
-
-  public void setMacAddr(String mac){
+  public void setMacAddr(String mac) {
     this.macAddr = mac;
   }
 
-  public void setPort(String port){
+  public String getPort() {
+    return port;
+  }
+
+  public void setPort(String port) {
     this.port = port;
   }
 
-  public void setIP(String ip){
+  public String getIp() {
+    return ip;
+  }
+
+  public void setIP(String ip) {
     this.ip = ip;
   }
 }

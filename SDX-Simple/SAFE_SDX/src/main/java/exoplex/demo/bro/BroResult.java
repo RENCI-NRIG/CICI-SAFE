@@ -113,8 +113,8 @@ public class BroResult {
   @Override
   public String toString() {
     return String.format("%7.3f(%.2f) %7.3f(%.2f) %7.3f(%.4f) %7.3f(%.4f)", getMean
-            (detectionTime), getStdev(detectionTime), getMean(cpuUtilization), getStdev(cpuUtilization)
-        , getMean(detectionRate), getStdev(detectionRate), getMean(packetDropRatio), getStdev
-            (packetDropRatio));
+        (detectionTime), getStdev(detectionTime), getMean(cpuUtilization), getStdev(cpuUtilization)
+      , getMean(detectionRate), getStdev(detectionRate), getMean(packetDropRatio), getStdev
+        (packetDropRatio));
   }
 }

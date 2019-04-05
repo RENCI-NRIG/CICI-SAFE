@@ -1,10 +1,11 @@
 package exoplex.client.stitchport;
 
-import exoplex.common.slice.SliceCommon;
 import exoplex.common.utils.Exec;
 import exoplex.common.utils.HttpUtil;
 import exoplex.common.utils.SafeUtils;
 import exoplex.common.utils.ServerOptions;
+import exoplex.sdx.slice.exogeni.SiteBase;
+import exoplex.sdx.slice.exogeni.SliceCommon;
 import org.apache.commons.cli.CommandLine;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -42,7 +43,7 @@ public class SdxStitchPortClient extends SliceCommon {
     //keyLocation = args[1];
     //controllerUrl = args[2]; //"https://geni.renci.org:11443/orca/xmlrpc";
     //sliceName = args[3];
-    //sshkey=args[6];
+    //sshKey=args[6];
     //keyhash=args[7];
 
     if (cmd.hasOption('e')) {
@@ -77,26 +78,55 @@ public class SdxStitchPortClient extends SliceCommon {
       if (params[0].equals("stitch")) {
         logger.debug(params.length);
         processStitchCmd(params);
+      } else if (params[0].equals("route")) {
+        processPrefixCmd(params);
       } else {
-
-        System.out.print(params.length);
-        JSONObject paramsobj = new JSONObject();
-        paramsobj.put("dest", params[1]);
-        paramsobj.put("gateway", params[2]);
-        paramsobj.put("customer", safeKeyHash);
-        String res = HttpUtil.postJSON(serverurl + "sdx/notifyprefix", paramsobj);
-        if (res.equals("")) {
-          logger.debug("Prefix notifcation failed");
-          System.out.println("Prefix notifcation failed");
-        } else {
-          logger.debug(res);
-          System.out.println(res);
-        }
+        processConnectionCmd(params);
       }
     } catch (Exception e) {
       e.printStackTrace();
     }
+  }
 
+  private void processConnectionCmd(String[] params) {
+    try {
+      JSONObject jsonparams = new JSONObject();
+      if (safeEnabled) {
+        safeKeyHash = SafeUtils.getPrincipalId(safeServer, safeKeyFile);
+        jsonparams.put("ckeyhash", safeKeyHash);
+      } else {
+        jsonparams.put("ckeyhash", sliceName);
+      }
+      jsonparams.put("self_prefix", params[1]);
+      jsonparams.put("target_prefix", params[2]);
+      try {
+        jsonparams.put("bandwidth", Long.valueOf(params[3]));
+      } catch (Exception e) {
+      }
+      String res = HttpUtil.postJSON(serverurl + "sdx/connectionrequest", jsonparams);
+      logger.info("get connection result from server:\n" + res);
+      logger.debug(res);
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+  }
+
+  private void processPrefixCmd(String[] params) {
+    System.out.print(params.length);
+    JSONObject paramsobj = new JSONObject();
+    paramsobj.put("dest", params[1]);
+    paramsobj.put("gateway", params[2]);
+    setSafeServerIp(conf.getString("config.safeserver"));
+    safeKeyHash = SafeUtils.getPrincipalId(safeServer, safeKeyFile);
+    paramsobj.put("customer", safeKeyHash);
+    String res = HttpUtil.postJSON(serverurl + "sdx/notifyprefix", paramsobj);
+    if (res.equals("")) {
+      logger.debug("Prefix notifcation failed");
+      System.out.println("Prefix notifcation failed");
+    } else {
+      logger.debug(res);
+      System.out.println(res);
+    }
   }
 
   private void processStitchCmd(String[] params) {
@@ -108,15 +138,17 @@ public class SdxStitchPortClient extends SliceCommon {
       jsonparams.put("vlan", params[2]);
       jsonparams.put("gateway", params[3]);
       jsonparams.put("ip", params[4]);
-      jsonparams.put("sdxsite", params[5]);
+      jsonparams.put("sdxsite", SiteBase.get(params[5]));
       try {
         jsonparams.put("sdxnode", params[6]);
-      }catch (Exception e){
-        jsonparams.put("sdxnode",(String)null);
+      } catch (Exception e) {
+        jsonparams.put("sdxnode", (String) null);
       }
-      jsonparams.put("ckeyhash", safeKeyHash);
-      if(safeEnabled){
-        postSafeStitchRequest(safeKeyHash,jsonparams.getString("gateway"),jsonparams.getString("sdxslice"),jsonparams.getString("sdxnode"),jsonparams.getString("stitchport"),jsonparams.getString("vlan"));
+      if (safeEnabled) {
+        setSafeServerIp(conf.getString("config.safeserver"));
+        safeKeyHash = SafeUtils.getPrincipalId(safeServer, safeKeyFile);
+        jsonparams.put("ckeyhash", safeKeyHash);
+        postSafeStitchRequest(safeKeyHash, jsonparams.getString("stitchport"), jsonparams.getString("vlan"));
       }
       logger.debug("posted stitch request, requesting to Sdx server");
       String res = HttpUtil.postJSON(serverurl + "sdx/stitchchameleon", jsonparams);
@@ -153,19 +185,15 @@ public class SdxStitchPortClient extends SliceCommon {
     }
   }
 
-  private boolean postSafeStitchRequest(String keyhash, String gateway,String slicename, String nodename,String stitchport, String vlan){
+  private boolean postSafeStitchRequest(String keyhash, String stitchport, String vlan) {
     /** Post to remote safesets using apache httpclient */
-    String[] othervalues=new String[5];
-    othervalues[0]=stitchport;
-    othervalues[1]=vlan;
-    othervalues[2]=gateway;
-    othervalues[3]=slicename;
-    othervalues[4]=nodename;
-    String message= SafeUtils.postSafeStatements(safeServer,"postChameleonStitchRequest",keyhash,othervalues);
-    if(message.contains("fail")){
+    String[] othervalues = new String[5];
+    othervalues[0] = stitchport;
+    othervalues[1] = vlan;
+    String message = SafeUtils.postSafeStatements(safeServer, "postChameleonStitchRequest", keyhash, othervalues);
+    if (message.contains("fail")) {
       return false;
-    }
-    else
+    } else
       return true;
   }
 
@@ -189,33 +217,33 @@ public class SdxStitchPortClient extends SliceCommon {
 
   private String getQuaggaScript() {
     return "#!/bin/bash\n"
-        // +"mask2cdr()\n{\n"+"local x=${1##*255.}\n"
-        // +" set -- 0^^^128^192^224^240^248^252^254^ $(( (${#1} - ${#x})*2 )) ${x%%.*}\n"
-        // +" x=${1%%$3*}\n"
-        // +"echo $(( $2 + (${#x}/4) ))\n"
-        // +"}\n"
-        + "ipmask()\n"
-        + "{\n"
-        + " echo $1/24\n}\n"
-        + "apt-get update\n"
-        + "apt-get install -y quagga\n"
-        + "sed -i -- 's/zebra=no/zebra=yes/g' /etc/quagga/daemons\n"
-        + "sed -i -- 's/ospfd=no/ospfd=yes/g' /etc/quagga/daemons\n"
-        + "echo \"!zebra configuration file\" >/etc/quagga/zebra.conf\necho \"hostname LogRouter\">>/etc/quagga/zebra.conf\n"
-        + "echo \"enable password zebra\">>/etc/quagga/zebra.conf\n"
-        + "echo \"!ospfd configuration file\" >/etc/quagga/ospfd.conf\n echo \"hostname ospfd\">>/etc/quagga/ospfd.conf\n echo \"enable password zebra\">>/etc/quagga/ospfd.conf\n  echo \"router ospf\">>/etc/quagga/ospfd.conf\n"
-        + "eth=$(ifconfig |grep 'inet addr:'|grep -v 'inet addr:10.' |grep -v '127.0.0.1' |cut -d: -f2|awk '{print $1}')\n"
-        + "eth1=$(echo $eth|cut -f 1 -d \" \")\n"
-        + "echo \"  router-id $eth1\">>/etc/quagga/ospfd.conf\n"
-        + "prefix=$(ifconfig |grep 'inet addr:'|grep -v 'inet addr:10.' |grep -v '127.0.0.1' |cut -d: -f2,4 |awk '{print $1 $2}'| sed 's/Bcast:/\\ /g')\n"
-        + "while read -r line;do\n"
-        + "  echo \"  network\" $(ipmask $line) area 0 >>/etc/quagga/ospfd.conf\n"
-        + "done <<<\"$prefix\"\n"
-        + "echo \"log stdout\">>/etc/quagga/ospfd.conf\n"
-        + "echo \"1\" > /proc/sys/net/ipv4/ip_forward\n"
-        //+"/etc/init.d/quagga restart\napt-get -y install iperf\n"
-        + "/etc/init.d/quagga stop\napt-get -y install iperf\n"
-        ;
+      // +"mask2cdr()\n{\n"+"local x=${1##*255.}\n"
+      // +" set -- 0^^^128^192^224^240^248^252^254^ $(( (${#1} - ${#x})*2 )) ${x%%.*}\n"
+      // +" x=${1%%$3*}\n"
+      // +"echo $(( $2 + (${#x}/4) ))\n"
+      // +"}\n"
+      + "ipmask()\n"
+      + "{\n"
+      + " echo $1/24\n}\n"
+      + "apt-get update\n"
+      + "apt-get install -y quagga\n"
+      + "sed -i -- 's/zebra=no/zebra=yes/g' /etc/quagga/daemons\n"
+      + "sed -i -- 's/ospfd=no/ospfd=yes/g' /etc/quagga/daemons\n"
+      + "echo \"!zebra configuration file\" >/etc/quagga/zebra.conf\necho \"hostname LogRouter\">>/etc/quagga/zebra.conf\n"
+      + "echo \"enable password zebra\">>/etc/quagga/zebra.conf\n"
+      + "echo \"!ospfd configuration file\" >/etc/quagga/ospfd.conf\n echo \"hostname ospfd\">>/etc/quagga/ospfd.conf\n echo \"enable password zebra\">>/etc/quagga/ospfd.conf\n  echo \"router ospf\">>/etc/quagga/ospfd.conf\n"
+      + "eth=$(ifconfig |grep 'inet addr:'|grep -v 'inet addr:10.' |grep -v '127.0.0.1' |cut -d: -f2|awk '{print $1}')\n"
+      + "eth1=$(echo $eth|cut -f 1 -d \" \")\n"
+      + "echo \"  router-id $eth1\">>/etc/quagga/ospfd.conf\n"
+      + "prefix=$(ifconfig |grep 'inet addr:'|grep -v 'inet addr:10.' |grep -v '127.0.0.1' |cut -d: -f2,4 |awk '{print $1 $2}'| sed 's/Bcast:/\\ /g')\n"
+      + "while read -r line;do\n"
+      + "  echo \"  network\" $(ipmask $line) area 0 >>/etc/quagga/ospfd.conf\n"
+      + "done <<<\"$prefix\"\n"
+      + "echo \"log stdout\">>/etc/quagga/ospfd.conf\n"
+      + "echo \"1\" > /proc/sys/net/ipv4/ip_forward\n"
+      //+"/etc/init.d/quagga restart\napt-get -y install iperf\n"
+      + "/etc/init.d/quagga stop\napt-get -y install iperf\n"
+      ;
   }
 
 }

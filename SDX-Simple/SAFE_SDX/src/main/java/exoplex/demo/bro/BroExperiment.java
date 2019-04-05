@@ -2,14 +2,14 @@ package exoplex.demo.bro;
 
 import exoplex.common.utils.Exec;
 import exoplex.experiment.ExperimentBase;
+import exoplex.sdx.core.SdxManager;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import exoplex.sdx.core.SdxManager;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 
-public class BroExperiment extends ExperimentBase{
+public class BroExperiment extends ExperimentBase {
   final static Logger logger = LogManager.getLogger(BroExperiment.class);
   final ArrayList<String[]> broOut = new ArrayList<String[]>();
   HashMap<String, String[]> clients;
@@ -49,8 +49,8 @@ public class BroExperiment extends ExperimentBase{
         @Override
         public void run() {
           ftpClientOut.add(Exec.sshExec("root", mip1, fetchFileCMD
-              (ftpuser, ftppw, dip2, file[2], 1) + getEchoTimeCMD() + fetchFileCMD(ftpuser, ftppw,
-              dip2, file[2], times - 1), sshkey));
+            (ftpuser, ftppw, dip2, file[2], 1) + getEchoTimeCMD() + fetchFileCMD(ftpuser, ftppw,
+            dip2, file[2], times - 1), sshkey));
           flowPattern = ".*table=0.*nw_src=" + dip1 + " actions=drop.*";
         }
       });
@@ -67,7 +67,7 @@ public class BroExperiment extends ExperimentBase{
         @Override
         public void run() {
           pingClientOut.add(Exec.sshExec("root", mip1, fetchFileCMD
-              (ftpuser, ftppw, dip2, file[2], 1) + "ping -i 0.01 -c 3000 " + dip2, sshkey));
+            (ftpuser, ftppw, dip2, file[2], 1) + "ping -i 0.01 -c 3000 " + dip2, sshkey));
           stopFlows();
           stopBro();
         }
@@ -86,7 +86,7 @@ public class BroExperiment extends ExperimentBase{
       public void run() {
         Exec.sshExec("root", broIP, "pkill bro", sshkey);
         broOut.add(Exec.sshExec("root", broIP, "/opt/bro/bin/bro -i eth1 " +
-            "detect-all-policy.bro", sshkey));
+          "detect-all-policy.bro", sshkey));
         stopFlows();
       }
     });
@@ -103,8 +103,8 @@ public class BroExperiment extends ExperimentBase{
       @Override
       public void run() {
         cpuOut.add(Exec.sshExec("root", broIP, "/bin/bash /root/cpu_percentage.sh " +
-                times,
-            sshkey));
+            times,
+          sshkey));
         Exec.sshExec("root", broIP, "pkill bro", sshkey);
       }
     });
@@ -203,7 +203,7 @@ public class BroExperiment extends ExperimentBase{
       public void run() {
         Exec.sshExec("root", broIP, "pkill bro", sshkey);
         broOut.add(Exec.sshExec("root", broIP, "/opt/bro/bin/bro -i eth1 " +
-            "detect-all-policy.bro", sshkey));
+          "detect-all-policy.bro", sshkey));
         stopFlows();
       }
     });
@@ -223,8 +223,8 @@ public class BroExperiment extends ExperimentBase{
       @Override
       public void run() {
         cpuOut.add(Exec.sshExec("root", broIP, "/bin/bash /root/cpu_percentage.sh " +
-                cpuTimes,
-            sshkey));
+            cpuTimes,
+          sshkey));
       }
     });
     tlist.get(tlist.size() - 1).start();
@@ -330,7 +330,7 @@ public class BroExperiment extends ExperimentBase{
   }
 
   public double measureResponseTime(int saturateTime, int fileTimes, int sleepTime, String
-      bro, String router) {
+    bro, String router) {
     broName = bro;
     broIP = sdxManager.getManagementIP(broName);
     routerName = router;
@@ -338,7 +338,7 @@ public class BroExperiment extends ExperimentBase{
       @Override
       public void run() {
         broOut.add(Exec.sshExec("root", broIP, "/usr/bin/rm *.log; pkill bro; /opt/bro/bin/bro " +
-            "-i eth1 test-all-policy.bro", sshkey));
+          "-i eth1 test-all-policy.bro", sshkey));
         stopFlows();
       }
     });

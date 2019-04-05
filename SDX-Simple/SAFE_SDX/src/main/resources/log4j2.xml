@@ -2,9 +2,20 @@
 <Configuration status="warn">
     <Appenders>
         <Console name="Console" target="SYSTEM_OUT">
-            <PatternLayout pattern="%highlight{%d{HH:mm:ss} [%t] %-5level %logger{36} - %msg%n}{FATAL=red, ERROR=red, WARN=yellow, INFO=black, DEBUG=green, TRACE=blue}"/>
+            <PatternLayout
+                    pattern="%highlight{%d{HH:mm:ss} [%t] %-5level %logger{36} - %msg%n}{FATAL=red, ERROR=red, WARN=yellow, INFO=black, DEBUG=green, TRACE=blue}"/>
         </Console>
         <RollingFile name="RollingFile" fileName="log/sdx-simple.log"
+                     filePattern="log/$${date:yyyy-MM}/app-%d{MM-dd-yyyy}-%i.log.gz" append="false">
+            <PatternLayout>
+                <Pattern>%d %p %c{1.} [%t] %m%n</Pattern>
+            </PatternLayout>
+            <Policies>
+                <TimeBasedTriggeringPolicy/>
+                <SizeBasedTriggeringPolicy size="250 MB"/>
+            </Policies>
+        </RollingFile>
+        <RollingFile name="ServerRollingFile" fileName="log/sdx-server.log"
                      filePattern="log/$${date:yyyy-MM}/app-%d{MM-dd-yyyy}-%i.log.gz" append="false">
             <PatternLayout>
                 <Pattern>%d %p %c{1.} [%t] %m%n</Pattern>
@@ -75,7 +86,8 @@
             </Policies>
         </RollingFile>
         <RollingFile name="SliceRollingFile" fileName="log/slice.log"
-                     filePattern="log/$${date:yyyy-MM}/slice-%d{MM-dd-yyyy}-%i.log.gz" append="false">
+                     filePattern="log/$${date:yyyy-MM}/slice-%d{MM-dd-yyyy}-%i.log.gz"
+                     append="false">
             <PatternLayout>
                 <Pattern>%m%n</Pattern>
             </PatternLayout>
@@ -101,23 +113,24 @@
         </Root>
         <Logger name="exoplex.sdx.core.SdxManager" level="info" additivity="false">
             <AppenderRef ref="Console"/>
+            <AppenderRef ref="ServerRollingFile"/>
         </Logger>
-        <Logger name="safe.AuthorityMock" level="debug" additivity="false">
+        <Logger name="safe.sdx.AuthorityMockSdx" level="debug" additivity="false">
             <AppenderRef ref="AuthRollingFile"/>
         </Logger>
         <Logger name="exoplex.common.utils.SafeUtils" level="debug" additivity="false">
             <AppenderRef ref="RollingFile"/>
         </Logger>
-        <Logger name="exoplex.sdx.core.SliceManager" level="info" additivity="false">
+        <Logger name="exoplex.sdx.core.SliceHelper" level="info" additivity="false">
             <AppenderRef ref="Console"/>
         </Logger>
-        <Logger name="exoplex.sdx.core.SliceManager" level="debug" additivity="false">
+        <Logger name="exoplex.sdx.core.SliceHelper" level="debug" additivity="false">
             <AppenderRef ref="RollingFile"/>
         </Logger>
         <Logger name="exoplex.sdx.network.NetworkManager" level="warn" additivity="false">
             <AppenderRef ref="Console"/>
         </Logger>
-        <Logger name="exoplex.common.slice.SliceCommon" level="info" additivity="false">
+        <Logger name="exoplex.sdx.slice.exogeni.SliceCommon" level="info" additivity="false">
             <AppenderRef ref="Console"/>
         </Logger>
         <Logger name="exoplex.sdx.bro.BroManager" level="info" additivity="false">
@@ -138,10 +151,10 @@
         <Logger name="exoplex.client.exogeni.ExogeniClientSlice" level="debug" additivity="false">
             <AppenderRef ref="ClientRollingFile"/>
         </Logger>
-        <Logger name="exoplex.common.slice.SafeSlice" level="warn" additivity="true">
+        <Logger name="exoplex.sdx.slice.exogeni.SliceManager" level="warn" additivity="true">
             <AppenderRef ref="Console"/>
         </Logger>
-        <Logger name="exoplex.common.slice.SafeSlice" level="debug" additivity="true">
+        <Logger name="exoplex.sdx.slice.exogeni.SliceManager" level="debug" additivity="true">
             <AppenderRef ref="RollingFile"/>
         </Logger>
         <Logger name="org.renci.ahab.libndl.LIBNDL" level="info" additivity="true">
@@ -153,16 +166,16 @@
         <Logger name="exoplex.sdx.network.RoutingManager" level="info" additivity="false">
             <AppenderRef ref="RoutingRollingFile"/>
         </Logger>
-        <Logger name="exoplex.common.slice.SafeSlice" level="info" additivity="true">
+        <Logger name="exoplex.sdx.slice.exogeni.SliceManager" level="info" additivity="true">
             <AppenderRef ref="SliceRollingFile"/>
         </Logger>
-        <Logger name="exoplex.common.slice.SafeSlice" level="warn" additivity="true">
+        <Logger name="exoplex.sdx.slice.exogeni.SliceManager" level="warn" additivity="true">
             <AppenderRef ref="Console"/>
         </Logger>
-        <Logger name="exoplex.common.slice.SafeSlice" level="error" additivity="true">
+        <Logger name="exoplex.sdx.slice.exogeni.SliceManager" level="error" additivity="true">
             <AppenderRef ref="Console"/>
         </Logger>
-        <Logger name="exoplex.common.slice.SafeSlice" level="debug" additivity="true">
+        <Logger name="exoplex.sdx.slice.exogeni.SliceManager" level="debug" additivity="true">
             <AppenderRef ref="RollingFile"/>
         </Logger>
         <Logger name="org.apache.commons.httpclient.HttpClient" level="debug" additivity="false">

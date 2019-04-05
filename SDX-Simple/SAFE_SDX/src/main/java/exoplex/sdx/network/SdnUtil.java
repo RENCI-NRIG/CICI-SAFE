@@ -7,7 +7,10 @@ import org.apache.logging.log4j.Logger;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
 
 public class SdnUtil {
   static final Logger logger = LogManager.getLogger(SdnUtil.class);
@@ -75,7 +78,7 @@ public class SdnUtil {
     return res;
   }
 
-  static String[] delAddrCMD(String addrId, String dpid, String controller){
+  static String[] delAddrCMD(String addrId, String dpid, String controller) {
     String[] cmd = new String[3];
     cmd[0] = "http://" + controller + "/router/" + dpid;
     cmd[1] = "{\"address_id\":\"" + addrId + "\"}";
@@ -132,43 +135,56 @@ public class SdnUtil {
     return res;
   }
 
-  static Collection<String> getAllSwitches(String controller){
+  static Collection<String> getAllSwitches(String controller) {
     String url = "http://" + controller + "/stats/switches";
     String res = HttpUtil.get(url);
-    String[] dpids = res.replace("[","")
-        .replace("]", "")
-        .replace("\n", "")
-        .replace(" ", "")
-        .split(",");
-    ArrayList<String> retVal =  new ArrayList<>();
-    for(String dpid: dpids){
+    String[] dpids = res.replace("[", "")
+      .replace("]", "")
+      .replace("\n", "")
+      .replace(" ", "")
+      .split(",");
+    ArrayList<String> retVal = new ArrayList<>();
+    for (String dpid : dpids) {
       String sdpid = Long.toHexString(Long.valueOf(dpid));
       retVal.add(StringUtils.leftPad(sdpid, 16, '0'));
     }
     return retVal;
   }
 
-  static JSONObject getPortDesc(String controller, String dpid){
+  static JSONObject getPortDesc(String controller, String dpid) {
     String url = "http://" + controller + "/stats/portdesc/" + Long.parseLong(dpid, 16);
     String res = HttpUtil.get(url);
-    try{
+    try {
       JSONObject obj = new JSONObject(res);
       return obj;
-    }catch (Exception e){
+    } catch (Exception e) {
       logger.error(e.getMessage());
       logger.error(res);
     }
     return null;
   }
 
-  public static String addSelectGroup(String controller, String dpid, int groupId, HashMap<Integer, Integer>ports){
+  /*
+  enum ofp_group_type {
+  OFPGT_ALL = 0, /* All (multicast/broadcast) group.
+    OFPGT_SELECT = 1, /* Select group.
+    OFPGT_INDIRECT = 2, /* Indirect group.
+    OFPGT_FF = 3, /* Fast failover group.
+  }
+  enum ofp_group {
+   Last usable group number.
+    OFPG_MAX = 0xffffff00,
+    OFPG_ALL = 0xfffffffc,  Represents all groups for group delete commands.
+    OFPG_ANY = 0xffffffff  Wildcard group used only for flow stats
+  */
+  public static String addSelectGroup(String controller, String dpid, int groupId, HashMap<Integer, Integer> ports) {
     String url = "http://" + controller + "/stats/groupentry/add";
     JSONObject entity = new JSONObject();
     entity.put("dpid", Long.parseLong(dpid, 16));
     entity.put("type", "SELECT");
     entity.put("group_id", groupId);
     JSONArray buckets = new JSONArray();
-    for(int port: ports.keySet()){
+    for (int port : ports.keySet()) {
       JSONObject bucket = new JSONObject();
       JSONArray actions = new JSONArray();
       JSONObject outAction = new JSONObject();
@@ -183,17 +199,17 @@ public class SdnUtil {
     return HttpUtil.postJSON(url, entity);
   }
 
-  public static  String getGroupStats(String controller, String dpid, int groupId){
+  public static String getGroupStats(String controller, String dpid, int groupId) {
     String url = "http://" + controller + "/stats/group/" + Long.parseLong(dpid, 16) + "/" + groupId;
     return HttpUtil.get(url);
   }
 
-  public static  String getGroupDescStats(String controller, String dpid, int groupId){
+  public static String getGroupDescStats(String controller, String dpid, int groupId) {
     String url = "http://" + controller + "/stats/groupdesc/" + Long.parseLong(dpid, 16) + "/" + groupId;
     return HttpUtil.get(url);
   }
 
-  public static void deleteGroup(String controller, String dpid, int groupId){
+  public static void deleteGroup(String controller, String dpid, int groupId) {
     String url = "http://" + controller + "/stats/groupentry/delete";
     JSONObject entity = new JSONObject();
     entity.put("dpid", Long.parseLong(dpid, 16));
@@ -201,7 +217,7 @@ public class SdnUtil {
     HttpUtil.postJSON(url, entity);
   }
 
-  public static String setRoutingFlow(String controller, String dpid, String destIP, int groupId){
+  public static String setRoutingFlow(String controller, String dpid, String destIP, int groupId) {
     String url = "http://" + controller + "/stats/flowentry/add";
 
     JSONObject entity = new JSONObject();
@@ -210,7 +226,7 @@ public class SdnUtil {
     entity.put("cookie_mask", 1);
     entity.put("table_id", 0);
     //entity.put("idle_timeout", 30);
-   // entity.put("hard_timeout", 30);
+    // entity.put("hard_timeout", 30);
     entity.put("priority", 11111);
     entity.put("flags", 1);
     JSONObject match = new JSONObject();
@@ -218,15 +234,15 @@ public class SdnUtil {
     match.put("dl_type", 2048);
     entity.put("match", match);
     JSONObject action = new JSONObject();
-    action.put("type","GROUP");
-    action.put("group_id",groupId);
+    action.put("type", "GROUP");
+    action.put("group_id", groupId);
     JSONArray actions = new JSONArray();
     actions.put(action);
     entity.put("actions", actions);
     return HttpUtil.postJSON(url, entity);
   }
 
-  public static String setRoutingOutputFlow(String controller, String dpid, String destIP, int port){
+  public static String setRoutingOutputFlow(String controller, String dpid, String destIP, int port) {
     String url = "http://" + controller + "/stats/flowentry/add";
 
     JSONObject entity = new JSONObject();
@@ -243,25 +259,25 @@ public class SdnUtil {
     match.put("dl_type", 2048);
     entity.put("match", match);
     JSONObject action = new JSONObject();
-    action.put("type","OUTPUT");
-    action.put("port",port);
+    action.put("type", "OUTPUT");
+    action.put("port", port);
     JSONArray actions = new JSONArray();
     actions.put(action);
     entity.put("actions", actions);
     return HttpUtil.postJSON(url, entity);
   }
 
-  public static void deleteAllFlows(String controller, String dpid){
+  public static void deleteAllFlows(String controller, String dpid) {
     String url = "http://" + controller + "/stats/flowentry/clear/" + Long.parseLong(dpid, 16);
     HttpUtil.delete(url);
   }
 
-  public static String getAllFlowStats(String controller, String dpid){
+  public static String getAllFlowStats(String controller, String dpid) {
     String url = "http://" + controller + "/stats/flow/" + Long.parseLong(dpid, 16);
     return HttpUtil.get(url);
   }
 
-  public static String getGroupStats(String controller, String dpid){
+  public static String getGroupStats(String controller, String dpid) {
     String url = "http://" + controller + "/stats/group/" + Long.parseLong(dpid, 16);
     return HttpUtil.get(url);
   }

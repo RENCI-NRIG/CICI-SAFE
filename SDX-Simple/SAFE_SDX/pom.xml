@@ -1,5 +1,5 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns="http://maven.apache.org/POM/4.0.0"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
@@ -56,7 +56,7 @@
                             <name>SafeSdxServer</name>
                         </program>
                         <program>
-                            <mainClass>exoplex.sdx.core.SliceManager</mainClass>
+                            <mainClass>exoplex.sdx.core.SliceHelper</mainClass>
                             <name>SafeSdxSliceServer</name>
                         </program>
                         <program>
@@ -68,7 +68,7 @@
                             <name>SafeSdxBro</name>
                         </program>
                         <program>
-                            <mainClass>exoplex.demo.cnert.TestMain</mainClass>
+                            <mainClass>exoplex.demo.cnert.CnertTestMain</mainClass>
                             <name>SafeSdxTest</name>
                         </program>
                         <program>
@@ -88,7 +88,7 @@
                             <name>TridentTest</name>
                         </program>
                         <program>
-                            <mainClass>safe.AuthorityMock</mainClass>
+                            <mainClass>safe.sdx.AuthorityMockSdx</mainClass>
                             <name>AuthorityMock</name>
                         </program>
                     </programs>
@@ -210,6 +210,11 @@
             <artifactId>log4j-core</artifactId>
             <version>2.11.0</version>
         </dependency>
+        <dependency>
+            <groupId>org.kamranzafar</groupId>
+            <artifactId>jtar</artifactId>
+            <version>2.2</version>
+        </dependency>
 
         <!-- https://mvnrepository.com/artifact/org.apache.httpcomponents/httpclient -->
         <dependency>
@@ -232,6 +237,13 @@
             <artifactId>commons-cli</artifactId>
             <version>1.4</version>
         </dependency>
+        <!-- https://mvnrepository.com/artifact/com.google.inject/guice -->
+        <dependency>
+            <groupId>com.google.inject</groupId>
+            <artifactId>guice</artifactId>
+            <version>4.0</version>
+        </dependency>
+
     </dependencies>
 
 

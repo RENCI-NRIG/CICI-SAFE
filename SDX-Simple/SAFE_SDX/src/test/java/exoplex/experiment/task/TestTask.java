@@ -6,8 +6,8 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 public class TestTask {
-  public static void main(String[] args){
-    HashMap<UUID, AsyncTask> allTasks= new HashMap<>();
+  public static void main(String[] args) {
+    HashMap<UUID, AsyncTask> allTasks = new HashMap<>();
     UUID uuid1 = UUID.randomUUID();
     allTasks.put(uuid1, new TaskOne(uuid1, 0l, TimeUnit.SECONDS, new ArrayList<>(), allTasks,
       "task1"));
@@ -24,10 +24,10 @@ public class TestTask {
     UUID uuid4 = UUID.randomUUID();
     allTasks.put(uuid4, new TaskOne(uuid1, 0l, TimeUnit.SECONDS, new ArrayList<>(), allTasks,
       "task4"));
-    for(AsyncTask task: allTasks.values()){
+    for (AsyncTask task : allTasks.values()) {
       task.start();
     }
-    for(AsyncTask task: allTasks.values()){
+    for (AsyncTask task : allTasks.values()) {
       task.waitTillEnd();
     }
   }

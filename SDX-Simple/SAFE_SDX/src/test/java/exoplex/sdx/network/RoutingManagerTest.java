@@ -1,8 +1,10 @@
 package exoplex.sdx.network;
 
+import com.google.inject.Guice;
+import com.google.inject.Injector;
 import exoplex.common.utils.ServerOptions;
 import exoplex.sdx.core.SdxManager;
-
+import injection.MultiSdxModule;
 import org.apache.commons.cli.CommandLine;
 
 import java.io.BufferedReader;
@@ -15,19 +17,22 @@ public class RoutingManagerTest {
 
   public static void main(String args[]) {
     try {
+      Injector injector = Guice.createInjector(new MultiSdxModule());
       Class NetM = Class.forName("exoplex.sdx.network.RoutingManager");
       Object obj = NetM.newInstance();
-      SdxManager sdxManager = new SdxManager();
+      SdxManager sdxManager = injector.getInstance(SdxManager.class);
       CommandLine cmd = ServerOptions.parseCmd(new String[]{"-c", "config/sdx.conf"});
       sdxManager.readConfig(cmd.getOptionValue("config"));
       sdxManager.loadSlice();
       sdxManager.initializeSdx();
-      sdxManager.configRouting();
+      Method configRouting = sdxManager.getClass().getDeclaredMethod("configRouting");
+      configRouting.setAccessible(true);
+      configRouting.invoke(sdxManager);
       sdxManager.delFlows();
       sdxManager.restartPlexus();
-      try{
+      try {
         Thread.sleep(10000);
-      }catch (Exception e){
+      } catch (Exception e) {
 
       }
 

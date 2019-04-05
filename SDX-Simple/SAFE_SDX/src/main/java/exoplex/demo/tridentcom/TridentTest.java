@@ -1,16 +1,24 @@
 package exoplex.demo.tridentcom;
 
+import com.google.inject.Guice;
+import com.google.inject.Inject;
+import com.google.inject.Injector;
+import com.google.inject.Provider;
 import exoplex.client.exogeni.SdxExogeniClient;
 import exoplex.sdx.core.SdxManager;
 import exoplex.sdx.core.SdxServer;
+import injection.MultiSdxModule;
 import org.apache.commons.cli.*;
-import safe.SafeAuthority;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import safe.Authority;
+import safe.SafeAuthority;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.HashMap;
 
-public class TridentTest {
+public class TridentTest extends TridentSetting {
 
   static Logger logger = LogManager.getLogger(TridentTest.class);
 
@@ -18,22 +26,22 @@ public class TridentTest {
 
   static HashMap<String, SdxExogeniClient> exogeniClients = new HashMap<>();
 
-  final static String[] sdxArgs = new String[]{"-c", "config/tri.conf"};
+  @Inject
+  public TridentTest(Provider<Authority> authorityProvider) {
+    super(authorityProvider);
+  }
 
-  final static String[] sdxArgs2 = {"-c", "config/tri.conf", "-r"};
-
-  final static String[] clientArgs = new String[]{"-c", "client-config/client.conf"};
-
-  public static void main(String[] args) throws  Exception{
-    SdxServer.run(sdxArgs);
-    sdxManager = SdxServer.sdxManager;
+  public static void main(String[] args) throws Exception {
+    Injector injector = Guice.createInjector(new MultiSdxModule());
+    SdxServer sdxServer = injector.getProvider(SdxServer.class).get();
+    sdxManager = sdxServer.run(sdxArgs);
     postSafeCertificates();
-    for(String clientSlice: TridentSetting.clientSlices){
+    for (String clientSlice : TridentSetting.clientSlices) {
       exogeniClients.put(clientSlice, new SdxExogeniClient(clientSlice,
         TridentSetting.clientIpMap.get(clientSlice),
         TridentSetting.clientKeyMap.get(clientSlice),
         clientArgs
-        ));
+      ));
     }
     stitchSlices();
     connectCustomerNetwork();
@@ -66,8 +74,23 @@ public class TridentTest {
     return cmd;
   }
 
-  private static  void postSafeCertificates(){
-    SafeAuthority safeAuthority = new SafeAuthority(sdxManager.getSafeServer(),
+  private static void postSafeCertificates() {
+    Method getSafeServer = null;
+    try {
+      getSafeServer = sdxManager.getClass().getDeclaredMethod("getSafeServer", null);
+    } catch (NoSuchMethodException e) {
+      e.printStackTrace();
+    }
+    getSafeServer.setAccessible(true);
+    String safeServer = null;
+    try {
+      safeServer = (String) getSafeServer.invoke(sdxManager);
+    } catch (IllegalAccessException e) {
+      e.printStackTrace();
+    } catch (InvocationTargetException e) {
+      e.printStackTrace();
+    }
+    SafeAuthority safeAuthority = new SafeAuthority(safeServer,
       TridentSetting.sdxName,
       "sdx",
       TridentSetting.clientSlices,
@@ -77,8 +100,8 @@ public class TridentTest {
     safeAuthority.initGeniTrustBase();
   }
 
-  private static void stitchSlices(){
-    for(String clientSlice: TridentSetting.clientSlices){
+  private static void stitchSlices() {
+    for (String clientSlice : TridentSetting.clientSlices) {
       String gw = exogeniClients.get(clientSlice).processCmd("stitch CNode0");
 
       exogeniClients.get(clientSlice).processCmd(String.format("route %s %s",
@@ -87,20 +110,20 @@ public class TridentTest {
     }
   }
 
-  private static void connectCustomerNetwork(){
-    for(int i=0; i<TridentSetting.clientSlices.size(); i++){
+  private static void connectCustomerNetwork() {
+    for (int i = 0; i < TridentSetting.clientSlices.size(); i++) {
       String client = TridentSetting.clientSlices.get(i);
       String clientIp = TridentSetting.clientIpMap.get(client);
-      for(int j = i + 1; j<TridentSetting.clientSlices.size(); j++){
+      for (int j = i + 1; j < TridentSetting.clientSlices.size(); j++) {
         String peer = TridentSetting.clientSlices.get(j);
         String peerIp = TridentSetting.clientIpMap.get(peer);
         exogeniClients.get(client).processCmd(String.format("link %s %s",
           TridentSetting.clientIpMap.get(client),
           TridentSetting.clientIpMap.get(peer)));
 
-        if(!exogeniClients.get(client).checkConnectivity("CNode1",
-          peerIp.replace(".1/24", ".2"))){
-          SdxServer.sdxManager.checkFlowTableForPair(clientIp.replace(".1/24", ".0/24"),
+        if (!exogeniClients.get(client).checkConnectivity("CNode1",
+          peerIp.replace(".1/24", ".2"))) {
+          sdxManager.checkFlowTableForPair(clientIp.replace(".1/24", ".0/24"),
             peerIp.replace(".1/24", ".0/24"),
             clientIp, peerIp);
         }

@@ -1,10 +1,10 @@
 package exoplex.sdx.bro;
 
+import exoplex.sdx.slice.exogeni.NodeBase;
 import org.renci.ahab.libndl.Slice;
 import org.renci.ahab.libndl.resources.request.ComputeNode;
 import org.renci.ahab.libndl.resources.request.InterfaceNode2Net;
 import org.renci.ahab.libndl.resources.request.Network;
-import exoplex.common.slice.NodeBase;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -14,9 +14,11 @@ public class SampleSlice extends SliceBase {
   ComputeNode control, flow, end1, end2, bro;
   Network netbro, nete1, nete2;
   InterfaceNode2Net ifFBflow, ifFBbro, ifFE1flow, ifFE1end, ifFE2flow, ifFE2end;
+
   public SampleSlice(String configPath) throws SliceBaseException {
     super(configPath);
   }
+
   public SampleSlice(String configPath, String name) throws SliceBaseException {
     super(configPath, name);
   }
@@ -93,13 +95,13 @@ public class SampleSlice extends SliceBase {
           ret = execOnNode(flow, "apt-get install -y openvswitch-switch");
         } while (!ret);
         execOnNode(flow, "ovs-vsctl add-br br0");
-        execOnNode(flow, "ovs-vsctl set bridge br0 protocols=OpenFlow10");
+        execOnNode(flow, "ovs-vsctl set bridge br0 protocols=OpenFlow13");
         execOnNode(flow, "ovs-vsctl set-fail-mode br0 secure");
         execOnNode(flow, "ovs-vsctl set-controller br0 tcp:" + retrieveIP(control) + ":6633");
         execOnNode(flow, "for i in `ifconfig | grep -B1 \"192.168.*\" | awk '$1!=\"inet\" && $1!=\"--\"' | cut -d' ' -f1`\n" +
-            "do\n" +
-            "ovs-vsctl add-port br0 $i\n" +
-            "done\n");
+          "do\n" +
+          "ovs-vsctl add-port br0 $i\n" +
+          "done\n");
       } catch (SliceBaseException e) {
         throw new RuntimeException(e);
       }

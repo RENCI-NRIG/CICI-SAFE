@@ -11,9 +11,9 @@ import java.util.*;
 
 public class RoutingManager {
   final static Logger logger = LogManager.getLogger(RoutingManager.class);
-  private NetworkManager networkManager;
-
+  final static Logger sdnLogger = LogManager.getLogger("SdnCmds");
   final static int MAX_RATE = 2000000;
+  private NetworkManager networkManager;
   private HashMap<String, ArrayList<Long>> router_queues = new HashMap<>();
   private HashMap<String, ArrayList<JSONObject>> router_matches = new HashMap<>();
   private HashMap<String, ArrayList<String[]>> sdncmds = new HashMap<String, ArrayList<String[]>>();
@@ -33,6 +33,20 @@ public class RoutingManager {
   public RoutingManager() {
     logger.debug("initialize network manager");
     networkManager = new NetworkManager();
+  }
+
+  public static String postSdnCmd(String cmd, JSONObject params) {
+    sdnLogger.info(String.format("%s\n%s", cmd, params.toString()));
+    String res = HttpUtil.postJSON(cmd, params);
+    return res;
+  }
+
+  public static String postSdnCmd(String cmd, JSONObject params, boolean logging) {
+    if (logging) {
+      sdnLogger.info(String.format("%s\n%s", cmd, params.toString()));
+    }
+    String res = HttpUtil.postJSON(cmd, params);
+    return res;
   }
 
   synchronized public void newRouter(String routerName, String dpid, String managementIP) {
@@ -63,7 +77,7 @@ public class RoutingManager {
     String dpid = networkManager.getRouter(routerA).getDPID();
     String cmd[] = SdnUtil.addrCMD(ipa, dpid, controller);
     boolean result = true;
-    String res = HttpUtil.postJSON(cmd[0], new JSONObject(cmd[1]));
+    String res = postSdnCmd(cmd[0], new JSONObject(cmd[1]));
     logger.debug(res);
     cmd[cmd.length - 1] = res;
     if (res.toString().contains("success")) {
@@ -83,9 +97,9 @@ public class RoutingManager {
     String cmd[] = SdnUtil.delAddrCMD(String.valueOf(address_id.get(linkName)), getDPID
       (routerName), controller);
     String res = HttpUtil.delete(cmd[0], cmd[1]);
-    if(res.contains("success")){
+    if (res.contains("success")) {
       logger.debug(res);
-    }else{
+    } else {
       logger.warn(res);
     }
   }
@@ -111,7 +125,7 @@ public class RoutingManager {
     String dpid = getDPID(routerA);
     String[] cmd = SdnUtil.addrCMD(ipa, dpid, controller);
     boolean result = true;
-    String res = HttpUtil.postJSON(cmd[0], new JSONObject(cmd[1]));
+    String res = postSdnCmd(cmd[0], new JSONObject(cmd[1]));
     logger.debug(res);
     cmd[cmd.length - 1] = res;
     if (res.toString().contains("success")) {
@@ -121,7 +135,7 @@ public class RoutingManager {
     }
     dpid = getDPID(routerB);
     cmd = SdnUtil.addrCMD(ipb, dpid, controller);
-    res = HttpUtil.postJSON(cmd[0], new JSONObject(cmd[1]));
+    res = postSdnCmd(cmd[0], new JSONObject(cmd[1]));
     if (res.toString().contains("success")) {
       addEntry_HashList(sdncmds, dpid, cmd);
       logger.debug(res);
@@ -147,10 +161,52 @@ public class RoutingManager {
       logger.debug("No router named " + nodename + " not found");
       return;
     }
-    ArrayList<String[]> paths = getBroadcastRoutes(gwdpid, gateway);
-    for (String[] path : paths) {
-      String res = singleStepRouting(destIP, path[1], path[0], controller);
-      //logger.debug(path[0]+" "+path[1]);
+    try {
+      ArrayList<String[]> paths = getBroadcastRoutes(gwdpid, gateway);
+      String pathId = getPathID(null, destIP);
+
+      pairPath.put(pathId, paths);
+      if (!prefixPaths.containsKey(destIP)) {
+        prefixPaths.put(destIP, new HashSet<>());
+      }
+      prefixPaths.get(destIP).add(pathId);
+
+      for (String[] path : paths) {
+        String res = singleStepRouting(destIP, path[1], path[0], controller);
+        //addRoute(destIP, path[1], path[0], pathId, controller);
+        //logger.debug(path[0]+" "+path[1]);
+      }
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+  }
+
+  public void configurePath(String destIP, String srcIP, String nodename, String gateway, String
+    controller) {
+    logger.info(String.format("configurePath %s %s %s %s %s", destIP, srcIP, nodename, gateway,
+      controller));
+    String gwdpid = networkManager.getRouter(nodename).getDPID();
+    if (gwdpid == null) {
+      logger.debug("No router named " + nodename + " not found");
+      return;
+    }
+    try {
+      ArrayList<String[]> paths = getBroadcastRoutes(gwdpid, gateway);
+      String pathId = getPathID(null, destIP);
+
+      pairPath.put(pathId, paths);
+      if (!prefixPaths.containsKey(destIP)) {
+        prefixPaths.put(destIP, new HashSet<>());
+      }
+      prefixPaths.get(destIP).add(pathId);
+
+      for (String[] path : paths) {
+        String res = singleStepRouting(destIP, srcIP, path[1], path[0], controller);
+        //addRoute(destIP, path[1], path[0], pathId, controller);
+        //logger.debug(path[0]+" "+path[1]);
+      }
+    } catch (Exception e) {
+      e.printStackTrace();
     }
   }
 
@@ -215,12 +271,18 @@ public class RoutingManager {
     return res;
   }
 
-  public void removePath(String srcIP, String dstIP, String controller) {
-    logger.info(String.format("removePath %s %s %s", srcIP, dstIP, controller));
-    removePath(getPathID(srcIP, dstIP), controller);
+
+  public void removePath(String dstIP, String controller) {
+    logger.info(String.format("removePath %s %s", dstIP, controller));
+    removePathId(getPathID(null, dstIP), controller);
   }
 
-  private void removePath(String pathId, String controller) {
+  public void removePath(String srcIP, String dstIP, String controller) {
+    logger.info(String.format("removePath %s %s %s", srcIP, dstIP, controller));
+    removePathId(getPathID(srcIP, dstIP), controller);
+  }
+
+  private void removePathId(String pathId, String controller) {
     if (pairPath.containsKey(pathId)) {
       ArrayList<String[]> paths = pairPath.get(pathId);
       for (String[] path : paths) {
@@ -231,10 +293,10 @@ public class RoutingManager {
     }
   }
 
-  public void revokePrefix(String prefix, String sdnController) {
+  public void retriveRouteOfPrefix(String prefix, String sdnController) {
     if (prefixPaths.containsKey(prefix)) {
       for (String pathId : prefixPaths.get(prefix)) {
-        removePath(pathId, sdnController);
+        removePathId(pathId, sdnController);
       }
     }
   }
@@ -243,7 +305,7 @@ public class RoutingManager {
     logger.info(String.format("setMirror %s %s %s %s %s", controller, dpid, source, dst, gw));
     String[] cmd = SdnUtil.mirrorCMD(controller, dpid, source, dst, gw);
     addEntry_HashList(sdncmds, dpid, cmd);
-    String res = HttpUtil.postJSON(cmd[0], new JSONObject(cmd[1]));
+    String res = postSdnCmd(cmd[0], new JSONObject(cmd[1]));
     logger.debug(res);
     if (res.contains("success")) {
       int id = Integer.valueOf(res.split("mirror_id=")[1].split("]")[0]);
@@ -274,7 +336,21 @@ public class RoutingManager {
 
   public String singleStepRouting(String dest, String gateway, String dpid, String controller) {
     String[] cmd = SdnUtil.routingCMD(dest, gateway, dpid, controller);
-    String res = HttpUtil.postJSON(cmd[0], new JSONObject(cmd[1]));
+    String res = postSdnCmd(cmd[0], new JSONObject(cmd[1]));
+    if (res.contains("success")) {
+      logger.debug(res);
+    } else {
+      logger.warn(res);
+    }
+    cmd[cmd.length - 1] = res;
+    addEntry_HashList(sdncmds, dpid, cmd);
+    return res;
+  }
+
+  public String singleStepRouting(String dest, String src, String gateway, String dpid, String
+    controller) {
+    String[] cmd = SdnUtil.routingCMD(dest, src, gateway, dpid, controller);
+    String res = postSdnCmd(cmd[0], new JSONObject(cmd[1]));
     if (res.contains("success")) {
       logger.debug(res);
     } else {
@@ -318,7 +394,8 @@ public class RoutingManager {
       if (i < paths.size() - 1) {
         dst = networkManager.getRouterByDPID(paths.get(i + 1)[0]).getRouterName();
       }
-      String flow = getFlowOnRouter(networkManager.getRouterByDPID(hop[0]).getManagementIP(), p1, p2, sshKey);
+      String flow = getFlowOnRouter(networkManager.getRouterByDPID(hop[0]).getManagementIP(), p2,
+        p1, sshKey);
       if (flow.contains("actions=CONTROLLER")) {
         logger.warn(String.format("%s %s -> %s: Failure\n %s", hop[0], src, dst, flow));
       } else if (flow.contains("output:")) {
@@ -477,11 +554,11 @@ public class RoutingManager {
     router_queues.get(dpid).add(bw);
     String qurl = SdnUtil.queueURL(controller, dpid);
     JSONObject qdata = SdnUtil.queueData(MAX_RATE, router_queues.get(dpid));
-    String res = HttpUtil.postJSON(qurl, qdata);
+    String res = postSdnCmd(qurl, qdata);
     logger.debug(res);
     String qosurl = SdnUtil.qosRuleURL(controller, dpid);
     JSONObject qosdata = SdnUtil.qosRuleData(match, router_queues.get(dpid).size() - 1);
-    String qosres = HttpUtil.postJSON(qosurl, qosdata);
+    String qosres = postSdnCmd(qosurl, qosdata);
     logger.debug(qosres);
   }
 
@@ -492,7 +569,7 @@ public class RoutingManager {
       for (String[] cmd : l) {
         logger.debug("Replay:" + cmd[0] + cmd[1]);
         if (cmd[2].equals("postJSON")) {
-          String result = HttpUtil.postJSON(cmd[0], new JSONObject(cmd[1]));
+          String result = postSdnCmd(cmd[0], new JSONObject(cmd[1]));
           if (result.contains("success")) {
             logger.debug(result);
           } else {
@@ -534,6 +611,27 @@ public class RoutingManager {
     return res;
   }
 
+  public List<String> getFlowsOnRouter(Map<String, String> fieldMap, String ip, String sshKey) {
+    String result = Exec.sshExec("root", ip,
+      "ovs-ofctl dump-flows br0", sshKey)[0];
+    String[] parts = result.split("\n");
+    ArrayList<String> res = new ArrayList<>();
+    for (String s : parts) {
+      boolean flag = true;
+      for (String filed : fieldMap.keySet()) {
+        if (!s.contains(String.format("%s=%s", filed, fieldMap.get(filed)))) {
+          flag = false;
+          break;
+        }
+      }
+      if (flag) {
+        res.add(s);
+      }
+    }
+    return res;
+
+  }
+
   public void deleteAllFlows(String controller) {
     for (String dpid : networkManager.getAllDpids()) {
       SdnUtil.deleteAllFlows(controller, dpid);
@@ -547,10 +645,27 @@ public class RoutingManager {
     }
   }
 
+  private boolean addRoute(String destIp, String gateWay, String dpid, String
+    pathId, String controller) {
+    String[] cmd = SdnUtil.routingCMD(destIp, gateWay, dpid, controller);
+    String res = postSdnCmd(cmd[0], new JSONObject(cmd[1]));
+    logger.debug(String.join("\n" + cmd));
+    logger.debug(res);
+    if (res.contains("success")) {
+      int id = Integer.valueOf(res.split("route_id=")[1].split("]")[0]);
+      route_id.put(getRouteKey(pathId, dpid), id);
+      cmd[cmd.length - 1] = res;
+      addEntry_HashList(sdncmds, dpid, cmd);
+      return true;
+    } else {
+      return false;
+    }
+  }
+
   private boolean addRoute(String destIp, String srcIp, String gateWay, String dpid, String
     pathId, String controller) {
     String[] cmd = SdnUtil.routingCMD(destIp, srcIp, gateWay, dpid, controller);
-    String res = HttpUtil.postJSON(cmd[0], new JSONObject(cmd[1]));
+    String res = postSdnCmd(cmd[0], new JSONObject(cmd[1]));
     logger.debug(String.join("\n" + cmd));
     logger.debug(res);
     if (res.contains("success")) {
@@ -579,7 +694,11 @@ public class RoutingManager {
   }
 
   private String getPathID(String src, String dst) {
-    return src + dst;
+    if (src != null) {
+      return src + dst;
+    } else {
+      return dst;
+    }
   }
 
   /*
@@ -690,13 +809,6 @@ public class RoutingManager {
 
   //FIXME: There might be bug, but haven't got the chance to look into it.
   private ArrayList<String[]> getBroadcastRoutes(String gwdpid, String gateway) {
-    //logger.debug("All logRouters and logLinks");
-    //for(String[] link:logLinks){
-    //  //logger.debug(link[0]+" "+link[1]);
-    //}
-    //for(String[] link:ip_router){
-    //  //logger.debug(link[0]+" "+link[1]);
-    //}
     HashSet<String> knownrouters = new HashSet<String>();
     //path queue: [dpid, path]
     //format of path:Arraylist([router_id,gateway])
@@ -720,7 +832,7 @@ public class RoutingManager {
         for (Interface neighborInterface : networkManager.getNeighborInterfaces(logRouter.getRouterName())) {
           //ip the ip of hte neighbor interface
           Link link = networkManager.getLink(neighborInterface.getLinkName());
-          String ip = neighborInterface.getIp();
+          String pairIp = neighborInterface.getIp();
           //logger.debug("neighborIP: "+ip);
           String pairrouter = getDPID(neighborInterface.getNodeName());
           if (!knownrouters.contains(pairrouter)) {
@@ -728,9 +840,9 @@ public class RoutingManager {
             queue.add(pairrouter);
             end += 1;
             String[] path = new String[2];
-            path[0] = getDPID(networkManager.getPairRouter(ip));
-            path[1] = networkManager.getPairIP(ip).split("/")[0];
-            println(path[1]);
+            String ip = networkManager.getInterface(link.getPairInterfaceName(neighborInterface.getName())).getIp();
+            path[0] = pairrouter;
+            path[1] = ip.split("/")[0];
             knownpaths.add(path);
           }
         }
