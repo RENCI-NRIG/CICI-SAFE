@@ -76,7 +76,7 @@ public class ExogeniClientSlice extends SliceHelper {
       }
       c1.refresh();
       if (safeEnabled && safeInSlice) {
-        String safeIp = c1.getComputeNode("safe-server").getManagementIP();
+        String safeIp = c1.getManagementIP("safe-server");
         checkSafeServer(safeIp, riakIp);
       }
       //copyFile2Slice(c1, "/home/yaoyj11/project/exo-geni/SAFE_SDX/src/main/resources/scripts/configospffornewif.sh","~/configospffornewif.sh","~/.ssh/id_rsa");
@@ -109,7 +109,7 @@ public class ExogeniClientSlice extends SliceHelper {
     c1.runCmdSlice("sed -i -- 's/zebra=no/zebra=yes/g' /etc/quagga/daemons", sshKey, "CNode\\d+",
       true);
     String Prefix = subnet.split("/")[0];
-    String mip = c1.getComputeNode("CNode1").getManagementIP();
+    String mip = c1.getManagementIP("CNode1");
     Exec.sshExec("root", mip, "echo \"ip route 192.168.1.1/16 " + Prefix + "\" >>/etc/quagga/zebra.conf  ", sshKey);
     Exec.sshExec("root", mip, "sed -i -- 's/zebra=no/zebra=yes/g' /etc/quagga/daemons\n", sshKey);
     String res[] = Exec.sshExec("root", mip, "ls /etc/quagga", sshKey);
@@ -139,7 +139,7 @@ public class ExogeniClientSlice extends SliceHelper {
       c1.commitAndWait();
       c1.refresh();
       if (safeEnabled && safeInSlice) {
-        String safeIp = c1.getComputeNode("safe-server").getManagementIP();
+        String safeIp = c1.getManagementIP("safe-server");
         checkSafeServer(safeIp, riakIp);
       }
       //copyFile2Slice(c1, "/home/yaoyj11/project/exo-geni/SAFE_SDX/src/main/resources/scripts/configospffornewif.sh","~/configospffornewif.sh","~/.ssh/id_rsa");

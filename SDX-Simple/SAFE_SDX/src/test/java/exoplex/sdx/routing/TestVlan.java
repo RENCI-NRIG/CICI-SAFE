@@ -91,10 +91,10 @@ public class TestVlan extends SdxManager {
     serverSlice.commitAndWait();
     configTestSlice(serverSlice);
     if (plexusInSlice) {
-      checkPlexus(serverSlice.getComputeNode(plexusName).getManagementIP());
+      checkPlexus(serverSlice, serverSlice.getManagementIP(plexusName));
     }
     if (safeInSlice) {
-      configSdnControllerAddr(serverSlice.getComputeNode(plexusName).getManagementIP());
+      configSdnControllerAddr(serverSlice.getManagementIP(plexusName));
     } else {
       configSdnControllerAddr(conf.getString("config.plexusserver"));
     }

@@ -229,16 +229,16 @@ public class SliceHelper extends SliceCommon {
       @Override
       public void run() {
         if (plexusInSlice) {
-          setSdnControllerIp(serverSlice.getComputeNode(plexusName).getManagementIP());
+          setSdnControllerIp(serverSlice.getManagementIP(plexusName));
         } else {
           setSdnControllerIp(conf.getString("config.plexusserver"));
         }
-        checkPlexus(SDNControllerIP);
+        checkPlexus(serverSlice, SDNControllerIP);
       }
     });
     if (safeEnabled) {
       if (safeInSlice) {
-        setSafeServerIp(serverSlice.getComputeNode("safe-server").getManagementIP());
+        setSafeServerIp(serverSlice.getManagementIP("safe-server"));
       } else {
         setSafeServerIp(conf.getString("config.safeserver"));
       }
@@ -273,12 +273,11 @@ public class SliceHelper extends SliceCommon {
   */
 
   public void checkOVS(SliceManager serverSlice, String nodeName) {
-    String mip = serverSlice.getComputeNode(nodeName).getManagementIP();
     String res = serverSlice.runCmdNode("ovs-vsctl show", nodeName, false);
     if (res.contains("ovs-vsctl: command not found")) {
       while (true) {
-        String[] result = Exec.sshExec("root", mip, "apt-get install -y openvswitch-switch", sshKey);
-        if (!result[0].startsWith("error")) {
+        String result = serverSlice.runCmdNode("apt-get install -y openvswitch-switch", nodeName, false);
+        if (!result.startsWith("error")) {
           break;
         }
       }
@@ -322,26 +321,28 @@ public class SliceHelper extends SliceCommon {
     return true;
   }
 
-  protected boolean checkPlexus(String SDNControllerIP) {
+  protected boolean checkPlexus(SliceManager serverSlice, String SDNControllerIP) {
     if (plexusInSlice) {
-      String result = Exec.sshExec("root", SDNControllerIP, "docker ps", sshKey)[0];
+      String result = serverSlice.runCmdByIP("docker ps", SDNControllerIP, false);
       if (result.contains("plexus")) {
         logger.debug("plexus controller has started");
       } else {
         logger.debug("plexus controller hasn't started, restarting it");
-        result = Exec.sshExec("root", SDNControllerIP, "docker images", sshKey)[0];
+        result = serverSlice.runCmdByIP("docker images", SDNControllerIP, false);
         if (result.contains("yaoyj11/plexus")) {
           logger.debug("found plexus image, starting plexus container");
-          Exec.sshExec("root", SDNControllerIP, "docker run -i -t -d -p 8080:8080 "
-            + " -p 6633:6633 -p 3000:3000 -h plexus --name plexus yaoyj11/plexus", sshKey);
+          serverSlice.runCmdByIP("docker run -i -t -d -p 8080:8080 "
+            + " -p 6633:6633 -p 3000:3000 -h plexus --name plexus yaoyj11/plexus",
+            SDNControllerIP, false);
         } else {
 
           logger.debug("plexus image not found, downloading...");
-          Exec.sshExec("root", SDNControllerIP, "docker pull yaoyj11/plexus", sshKey);
-          Exec.sshExec("root", SDNControllerIP, "docker run -i -t -d -p 8080:8080 -p"
-            + " 6633:6633 -p 3000:3000 -h plexus --name plexus yaoyj11/plexus", sshKey);
+          serverSlice.runCmdByIP("docker pull yaoyj11/plexus", SDNControllerIP, false);
+          serverSlice.runCmdByIP("docker run -i -t -d -p 8080:8080 -p"
+            + " 6633:6633 -p 3000:3000 -h plexus --name plexus yaoyj11/plexus", SDNControllerIP,
+            false);
         }
-        result = Exec.sshExec("root", SDNControllerIP, "docker ps", sshKey)[0];
+        result = serverSlice.runCmdByIP("docker ps", SDNControllerIP, false);
         if (result.contains("plexus")) {
           logger.debug("plexus controller has started");
         } else {
@@ -383,20 +384,22 @@ public class SliceHelper extends SliceCommon {
     //String nodePostBootScript="apt-get update;apt-get -y  install quagga\n"
     //  +"sed -i -- 's/zebra=no/zebra=yes/g' /etc/quagga/daemons\n"
     //  +"sed -i -- 's/ospfd=no/ospfd=yes/g' /etc/quagga/daemons\n";
-    ArrayList<ComputeNode> nodelist = new ArrayList<ComputeNode>();
-    ArrayList<Network> netlist = new ArrayList<Network>();
-    ArrayList<Network> stitchlist = new ArrayList<Network>();
+    ArrayList<String> nodelist = new ArrayList<>();
+    ArrayList<String> netlist = new ArrayList<>();
+    ArrayList<String> stitchlist = new ArrayList<>();
     if (conf.hasPath("config.bro")) {
       BRO = conf.getBoolean("config.bro");
     }
     for (int i = 0; i < num; i++) {
       s.addOVSRouter(clientSites.get(i % clientSites.size()), "e" + i);
-      nodelist.add((ComputeNode) s.getResourceByName("e" + i));
+      nodelist.add("e" + i);
       if (BRO && i == 0) {
         long brobw = conf.getLong("config.brobw");
-        ComputeNode node1 = (ComputeNode) s.getResourceByName("e" + i);
-        ComputeNode broNode = s.addBro("bro0_e" + i, node1.getDomain());
+        String node1 = "e" + i;
+        String broNode = s.addBro("bro0_e" + i, s.getNodeDomain(node1));
         int ip_to_use = curip++;
+
+        /*
         Network bronet = s.addBroadcastLink(getBroLinkName(broNode.getName(),
           ip_to_use),
           bw);
@@ -406,12 +409,21 @@ public class SliceHelper extends SliceCommon {
         InterfaceNode2Net ifaceNode2 = (InterfaceNode2Net) bronet.stitch(broNode);
         ifaceNode2.setIpAddress("192.168." + String.valueOf(ip_to_use) + ".2");
         ifaceNode2.setNetmask("255.255.255.0");
+        */
+
+        String bronet = s.addBroadcastLink(getBroLinkName(broNode,
+          ip_to_use),
+          bw);
+        s.stitchNetToNode(bronet, node1, "192.168." + String.valueOf(ip_to_use) + ".1",
+          "255.255.255.0");
+        s.stitchNetToNode(bronet, broNode, "192.168." + String.valueOf(ip_to_use) + ".2",
+          "255.255.255.0");
       }
     }
     //add Links
     for (int i = 0; i < num - 1; i++) {
-      ComputeNode node0 = nodelist.get(i);
-      ComputeNode node1 = nodelist.get(i + 1);
+      String node0 = nodelist.get(i);
+      String node1 = nodelist.get(i + 1);
       String linkname = "clink" + i;
       Link logLink = addLink(s, linkname, node0, node1, bw);
       links.put(linkname, logLink);
@@ -426,14 +438,15 @@ public class SliceHelper extends SliceCommon {
   }
 
 
-  private Link addLink(SliceManager s, String linkname, ComputeNode node0, ComputeNode node1,
+  private Link addLink(SliceManager s, String linkname, String node0, String node1,
                        Long bw) {
-    Network net2 = s.addBroadcastLink(linkname, bw);
-    InterfaceNode2Net ifaceNode1 = (InterfaceNode2Net) net2.stitch(node0);
-    InterfaceNode2Net ifaceNode2 = (InterfaceNode2Net) net2.stitch(node1);
+    String net2 = s.addBroadcastLink(linkname, bw);
+    s.stitchNetToNode(net2, node0);
+    s.stitchNetToNode(net2, node1);
+
     Link logLink = new Link();
-    logLink.addNode(node0.getName());
-    logLink.addNode(node1.getName());
+    logLink.addNode(node0);
+    logLink.addNode(node1);
     logLink.setName(linkname);
     return logLink;
   }

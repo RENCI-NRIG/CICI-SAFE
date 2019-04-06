@@ -43,11 +43,9 @@ public class DockerServerSlice extends SliceHelper {
     s.addPlexusController(SiteBase.get("BBN"), "plexus");
     s.commitAndWait();
     s.reloadSlice();
-    checkSafeServer(s.getComputeNode("safe-server").getManagementIP(), riakIp);
-    checkPlexus(s.getComputeNode("plexus").getManagementIP());
-    System.out.println(String.format("Safe server IP %s", s.getComputeNode("safe-server")
-      .getManagementIP()));
-    System.out.println(String.format("plexus server IP %s", s.getComputeNode("plexus")
-      .getManagementIP()));
+    checkSafeServer(s.getManagementIP("safe-server"), riakIp);
+    checkPlexus(s, s.getManagementIP("plexus"));
+    System.out.println(String.format("Safe server IP %s", s.getManagementIP("safe-server")));
+    System.out.println(String.format("plexus server IP %s", s.getManagementIP("plexus")));
   }
 }

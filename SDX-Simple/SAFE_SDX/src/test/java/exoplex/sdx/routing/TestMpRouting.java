@@ -93,10 +93,10 @@ public class TestMpRouting extends SdxManager {
     serverSlice.commitAndWait();
     configTestSlice(serverSlice);
     if (plexusInSlice) {
-      checkPlexus(serverSlice.getComputeNode(plexusName).getManagementIP());
+      checkPlexus(serverSlice, serverSlice.getManagementIP(plexusName));
     }
     if (safeInSlice) {
-      configSdnControllerAddr(serverSlice.getComputeNode(plexusName).getManagementIP());
+      configSdnControllerAddr(serverSlice.getManagementIP(plexusName));
     } else {
       configSdnControllerAddr(conf.getString("config.plexusserver"));
     }
@@ -247,11 +247,11 @@ public class TestMpRouting extends SdxManager {
 
   public void sendTraffic() {
     ExperimentBase experiment = new ExperimentBase(this);
-    experiment.addClient("CNode0", serverSlice.getComputeNode("CNode0").getManagementIP(),
+    experiment.addClient("CNode0", serverSlice.getManagementIP("CNode0"),
       "192.168.10.2");
-    experiment.addClient("CNode1", serverSlice.getComputeNode("CNode1").getManagementIP(),
+    experiment.addClient("CNode1", serverSlice.getManagementIP("CNode1"),
       "192.168.20.2");
-    experiment.addClient("CNode2", serverSlice.getComputeNode("CNode2").getManagementIP(),
+    experiment.addClient("CNode2", serverSlice.getManagementIP("CNode2"),
       "192.168.30.2");
     experiment.addTcpFlow("CNode0", "CNode1", "1m", 20);
     experiment.addTcpFlow("CNode0", "CNode2", "1m", 20);
