@@ -58,7 +58,7 @@ public class SliceHelper extends SliceCommon {
 
   public void resetHostNames(SliceManager slice) {
     try {
-      slice.resetHostNames(sshKey);
+      slice.resetHostNames();
     } catch (Exception e) {
 
     }
@@ -274,7 +274,7 @@ public class SliceHelper extends SliceCommon {
 
   public void checkOVS(SliceManager serverSlice, String nodeName) {
     String mip = serverSlice.getComputeNode(nodeName).getManagementIP();
-    String res = serverSlice.runCmdNode("ovs-vsctl show", sshKey, nodeName, false);
+    String res = serverSlice.runCmdNode("ovs-vsctl show", nodeName, false);
     if (res.contains("ovs-vsctl: command not found")) {
       while (true) {
         String[] result = Exec.sshExec("root", mip, "apt-get install -y openvswitch-switch", sshKey);
@@ -286,7 +286,7 @@ public class SliceHelper extends SliceCommon {
   }
 
   public void checkScripts(SliceManager serverSlice, String nodeName) {
-    String res = serverSlice.runCmdNode("ls", sshKey, nodeName, false);
+    String res = serverSlice.runCmdNode("ls", nodeName, false);
     if (!res.contains("ovsbridge.sh") || !res.contains("dpid.sh") || !res.contains("ifaces.sh")) {
       copyRouterScript(serverSlice, nodeName);
     }
