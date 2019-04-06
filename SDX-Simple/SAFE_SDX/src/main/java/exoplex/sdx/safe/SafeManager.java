@@ -223,8 +223,7 @@ public class SafeManager {
     if(! res){
       logger.warn("stitchRequest failed");
     }
-    return true;
-    //return res;
+    return res;
   }
 
   public boolean verifyAS(String owner, String dstIP, String as, String token) {

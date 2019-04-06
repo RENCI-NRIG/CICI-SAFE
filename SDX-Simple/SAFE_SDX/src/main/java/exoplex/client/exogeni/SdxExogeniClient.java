@@ -181,8 +181,8 @@ public class SdxExogeniClient extends SliceCommon {
     return res[0];
   }
 
-  public boolean checkConnectivity(String nodeName, String ip) {
-    for (int i = 0; i < 4; i++) {
+  public boolean checkConnectivity(String nodeName, String ip, int times) {
+    for (int i = 0; i < times; i++) {
       if (ping(nodeName, ip)) {
         logger.info(String.format("%s connect to %s: Ok", logPrefix, ip));
         return true;
