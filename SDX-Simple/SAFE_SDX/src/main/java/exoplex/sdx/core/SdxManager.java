@@ -1,8 +1,6 @@
 package exoplex.sdx.core;
 
 import com.google.inject.Inject;
-import com.google.inject.Provider;
-import exoplex.common.utils.Exec;
 import exoplex.common.utils.HttpUtil;
 import exoplex.common.utils.ServerOptions;
 import exoplex.sdx.advertise.AdvertiseBase;
@@ -405,10 +403,10 @@ public class SdxManager extends SliceHelper {
       String myAddress = ip.split("/")[0];
       String urAddressPrefix = l1.getIP(1);
 
-      ComputeNode node0_s2 = (ComputeNode) serverSlice.getResourceByName(myNode);
-      String node0_s2_stitching_GUID = node0_s2.getStitchingGUID();
+      String node0_s2 = serverSlice.getComputeNode(myNode);
+      String node0_s2_stitching_GUID = serverSlice.getStitchingGUID(node0_s2);
       String secret = serverSlice.permitStitch(node0_s2_stitching_GUID);
-      String sdxsite = node0_s2.getDomain();
+      String sdxsite = serverSlice.getNodeDomain(node0_s2);
       //post stitch request to SAFE
       JSONObject jsonparams = new JSONObject();
       jsonparams.put("sdxsite", sdxsite);
@@ -432,6 +430,7 @@ public class SdxManager extends SliceHelper {
         jsonparams.put("ckeyhash", sliceName);
       }
       logger.debug("Sending stitch request to Sdx server");
+      int interfaceNum = serverSlice.getInterfaceNum(myNode);
       String r = HttpUtil.postJSON(serverURI + "sdx/stitchrequest", jsonparams);
       logger.debug(r);
       JSONObject res = new JSONObject(r);
@@ -441,9 +440,12 @@ public class SdxManager extends SliceHelper {
       } else {
         links.put(l1.getLinkName(), l1);
         String gateway = urAddressPrefix.split("/")[0];
-        updateOvsInterface(myNode);
+        int ifNumAfter = interfaceNum;
+        do{
+          ifNumAfter = serverSlice.getInterfaceNum(myNode);
+          updateOvsInterface(myNode);
+        } while(ifNumAfter <= interfaceNum);
         routingmanager.newExternalLink(l1.getLinkName(), ip, myNode, gateway, SDNController);
-
         String remoteGUID = res.getString("reservID");
         String remoteSafeKeyHash = res.getString("safeKeyHash");
         //Todo: be careful when we want to unstitch from the link side. as the net is virtual
@@ -609,7 +611,7 @@ public class SdxManager extends SliceHelper {
         logger.debug("Configured the new router in RoutingManager");
       }
 
-      String net1_stitching_GUID = serverSlice.getNetStitchingGUID(stitchname);
+      String net1_stitching_GUID = serverSlice.getStitchingGUID(stitchname);
       logger.debug("net1_stitching_GUID: " + net1_stitching_GUID);
       Link logLink = new Link();
       logLink.setName(stitchname);
@@ -998,9 +1000,11 @@ public class SdxManager extends SliceHelper {
       (policyAdvertise);
     for (AdvertiseBase newAdvertise : newAdvertises) {
       if (newAdvertise instanceof RouteAdvertise) {
+        logger.info("Updating Bgp advertisement after receiving policies advertisements %s"
+          .format(policyAdvertise.toString()));
+        logger.info(String.format("new advertise: %s", newAdvertise.toString()));
         propagateBgpAdvertise((RouteAdvertise) newAdvertise, ((RouteAdvertise) newAdvertise).srcPid);
       } else {
-        //TODO propagate policy advertise
         propagatePolicyAdvertise((PolicyAdvertise) newAdvertise);
       }
     }
@@ -1607,15 +1611,15 @@ public class SdxManager extends SliceHelper {
     return num;
   }
 
-  private void logFlowTables() {
+  public void logFlowTables(List<String> patterns) {
     for (ComputeNode node : serverSlice.getComputeNodes()) {
       if (node.getName().matches(routerPattern)) {
-        logFlowTables(node.getName());
+        logFlowTables(node.getName(), patterns);
       }
     }
   }
 
-  private void logFlowTables(String node) {
+  private void logFlowTables(String node, List<String> patterns) {
     logger.debug("------------------");
     logger.debug(String.format("Flow table: %s - %s", sliceName, node));
     String result = serverSlice.runCmdNode(
@@ -1623,7 +1627,16 @@ public class SdxManager extends SliceHelper {
       node);
     String[] parts = result.split("\n");
     for (String s : parts) {
-      logger.debug(s);
+      if(! patterns.isEmpty()){
+        for(String pattern: patterns){
+          if(s.matches(pattern)){
+            logger.debug(s);
+            break;
+          }
+        }
+      }else {
+        logger.debug(s);
+      }
     }
     logger.debug("------------------");
   }

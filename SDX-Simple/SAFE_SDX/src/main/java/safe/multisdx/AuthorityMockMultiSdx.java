@@ -1,8 +1,11 @@
 package safe.multisdx;
 
+import com.google.inject.Guice;
 import com.google.inject.Inject;
+import com.google.inject.Injector;
 import exoplex.common.utils.SafeUtils;
 import exoplex.demo.AbstractTestSetting;
+import injection.MultiSdxSDModule;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -22,7 +25,7 @@ public class AuthorityMockMultiSdx extends Authority implements SdxRoutingSlang 
 
   static Logger logger = LogManager.getLogger(AuthorityMockMultiSdx.class);
 
-  static String defaultSafeServer = "localhost:7777";
+  static String defaultSafeServer = "128.194.6.133:7777";
 
   public HashMap<String, String> sliceToken = new HashMap<>();
 
@@ -52,7 +55,9 @@ public class AuthorityMockMultiSdx extends Authority implements SdxRoutingSlang 
       LoggerConfig loggerConfig = config.getLoggerConfig(LogManager.ROOT_LOGGER_NAME);
       loggerConfig.setLevel(Level.DEBUG);
       ctx.updateLoggers();
-      AuthorityMockMultiSdx authorityMock = new AuthorityMockMultiSdx(defaultSafeServer);
+      Injector injector = Guice.createInjector(new MultiSdxSDModule());
+      Authority authorityMock = injector.getInstance(Authority.class);
+      authorityMock.setSafeServer("128.194.6.133:7777");
       authorityMock.makeSafePreparation();
     } else if (args.length == 4) {
       String userKeyFile = args[0];
@@ -77,6 +82,7 @@ public class AuthorityMockMultiSdx extends Authority implements SdxRoutingSlang 
 
   public void makeSafePreparation() {
     if (!authorizationMade) {
+      authorizationMade = true;
       multiSdxSetting();
       addPrincipals();
       initPrincipals();
@@ -89,8 +95,8 @@ public class AuthorityMockMultiSdx extends Authority implements SdxRoutingSlang 
         addMultiSdxUserSlice(testSetting.sdxKeyMap.get(slice), slice, testSetting
           .sdxIpMap.get(slice));
       }
-      //checkAuthorization();
-      authorizationMade = true;
+      checkAuthorization();
+      logger.debug("safe preparation made");
     }
   }
 
@@ -144,7 +150,7 @@ public class AuthorityMockMultiSdx extends Authority implements SdxRoutingSlang 
   private void checkAuthorization() {
     try {
       verifyAuthStitchingByUid();
-      verifyAuthZByUserAttr();
+      //verifyAuthZByUserAttr();
     } catch (Exception e) {
       logger.error(e.getMessage());
     }
@@ -316,8 +322,9 @@ public class AuthorityMockMultiSdx extends Authority implements SdxRoutingSlang 
 
   void verifyAuthStitchingByUid() throws Exception {
     //authorizeStitchByUid
-    for (String slice : slices) {
-      if (!authorize(authorizeStitchByUID, "sdx",
+    for (String slice : testSetting.sdxSliceNames) {
+      for(String sdx: testSetting.sdxSliceNames)
+      if (!authorize(authorizeStitchByUID, sliceKeyMap.get(sdx),
         new String[]{getPrincipalId(sliceKeyMap.get(slice)), sliceScid.get(slice)})) {
         throw new Exception(String.format("Authorization failed: %s %s ", authorizeStitchByUID,
           slice));

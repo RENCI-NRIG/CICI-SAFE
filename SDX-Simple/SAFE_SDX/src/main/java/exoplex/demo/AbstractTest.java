@@ -14,6 +14,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 public abstract class AbstractTest {
   final static Logger logger = LogManager.getLogger(AbstractTest.class);
@@ -162,7 +163,11 @@ public abstract class AbstractTest {
     logger.debug("connection ends");
   }
 
-  public boolean checkConnection() {
+  public boolean checkConnection(){
+    return checkConnection(3);
+  }
+
+  public boolean checkConnection(int times) {
     logger.debug("checking connections");
     boolean flag = true;
     for (Integer[] pair : testSetting.clientConnectionPairs) {
@@ -173,7 +178,7 @@ public abstract class AbstractTest {
       String peer = testSetting.clientSlices.get(j);
       String peerIp = testSetting.clientIpMap.get(peer);
       if (!exogeniClients.get(client).checkConnectivity("CNode1",
-        peerIp.replace(".1/24", ".2"))) {
+        peerIp.replace(".1/24", ".2"), times)) {
         flag = false;
       } else {
         System.out.println(exogeniClients.get(client).traceRoute("CNode1",
@@ -183,12 +188,22 @@ public abstract class AbstractTest {
     return flag;
   }
 
-  public void logFlowTables() {
+  public void logFlowTables(boolean showAll) {
+    ArrayList<String> patterns = new ArrayList<>();
+    if(!showAll) {
+      String routeFlowPattern = ".*nw_src=%s.*nw_dst=%s.*actions=dec_ttl.*";
+      for (Integer[] pair : testSetting.clientConnectionPairs) {
+        String slice1 = testSetting.clientSlices.get(pair[0]);
+        String slice2 = testSetting.clientSlices.get(pair[1]);
+        String ip1 = testSetting.clientIpMap.get(slice1).replace(".1/24", ".0/24");
+        String ip2 = testSetting.clientIpMap.get(slice2).replace(".1/24", ".0/24");
+        patterns.add(String.format(routeFlowPattern, ip1, ip2));
+        patterns.add(String.format(routeFlowPattern, ip2, ip1));
+      }
+    }
     for (SdxManager sdxManager : sdxManagerMap.values()) {
       try {
-        Method logFlowTables = sdxManager.getClass().getDeclaredMethod("logFlowTables", null);
-        logFlowTables.setAccessible(true);
-        logFlowTables.invoke(sdxManager);
+        sdxManager.logFlowTables(patterns);
       } catch (Exception e) {
         e.printStackTrace();
       }

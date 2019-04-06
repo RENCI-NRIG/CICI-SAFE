@@ -9,6 +9,7 @@ import exoplex.demo.AbstractTestSlice;
 import exoplex.demo.SdxTest;
 import exoplex.sdx.core.SdxManager;
 import injection.MultiSdxSDLargeModule;
+import injection.MultiSdxSDModule;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -16,6 +17,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class MultiSdxTestSD extends AbstractTest {
@@ -32,7 +34,7 @@ public class MultiSdxTestSD extends AbstractTest {
     try {
       multiSdxTestSD.testMultiSdxSD();
       //multiSdxTestSD.replaySdnConfiguration("/home/yaoyj11/CICI-SAFE/SDX-Simple/log/sdn.log");
-      multiSdxTestSD.logFlowTables();
+      multiSdxTestSD.logFlowTables(false);
     } catch (Exception e) {
       e.printStackTrace();
     }
@@ -77,7 +79,7 @@ public class MultiSdxTestSD extends AbstractTest {
     connectCustomerNetwork();
     Long t3 = System.currentTimeMillis();
 
-    checkConnection();
+    checkConnection(30);
     Long t4 = System.currentTimeMillis();
 
     logger.info("test done");
@@ -106,14 +108,14 @@ public class MultiSdxTestSD extends AbstractTest {
   private void advertiseSDRoutesAndPolicies() {
     for (String client : testSetting.clientSlices) {
       String clientIp = testSetting.clientIpMap.get(client);
-      List<ImmutablePair<String, String>> pairRouteAcls = testSetting.clientRouteASTagAcls.get
-        (client);
+      List<ImmutablePair<String, String>> pairRouteAcls = testSetting.clientRouteASTagAcls.getOrDefault
+        (client, new ArrayList<>());
       for (ImmutablePair<String, String> pair : pairRouteAcls) {
         exogeniClients.get(client).processCmd(String.format("bgp %s %s %s", clientIp, pair
           .getLeft(), pair.getRight()));
       }
-      List<ImmutablePair<String, String>> pairPolicyAcls = testSetting.clientPolicyASTagAcls.get
-        (client);
+      List<ImmutablePair<String, String>> pairPolicyAcls = testSetting.clientPolicyASTagAcls
+        .getOrDefault(client, new ArrayList<>());
       for (ImmutablePair<String, String> pair : pairPolicyAcls){
         exogeniClients.get(client).processCmd(String.format("policy %s %s %s", pair.getLeft(),
           clientIp, pair.getRight()));

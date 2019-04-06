@@ -122,7 +122,7 @@ public class TridentTest extends TridentSetting {
           TridentSetting.clientIpMap.get(peer)));
 
         if (!exogeniClients.get(client).checkConnectivity("CNode1",
-          peerIp.replace(".1/24", ".2"))) {
+          peerIp.replace(".1/24", ".2"), 3)) {
           sdxManager.checkFlowTableForPair(clientIp.replace(".1/24", ".0/24"),
             peerIp.replace(".1/24", ".0/24"),
             clientIp, peerIp);
