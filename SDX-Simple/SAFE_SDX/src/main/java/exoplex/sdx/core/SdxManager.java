@@ -199,8 +199,10 @@ public class SdxManager extends SliceHelper {
   private void startBro() {
     for (ComputeNode node : serverSlice.getComputeNodes()) {
       if (node.getName().matches(broPattern)) {
-        Exec.sshExec("root", node.getManagementIP(), "/usr/bin/rm *.log; pkill bro;" +
-          "/usr/bin/screen -d -m /opt/bro/bin/bro -i eth1 test-all-policy.bro", sshKey);
+        serverSlice.runCmdNode(
+          "/usr/bin/rm *.log; pkill bro;" +
+            "/usr/bin/screen -d -m /opt/bro/bin/bro -i eth1 test-all-policy.bro", node.getName()
+        );
       }
     }
   }
@@ -255,18 +257,16 @@ public class SdxManager extends SliceHelper {
 
   private boolean addLink(String linkName, String
     node1, String node2, long bw) throws TransportException, Exception {
-    String ip1 = serverSlice.getComputeNode(node1).getManagementIP();
-    String ip2 = serverSlice.getComputeNode(node2).getManagementIP();
-    int numInterfaces1 = getInterfaceNum(ip1);
-    int numInterfaces2 = getInterfaceNum(ip2);
+    int numInterfaces1 = serverSlice.getInterfaceNum(node1);
+    int numInterfaces2 = serverSlice.getInterfaceNum(node2);
     serverSlice.lockSlice();
     int times = 1;
     while (true) {
       serverSlice.addLink(linkName, node1, node2, bw);
       if (serverSlice.commitAndWait(10, Arrays.asList(new String[]{linkName}))) {
         sleep(10);
-        int newNum1 = getInterfaceNum(ip1);
-        int newNum2 = getInterfaceNum(ip2);
+        int newNum1 = serverSlice.getInterfaceNum(node1);
+        int newNum2 = serverSlice.getInterfaceNum(node2);
         if (newNum1 > numInterfaces1 && newNum2 > numInterfaces2) {
           if (times > 1) {
             logger.warn(String.format("Tried %s times to add a stitchlink", times));
@@ -275,8 +275,8 @@ public class SdxManager extends SliceHelper {
         }
 
         sleep(30);
-        newNum1 = getInterfaceNum(ip1);
-        newNum2 = getInterfaceNum(ip2);
+        newNum1 = serverSlice.getInterfaceNum(node1);
+        newNum2 = serverSlice.getInterfaceNum(node2);
         if (newNum1 > numInterfaces1 && newNum2 > numInterfaces2) {
           if (times > 1) {
             logger.warn(String.format("Tried %s times to add a stitchlink", times));
@@ -298,8 +298,7 @@ public class SdxManager extends SliceHelper {
     if (serverSlice.getResourceByName(stitchName) != null) {
       return false;
     }
-    String ip = serverSlice.getComputeNode(nodeName).getManagementIP();
-    int numInterfaces = getInterfaceNum(ip);
+    int numInterfaces = serverSlice.getInterfaceNum(nodeName);
     serverSlice.lockSlice();
     serverSlice.reloadSlice();
     int times = 1;
@@ -307,7 +306,7 @@ public class SdxManager extends SliceHelper {
       serverSlice.addLink(stitchName, nodeName, bw);
       serverSlice.commitAndWait(10, Arrays.asList(new String[]{stitchName}));
       sleep(10);
-      int newNum = getInterfaceNum(ip);
+      int newNum = serverSlice.getInterfaceNum(nodeName);
       if (newNum > numInterfaces) {
         if (times > 1) {
           logger.warn(String.format("Tried %s times to add a stitchlink", times));
@@ -315,7 +314,7 @@ public class SdxManager extends SliceHelper {
         break;
       } else {
         sleep(30);
-        newNum = getInterfaceNum(ip);
+        newNum = serverSlice.getInterfaceNum(nodeName);
         if (newNum > numInterfaces) {
           if (times > 1) {
             logger.warn(String.format("Tried %s times to add a stitchlink", times));
@@ -335,8 +334,7 @@ public class SdxManager extends SliceHelper {
   private boolean addStitchPort(String spName, String nodeName, String stitchUrl, String vlan, long
     bw) throws
     TransportException, Exception {
-    String ip = serverSlice.getComputeNode(nodeName).getManagementIP();
-    int numInterfaces = getInterfaceNum(ip);
+    int numInterfaces = serverSlice.getInterfaceNum(nodeName);
     serverSlice.lockSlice();
     serverSlice.reloadSlice();
     int times = 1;
@@ -346,7 +344,7 @@ public class SdxManager extends SliceHelper {
       mysp.stitch(node);
       serverSlice.commitAndWait(10, Arrays.asList(new String[]{spName + "-net"}));
       sleep(10);
-      int newNum = getInterfaceNum(ip);
+      int newNum = serverSlice.getInterfaceNum(nodeName);
       if (newNum > numInterfaces) {
         if (times > 1) {
           logger.warn(String.format("Tried %s times to add a stitchlink", times));
@@ -354,7 +352,7 @@ public class SdxManager extends SliceHelper {
         break;
       } else {
         sleep(30);
-        newNum = getInterfaceNum(ip);
+        newNum = serverSlice.getInterfaceNum(nodeName);
         if (newNum > numInterfaces) {
           if (times > 1) {
             logger.warn(String.format("Tried %s times to add a stitchlink", times));
@@ -369,13 +367,6 @@ public class SdxManager extends SliceHelper {
     }
     updateMacAddr();
     return true;
-  }
-
-  private int getInterfaceNum(String ip) {
-    String res[] = Exec.sshExec("root", ip, "/bin/bash /root/ifaces.sh", sshKey);
-    logger.debug(String.format("Interfaces: %s", res[0]));
-    int num = res[0].split("\n").length;
-    return num;
   }
 
   public String adminCmd(String operation, String[] params) {
@@ -698,7 +689,7 @@ public class SdxManager extends SliceHelper {
   }
 
   private String updateOvsInterface(String routerName) {
-    String res = serverSlice.runCmdNode("/bin/bash ~/ovsbridge.sh " + OVSController, sshKey,
+    String res = serverSlice.runCmdNode("/bin/bash ~/ovsbridge.sh " + OVSController,
       routerName, true);
     return res;
   }
@@ -1223,7 +1214,6 @@ public class SdxManager extends SliceHelper {
         //serverSlice.waitTillActive();
         updateOvsInterface(nodeName);
         //routingmanager.replayCmds(routingmanager.getDPID(nodeName));
-        Exec.sshExec("root", node.getManagementIP(), "ifconfig;ovs-vsctl list port", sshKey);
         routingmanager.newExternalLink(stitchname, ip, nodeName, gateway, SDNController);
         res = "Stitch operation Completed";
         logger.info(logPrefix + res);
@@ -1252,20 +1242,6 @@ public class SdxManager extends SliceHelper {
     return "";
   }
 
-  private void restartPlexus(String plexusip) {
-    logger.debug("Restarting Plexus Controller");
-    logger.info(logPrefix + "Restarting Plexus Controller: " + plexusip);
-    delFlows();
-    String script = "docker exec -d plexus /bin/bash -c  \"cd /root;pkill ryu-manager; " +
-      "ryu-manager --log-file ~/log --default-log-level 1 ryu/ryu/app/rest_conf_switch.py " +
-      "ryu/ryu/app/rest_qos.py " +
-      "ryu/ryu/app/rest_router_mirror.py ryu/ryu/app/ofctl_rest.py\"\n";
-    //String script = "docker exec -d plexus /bin/bash -c  \"cd /root;pkill ryu-manager;
-    // ryu-manager ryu/ryu/app/rest_router.py|tee log\"\n";
-    Exec.sshExec("root", plexusip, script, sshKey);
-    serverSlice.runCmdByIP(script, sshKey, plexusip, true);
-  }
-
   private void restartPlexus(String plexusip, String type) {
     if (type.equals("rest_router")) {
       logger.debug("Restarting Plexus Controller");
@@ -1276,8 +1252,7 @@ public class SdxManager extends SliceHelper {
         "ryu/ryu/app/ofctl_rest.py\"\n";
       //String script = "docker exec -d plexus /bin/bash -c  \"cd /root;pkill ryu-manager;
       // ryu-manager ryu/ryu/app/rest_router.py|tee log\"\n";
-      Exec.sshExec("root", plexusip, script, sshKey);
-      serverSlice.runCmdByIP(script, sshKey, plexusip, true);
+      serverSlice.runCmdByIP(script, plexusip, false);
     }
   }
 
@@ -1586,8 +1561,9 @@ public class SdxManager extends SliceHelper {
   public String getFlowInstallationTime(String routername, String flowPattern) {
     logger.debug("Get flow installation time on " + routername + " for " + flowPattern);
     try {
-      String result = Exec.sshExec("root", getManagementIP(routername), getEchoTimeCMD() +
-        String.format("ovs-ofctl %s dump-flows br0", SliceEnv.OFP), sshKey)[0];
+      String result = serverSlice.runCmdNode(
+        getEchoTimeCMD() + "ovs-ofctl dump-flows br0",
+          routername);
       String[] parts = result.split("\n");
       String curMillis = parts[0].split(":")[1];
       String flow = "";
@@ -1613,8 +1589,9 @@ public class SdxManager extends SliceHelper {
   }
 
   public int getNumRouteEntries(String routerName, String flowPattern) {
-    String result = Exec.sshExec("root", getManagementIP(routerName), getEchoTimeCMD() +
-      String.format("ovs-ofctl %s dump-flows br0", SliceEnv.OFP), sshKey)[0];
+    String result = serverSlice.runCmdNode(
+      getEchoTimeCMD() + "ovs-ofctl dump-flows br0",
+      routerName);
     String[] parts = result.split("\n");
     String curMillis = parts[0].split(":")[1];
     int num = 0;
@@ -1638,8 +1615,9 @@ public class SdxManager extends SliceHelper {
   private void logFlowTables(String node) {
     logger.debug("------------------");
     logger.debug(String.format("Flow table: %s - %s", sliceName, node));
-    String result = Exec.sshExec("root", getManagementIP(node), getEchoTimeCMD() +
-      String.format("ovs-ofctl %s dump-flows br0", SliceEnv.OFP), sshKey)[0];
+    String result = serverSlice.runCmdNode(
+      getEchoTimeCMD() + "ovs-ofctl dump-flows br0",
+      node);
     String[] parts = result.split("\n");
     for (String s : parts) {
       logger.debug(s);

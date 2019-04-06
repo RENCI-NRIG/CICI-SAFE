@@ -35,11 +35,9 @@ public class RiakSlice extends SliceCommon {
     s.addRiakServer(serverSite, "riak");
     s.commitAndWait();
     s.reloadSlice();
-    s.runCmdNode(Scripts.getRiakScripts(), sshKey, "riak", false);
+    s.runCmdNode(Scripts.getRiakScripts(), "riak", false);
     s.runCmdNode(String.format("echo 'docker rm -f riakserver\n %s' >> start.sh", Scripts
-        .getRiakScripts
-          ()), sshKey, "riak",
-      false);
+        .getRiakScripts()),  "riak", false);
     String riakIP = s.getComputeNode("riak").getManagementIP();
     System.out.println(String.format("Riak IP %s", riakIP));
     return riakIP;

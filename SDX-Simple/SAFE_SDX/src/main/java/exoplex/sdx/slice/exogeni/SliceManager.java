@@ -56,39 +56,11 @@ public class SliceManager {
     this.slice = null;
   }
 
-  /*
-  public SliceManager(String pemLocation, String keyLocation, String controllerUrl, SliceAccessContext<SSHAccessToken> sctx) {
-    this.pemLocation = pemLocation;
-    this.keyLocation = keyLocation;
-    this.controllerUrl = controllerUrl;
-    this.sctx = sctx;
-    this.sliceProxy = getSliceProxy(pemLocation, keyLocation, controllerUrl);
-    this.slice = null;
-  }
-
-  public SliceManager(String pemLocation, String keyLocation, String controllerUrl) {
-    this.pemLocation = pemLocation;
-    this.keyLocation = keyLocation;
-    this.controllerUrl = controllerUrl;
-    this.sliceProxy = getSliceProxy(pemLocation, keyLocation, controllerUrl);
-    this.slice = null;
-  }
-
-  public SliceManager(String sliceName, String pemLocation, String keyLocation, String controllerUrl) {
-    this.sliceName = sliceName;
-    this.pemLocation = pemLocation;
-    this.keyLocation = keyLocation;
-    this.controllerUrl = controllerUrl;
-    this.sliceProxy = getSliceProxy(pemLocation, keyLocation, controllerUrl);
-    this.slice = null;
-  }
-  */
-
   public static Collection<String> getDomains() {
     return Slice.getDomains();
   }
 
-  public static ISliceTransportAPIv1 getSliceProxy(String pem, String key, String controllerUrl) {
+  private static ISliceTransportAPIv1 getSliceProxy(String pem, String key, String controllerUrl) {
     ISliceTransportAPIv1 sliceProxy = null;
     try {
       //ExoGENI controller context
@@ -224,9 +196,9 @@ public class SliceManager {
     throw new Exception(String.format("Unable to find %s among active slices", sliceName));
   }
 
-  public void resetHostNames(String sshKey) {
+  public void resetHostNames() {
     for (ComputeNode node : slice.getComputeNodes()) {
-      runCmdByIP(String.format("hostnamectl set-hostname %s-%s", sliceName, node.getName()), sshKey,
+      runCmdByIP(String.format("hostnamectl set-hostname %s-%s", sliceName, node.getName()),
         node.getManagementIP(), false);
     }
   }
@@ -765,17 +737,29 @@ public class SliceManager {
     return false;
   }
 
-  public String runCmdNode(final String cmd, final String sshkey, String nodeName, boolean repeat) {
+  public String runCmdNode(final String cmd, String nodeName, boolean repeat) {
     String mip = getComputeNode(nodeName).getManagementIP();
-    return runCmdByIP(cmd, sshkey, mip, repeat);
+    return runCmdByIP(cmd, mip, repeat);
   }
 
-  public String runCmdByIP(final String cmd, final String sshkey, String mip, boolean repeat) {
+  public String runCmdNode(final String cmd, String nodeName) {
+    String mip = getComputeNode(nodeName).getManagementIP();
+    return runCmdByIP(cmd, mip, false);
+  }
+
+  public int getInterfaceNum(String nodeName) {
+    String res = runCmdNode("/bin/bash /root/ifaces.sh", nodeName);
+    logger.debug(String.format("Interfaces: %s", res));
+    int num = res.split("\n").length;
+    return num;
+  }
+
+  public String runCmdByIP(final String cmd, String mip, boolean repeat) {
     logger.debug(mip + " run commands:" + cmd);
-    String res[] = Exec.sshExec("root", mip, cmd, sshkey);
+    String res[] = Exec.sshExec("root", mip, cmd, sshKey);
     while (repeat && (res[0] == null || res[0].startsWith("error"))) {
       logger.debug(res[1]);
-      res = Exec.sshExec("root", mip, cmd, sshkey);
+      res = Exec.sshExec("root", mip, cmd, sshKey);
       if (res[0].startsWith("error")) {
         try {
           Thread.sleep(1000);
@@ -796,7 +780,7 @@ public class SliceManager {
           @Override
           public void run() {
             try {
-              runCmdNode(cmd, sshkey, c.getName(), repeat);
+              runCmdNode(cmd, c.getName(), repeat);
             } catch (Exception e) {
               logger.warn("exception when running command");
             }
@@ -998,7 +982,7 @@ public class SliceManager {
   }
 
   public String getDpid(String routerName, String sshkey) {
-    String[] res = runCmdNode("/bin/bash ~/dpid.sh", sshkey, routerName, true).split(" ");
+    String[] res = runCmdNode("/bin/bash ~/dpid.sh", routerName, true).split(" ");
     res[1] = res[1].replace("\n", "");
     return res[1];
   }
