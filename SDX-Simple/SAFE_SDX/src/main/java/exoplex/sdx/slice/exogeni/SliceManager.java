@@ -203,12 +203,28 @@ public class SliceManager {
     }
   }
 
-  public ComputeNode addComputeNode(String name) {
+  public String addComputeNode(String name) {
     logger.info(String.format("addComputeNode %s", name));
-    return this.slice.addComputeNode(name);
+    this.slice.addComputeNode(name);
+    return name;
   }
 
-  public ComputeNode addComputeNode(
+  public String stitchNetToNode(String netName, String nodeName){
+    Network net0 = (Network)slice.getResourceByName(netName);
+    InterfaceNode2Net ifaceNode0 = (InterfaceNode2Net) net0.stitch(slice.getResourceByName(nodeName));
+    return ifaceNode0.getName();
+  }
+
+  public String stitchNetToNode(String netName, String nodeName, String ip, String
+    netmask){
+    Network net0 = (Network)slice.getResourceByName(netName);
+    InterfaceNode2Net ifaceNode0 = (InterfaceNode2Net) net0.stitch(slice.getResourceByName(nodeName));
+    ifaceNode0.setIpAddress(ip);
+    ifaceNode0.setNetmask(netmask);
+    return ifaceNode0.getName();
+  }
+
+  public String addComputeNode(
     String name, String nodeImageURL,
     String nodeImageHash, String nodeImageShortName, String nodeNodeType, String site,
     String nodePostBootScript) {
@@ -219,7 +235,7 @@ public class SliceManager {
     if (nodePostBootScript != null) {
       node0.setPostBootScript(nodePostBootScript);
     }
-    return node0;
+    return name;
   }
 
   public ComputeNode addComputeNode(String site, String name) {
@@ -246,17 +262,23 @@ public class SliceManager {
     return this.slice.addStorageNode(name, capacity, mountpnt);
   }
 
-  public StitchPort addStitchPort(String name, String label, String port, long bandwidth) {
+  public String addStitchPort(String name, String label, String port, long bandwidth) {
     logger.info(String.format("addStitchPort %s %s %s %s", name, label, port, bandwidth));
-    return this.slice.addStitchPort(name, label, port, bandwidth);
+    return this.slice.addStitchPort(name, label, port, bandwidth).getName();
   }
 
-  public BroadcastNetwork addBroadcastLink(String name, long bandwidth) {
+  public void stitchSptoNode(String spName, String nodeName){
+    StitchPort sp = (StitchPort) slice.getResourceByName(spName);
+    ComputeNode node = (ComputeNode) slice.getResourceByName(nodeName);
+    sp.stitch(node);
+  }
+
+  public String addBroadcastLink(String name, long bandwidth) {
     logger.info(String.format("addBroadcastLink %s %s", name, bandwidth));
-    return this.slice.addBroadcastLink(name, bandwidth);
+    return this.slice.addBroadcastLink(name, bandwidth).getName();
   }
 
-  public BroadcastNetwork addBroadcastLink(String name) {
+  public String addBroadcastLink(String name) {
     return this.addBroadcastLink(name, DEFAULT_BW);
   }
 
@@ -306,7 +328,12 @@ public class SliceManager {
     return this.slice.getResourceByName(nm);
   }
 
-  public ComputeNode getComputeNode(String nm) {
+  public String getNetStitchingGUID(String netName){
+    Network net = (Network) slice.getResourceByName(netName);
+    return net.getStitchingGUID();
+  }
+
+  public String getComputeNode(String nm) {
     ComputeNode node = (ComputeNode) this.slice.getResourceByName(nm);
     while (node == null || node.getState() == null || node.getManagementIP() == null) {
       logger.debug(String.format("getComputeNode %s", nm));
@@ -317,7 +344,7 @@ public class SliceManager {
       }
       node = (ComputeNode) this.slice.getResourceByName(nm);
     }
-    return node;
+    return node.getName();
   }
 
   public Interface stitch(RequestResource r1, RequestResource r2) {
@@ -675,8 +702,12 @@ public class SliceManager {
     }
   }
 
+  public String getManagementIP(String nodeName){
+    return ((ComputeNode)slice.getResourceByName(nodeName)).getManagementIP();
+  }
+
   public void copyFile2Node(String lfile, String rfile, String privkey, String nodeName) {
-    String ip = getComputeNode(nodeName).getManagementIP();
+    String ip = getManagementIP(nodeName);
     try {
       logger.debug(String.format("scp file %s to %s", lfile, ip));
       ScpTo.Scp(lfile, "root", ip, rfile, privkey);
@@ -738,12 +769,12 @@ public class SliceManager {
   }
 
   public String runCmdNode(final String cmd, String nodeName, boolean repeat) {
-    String mip = getComputeNode(nodeName).getManagementIP();
+    String mip = getManagementIP(nodeName);
     return runCmdByIP(cmd, mip, repeat);
   }
 
   public String runCmdNode(final String cmd, String nodeName) {
-    String mip = getComputeNode(nodeName).getManagementIP();
+    String mip = getManagementIP(nodeName);
     return runCmdByIP(cmd, mip, false);
   }
 
@@ -846,6 +877,11 @@ public class SliceManager {
     InterfaceNode2Net ifaceNode1 = (InterfaceNode2Net) net.stitch(node_2);
   }
 
+  public String getNodeDomain(String nodeName){
+    ComputeNode node = (ComputeNode) slice.getResourceByName(nodeName);
+    return node.getDomain();
+  }
+
   public void addCoreEdgeRouterPair(String site, String router1, String router2, String linkname, long bw) {
     NodeBaseInfo ninfo = NodeBase.getImageInfo(SliceEnv.OVSVersion);
     String nodeImageShortName = ninfo.nisn;
@@ -854,15 +890,15 @@ public class SliceManager {
     String nodeImageHash = ninfo.nihash;
     String nodeNodeType = "XO Medium";
     String nodePostBootScript = Scripts.getOVSScript();
-    ComputeNode node0 = addComputeNode(router1, nodeImageURL,
+    String node0 = addComputeNode(router1, nodeImageURL,
       nodeImageHash, nodeImageShortName, nodeNodeType, site,
       nodePostBootScript);
-    ComputeNode node1 = addComputeNode(router2, nodeImageURL,
+    String node1 = addComputeNode(router2, nodeImageURL,
       nodeImageHash, nodeImageShortName, nodeNodeType, site,
       nodePostBootScript);
-    Network bronet = addBroadcastLink(linkname, bw);
-    bronet.stitch(node0);
-    bronet.stitch(node1);
+    String bronet = addBroadcastLink(linkname, bw);
+    stitchNetToNode(bronet, node0);
+    stitchNetToNode(bronet, node1);
   }
 
   public void addOvsRouter(String site, String router1) {
@@ -873,7 +909,7 @@ public class SliceManager {
     String nodeImageHash = ninfo.nihash;
     String nodeNodeType = "XO Medium";
     String nodePostBootScript = Scripts.getOVSScript();
-    ComputeNode node0 = addComputeNode(router1, nodeImageURL,
+    addComputeNode(router1, nodeImageURL,
       nodeImageHash, nodeImageShortName, nodeNodeType, site,
       nodePostBootScript);
   }
@@ -884,7 +920,7 @@ public class SliceManager {
     String dockerImageURL = ninfo.niurl;
     String dockerImageHash = ninfo.nihash;
     String dockerNodeType = "XO Medium";
-    ComputeNode node0 = addComputeNode(nodeName);
+    ComputeNode node0 = this.slice.addComputeNode(nodeName);
     node0.setImage(dockerImageURL, dockerImageHash, dockerImageShortName);
     node0.setNodeType(dockerNodeType);
     node0.setDomain(siteName);
@@ -907,18 +943,18 @@ public class SliceManager {
   }
 
   //We always add the bro when we add the edge router
-  public ComputeNode addBro(String broname, String domain) {
+  public String addBro(String broname, String domain) {
     String broN = "Centos 7.4 Bro";
     String broURL =
       "http://geni-images.renci.org/images/standard/centos/centos7.4-bro-v1.0.4/centos7.4-demo.bro-v1.0.4.xml";
     String broHash = "50c973571fc6da95c3f70d0f71c9aea1659ff780";
     String broType = "XO Medium";
-    ComputeNode bro = addComputeNode(broname);
+    ComputeNode bro = this.slice.addComputeNode(broname);
     bro.setImage(broURL, broHash, broN);
     bro.setDomain(domain);
     bro.setNodeType(broType);
     bro.setPostBootScript(Scripts.getBroScripts());
-    return bro;
+    return broname;
   }
 
   public void stitch(String RID, String customerName, String CID, String secret,
@@ -943,7 +979,7 @@ public class SliceManager {
   public void configBroNode(String nodeName, String edgeRouter, String resourceDir, String
     SDNControllerIP, String serverurl, String sshkey) {
     // Bro uses 'eth1"
-    Exec.sshExec("root", getComputeNode(nodeName).getManagementIP(), "sed -i 's/eth0/eth1/' " +
+    Exec.sshExec("root", getManagementIP(nodeName), "sed -i 's/eth0/eth1/' " +
       "/opt/bro/etc/node.cfg", sshkey);
 
     copyFile2Node(PathUtil.joinFilePath(resourceDir, "bro/test.bro"), "/root/test.bro", sshkey,
@@ -964,19 +1000,19 @@ public class SliceManager {
       "/root/cpu_percentage.sh",
       sshkey, nodeName);
 
-    Exec.sshExec("root", getComputeNode(nodeName).getManagementIP(), "sed -i 's/bogus_addr/" +
+    Exec.sshExec("root", getManagementIP(nodeName), "sed -i 's/bogus_addr/" +
       SDNControllerIP + "/' *.bro", sshkey);
 
     String url = serverurl.replace("/", "\\/");
-    Exec.sshExec("root", getComputeNode(nodeName).getManagementIP(), "sed -i 's/bogus_addr/" +
+    Exec.sshExec("root", getManagementIP(nodeName), "sed -i 's/bogus_addr/" +
       url + "/g' reporter.py", sshkey);
 
     String dpid = getDpid(edgeRouter, sshkey);
-    Exec.sshExec("root", getComputeNode(nodeName).getManagementIP(), "sed -i 's/bogus_dpid/" +
+    Exec.sshExec("root", getManagementIP(nodeName), "sed -i 's/bogus_dpid/" +
       Long.parseLong(dpid, 16) + "/' *.bro", sshkey);
-    Exec.sshExec("root", getComputeNode(nodeName).getManagementIP(), "broctl deploy&", sshkey);
-    Exec.sshExec("root", getComputeNode(nodeName).getManagementIP(), "python reporter & disown", sshkey);
-    Exec.sshExec("root", getComputeNode(nodeName).getManagementIP(),
+    Exec.sshExec("root", getManagementIP(nodeName), "broctl deploy&", sshkey);
+    Exec.sshExec("root", getManagementIP(nodeName), "python reporter & disown", sshkey);
+    Exec.sshExec("root", getManagementIP(nodeName),
       "/usr/bin/rm *.log; pkill bro; /usr/bin/screen -d -m /opt/bro/bin/bro " +
         "-i eth1 " + "test-all-policy.bro", sshkey);
   }
