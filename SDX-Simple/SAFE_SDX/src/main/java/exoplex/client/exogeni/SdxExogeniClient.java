@@ -156,8 +156,9 @@ public class SdxExogeniClient extends SliceCommon {
         }
       }
     }
-    ComputeNode node = serverSlice.getComputeNode(nodeName);
-    String res[] = Exec.sshExec("root", node.getManagementIP(), "ping  -c 1 " + ip, sshKey);
+    String node = serverSlice.getComputeNode(nodeName);
+    String res[] = Exec.sshExec("root", serverSlice.getManagementIP(node), "ping  -c 1 " + ip,
+      sshKey);
     logger.debug(res[0]);
     return res[0].contains("1 received");
   }
@@ -173,8 +174,9 @@ public class SdxExogeniClient extends SliceCommon {
         }
       }
     }
-    ComputeNode node = serverSlice.getComputeNode(nodeName);
-    String res[] = Exec.sshExec("root", node.getManagementIP(), "traceroute " + ip, sshKey);
+    String node = serverSlice.getComputeNode(nodeName);
+    String res[] = Exec.sshExec("root", serverSlice.getManagementIP(node), "traceroute " + ip,
+      sshKey);
     logger.debug(res[0]);
     return res[0];
   }
@@ -291,7 +293,7 @@ public class SdxExogeniClient extends SliceCommon {
     if (safeEnabled && !safeChecked) {
       safeManager = new SafeManager(safeServerIp, safeKeyFile, sshKey);
       if (safeInSlice && serverSlice.getResourceByName("safe-server") != null) {
-        setSafeServerIp(serverSlice.getComputeNode("safe-server").getManagementIP());
+        setSafeServerIp(serverSlice.getManagementIP("safe-server"));
       } else {
         setSafeServerIp(conf.getString("config.safeserver"));
       }
