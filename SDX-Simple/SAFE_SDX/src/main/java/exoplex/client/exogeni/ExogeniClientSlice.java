@@ -29,8 +29,8 @@ public class ExogeniClientSlice extends SliceHelper {
   private String routerSite = "";
 
   @Inject
-  public ExogeniClientSlice(Provider<Authority> authorityProvider) {
-    super(authorityProvider);
+  public ExogeniClientSlice(Authority authority) {
+    super(authority);
   }
 
 

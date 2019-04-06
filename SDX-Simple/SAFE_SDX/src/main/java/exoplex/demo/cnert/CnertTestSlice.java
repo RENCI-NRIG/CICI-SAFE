@@ -25,8 +25,8 @@ public class CnertTestSlice extends SliceHelper {
   final Logger logger = LogManager.getLogger(Exec.class);
 
   @Inject
-  public CnertTestSlice(Provider<Authority> authorityProvider) {
-    super(authorityProvider);
+  public CnertTestSlice(Authority authority) {
+    super(authority);
   }
 
   public CnertTestSlice(String[] args) {

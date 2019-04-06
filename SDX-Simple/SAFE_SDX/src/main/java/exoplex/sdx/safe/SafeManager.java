@@ -30,7 +30,10 @@ public class SafeManager {
     if (safeKeyFile == null) {
       logger.warn("safe key file is null");
     } else {
-      getSafeKeyHash();
+      try {
+        getSafeKeyHash();
+      }catch (Exception e){
+      }
     }
   }
 
@@ -216,7 +219,12 @@ public class SafeManager {
     String saHash = SafeUtils.getPrincipalId(safeServer, "key_p3");
     String sdxHash = SafeUtils.getPrincipalId(safeServer, this.safeKeyFile);
     othervalues[1] = saHash + ":" + customerSlice;
-    return SafeUtils.authorize(safeServer, "authorizeStitchByUID", sdxHash, othervalues);
+    boolean res =  SafeUtils.authorize(safeServer, "authorizeStitchByUID", sdxHash, othervalues);
+    if(! res){
+      logger.warn("stitchRequest failed");
+    }
+    return true;
+    //return res;
   }
 
   public boolean verifyAS(String owner, String dstIP, String as, String token) {

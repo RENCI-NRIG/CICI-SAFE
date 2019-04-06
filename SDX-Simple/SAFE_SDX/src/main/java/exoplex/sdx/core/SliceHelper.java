@@ -45,11 +45,11 @@ public class SliceHelper extends SliceCommon {
   protected String mask = "/24";
   protected String scriptsdir;
   protected boolean BRO = false;
-  protected Provider<Authority> authorityProvider;
+  protected Authority authority;
 
   @Inject
-  public SliceHelper(Provider<Authority> authorityProvider) {
-    this.authorityProvider = authorityProvider;
+  public SliceHelper(Authority authority) {
+    this.authority = authority;
   }
 
   public void setRiakIP(String riakIP) {
@@ -246,9 +246,8 @@ public class SliceHelper extends SliceCommon {
         @Override
         public void run() {
           checkSafeServer(safeServerIp, riakIp);
-          Authority mock = authorityProvider.get();
-          mock.setSafeServer(safeServerIp + ":7777");
-          mock.makeSafePreparation();
+          authority.setSafeServer(safeServerIp + ":7777");
+          authority.makeSafePreparation();
         }
       });
     }

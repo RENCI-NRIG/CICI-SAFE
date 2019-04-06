@@ -1,5 +1,6 @@
 package exoplex.demo.multisdx;
 
+import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import exoplex.demo.AbstractTest;
@@ -7,6 +8,7 @@ import exoplex.demo.AbstractTestSetting;
 import exoplex.demo.AbstractTestSlice;
 import exoplex.demo.SdxTest;
 import exoplex.sdx.core.SdxManager;
+import injection.MultiSdxSDLargeModule;
 import injection.MultiSdxSDModule;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.logging.log4j.LogManager;
@@ -19,10 +21,11 @@ import java.util.List;
 
 public class MultiSdxTestSD extends AbstractTest {
   final static Logger logger = LogManager.getLogger(SdxTest.class);
+  final static AbstractModule module = new MultiSdxSDLargeModule();
 
   public static void main(String[] args) {
     MultiSdxTestSD multiSdxTestSD = new MultiSdxTestSD();
-    Injector injector = Guice.createInjector(new MultiSdxSDModule());
+    Injector injector = Guice.createInjector(module);
     multiSdxTestSD.reset = true;
     multiSdxTestSD.injector = injector;
     multiSdxTestSD.testSlice = injector.getInstance(AbstractTestSlice.class);
@@ -38,7 +41,7 @@ public class MultiSdxTestSD extends AbstractTest {
 
   @Override
   public void initTests() {
-    injector = Guice.createInjector(new MultiSdxSDModule());
+    injector = Guice.createInjector(module);
     testSlice = injector.getInstance(AbstractTestSlice.class);
     testSetting = injector.getInstance(AbstractTestSetting.class);
   }
@@ -59,7 +62,7 @@ public class MultiSdxTestSD extends AbstractTest {
   }
 
   @Test
-  public void testMultiSdxSD() throws Exception {
+  public void testMultiSdxSD()throws Exception {
     startSdxServersAndClients(reset);
     //stitch sdx slices
     Long t0 = System.currentTimeMillis();
@@ -103,12 +106,16 @@ public class MultiSdxTestSD extends AbstractTest {
 
   private void advertiseSDRoutesAndPolicies() {
     for (String client : testSetting.clientSlices) {
-      List<ImmutablePair<String, String>> pairAcls = testSetting.clientSDASTagAcls.get
-        (client);
       String clientIp = testSetting.clientIpMap.get(client);
-      for (ImmutablePair<String, String> pair : pairAcls) {
+      List<ImmutablePair<String, String>> pairRouteAcls = testSetting.clientRouteASTagAcls.get
+        (client);
+      for (ImmutablePair<String, String> pair : pairRouteAcls) {
         exogeniClients.get(client).processCmd(String.format("bgp %s %s %s", clientIp, pair
           .getLeft(), pair.getRight()));
+      }
+      List<ImmutablePair<String, String>> pairPolicyAcls = testSetting.clientPolicyASTagAcls.get
+        (client);
+      for (ImmutablePair<String, String> pair : pairPolicyAcls){
         exogeniClients.get(client).processCmd(String.format("policy %s %s %s", pair.getLeft(),
           clientIp, pair.getRight()));
       }

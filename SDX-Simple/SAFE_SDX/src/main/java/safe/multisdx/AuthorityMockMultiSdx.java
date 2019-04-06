@@ -300,12 +300,13 @@ public class AuthorityMockMultiSdx extends Authority implements SdxRoutingSlang 
         String astag = getPrincipalId("tagauthority") + ":" + t;
         safePost(postASTagAclEntry, userKeyFile, new String[]{astag, uip});
       }
-      for (ImmutablePair<String, String> pair : testSetting.clientSDASTagAcls.getOrDefault(slice,
+      /*
+      for (ImmutablePair<String, String> pair : testSetting.clientRouteASTagAcls.getOrDefault(slice,
         new ArrayList<>())) {
         String astag = getPrincipalId("tagauthority") + ":" + pair.getRight();
         String srcip = String.format("ipv4\\\"%s\\\"", pair.getLeft());
         safePost(postASTagAclEntrySD, userKeyFile, new String[]{astag, srcip, uip});
-      }
+      }*/
     }
     safePost(postCustomerConnectionPolicy, userKeyFile, new String[]{});
     safePost(postTagPrivilegePolicy, userKeyFile, new String[]{});

@@ -26,8 +26,8 @@ public class TridentSlice extends TridentSetting {
 
 
   @Inject
-  public TridentSlice(Provider<Authority> authorityProvider) {
-    super(authorityProvider);
+  public TridentSlice(Authority authority) {
+    super(authority);
   }
 
   public static void main(String[] args) {

@@ -51,7 +51,7 @@ public class TridentSetting extends SliceHelper {
   }
 
   @Inject
-  public TridentSetting(Provider<Authority> authorityProvider) {
-    super(authorityProvider);
+  public TridentSetting(Authority authority) {
+    super(authority);
   }
 }
