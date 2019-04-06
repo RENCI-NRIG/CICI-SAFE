@@ -25,7 +25,9 @@ public abstract class AbstractTestSetting {
   public HashMap<String, String> clientSdxMap = new HashMap<>();
   public ArrayList<String> clientSites = new ArrayList<>();
   public HashMap<String, List<String>> clientASTagAcls = new HashMap<>();
-  public HashMap<String, List<ImmutablePair<String, String>>> clientSDASTagAcls = new
+  public HashMap<String, List<ImmutablePair<String, String>>> clientRouteASTagAcls = new
+    HashMap<>();
+  public HashMap<String, List<ImmutablePair<String, String>>> clientPolicyASTagAcls = new
     HashMap<>();
   public HashMap<String, List<String>> clientTags = new HashMap<>();
   public ArrayList<Integer[]> clientConnectionPairs = new ArrayList<>();

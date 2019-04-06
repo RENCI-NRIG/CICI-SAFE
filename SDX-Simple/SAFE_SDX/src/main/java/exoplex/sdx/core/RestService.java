@@ -65,7 +65,7 @@ public class RestService {
   public String receiveBgpAdvertise(@Context UriInfo uriInfo, RouteAdvertise routeAdvertise) {
     logger.debug(uriInfo.getBaseUri());
     SdxManager sdxManager = sdxManagerMap.get(uriInfo.getBaseUri().getPort());
-    logger.debug(String.format("%s got bgp advertisement %s", sdxManager
+    logger.info(String.format("%s got bgp advertisement %s", sdxManager
       .getSliceName(), routeAdvertise));
     try {
       return sdxManager.processBgpAdvertise(routeAdvertise);

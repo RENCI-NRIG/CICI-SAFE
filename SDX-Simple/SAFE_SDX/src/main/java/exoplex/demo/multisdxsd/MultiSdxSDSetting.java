@@ -1,4 +1,4 @@
-package exoplex.demo.multisdx;
+package exoplex.demo.multisdxsd;
 
 import exoplex.demo.AbstractTestSetting;
 import org.apache.commons.lang3.tuple.ImmutablePair;
@@ -120,13 +120,13 @@ public class MultiSdxSDSetting extends AbstractTestSetting {
   }
 
   public void setClientASTagAclsForSD() {
-    clientSDASTagAcls.put(clientSlices.get(0), Arrays.asList(new ImmutablePair[]{new
+    clientRouteASTagAcls.put(clientSlices.get(0), Arrays.asList(new ImmutablePair[]{new
       ImmutablePair<String, String>("192.168.30.1/24", "astag0")}));
-    clientSDASTagAcls.put(clientSlices.get(2), Arrays.asList(new ImmutablePair[]{new
+    clientRouteASTagAcls.put(clientSlices.get(2), Arrays.asList(new ImmutablePair[]{new
       ImmutablePair<String, String>("192.168.10.1/24", "astag0")}));
-    clientSDASTagAcls.put(clientSlices.get(1), Arrays.asList(new ImmutablePair[]{new
+    clientRouteASTagAcls.put(clientSlices.get(1), Arrays.asList(new ImmutablePair[]{new
       ImmutablePair<String, String>("192.168.40.1/24", "astag1")}));
-    clientSDASTagAcls.put(clientSlices.get(3), Arrays.asList(new ImmutablePair[]{new
+    clientRouteASTagAcls.put(clientSlices.get(3), Arrays.asList(new ImmutablePair[]{new
       ImmutablePair<String, String>("192.168.20.1/24", "astag1")}));
   }
 }
