@@ -328,9 +328,8 @@ public class SliceManager {
     return this.slice.getResourceByName(nm);
   }
 
-  public String getNetStitchingGUID(String netName){
-    Network net = (Network) slice.getResourceByName(netName);
-    return net.getStitchingGUID();
+  public String getStitchingGUID(String netName){
+    return slice.getResourceByName(netName).getStitchingGUID();
   }
 
   public String getComputeNode(String nm) {

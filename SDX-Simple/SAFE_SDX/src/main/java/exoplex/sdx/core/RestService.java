@@ -97,7 +97,7 @@ public class RestService {
   public String receivePolicyAdvertise(@Context UriInfo uriInfo, PolicyAdvertise policyAdvertise) {
     logger.debug(uriInfo.getBaseUri());
     SdxManager sdxManager = sdxManagerMap.get(uriInfo.getBaseUri().getPort());
-    logger.debug(String.format("%s got policy advertisement %s", sdxManager.getSliceName(),
+    logger.info(String.format("%s got policy advertisement %s", sdxManager.getSliceName(),
       policyAdvertise));
     try {
       return sdxManager.processPolicyAdvertise(policyAdvertise);

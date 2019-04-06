@@ -28,7 +28,7 @@ public class MultiSdxTest extends AbstractTest {
     try {
       multiSdxTest.testMultiSdx();
       //multiSdxTest.replaySdnConfiguration("/home/yaoyj11/CICI-SAFE/SDX-Simple/log/sdn.log");
-      multiSdxTest.logFlowTables();
+      multiSdxTest.logFlowTables(false);
     } catch (Exception e) {
       e.printStackTrace();
     }

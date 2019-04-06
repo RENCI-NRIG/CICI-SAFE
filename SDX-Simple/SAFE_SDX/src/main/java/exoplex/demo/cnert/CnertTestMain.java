@@ -159,13 +159,13 @@ public class CnertTestMain {
 
     // Client request for connection between prefixes
     client1.processCmd("link 192.168.10.1/24 192.168.20.1/24");
-    if (!client1.checkConnectivity("CNode1", "192.168.20.2")) {
+    if (!client1.checkConnectivity("CNode1", "192.168.20.2", 3)) {
       sdxManager.checkFlowTableForPair("192.168.10.0/24", "192.168.20.0/24",
         "192.168.10.1/24", "192.168.20.1/24");
     }
     client3.processCmd("link 192.168.30.1/24 192.168.40.1/24");
 
-    if (!client3.checkConnectivity("CNode1", "192.168.40.2")) {
+    if (!client3.checkConnectivity("CNode1", "192.168.40.2", 3)) {
       sdxManager.checkFlowTableForPair("192.168.30.0/24", "192.168.40.0/24",
         "192.168.30.1/24", "192.168.40.1/24");
     }
@@ -174,12 +174,12 @@ public class CnertTestMain {
     //An IP address will be used when we add new core-edge router pair: 192.168.136.1/24
     client6.processCmd("route 192.168.60.1/24 " + gateways[4]);
     client6.processCmd("link 192.168.60.1/24 192.168.10.1/24");
-    if (!client6.checkConnectivity("CNode1", "192.168.10.2")) {
+    if (!client6.checkConnectivity("CNode1", "192.168.10.2", 3)) {
       sdxManager.checkFlowTableForPair("192.168.10.0/24", "192.168.60.0/24",
         "192.168.10.1/24", "192.168.60.1/24");
     }
     client6.processCmd("link 192.168.60.1/24 192.168.20.1/24");
-    if (!client6.checkConnectivity("CNode1", "192.168.20.2")) {
+    if (!client6.checkConnectivity("CNode1", "192.168.20.2", 3)) {
       sdxManager.checkFlowTableForPair("192.168.20.0/24", "192.168.60.0/24",
         "192.168.20.1/24", "192.168.60.1/24");
     }
