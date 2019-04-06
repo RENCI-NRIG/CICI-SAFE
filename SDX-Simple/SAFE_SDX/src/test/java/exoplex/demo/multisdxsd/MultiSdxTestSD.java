@@ -1,4 +1,4 @@
-package exoplex.demo.multisdx;
+package exoplex.demo.multisdxsd;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
@@ -9,7 +9,6 @@ import exoplex.demo.AbstractTestSlice;
 import exoplex.demo.SdxTest;
 import exoplex.sdx.core.SdxManager;
 import injection.MultiSdxSDLargeModule;
-import injection.MultiSdxSDModule;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
