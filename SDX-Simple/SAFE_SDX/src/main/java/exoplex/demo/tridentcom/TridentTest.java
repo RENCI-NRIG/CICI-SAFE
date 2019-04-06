@@ -27,8 +27,8 @@ public class TridentTest extends TridentSetting {
   static HashMap<String, SdxExogeniClient> exogeniClients = new HashMap<>();
 
   @Inject
-  public TridentTest(Provider<Authority> authorityProvider) {
-    super(authorityProvider);
+  public TridentTest(Authority authority) {
+    super(authority);
   }
 
   public static void main(String[] args) throws Exception {

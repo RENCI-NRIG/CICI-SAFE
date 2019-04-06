@@ -94,8 +94,8 @@ public class SdxManager extends SliceHelper {
   private ConcurrentHashMap<String, String> stitchNet = new ConcurrentHashMap<>();
 
   @Inject
-  public SdxManager(Provider<Authority> authorityProvider) {
-    super(authorityProvider);
+  public SdxManager(Authority authority) {
+    super(authority);
   }
 
   public String getSDNControllerIP() {
@@ -164,7 +164,7 @@ public class SdxManager extends SliceHelper {
       advertiseManager = new AdvertiseManager(safeManager.getSafeKeyHash(), safeManager);
     }
     //configRouting(serverslice,OVSController,SDNController,"(c\\d+)","(sp-c\\d+.*)");
-    loadSdxNetwork(serverSlice, routerPattern, stitchPortPattern, broPattern);
+    loadSdxNetwork(routerPattern, stitchPortPattern, broPattern);
   }
 
 
@@ -450,7 +450,7 @@ public class SdxManager extends SliceHelper {
       } else {
         links.put(l1.getLinkName(), l1);
         String gateway = urAddressPrefix.split("/")[0];
-        updateOvsInterface(serverSlice, myNode);
+        updateOvsInterface(myNode);
         routingmanager.newExternalLink(l1.getLinkName(), ip, myNode, gateway, SDNController);
 
         String remoteGUID = res.getString("reservID");
@@ -632,7 +632,7 @@ public class SdxManager extends SliceHelper {
       res.put("reservID", net1_stitching_GUID);
       res.put("safeKeyHash", safeManager.getSafeKeyHash());
       sleep(15);
-      updateOvsInterface(serverSlice, node.getName());
+      updateOvsInterface(node.getName());
       routingmanager.newExternalLink(logLink.getLinkName(),
         ip,
         logLink.getNodeA(),
@@ -692,15 +692,16 @@ public class SdxManager extends SliceHelper {
     serverSlice.commitAndWait();
     routingmanager.removeExternalLink(stitchName, stitchName.split("_")[1], SDNController);
     releaseIP(Integer.valueOf(stitchName.split("_")[2]));
-    updateOvsInterface(serverSlice, stitchNodeName);
+    updateOvsInterface(stitchNodeName);
     logger.debug("Finished UnStitching, time elapsed: " + String.valueOf(t2 - t1) + "\n");
     logger.info("Finished UnStitching, time elapsed: " + String.valueOf(t2 - t1) + "\n");
 
     return "Finished Unstitching";
   }
 
-  private String updateOvsInterface(SliceManager slice, String routerName) {
-    String res = slice.runCmdNode("/bin/bash ~/ovsbridge.sh " + OVSController, sshKey, routerName, true);
+  private String updateOvsInterface(String routerName) {
+    String res = serverSlice.runCmdNode("/bin/bash ~/ovsbridge.sh " + OVSController, sshKey,
+      routerName, true);
     return res;
   }
 
@@ -730,7 +731,7 @@ public class SdxManager extends SliceHelper {
     serverSlice.refresh();
     String resource_dir = conf.getString("config.resourcedir");
     serverSlice.configBroNode(broName, routerName, resource_dir, SDNControllerIP, serverurl, sshKey);
-    updateOvsInterface(serverSlice, routerName);
+    updateOvsInterface(routerName);
     Link logLink = new Link();
     logLink.setName(getBroLinkName(broName, ip_to_use));
     logLink.addNode(router.getName());
@@ -946,8 +947,8 @@ public class SdxManager extends SliceHelper {
       int ip_to_use = getAvailableIP();
       l1.setIP(IPPrefix + ip_to_use);
       String param = "";
-      updateOvsInterface(serverSlice, c1);
-      updateOvsInterface(serverSlice, c2);
+      updateOvsInterface(c1);
+      updateOvsInterface(c2);
 
       //TODO: why nodeb dpid could be null
       res = routingmanager.newInternalLink(l1.getLinkName(),
@@ -1224,7 +1225,7 @@ public class SdxManager extends SliceHelper {
         //mysp.stitch(node);
         //serverSlice.commit();
         //serverSlice.waitTillActive();
-        updateOvsInterface(serverSlice, nodeName);
+        updateOvsInterface(nodeName);
         //routingmanager.replayCmds(routingmanager.getDPID(nodeName));
         Exec.sshExec("root", node.getManagementIP(), "ifconfig;ovs-vsctl list port", sshKey);
         routingmanager.newExternalLink(stitchname, ip, nodeName, gateway, SDNController);
@@ -1318,7 +1319,7 @@ public class SdxManager extends SliceHelper {
    * brolink:
    */
 
-  private void loadSdxNetwork(SliceManager s, String routerpattern, String stitchportpattern, String
+  private void loadSdxNetwork(String routerpattern, String stitchportpattern, String
     bropattern) {
     logger.debug("Loading Sdx Network Topology");
     try {
@@ -1326,7 +1327,7 @@ public class SdxManager extends SliceHelper {
       Pattern stitchpattern = Pattern.compile(stitchportpattern);
       Pattern bropatn = Pattern.compile(bropattern);
       //Nodes: Get all router information
-      for (ComputeNode node : s.getComputeNodes()) {
+      for (ComputeNode node : serverSlice.getComputeNodes()) {
         if (pattern.matcher(node.getName()).find()) {
           putComputeNode(node);
           if (node.getName().matches(eRouterPattern)) {
@@ -1346,7 +1347,7 @@ public class SdxManager extends SliceHelper {
       usedip = new HashSet<Integer>();
       HashSet<String> ifs = new HashSet<String>();
       // get all links, and then
-      for (Interface i : s.getInterfaces()) {
+      for (Interface i : serverSlice.getInterfaces()) {
         InterfaceNode2Net inode2net = (InterfaceNode2Net) i;
         routingmanager.updateInterfaceMac(inode2net.getNode().getName(),
           inode2net.getLink().getName(),
@@ -1392,7 +1393,7 @@ public class SdxManager extends SliceHelper {
       }
       //Stitchports
       logger.debug("setting up sttichports");
-      for (StitchPort sp : s.getStitchPorts()) {
+      for (StitchPort sp : serverSlice.getStitchPorts()) {
         logger.debug(sp.getName());
         Matcher matcher = stitchpattern.matcher(sp.getName());
         if (!matcher.find()) {
@@ -1422,11 +1423,11 @@ public class SdxManager extends SliceHelper {
     checkOVS(serverSlice, nodeName);
     checkScripts(serverSlice, nodeName);
     logger.debug(nodeName + " " + mip);
-    updateOvsInterface(serverSlice, nodeName);
+    updateOvsInterface(nodeName);
     String result = serverSlice.getDpid(nodeName, sshKey);
     logger.debug("Trying to get DPID of the router " + nodeName);
     while (result == null || !validDPID(result)) {
-      updateOvsInterface(serverSlice, nodeName);
+      updateOvsInterface(nodeName);
       sleep(1);
       result = serverSlice.getDpid(nodeName, sshKey);
     }
