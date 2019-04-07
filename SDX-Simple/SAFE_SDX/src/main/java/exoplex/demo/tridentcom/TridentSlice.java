@@ -3,7 +3,6 @@ package exoplex.demo.tridentcom;
 import com.google.inject.Guice;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
-import com.google.inject.Provider;
 import exoplex.client.exogeni.ExogeniClientSlice;
 import exoplex.common.utils.ServerOptions;
 import exoplex.sdx.safe.SafeManager;

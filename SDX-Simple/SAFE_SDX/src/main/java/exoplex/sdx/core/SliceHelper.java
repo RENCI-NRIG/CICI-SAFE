@@ -1,8 +1,6 @@
 package exoplex.sdx.core;
 
 import com.google.inject.Inject;
-import com.google.inject.Provider;
-import exoplex.common.utils.Exec;
 import exoplex.common.utils.PathUtil;
 import exoplex.common.utils.ServerOptions;
 import exoplex.sdx.network.Link;
@@ -14,8 +12,6 @@ import org.apache.commons.cli.CommandLine;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.renci.ahab.libndl.resources.request.ComputeNode;
-import org.renci.ahab.libndl.resources.request.InterfaceNode2Net;
-import org.renci.ahab.libndl.resources.request.Network;
 import safe.Authority;
 
 import java.io.FileOutputStream;
@@ -332,14 +328,14 @@ public class SliceHelper extends SliceCommon {
         if (result.contains("yaoyj11/plexus")) {
           logger.debug("found plexus image, starting plexus container");
           serverSlice.runCmdByIP("docker run -i -t -d -p 8080:8080 "
-            + " -p 6633:6633 -p 3000:3000 -h plexus --name plexus yaoyj11/plexus",
+              + " -p 6633:6633 -p 3000:3000 -h plexus --name plexus yaoyj11/plexus",
             SDNControllerIP, false);
         } else {
 
           logger.debug("plexus image not found, downloading...");
           serverSlice.runCmdByIP("docker pull yaoyj11/plexus", SDNControllerIP, false);
           serverSlice.runCmdByIP("docker run -i -t -d -p 8080:8080 -p"
-            + " 6633:6633 -p 3000:3000 -h plexus --name plexus yaoyj11/plexus", SDNControllerIP,
+              + " 6633:6633 -p 3000:3000 -h plexus --name plexus yaoyj11/plexus", SDNControllerIP,
             false);
         }
         result = serverSlice.runCmdByIP("docker ps", SDNControllerIP, false);

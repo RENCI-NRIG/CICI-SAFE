@@ -14,7 +14,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 
 public abstract class AbstractTest {
   final static Logger logger = LogManager.getLogger(AbstractTest.class);
@@ -163,7 +162,7 @@ public abstract class AbstractTest {
     logger.debug("connection ends");
   }
 
-  public boolean checkConnection(){
+  public boolean checkConnection() {
     return checkConnection(3);
   }
 
@@ -190,7 +189,7 @@ public abstract class AbstractTest {
 
   public void logFlowTables(boolean showAll) {
     ArrayList<String> patterns = new ArrayList<>();
-    if(!showAll) {
+    if (!showAll) {
       String routeFlowPattern = ".*nw_src=%s.*nw_dst=%s.*actions=dec_ttl.*";
       for (Integer[] pair : testSetting.clientConnectionPairs) {
         String slice1 = testSetting.clientSlices.get(pair[0]);

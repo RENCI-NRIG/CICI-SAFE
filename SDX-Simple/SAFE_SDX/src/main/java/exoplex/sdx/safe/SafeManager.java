@@ -32,7 +32,7 @@ public class SafeManager {
     } else {
       try {
         getSafeKeyHash();
-      }catch (Exception e){
+      } catch (Exception e) {
       }
     }
   }
@@ -219,8 +219,8 @@ public class SafeManager {
     String saHash = SafeUtils.getPrincipalId(safeServer, "key_p3");
     String sdxHash = SafeUtils.getPrincipalId(safeServer, this.safeKeyFile);
     othervalues[1] = saHash + ":" + customerSlice;
-    boolean res =  SafeUtils.authorize(safeServer, "authorizeStitchByUID", sdxHash, othervalues);
-    if(! res){
+    boolean res = SafeUtils.authorize(safeServer, "authorizeStitchByUID", sdxHash, othervalues);
+    if (!res) {
       logger.warn("stitchRequest failed");
     }
     return res;

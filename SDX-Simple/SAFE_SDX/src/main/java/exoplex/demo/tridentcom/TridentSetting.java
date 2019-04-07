@@ -1,7 +1,6 @@
 package exoplex.demo.tridentcom;
 
 import com.google.inject.Inject;
-import com.google.inject.Provider;
 import exoplex.sdx.core.SliceHelper;
 import safe.Authority;
 

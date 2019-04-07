@@ -441,10 +441,10 @@ public class SdxManager extends SliceHelper {
         links.put(l1.getLinkName(), l1);
         String gateway = urAddressPrefix.split("/")[0];
         int ifNumAfter = interfaceNum;
-        do{
+        do {
           ifNumAfter = serverSlice.getInterfaceNum(myNode);
           updateOvsInterface(myNode);
-        } while(ifNumAfter <= interfaceNum);
+        } while (ifNumAfter <= interfaceNum);
         routingmanager.newExternalLink(l1.getLinkName(), ip, myNode, gateway, SDNController);
         String remoteGUID = res.getString("reservID");
         String remoteSafeKeyHash = res.getString("safeKeyHash");
@@ -585,7 +585,7 @@ public class SdxManager extends SliceHelper {
         serverSlice.reloadSlice();
         serverSlice.addOVSRouter(site, eRouterName);
         //serverSlice.addCoreEdgeRouterPair(site, cRouterName, eRouterName, eLinkName, bw);
-        node =  serverSlice.getComputeNode(eRouterName);
+        node = serverSlice.getComputeNode(eRouterName);
         stitchname = allocateStitchLinkName(ip, node);
 
         net = serverSlice.addBroadcastLink(stitchname, bw);
@@ -1570,7 +1570,7 @@ public class SdxManager extends SliceHelper {
     try {
       String result = serverSlice.runCmdNode(
         getEchoTimeCMD() + "ovs-ofctl dump-flows br0",
-          routername);
+        routername);
       String[] parts = result.split("\n");
       String curMillis = parts[0].split(":")[1];
       String flow = "";
@@ -1627,14 +1627,14 @@ public class SdxManager extends SliceHelper {
       node);
     String[] parts = result.split("\n");
     for (String s : parts) {
-      if(! patterns.isEmpty()){
-        for(String pattern: patterns){
-          if(s.matches(pattern)){
+      if (!patterns.isEmpty()) {
+        for (String pattern : patterns) {
+          if (s.matches(pattern)) {
             logger.debug(s);
             break;
           }
         }
-      }else {
+      } else {
         logger.debug(s);
       }
     }

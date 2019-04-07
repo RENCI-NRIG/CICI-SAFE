@@ -1,7 +1,6 @@
 package exoplex.client.exogeni;
 
 import com.google.inject.Inject;
-import com.google.inject.Provider;
 import exoplex.common.utils.Exec;
 import exoplex.common.utils.ServerOptions;
 import exoplex.sdx.core.SliceHelper;
