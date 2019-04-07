@@ -8,7 +8,7 @@ import exoplex.demo.multisdxsd.MultiSdxSDLargeSetting;
 import safe.Authority;
 import safe.multisdx.AuthorityMockMultiSdx;
 
-public class MultiSdxSDLargeModule extends AbstractModule{
+public class MultiSdxSDLargeModule extends AbstractModule {
   @Override
   protected void configure() {
     bind(Authority.class).to(AuthorityMockMultiSdx.class);

@@ -6,7 +6,6 @@ import com.google.inject.Injector;
 import exoplex.common.utils.SafeUtils;
 import exoplex.demo.AbstractTestSetting;
 import injection.MultiSdxSDModule;
-import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -323,12 +322,12 @@ public class AuthorityMockMultiSdx extends Authority implements SdxRoutingSlang 
   void verifyAuthStitchingByUid() throws Exception {
     //authorizeStitchByUid
     for (String slice : testSetting.sdxSliceNames) {
-      for(String sdx: testSetting.sdxSliceNames)
-      if (!authorize(authorizeStitchByUID, sliceKeyMap.get(sdx),
-        new String[]{getPrincipalId(sliceKeyMap.get(slice)), sliceScid.get(slice)})) {
-        throw new Exception(String.format("Authorization failed: %s %s ", authorizeStitchByUID,
-          slice));
-      }
+      for (String sdx : testSetting.sdxSliceNames)
+        if (!authorize(authorizeStitchByUID, sliceKeyMap.get(sdx),
+          new String[]{getPrincipalId(sliceKeyMap.get(slice)), sliceScid.get(slice)})) {
+          throw new Exception(String.format("Authorization failed: %s %s ", authorizeStitchByUID,
+            slice));
+        }
     }
   }
 

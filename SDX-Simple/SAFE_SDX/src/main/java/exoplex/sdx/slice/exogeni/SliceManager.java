@@ -209,15 +209,15 @@ public class SliceManager {
     return name;
   }
 
-  public String stitchNetToNode(String netName, String nodeName){
-    Network net0 = (Network)slice.getResourceByName(netName);
+  public String stitchNetToNode(String netName, String nodeName) {
+    Network net0 = (Network) slice.getResourceByName(netName);
     InterfaceNode2Net ifaceNode0 = (InterfaceNode2Net) net0.stitch(slice.getResourceByName(nodeName));
     return ifaceNode0.getName();
   }
 
   public String stitchNetToNode(String netName, String nodeName, String ip, String
-    netmask){
-    Network net0 = (Network)slice.getResourceByName(netName);
+    netmask) {
+    Network net0 = (Network) slice.getResourceByName(netName);
     InterfaceNode2Net ifaceNode0 = (InterfaceNode2Net) net0.stitch(slice.getResourceByName(nodeName));
     ifaceNode0.setIpAddress(ip);
     ifaceNode0.setNetmask(netmask);
@@ -267,7 +267,7 @@ public class SliceManager {
     return this.slice.addStitchPort(name, label, port, bandwidth).getName();
   }
 
-  public void stitchSptoNode(String spName, String nodeName){
+  public void stitchSptoNode(String spName, String nodeName) {
     StitchPort sp = (StitchPort) slice.getResourceByName(spName);
     ComputeNode node = (ComputeNode) slice.getResourceByName(nodeName);
     sp.stitch(node);
@@ -328,7 +328,7 @@ public class SliceManager {
     return this.slice.getResourceByName(nm);
   }
 
-  public String getStitchingGUID(String netName){
+  public String getStitchingGUID(String netName) {
     return slice.getResourceByName(netName).getStitchingGUID();
   }
 
@@ -701,8 +701,8 @@ public class SliceManager {
     }
   }
 
-  public String getManagementIP(String nodeName){
-    return ((ComputeNode)slice.getResourceByName(nodeName)).getManagementIP();
+  public String getManagementIP(String nodeName) {
+    return ((ComputeNode) slice.getResourceByName(nodeName)).getManagementIP();
   }
 
   public void copyFile2Node(String lfile, String rfile, String privkey, String nodeName) {
@@ -876,7 +876,7 @@ public class SliceManager {
     InterfaceNode2Net ifaceNode1 = (InterfaceNode2Net) net.stitch(node_2);
   }
 
-  public String getNodeDomain(String nodeName){
+  public String getNodeDomain(String nodeName) {
     ComputeNode node = (ComputeNode) slice.getResourceByName(nodeName);
     return node.getDomain();
   }

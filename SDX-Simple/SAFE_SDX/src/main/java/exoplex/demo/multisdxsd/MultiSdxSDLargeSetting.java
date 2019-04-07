@@ -5,7 +5,7 @@ import org.apache.commons.lang3.tuple.ImmutablePair;
 
 import java.util.Arrays;
 
-public class MultiSdxSDLargeSetting extends AbstractTestSetting{
+public class MultiSdxSDLargeSetting extends AbstractTestSetting {
   public String sdxConfigDir = sdxSimpleDir + "config/multisdx/";
 
   public MultiSdxSDLargeSetting() {

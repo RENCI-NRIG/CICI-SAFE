@@ -1,7 +1,6 @@
 package exoplex.demo.cnert;
 
 import com.google.inject.Inject;
-import com.google.inject.Provider;
 import exoplex.common.utils.Exec;
 import exoplex.common.utils.PathUtil;
 import exoplex.common.utils.ServerOptions;
@@ -11,10 +10,6 @@ import exoplex.sdx.slice.exogeni.SliceManager;
 import org.apache.commons.cli.CommandLine;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.renci.ahab.libndl.resources.request.ComputeNode;
-import org.renci.ahab.libndl.resources.request.InterfaceNode2Net;
-import org.renci.ahab.libndl.resources.request.Network;
-import org.renci.ahab.libndl.resources.request.StitchPort;
 import org.renci.ahab.libtransport.util.TransportException;
 import org.renci.ahab.libtransport.xmlrpc.XMLRPCTransportException;
 import safe.Authority;
@@ -330,7 +325,7 @@ public class CnertTestSlice extends SliceHelper {
     String c0 = "c0";
     String c1 = "c1";
     String c2 = "c2";
-    String scripts = Scripts.getCustomerScript()  + "apt-get install -y vsftpd iperf\n";
+    String scripts = Scripts.getCustomerScript() + "apt-get install -y vsftpd iperf\n";
 
     String nodeName = s.addComputeNode("node0", nodeImageURL, nodeImageHash, nodeImageShortName,
       nodeNodeType, clientSites.get(0), scripts);
@@ -389,7 +384,7 @@ public class CnertTestSlice extends SliceHelper {
     net1.stitch(c1);
     */
 
-    String  nodeName1 = "node" + (num - 1);
+    String nodeName1 = "node" + (num - 1);
     String stitchName = "stitch_c" + (num - 1) + "_20";
     String site = clientSites.get((num - 1) % clientSites.size());
     s.addComputeNode(nodeName1, nodeImageURL, nodeImageHash, nodeImageShortName,
@@ -456,7 +451,7 @@ public class CnertTestSlice extends SliceHelper {
 
       String node0 = s.addComputeNode(((i == 0 || i == (num - 1)) ? "node" : "c") + String
           .valueOf(i), nodeImageURL, nodeImageHash, nodeImageShortName,
-        nodeNodeType, clientSites.get(i%clientSites.size()), nodePostBootScript);
+        nodeNodeType, clientSites.get(i % clientSites.size()), nodePostBootScript);
 
       nodelist.add(node0);
 
@@ -476,7 +471,7 @@ public class CnertTestSlice extends SliceHelper {
         }
 
         String net2 = s.addBroadcastLink(linkname, bw);
-        s.stitchNetToNode(linkname, node0,"192.168." + String.valueOf(start + i) + ".1",
+        s.stitchNetToNode(linkname, node0, "192.168." + String.valueOf(start + i) + ".1",
           "255.255.255.0");
         netlist.add(net2);
       }
