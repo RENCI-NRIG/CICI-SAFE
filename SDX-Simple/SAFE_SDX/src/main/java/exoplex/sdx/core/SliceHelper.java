@@ -6,12 +6,12 @@ import exoplex.common.utils.ServerOptions;
 import exoplex.sdx.network.Link;
 import exoplex.sdx.safe.SafeManager;
 import exoplex.sdx.slice.Scripts;
+import exoplex.sdx.slice.SliceManager;
+import exoplex.sdx.slice.SliceManagerFactory;
 import exoplex.sdx.slice.exogeni.SliceCommon;
-import exoplex.sdx.slice.exogeni.SliceManager;
 import org.apache.commons.cli.CommandLine;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.renci.ahab.libndl.resources.request.ComputeNode;
 import safe.Authority;
 
 import java.io.FileOutputStream;
@@ -42,6 +42,8 @@ public class SliceHelper extends SliceCommon {
   protected String scriptsdir;
   protected boolean BRO = false;
   protected Authority authority;
+  @Inject
+  protected SliceManagerFactory sliceManagerFactory;
 
   @Inject
   public SliceHelper(Authority authority) {
@@ -109,12 +111,13 @@ public class SliceHelper extends SliceCommon {
   }
 
   public void deleteSlice() {
-    SliceManager s = new SliceManager(sliceName, pemLocation, keyLocation, controllerUrl, sshKey);
+    SliceManager s = sliceManagerFactory.create(sliceName, pemLocation, keyLocation, controllerUrl,
+      sshKey);
     s.delete();
   }
 
   public void deleteSlice(String slice) {
-    SliceManager s = new SliceManager(slice, pemLocation, keyLocation, controllerUrl, sshKey);
+    SliceManager s = sliceManagerFactory.create(slice, pemLocation, keyLocation, controllerUrl, sshKey);
     s.delete();
   }
 
@@ -183,13 +186,13 @@ public class SliceHelper extends SliceCommon {
   public void configBroNodes(SliceManager carrier, String bropattern) {
     String resource_dir = conf.getString("config.resourcedir");
     List<Thread> tlist = new ArrayList<Thread>();
-    for (ComputeNode c : carrier.getComputeNodes()) {
-      if (c.getName().matches(bropattern)) {
+    for (String c : carrier.getComputeNodes()) {
+      if (c.matches(bropattern)) {
         tlist.add(new Thread() {
           @Override
           public void run() {
-            String routername = c.getName().split("_")[1];
-            carrier.configBroNode(c.getName(), routername, resource_dir, SDNControllerIP, serverurl, sshKey);
+            String routername = c.split("_")[1];
+            carrier.configBroNode(c, routername, resource_dir, SDNControllerIP, serverurl, sshKey);
           }
         });
       }
@@ -209,13 +212,13 @@ public class SliceHelper extends SliceCommon {
     //check if openvswitch is installed on all ovs nodes
     logger.debug("Start checking prerequisites");
     ArrayList<Thread> tlist = new ArrayList<>();
-    for (ComputeNode node : serverSlice.getComputeNodes()) {
-      if (node.getName().matches(routerPattern)) {
+    for (String node : serverSlice.getComputeNodes()) {
+      if (node.matches(routerPattern)) {
         tlist.add(new Thread() {
           @Override
           public void run() {
-            checkOVS(serverSlice, node.getName());
-            checkScripts(serverSlice, node.getName());
+            checkOVS(serverSlice, node);
+            checkScripts(serverSlice, node);
           }
         });
       }
@@ -374,7 +377,7 @@ public class SliceHelper extends SliceCommon {
 
   public SliceManager createCarrierSlice(String sliceName, int num, long bw) {
     //,String stitchsubnet="", String slicesubnet="")
-    SliceManager s = new SliceManager(sliceName, pemLocation, keyLocation, controllerUrl,
+    SliceManager s = sliceManagerFactory.create(sliceName, pemLocation, keyLocation, controllerUrl,
       sshKey);
     s.createSlice();
     //String nodePostBootScript="apt-get update;apt-get -y  install quagga\n"

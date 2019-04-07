@@ -2,7 +2,7 @@ package exoplex.sdx.bro;
 
 import exoplex.sdx.core.SdxManager;
 import exoplex.sdx.network.RoutingManager;
-import exoplex.sdx.slice.exogeni.SliceManager;
+import exoplex.sdx.slice.SliceManager;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 

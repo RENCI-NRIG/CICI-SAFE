@@ -6,8 +6,8 @@ import com.google.inject.Injector;
 import exoplex.client.exogeni.ExogeniClientSlice;
 import exoplex.common.utils.ServerOptions;
 import exoplex.sdx.safe.SafeManager;
+import exoplex.sdx.slice.SliceManager;
 import exoplex.sdx.slice.exogeni.SiteBase;
-import exoplex.sdx.slice.exogeni.SliceManager;
 import injection.TridentTestModule;
 import org.apache.commons.cli.CommandLine;
 import org.apache.logging.log4j.LogManager;
@@ -93,7 +93,7 @@ public class TridentSlice extends TridentSetting {
 
   private SliceManager createTridentTestSlice() throws Exception {
     ArrayList<String> sites = TridentSetting.sites;
-    SliceManager slice = new SliceManager(TridentSetting.sdxName, pemLocation, keyLocation,
+    SliceManager slice = sliceManagerFactory.create(TridentSetting.sdxName, pemLocation, keyLocation,
       controllerUrl, sshKey);
     slice.createSlice();
     HashMap<String, String> coreRouterMap = new HashMap<>();

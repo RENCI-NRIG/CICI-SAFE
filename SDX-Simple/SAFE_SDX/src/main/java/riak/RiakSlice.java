@@ -1,17 +1,26 @@
 package riak;
 
+import com.google.inject.Guice;
+import com.google.inject.Inject;
+import com.google.inject.Injector;
 import exoplex.common.utils.ServerOptions;
 import exoplex.sdx.slice.Scripts;
+import exoplex.sdx.slice.SliceManager;
+import exoplex.sdx.slice.SliceManagerFactory;
 import exoplex.sdx.slice.exogeni.SliceCommon;
-import exoplex.sdx.slice.exogeni.SliceManager;
+import injection.ExoGeniSliceModule;
 import org.apache.commons.cli.CommandLine;
 
 public class RiakSlice extends SliceCommon {
+  @Inject
+  private SliceManagerFactory sliceManagerFactory;
+
   public static void main(String[] args) throws Exception {
     if (args.length < 1) {
       args = new String[]{"-c", "config/riak.conf"};
     }
-    RiakSlice slice = new RiakSlice();
+    Injector injector = Guice.createInjector(new ExoGeniSliceModule());
+    RiakSlice slice = injector.getInstance(RiakSlice.class);
     slice.run(args);
   }
 
@@ -29,7 +38,7 @@ public class RiakSlice extends SliceCommon {
   }
 
   public String createRiakSlice() throws Exception {
-    SliceManager s = new SliceManager(sliceName, pemLocation, keyLocation, controllerUrl,
+    SliceManager s = sliceManagerFactory.create(sliceName, pemLocation, keyLocation, controllerUrl,
       sshKey);
     s.createSlice();
     s.addRiakServer(serverSite, "riak");
@@ -44,7 +53,7 @@ public class RiakSlice extends SliceCommon {
   }
 
   private String deleteRiakSlice() throws Exception {
-    SliceManager s = new SliceManager(sliceName, pemLocation, keyLocation, controllerUrl,
+    SliceManager s = sliceManagerFactory.create(sliceName, pemLocation, keyLocation, controllerUrl,
       sshKey);
     s.delete();
     return "true";

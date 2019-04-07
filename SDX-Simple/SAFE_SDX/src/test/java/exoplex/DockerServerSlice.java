@@ -1,10 +1,13 @@
 package exoplex;
 
+import com.google.inject.Guice;
+import com.google.inject.Injector;
 import exoplex.common.utils.ServerOptions;
 import exoplex.sdx.core.SliceHelper;
 import exoplex.sdx.safe.SafeManager;
+import exoplex.sdx.slice.SliceManager;
 import exoplex.sdx.slice.exogeni.SiteBase;
-import exoplex.sdx.slice.exogeni.SliceManager;
+import injection.ExoGeniSliceModule;
 import org.apache.commons.cli.CommandLine;
 
 public class DockerServerSlice extends SliceHelper {
@@ -17,7 +20,8 @@ public class DockerServerSlice extends SliceHelper {
     if (args.length < 1) {
       args = new String[]{"-c", "config/docker.conf"};
     }
-    DockerServerSlice slice = new DockerServerSlice();
+    Injector injector = Guice.createInjector(new ExoGeniSliceModule());
+    DockerServerSlice slice = injector.getInstance(DockerServerSlice.class);
     slice.run(args);
   }
 
@@ -35,7 +39,7 @@ public class DockerServerSlice extends SliceHelper {
   }
 
   public void createSafeAndPlexusSlice() throws Exception {
-    SliceManager s = new SliceManager(sliceName, pemLocation, keyLocation, controllerUrl,
+    SliceManager s = sliceManagerFactory.create(sliceName, pemLocation, keyLocation, controllerUrl,
       sshKey);
     s.createSlice();
     s.addSafeServer(SiteBase.get("BBN"), conf.getString("config.riak"), SafeManager

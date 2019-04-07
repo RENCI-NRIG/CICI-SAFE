@@ -6,7 +6,8 @@ import exoplex.common.utils.PathUtil;
 import exoplex.common.utils.ServerOptions;
 import exoplex.sdx.core.SliceHelper;
 import exoplex.sdx.slice.Scripts;
-import exoplex.sdx.slice.exogeni.SliceManager;
+import exoplex.sdx.slice.SliceManager;
+import exoplex.sdx.slice.SliceManagerFactory;
 import org.apache.commons.cli.CommandLine;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -18,6 +19,9 @@ import java.util.ArrayList;
 
 public class CnertTestSlice extends SliceHelper {
   final Logger logger = LogManager.getLogger(Exec.class);
+
+  @Inject
+  SliceManagerFactory sliceManagerFactory;
 
   @Inject
   public CnertTestSlice(Authority authority) {
@@ -126,7 +130,8 @@ public class CnertTestSlice extends SliceHelper {
       ////if (!checkPlexus(SDNControllerIP)) {
       ////  System.exit(-1);
       ////}
-      SliceManager carrier = new SliceManager(sliceName, pemLocation, keyLocation, controllerUrl,
+      SliceManager carrier = sliceManagerFactory.create(sliceName, pemLocation, keyLocation,
+        controllerUrl,
         sshKey);
       carrier.reloadSlice();
       SDNControllerIP = carrier.getManagementIP("plexuscontroller");
@@ -433,7 +438,7 @@ public class CnertTestSlice extends SliceHelper {
                                                           long bw, int numstitches) {//,String stitchsubnet="", String slicesubnet="")
     System.out.println("ndllib TestDriver: START");
 
-    SliceManager s = new SliceManager(sliceName, pemLocation, keyLocation, controllerUrl,
+    SliceManager s = sliceManagerFactory.create(sliceName, pemLocation, keyLocation, controllerUrl,
       sshKey);
 
     String nodeImageShortName = "Ubuntu 14.04";
