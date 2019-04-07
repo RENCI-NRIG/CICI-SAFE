@@ -1,17 +1,18 @@
 package exoplex.sdx.bro;
 
+import com.google.inject.Inject;
 import com.jcraft.jsch.ChannelExec;
 import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.Session;
 import exoplex.common.utils.ScpTo;
+import exoplex.sdx.slice.SliceManager;
+import exoplex.sdx.slice.SliceManagerFactory;
 import exoplex.sdx.slice.exogeni.SliceCommon;
-import exoplex.sdx.slice.exogeni.SliceManager;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.renci.ahab.libndl.Slice;
 import org.renci.ahab.libndl.resources.request.ComputeNode;
-import org.renci.ahab.libndl.resources.request.Network;
 
 import java.io.BufferedReader;
 import java.io.FileInputStream;
@@ -26,6 +27,10 @@ public abstract class SliceBase extends SliceCommon {
 
 
   private SliceManager thisSlice;
+
+  @Inject
+  private SliceManagerFactory sliceManagerFactory;
+
   private Map<String, String> resourceIPs = new HashMap<>();
   private Map<String, Session> sessions = new HashMap<>();
 
@@ -46,13 +51,14 @@ public abstract class SliceBase extends SliceCommon {
       readConfig(configPath);
       System.out.println("Making proxy...");
       System.out.println("Setting access context...");
-      thisSlice = new SliceManager(sliceName, pemLocation, keyLocation, controllerUrl, sshKey);
+      thisSlice = sliceManagerFactory.create(sliceName, pemLocation, keyLocation, controllerUrl,
+        sshKey);
       thisSlice.reloadSlice();
-      for (ComputeNode c : thisSlice.getComputeNodes()) {
-        if (c.getManagementIP() == null) {
+      for (String c : thisSlice.getComputeNodes()) {
+        if (thisSlice.getManagementIP(c) == null) {
           break;
         }
-        resourceIPs.put(c.getName(), c.getManagementIP());
+        resourceIPs.put(c, thisSlice.getManagementIP(c));
       }
     } catch (Exception e) {
       throw new SampleSlice.SliceBaseException(e);
@@ -62,7 +68,7 @@ public abstract class SliceBase extends SliceCommon {
   public void createSlice() throws SampleSlice.SliceBaseException {
     try {
       System.out.println("Creating slice!!...");
-      thisSlice = new SliceManager(sliceName, pemLocation, keyLocation, controllerUrl, sshKey);
+      thisSlice = sliceManagerFactory.create(sliceName, pemLocation, keyLocation, controllerUrl, sshKey);
       thisSlice.createSlice();
       // TODO Add the option to ignore this? idk
       try {
@@ -75,8 +81,8 @@ public abstract class SliceBase extends SliceCommon {
     }
   }
 
-  public ComputeNode retrieveNode(String name) {
-    return (ComputeNode) thisSlice.getResourceByName(name);
+  public String retrieveNode(String name) {
+    return thisSlice.getResourceByName(name);
   }
 
   public String retrieveIP(String c) {
@@ -202,15 +208,15 @@ public abstract class SliceBase extends SliceCommon {
       sliceActive = true;
 
       System.out.println("Slice: " + thisSlice.getAllResources());
-      for (ComputeNode c : thisSlice.getComputeNodes()) {
-        System.out.println("Resource: " + c.getName() + ", state: " + c.getState());
-        if (c.getState() != "Active" || c.getManagementIP() == null)
+      for (String c : thisSlice.getComputeNodes()) {
+        System.out.println("Resource: " + c + ", state: " + thisSlice.getState(c));
+        if (thisSlice.getState(c) != "Active" || thisSlice.getManagementIP(c) == null)
           sliceActive = false;
       }
 
-      for (Network l : thisSlice.getBroadcastLinks()) {
-        System.out.println("Resource: " + l.getName() + ", state: " + l.getState());
-        if (l.getState() != "Active")
+      for (String l : thisSlice.getBroadcastLinks()) {
+        System.out.println("Resource: " + l + ", state: " + thisSlice.getState(l));
+        if (thisSlice.getState(l) != "Active")
           sliceActive = false;
       }
 
@@ -219,9 +225,9 @@ public abstract class SliceBase extends SliceCommon {
     }
 
     System.out.println("Done");
-    for (ComputeNode n : thisSlice.getComputeNodes()) {
-      System.out.println("ComputeNode: " + n.getName() + ", Managment IP =  " + n.getManagementIP());
-      resourceIPs.put(n.getName(), n.getManagementIP());
+    for (String n : thisSlice.getComputeNodes()) {
+      System.out.println("ComputeNode: " + n + ", Managment IP =  " + thisSlice.getManagementIP(n));
+      resourceIPs.put(n, thisSlice.getManagementIP(n));
     }
   }
 

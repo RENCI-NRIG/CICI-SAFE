@@ -5,7 +5,6 @@ import com.typesafe.config.ConfigFactory;
 import exoplex.sdx.network.Link;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.renci.ahab.libndl.resources.request.StitchPort;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -43,7 +42,7 @@ public abstract class SliceCommon {
 
   protected HashMap<String, Link> links = new HashMap<String, Link>();
   protected HashMap<String, ArrayList<String>> computenodes = new HashMap<String, ArrayList<String>>();
-  protected ArrayList<StitchPort> stitchports = new ArrayList<>();
+  protected ArrayList<String> stitchports = new ArrayList<>();
   private String topodir = null;
 
   public String getSDNControllerIP() {

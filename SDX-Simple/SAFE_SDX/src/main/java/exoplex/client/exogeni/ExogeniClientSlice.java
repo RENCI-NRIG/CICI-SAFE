@@ -5,12 +5,11 @@ import exoplex.common.utils.Exec;
 import exoplex.common.utils.ServerOptions;
 import exoplex.sdx.core.SliceHelper;
 import exoplex.sdx.safe.SafeManager;
+import exoplex.sdx.slice.SliceManager;
 import exoplex.sdx.slice.exogeni.SiteBase;
-import exoplex.sdx.slice.exogeni.SliceManager;
 import org.apache.commons.cli.CommandLine;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.renci.ahab.libndl.resources.request.ComputeNode;
 import org.renci.ahab.libtransport.util.TransportException;
 import safe.Authority;
 
@@ -89,7 +88,7 @@ public class ExogeniClientSlice extends SliceHelper {
     } else if (type.equals("delete")) {
       SliceManager s2 = null;
       logger.info("deleting slice " + sliceName);
-      s2 = new SliceManager(sliceName, pemLocation, keyLocation, controllerUrl, sshKey);
+      s2 = sliceManagerFactory.create(sliceName, pemLocation, keyLocation, controllerUrl, sshKey);
       //s2.reloadSlice();
       s2.delete();
     }
@@ -99,10 +98,10 @@ public class ExogeniClientSlice extends SliceHelper {
     c1.runCmdSlice("apt-get update; apt-get install -y quagga traceroute iperf", sshKey,
       "CNode\\d+",
       true);
-    for (ComputeNode node : c1.getComputeNodes()) {
-      String res[] = Exec.sshExec("root", node.getManagementIP(), "ls /etc/init.d", sshKey);
+    for (String node : c1.getComputeNodes()) {
+      String res[] = Exec.sshExec("root", c1.getManagementIP(node), "ls /etc/init.d", sshKey);
       while (!res[0].contains("quagga")) {
-        res = Exec.sshExec("root", node.getManagementIP(), "apt-get install -y quagga", sshKey);
+        res = Exec.sshExec("root", c1.getManagementIP(node), "apt-get install -y quagga", sshKey);
       }
     }
     c1.runCmdSlice("sed -i -- 's/zebra=no/zebra=yes/g' /etc/quagga/daemons", sshKey, "CNode\\d+",
@@ -153,7 +152,7 @@ public class ExogeniClientSlice extends SliceHelper {
     } else if (type.equals("delete")) {
       SliceManager s2 = null;
       logger.info("deleting slice " + sliceName);
-      s2 = new SliceManager(sliceName, pemLocation, keyLocation, controllerUrl, sshKey);
+      s2 = sliceManagerFactory.create(sliceName, pemLocation, keyLocation, controllerUrl, sshKey);
       //s2.reloadSlice();
       s2.delete();
     }
@@ -163,13 +162,13 @@ public class ExogeniClientSlice extends SliceHelper {
     throws TransportException {//=1, String subnet="")
     //Main Example Code
 
-    SliceManager s = new SliceManager(sliceName, pemLocation, keyLocation, controllerUrl,
+    SliceManager s = sliceManagerFactory.create(sliceName, pemLocation, keyLocation, controllerUrl,
       sshKey);
     s.createSlice();
 
-    ArrayList<ComputeNode> nodelist = new ArrayList<ComputeNode>();
+    ArrayList<String> nodelist = new ArrayList<>();
     for (int i = 0; i < num; i++) {
-      ComputeNode node0 = s.addComputeNode(routerSite, "CNode" + String.valueOf(i + 1));
+      String node0 = s.addComputeNode(routerSite, "CNode" + String.valueOf(i + 1));
       nodelist.add(node0);
     }
     if (network) {
@@ -178,8 +177,8 @@ public class ExogeniClientSlice extends SliceHelper {
           IPPrefix + (start + i) + ".1",
           IPPrefix + (start + i) + ".2",
           "255.255.255.0",
-          nodelist.get(i).getName(),
-          nodelist.get(i + 1).getName(),
+          nodelist.get(i),
+          nodelist.get(i + 1),
           bw
         );
       }
