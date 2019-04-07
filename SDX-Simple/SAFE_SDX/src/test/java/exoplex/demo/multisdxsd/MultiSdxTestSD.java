@@ -9,7 +9,6 @@ import exoplex.demo.AbstractTestSlice;
 import exoplex.demo.SdxTest;
 import exoplex.sdx.core.SdxManager;
 import injection.MultiSdxSDLargeModule;
-import injection.MultiSdxSDModule;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -63,7 +62,7 @@ public class MultiSdxTestSD extends AbstractTest {
   }
 
   @Test
-  public void testMultiSdxSD()throws Exception {
+  public void testMultiSdxSD() throws Exception {
     startSdxServersAndClients(reset);
     //stitch sdx slices
     Long t0 = System.currentTimeMillis();
@@ -116,7 +115,7 @@ public class MultiSdxTestSD extends AbstractTest {
       }
       List<ImmutablePair<String, String>> pairPolicyAcls = testSetting.clientPolicyASTagAcls
         .getOrDefault(client, new ArrayList<>());
-      for (ImmutablePair<String, String> pair : pairPolicyAcls){
+      for (ImmutablePair<String, String> pair : pairPolicyAcls) {
         exogeniClients.get(client).processCmd(String.format("policy %s %s %s", pair.getLeft(),
           clientIp, pair.getRight()));
       }

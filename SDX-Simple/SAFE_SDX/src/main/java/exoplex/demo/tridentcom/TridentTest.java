@@ -3,7 +3,6 @@ package exoplex.demo.tridentcom;
 import com.google.inject.Guice;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
-import com.google.inject.Provider;
 import exoplex.client.exogeni.SdxExogeniClient;
 import exoplex.sdx.core.SdxManager;
 import exoplex.sdx.core.SdxServer;

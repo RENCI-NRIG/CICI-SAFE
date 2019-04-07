@@ -3,8 +3,8 @@ package injection;
 import com.google.inject.AbstractModule;
 import exoplex.demo.AbstractTestSetting;
 import exoplex.demo.AbstractTestSlice;
-import exoplex.demo.multisdxsd.MultiSdxSDSetting;
 import exoplex.demo.multisdx.MultiSdxSlice;
+import exoplex.demo.multisdxsd.MultiSdxSDSetting;
 import safe.Authority;
 import safe.multisdx.AuthorityMockMultiSdx;
 

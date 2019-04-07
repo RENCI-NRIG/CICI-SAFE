@@ -4,7 +4,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.renci.ahab.libndl.resources.common.ModelResource;
 import org.renci.ahab.libndl.resources.request.*;
-import org.renci.ahab.libtransport.ISliceTransportAPIv1;
 import org.renci.ahab.libtransport.util.TransportException;
 import org.renci.ahab.libtransport.xmlrpc.XMLRPCTransportException;
 
@@ -16,10 +15,10 @@ import java.util.Set;
 import java.util.concurrent.locks.ReentrantLock;
 
 
-public class SliceManagerMock implements Serializable{
-  private static final long serialVersionUID = 1L;
+public class SliceManagerMock implements Serializable {
   final static long DEFAULT_BW = 10000000;
   final static Logger logger = LogManager.getLogger(SliceManagerMock.class);
+  private static final long serialVersionUID = 1L;
   private static final int COMMIT_COUNT = 5;
   private static final int INTERVAL = 10;
   private ReentrantLock lock = new ReentrantLock();
@@ -45,11 +44,11 @@ public class SliceManagerMock implements Serializable{
     sliceCreated = true;
   }
 
-  public void permitStitch(String secret, String GUID){
+  public void permitStitch(String secret, String GUID) {
     //do nothing
   }
 
-  public String permitStitch(String GUID){
+  public String permitStitch(String GUID) {
     return "secret";
   }
 
@@ -57,11 +56,11 @@ public class SliceManagerMock implements Serializable{
     loadFromFile();
   }
 
-  private void loadFromFile(){
+  private void loadFromFile() {
     sliceCreated = true;
   }
 
-  private void saveToFile(){
+  private void saveToFile() {
 
   }
 
@@ -72,16 +71,16 @@ public class SliceManagerMock implements Serializable{
     return null;
   }
 
-  public ComputeNode addComputeNode(){
+  public ComputeNode addComputeNode() {
     return null;
   }
 
   public ComputeNode addComputeNode(String site, String name) {
-  return null;
+    return null;
   }
 
   public BroadcastNetwork addBroadcastLink(String name, long bandwidth) {
-  return null;
+    return null;
   }
 
   public BroadcastNetwork addBroadcastLink(String name) {
