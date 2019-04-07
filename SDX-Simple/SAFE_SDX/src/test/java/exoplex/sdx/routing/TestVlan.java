@@ -3,8 +3,8 @@ package exoplex.sdx.routing;
 import exoplex.common.utils.ServerOptions;
 import exoplex.sdx.core.SdxManager;
 import exoplex.sdx.slice.Scripts;
+import exoplex.sdx.slice.SliceManager;
 import exoplex.sdx.slice.exogeni.SiteBase;
-import exoplex.sdx.slice.exogeni.SliceManager;
 import org.apache.commons.cli.CommandLine;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -123,7 +123,7 @@ public class TestVlan extends SdxManager {
   }
 
   public SliceManager createTestSlice() {
-    SliceManager slice = new SliceManager(sliceName, pemLocation, keyLocation, controllerUrl,
+    SliceManager slice = sliceManagerFactory.create(sliceName, pemLocation, keyLocation, controllerUrl,
       sshKey);
     slice.createSlice();
     slice.addComputeNode(site, "CNode0");

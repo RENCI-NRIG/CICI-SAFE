@@ -5,8 +5,8 @@ import exoplex.experiment.ExperimentBase;
 import exoplex.sdx.core.SdxManager;
 import exoplex.sdx.network.SdnUtil;
 import exoplex.sdx.slice.Scripts;
+import exoplex.sdx.slice.SliceManager;
 import exoplex.sdx.slice.exogeni.SiteBase;
-import exoplex.sdx.slice.exogeni.SliceManager;
 import org.apache.commons.cli.CommandLine;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -128,7 +128,7 @@ public class TestMpRouting extends SdxManager {
   }
 
   public SliceManager createTestSlice() {
-    SliceManager slice = new SliceManager(sliceName, pemLocation, keyLocation, controllerUrl,
+    SliceManager slice = sliceManagerFactory.create(sliceName, pemLocation, keyLocation, controllerUrl,
       sshKey);
     slice.addComputeNode(site, "CNode0");
     slice.addComputeNode(site, "CNode1");

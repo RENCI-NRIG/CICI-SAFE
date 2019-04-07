@@ -1,18 +1,20 @@
 package exoplex.sdx.slice.exogeni;
 
+import com.google.inject.Inject;
+import com.google.inject.assistedinject.Assisted;
 import exoplex.common.utils.Exec;
 import exoplex.common.utils.NetworkUtil;
 import exoplex.common.utils.PathUtil;
 import exoplex.common.utils.ScpTo;
 import exoplex.sdx.slice.Scripts;
 import exoplex.sdx.slice.SliceEnv;
+import exoplex.sdx.slice.SliceManager;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.renci.ahab.libndl.Slice;
 import org.renci.ahab.libndl.resources.common.ModelResource;
 import org.renci.ahab.libndl.resources.request.*;
-import org.renci.ahab.libndl.util.IP4Subnet;
 import org.renci.ahab.libtransport.*;
 import org.renci.ahab.libtransport.util.SSHAccessTokenFileFactory;
 import org.renci.ahab.libtransport.util.TransportException;
@@ -28,29 +30,24 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-public class SliceManager {
+public class ExoSliceManager extends SliceManager {
   final static long DEFAULT_BW = 10000000;
-  final static Logger logger = LogManager.getLogger(SliceManager.class);
+  final static Logger logger = LogManager.getLogger(ExoSliceManager.class);
   private static final int COMMIT_COUNT = 5;
   private static final int INTERVAL = 10;
   private ReentrantLock lock = new ReentrantLock();
   private ISliceTransportAPIv1 sliceProxy;
   private SliceAccessContext<SSHAccessToken> sctx;
-  private String pemLocation;
-  private String keyLocation;
-  private String controllerUrl;
-  private String sliceName;
   private Slice slice;
-  private String sshKey;
   private HashSet<String> reachableNodes = new HashSet<>();
 
-  public SliceManager(String sliceName, String pemLocation, String keyLocation, String
-    controllerUrl, String sshKey) {
-    this.sliceName = sliceName;
-    this.pemLocation = pemLocation;
-    this.keyLocation = keyLocation;
-    this.controllerUrl = controllerUrl;
-    this.sshKey = sshKey;
+  @Inject
+  public ExoSliceManager(@Assisted String sliceName,
+                         @Assisted String pemLocation,
+                         @Assisted String keyLocation,
+                         @Assisted String controllerUrl,
+                         @Assisted String sshKey) {
+    super(sliceName, pemLocation, keyLocation, controllerUrl, sshKey);
     this.sliceProxy = getSliceProxy(pemLocation, keyLocation, controllerUrl);
     refreshSshContext();
     this.slice = null;
@@ -72,6 +69,14 @@ public class SliceManager {
       assert (false);
     }
     return sliceProxy;
+  }
+
+  public Collection<String> getBroadcastLinks() {
+    ArrayList<String> res = new ArrayList<>();
+    for (BroadcastNetwork net : slice.getBroadcastLinks()) {
+      res.add(net.getName());
+    }
+    return res;
   }
 
   private void refreshSshContext() {
@@ -238,7 +243,7 @@ public class SliceManager {
     return name;
   }
 
-  public ComputeNode addComputeNode(String site, String name) {
+  public String addComputeNode(String site, String name) {
     logger.debug(String.format("Adding new compute node %s to slice %s", name, sliceName));
     if (slice == null) {
       createSlice();
@@ -255,7 +260,7 @@ public class SliceManager {
     node0.setNodeType(nodeNodeType);
     node0.setDomain(SiteBase.get(site));
     node0.setPostBootScript(nodePostBootScript);
-    return node0;
+    return node0.getName();
   }
 
   public StorageNode addStorageNode(String name, long capacity, String mountpnt) {
@@ -282,7 +287,7 @@ public class SliceManager {
     return this.addBroadcastLink(name, DEFAULT_BW);
   }
 
-  public Interface attach(String nodeName, String linkName, String ip, String netmask) {
+  public String attach(String nodeName, String linkName, String ip, String netmask) {
     ComputeNode node = null;
     BroadcastNetwork link = null;
     RequestResource obj;
@@ -302,10 +307,10 @@ public class SliceManager {
       ifaceNode1.setIpAddress(ip);
       ifaceNode1.setNetmask(netmask);
     }
-    return ifaceNode1;
+    return ifaceNode1.getName();
   }
 
-  public Interface attach(String nodeName, String linkName) {
+  public String attach(String nodeName, String linkName) {
     ComputeNode node = null;
     BroadcastNetwork link = null;
     RequestResource obj;
@@ -321,11 +326,7 @@ public class SliceManager {
     }
 
     InterfaceNode2Net ifaceNode1 = (InterfaceNode2Net) link.stitch(node);
-    return ifaceNode1;
-  }
-
-  public RequestResource getResourceByName(String nm) {
-    return this.slice.getResourceByName(nm);
+    return ifaceNode1.getName();
   }
 
   public String getStitchingGUID(String netName) {
@@ -444,92 +445,48 @@ public class SliceManager {
     return slice.enableSliceStitching(r, secret);
   }
 
-  public Collection<ModelResource> getAllResources() {
-    return slice.getAllResources();
+  public Collection<String> getAllResources() {
+    return maptoNames(slice.getAllResources());
   }
 
-  public Collection<Interface> getInterfaces() {
-    return slice.getInterfaces();
+  private Collection<String> maptoNames(Collection<ModelResource> resources) {
+    ArrayList<String> res = new ArrayList<>();
+    for (ModelResource resource : resources) {
+      res.add(resource.getName());
+    }
+    return res;
   }
 
-  public Collection<Network> getLinks() {
-    return slice.getLinks();
+  public Collection<String> getInterfaces() {
+    ArrayList<String> res = new ArrayList<>();
+    for (Interface intf : slice.getInterfaces()) {
+      res.add(intf.getName());
+    }
+    return res;
   }
 
-  public Collection<BroadcastNetwork> getBroadcastLinks() {
-    return slice.getBroadcastLinks();
+  public Collection<String> getLinks() {
+    ArrayList<String> res = new ArrayList<>();
+    for (Network net : slice.getLinks()) {
+      res.add(net.getName());
+    }
+    return res;
   }
 
-  public Collection<Node> getNodes() {
-    return slice.getNodes();
+  public Collection<String> getComputeNodes() {
+    ArrayList<String> res = new ArrayList<>();
+    for (ComputeNode node : slice.getComputeNodes()) {
+      res.add(node.getName());
+    }
+    return res;
   }
 
-  public Collection<ComputeNode> getComputeNodes() {
-    return slice.getComputeNodes();
-  }
-
-  public Collection<StorageNode> getStorageNodes() {
-    return slice.getStorageNodes();
-  }
-
-  public Collection<StitchPort> getStitchPorts() {
-    return slice.getStitchPorts();
-  }
-
-  public String getState() {
-    return "getState unimplimented";
-  }
-
-  public void setSliceProxy(ISliceTransportAPIv1 sliceProxy) {
-    this.sliceProxy = sliceProxy;
-    slice.setSliceProxy(sliceProxy);
-  }
-
-  public String getRequest() {
-    return slice.getRequest();
-  }
-
-  public String getDebugString() {
-    return this.slice.getDebugString();
-  }
-
-  public String getSliceGraphString() {
-    return this.slice.getSliceGraphString();
-  }
-
-  public Collection<Interface> getInterfaces(RequestResource requestResource) {
-    return null;
-  }
-
-  public boolean isNewRequest() {
-    return false;
-  }
-
-  public void increaseComputeNodeCount(ComputeNode computeNode, int i) {
-  }
-
-  public void deleteComputeNode(ComputeNode computeNode, String uri) {
-  }
-
-  public void addStitch(ComputeNode computeNode, RequestResource r, Interface stitch) {
-  }
-
-  public IP4Subnet setSubnet(String ip, int mask) {
-    return slice.setSubnet(ip, mask);
-  }
-
-  public void addStitch(StorageNode storageNode, RequestResource r, Interface stitch) {
-  }
-
-  public void addStitch(StitchPort stitchPort, RequestResource r, Interface stitch) {
-  }
-
-  public IP4Subnet allocateSubnet(int dEFAULT_SIZE) {
-    return null;
-  }
-
-  public SliceAccessContext<? extends AccessToken> getSliceContext() {
-    return slice.getSliceContext();
+  public Collection<String> getStitchPorts() {
+    ArrayList<String> res = new ArrayList<>();
+    for (StitchPort sp : slice.getStitchPorts()) {
+      res.add(sp.getName());
+    }
+    return res;
   }
 
   public void refresh() {
@@ -572,10 +529,15 @@ public class SliceManager {
   }
 
   public void waitTillActive(int interval) throws Exception {
-    List<String> computeNodes = getComputeNodes().stream().map(c -> c.getName()).collect(Collectors.toList());
-    List<String> links = getBroadcastLinks().stream().map(c -> c.getName()).collect(Collectors.toList());
+    List<String> computeNodes = getComputeNodes().stream().collect
+      (Collectors.toList());
+    List<String> links = getBroadcastLinks().stream().collect(Collectors.toList());
     computeNodes.addAll(links);
     waitTillActive(interval, computeNodes);
+  }
+
+  public String getState(String resourceName) {
+    return slice.getResourceByName(resourceName).getState();
   }
 
   public boolean waitTillActive(int interval, List<String> resources) throws Exception {
@@ -584,38 +546,37 @@ public class SliceManager {
     while (true) {
       ArrayList<String> activeResources = new ArrayList<>();
       refresh();
-      logger.debug("SliceManager: " + getAllResources());
-      for (ComputeNode c : getComputeNodes()) {
-        logger.debug("[" + sliceName + "] Resource: " + c.getName() + ", state: " + c
-          .getState());
-        if (resources.contains(c.getName())) {
-          if (c.getState().contains("Closed")) {
+      logger.debug("ExoSliceManager: " + getAllResources());
+      for (String c : getComputeNodes()) {
+        logger.debug("[" + sliceName + "] Resource: " + c + ", state: " + getState(c));
+        if (resources.contains(c)) {
+          if (getState(c).contains("Closed")) {
             throw new Exception(String.format("Slice %s closed", sliceName));
           }
-          if (!c.getState().equals("Active") || c.getManagementIP() == null) {
+          if (!getState(c).equals("Active") || getManagementIP(c) == null) {
           } else {
-            if (!reachableNodes.contains(c.getName()) && !NetworkUtil.checkReachability(c.getManagementIP())) {
-              logger.warn(String.format("Node %s (%s) unreachable", c.getName(), c.getManagementIP()));
+            if (!reachableNodes.contains(c) && !NetworkUtil.checkReachability(getManagementIP(c))) {
+              logger.warn(String.format("Node %s (%s) unreachable", c, getManagementIP(c)));
             } else {
-              activeResources.add(c.getName());
-              reachableNodes.add(c.getName());
+              activeResources.add(c);
+              reachableNodes.add(c);
             }
           }
         }
       }
-      for (Network l : getBroadcastLinks()) {
-        logger.debug("Resource: " + l.getName() + ", state: " + l.getState());
-        if (resources.contains(l.getName())) {
-          if (l.getState().contains("Failed") || l.getState().contains("Closed")) {
-            logger.warn(String.format("link %s failed or closed", l.getName()));
+      for (String l : getBroadcastLinks()) {
+        logger.debug("Resource: " + l + ", state: " + getState(l));
+        if (resources.contains(l)) {
+          if (getState(l).contains("Failed") || getState(l).contains("Closed")) {
+            logger.warn(String.format("link %s failed or closed", l));
             return false;
           }
-          if (l.getState().equals("Active")) {
-            activeResources.add(l.getName());
+          if (getState(l).equals("Active")) {
+            activeResources.add(l);
           }
-          if (l.getState().equals("Null")) {
-            activeResources.add(l.getName());
-            logger.warn(String.format("%s state: Null", l.getName()));
+          if (getState(l).equals("Null")) {
+            activeResources.add(l);
+            logger.warn(String.format("%s state: Null", l));
           }
         }
       }
@@ -627,16 +588,16 @@ public class SliceManager {
       }
     }
     logger.debug("Done, those  resources are active now: " + String.join(",", resources));
-    for (ComputeNode n : getComputeNodes()) {
-      logger.debug("ComputeNode: " + n.getName() + ", Managment IP =  " + n.getManagementIP());
+    for (String n : getComputeNodes()) {
+      logger.debug("ComputeNode: " + n + ", Managment IP =  " + getManagementIP(n));
     }
     return true;
   }
 
   public void copyFile2Slice(String lfile, String rfile, String privkey) {
     ArrayList<Thread> tlist = new ArrayList<Thread>();
-    for (ComputeNode c : getComputeNodes()) {
-      String mip = c.getManagementIP();
+    for (String c : getComputeNodes()) {
+      String mip = getManagementIP(c);
       try {
         Thread thread = new Thread() {
           @Override
@@ -668,12 +629,12 @@ public class SliceManager {
                              String patn) {
     Pattern pattern = Pattern.compile(patn);
     ArrayList<Thread> tlist = new ArrayList<Thread>();
-    for (ComputeNode c : getComputeNodes()) {
-      Matcher matcher = pattern.matcher(c.getName());
+    for (String c : getComputeNodes()) {
+      Matcher matcher = pattern.matcher(c);
       if (!matcher.find()) {
         continue;
       }
-      String mip = c.getManagementIP();
+      String mip = getManagementIP(c);
       try {
         Thread thread = new Thread() {
           @Override
@@ -804,13 +765,13 @@ public class SliceManager {
                           final boolean repeat) {
     List<Thread> tlist = new ArrayList<Thread>();
 
-    for (ComputeNode c : getComputeNodes()) {
-      if (c.getName().matches(pattern)) {
+    for (String c : getComputeNodes()) {
+      if (c.matches(pattern)) {
         tlist.add(new Thread() {
           @Override
           public void run() {
             try {
-              runCmdNode(cmd, c.getName(), repeat);
+              runCmdNode(cmd, c, repeat);
             } catch (Exception e) {
               logger.warn("exception when running command");
             }
@@ -1022,7 +983,7 @@ public class SliceManager {
     return res[1];
   }
 
-  public ComputeNode addOVSRouter(String site, String name) {
+  public String addOVSRouter(String site, String name) {
     logger.debug(String.format("Adding new OVS router to slice %s on site %s", slice.getName(),
       site));
     NodeBaseInfo ninfo = NodeBase.getImageInfo(SliceEnv.OVSVersion);
@@ -1037,7 +998,7 @@ public class SliceManager {
     node0.setNodeType(nodeNodeType);
     node0.setDomain(SiteBase.get(site));
     node0.setPostBootScript(nodePostBootScript);
-    return node0;
+    return node0.getName();
   }
 
   public void printNetworkInfo() {
@@ -1076,4 +1037,58 @@ public class SliceManager {
     }
   }
 
+  public void deleteResource(String name) {
+    slice.getResourceByName(name).delete();
+  }
+
+  public String getResourceByName(String name) {
+    if (slice.getResourceByName(name) != null) {
+      return slice.getResourceByName(name).getName();
+    } else {
+      return null;
+    }
+  }
+
+  public Collection<String> getNodeInterfaces(String nodeName) {
+    ArrayList<String> res = new ArrayList<>();
+    for (Interface ifname : ((ComputeNode) slice.getResourceByName(nodeName)).getInterfaces()) {
+      res.add(ifname.getName());
+    }
+    return res;
+  }
+
+  public String getNodeOfInterface(String ifName) {
+    for (Interface iface : slice.getInterfaces()) {
+      if (iface.getName().equals(ifName)) {
+        InterfaceNode2Net interfaceNode2Net = (InterfaceNode2Net) iface;
+        return interfaceNode2Net.getNode().getName();
+      }
+    }
+    return null;
+  }
+
+  public String getLinkOfInterface(String ifName) {
+    for (Interface iface : slice.getInterfaces()) {
+      if (iface.getName().equals(ifName)) {
+        InterfaceNode2Net interfaceNode2Net = (InterfaceNode2Net) iface;
+        return interfaceNode2Net.getLink().getName();
+      }
+    }
+    return null;
+  }
+
+  public String getMacAddressOfInterface(String ifName) {
+    for (Interface iface : slice.getInterfaces()) {
+      if (iface.getName().equals(ifName)) {
+        InterfaceNode2Net interfaceNode2Net = (InterfaceNode2Net) iface;
+        return interfaceNode2Net.getMacAddress();
+      }
+    }
+    return null;
+  }
+
+  public Long getBandwidthOfLink(String linkName) {
+    Network link = (Network) slice.getResourceByName(linkName);
+    return link.getBandwidth();
+  }
 }

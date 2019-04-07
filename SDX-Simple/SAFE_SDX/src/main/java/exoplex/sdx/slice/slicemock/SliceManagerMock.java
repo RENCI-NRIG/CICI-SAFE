@@ -1,5 +1,6 @@
 package exoplex.sdx.slice.slicemock;
 
+import exoplex.sdx.slice.SliceManager;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.renci.ahab.libndl.resources.common.ModelResource;
@@ -8,35 +9,23 @@ import org.renci.ahab.libtransport.util.TransportException;
 import org.renci.ahab.libtransport.xmlrpc.XMLRPCTransportException;
 
 import java.io.Serializable;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.locks.ReentrantLock;
 
 
-public class SliceManagerMock implements Serializable {
+public class SliceManagerMock extends SliceManager implements Serializable {
   final static long DEFAULT_BW = 10000000;
   final static Logger logger = LogManager.getLogger(SliceManagerMock.class);
   private static final long serialVersionUID = 1L;
   private static final int COMMIT_COUNT = 5;
   private static final int INTERVAL = 10;
   private ReentrantLock lock = new ReentrantLock();
-  private String pemLocation;
-  private String keyLocation;
-  private String controllerUrl;
-  private String sliceName;
-  private String sshKey;
   private HashSet<String> reachableNodes = new HashSet<>();
   private boolean sliceCreated = false;
 
   public SliceManagerMock(String sliceName, String pemLocation, String keyLocation, String
     controllerUrl, String sshKey) {
-    this.sliceName = sliceName;
-    this.pemLocation = pemLocation;
-    this.keyLocation = keyLocation;
-    this.controllerUrl = controllerUrl;
-    this.sshKey = sshKey;
+    super(sliceName, pemLocation, keyLocation, controllerUrl, sshKey);
   }
 
   public void createSlice() {
@@ -67,43 +56,43 @@ public class SliceManagerMock implements Serializable {
   public void resetHostNames() {
   }
 
-  public ComputeNode addComputeNode(String name) {
+  public String addComputeNode(String name) {
     return null;
   }
 
-  public ComputeNode addComputeNode() {
+  public String addComputeNode() {
     return null;
   }
 
-  public ComputeNode addComputeNode(String site, String name) {
+  public String addComputeNode(String site, String name) {
     return null;
   }
 
-  public BroadcastNetwork addBroadcastLink(String name, long bandwidth) {
+  public String addBroadcastLink(String name, long bandwidth) {
     return null;
   }
 
-  public BroadcastNetwork addBroadcastLink(String name) {
+  public String addBroadcastLink(String name) {
     return this.addBroadcastLink(name, DEFAULT_BW);
   }
 
-  public Interface attach(String nodeName, String linkName, String ip, String netmask) {
+  public String attach(String nodeName, String linkName, String ip, String netmask) {
     return null;
   }
 
-  public Interface attach(String nodeName, String linkName) {
+  public String attach(String nodeName, String linkName) {
     return null;
   }
 
-  public RequestResource getResourceByName(String nm) {
+  public String getResourceByName(String nm) {
     return null;
   }
 
-  public ComputeNode getComputeNode(String nm) {
+  public String getComputeNode(String nm) {
     return null;
   }
 
-  public Interface stitch(RequestResource r1, RequestResource r2) {
+  public String stitch(RequestResource r1, RequestResource r2) {
     return null;
   }
 
@@ -131,19 +120,19 @@ public class SliceManagerMock implements Serializable {
     return null;
   }
 
-  public Collection<ModelResource> getAllResources() {
+  public Collection<String> getAllResources() {
     return null;
   }
 
-  public Collection<Interface> getInterfaces() {
+  public Collection<String> getInterfaces() {
     return null;
   }
 
-  public Collection<Network> getLinks() {
+  public Collection<String> getLinks() {
     return null;
   }
 
-  public Collection<BroadcastNetwork> getBroadcastLinks() {
+  public Collection<String> getBroadcastLinks() {
     return null;
   }
 
@@ -151,23 +140,15 @@ public class SliceManagerMock implements Serializable {
     return null;
   }
 
-  public Collection<ComputeNode> getComputeNodes() {
+  public Collection<String> getComputeNodes() {
     return null;
   }
 
-  public Collection<StorageNode> getStorageNodes() {
+  public Collection<String> getStitchPorts() {
     return null;
   }
 
-  public Collection<StitchPort> getStitchPorts() {
-    return null;
-  }
-
-  public String getState() {
-    return "getState unimplimented";
-  }
-
-  public Collection<Interface> getInterfaces(RequestResource requestResource) {
+  public Collection<String> getInterfaces(RequestResource requestResource) {
     return null;
   }
 
@@ -245,21 +226,14 @@ public class SliceManagerMock implements Serializable {
     return false;
   }
 
-  public String runCmdNode(final String cmd, String nodeName, boolean repeat) {
-    String mip = getComputeNode(nodeName).getManagementIP();
-    return runCmdByIP(cmd, mip, repeat);
-  }
+  public String runCmdNode(final String cmd, String nodeName, boolean repeat) {return null;}
 
   public String runCmdNode(final String cmd, String nodeName) {
-    String mip = getComputeNode(nodeName).getManagementIP();
-    return runCmdByIP(cmd, mip, false);
+    return null;
   }
 
   public int getInterfaceNum(String nodeName) {
-    String res = runCmdNode("/bin/bash /root/ifaces.sh", nodeName);
-    logger.debug(String.format("Interfaces: %s", res));
-    int num = res.split("\n").length;
-    return num;
+    return 0;
   }
 
   public String runCmdByIP(final String cmd, String mip, boolean repeat) {
@@ -310,7 +284,7 @@ public class SliceManagerMock implements Serializable {
   }
 
   //We always add the bro when we add the edge router
-  public ComputeNode addBro(String broname, String domain) {
+  public String addBro(String broname, String domain) {
     return null;
   }
 
@@ -329,7 +303,7 @@ public class SliceManagerMock implements Serializable {
     return res[1];
   }
 
-  public ComputeNode addOVSRouter(String site, String name) {
+  public String addOVSRouter(String site, String name) {
     return null;
   }
 
@@ -338,4 +312,58 @@ public class SliceManagerMock implements Serializable {
 
   public void printSliceInfo() {
   }
+
+  public Collection<String> getNodeInterfaces(String nodeName){
+    return new ArrayList<>();
+  }
+
+  public String getNodeOfInterface(String ifName){
+    return null;
+  }
+
+  public String getLinkOfInterface(String ifName){
+    return null;
+  }
+
+  public String getMacAddressOfInterface(String ifName){
+    return null;
+  }
+
+  public Long getBandwidthOfLink(String linkName){
+    return null;
+  }
+
+  public String getState(String name){
+    return "Active";
+  }
+
+  public String getManagementIP(String nm){
+    return "127.0.0.1";
+  }
+
+  public void lockSlice(){}
+
+  public void unLockSlice(){}
+
+  public void deleteResource(String na){}
+
+  public String addStitchPort(String name, String label, String port, long bandwidth){return null;}
+
+  public String stitchNetToNode(String netName, String nodeName){return  null;}
+
+  public String stitchNetToNode(String netName, String nodeName, String ip, String
+    netmask){return null;}
+
+  public String getNodeDomain(String nm){
+    return null;
+  }
+
+  public String getStitchingGUID(String netName){return null;}
+
+  public void stitchSptoNode(String spName, String nodeName){}
+
+  public String addComputeNode(
+    String name, String nodeImageURL,
+    String nodeImageHash, String nodeImageShortName, String nodeNodeType, String site,
+    String nodePostBootScript){return  null;}
 }
