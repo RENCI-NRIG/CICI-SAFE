@@ -7,6 +7,7 @@ import java.util.Collection;
 import java.util.List;
 
 public abstract class SliceManager {
+  public boolean mocked = true;
   protected String pemLocation;
   protected String keyLocation;
   protected String controllerUrl;
@@ -189,4 +190,6 @@ public abstract class SliceManager {
   abstract public String getMacAddressOfInterface(String ifName);
 
   abstract public Long getBandwidthOfLink(String linkName);
+
+  abstract public void sleep(int seconds);
 }

@@ -65,8 +65,8 @@ public class RestService {
   public String receiveBgpAdvertise(@Context UriInfo uriInfo, RouteAdvertise routeAdvertise) {
     logger.debug(uriInfo.getBaseUri());
     SdxManager sdxManager = sdxManagerMap.get(uriInfo.getBaseUri().getPort());
-    logger.info(String.format("%s got bgp advertisement %s", sdxManager
-      .getSliceName(), routeAdvertise));
+    logger.info(translatePids(String.format("%s got bgp advertisement %s", sdxManager
+      .getSliceName(), routeAdvertise)));
     try {
       return sdxManager.processBgpAdvertise(routeAdvertise);
     } catch (Exception e) {
@@ -97,8 +97,8 @@ public class RestService {
   public String receivePolicyAdvertise(@Context UriInfo uriInfo, PolicyAdvertise policyAdvertise) {
     logger.debug(uriInfo.getBaseUri());
     SdxManager sdxManager = sdxManagerMap.get(uriInfo.getBaseUri().getPort());
-    logger.info(String.format("%s got policy advertisement %s", sdxManager.getSliceName(),
-      policyAdvertise));
+    logger.info(translatePids(String.format("%s got policy advertisement %s", sdxManager
+      .getSliceName(), policyAdvertise)));
     try {
       return sdxManager.processPolicyAdvertise(policyAdvertise);
     } catch (Exception e) {
@@ -216,6 +216,13 @@ public class RestService {
       logger.warn(res);
     }
     return res;
+  }
+
+  private String translatePids(String s) {
+    for (SdxManager sdxManager : sdxManagerMap.values()) {
+      s = s.replace(sdxManager.getPid(), sdxManager.getSliceName());
+    }
+    return s;
   }
 }
 

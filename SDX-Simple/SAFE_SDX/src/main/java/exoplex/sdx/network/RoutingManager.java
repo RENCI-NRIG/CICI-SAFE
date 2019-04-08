@@ -476,8 +476,8 @@ public class RoutingManager {
     }
   }
 
-  public boolean waitTillAllOvsConnected(String controller) {
-    boolean flag = true;
+  public boolean waitTillAllOvsConnected(String controller, boolean mocked) {
+    boolean flag = !mocked;
     while (flag) {
       flag = false;
       Collection<String> dpids = SdnUtil.getAllSwitches(controller);

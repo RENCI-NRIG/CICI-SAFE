@@ -62,6 +62,16 @@ public class SliceHelper extends SliceCommon {
     }
   }
 
+  public void processArgs(String[] args) {
+    CommandLine cmd = ServerOptions.parseCmd(args);
+    String configFilePath = cmd.getOptionValue("config");
+    this.readConfig(configFilePath);
+
+    if (cmd.hasOption('d')) {
+      type = "delete";
+    }
+  }
+
   protected void computeIP(String prefix) {
     logger.debug(prefix);
     String[] ip_mask = prefix.split("/");

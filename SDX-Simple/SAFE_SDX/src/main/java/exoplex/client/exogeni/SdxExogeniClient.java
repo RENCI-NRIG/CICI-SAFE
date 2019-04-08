@@ -4,7 +4,6 @@
 package exoplex.client.exogeni;
 
 import com.google.inject.Inject;
-import exoplex.common.utils.Exec;
 import exoplex.common.utils.HttpUtil;
 import exoplex.common.utils.SafeUtils;
 import exoplex.common.utils.ServerOptions;
@@ -18,7 +17,6 @@ import org.apache.commons.cli.CommandLine;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.json.JSONObject;
-import org.renci.ahab.libndl.resources.request.ComputeNode;
 import safe.SdxRoutingSlang;
 
 import java.io.BufferedReader;
@@ -38,6 +36,9 @@ public class SdxExogeniClient extends SliceCommon {
 
   @Inject
   private SliceManagerFactory sliceManagerFactory;
+
+  public SdxExogeniClient() {
+  }
 
   public SdxExogeniClient(String sliceName, String IPPrefix, String safeKeyFile, String[] args) {
     cmd = ServerOptions.parseCmd(args);
@@ -72,6 +73,17 @@ public class SdxExogeniClient extends SliceCommon {
 
     SdxExogeniClient sdxExogeniClient = new SdxExogeniClient(args);
     sdxExogeniClient.run(args);
+  }
+
+  public void config(String sliceName, String IPPrefix, String safeKeyFile, String[] args) {
+    cmd = ServerOptions.parseCmd(args);
+    String configFilePath = cmd.getOptionValue("config");
+    readConfig(configFilePath);
+    this.ipIprefix = IPPrefix;
+    this.safeKeyFile = safeKeyFile;
+    this.sliceName = sliceName;
+    logPrefix = "[" + sliceName + "] ";
+    logger.info(logPrefix + "Client start");
   }
 
   public void setSafeServer(String safeIP) {
@@ -155,6 +167,7 @@ public class SdxExogeniClient extends SliceCommon {
       try {
         loadSlice();
       } catch (Exception e) {
+        e.printStackTrace();
         logger.warn(e.getMessage());
         if (serverSlice == null) {
           return false;
@@ -162,10 +175,9 @@ public class SdxExogeniClient extends SliceCommon {
       }
     }
     String node = serverSlice.getComputeNode(nodeName);
-    String res[] = Exec.sshExec("root", serverSlice.getManagementIP(node), "ping  -c 1 " + ip,
-      sshKey);
-    logger.debug(res[0]);
-    return res[0].contains("1 received");
+    String res = serverSlice.runCmdNode("ping  -c 1 " + ip, node, false);
+    logger.debug(res);
+    return res.contains("1 received");
   }
 
   public String traceRoute(String nodeName, String ip) {
@@ -180,10 +192,9 @@ public class SdxExogeniClient extends SliceCommon {
       }
     }
     String node = serverSlice.getComputeNode(nodeName);
-    String res[] = Exec.sshExec("root", serverSlice.getManagementIP(node), "traceroute " + ip,
-      sshKey);
-    logger.debug(res[0]);
-    return res[0];
+    String res = serverSlice.runCmdNode("traceroute " + ip, node, false);
+    logger.debug(res);
+    return res;
   }
 
   public boolean checkConnectivity(String nodeName, String ip, int times) {
@@ -192,11 +203,7 @@ public class SdxExogeniClient extends SliceCommon {
         logger.info(String.format("%s connect to %s: Ok", logPrefix, ip));
         return true;
       } else {
-        try {
-          Thread.sleep(2);
-        } catch (Exception e) {
-          e.printStackTrace();
-        }
+        serverSlice.sleep(1);
       }
     }
     logger.warn(String.format("%s connect to %s: Failed", logPrefix, ip));
@@ -397,13 +404,13 @@ public class SdxExogeniClient extends SliceCommon {
       } else {
         String ip = params[2] + "/" + params[3].split("/")[1];
         logger.info(logPrefix + "set IP address of the stitch interface to " + ip);
-        sleep(5);
+        serverSlice.sleep(5);
         String mip = serverSlice.getManagementIP(node0_s2);
-        String result = Exec.sshExec("root", mip, "ifconfig eth1 " + ip, sshKey)[0];
+        String result = serverSlice.runCmdNode("ifconfig eth1 " + ip, node0_s2, false);
         String gateway = params[3].split("/")[0];
-        Exec.sshExec("root", mip, "echo \"ip route 192.168.1.1/16 " + gateway +
-          "\" >>/etc/quagga/zebra.conf  ", sshKey);
-        Exec.sshExec("root", mip, "/etc/init.d/quagga restart", sshKey);
+        serverSlice.runCmdNode("echo \"ip route 192.168.1.1/16 " + gateway +
+          "\" >>/etc/quagga/zebra.conf  ", node0_s2, false);
+        serverSlice.runCmdNode("/etc/init.d/quagga restart", node0_s2, false);
         if (ping(node0_s2, gateway)) {
           logger.info(String.format("Ping to %s works", gateway));
           logger.info(logPrefix + "stitch completed.");
@@ -449,8 +456,8 @@ public class SdxExogeniClient extends SliceCommon {
     return null;
   }
 
-  private void configOSPFForNewInterface(ComputeNode c, String newip) {
-    Exec.sshExec("root", c.getManagementIP(), "/bin/bash ~/configospfforif.sh " + newip, "~/.ssh/id_rsa");
+  private void configOSPFForNewInterface(String c, String newip) {
+    serverSlice.runCmdNode("/bin/bash ~/configospfforif.sh " + newip, c, false);
   }
 }
 

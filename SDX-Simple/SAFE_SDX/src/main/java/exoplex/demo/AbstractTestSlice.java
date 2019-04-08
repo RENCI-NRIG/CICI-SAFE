@@ -16,12 +16,16 @@ import java.util.List;
 
 public abstract class AbstractTestSlice {
   public final Provider<SliceHelper> sliceHelperProvider;
+  public final Provider<ExogeniClientSlice> exogeniClientSliceProvider;
   public final AbstractTestSetting testSetting;
   final Logger logger = LogManager.getLogger(Exec.class);
 
   @Inject
-  public AbstractTestSlice(Provider<SliceHelper> sliceHelperProvider, AbstractTestSetting testSetting) {
+  public AbstractTestSlice(Provider<SliceHelper> sliceHelperProvider,
+                           Provider<ExogeniClientSlice> exogeniClientSliceProvider,
+                           AbstractTestSetting testSetting) {
     this.sliceHelperProvider = sliceHelperProvider;
+    this.exogeniClientSliceProvider = exogeniClientSliceProvider;
     this.testSetting = testSetting;
   }
 
@@ -49,7 +53,8 @@ public abstract class AbstractTestSlice {
   }
 
   private boolean createClientSlice(String clientSlice, String riakIP) {
-    ExogeniClientSlice cs = new ExogeniClientSlice(testSetting.clientArgs);
+    ExogeniClientSlice cs = exogeniClientSliceProvider.get();
+    cs.processArgs(testSetting.clientArgs);
     int times = 0;
     while (true) {
       try {
@@ -69,7 +74,8 @@ public abstract class AbstractTestSlice {
   }
 
   public void deleteClientSlices() {
-    ExogeniClientSlice cs = new ExogeniClientSlice(testSetting.clientArgs);
+    ExogeniClientSlice cs = exogeniClientSliceProvider.get();
+    cs.processArgs(testSetting.clientArgs);
     for (String clientSlice : testSetting.clientSlices) {
       cs.setSliceName(clientSlice);
       cs.deleteSlice();

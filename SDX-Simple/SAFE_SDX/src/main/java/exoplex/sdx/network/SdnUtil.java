@@ -152,14 +152,18 @@ public class SdnUtil {
   }
 
   static JSONObject getPortDesc(String controller, String dpid) {
-    String url = "http://" + controller + "/stats/portdesc/" + Long.parseLong(dpid, 16);
-    String res = HttpUtil.get(url);
     try {
-      JSONObject obj = new JSONObject(res);
-      return obj;
+      String url = "http://" + controller + "/stats/portdesc/" + Long.parseLong(dpid, 16);
+      String res = HttpUtil.get(url);
+      try {
+        JSONObject obj = new JSONObject(res);
+        return obj;
+      } catch (Exception e) {
+        logger.error(e.getMessage());
+        logger.error(res);
+      }
     } catch (Exception e) {
-      logger.error(e.getMessage());
-      logger.error(res);
+
     }
     return null;
   }
