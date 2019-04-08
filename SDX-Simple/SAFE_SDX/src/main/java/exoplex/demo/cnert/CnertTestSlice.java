@@ -3,12 +3,10 @@ package exoplex.demo.cnert;
 import com.google.inject.Inject;
 import exoplex.common.utils.Exec;
 import exoplex.common.utils.PathUtil;
-import exoplex.common.utils.ServerOptions;
 import exoplex.sdx.core.SliceHelper;
 import exoplex.sdx.slice.Scripts;
 import exoplex.sdx.slice.SliceManager;
 import exoplex.sdx.slice.SliceManagerFactory;
-import org.apache.commons.cli.CommandLine;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.renci.ahab.libtransport.util.TransportException;
@@ -28,16 +26,10 @@ public class CnertTestSlice extends SliceHelper {
     super(authority);
   }
 
-  public CnertTestSlice(String[] args) {
+  public CnertTestSlice() {
     super(null);
-    CommandLine cmd = ServerOptions.parseCmd(args);
-    String configFilePath = cmd.getOptionValue("config");
-    this.readConfig(configFilePath);
-
-    if (cmd.hasOption('d')) {
-      type = "delete";
-    }
   }
+
 
   public void testBroSliceTwoPairs() {
     IPPrefix = conf.getString("config.ipprefix");

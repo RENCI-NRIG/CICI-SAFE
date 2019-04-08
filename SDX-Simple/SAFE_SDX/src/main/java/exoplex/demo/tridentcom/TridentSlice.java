@@ -3,6 +3,7 @@ package exoplex.demo.tridentcom;
 import com.google.inject.Guice;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
+import com.google.inject.Provider;
 import exoplex.client.exogeni.ExogeniClientSlice;
 import exoplex.common.utils.ServerOptions;
 import exoplex.sdx.safe.SafeManager;
@@ -23,10 +24,13 @@ public class TridentSlice extends TridentSetting {
 
   final static Logger logger = LogManager.getLogger(TridentSlice.class);
 
+  final Provider<ExogeniClientSlice> exogeniClientSliceProvider;
 
   @Inject
-  public TridentSlice(Authority authority) {
+  public TridentSlice(Provider<ExogeniClientSlice> exogeniClientSliceProvider, Authority
+    authority) {
     super(authority);
+    this.exogeniClientSliceProvider = exogeniClientSliceProvider;
   }
 
   public static void main(String[] args) {
@@ -158,7 +162,8 @@ public class TridentSlice extends TridentSetting {
   }
 
   private boolean createClientSlice(String clientSlice, String riakIp) {
-    ExogeniClientSlice cs = new ExogeniClientSlice(clientArgs);
+    ExogeniClientSlice cs = exogeniClientSliceProvider.get();
+    cs.processArgs(clientArgs);
     int times = 0;
     while (true) {
       try {
@@ -182,7 +187,8 @@ public class TridentSlice extends TridentSetting {
   }
 
   private void deleteClientSlices() {
-    ExogeniClientSlice cs = new ExogeniClientSlice(clientArgs);
+    ExogeniClientSlice cs = exogeniClientSliceProvider.get();
+    cs.processArgs(clientArgs);
     for (String clientSlice : TridentSetting.clientSlices) {
       deleteSlice(clientSlice);
     }

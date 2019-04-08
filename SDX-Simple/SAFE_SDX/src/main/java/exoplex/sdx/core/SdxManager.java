@@ -147,7 +147,9 @@ public class SdxManager extends SliceHelper {
     broManager = new BroManager(serverSlice, routingmanager, this);
     logPrefix += "[" + sliceName + "]";
 
-    checkSdxPrerequisites(serverSlice);
+    if (!serverSlice.mocked) {
+      checkSdxPrerequisites(serverSlice);
+    }
     if (plexusInSlice) {
       configSdnControllerAddr(serverSlice.getManagementIP(plexusName));
     } else {
@@ -248,7 +250,7 @@ public class SdxManager extends SliceHelper {
     }
     if (flag) {
       serverSlice.commitAndWait();
-      sleep(10);
+      serverSlice.sleep(10);
     }
     delFlows();
   }
@@ -263,7 +265,7 @@ public class SdxManager extends SliceHelper {
     while (true) {
       serverSlice.addLink(linkName, node1, node2, bw);
       if (serverSlice.commitAndWait(10, Arrays.asList(new String[]{linkName}))) {
-        sleep(10);
+        serverSlice.sleep(10);
         int newNum1 = serverSlice.getInterfaceNum(node1);
         int newNum2 = serverSlice.getInterfaceNum(node2);
         if (newNum1 > numInterfaces1 && newNum2 > numInterfaces2) {
@@ -273,7 +275,7 @@ public class SdxManager extends SliceHelper {
           break;
         }
 
-        sleep(30);
+        serverSlice.sleep(30);
         newNum1 = serverSlice.getInterfaceNum(node1);
         newNum2 = serverSlice.getInterfaceNum(node2);
         if (newNum1 > numInterfaces1 && newNum2 > numInterfaces2) {
@@ -299,12 +301,12 @@ public class SdxManager extends SliceHelper {
     }
     int numInterfaces = serverSlice.getInterfaceNum(nodeName);
     serverSlice.lockSlice();
-    serverSlice.reloadSlice();
+    serverSlice.refresh();
     int times = 1;
     while (true) {
       serverSlice.addLink(stitchName, nodeName, bw);
       serverSlice.commitAndWait(10, Arrays.asList(new String[]{stitchName}));
-      sleep(10);
+      serverSlice.sleep(10);
       int newNum = serverSlice.getInterfaceNum(nodeName);
       if (newNum > numInterfaces) {
         if (times > 1) {
@@ -312,7 +314,7 @@ public class SdxManager extends SliceHelper {
         }
         break;
       } else {
-        sleep(30);
+        serverSlice.sleep(30);
         newNum = serverSlice.getInterfaceNum(nodeName);
         if (newNum > numInterfaces) {
           if (times > 1) {
@@ -335,14 +337,14 @@ public class SdxManager extends SliceHelper {
     TransportException, Exception {
     int numInterfaces = serverSlice.getInterfaceNum(nodeName);
     serverSlice.lockSlice();
-    serverSlice.reloadSlice();
+    serverSlice.refresh();
     int times = 1;
     String node = serverSlice.getComputeNode(nodeName);
     while (true) {
       String mysp = serverSlice.addStitchPort(spName, vlan, stitchUrl, bw);
       serverSlice.stitchSptoNode(mysp, node);
       serverSlice.commitAndWait(10, Arrays.asList(new String[]{spName + "-net"}));
-      sleep(10);
+      serverSlice.sleep(10);
       int newNum = serverSlice.getInterfaceNum(nodeName);
       if (newNum > numInterfaces) {
         if (times > 1) {
@@ -350,7 +352,7 @@ public class SdxManager extends SliceHelper {
         }
         break;
       } else {
-        sleep(30);
+        serverSlice.sleep(30);
         newNum = serverSlice.getInterfaceNum(nodeName);
         if (newNum > numInterfaces) {
           if (times > 1) {
@@ -548,7 +550,7 @@ public class SdxManager extends SliceHelper {
       if (safeEnabled) {
         logger.info("Authorized: stitch request for " + sliceName);
       }
-      serverSlice.reloadSlice();
+      serverSlice.refresh();
       String stitchname = null;
       String net = null;
       String node = null;
@@ -583,7 +585,7 @@ public class SdxManager extends SliceHelper {
         String cRouterName = allcoateCRouterName(site);
         String eLinkName = allocateELinkName();
         serverSlice.lockSlice();
-        serverSlice.reloadSlice();
+        serverSlice.refresh();
         serverSlice.addOVSRouter(site, eRouterName);
         //serverSlice.addCoreEdgeRouterPair(site, cRouterName, eRouterName, eLinkName, bw);
         node = serverSlice.getComputeNode(eRouterName);
@@ -593,7 +595,9 @@ public class SdxManager extends SliceHelper {
         serverSlice.stitchNetToNode(net, node, ip, "255.255.255.0");
 
         serverSlice.commitAndWait(10, Arrays.asList(new String[]{stitchname, eRouterName}));
-        serverSlice.reloadSlice();
+        //serverSlice.commitAndWait(10, Arrays.asList(new String[]{stitchname, cRouterName,
+        //  eRouterName, eLinkName}));
+        serverSlice.refresh();
         copyRouterScript(serverSlice, eRouterName);
         configRouter(eRouterName);
         //Link internal_Log_link = new Link(eLinkName, cRouterName, eRouterName);
@@ -622,7 +626,7 @@ public class SdxManager extends SliceHelper {
       res.put("gateway", gateway);
       res.put("reservID", net1_stitching_GUID);
       res.put("safeKeyHash", safeManager.getSafeKeyHash());
-      sleep(15);
+      serverSlice.sleep(15);
       updateOvsInterface(node);
       routingmanager.newExternalLink(logLink.getLinkName(),
         ip,
@@ -663,7 +667,7 @@ public class SdxManager extends SliceHelper {
 
     Long t1 = System.currentTimeMillis();
 
-    serverSlice.reloadSlice();
+    serverSlice.refresh();
 
     String stitchLinkName = stitchNet.get(customerReserveId);
     String stitchNodeName = stitchLinkName.split("_")[1];
@@ -705,7 +709,7 @@ public class SdxManager extends SliceHelper {
       e.printStackTrace();
     }
     serverSlice.lockSlice();
-    serverSlice.reloadSlice();
+    serverSlice.refresh();
     logger.info(logPrefix + "deploying new bro instance to " + routerName);
     Long t1 = System.currentTimeMillis();
     String router = serverSlice.getComputeNode(routerName);
@@ -918,7 +922,7 @@ public class SdxManager extends SliceHelper {
     boolean res = true;
     if (!routingmanager.findPath(n1, n2, bandwidth)) {
       serverSlice.lockSlice();
-      serverSlice.reloadSlice();
+      serverSlice.refresh();
       String c1 = getCoreRouterByEdgeRouter(n1);
       String c2 = getCoreRouterByEdgeRouter(n2);
       String node1 = serverSlice.getComputeNode(c1);
@@ -1169,7 +1173,7 @@ public class SdxManager extends SliceHelper {
       try {
         //FIX ME: do stitching
         logger.info(logPrefix + "Chameleon Stitch Request from " + customer_keyhash + " Authorized");
-        serverSlice.reloadSlice();
+        serverSlice.refresh();
         String node = null;
         if (nodeName != null) {
           node = serverSlice.getComputeNode(nodeName);
@@ -1185,12 +1189,12 @@ public class SdxManager extends SliceHelper {
           logger.debug("No existing router at requested site, adding new router");
           String eRouterName = allcoateERouterName(sdxsite);
           serverSlice.lockSlice();
-          serverSlice.reloadSlice();
+          serverSlice.refresh();
           serverSlice.addOVSRouter(sdxsite, eRouterName);
           //serverSlice.addCoreEdgeRouterPair(sdxsite, cRouterName, eRouterName, eLinkName, bw);
           node = serverSlice.getComputeNode(eRouterName);
           serverSlice.commitAndWait(10, Arrays.asList(new String[]{eRouterName}));
-          serverSlice.reloadSlice();
+          serverSlice.refresh();
           //copyRouterScript(serverSlice, cRouterName);
           //configRouter(cRouterName);
           copyRouterScript(serverSlice, eRouterName);
@@ -1407,7 +1411,7 @@ public class SdxManager extends SliceHelper {
     logger.debug("Trying to get DPID of the router " + nodeName);
     while (result == null || !validDPID(result)) {
       updateOvsInterface(nodeName);
-      sleep(1);
+      serverSlice.sleep(1);
       result = serverSlice.getDpid(nodeName, sshKey);
     }
     result = result.replace("\n", "");
@@ -1443,11 +1447,6 @@ public class SdxManager extends SliceHelper {
     }
   }
 
-  private void waitTillAllOvsConnected() {
-    routingmanager.waitTillAllOvsConnected(SDNController);
-  }
-
-
   public String setMirror(String routerName, String source, String dst) {
     setMirror(routerName, source, dst, 100000000);
     return "Mirroring job submitted";
@@ -1479,7 +1478,7 @@ public class SdxManager extends SliceHelper {
     //add all interfaces other than eth0 to ovs bridge br0
     configRouters(serverSlice);
 
-    routingmanager.waitTillAllOvsConnected(SDNController);
+    routingmanager.waitTillAllOvsConnected(SDNController, serverSlice.mocked);
 
     logger.debug("setting up sttichports");
     HashSet<Integer> usedip = new HashSet<Integer>();

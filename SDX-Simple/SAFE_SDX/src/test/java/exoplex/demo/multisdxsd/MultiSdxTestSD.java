@@ -8,7 +8,7 @@ import exoplex.demo.AbstractTestSetting;
 import exoplex.demo.AbstractTestSlice;
 import exoplex.demo.SdxTest;
 import exoplex.sdx.core.SdxManager;
-import injection.MultiSdxSDLargeModule;
+import injection.MultiSdxSDMockModule;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -21,7 +21,7 @@ import java.util.List;
 
 public class MultiSdxTestSD extends AbstractTest {
   final static Logger logger = LogManager.getLogger(SdxTest.class);
-  final static AbstractModule module = new MultiSdxSDLargeModule();
+  final static AbstractModule module = new MultiSdxSDMockModule();
 
   public static void main(String[] args) {
     MultiSdxTestSD multiSdxTestSD = new MultiSdxTestSD();

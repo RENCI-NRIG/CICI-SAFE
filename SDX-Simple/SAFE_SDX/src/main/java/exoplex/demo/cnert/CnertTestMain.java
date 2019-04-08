@@ -38,10 +38,16 @@ public class CnertTestMain {
   static SdxManager sdxManager;
   static boolean stitch = true;
   final Provider<SdxServer> sdxServerProvider;
+  final Provider<ExogeniClientSlice> exogeniClientSliceProvider;
+  final Provider<CnertTestSlice> cnertTestSliceProvider;
 
   @Inject
-  public CnertTestMain(Provider<SdxServer> sdxServerProvider) {
+  public CnertTestMain(Provider<SdxServer> sdxServerProvider,
+                       Provider<ExogeniClientSlice> exogeniClientSliceProvider,
+                       Provider<CnertTestSlice> cnertTestSliceProvider) {
     this.sdxServerProvider = sdxServerProvider;
+    this.exogeniClientSliceProvider = exogeniClientSliceProvider;
+    this.cnertTestSliceProvider = cnertTestSliceProvider;
   }
 
   public static void main(String[] args) throws Exception {
@@ -232,12 +238,18 @@ public class CnertTestMain {
   }
 
   public void deleteSlice() {
-    CnertTestSlice ts = new CnertTestSlice(arg1);
-    ExogeniClientSlice s1 = new ExogeniClientSlice(clientarg1);
-    ExogeniClientSlice s2 = new ExogeniClientSlice(clientarg2);
-    ExogeniClientSlice s3 = new ExogeniClientSlice(clientarg3);
-    ExogeniClientSlice s4 = new ExogeniClientSlice(clientarg4);
-    ExogeniClientSlice s6 = new ExogeniClientSlice(clientarg6);
+    CnertTestSlice ts = cnertTestSliceProvider.get();
+    ts.processArgs(arg1);
+    ExogeniClientSlice s1 = exogeniClientSliceProvider.get();
+    s1.processArgs(clientarg1);
+    ExogeniClientSlice s2 = exogeniClientSliceProvider.get();
+    s1.processArgs(clientarg2);
+    ExogeniClientSlice s3 = exogeniClientSliceProvider.get();
+    s1.processArgs(clientarg3);
+    ExogeniClientSlice s4 = exogeniClientSliceProvider.get();
+    s1.processArgs(clientarg4);
+    ExogeniClientSlice s6 = exogeniClientSliceProvider.get();
+    s1.processArgs(clientarg6);
     ts.deleteSlice();
     s1.deleteSlice();
     s2.deleteSlice();
@@ -251,7 +263,8 @@ public class CnertTestMain {
     Thread thread1 = new Thread() {
       @Override
       public void run() {
-        CnertTestSlice ts = new CnertTestSlice(arg1);
+        CnertTestSlice ts = cnertTestSliceProvider.get();
+        ts.processArgs(arg1);
         ts.run(arg1);
       }
     };
@@ -265,7 +278,8 @@ public class CnertTestMain {
       Thread thread2 = new Thread() {
         @Override
         public void run() {
-          ExogeniClientSlice s1 = new ExogeniClientSlice(arg);
+          ExogeniClientSlice s1 = exogeniClientSliceProvider.get();
+          s1.processArgs(arg);
           try {
             s1.run();
           } catch (Exception e) {
@@ -327,7 +341,8 @@ public class CnertTestMain {
   }
 
   public void emulationSlice() {
-    CnertTestSlice ts = new CnertTestSlice(arg1);
+    CnertTestSlice ts = cnertTestSliceProvider.get();
+    ts.processArgs(arg1);
     ts.deleteSlice();
     ts.testBroSliceTwoPairs();
   }
