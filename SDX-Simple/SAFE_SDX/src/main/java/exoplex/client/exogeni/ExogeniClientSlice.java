@@ -1,12 +1,15 @@
 package exoplex.client.exogeni;
 
+import com.google.inject.Guice;
 import com.google.inject.Inject;
+import com.google.inject.Injector;
 import exoplex.common.utils.Exec;
 import exoplex.common.utils.ServerOptions;
 import exoplex.sdx.core.SliceHelper;
 import exoplex.sdx.safe.SafeManager;
 import exoplex.sdx.slice.SliceManager;
 import exoplex.sdx.slice.exogeni.SiteBase;
+import injection.ExoGeniSliceModule;
 import org.apache.commons.cli.CommandLine;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -32,8 +35,17 @@ public class ExogeniClientSlice extends SliceHelper {
   }
 
 
-  public ExogeniClientSlice(String[] args) {
+  public ExogeniClientSlice() {
     super(null);
+  }
+
+  public static void main(String[] args) throws Exception {
+    Injector injector = Guice.createInjector(new ExoGeniSliceModule());
+    ExogeniClientSlice cs = injector.getProvider(ExogeniClientSlice.class).get();
+    cs.run();
+  }
+
+  public void processArgs(String[] args) {
 
     logger.debug("SDX-Simple " + args[0]);
 
@@ -46,11 +58,6 @@ public class ExogeniClientSlice extends SliceHelper {
     if (cmd.hasOption('d')) {
       type = "delete";
     }
-  }
-
-  public static void main(String[] args) throws Exception {
-    ExogeniClientSlice cs = new ExogeniClientSlice(args);
-    cs.run();
   }
 
   public void run() throws Exception {

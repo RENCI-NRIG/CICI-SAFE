@@ -42,15 +42,16 @@ public class ExoSliceManager extends SliceManager {
   private HashSet<String> reachableNodes = new HashSet<>();
 
   @Inject
-  public ExoSliceManager(@Assisted String sliceName,
-                         @Assisted String pemLocation,
-                         @Assisted String keyLocation,
-                         @Assisted String controllerUrl,
-                         @Assisted String sshKey) {
+  public ExoSliceManager(@Assisted("sliceName") String sliceName,
+                         @Assisted("pem") String pemLocation,
+                         @Assisted("key") String keyLocation,
+                         @Assisted("controller") String controllerUrl,
+                         @Assisted("ssh") String sshKey) {
     super(sliceName, pemLocation, keyLocation, controllerUrl, sshKey);
     this.sliceProxy = getSliceProxy(pemLocation, keyLocation, controllerUrl);
     refreshSshContext();
     this.slice = null;
+    this.mocked = false;
   }
 
   public static Collection<String> getDomains() {
@@ -1090,5 +1091,12 @@ public class ExoSliceManager extends SliceManager {
   public Long getBandwidthOfLink(String linkName) {
     Network link = (Network) slice.getResourceByName(linkName);
     return link.getBandwidth();
+  }
+
+  public void sleep(int seconds) {
+    try {
+      Thread.sleep(seconds * 1000);
+    } catch (Exception e) {
+    }
   }
 }

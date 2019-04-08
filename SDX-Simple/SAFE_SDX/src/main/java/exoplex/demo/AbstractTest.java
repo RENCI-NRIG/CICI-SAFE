@@ -35,14 +35,14 @@ public abstract class AbstractTest {
   }
 
   public void createSlices() throws Exception {
-    RiakSlice riakSlice = new RiakSlice();
+    RiakSlice riakSlice = injector.getInstance(RiakSlice.class);
     String riakIP = riakSlice.run(testSetting.riakArgs);
     testSlice.createSdxSlices(riakIP);
     testSlice.createClientSlices(riakIP);
   }
 
   public void deleteSlices() throws Exception {
-    RiakSlice riakSlice = new RiakSlice();
+    RiakSlice riakSlice = injector.getInstance(RiakSlice.class);
     riakSlice.run(testSetting.riakDelArgs);
     testSlice.deleteSdxSlices();
     testSlice.deleteClientSlices();
@@ -93,11 +93,13 @@ public abstract class AbstractTest {
     }
 
     for (String clientSlice : testSetting.clientSlices) {
-      exogeniClients.put(clientSlice, new SdxExogeniClient(clientSlice,
+      SdxExogeniClient sdxExogeniClient = injector.getProvider(SdxExogeniClient.class).get();
+      sdxExogeniClient.config(clientSlice,
         testSetting.clientIpMap.get(clientSlice),
         testSetting.clientKeyMap.get(clientSlice),
         testSetting.clientArgs
-      ));
+      );
+      exogeniClients.put(clientSlice, sdxExogeniClient);
     }
     for (String clientSlice : testSetting.clientSlices) {
       SdxExogeniClient client = exogeniClients.get(clientSlice);

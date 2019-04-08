@@ -11,6 +11,7 @@ public class Router {
   String routerName = "";
   String dpid = "";
   String managementIP = "";
+  String domain;
 
   HashSet<String> interfaces = new HashSet<String>();
   HashSet<String> customergateways = new HashSet<>();
@@ -19,6 +20,14 @@ public class Router {
     routerName = rid;
     dpid = switch_id;
     this.managementIP = ip;
+  }
+
+  public String getDomain() {
+    return domain;
+  }
+
+  public void setDomain(String domain) {
+    this.domain = domain;
   }
 
   public Collection<String> getInterfaces() {
