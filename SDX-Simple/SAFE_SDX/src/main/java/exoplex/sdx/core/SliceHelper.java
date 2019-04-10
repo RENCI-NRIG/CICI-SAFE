@@ -4,6 +4,7 @@ import com.google.inject.Inject;
 import exoplex.common.utils.PathUtil;
 import exoplex.common.utils.ServerOptions;
 import exoplex.sdx.network.Link;
+import exoplex.sdx.network.RoutingManager;
 import exoplex.sdx.safe.SafeManager;
 import exoplex.sdx.slice.Scripts;
 import exoplex.sdx.slice.SliceManager;
@@ -149,7 +150,7 @@ public class SliceHelper extends SliceCommon {
       SliceManager carrier = createCarrierSlice(carrierName, routerNum, bw);
       carrier.commitAndWait();
       try {
-        carrier.reloadSlice();
+        carrier.loadSlice();
       } catch (Exception e) {
         carrier = createCarrierSlice(carrierName, routerNum, bw);
         carrier.commitAndWait();
@@ -242,7 +243,7 @@ public class SliceHelper extends SliceCommon {
         } else {
           setSdnControllerIp(conf.getString("config.plexusserver"));
         }
-        checkPlexus(serverSlice, SDNControllerIP);
+        checkPlexus(serverSlice, SDNControllerIP, RoutingManager.plexusImage);
       }
     });
     if (safeEnabled) {
@@ -323,6 +324,7 @@ public class SliceHelper extends SliceCommon {
   }
 
   protected boolean checkSafeServer(String safeIP, String riakIp) {
+    logger.info(String.format("checking safe server with image %s", SafeManager.getSafeDockerImage()));
     if (safeInSlice) {
       SafeManager sm = new SafeManager(safeIP, safeKeyFile, sshKey);
       sm.verifySafeInstallation(riakIp);
@@ -330,7 +332,8 @@ public class SliceHelper extends SliceCommon {
     return true;
   }
 
-  protected boolean checkPlexus(SliceManager serverSlice, String SDNControllerIP) {
+  protected boolean checkPlexus(SliceManager serverSlice, String SDNControllerIP, String
+    plexusImage) {
     if (plexusInSlice) {
       String result = serverSlice.runCmdByIP("docker ps", SDNControllerIP, false);
       if (result.contains("plexus")) {
@@ -338,17 +341,17 @@ public class SliceHelper extends SliceCommon {
       } else {
         logger.debug("plexus controller hasn't started, restarting it");
         result = serverSlice.runCmdByIP("docker images", SDNControllerIP, false);
-        if (result.contains("yaoyj11/plexus")) {
+        if (result.contains(plexusImage)) {
           logger.debug("found plexus image, starting plexus container");
-          serverSlice.runCmdByIP("docker run -i -t -d -p 8080:8080 "
-              + " -p 6633:6633 -p 3000:3000 -h plexus --name plexus yaoyj11/plexus",
+          serverSlice.runCmdByIP(String.format("docker run -i -t -d -p 8080:8080 "
+              + " -p 6633:6633 -p 3000:3000 -h plexus --name plexus %s", plexusImage),
             SDNControllerIP, false);
         } else {
 
           logger.debug("plexus image not found, downloading...");
-          serverSlice.runCmdByIP("docker pull yaoyj11/plexus", SDNControllerIP, false);
-          serverSlice.runCmdByIP("docker run -i -t -d -p 8080:8080 -p"
-              + " 6633:6633 -p 3000:3000 -h plexus --name plexus yaoyj11/plexus", SDNControllerIP,
+          serverSlice.runCmdByIP(String.format("docker pull %s", plexusImage), SDNControllerIP, false);
+          serverSlice.runCmdByIP(String.format("docker run -i -t -d -p 8080:8080 -p"
+              + " 6633:6633 -p 3000:3000 -h plexus --name plexus %s", plexusImage), SDNControllerIP,
             false);
         }
         result = serverSlice.runCmdByIP("docker ps", SDNControllerIP, false);

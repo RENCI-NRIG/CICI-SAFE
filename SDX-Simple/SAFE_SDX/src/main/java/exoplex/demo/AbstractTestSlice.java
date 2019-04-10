@@ -19,6 +19,7 @@ public abstract class AbstractTestSlice {
   public final Provider<ExogeniClientSlice> exogeniClientSliceProvider;
   public final AbstractTestSetting testSetting;
   final Logger logger = LogManager.getLogger(Exec.class);
+  Long bandwidth = 100000000l;
 
   @Inject
   public AbstractTestSlice(Provider<SliceHelper> sliceHelperProvider,
@@ -140,7 +141,7 @@ public abstract class AbstractTestSlice {
       sliceHelper.setClientSites(clientSites);
     }
     SliceManager slice = sliceHelper.createCarrierSlice(sliceHelper.getSliceName(), clientSites
-      .size(), 100000000);
+      .size(), bandwidth);
     slice.commitAndWait();
     sliceHelper.resetHostNames(slice);
     sliceHelper.checkSdxPrerequisites(slice);

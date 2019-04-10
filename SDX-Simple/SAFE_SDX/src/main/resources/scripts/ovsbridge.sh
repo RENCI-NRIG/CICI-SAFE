@@ -6,6 +6,7 @@
 #/etc/init.d/neuca stop;
 #check if there is a bridge, if yes skip
 # if a new interface is not added to the ovsbridge, then add it and set controller again
+
 string=$(ifconfig -a);
 if [[ $string == *"br0"* ]]; then
     :

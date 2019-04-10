@@ -81,7 +81,7 @@ public class TridentSlice extends TridentSetting {
     SliceManager slice = null;
     try {
       slice = createTridentTestSlice();
-      slice.reloadSlice();
+      slice.loadSlice();
       checkSdxPrerequisites(slice);
     } catch (Exception e) {
     }

@@ -48,9 +48,9 @@ public class MultiSdxSetting extends AbstractTestSetting {
 
   @Override
   public void addSdxSites() {
-    sdxSites.put(sdxSliceNames.get(0), new String[]{"TAMU", "SL"});
-    sdxSites.put(sdxSliceNames.get(1), new String[]{"SL", "UFL"});
-    sdxSites.put(sdxSliceNames.get(2), new String[]{"SL", "UFL"});
+    sdxSites.put(sdxSliceNames.get(0), new String[]{"TAMU", "UH"});
+    sdxSites.put(sdxSliceNames.get(1), new String[]{"UH", "UFL"});
+    sdxSites.put(sdxSliceNames.get(2), new String[]{"UH", "UFL"});
     sdxSites.put(sdxSliceNames.get(3), new String[]{"UFL", "UNF"});
   }
 
