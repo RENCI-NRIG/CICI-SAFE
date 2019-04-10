@@ -3,12 +3,14 @@ package exoplex.sdx.slice.slicemock;
 
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
+import exoplex.sdx.network.RoutingManager;
 import exoplex.sdx.slice.Scripts;
 import exoplex.sdx.slice.SliceEnv;
 import exoplex.sdx.slice.SliceManager;
 import exoplex.sdx.slice.exogeni.NodeBase;
 import exoplex.sdx.slice.exogeni.NodeBaseInfo;
 import exoplex.sdx.slice.exogeni.SiteBase;
+import org.apache.commons.lang.time.DateUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -134,25 +136,9 @@ public class SliceManagerMock extends SliceManager implements Serializable {
   public String permitStitch(String GUID) throws TransportException {
     int times = 0;
     while (times < COMMIT_COUNT) {
-      try {
-        //s1
-        sliceProxy = getSliceProxy(pemLocation, keyLocation, controllerUrl);
-        String secret = RandomStringUtils.randomAlphabetic(10);
-        sliceProxy.permitSliceStitch(sliceName, GUID, secret);
-        return secret;
-      } catch (TransportException e) {
-        // TODO Auto-generated catch block
-        logger.warn("Failed to permit stitch, retry");
-        times++;
-        if (times == COMMIT_COUNT) {
-          throw e;
-        }
-        try {
-          Thread.sleep((long) (INTERVAL * 1000));
-        } catch (InterruptedException var6) {
-          Thread.currentThread().interrupt();
-        }
-      }
+      //s1
+      String secret = RandomStringUtils.randomAlphabetic(10);
+      return secret;
     }
     return null;
   }
@@ -174,13 +160,19 @@ public class SliceManagerMock extends SliceManager implements Serializable {
     }
   }
 
-  public void reloadSlice() throws Exception {
+  public void loadSlice() throws Exception {
+    reloadSlice();
+  }
+
+  private void reloadSlice() throws Exception {
     int i = 0;
     sliceProxy = getSliceProxy(pemLocation, keyLocation, controllerUrl);
     do {
       try {
         slice = Slice.loadManifestFile(sliceProxy, sliceName);
         if (slice != null) {
+          Date date = DateUtils.addDays(new Date(), extensionDays);
+          renew(date);
           return;
         }
       } catch (XMLRPCTransportException e) {
@@ -338,7 +330,7 @@ public class SliceManagerMock extends SliceManager implements Serializable {
   }
 
   public String getStitchingGUID(String netName) {
-    return slice.getResourceByName(netName).getStitchingGUID();
+    return RandomStringUtils.randomAlphanumeric(40);
   }
 
   public String getComputeNode(String nm) {
@@ -659,7 +651,7 @@ public class SliceManagerMock extends SliceManager implements Serializable {
   }
 
   public void addPlexusController(String controllerSite, String name) {
-    addDocker(controllerSite, name, Scripts.getPlexusScript(), NodeBase.xoMedium);
+    addDocker(controllerSite, name, Scripts.getPlexusScript(RoutingManager.plexusImage), NodeBase.xoMedium);
   }
 
   //We always add the bro when we add the edge router
@@ -810,4 +802,9 @@ public class SliceManagerMock extends SliceManager implements Serializable {
   public void sleep(int seconds) {
   }
 
+  public void renew(Date newDate) {
+  }
+
+  public void renew() {
+  }
 }

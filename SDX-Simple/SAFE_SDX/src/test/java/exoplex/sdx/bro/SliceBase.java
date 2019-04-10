@@ -53,7 +53,7 @@ public abstract class SliceBase extends SliceCommon {
       System.out.println("Setting access context...");
       thisSlice = sliceManagerFactory.create(sliceName, pemLocation, keyLocation, controllerUrl,
         sshKey);
-      thisSlice.reloadSlice();
+      thisSlice.loadSlice();
       for (String c : thisSlice.getComputeNodes()) {
         if (thisSlice.getManagementIP(c) == null) {
           break;

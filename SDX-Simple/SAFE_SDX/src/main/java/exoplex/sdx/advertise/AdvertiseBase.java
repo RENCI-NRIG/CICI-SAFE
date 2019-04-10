@@ -79,7 +79,7 @@ public class AdvertiseBase {
 
   @Override
   public boolean equals(Object routeAdvertise) {
-    if (!(routeAdvertise instanceof AdvertiseBase)) {
+    if (routeAdvertise == null) {
       return false;
     }
     if (!this.ownerPID.equals(((AdvertiseBase) routeAdvertise).ownerPID)) {
@@ -104,7 +104,7 @@ public class AdvertiseBase {
       return false;
     }
     for (int i = 0; i < route.size(); i++) {
-      if (this.route.get(i).equals(((AdvertiseBase) routeAdvertise).route.get(i))) {
+      if (!this.route.get(i).equals(((AdvertiseBase) routeAdvertise).route.get(i))) {
         return false;
       }
     }

@@ -6,6 +6,7 @@ import exoplex.common.utils.Exec;
 import exoplex.common.utils.NetworkUtil;
 import exoplex.common.utils.PathUtil;
 import exoplex.common.utils.ScpTo;
+import exoplex.sdx.network.RoutingManager;
 import exoplex.sdx.slice.Scripts;
 import exoplex.sdx.slice.SliceEnv;
 import exoplex.sdx.slice.SliceManager;
@@ -31,7 +32,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public class ExoSliceManager extends SliceManager {
-  final static long DEFAULT_BW = 10000000;
+  final static long DEFAULT_BW = 1000000000;
   final static Logger logger = LogManager.getLogger(ExoSliceManager.class);
   private static final int COMMIT_COUNT = 5;
   private static final int INTERVAL = 10;
@@ -167,7 +168,14 @@ public class ExoSliceManager extends SliceManager {
     }
   }
 
-  public void reloadSlice() throws Exception {
+  public void loadSlice() throws Exception {
+    reloadSlice();
+    if (slice != null) {
+      renew();
+    }
+  }
+
+  private void reloadSlice() throws Exception {
     int i = 0;
     sliceProxy = getSliceProxy(pemLocation, keyLocation, controllerUrl);
     do {
@@ -176,22 +184,13 @@ public class ExoSliceManager extends SliceManager {
         if (slice != null) {
           return;
         }
-      } catch (XMLRPCTransportException e) {
+      } catch (Exception e) {
         logger.warn(e.getMessage());
         try {
           Thread.sleep((long) (INTERVAL * 1000 * (i + 1)));
         } catch (InterruptedException var6) {
           Thread.currentThread().interrupt();
         }
-
-      } catch (TransportException ex) {
-        logger.warn(ex.getMessage());
-        try {
-          Thread.sleep((long) (INTERVAL * 1000 * (i + 1)));
-        } catch (InterruptedException var6) {
-          Thread.currentThread().interrupt();
-        }
-        sliceProxy = getSliceProxy(pemLocation, keyLocation, controllerUrl);
       }
       i++;
       sliceProxy = getSliceProxy(pemLocation, keyLocation, controllerUrl);
@@ -393,13 +392,19 @@ public class ExoSliceManager extends SliceManager {
         return;
       } catch (XMLRPCTransportException var7) {
         logger.debug(var7.getMessage());
-        logger.warn("Slice commit failed: sleeping for " + INTERVAL + " seconds. ");
-        if (i >= COMMIT_COUNT) {
-          throw var7;
+        if (var7.getMessage().contains("duplicate slice urn")) {
+          i = COMMIT_COUNT;
         }
+        logger.warn("Slice commit failed: sleeping for " + INTERVAL + " seconds. ");
+        //if (i >= COMMIT_COUNT) {
+        //  throw var7;
+        //}
       } catch (Exception var8) {
         logger.debug(var8.getMessage());
         logger.warn("Slice commit failed: sleeping for " + INTERVAL + " seconds. ");
+        if (var8.getMessage().contains("duplicate slice urn")) {
+          i = COMMIT_COUNT;
+        }
       }
 
       try {
@@ -550,6 +555,8 @@ public class ExoSliceManager extends SliceManager {
       logger.debug("ExoSliceManager: " + getAllResources());
       for (String c : getComputeNodes()) {
         logger.debug("[" + sliceName + "] Resource: " + c + ", state: " + getState(c));
+        logger.debug(String.format("[%s] Resource: %s , state: %s  site: %s", sliceName, c, getState
+          (c), getNodeDomain(c)));
         if (resources.contains(c)) {
           if (getState(c).contains("Closed")) {
             throw new Exception(String.format("Slice %s closed", sliceName));
@@ -557,7 +564,8 @@ public class ExoSliceManager extends SliceManager {
           if (!getState(c).equals("Active") || getManagementIP(c) == null) {
           } else {
             if (!reachableNodes.contains(c) && !NetworkUtil.checkReachability(getManagementIP(c))) {
-              logger.warn(String.format("Node %s (%s) unreachable", c, getManagementIP(c)));
+              logger.warn(String.format("Node %s (%s) of slice %s unreachable", c, getManagementIP
+                (c), sliceName));
             } else {
               activeResources.add(c);
               reachableNodes.add(c);
@@ -731,6 +739,9 @@ public class ExoSliceManager extends SliceManager {
 
   public String runCmdNode(final String cmd, String nodeName, boolean repeat) {
     String mip = getManagementIP(nodeName);
+    if (mip == null) {
+      logger.error(String.format("IP address of %s in slice %s is null", nodeName, sliceName));
+    }
     return runCmdByIP(cmd, mip, repeat);
   }
 
@@ -741,7 +752,7 @@ public class ExoSliceManager extends SliceManager {
 
   public int getInterfaceNum(String nodeName) {
     String res = runCmdNode("/bin/bash /root/ifaces.sh", nodeName);
-    logger.debug(String.format("Interfaces: %s", res));
+    logger.debug(String.format("Interfaces: %s", res).replace("\n", " "));
     int num = res.split("\n").length;
     return num;
   }
@@ -900,7 +911,7 @@ public class ExoSliceManager extends SliceManager {
   }
 
   public void addPlexusController(String controllerSite, String name) {
-    addDocker(controllerSite, name, Scripts.getPlexusScript(), NodeBase.xoMedium);
+    addDocker(controllerSite, name, Scripts.getPlexusScript(RoutingManager.plexusImage), NodeBase.xoMedium);
   }
 
   //We always add the bro when we add the edge router
@@ -920,7 +931,6 @@ public class ExoSliceManager extends SliceManager {
 
   public void stitch(String RID, String customerName, String CID, String secret,
                      String newip) {
-    logger.debug("ndllib TestDriver: START");
     //Main Example Code
     Long t1 = System.currentTimeMillis();
     try {
@@ -1098,5 +1108,20 @@ public class ExoSliceManager extends SliceManager {
       Thread.sleep(seconds * 1000);
     } catch (Exception e) {
     }
+  }
+
+  public void renew(Date newDate) {
+    //try {
+    //  slice.renew(newDate);
+    //}catch (Exception e){
+
+    //}
+  }
+
+  public void renew() {
+    //try {
+    //  slice.renew(DateUtils.addDays(new Date(), extensionDays));
+    //}catch (Exception e){
+    //}
   }
 }

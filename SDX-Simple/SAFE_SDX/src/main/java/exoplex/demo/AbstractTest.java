@@ -189,10 +189,31 @@ public abstract class AbstractTest {
     return flag;
   }
 
+  public boolean ping(int num) {
+    logger.debug("checking connections");
+    boolean flag = true;
+    for (Integer[] pair : testSetting.clientConnectionPairs) {
+      int i = pair[0];
+      int j = pair[1];
+      String client = testSetting.clientSlices.get(i);
+      String clientIp = testSetting.clientIpMap.get(client);
+      String peer = testSetting.clientSlices.get(j);
+      String peerIp = testSetting.clientIpMap.get(peer);
+      if (!exogeniClients.get(client).ping("CNode1",
+        peerIp.replace(".1/24", ".2"), num)) {
+        flag = false;
+      } else {
+        System.out.println(exogeniClients.get(client).traceRoute("CNode1",
+          peerIp.replace(".1/24", ".2")));
+      }
+    }
+    return flag;
+  }
+
   public void logFlowTables(boolean showAll) {
     ArrayList<String> patterns = new ArrayList<>();
     if (!showAll) {
-      String routeFlowPattern = ".*nw_src=%s.*nw_dst=%s.*actions=dec_ttl.*";
+      String routeFlowPattern = ".*nw_src=%s.*nw_dst=%s.*";
       for (Integer[] pair : testSetting.clientConnectionPairs) {
         String slice1 = testSetting.clientSlices.get(pair[0]);
         String slice2 = testSetting.clientSlices.get(pair[1]);
@@ -212,7 +233,7 @@ public abstract class AbstractTest {
   }
 
   public void replaySdnConfiguration(String logFile) {
-    startSdxServersAndClients(false);
+    //startSdxServersAndClients(false);
     SdnReplay.replay(logFile);
     checkConnection();
     logger.info("replay done");

@@ -10,6 +10,7 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.UriInfo;
+import java.util.ArrayList;
 import java.util.HashMap;
 
 /**
@@ -84,6 +85,30 @@ public class RestService {
     logger.debug(String.format(" %s got bgp pid request", sdxManager.getSliceName()));
     try {
       return sdxManager.getPid();
+    } catch (Exception e) {
+      e.printStackTrace();
+      return e.getMessage();
+    }
+  }
+
+  @POST
+  @Path("/flow")
+  @Produces(MediaType.TEXT_PLAIN)
+  public String getFLow(@Context UriInfo uriInfo, Flow flow) {
+    logger.debug(uriInfo.getBaseUri());
+    SdxManager sdxManager = sdxManagerMap.get(uriInfo.getBaseUri().getPort());
+    logger.debug(String.format(" %s got flow request", sdxManager.getSliceName()));
+    ArrayList<String> patterns = new ArrayList<>();
+    String pattern = ".*";
+    if (flow.src != null) {
+      pattern = pattern + String.format("nw_src=.*%s.*", flow.src);
+    }
+    if (flow.dest != null) {
+      pattern = pattern + String.format("nw_dst=.*%s.*", flow.dest);
+    }
+    patterns.add(pattern);
+    try {
+      return sdxManager.logFlowTables(patterns);
     } catch (Exception e) {
       e.printStackTrace();
       return e.getMessage();
@@ -370,6 +395,14 @@ class StitchResult {
     else
       result = false;
     this.message = res.getString("message");
+  }
+}
+
+class Flow {
+  public String src;
+  public String dest;
+
+  public Flow() {
   }
 }
 
