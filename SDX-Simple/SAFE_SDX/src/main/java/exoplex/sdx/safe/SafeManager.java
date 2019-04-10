@@ -13,7 +13,7 @@ import java.util.List;
 public class SafeManager {
   final static Logger logger = LogManager.getLogger(SafeManager.class);
   //was v4
-  private static String safeDockerImage = "safeserver-v7";
+  private static String safeDockerImage = "safeserver-v8";
   //was prdn.sh
   private static String safeServerScript = "sdx-routing.sh";
   private String safeServerIp;
@@ -136,13 +136,15 @@ public class SafeManager {
   }
 
   public boolean authorizeBgpAdvertise(RouteAdvertise routeAdvertise) {
+    boolean res = false;
     if (routeAdvertise.srcPrefix == null) {
       String[] othervalues = new String[4];
       othervalues[0] = routeAdvertise.ownerPID;
       othervalues[1] = routeAdvertise.getDestPrefix();
       othervalues[2] = routeAdvertise.getFormattedPath();
       othervalues[3] = routeAdvertise.safeToken;
-      return SafeUtils.authorize(safeServer, SdxRoutingSlang.verifyRoute, getSafeKeyHash(), othervalues);
+      res = SafeUtils.authorize(safeServer, SdxRoutingSlang.verifyRoute, getSafeKeyHash(),
+        othervalues);
     } else {
       String[] othervalues = new String[5];
       othervalues[0] = routeAdvertise.ownerPID;
@@ -150,9 +152,10 @@ public class SafeManager {
       othervalues[2] = routeAdvertise.getDestPrefix();
       othervalues[3] = routeAdvertise.getFormattedPath();
       othervalues[4] = routeAdvertise.safeToken;
-      return SafeUtils.authorize(safeServer, SdxRoutingSlang.verifyRouteSD, getSafeKeyHash(),
+      res = SafeUtils.authorize(safeServer, SdxRoutingSlang.verifyRouteSD, getSafeKeyHash(),
         othervalues);
     }
+    return res;
   }
 
   public String postSdPolicySet(String tag, String srcIP, String destIP) {

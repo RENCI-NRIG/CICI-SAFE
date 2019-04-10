@@ -4,6 +4,7 @@ import com.google.inject.Inject;
 import exoplex.common.utils.Exec;
 import exoplex.common.utils.PathUtil;
 import exoplex.sdx.core.SliceHelper;
+import exoplex.sdx.network.RoutingManager;
 import exoplex.sdx.slice.Scripts;
 import exoplex.sdx.slice.SliceManager;
 import exoplex.sdx.slice.SliceManagerFactory;
@@ -54,7 +55,7 @@ public class CnertTestSlice extends SliceHelper {
       //Make sure that plexus container is running
       //SDNControllerIP = "152.3.136.36";
       SDNControllerIP = carrier.getManagementIP("plexuscontroller");
-      if (!checkPlexus(carrier, SDNControllerIP)) {
+      if (!checkPlexus(carrier, SDNControllerIP, RoutingManager.plexusImage)) {
         System.exit(-1);
       }
       System.out.println("Plexus Controler IP: " + SDNControllerIP);
@@ -125,7 +126,7 @@ public class CnertTestSlice extends SliceHelper {
       SliceManager carrier = sliceManagerFactory.create(sliceName, pemLocation, keyLocation,
         controllerUrl,
         sshKey);
-      carrier.reloadSlice();
+      carrier.loadSlice();
       SDNControllerIP = carrier.getManagementIP("plexuscontroller");
       System.out.println("Plexus Controler IP: " + SDNControllerIP);
       carrier.runCmdSlice("/bin/bash ~/ovsbridge.sh " + SDNControllerIP + ":6633", sshKey, "(^c\\d+)",
@@ -410,7 +411,7 @@ public class CnertTestSlice extends SliceHelper {
 
 
     s.commitAndWait();
-    s.reloadSlice();
+    s.loadSlice();
     String c3 = s.getComputeNode("c" + (num - 1));
     String ip = "10.32.90.106/24";
     String gateway = "10.32.90.105";

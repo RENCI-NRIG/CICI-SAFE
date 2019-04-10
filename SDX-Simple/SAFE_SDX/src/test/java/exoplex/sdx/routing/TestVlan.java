@@ -2,6 +2,7 @@ package exoplex.sdx.routing;
 
 import exoplex.common.utils.ServerOptions;
 import exoplex.sdx.core.SdxManager;
+import exoplex.sdx.network.RoutingManager;
 import exoplex.sdx.slice.Scripts;
 import exoplex.sdx.slice.SliceManager;
 import exoplex.sdx.slice.exogeni.SiteBase;
@@ -17,7 +18,7 @@ import java.lang.reflect.Method;
 
 @Ignore
 public class TestVlan extends SdxManager {
-  static Logger logger = LogManager.getLogger(TestMpRouting.class);
+  static Logger logger = LogManager.getLogger(TestVlan.class);
   static String site = SiteBase.get("TAMU");
   static String userDir = System.getProperty("user.dir");
   static String sdxSimpleDir = userDir.split("SDX-Simple")[0] + "SDX-Simple/";
@@ -91,7 +92,7 @@ public class TestVlan extends SdxManager {
     serverSlice.commitAndWait();
     configTestSlice(serverSlice);
     if (plexusInSlice) {
-      checkPlexus(serverSlice, serverSlice.getManagementIP(plexusName));
+      checkPlexus(serverSlice, serverSlice.getManagementIP(plexusName), RoutingManager.plexusImage);
     }
     if (safeInSlice) {
       configSdnControllerAddr(serverSlice.getManagementIP(plexusName));
