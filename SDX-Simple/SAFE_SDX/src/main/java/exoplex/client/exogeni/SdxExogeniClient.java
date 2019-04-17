@@ -213,7 +213,7 @@ public class SdxExogeniClient extends SliceCommon {
       }
     }
     String node = serverSlice.getComputeNode(nodeName);
-    String res = serverSlice.runCmdNode("traceroute " + ip, node, false);
+    String res = serverSlice.runCmdNode("traceroute " + ip, node, true);
     logger.debug(res);
     return res;
   }

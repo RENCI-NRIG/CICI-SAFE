@@ -21,7 +21,7 @@ public class MultiSdxSDLargeSetting extends AbstractTestSetting {
     addClientSlices();
     setClientSdxMap();
     setSdxASTags();
-    //setClientASTagAcls();
+    setClientASTagAcls();
     setClientASTagAclsForSD();
     setUserConnectionTagAcls();
   }
@@ -41,6 +41,8 @@ public class MultiSdxSDLargeSetting extends AbstractTestSetting {
   public void addClientConnectionPairs() {
     clientConnectionPairs.add(new Integer[]{0, 2});
     clientConnectionPairs.add(new Integer[]{1, 3});
+    clientConnectionPairs.add(new Integer[]{0, 3});
+    clientConnectionPairs.add(new Integer[]{1, 2});
   }
 
   @Override
@@ -122,10 +124,10 @@ public class MultiSdxSDLargeSetting extends AbstractTestSetting {
 
   @Override
   public void setUserConnectionTagAcls() {
-    clientTags.put(clientSlices.get(0), Arrays.asList(new String[]{"tag0"}));
-    clientTags.put(clientSlices.get(2), Arrays.asList(new String[]{"tag0"}));
-    clientTags.put(clientSlices.get(1), Arrays.asList(new String[]{"tag1"}));
-    clientTags.put(clientSlices.get(3), Arrays.asList(new String[]{"tag1"}));
+    clientTags.put(clientSlices.get(0), Arrays.asList(new String[]{"tag0", "tag2"}));
+    clientTags.put(clientSlices.get(2), Arrays.asList(new String[]{"tag0", "tag3"}));
+    clientTags.put(clientSlices.get(1), Arrays.asList(new String[]{"tag1", "tag3"}));
+    clientTags.put(clientSlices.get(3), Arrays.asList(new String[]{"tag1", "tag2"}));
   }
 
   public void setClientASTagAclsForSD() {
