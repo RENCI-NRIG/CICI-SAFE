@@ -554,7 +554,6 @@ public class ExoSliceManager extends SliceManager {
       refresh();
       logger.debug("ExoSliceManager: " + getAllResources());
       for (String c : getComputeNodes()) {
-        logger.debug("[" + sliceName + "] Resource: " + c + ", state: " + getState(c));
         logger.debug(String.format("[%s] Resource: %s , state: %s  site: %s", sliceName, c, getState
           (c), getNodeDomain(c)));
         if (resources.contains(c)) {
