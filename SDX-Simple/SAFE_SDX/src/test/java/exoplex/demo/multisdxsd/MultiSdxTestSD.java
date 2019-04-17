@@ -9,6 +9,7 @@ import exoplex.demo.AbstractTestSlice;
 import exoplex.sdx.core.SdxManager;
 import exoplex.sdx.safe.SafeManager;
 import injection.MultiSdxSDLargeModule;
+import injection.MultiSdxSDModule;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -21,7 +22,7 @@ import java.util.List;
 
 public class MultiSdxTestSD extends AbstractTest {
   final static Logger logger = LogManager.getLogger(MultiSdxTestSD.class);
-  final static AbstractModule module = new MultiSdxSDLargeModule();
+  final static AbstractModule module = new MultiSdxSDModule();
   //final static AbstractModule module = new MultiSdxSDMockModule();
 
   public static void main(String[] args) {
@@ -35,7 +36,6 @@ public class MultiSdxTestSD extends AbstractTest {
     try {
       multiSdxTestSD.testMultiSdxSD();
       //multiSdxTestSD.replaySdnConfiguration("/home/yaoyj11/CICI-SAFE/SDX-Simple/log/sdn.log");
-      multiSdxTestSD.logFlowTables(false);
     } catch (Exception e) {
       e.printStackTrace();
     }
@@ -53,7 +53,7 @@ public class MultiSdxTestSD extends AbstractTest {
   public void before() throws Exception {
     deleteSliceAfterTest = false;
     initTests();
-    //deleteSlices();
+    deleteSlices();
     super.before();
   }
 
