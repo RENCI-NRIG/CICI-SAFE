@@ -721,17 +721,20 @@ public class ExoSliceManager extends SliceManager {
   /**
    * @param mip
    * @param res
-   * @param sshkey
    * @return true is there is uninstalled software
    */
-  private boolean processCmdRes(String mip, String res, String sshkey) {
+  private boolean processCmdRes(String mip, String res) {
     if (res.contains("ovs-vsctl: command not found") || res.contains("ovs-ofctl: command not found")) {
-      String[] result = Exec.sshExec("root", mip, "apt-get install -y openvswitch-switch", sshkey);
+      String[] result = Exec.sshExec("root", mip, "apt-get install -y openvswitch-switch",
+        sshKey);
       if (result[0].startsWith("error")) {
         return true;
       } else {
         return false;
       }
+    }
+    if(res.contains("traceroute: command not found")){
+      Exec.sshExec("root", mip, "apt-get install -y ", sshKey);
     }
     return false;
   }
@@ -761,6 +764,7 @@ public class ExoSliceManager extends SliceManager {
     String res[] = Exec.sshExec("root", mip, cmd, sshKey);
     while (repeat && (res[0] == null || res[0].startsWith("error"))) {
       logger.debug(res[1]);
+      processCmdRes(mip, res[0]);
       res = Exec.sshExec("root", mip, cmd, sshKey);
       if (res[0].startsWith("error")) {
         try {
