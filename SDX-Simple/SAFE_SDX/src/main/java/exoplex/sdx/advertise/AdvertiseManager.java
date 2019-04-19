@@ -88,13 +88,17 @@ public class AdvertiseManager {
         //get previously advertised route in other direction, if it is not in the  compliant
         // pair, correct the advertisement
         RouteAdvertise otherRoute = advertisedRoutes.get(key);
+        logger.info(String.format("%s compairing routes:\n previous: %s\n new: %s", safeManager
+          .getSafeKeyHash(), otherRoute, cpairs.get(0).getRight()));
         boolean compliant = false;
         for (ImmutablePair<PolicyAdvertise, RouteAdvertise> pair : cpairs) {
           if (pair.getRight().equals(otherRoute)) {
+            logger.info("Result: equal");
             compliant = true;
           }
         }
         if (!compliant) {
+          logger.info(String.format("%s updating route", safeManager.getSafeKeyHash()));
           RouteAdvertise correctOtherRoute = cpairs.get(0).getRight();
           RouteAdvertise propagateOtherAdvertise = new RouteAdvertise(correctOtherRoute, myPID);
           advertisedRoutes.put(key, correctOtherRoute);
@@ -175,7 +179,6 @@ public class AdvertiseManager {
       } else {
         //advertise not matched with known policies
       }
-
     }
     return newAdvertises;
   }

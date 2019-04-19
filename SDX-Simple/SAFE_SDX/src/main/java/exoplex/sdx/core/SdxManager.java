@@ -17,6 +17,7 @@ import exoplex.sdx.slice.exogeni.SiteBase;
 import org.apache.commons.cli.CommandLine;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.core.appender.routing.Route;
 import org.json.JSONObject;
 import org.renci.ahab.libndl.resources.request.InterfaceNode2Net;
 import org.renci.ahab.libtransport.util.TransportException;
@@ -1018,8 +1019,6 @@ public class SdxManager extends SliceHelper {
           String gateway = customerGateway.get(customerReservId);
           String edgeNode = routingmanager.getEdgeRouterByGateway(gateway);
           if (newAdvertise.srcPrefix != null) {
-            logger.error(String.format("Debug Msg: configuring route for policy %s\n new " +
-              "advertise: %s", policyAdvertise.toString(), newAdvertise.toString()));
             routingmanager.removePath(newAdvertise.destPrefix, newAdvertise.srcPrefix,
               getSDNController());
             routingmanager.configurePath(newAdvertise.destPrefix, newAdvertise.srcPrefix,
@@ -1059,7 +1058,6 @@ public class SdxManager extends SliceHelper {
           String customerReservId = customerNodes.get(routeAdvertise.advertiserPID).iterator().next();
           String gateway = customerGateway.get(customerReservId);
           String edgeNode = routingmanager.getEdgeRouterByGateway(gateway);
-          logger.error(String.format("Debug Msg: configuring route for %s", routeAdvertise.toString()));
           routingmanager.removePath(routeAdvertise.destPrefix, getSDNController());
           routingmanager.configurePath(routeAdvertise.destPrefix, edgeNode, gateway, getSDNController
             ());
@@ -1074,7 +1072,6 @@ public class SdxManager extends SliceHelper {
         String customerReservId = customerNodes.get(routeAdvertise.advertiserPID).iterator().next();
         String gateway = customerGateway.get(customerReservId);
         String edgeNode = routingmanager.getEdgeRouterByGateway(gateway);
-        logger.error(String.format("Debug Msg: configuring route for %s", routeAdvertise.toString()));
         routingmanager.removePath(routeAdvertise.destPrefix, routeAdvertise.srcPrefix,
           getSDNController());
         routingmanager.configurePath(routeAdvertise.destPrefix, routeAdvertise.srcPrefix, edgeNode,

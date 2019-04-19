@@ -15,6 +15,7 @@ public abstract class SliceManager {
   protected String controllerUrl;
   protected String sliceName;
   protected String sshKey;
+  protected static int extensionDays = 2;
 
   public SliceManager(String sliceName, String pemLocation, String keyLocation, String
     controllerUrl, String sshKey) {
