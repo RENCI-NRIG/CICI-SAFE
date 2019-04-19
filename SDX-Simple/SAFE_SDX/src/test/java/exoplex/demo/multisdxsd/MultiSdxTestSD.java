@@ -10,6 +10,7 @@ import exoplex.sdx.core.SdxManager;
 import exoplex.sdx.safe.SafeManager;
 import injection.MultiSdxSDLargeModule;
 import injection.MultiSdxSDModule;
+import injection.MultiSdxTridentcomModule;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -21,8 +22,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class MultiSdxTestSD extends AbstractTest {
-  final static Logger logger = LogManager.getLogger(SdxTest.class);
-  final static AbstractModule module = new MultiSdxSDMockModule();
+  final static Logger logger = LogManager.getLogger(MultiSdxTestSD.class);
+  final static AbstractModule module = new MultiSdxTridentcomModule();
+  //final static AbstractModule module = new MultiSdxSDLargeModule();
+  //final static AbstractModule module = new MultiSdxSDMockModule();
 
   public static void main(String[] args) {
     MultiSdxTestSD multiSdxTestSD = new MultiSdxTestSD();
@@ -80,8 +83,10 @@ public class MultiSdxTestSD extends AbstractTest {
     Long t3 = System.currentTimeMillis();
 
     checkConnection(3);
-    ping(1000);
     Long t4 = System.currentTimeMillis();
+    traceRoute();
+    Long t5 = System.currentTimeMillis();
+    logFlowTables(false);
 
     logger.info("test done");
     logger.info(String.format("Time\n stitch sdx: %s s\n stitch customers: %s s\n connection: %s s\n check " +
