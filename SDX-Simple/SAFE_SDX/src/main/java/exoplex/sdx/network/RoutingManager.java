@@ -10,6 +10,7 @@ import org.json.JSONObject;
 import java.util.*;
 
 public class RoutingManager {
+  public final static String plexusImage = "yaoyj11/plexus-v1";
   final static Logger logger = LogManager.getLogger(RoutingManager.class);
   final static Logger sdnLogger = LogManager.getLogger("SdnCmds");
   final static int MAX_RATE = 2000000;
@@ -277,9 +278,13 @@ public class RoutingManager {
     removePathId(getPathID(null, dstIP), controller);
   }
 
-  public void removePath(String srcIP, String dstIP, String controller) {
-    logger.info(String.format("removePath %s %s %s", srcIP, dstIP, controller));
-    removePathId(getPathID(srcIP, dstIP), controller);
+  public void removePath(String dstIP, String srcIP, String controller) {
+    logger.info(String.format("removePath %s %s %s", dstIP, srcIP, controller));
+    try {
+      removePathId(getPathID(dstIP, srcIP), controller);
+    } catch (Exception e) {
+      logger.warn(String.format("Exception when removing path %s %s %s", dstIP, srcIP, controller));
+    }
   }
 
   private void removePathId(String pathId, String controller) {

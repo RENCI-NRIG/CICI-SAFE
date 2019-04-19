@@ -11,10 +11,11 @@ public class Scripts {
     return "";
   }
 
-  public static String getPlexusScript() {
+  public static String getPlexusScript(String plexusImage) {
     String script = "apt-get update\n"
-      + "docker pull yaoyj11/plexus\n"
-      + "docker run -i -t -d -p 8080:8080 -p 6633:6633 -p 3000:3000 -h plexus --name plexus yaoyj11/plexus\n";
+      + "docker pull %s\n"
+      + "docker run -i -t -d -p 8080:8080 -p 6633:6633 -p 3000:3000 -h plexus --name plexus %s\n";
+    script = String.format(script, plexusImage, plexusImage);
     //+"docker exec -d plexus /bin/bash -c  \"cd /root/;./sdx.sh\"\n";
     return script;
   }

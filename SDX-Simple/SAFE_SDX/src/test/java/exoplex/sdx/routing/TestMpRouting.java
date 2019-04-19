@@ -3,6 +3,7 @@ package exoplex.sdx.routing;
 import exoplex.common.utils.ServerOptions;
 import exoplex.experiment.ExperimentBase;
 import exoplex.sdx.core.SdxManager;
+import exoplex.sdx.network.RoutingManager;
 import exoplex.sdx.network.SdnUtil;
 import exoplex.sdx.slice.Scripts;
 import exoplex.sdx.slice.SliceManager;
@@ -93,7 +94,7 @@ public class TestMpRouting extends SdxManager {
     serverSlice.commitAndWait();
     configTestSlice(serverSlice);
     if (plexusInSlice) {
-      checkPlexus(serverSlice, serverSlice.getManagementIP(plexusName));
+      checkPlexus(serverSlice, serverSlice.getManagementIP(plexusName), RoutingManager.plexusImage);
     }
     if (safeInSlice) {
       configSdnControllerAddr(serverSlice.getManagementIP(plexusName));
