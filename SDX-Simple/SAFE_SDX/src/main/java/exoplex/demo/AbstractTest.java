@@ -181,10 +181,28 @@ public abstract class AbstractTest {
       if (!exogeniClients.get(client).checkConnectivity("CNode1",
         peerIp.replace(".1/24", ".2"), times)) {
         flag = false;
-      } else {
-        System.out.println(exogeniClients.get(client).traceRoute("CNode1",
-          peerIp.replace(".1/24", ".2")));
       }
+    }
+    return flag;
+  }
+
+  public boolean traceRoute() {
+    logger.debug("trace route");
+    boolean flag = true;
+    for (Integer[] pair : testSetting.clientConnectionPairs) {
+      int i = pair[0];
+      int j = pair[1];
+      String client = testSetting.clientSlices.get(i);
+      String clientIp = testSetting.clientIpMap.get(client);
+      String peer = testSetting.clientSlices.get(j);
+      String peerIp = testSetting.clientIpMap.get(peer);
+      System.out.println(String.format("From %s to %s", clientIp, peerIp));
+      System.out.println(exogeniClients.get(client).traceRoute("CNode1",
+        peerIp.replace(".1/24", ".2")));
+
+      System.out.println(String.format("From %s to %s", peerIp, clientIp));
+      System.out.println(exogeniClients.get(peer).traceRoute("CNode1",
+        clientIp.replace(".1/24", ".2")));
     }
     return flag;
   }
@@ -213,14 +231,17 @@ public abstract class AbstractTest {
   public void logFlowTables(boolean showAll) {
     ArrayList<String> patterns = new ArrayList<>();
     if (!showAll) {
-      String routeFlowPattern = ".*nw_src=%s.*nw_dst=%s.*";
+      String routeFlowPattern = ".*nw_src=%s.*nw_dst=%s.*actions=dec_ttl.*";
+      String routeFlowPattern1 = ".*nw_dst=%s.*actions=dec_ttl.*";
       for (Integer[] pair : testSetting.clientConnectionPairs) {
         String slice1 = testSetting.clientSlices.get(pair[0]);
         String slice2 = testSetting.clientSlices.get(pair[1]);
         String ip1 = testSetting.clientIpMap.get(slice1).replace(".1/24", ".0/24");
         String ip2 = testSetting.clientIpMap.get(slice2).replace(".1/24", ".0/24");
         patterns.add(String.format(routeFlowPattern, ip1, ip2));
+        patterns.add(String.format(routeFlowPattern1, ip2));
         patterns.add(String.format(routeFlowPattern, ip2, ip1));
+        patterns.add(String.format(routeFlowPattern1, ip1));
       }
     }
     for (SdxManager sdxManager : sdxManagerMap.values()) {
