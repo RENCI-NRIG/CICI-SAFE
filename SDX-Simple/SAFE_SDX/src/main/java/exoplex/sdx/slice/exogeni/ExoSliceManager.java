@@ -279,12 +279,16 @@ public class ExoSliceManager extends SliceManager {
   }
 
   public String addBroadcastLink(String name, long bandwidth) {
-    logger.info(String.format("addBroadcastLink %s %s", name, bandwidth));
-    return this.slice.addBroadcastLink(name, bandwidth).getName();
+    synchronized (this) {
+      logger.info(String.format("addBroadcastLink %s %s", name, bandwidth));
+      return this.slice.addBroadcastLink(name, bandwidth).getName();
+    }
   }
 
   public String addBroadcastLink(String name) {
-    return this.addBroadcastLink(name, DEFAULT_BW);
+    synchronized (this) {
+      return this.addBroadcastLink(name, DEFAULT_BW);
+    }
   }
 
   public String attach(String nodeName, String linkName, String ip, String netmask) {
@@ -554,7 +558,6 @@ public class ExoSliceManager extends SliceManager {
       refresh();
       logger.debug("ExoSliceManager: " + getAllResources());
       for (String c : getComputeNodes()) {
-        logger.debug("[" + sliceName + "] Resource: " + c + ", state: " + getState(c));
         logger.debug(String.format("[%s] Resource: %s , state: %s  site: %s", sliceName, c, getState
           (c), getNodeDomain(c)));
         if (resources.contains(c)) {
@@ -722,17 +725,20 @@ public class ExoSliceManager extends SliceManager {
   /**
    * @param mip
    * @param res
-   * @param sshkey
    * @return true is there is uninstalled software
    */
-  private boolean processCmdRes(String mip, String res, String sshkey) {
+  private boolean processCmdRes(String mip, String res) {
     if (res.contains("ovs-vsctl: command not found") || res.contains("ovs-ofctl: command not found")) {
-      String[] result = Exec.sshExec("root", mip, "apt-get install -y openvswitch-switch", sshkey);
+      String[] result = Exec.sshExec("root", mip, "apt-get install -y openvswitch-switch",
+        sshKey);
       if (result[0].startsWith("error")) {
         return true;
       } else {
         return false;
       }
+    }
+    if(res.contains("traceroute: command not found")){
+      Exec.sshExec("root", mip, "apt-get install -y traceroute", sshKey);
     }
     return false;
   }
@@ -762,6 +768,7 @@ public class ExoSliceManager extends SliceManager {
     String res[] = Exec.sshExec("root", mip, cmd, sshKey);
     while (repeat && (res[0] == null || res[0].startsWith("error"))) {
       logger.debug(res[1]);
+      processCmdRes(mip, res[1]);
       res = Exec.sshExec("root", mip, cmd, sshKey);
       if (res[0].startsWith("error")) {
         try {
@@ -995,21 +1002,23 @@ public class ExoSliceManager extends SliceManager {
   }
 
   public String addOVSRouter(String site, String name) {
-    logger.debug(String.format("Adding new OVS router to slice %s on site %s", slice.getName(),
-      site));
-    NodeBaseInfo ninfo = NodeBase.getImageInfo(SliceEnv.OVSVersion);
-    String nodeImageShortName = ninfo.nisn;
-    String nodeImageURL = ninfo.niurl;
-    //http://geni-images.renci.org/images/standard/ubuntu/ub1304-ovs-opendaylight-v1.0.0.xml
-    String nodeImageHash = ninfo.nihash;
-    String nodeNodeType = "XO Medium";
-    String nodePostBootScript = Scripts.getOVSScript();
-    ComputeNode node0 = slice.addComputeNode(name);
-    node0.setImage(nodeImageURL, nodeImageHash, nodeImageShortName);
-    node0.setNodeType(nodeNodeType);
-    node0.setDomain(SiteBase.get(site));
-    node0.setPostBootScript(nodePostBootScript);
-    return node0.getName();
+    synchronized (this) {
+      logger.debug(String.format("Adding new OVS router to slice %s on site %s", slice.getName(),
+        site));
+      NodeBaseInfo ninfo = NodeBase.getImageInfo(SliceEnv.OVSVersion);
+      String nodeImageShortName = ninfo.nisn;
+      String nodeImageURL = ninfo.niurl;
+      //http://geni-images.renci.org/images/standard/ubuntu/ub1304-ovs-opendaylight-v1.0.0.xml
+      String nodeImageHash = ninfo.nihash;
+      String nodeNodeType = "XO Medium";
+      String nodePostBootScript = Scripts.getOVSScript();
+      ComputeNode node0 = slice.addComputeNode(name);
+      node0.setImage(nodeImageURL, nodeImageHash, nodeImageShortName);
+      node0.setNodeType(nodeNodeType);
+      node0.setDomain(SiteBase.get(site));
+      node0.setPostBootScript(nodePostBootScript);
+      return node0.getName();
+    }
   }
 
   public void printNetworkInfo() {

@@ -291,8 +291,10 @@ public class RoutingManager {
     if (pairPath.containsKey(pathId)) {
       ArrayList<String[]> paths = pairPath.get(pathId);
       for (String[] path : paths) {
-        int routeid = route_id.get(getRouteKey(pathId, path[0]));
-        deleteRoute(path[0], String.valueOf(routeid), controller);
+        if(route_id.containsKey(getRouteKey(pathId, path[0]))) {
+          int routeid = route_id.get(getRouteKey(pathId, path[0]));
+          deleteRoute(path[0], String.valueOf(routeid), controller);
+        }
       }
       pairPath.remove(pathId);
     }
