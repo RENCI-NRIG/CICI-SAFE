@@ -21,9 +21,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class MultiSdxTestSD extends AbstractTest {
-  final static Logger logger = LogManager.getLogger(MultiSdxTestSD.class);
-  final static AbstractModule module = new MultiSdxSDLargeModule();
-  //final static AbstractModule module = new MultiSdxSDMockModule();
+  final static Logger logger = LogManager.getLogger(SdxTest.class);
+  final static AbstractModule module = new MultiSdxSDMockModule();
 
   public static void main(String[] args) {
     MultiSdxTestSD multiSdxTestSD = new MultiSdxTestSD();
@@ -83,8 +82,6 @@ public class MultiSdxTestSD extends AbstractTest {
     checkConnection(3);
     ping(1000);
     Long t4 = System.currentTimeMillis();
-
-    logFlowTables(false);
 
     logger.info("test done");
     logger.info(String.format("Time\n stitch sdx: %s s\n stitch customers: %s s\n connection: %s s\n check " +
@@ -183,10 +180,6 @@ public class MultiSdxTestSD extends AbstractTest {
       String clientIp = testSetting.clientIpMap.get(client);
       List<ImmutablePair<String, String>> pairRouteAcls = testSetting.clientRouteASTagAcls.getOrDefault
         (client, new ArrayList<>());
-      for (ImmutablePair<String, String> pair : pairRouteAcls) {
-        exogeniClients.get(client).processCmd(String.format("acl %s %s %s", clientIp, pair
-          .getLeft(), pair.getRight()));
-      }
       for (ImmutablePair<String, String> pair : pairRouteAcls) {
         exogeniClients.get(client).processCmd(String.format("bgp %s %s %s", clientIp, pair
           .getLeft(), pair.getRight()));

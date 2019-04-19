@@ -39,7 +39,7 @@ public class MultiSdxSDLargeSetting extends AbstractTestSetting {
 
   @Override
   public void addClientConnectionPairs() {
-    clientConnectionPairs.add(new Integer[]{0, 2});
+    //clientConnectionPairs.add(new Integer[]{0, 2});
     clientConnectionPairs.add(new Integer[]{1, 3});
     clientConnectionPairs.add(new Integer[]{0, 3});
     clientConnectionPairs.add(new Integer[]{1, 2});
@@ -110,8 +110,8 @@ public class MultiSdxSDLargeSetting extends AbstractTestSetting {
     sdxASTags.put(sdxSliceNames.get(0), Arrays.asList(new String[]{"astag0", "astag1"}));
     sdxASTags.put(sdxSliceNames.get(1), Arrays.asList(new String[]{"astag0"}));
     sdxASTags.put(sdxSliceNames.get(2), Arrays.asList(new String[]{"astag1"}));
-    sdxASTags.put(sdxSliceNames.get(3), Arrays.asList(new String[]{"astag0"}));
-    sdxASTags.put(sdxSliceNames.get(4), Arrays.asList(new String[]{"astag1"}));
+    sdxASTags.put(sdxSliceNames.get(3), Arrays.asList(new String[]{"astag1"}));
+    sdxASTags.put(sdxSliceNames.get(4), Arrays.asList(new String[]{"astag0"}));
     sdxASTags.put(sdxSliceNames.get(5), Arrays.asList(new String[]{"astag0", "astag1"}));
   }
 
@@ -132,6 +132,7 @@ public class MultiSdxSDLargeSetting extends AbstractTestSetting {
 
   public void setClientASTagAclsForSD() {
     //astag for traffic from pair.left to self.prefix
+    /*
     clientRouteASTagAcls.put(clientSlices.get(0), Arrays.asList(new ImmutablePair[]{
       new ImmutablePair<String, String>("192.168.30.1/24", "astag0")
       , new ImmutablePair<String, String>("192.168.30.1/24", "astag1")
@@ -146,6 +147,7 @@ public class MultiSdxSDLargeSetting extends AbstractTestSetting {
     clientPolicyASTagAcls.put(clientSlices.get(2), Arrays.asList(new ImmutablePair[]{
       new ImmutablePair<String, String>("192.168.10.1/24", "astag0")
     }));
+    */
     clientRouteASTagAcls.put(clientSlices.get(1), Arrays.asList(new ImmutablePair[]{
       new ImmutablePair<String, String>("192.168.40.1/24", "astag0"),
       new ImmutablePair<String, String>("192.168.40.1/24", "astag1")

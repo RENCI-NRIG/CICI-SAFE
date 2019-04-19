@@ -10,8 +10,6 @@ import exoplex.sdx.network.RoutingManager;
 import exoplex.sdx.slice.Scripts;
 import exoplex.sdx.slice.SliceEnv;
 import exoplex.sdx.slice.SliceManager;
-import org.apache.commons.httpclient.util.DateUtil;
-import org.apache.commons.lang.time.DateUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -936,6 +934,7 @@ public class ExoSliceManager extends SliceManager {
 
   public void stitch(String RID, String customerName, String CID, String secret,
                      String newip) {
+    logger.debug("ndllib TestDriver: START");
     //Main Example Code
     Long t1 = System.currentTimeMillis();
     try {

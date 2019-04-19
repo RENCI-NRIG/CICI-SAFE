@@ -2,14 +2,11 @@ package exoplex.sdx.advertise;
 
 import exoplex.sdx.safe.SafeManager;
 import org.apache.commons.lang3.tuple.ImmutablePair;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import java.util.ArrayList;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class AdvertiseManager {
-  final static Logger logger = LogManager.getLogger(AdvertiseManager.class);
   static int topK = 1;
   String myPID;
   SafeManager safeManager;
@@ -35,14 +32,13 @@ public class AdvertiseManager {
 
   public RouteAdvertise receiveAdvertise(RouteAdvertise routeAdvertise) {
     String destPrefix = routeAdvertise.destPrefix;
-    ImmutablePair<String, String> key = new ImmutablePair<>(routeAdvertise.destPrefix, null);
-    if (bgpTable.containsKey(destPrefix) &&
-      advertisedRoutes.get(key).route.size() <= routeAdvertise.route.size()) {
+    if (bgpTable.containsKey(destPrefix)) {
       //Todo: implement stategy for chosing from multiple advertisements here
       addToBgpTable(routeAdvertise);
       return null;
     } else {
       addToBgpTable(routeAdvertise);
+      ImmutablePair<String, String> key = new ImmutablePair<>(routeAdvertise.destPrefix, null);
       advertisedRoutes.put(key, routeAdvertise);
       RouteAdvertise propagateAdvertise = new RouteAdvertise(routeAdvertise, myPID);
       return propagateAdvertise;
@@ -56,7 +52,8 @@ public class AdvertiseManager {
     String srcPrefix = policyAdvertise.srcPrefix;
     addToStPairPolicyTable(policyAdvertise);
 
-    ImmutablePair<String, String> key = new ImmutablePair<>(destPrefix, srcPrefix);
+    ImmutablePair<String, String> otherKey = new ImmutablePair<>(srcPrefix, destPrefix);
+    ImmutablePair<String, String> key = new ImmutablePair<>(srcPrefix, destPrefix);
     ArrayList<ImmutablePair<PolicyAdvertise, RouteAdvertise>> existingCompliantPairs =
       compliantPairs.getOrDefault(key, new ArrayList<>());
     if (existingCompliantPairs.size() > 0) {
@@ -66,16 +63,14 @@ public class AdvertiseManager {
       ArrayList<RouteAdvertise> matchedRoutes = stPairBgpTable.getOrDefault(key, new ArrayList<>());
       //NOTE: This doesn't make sense.
       if (matchedRoutes.size() == 0) {
-        matchedRoutes.addAll(bgpTable.getOrDefault(destPrefix, new ArrayList<>()));
+        matchedRoutes.addAll(bgpTable.getOrDefault(srcPrefix, new ArrayList<>()));
       }
       ArrayList<ImmutablePair<PolicyAdvertise, RouteAdvertise>> cpairs = new ArrayList<>();
       //TODO we only need to veirfy if the route is compliant to the other side's policy
       for (RouteAdvertise matchedAdvertise : matchedRoutes) {
         String token1 = policyAdvertise.safeToken;
         String token2 = matchedAdvertise.safeToken;
-        RouteAdvertise newAd = new RouteAdvertise(matchedAdvertise, myPID);
-        newAd.route.remove(newAd.route.size() - 1);
-        String path = newAd.getFormattedPath();
+        String path = (new RouteAdvertise(matchedAdvertise, myPID)).getFormattedPath();
         if (safeManager.verifyCompliantPath(policyAdvertise.ownerPID, policyAdvertise
           .getSrcPrefix(), policyAdvertise.getDestPrefix(), token1, token2, path)) {
           cpairs.add(new ImmutablePair<>(policyAdvertise, matchedAdvertise));
@@ -88,20 +83,15 @@ public class AdvertiseManager {
         //get previously advertised route in other direction, if it is not in the  compliant
         // pair, correct the advertisement
         RouteAdvertise otherRoute = advertisedRoutes.get(key);
-        logger.info(String.format("%s compairing routes:\n previous: %s\n new: %s", safeManager
-          .getSafeKeyHash(), otherRoute, cpairs.get(0).getRight()));
         boolean compliant = false;
         for (ImmutablePair<PolicyAdvertise, RouteAdvertise> pair : cpairs) {
           if (pair.getRight().equals(otherRoute)) {
-            logger.info("Result: equal");
             compliant = true;
           }
         }
         if (!compliant) {
-          logger.info(String.format("%s updating route", safeManager.getSafeKeyHash()));
           RouteAdvertise correctOtherRoute = cpairs.get(0).getRight();
           RouteAdvertise propagateOtherAdvertise = new RouteAdvertise(correctOtherRoute, myPID);
-          advertisedRoutes.put(key, correctOtherRoute);
           newAdvertises.add(propagateOtherAdvertise);
         }
 
@@ -135,15 +125,14 @@ public class AdvertiseManager {
     ImmutablePair<String, String> key = new ImmutablePair<>(destPrefix, srcPrefix);
     ArrayList<ImmutablePair<PolicyAdvertise, RouteAdvertise>> existingCompliantPairs =
       compliantPairs.getOrDefault(key, new ArrayList<>());
-    if (existingCompliantPairs.size() > 0 && existingCompliantPairs.get(0).getRight().srcPrefix
-      != null) {
+    if (existingCompliantPairs.size() > 0) {
       //Do nothing for now
     } else {
       ArrayList<PolicyAdvertise> matchedPolicies = stPairPolicyTable.getOrDefault(key,
         new ArrayList<>());
       //NOTE: This doesn't make sense.
       if (matchedPolicies.size() == 0) {
-        matchedPolicies.addAll(policyTable.getOrDefault(destPrefix, new ArrayList<>()));
+        matchedPolicies.addAll(policyTable.getOrDefault(srcPrefix, new ArrayList<>()));
       }
       ArrayList<ImmutablePair<PolicyAdvertise, RouteAdvertise>> cpairs = new ArrayList<>();
       //TODO we only need to veirfy if the route is compliant to the other side's policy
@@ -154,9 +143,9 @@ public class AdvertiseManager {
         newAd.route.remove(newAd.route.size() - 1);
         String path = newAd.getFormattedPath();
         //don't use path containing self because the tag set for self is not linked yet.
-        if (safeManager.verifyCompliantPath(policyAdvertise.ownerPID, routeAdvertise.getSrcPrefix(),
-          routeAdvertise.getDestPrefix(), token2, routeAdvertise.safeToken,
-          newAd.getFormattedPath())) {
+        if (safeManager.verifyCompliantPath(routeAdvertise.ownerPID, routeAdvertise.srcPrefix,
+          routeAdvertise.destPrefix, token2, routeAdvertise.safeToken,
+          routeAdvertise.getFormattedPath())) {
           cpairs.add(new ImmutablePair<PolicyAdvertise, RouteAdvertise>(policyAdvertise,
             routeAdvertise));
         }
