@@ -42,8 +42,6 @@ public abstract class AbstractTestSetting {
   public AbstractTestSetting() {
   }
 
-  public void addClientConnectionPairs() {
-  }
 
   public void addClientSites() {
   }
@@ -57,9 +55,25 @@ public abstract class AbstractTestSetting {
   public void addClientSlices() {
   }
 
+  /*
+  Pairs of clients that are assumed to be able to talk.
+  We will check the connection between the pairs and run traceroutes between them.
+  Note: Traceroute result for some pairs may be "***" because packets in two directions might
+  take different paths.
+   */
+  public void addClientConnectionPairs() {
+  }
+
+  /*
+  Which SDX serves as the NSP for the client (stitching and SDX)
+   */
   public void setClientSdxMap() {
   }
 
+  /*
+  Client connection policies that an peer with specified tag (attribute) can talk to him.
+  And the tags specified are also delegated to itself by the authorities. (We may also separate it)
+   */
   public void setUserConnectionTagAcls() {
   }
 }

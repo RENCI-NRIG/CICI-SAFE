@@ -9,6 +9,10 @@ public class MultiSdxSDLargeSetting extends AbstractTestSetting {
   public String sdxConfigDir = sdxSimpleDir + "config/multisdx/";
 
   public MultiSdxSDLargeSetting() {
+    setting();
+  }
+
+  public void setting(){
     numSdx = 6;
     clientArgs = new String[]{"-c", sdxSimpleDir +
       "client-config/multisdx/client" + ".conf"};
@@ -67,7 +71,7 @@ public class MultiSdxSDLargeSetting extends AbstractTestSetting {
   @Override
   public void addSdxSlices() {
     int sdxKeyBase = 100;
-    int sdxIpBase = 100;
+    int sdxIpBase = 110;
     for (int i = 0; i < numSdx; i++) {
       String sdxSliceName = String.format("sdx-%s-cn", i + 1);
       sdxConfs.put(sdxSliceName, String.format("%ssdx%s.conf", sdxConfigDir, i + 1));
@@ -147,17 +151,17 @@ public class MultiSdxSDLargeSetting extends AbstractTestSetting {
       new ImmutablePair<String, String>("192.168.10.1/24", "astag0")
     }));
     clientRouteASTagAcls.put(clientSlices.get(1), Arrays.asList(new ImmutablePair[]{
-      new ImmutablePair<String, String>("192.168.40.1/24", "astag0"),
       new ImmutablePair<String, String>("192.168.40.1/24", "astag1")
     }));
     clientPolicyASTagAcls.put(clientSlices.get(1), Arrays.asList(new ImmutablePair[]{
+      new ImmutablePair<String, String>("192.168.40.1/24", "astag0"),
       new ImmutablePair<String, String>("192.168.40.1/24", "astag1")
     }));
     clientRouteASTagAcls.put(clientSlices.get(3), Arrays.asList(new ImmutablePair[]{
-      new ImmutablePair<String, String>("192.168.20.1/24", "astag0"),
       new ImmutablePair<String, String>("192.168.20.1/24", "astag1")
     }));
     clientPolicyASTagAcls.put(clientSlices.get(3), Arrays.asList(new ImmutablePair[]{
+      new ImmutablePair<String, String>("192.168.20.1/24", "astag0"),
       new ImmutablePair<String, String>("192.168.20.1/24", "astag1")
     }));
   }

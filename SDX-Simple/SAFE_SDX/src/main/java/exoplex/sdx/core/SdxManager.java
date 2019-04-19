@@ -529,7 +529,7 @@ public class SdxManager extends SliceHelper {
     return null;
   }
 
-  public synchronized JSONObject stitchRequest(
+  synchronized public JSONObject stitchRequest(
     String site,
     String customerSafeKeyHash,
     String customerSlice,
@@ -552,10 +552,10 @@ public class SdxManager extends SliceHelper {
       if (safeEnabled) {
         logger.info("Authorized: stitch request for " + sliceName);
       }
-      serverSlice.refresh();
       String stitchname = null;
       String net = null;
       String node = null;
+      serverSlice.refresh();
       if (sdxnode != null && serverSlice.getComputeNode(sdxnode) != null) {
         node = serverSlice.getComputeNode(sdxnode);
       /*
