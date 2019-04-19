@@ -9,8 +9,6 @@ import exoplex.common.utils.ScpTo;
 import exoplex.sdx.slice.Scripts;
 import exoplex.sdx.slice.SliceEnv;
 import exoplex.sdx.slice.SliceManager;
-import org.apache.commons.httpclient.util.DateUtil;
-import org.apache.commons.lang.time.DateUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -169,14 +167,7 @@ public class ExoSliceManager extends SliceManager {
     }
   }
 
-  public void loadSlice() throws Exception{
-    reloadSlice();
-    if(slice != null){
-      renew();
-    }
-  }
-
-  private void reloadSlice() throws Exception {
+  public void reloadSlice() throws Exception {
     int i = 0;
     sliceProxy = getSliceProxy(pemLocation, keyLocation, controllerUrl);
     do {
@@ -929,6 +920,7 @@ public class ExoSliceManager extends SliceManager {
 
   public void stitch(String RID, String customerName, String CID, String secret,
                      String newip) {
+    logger.debug("ndllib TestDriver: START");
     //Main Example Code
     Long t1 = System.currentTimeMillis();
     try {
@@ -1106,20 +1098,5 @@ public class ExoSliceManager extends SliceManager {
       Thread.sleep(seconds * 1000);
     } catch (Exception e) {
     }
-  }
-
-  public void renew(Date newDate){
-    //try {
-    //  slice.renew(newDate);
-    //}catch (Exception e){
-
-    //}
-  }
-
-  public void renew(){
-    //try {
-    //  slice.renew(DateUtils.addDays(new Date(), extensionDays));
-    //}catch (Exception e){
-    //}
   }
 }

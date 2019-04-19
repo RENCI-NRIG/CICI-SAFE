@@ -125,7 +125,7 @@ public class CnertTestSlice extends SliceHelper {
       SliceManager carrier = sliceManagerFactory.create(sliceName, pemLocation, keyLocation,
         controllerUrl,
         sshKey);
-      carrier.loadSlice();
+      carrier.reloadSlice();
       SDNControllerIP = carrier.getManagementIP("plexuscontroller");
       System.out.println("Plexus Controler IP: " + SDNControllerIP);
       carrier.runCmdSlice("/bin/bash ~/ovsbridge.sh " + SDNControllerIP + ":6633", sshKey, "(^c\\d+)",
@@ -410,7 +410,7 @@ public class CnertTestSlice extends SliceHelper {
 
 
     s.commitAndWait();
-    s.loadSlice();
+    s.reloadSlice();
     String c3 = s.getComputeNode("c" + (num - 1));
     String ip = "10.32.90.106/24";
     String gateway = "10.32.90.105";

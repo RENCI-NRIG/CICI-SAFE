@@ -277,13 +277,9 @@ public class RoutingManager {
     removePathId(getPathID(null, dstIP), controller);
   }
 
-  public void removePath(String dstIP, String srcIP, String controller) {
-    logger.info(String.format("removePath %s %s %s", dstIP, srcIP, controller));
-    try {
-      removePathId(getPathID(dstIP, srcIP), controller);
-    }catch (Exception e){
-      logger.warn(String.format("Exception when removing path %s %s %s", dstIP, srcIP, controller));
-    }
+  public void removePath(String srcIP, String dstIP, String controller) {
+    logger.info(String.format("removePath %s %s %s", srcIP, dstIP, controller));
+    removePathId(getPathID(srcIP, dstIP), controller);
   }
 
   private void removePathId(String pathId, String controller) {

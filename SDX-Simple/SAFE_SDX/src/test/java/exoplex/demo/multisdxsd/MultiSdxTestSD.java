@@ -7,9 +7,7 @@ import exoplex.demo.AbstractTest;
 import exoplex.demo.AbstractTestSetting;
 import exoplex.demo.AbstractTestSlice;
 import exoplex.demo.SdxTest;
-import exoplex.demo.multisdx.MultiSdxSetting;
 import exoplex.sdx.core.SdxManager;
-import injection.MultiSdxSDLargeModule;
 import injection.MultiSdxSDMockModule;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.logging.log4j.LogManager;
@@ -22,9 +20,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class MultiSdxTestSD extends AbstractTest {
-  final static Logger logger = LogManager.getLogger(MultiSdxTestSD.class);
-  final static AbstractModule module = new MultiSdxSDLargeModule();
-  //final static AbstractModule module = new MultiSdxSDMockModule();
+  final static Logger logger = LogManager.getLogger(SdxTest.class);
+  final static AbstractModule module = new MultiSdxSDMockModule();
 
   public static void main(String[] args) {
     MultiSdxTestSD multiSdxTestSD = new MultiSdxTestSD();
@@ -34,8 +31,8 @@ public class MultiSdxTestSD extends AbstractTest {
     multiSdxTestSD.testSlice = injector.getInstance(AbstractTestSlice.class);
     multiSdxTestSD.testSetting = injector.getInstance(AbstractTestSetting.class);
     try {
-      //multiSdxTestSD.testMultiSdxSD();
-      multiSdxTestSD.replaySdnConfiguration("/home/yaoyj11/CICI-SAFE/SDX-Simple/log/sdn.log");
+      multiSdxTestSD.testMultiSdxSD();
+      //multiSdxTestSD.replaySdnConfiguration("/home/yaoyj11/CICI-SAFE/SDX-Simple/log/sdn.log");
       multiSdxTestSD.logFlowTables(false);
     } catch (Exception e) {
       e.printStackTrace();
@@ -84,8 +81,6 @@ public class MultiSdxTestSD extends AbstractTest {
     checkConnection(30);
     Long t4 = System.currentTimeMillis();
 
-    logFlowTables(false);
-
     logger.info("test done");
     logger.info(String.format("Time\n stitch sdx: %s s\n stitch customers: %s s\n connection: %s s\n check " +
       "connection: %s s", (t1 - t0) / 1000.0, (t2 - t1) / 1000.0, (t3 - t2) / 1000.0, (t4 - t3) / 1000.0));
@@ -115,24 +110,14 @@ public class MultiSdxTestSD extends AbstractTest {
       List<ImmutablePair<String, String>> pairRouteAcls = testSetting.clientRouteASTagAcls.getOrDefault
         (client, new ArrayList<>());
       for (ImmutablePair<String, String> pair : pairRouteAcls) {
-        exogeniClients.get(client).processCmd(String.format("acl %s %s %s", clientIp, pair
-          .getLeft(), pair.getRight()));
-      }
-      for (ImmutablePair<String, String> pair : pairRouteAcls) {
         exogeniClients.get(client).processCmd(String.format("bgp %s %s %s", clientIp, pair
           .getLeft(), pair.getRight()));
-      }
-      if(pairRouteAcls.size() > 0) {
-        logger.debug("\n\n\n\n\n\n\n\n");
       }
       List<ImmutablePair<String, String>> pairPolicyAcls = testSetting.clientPolicyASTagAcls
         .getOrDefault(client, new ArrayList<>());
       for (ImmutablePair<String, String> pair : pairPolicyAcls) {
         exogeniClients.get(client).processCmd(String.format("policy %s %s %s", pair.getLeft(),
           clientIp, pair.getRight()));
-      }
-      if(pairPolicyAcls.size() > 0) {
-        logger.debug("\n\n\n\n\n\n\n\n");
       }
     }
     logger.debug("SD routes made");

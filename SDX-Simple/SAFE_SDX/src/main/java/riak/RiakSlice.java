@@ -43,7 +43,7 @@ public class RiakSlice extends SliceCommon {
     s.createSlice();
     s.addRiakServer(serverSite, "riak");
     s.commitAndWait();
-    s.loadSlice();
+    s.reloadSlice();
     s.runCmdNode(Scripts.getRiakScripts(), "riak", false);
     s.runCmdNode(String.format("echo 'docker rm -f riakserver\n %s' >> start.sh", Scripts
       .getRiakScripts()), "riak", false);
