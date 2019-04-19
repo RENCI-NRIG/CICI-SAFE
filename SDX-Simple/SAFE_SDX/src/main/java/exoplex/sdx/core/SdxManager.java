@@ -17,6 +17,7 @@ import exoplex.sdx.slice.exogeni.SiteBase;
 import org.apache.commons.cli.CommandLine;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.core.appender.routing.Route;
 import org.json.JSONObject;
 import org.renci.ahab.libndl.resources.request.InterfaceNode2Net;
 import org.renci.ahab.libtransport.util.TransportException;
@@ -136,7 +137,7 @@ public class SdxManager extends SliceHelper {
   public void loadSlice() throws TransportException {
     serverSlice = sliceManagerFactory.create(sliceName, pemLocation, keyLocation, controllerUrl, sshKey);
     try {
-      serverSlice.reloadSlice();
+      serverSlice.loadSlice();
     } catch (Exception e) {
       e.printStackTrace();
     }
@@ -1001,11 +1002,27 @@ public class SdxManager extends SliceHelper {
     // route with both source and destination address, find matching pairs
     ArrayList<AdvertiseBase> newAdvertises = advertiseManager.receiveStPolicy
       (policyAdvertise);
-    for (AdvertiseBase newAdvertise : newAdvertises) {
+    for (int i = 0; i< newAdvertises.size(); i++) {
+      AdvertiseBase newAdvertise = newAdvertises.get(i);
       if (newAdvertise instanceof RouteAdvertise) {
-        logger.info("Updating Bgp advertisement after receiving policies advertisements %s"
-          .format(policyAdvertise.toString()));
+        logger.info(String.format("%s Updating Bgp advertisement after receiving policies " +
+          "advertisement%s", sliceName, policyAdvertise.toString()));
         logger.info(String.format("new advertise: %s", newAdvertise.toString()));
+        if (newAdvertise.route.size() > 1) {
+          //configure the route if the advertisement is not from a direct customer for access control
+          //routingmanager.retriveRouteOfPrefix(routeAdvertise.prefix, SDNController);
+          String customerReservId = customerNodes.get(((RouteAdvertise) newAdvertise).srcPid).iterator().next();
+          String gateway = customerGateway.get(customerReservId);
+          String edgeNode = routingmanager.getEdgeRouterByGateway(gateway);
+          if(newAdvertise.srcPrefix != null) {
+            routingmanager.removePath(newAdvertise.destPrefix, newAdvertise.srcPrefix,
+              getSDNController());
+            routingmanager.configurePath(newAdvertise.destPrefix, newAdvertise.srcPrefix,
+              edgeNode, gateway,
+              getSDNController
+              ());
+          }
+        }
         propagateBgpAdvertise((RouteAdvertise) newAdvertise, ((RouteAdvertise) newAdvertise).srcPid);
       } else {
         propagatePolicyAdvertise((PolicyAdvertise) newAdvertise);
@@ -1030,13 +1047,14 @@ public class SdxManager extends SliceHelper {
       } else {
         newAdvertise.safeToken = routeAdvertise.safeToken;
         //Updates
-        //TODO retrive previous routes, how to to it safely?
+        //TODO retrive previous routes, how to do it safely?
         if (routeAdvertise.route.size() > 1) {
           //configure the route if the advertisement is not from a direct customer for access control
           //routingmanager.retriveRouteOfPrefix(routeAdvertise.prefix, SDNController);
           String customerReservId = customerNodes.get(routeAdvertise.advertiserPID).iterator().next();
           String gateway = customerGateway.get(customerReservId);
           String edgeNode = routingmanager.getEdgeRouterByGateway(gateway);
+          routingmanager.removePath(routeAdvertise.destPrefix, getSDNController());
           routingmanager.configurePath(routeAdvertise.destPrefix, edgeNode, gateway, getSDNController
             ());
         }
@@ -1050,6 +1068,8 @@ public class SdxManager extends SliceHelper {
         String customerReservId = customerNodes.get(routeAdvertise.advertiserPID).iterator().next();
         String gateway = customerGateway.get(customerReservId);
         String edgeNode = routingmanager.getEdgeRouterByGateway(gateway);
+        routingmanager.removePath(routeAdvertise.destPrefix, routeAdvertise.srcPrefix,
+          getSDNController());
         routingmanager.configurePath(routeAdvertise.destPrefix, routeAdvertise.srcPrefix, edgeNode,
           gateway, getSDNController());
       }

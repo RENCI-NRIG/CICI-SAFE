@@ -98,7 +98,7 @@ public class SdxExogeniClient extends SliceCommon {
 
   private void loadSlice() throws Exception {
     serverSlice = sliceManagerFactory.create(sliceName, pemLocation, keyLocation, controllerUrl, sshKey);
-    serverSlice.reloadSlice();
+    serverSlice.loadSlice();
   }
 
   public void run(String[] args) {
@@ -155,6 +155,8 @@ public class SdxExogeniClient extends SliceCommon {
         processBgpCmd(params);
       } else if (params[0].equals("policy")) {
         processPolicyCmd(params);
+      } else if(params[0].equals("acl")){
+        processAclCmd(params);
       }
     } catch (Exception e) {
       e.printStackTrace();
@@ -203,7 +205,6 @@ public class SdxExogeniClient extends SliceCommon {
         logger.info(String.format("%s connect to %s: Ok", logPrefix, ip));
         return true;
       } else {
-        serverSlice.sleep(1);
       }
     }
     logger.warn(String.format("%s connect to %s: Failed", logPrefix, ip));
@@ -258,6 +259,31 @@ public class SdxExogeniClient extends SliceCommon {
     policyAdvertise.safeToken = sdToken;
     advertisePolicy(serverurl, policyAdvertise);
     logger.debug("client posted SD policy set and made policy advertisement");
+  }
+
+  private void processAclCmd(String[] params) {
+    if (safeEnabled) {
+      String token = null;
+      checkSafe();
+      RouteAdvertise advertise = new RouteAdvertise();
+      advertise.destPrefix = params[1];
+      advertise.srcPrefix = params[2];
+      advertise.advertiserPID = safeKeyHash;
+      advertise.ownerPID = safeKeyHash;
+      advertise.route.add(safeKeyHash);
+      if (params.length > 3) {
+        //need special tag acl
+        // postASTagAclEntrySD
+        String[] vars = new String[3];
+        String tagAuth = SafeUtils.getPrincipalId(safeServer, "tagauthority");
+        String tag = String.format("%s:%s", tagAuth, params[3]);
+        String res = safeManager.postSdPolicySet(tag, advertise.getSrcPrefix(), advertise
+          .getDestPrefix());
+        logger.debug(res);
+      }
+      //Post SAFE sets
+      //postInitRouteSD
+    }
   }
 
   private void processBgpCmd(String[] params) {
