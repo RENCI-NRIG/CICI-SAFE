@@ -75,6 +75,16 @@
                 <SizeBasedTriggeringPolicy size="250 MB"/>
             </Policies>
         </RollingFile>
+        <RollingFile name="SafeRollingFile" fileName="log/safe-posts.log"
+                     filePattern="log/$${date:yyyy-MM}/app-%d{MM-dd-yyyy}-%i.log.gz" append="false">
+            <PatternLayout>
+                <Pattern>%m%n</Pattern>
+            </PatternLayout>
+            <Policies>
+                <TimeBasedTriggeringPolicy/>
+                <SizeBasedTriggeringPolicy size="250 MB"/>
+            </Policies>
+        </RollingFile>
         <RollingFile name="SliceRollingFile" fileName="log/test-slice.log"
                      filePattern="log/$${date:yyyy-MM}/slice-%d{MM-dd-yyyy}-%i.log.gz"
                      append="false">
@@ -162,12 +172,14 @@
             <AppenderRef ref="RollingFile"/>
         </Logger>
         <Logger name="exoplex.common.utils.SafeUtils" level="info" additivity="false">
+            <AppenderRef ref="SafeRollingFile"/>
             <AppenderRef ref="Console"/>
         </Logger>
         <Logger name="exoplex.common.utils.SafeUtils" level="warn" additivity="false">
             <AppenderRef ref="Console"/>
         </Logger>
         <Logger name="exoplex.common.utils.SafeUtils" level="debug" additivity="false">
+            <AppenderRef ref="Console"/>
             <AppenderRef ref="RollingFile"/>
         </Logger>
         <Logger name="org.apache.commons.httpclient.HttpClient" level="debug" additivity="false">

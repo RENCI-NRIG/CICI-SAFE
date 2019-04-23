@@ -81,6 +81,9 @@ public class SafeUtils {
   public static String postSafeStatements(String safeserver, String requestName, String
     principal, HashMap<String, String> envs, Object[] othervalues) {
     /** Post to remote safesets using apache httpclient */
+    String logitem = String.format("curl http://%s/%s -H \"Content-Type: application/json\"  -d " +
+        "'{\"principal\": \"%s\", \"methodParams\":[OTHER]}'",
+      safeserver, requestName, principal);
     String res = null;
     try {
       DefaultHttpClient httpClient = new DefaultHttpClient();
@@ -89,22 +92,19 @@ public class SafeUtils {
       String params = "{\"principal\":\"PRINCIPAL\",ENVS\"methodParams\":[OTHER]}";
       params = params.replace("ENVS", getEnvs(envs));
       params = params.replace("PRINCIPAL", principal);
-      String others = "";
-      if (othervalues.length > 0) {
-        if (othervalues[0] instanceof String) {
-          others = others + "\"" + othervalues[0] + "\"";
-        } else if (othervalues[0] instanceof Boolean) {
-          others = String.valueOf(othervalues[0]);
+      String[] others = new String[othervalues.length];
+      String[] othersLogFormat = new String[othervalues.length];
+      for(int i = 0; i< othervalues.length; i++){
+        if(othervalues[i] instanceof  String) {
+          others[i] = String.format("\"%s\"", othervalues[i]);
+        }else{
+          others[i] = String.valueOf(othervalues[i]);
         }
       }
-      for (int i = 1; i < othervalues.length; i++) {
-        if (othervalues[i] instanceof String) {
-          others = others + ",\"" + othervalues[i] + "\"";
-        } else if (othervalues[i] instanceof Boolean) {
-          others = others + ",\"" + othervalues[i] + "\"";
-        }
-      }
-      params = params.replace("OTHER", others);
+      String othersString = String.join(",", others);
+      params = params.replace("OTHER", othersString);
+      logitem = logitem.replace("OTHER", othersString);
+      logger.info(logitem);
       logger.debug(requestName + "  " + params);
 
       StringEntity input = new StringEntity(params);
@@ -160,7 +160,7 @@ public class SafeUtils {
   }
 
   public static String getPrincipalId(String safeServer, String keyFile) {
-    String message = SafeUtils.postSafeStatements(safeServer, "whoami", keyFile, new String[]{});
+    String message = postSafeStatements(safeServer, "whoami", keyFile, new String[]{});
     return message.split(":")[0].replace("{", "")
       .replace("'", "")
       .replace(" ", "");
