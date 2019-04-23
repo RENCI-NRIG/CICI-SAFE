@@ -4,9 +4,11 @@ import exoplex.demo.AbstractTestSetting;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 
 import java.util.Arrays;
+import java.util.HashMap;
 
 public class MultiSdxSDLargeSetting extends AbstractTestSetting {
   public String sdxConfigDir = sdxSimpleDir + "config/multisdx/";
+  HashMap<String, String> clientSdxNode = new HashMap<>();
 
   public MultiSdxSDLargeSetting() {
     setting();
@@ -97,7 +99,6 @@ public class MultiSdxSDLargeSetting extends AbstractTestSetting {
       clientKeyMap.put(clientName, "key_p" + (keyBase + i));
       clientSiteMap.put(clientName, clientSites.get(i));
       clientIpMap.put(clientName, "192.168." + ipBase + ".1/24");
-      clientSdxMap.put(clientName, sdxSliceNames.get(((i + 1) / sdxSliceNames.size())));
       ipBase += 10;
     }
   }
@@ -108,6 +109,10 @@ public class MultiSdxSDLargeSetting extends AbstractTestSetting {
     clientSdxMap.put(clientSlices.get(1), sdxSliceNames.get(0));
     clientSdxMap.put(clientSlices.get(2), sdxSliceNames.get(5));
     clientSdxMap.put(clientSlices.get(3), sdxSliceNames.get(5));
+    clientSdxMap.put(clientSlices.get(0), "e0");
+    clientSdxMap.put(clientSlices.get(1), "e0");
+    clientSdxMap.put(clientSlices.get(2), "e1");
+    clientSdxMap.put(clientSlices.get(3), "e1");
   }
 
   public void setSdxASTags() {
