@@ -45,6 +45,26 @@
                 <SizeBasedTriggeringPolicy size="250 MB"/>
             </Policies>
         </RollingFile>
+        <RollingFile name="SafeRollingFile" fileName="log/safe-posts.log"
+                     filePattern="log/$${date:yyyy-MM}/app-%d{MM-dd-yyyy}-%i.log.gz" append="false">
+            <PatternLayout>
+                <Pattern>%m%n</Pattern>
+            </PatternLayout>
+
+            <Filters>
+                <!-- Now deny warn, error and fatal messages -->
+                <ThresholdFilter level="warn" onMatch="DENY" onMismatch="NEUTRAL"/>
+                <ThresholdFilter level="error" onMatch="DENY" onMismatch="NEUTRAL"/>
+                <ThresholdFilter level="fatal" onMatch="DENY" onMismatch="NEUTRAL"/>
+
+                <!-- This filter accepts info, warn, error, fatal and denies debug/trace -->
+                <ThresholdFilter level="info" onMatch="ACCEPT" onMismatch="DENY"/>
+            </Filters>
+            <Policies>
+                <TimeBasedTriggeringPolicy/>
+                <SizeBasedTriggeringPolicy size="250 MB"/>
+            </Policies>
+        </RollingFile>
         <RollingFile name="NetworkRollingFile" fileName="log/network-manager.log"
                      filePattern="log/$${date:yyyy-MM}/app-%d{MM-dd-yyyy}-%i.log.gz" append="false">
             <PatternLayout>
@@ -120,6 +140,10 @@
         </Logger>
         <Logger name="exoplex.common.utils.SafeUtils" level="debug" additivity="false">
             <AppenderRef ref="RollingFile"/>
+        </Logger>
+        <Logger name="exoplex.common.utils.SafeUtils" level="info" additivity="false">
+            <AppenderRef ref="Console"/>
+            <AppenderRef ref="SafeRollingFile"/>
         </Logger>
         <Logger name="exoplex.sdx.core.SliceHelper" level="info" additivity="false">
             <AppenderRef ref="Console"/>
