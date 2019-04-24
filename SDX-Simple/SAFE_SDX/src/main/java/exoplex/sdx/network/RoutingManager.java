@@ -275,7 +275,11 @@ public class RoutingManager {
 
   public void removePath(String dstIP, String controller) {
     logger.info(String.format("removePath %s %s", dstIP, controller));
-    removePathId(getPathID(null, dstIP), controller);
+    try {
+      removePathId(getPathID(null, dstIP), controller);
+    }catch (Exception e){
+      logger.warn(String.format("Exception when removing path %s %s", dstIP, controller));
+    }
   }
 
   public void removePath(String dstIP, String srcIP, String controller) {

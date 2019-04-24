@@ -8,7 +8,6 @@ import java.util.HashMap;
 
 public class MultiSdxSDLargeSetting extends AbstractTestSetting {
   public String sdxConfigDir = sdxSimpleDir + "config/multisdx/";
-  HashMap<String, String> clientSdxNode = new HashMap<>();
 
   public MultiSdxSDLargeSetting() {
     setting();
@@ -16,6 +15,7 @@ public class MultiSdxSDLargeSetting extends AbstractTestSetting {
 
   public void setting(){
     numSdx = 6;
+    sliceNameSuffix = "cn";
     clientArgs = new String[]{"-c", sdxSimpleDir +
       "client-config/multisdx/client" + ".conf"};
 
@@ -75,7 +75,7 @@ public class MultiSdxSDLargeSetting extends AbstractTestSetting {
     int sdxKeyBase = 100;
     int sdxIpBase = 110;
     for (int i = 0; i < numSdx; i++) {
-      String sdxSliceName = String.format("sdx-%s-cn", i + 1);
+      String sdxSliceName = String.format("sdx-%s-%s", i + 1, sliceNameSuffix);
       sdxConfs.put(sdxSliceName, String.format("%ssdx%s.conf", sdxConfigDir, i + 1));
       String[] sdxArg = new String[]{"-c", sdxConfs.get(sdxSliceName), "-r"};
       String[] sdxNRArg = new String[]{"-c", sdxConfs.get(sdxSliceName)};
@@ -94,7 +94,7 @@ public class MultiSdxSDLargeSetting extends AbstractTestSetting {
     int keyBase = 10;
     int ipBase = 10;
     for (int i = 0; i < clientSites.size(); i++) {
-      String clientName = "c" + i + "-cn";
+      String clientName = String.format("c%s-%s", i, sliceNameSuffix);
       clientSlices.add(clientName);
       clientKeyMap.put(clientName, "key_p" + (keyBase + i));
       clientSiteMap.put(clientName, clientSites.get(i));
@@ -109,10 +109,10 @@ public class MultiSdxSDLargeSetting extends AbstractTestSetting {
     clientSdxMap.put(clientSlices.get(1), sdxSliceNames.get(0));
     clientSdxMap.put(clientSlices.get(2), sdxSliceNames.get(5));
     clientSdxMap.put(clientSlices.get(3), sdxSliceNames.get(5));
-    clientSdxMap.put(clientSlices.get(0), "e0");
-    clientSdxMap.put(clientSlices.get(1), "e0");
-    clientSdxMap.put(clientSlices.get(2), "e1");
-    clientSdxMap.put(clientSlices.get(3), "e1");
+    clientSdxNode.put(clientSlices.get(0), "e0");
+    clientSdxNode.put(clientSlices.get(1), "e0");
+    clientSdxNode.put(clientSlices.get(2), "e1");
+    clientSdxNode.put(clientSlices.get(3), "e1");
   }
 
   public void setSdxASTags() {

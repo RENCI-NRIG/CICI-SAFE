@@ -81,25 +81,21 @@ public class SafeUtils {
   public static String postSafeStatements(String safeserver, String requestName, String
     principal, HashMap<String, String> envs, Object[] othervalues) {
     /** Post to remote safesets using apache httpclient */
-    String logitem = String.format("curl http://%s/%s -H \"Content-Type: application/json\"  -d " +
-        "'{\"principal\": \"%s\", \"methodParams\":[OTHER]}'",
+    String logitem = String.format("curl http://%s/%s -H \"Content-Type:application/json\" -d " +
+        "'{\"principal\": \"%s\", \"methodParams\": [OTHER]}'",
       safeserver, requestName, principal);
     String res = null;
     try {
       DefaultHttpClient httpClient = new DefaultHttpClient();
       logger.debug(safeserver + "/" + requestName);
       HttpPost postRequest = new HttpPost("http://" + safeserver + "/" + requestName);
-      String params = "{\"principal\":\"PRINCIPAL\",ENVS\"methodParams\":[OTHER]}";
+      String params = "{\"principal\": \"PRINCIPAL\", ENVS\"methodParams\": [OTHER]}";
       params = params.replace("ENVS", getEnvs(envs));
       params = params.replace("PRINCIPAL", principal);
       String[] others = new String[othervalues.length];
       String[] othersLogFormat = new String[othervalues.length];
       for(int i = 0; i< othervalues.length; i++){
-        if(othervalues[i] instanceof  String) {
-          others[i] = String.format("\"%s\"", othervalues[i]);
-        }else{
-          others[i] = String.valueOf(othervalues[i]);
-        }
+        others[i] = String.format("\"%s\"", othervalues[i]);
       }
       String othersString = String.join(",", others);
       params = params.replace("OTHER", othersString);
