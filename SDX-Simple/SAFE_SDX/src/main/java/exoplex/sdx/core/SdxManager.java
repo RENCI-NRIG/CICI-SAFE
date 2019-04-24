@@ -249,7 +249,7 @@ public class SdxManager extends SliceHelper {
     }
     if (flag) {
       serverSlice.commitAndWait();
-      serverSlice.sleep(10);
+      serverSlice.sleep(30);
     }
     delFlows();
   }
@@ -264,25 +264,17 @@ public class SdxManager extends SliceHelper {
     while (true) {
       serverSlice.addLink(linkName, node1, node2, bw);
       if (serverSlice.commitAndWait(10, Arrays.asList(new String[]{linkName}))) {
-        serverSlice.sleep(10);
         int newNum1 = serverSlice.getInterfaceNum(node1);
         int newNum2 = serverSlice.getInterfaceNum(node2);
-        if (newNum1 > numInterfaces1 && newNum2 > numInterfaces2) {
-          if (times > 1) {
-            logger.warn(String.format("Tried %s times to add a stitchlink", times));
-          }
-          break;
+        while(newNum1 <= numInterfaces1 || newNum2 <= numInterfaces2){
+          serverSlice.sleep(5);
+          newNum1 = serverSlice.getInterfaceNum(node1);
+          newNum2 = serverSlice.getInterfaceNum(node2);
         }
-
-        serverSlice.sleep(30);
-        newNum1 = serverSlice.getInterfaceNum(node1);
-        newNum2 = serverSlice.getInterfaceNum(node2);
-        if (newNum1 > numInterfaces1 && newNum2 > numInterfaces2) {
-          if (times > 1) {
-            logger.warn(String.format("Tried %s times to add a stitchlink", times));
-          }
-          break;
+        if (times > 1) {
+          logger.warn(String.format("Tried %s times to add a stitchlink", times));
         }
+        break;
       }
       serverSlice.deleteResource(linkName);
       serverSlice.commitAndWait();
@@ -304,23 +296,17 @@ public class SdxManager extends SliceHelper {
     int times = 1;
     while (true) {
       serverSlice.addLink(stitchName, nodeName, bw);
-      serverSlice.commitAndWait(10, Arrays.asList(new String[]{stitchName}));
-      serverSlice.sleep(10);
-      int newNum = serverSlice.getInterfaceNum(nodeName);
-      if (newNum > numInterfaces) {
+      if( serverSlice.commitAndWait(10, Arrays.asList(new String[]{stitchName}))) {
+        int newNum;
+        do{
+          serverSlice.sleep(5);
+          newNum = serverSlice.getInterfaceNum(nodeName);
+        }while (newNum <= numInterfaces);
         if (times > 1) {
           logger.warn(String.format("Tried %s times to add a stitchlink", times));
         }
         break;
-      } else {
-        serverSlice.sleep(30);
-        newNum = serverSlice.getInterfaceNum(nodeName);
-        if (newNum > numInterfaces) {
-          if (times > 1) {
-            logger.warn(String.format("Tried %s times to add a stitchlink", times));
-          }
-          break;
-        }
+      }else {
         serverSlice.deleteResource(stitchName);
         serverSlice.commitAndWait();
         serverSlice.refresh();
@@ -342,23 +328,17 @@ public class SdxManager extends SliceHelper {
     while (true) {
       String mysp = serverSlice.addStitchPort(spName, vlan, stitchUrl, bw);
       serverSlice.stitchSptoNode(mysp, node);
-      serverSlice.commitAndWait(10, Arrays.asList(new String[]{spName + "-net"}));
-      serverSlice.sleep(10);
-      int newNum = serverSlice.getInterfaceNum(nodeName);
-      if (newNum > numInterfaces) {
+      int newNum;
+      if(serverSlice.commitAndWait(10, Arrays.asList(new String[]{spName + "-net"}))) {
+        do {
+          serverSlice.sleep(5);
+          newNum = serverSlice.getInterfaceNum(nodeName);
+        } while (newNum <= numInterfaces);
         if (times > 1) {
           logger.warn(String.format("Tried %s times to add a stitchlink", times));
         }
         break;
-      } else {
-        serverSlice.sleep(30);
-        newNum = serverSlice.getInterfaceNum(nodeName);
-        if (newNum > numInterfaces) {
-          if (times > 1) {
-            logger.warn(String.format("Tried %s times to add a stitchlink", times));
-          }
-          break;
-        }
+      }else{
         serverSlice.deleteResource(spName);
         serverSlice.commitAndWait();
         serverSlice.refresh();
@@ -629,7 +609,6 @@ public class SdxManager extends SliceHelper {
       res.put("gateway", gateway);
       res.put("reservID", net1_stitching_GUID);
       res.put("safeKeyHash", safeManager.getSafeKeyHash());
-      serverSlice.sleep(15);
       updateOvsInterface(node);
       routingmanager.newExternalLink(logLink.getLinkName(),
         ip,
@@ -1020,6 +999,15 @@ public class SdxManager extends SliceHelper {
             routingmanager.removePath(newAdvertise.destPrefix, newAdvertise.srcPrefix,
               getSDNController());
             routingmanager.configurePath(newAdvertise.destPrefix, newAdvertise.srcPrefix,
+              edgeNode, gateway,
+              getSDNController
+                ());
+          }else{
+            logger.error(String.format("Debug Msg: configuring route for policy %s\n new " +
+              "advertise: %s", policyAdvertise.toString(), newAdvertise.toString()));
+            routingmanager.removePath(newAdvertise.destPrefix,
+              getSDNController());
+            routingmanager.configurePath(newAdvertise.destPrefix,
               edgeNode, gateway,
               getSDNController
                 ());
@@ -1431,7 +1419,6 @@ public class SdxManager extends SliceHelper {
     logger.debug("Trying to get DPID of the router " + nodeName);
     while (result == null || !validDPID(result)) {
       updateOvsInterface(nodeName);
-      serverSlice.sleep(1);
       result = serverSlice.getDpid(nodeName, sshKey);
     }
     result = result.replace("\n", "");
