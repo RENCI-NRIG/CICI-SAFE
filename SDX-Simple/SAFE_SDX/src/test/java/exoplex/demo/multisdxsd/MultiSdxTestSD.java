@@ -111,8 +111,14 @@ public class MultiSdxTestSD extends AbstractTest {
           try {
             String clientGateWay = testSetting.clientIpMap.get(clientSlice).replace(".1/24", ".2");
             String sdxInterfaceIP = testSetting.clientIpMap.get(clientSlice).replace(".1/24", ".1/24");
-            String gw = exogeniClients.get(clientSlice).processCmd(String.format("stitch CNode1 %s %s",
-              clientGateWay, sdxInterfaceIP));
+            String gw;
+            if(testSetting.clientSdxNode.containsKey(clientSlice)) {
+              gw = exogeniClients.get(clientSlice).processCmd(String.format("stitch CNode1 %s %s " +
+                  "%s", clientGateWay, sdxInterfaceIP, testSetting.clientSdxNode.get(clientSlice)));
+            }else{
+              gw = exogeniClients.get(clientSlice).processCmd(String.format("stitch CNode1 %s %s",
+                clientGateWay, sdxInterfaceIP));
+            }
             exogeniClients.get(clientSlice).processCmd(String.format("route %s %s",
               testSetting.clientIpMap.get(clientSlice),
               gw));

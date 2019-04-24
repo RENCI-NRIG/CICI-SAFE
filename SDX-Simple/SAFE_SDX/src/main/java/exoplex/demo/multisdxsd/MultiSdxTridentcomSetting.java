@@ -13,6 +13,7 @@ public class MultiSdxTridentcomSetting extends MultiSdxSDLargeSetting{
   @Override
   public void setting(){
     numSdx = 6;
+    sliceNameSuffix = "tri";
     clientArgs = new String[]{"-c", sdxSimpleDir +
       "client-config/multisdx/client" + ".conf"};
 

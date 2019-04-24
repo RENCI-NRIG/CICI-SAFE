@@ -8,6 +8,7 @@ import java.util.List;
 
 public abstract class AbstractTestSetting {
   public int numSdx;
+  public String sliceNameSuffix = "test";
   public ArrayList<String> sdxSliceNames = new ArrayList<>();
   public HashMap<String, String[]> sdxArgs = new HashMap<>();
   public HashMap<String, String[]> sdxNoResetArgs = new HashMap<>();
@@ -23,6 +24,7 @@ public abstract class AbstractTestSetting {
   public HashMap<String, String> clientSiteMap = new HashMap<>();
   public HashMap<String, String> clientIpMap = new HashMap<>();
   public HashMap<String, String> clientSdxMap = new HashMap<>();
+  public HashMap<String, String> clientSdxNode = new HashMap<>();
   public ArrayList<String> clientSites = new ArrayList<>();
   public HashMap<String, List<String>> clientASTagAcls = new HashMap<>();
   public HashMap<String, List<ImmutablePair<String, String>>> clientRouteASTagAcls = new
