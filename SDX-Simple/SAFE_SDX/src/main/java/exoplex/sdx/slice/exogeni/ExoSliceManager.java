@@ -758,7 +758,8 @@ public class ExoSliceManager extends SliceManager {
 
   public int getInterfaceNum(String nodeName) {
     String res = runCmdNode("/bin/bash /root/ifaces.sh", nodeName);
-    logger.debug(String.format("Interfaces: %s", res).replace("\n", " "));
+    logger.debug(String.format("%s %s Interfaces: %s", sliceName, nodeName, res).replace("\n",
+      " "));
     int num = res.split("\n").length;
     return num;
   }
