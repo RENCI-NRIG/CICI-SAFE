@@ -15,7 +15,7 @@ public class MultiSdxSDLargeSetting extends AbstractTestSetting {
 
   public void setting(){
     numSdx = 6;
-    sliceNameSuffix = "cn";
+    sliceNameSuffix = "tri";
     clientArgs = new String[]{"-c", sdxSimpleDir +
       "client-config/multisdx/client" + ".conf"};
 

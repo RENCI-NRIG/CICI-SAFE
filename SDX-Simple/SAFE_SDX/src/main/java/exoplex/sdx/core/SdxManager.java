@@ -249,8 +249,8 @@ public class SdxManager extends SliceHelper {
     }
     if (flag) {
       serverSlice.commitAndWait();
-      serverSlice.sleep(30);
     }
+    serverSlice.sleep(60);
     delFlows();
   }
 
@@ -299,7 +299,7 @@ public class SdxManager extends SliceHelper {
       if( serverSlice.commitAndWait(10, Arrays.asList(new String[]{stitchName}))) {
         int newNum;
         do{
-          serverSlice.sleep(5);
+          serverSlice.sleep(10);
           newNum = serverSlice.getInterfaceNum(nodeName);
         }while (newNum <= numInterfaces);
         if (times > 1) {
@@ -538,11 +538,6 @@ public class SdxManager extends SliceHelper {
       serverSlice.refresh();
       if (sdxnode != null && serverSlice.getComputeNode(sdxnode) != null) {
         node = serverSlice.getComputeNode(sdxnode);
-      /*
-      serverSlice.lockSlice();
-      serverSlice.addLink(stitchname,  node.getName(), bw);
-      serverSlice.commitAndWait(10, Arrays.asList(new String[]{stitchname}));
-      */
         stitchname = allocateStitchLinkName(ip, node);
         addLink(stitchname, node, bw);
         serverSlice.refresh();
@@ -550,11 +545,6 @@ public class SdxManager extends SliceHelper {
         0) {
         node = serverSlice.getComputeNode(edgeRouters.get(site).get(0));
         stitchname = allocateStitchLinkName(ip, node);
-      /*
-      serverSlice.lockSlice();
-      serverSlice.addLink(stitchname, node.getName(), bw);
-      serverSlice.commitAndWait(10, Arrays.asList(new String[]{stitchname}));
-      */
         addLink(stitchname, node, bw);
         serverSlice.refresh();
 
