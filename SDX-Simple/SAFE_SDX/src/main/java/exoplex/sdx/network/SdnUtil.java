@@ -142,8 +142,10 @@ public class SdnUtil {
         .split(",");
     ArrayList<String> retVal =  new ArrayList<>();
     for(String dpid: dpids){
-      String sdpid = Long.toHexString(Long.valueOf(dpid));
-      retVal.add(StringUtils.leftPad(sdpid, 16, '0'));
+      try {
+        String sdpid = Long.toHexString(Long.valueOf(dpid));
+        retVal.add(StringUtils.leftPad(sdpid, 16, '0'));
+      }catch (Exception e){}
     }
     return retVal;
   }
