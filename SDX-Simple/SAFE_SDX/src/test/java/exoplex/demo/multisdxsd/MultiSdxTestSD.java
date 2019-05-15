@@ -23,8 +23,8 @@ import java.util.List;
 
 public class MultiSdxTestSD extends AbstractTest {
   final static Logger logger = LogManager.getLogger(MultiSdxTestSD.class);
-  //final static AbstractModule module = new MultiSdxTridentcomModule();
-  final static AbstractModule module = new MultiSdxSDLargeModule();
+  final static AbstractModule module = new MultiSdxTridentcomModule();
+  //final static AbstractModule module = new MultiSdxSDLargeModule();
   //final static AbstractModule module = new MultiSdxSDMockModule();
 
   public static void main(String[] args) {

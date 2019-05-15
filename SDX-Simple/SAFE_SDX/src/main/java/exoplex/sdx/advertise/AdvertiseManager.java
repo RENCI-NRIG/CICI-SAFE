@@ -87,9 +87,11 @@ public class AdvertiseManager {
 
         //get previously advertised route in other direction, if it is not in the  compliant
         // pair, correct the advertisement
-        RouteAdvertise otherRoute = advertisedRoutes.get(key);
         boolean compliant = false;
         for (ImmutablePair<PolicyAdvertise, RouteAdvertise> pair : cpairs) {
+          ImmutablePair<String, String> k = new ImmutablePair<>(destPrefix, pair.getRight()
+            .srcPrefix);
+          RouteAdvertise otherRoute = advertisedRoutes.getOrDefault(key, null);
           if (pair.getRight().equals(otherRoute)) {
             compliant = true;
           }

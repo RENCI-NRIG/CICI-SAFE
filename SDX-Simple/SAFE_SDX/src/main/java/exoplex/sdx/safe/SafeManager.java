@@ -315,7 +315,7 @@ public class SafeManager {
     try {
       SafeUtils.getPrincipalId(safeServer, "sdx");
     } catch (Exception e) {
-      logger.debug("Safe server not alive yet");
+      logger.debug(String.format("[%s] Safe server not alive yet", safeServerIp));
       return false;
     }
     return true;
