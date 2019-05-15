@@ -27,7 +27,7 @@ import java.util.stream.Collectors;
 public class SafeSlice {
   private static final int COMMIT_COUNT = 5;
   private static final int INTERVAL = 10;
-  public static final String VMVersion = "Ubuntu 17.10";
+  public static final String VMVersion = "Ubuntu 16.04";
   public static final String SafeVMVersion = "Ubuntu 14.04 Docker";
   public static final String CustomerVMVersion = "Ubuntu 14.04";
   private ReentrantLock lock = new ReentrantLock();
