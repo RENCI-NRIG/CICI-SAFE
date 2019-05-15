@@ -23,7 +23,7 @@ resources:
   sdx:
    type: OS::Nova::Server
    properties:
-     name: { get_param: sdx_node_name }
+     name: { get_param: safe_node_name }
      flavor: baremetal
      image: CC-CentOS7
      key_name: { get_param: key_name }
@@ -38,41 +38,14 @@ resources:
            WORKING_DIR=/root
            {
            echo "PermitRootLogin yes" >>/etc/ssh/sshd_config
-           yum install -y docker vim mlocate git maven
+           yum install -y docker
            systemctl start docker
-
-           echo Start Plexus Controller in Container
-           docker pull yaoyj11/plexus
-           docker run -i -t -d -p 8080:8080 -p 6633:6633 -p 3000:3000 -h plexus --name plexus yaoyj11/plexus
-           docker exec -d plexus /bin/bash -c  "cd /root;pkill ryu-manager; ryu-manager ryu/ryu/app/rest_conf_switch.py ryu/ryu/app/rest_qos.py ryu/ryu/app/rest_router_mirror.py ryu/ryu/app/ofctl_rest.py"
 
            echo Start SAFE Server in Container
            docker pull yaoyj11/safeserver-v7
            docker run -i -t -d -p 7777:7777 -h safe --name safe yaoyj11/safeserver-v7
            docker exec -d safe /bin/bash -c  "cd /root/safe;sed -i 's/RIAKSERVER/$riak_ip/g' safe-server/src/main/resources/application.conf;./prdn.sh"
            
-           echo Git Orca
-           cd $WORKING_DIR
-           git clone https://github.com/RENCI-NRIG/orca5.git
-           cd orca5
-           mvn install
-           
-           echo Git Ahab
-           cd $WORKING_DIR
-           cat .ssh/id_rsa.pub >>.ssh/authorized_keys
-           git clone https://github.com/RENCI-NRIG/ahab.git
-           cd ahab
-           mvn install
-
-           echo Git SDX
-           cd $WORKING_DIR
-           git clone --single-branch -b tridentcom https://github.com/RENCI-NRIG/CICI-SAFE.git
-
-           echo Build SDX
-           cd ${WORKING_DIR}/CICI-SAFE/SDX-Simple/SAFE_SDX
-           mvn  clean package appassembler:assemble
-
-
            echo Create ssh key
            ssh-keygen -t rsa -b 4096  -P "" -f "/root/.ssh/id_rsa"  -q
            cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys2
@@ -82,12 +55,8 @@ resources:
            echo Boot Script Done!
            } > ${WORKING_DIR}/boot.log 2>&1
          params:
-           $vsdx_network: { get_param: network_name }
            $riak_ip: { get_param: riak_ip }
-           $sdxserver_ip: { get_attr: [sdx_floating_ip, ip] }
-           $plexus_ip: { get_attr: [sdx_floating_ip, ip] }
-
-
+  
 
 # The parameters section gathers configuration from the user.
 parameters:
@@ -107,7 +76,7 @@ parameters:
     default: sharednet1
     constraints:
     - custom_constraint: neutron.network
-  sdx_node_name:
+  safe_node_name:
     type: string
     description: Name of the sdx server
     default: sdx
