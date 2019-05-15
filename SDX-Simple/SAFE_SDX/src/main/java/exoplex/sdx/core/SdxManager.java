@@ -993,7 +993,7 @@ public class SdxManager extends SliceHelper {
               getSDNController
                 ());
           }else{
-            logger.error(String.format("Debug Msg: configuring route for policy %s\n new " +
+            logger.debug(String.format("Debug Msg: configuring route for policy %s\n new " +
               "advertise: %s", policyAdvertise.toString(), newAdvertise.toString()));
             routingmanager.removePath(newAdvertise.destPrefix,
               getSDNController());
@@ -1034,6 +1034,7 @@ public class SdxManager extends SliceHelper {
           String customerReservId = customerNodes.get(routeAdvertise.advertiserPID).iterator().next();
           String gateway = customerGateway.get(customerReservId);
           String edgeNode = routingmanager.getEdgeRouterByGateway(gateway);
+          routingmanager.removePath(routeAdvertise.destPrefix, getSDNController());
           routingmanager.configurePath(routeAdvertise.destPrefix, edgeNode, gateway, getSDNController
             ());
         }
@@ -1047,6 +1048,8 @@ public class SdxManager extends SliceHelper {
         String customerReservId = customerNodes.get(routeAdvertise.advertiserPID).iterator().next();
         String gateway = customerGateway.get(customerReservId);
         String edgeNode = routingmanager.getEdgeRouterByGateway(gateway);
+        routingmanager.removePath(routeAdvertise.destPrefix, routeAdvertise.srcPrefix,
+          getSDNController());
         routingmanager.configurePath(routeAdvertise.destPrefix, routeAdvertise.srcPrefix, edgeNode,
           gateway, getSDNController());
       }

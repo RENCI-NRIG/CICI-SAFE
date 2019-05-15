@@ -551,7 +551,7 @@ public class ExoSliceManager extends SliceManager {
   }
 
   public boolean waitTillActive(int interval, List<String> resources) throws Exception {
-    logger.debug("Wait until following resources are active: " + String.join(",", resources));
+    logger.info("Wait until following resources are active: " + String.join(",", resources));
     reloadSlice();
     while (true) {
       ArrayList<String> activeResources = new ArrayList<>();
@@ -599,7 +599,7 @@ public class ExoSliceManager extends SliceManager {
         e.printStackTrace();
       }
     }
-    logger.debug("Done, those  resources are active now: " + String.join(",", resources));
+    logger.info("Done, those  resources are active now: " + String.join(",", resources));
     for (String n : getComputeNodes()) {
       logger.debug("ComputeNode: " + n + ", Managment IP =  " + getManagementIP(n));
     }
@@ -698,7 +698,8 @@ public class ExoSliceManager extends SliceManager {
         @Override
         public void run() {
           try {
-            logger.debug(mip + " run commands: " + cmd);
+            logger.debug(String.format("[%s-%s-%s] run commands: %s", sliceName, c.getName(),mip,
+             cmd ));
             String res = Exec.sshExec("root", mip, cmd, sshkey)[0];
             while (res.startsWith("error") && repeat) {
               sleep(5);
@@ -765,7 +766,7 @@ public class ExoSliceManager extends SliceManager {
   }
 
   public String runCmdByIP(final String cmd, String mip, boolean repeat) {
-    logger.debug(mip + " run commands:" + cmd);
+    logger.debug(String.format("[%s-%s] run commands: %s", sliceName, mip, cmd));
     String res[] = Exec.sshExec("root", mip, cmd, sshKey);
     while (repeat && (res[0] == null || res[0].startsWith("error"))) {
       logger.debug(res[1]);
