@@ -359,8 +359,8 @@ public class SliceManager extends SliceCommon {
       BRO = conf.getBoolean("config.bro");
     }
     for (int i = 0; i < num; i++) {
-      s.addCoreEdgeRouterPair(clientSites.get(i % clientSites.size()), "c" + i, "e" + i, "elink" + i, bw);
-      nodelist.add((ComputeNode) s.getResourceByName("c" + i));
+      s.addOVSRouter(clientSites.get(i % clientSites.size()),  "e" + i);
+      nodelist.add((ComputeNode) s.getResourceByName("e" + i));
       if (BRO && i == 0) {
         long brobw = conf.getLong("config.brobw");
         ComputeNode node1 = (ComputeNode) s.getResourceByName("e" + i);
