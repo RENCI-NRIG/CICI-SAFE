@@ -13,7 +13,7 @@ public class TridentSetting extends SliceHelper {
   public static final HashMap<String, String> clientKeyMap = new HashMap<>();
   public static final HashMap<String, String> clientSiteMap = new HashMap<>();
   public static final HashMap<String, String> clientIpMap = new HashMap<>();
-  final static String sdxName = "sdx-tri";
+  final static String sdxName = "sdx-tc";
   static String userDir = System.getProperty("user.dir");
   static String sdxSimpleDir = userDir.split("SDX-Simple")[0] + "SDX-Simple/";
   public final static String sdxConfig = sdxSimpleDir + "config/tri.conf";
