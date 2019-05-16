@@ -13,7 +13,7 @@ public class MultiSdxTridentcomSetting extends MultiSdxSDLargeSetting{
   @Override
   public void setting(){
     numSdx = 6;
-    sliceNameSuffix = "tri";
+    sliceNameSuffix = "tc";
     clientArgs = new String[]{"-c", sdxSimpleDir +
       "client-config/multisdx/client" + ".conf"};
 
@@ -34,15 +34,15 @@ public class MultiSdxTridentcomSetting extends MultiSdxSDLargeSetting{
 
   @Override
   public void addClientSites() {
-    clientSites.add("UFL");
-    clientSites.add("UFL");
-    clientSites.add("UFL");
-    clientSites.add("UFL");
+    clientSites.add("TAMU");
+    clientSites.add("TAMU");
+    clientSites.add("TAMU");
+    clientSites.add("TAMU");
   }
 
   @Override
   public void addSdxSites() {
-    String[] sites = new String[]{"UFL", "UFL", "UFL", "UFL", "UFL"};
+    String[] sites = new String[]{"TAMU", "UH", "UH", "UH", "TAMU"};
     sdxSites.put(sdxSliceNames.get(0), new String[]{sites[0], sites[1]});
     sdxSites.put(sdxSliceNames.get(1), new String[]{sites[1], sites[2]});
     sdxSites.put(sdxSliceNames.get(2), new String[]{sites[1], sites[2]});
@@ -56,6 +56,7 @@ public class MultiSdxTridentcomSetting extends MultiSdxSDLargeSetting{
     clientConnectionPairs.add(new Integer[]{0, 2});
     clientConnectionPairs.add(new Integer[]{1, 3});
     clientConnectionPairs.add(new Integer[]{1, 2});
+    clientConnectionPairs.add(new Integer[]{0, 3});
   }
 
   @Override
