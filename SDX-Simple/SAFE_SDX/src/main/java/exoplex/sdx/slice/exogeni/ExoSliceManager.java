@@ -729,6 +729,7 @@ public class ExoSliceManager extends SliceManager {
    * @return true is there is uninstalled software
    */
   private boolean processCmdRes(String mip, String res) {
+    logger.debug(String.format("%s processing result from %s: %s", sliceName, mip, res));
     if (res.contains("ovs-vsctl: command not found") || res.contains("ovs-ofctl: command not found")) {
       String[] result = Exec.sshExec("root", mip, "apt-get install -y openvswitch-switch",
         sshKey);
