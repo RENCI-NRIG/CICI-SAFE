@@ -7,7 +7,6 @@ import exoplex.sdx.slice.Scripts;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import safe.SdxRoutingSlang;
-
 import java.util.List;
 
 public class SafeManager {
