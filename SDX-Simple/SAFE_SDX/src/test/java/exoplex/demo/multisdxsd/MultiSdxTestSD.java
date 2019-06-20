@@ -28,9 +28,9 @@ import java.util.UUID;
 
 public class MultiSdxTestSD extends AbstractTest {
   final static Logger logger = LogManager.getLogger(MultiSdxTestSD.class);
-  //final static AbstractModule module = new MultiSdxTridentcomModule();
+  final static AbstractModule module = new MultiSdxTridentcomModule();
   //final static AbstractModule module = new MultiSdxSDLargeModule();
-  final static AbstractModule module = new MultiSdxSDModule();
+  //final static AbstractModule module = new MultiSdxSDModule();
   //final static AbstractModule module = new MultiSdxSDMockModule();
 
   public static void main(String[] args) {
@@ -105,8 +105,9 @@ public class MultiSdxTestSD extends AbstractTest {
     logFlowTables(false);
 
     logger.info("test done");
-    logger.info(String.format("Time\n stitch sdx: %s s\n stitch customers: %s s\n connection: %s s\n check " +
-      "connection: %s s", (t1 - t0) / 1000.0, (t2 - t1) / 1000.0, (t3 - t2) / 1000.0, (t4 - t3) / 1000.0));
+    logger.info(String.format("Time\n stitch sdx: %s s\n stitch customers: %s s\n check " +
+      "connection: %s s", (t1 - t0) / 1000.0, (t2 - t1) / 1000.0, (t4 - t3) / 1000.0));
+    logger("Routing ")
   }
 
   @Override

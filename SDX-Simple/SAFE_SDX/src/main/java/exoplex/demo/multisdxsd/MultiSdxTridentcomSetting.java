@@ -113,15 +113,11 @@ public class MultiSdxTridentcomSetting extends MultiSdxSDLargeSetting{
     }));
     clientRouteASTagAcls.put(clientSlices.get(1), Arrays.asList(new ImmutablePair[]{
       new ImmutablePair<String, String>("192.168.40.1/24", "tag0"),
-      new ImmutablePair<String, String>("192.168.40.1/24", "tag1"),
-      new ImmutablePair<String, String>("192.168.30.1/24", "tag0"),
-      new ImmutablePair<String, String>("192.168.30.1/24", "tag1")
+      new ImmutablePair<String, String>("192.168.40.1/24", "tag1")
     }));
     clientRouteASTagAcls.put(clientSlices.get(2), Arrays.asList(new ImmutablePair[]{
       new ImmutablePair<String, String>("192.168.10.1/24", "tag0")
       , new ImmutablePair<String, String>("192.168.10.1/24", "tag1")
-      , new ImmutablePair<String, String>("192.168.20.1/24", "tag0")
-      , new ImmutablePair<String, String>("192.168.20.1/24", "tag1")
     }));
     clientRouteASTagAcls.put(clientSlices.get(3), Arrays.asList(new ImmutablePair[]{
       new ImmutablePair<String, String>("192.168.20.1/24", "tag1"),
@@ -134,15 +130,11 @@ public class MultiSdxTridentcomSetting extends MultiSdxSDLargeSetting{
     }));
     clientPolicyASTagAcls.put(clientSlices.get(1), Arrays.asList(new ImmutablePair[]{
       new ImmutablePair<String, String>("192.168.40.1/24", "tag0"),
-      new ImmutablePair<String, String>("192.168.40.1/24", "tag1"),
-      new ImmutablePair<String, String>("192.168.30.1/24", "tag0"),
-      new ImmutablePair<String, String>("192.168.30.1/24", "tag1")
+      new ImmutablePair<String, String>("192.168.40.1/24", "tag1")
     }));
     clientPolicyASTagAcls.put(clientSlices.get(2), Arrays.asList(new ImmutablePair[]{
       new ImmutablePair<String, String>("192.168.10.1/24", "tag0")
       ,new ImmutablePair<String, String>("192.168.10.1/24", "tag1")
-      ,new ImmutablePair<String, String>("192.168.20.1/24", "tag0")
-      ,new ImmutablePair<String, String>("192.168.20.1/24", "tag1")
     }));
     clientPolicyASTagAcls.put(clientSlices.get(3), Arrays.asList(new ImmutablePair[]{
       new ImmutablePair<String, String>("192.168.20.1/24", "tag1"),
