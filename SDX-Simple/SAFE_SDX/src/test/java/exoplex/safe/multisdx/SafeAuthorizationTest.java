@@ -154,16 +154,18 @@ public class SafeAuthorizationTest extends AuthorityMockMultiSdx {
 
     if (sdpolicytest) {
       String slicec0 = testSetting.clientSlices.get(0);
-      SafeManager safeManagerC0 = safeManagerHashMap.get(slicec0);
+      SafeManager safeManager = safeManagerHashMap.get(slicec0);
       String tagAuthorityPid = getPrincipalId("tagauthority");
       String tag = String.format("%s:%s", tagAuthorityPid, "astag0");
-      String sdToken = safeManagerC0.postSdPolicySet(tag, routeAdvertise.getDestPrefix(),
+      String aclToken = safeManager.postASTagAclEntrySD(tag, routeAdvertise.getDestPrefix(),
         routeAdvertise.getSrcPrefix());
+      String sdToken = safeManager.postSdPolicySet(routeAdvertise.getDestPrefix(),
+          routeAdvertise.getSrcPrefix());
       PolicyAdvertise policyAdvertise = new PolicyAdvertise();
       policyAdvertise.srcPrefix = routeAdvertise.destPrefix;
       policyAdvertise.destPrefix = routeAdvertise.srcPrefix;
-      policyAdvertise.ownerPID = safeManagerC0.getSafeKeyHash();
-      policyAdvertise.route.add(safeManagerC0.getSafeKeyHash());
+      policyAdvertise.ownerPID = safeManager.getSafeKeyHash();
+      policyAdvertise.route.add(safeManager.getSafeKeyHash());
       policyAdvertise.safeToken = sdToken;
     }
   }

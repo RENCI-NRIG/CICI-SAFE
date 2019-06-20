@@ -287,6 +287,7 @@ public class SdxManager extends SliceHelper {
 
   private boolean addLink(String stitchName, String nodeName, long bw) throws TransportException, Exception {
     //TODO use another SliceManager module that mimic the addition of the stitch link
+    logger.info(String.format("Adding link %s %s %s Mbps", stitchName, nodeName, bw/1000000));
     if (serverSlice.getResourceByName(stitchName) != null) {
       return false;
     }

@@ -66,6 +66,7 @@ public class Exec {
         }
       }
     } catch (Exception e) {
+      e.printStackTrace();
     }
     return null;
   }

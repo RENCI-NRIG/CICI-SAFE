@@ -743,6 +743,10 @@ public class ExoSliceManager extends SliceManager {
       Exec.sshExec("root", mip, "rm /var/lib/dpkg/lock;dpkg --configure -a",
         sshKey);
     }
+    if(res.contains("dpkg was interrupted")){
+      Exec.sshExec("root", mip, "dpkg --configure -a",
+          sshKey);
+    }
     if(res.contains("traceroute: command not found")){
       Exec.sshExec("root", mip, "apt-get install -y traceroute", sshKey);
     }

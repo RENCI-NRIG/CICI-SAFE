@@ -51,16 +51,22 @@ public class Scripts {
     String script = String.format("apt-get update\n"
       + "docker pull yaoyj11/%s\n"
       + "docker run -i -t -d -p 7777:7777 -h safe --name safe yaoyj11/%s\n"
+      + "docker exed -d safe /usr/bin/git clone -b multisdx https://github" +
+        ".com/yaoyj11/safe-multisdx.git\n"
       + "docker exec -d safe /bin/bash -c  \"cd /root/safe;"
       + "sed -i 's/http:\\/\\/.*:8098/http:\\/\\/" + riakip + ":8098/g' "
       + "safe-server/src/main/resources/application.conf;"
-      + "./%s\"\n", safeDockerImg, safeDockerImg, safeServerScript);
+      + "cd /root; ./safe-multisdx/%s\"\n", safeDockerImg, safeDockerImg, safeServerScript);
     return script;
   }
 
   public static String restartSafe_v1(String safeServerScript) {
-    return String.format("docker exec -d safe /bin/bash -c  \"cd /root/safe;pkill java;"
-      + "./%s\"\n", safeServerScript);
+    return String.format(
+      "docker exec -d safe /bin/bash -c  \"cd /root;" +
+      "pkill java;" +
+      "/usr/bin/git clone -b multisdx https://github.com/yaoyj11/safe-multisdx.git;"
+      + "cd /root;./safe-multisdx/%s\"\n",
+      safeServerScript);
   }
 
   public static String getRiakPreBootScripts() {
@@ -68,7 +74,8 @@ public class Scripts {
   }
 
   public static String getRiakScripts() {
-    return "docker run -i -t  -d -p 2122:2122 -p 8098:8098 -p 8087:8087 -h riakserver --name riakserver yaoyj11/riakimg\n"
+    return getRiakPreBootScripts() +
+      "docker run -i -t  -d -p 2122:2122 -p 8098:8098 -p 8087:8087 -h riakserver --name riakserver yaoyj11/riakimg\n"
       + "docker ps\n"
       + "docker exec -i -t -d riakserver sudo riak start\n"
       + "docker exec -i -t -d  riakserver sudo riak-admin bucket-type activate  safesets\n"

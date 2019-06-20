@@ -9,7 +9,11 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 public class IperfFlow extends AsyncTask {
+  final static Logger logger = LogManager.getLogger(IperfFlow.class);
   static String baseCmd = "/usr/bin/iperf";
   String iperfServer;
   String managementIp;
@@ -55,7 +59,12 @@ public class IperfFlow extends AsyncTask {
     if (this.threads > 1) {
       cmd = cmd + " -P " + this.threads;
     }
-    results.add(Exec.sshExec("root", managementIp, cmd, sshKey));
+    cmd = cmd + " -p " + this.port;
+    logger.info(cmd);
+    String[] res = Exec.sshExec("root", managementIp, cmd, sshKey);
+    logger.info(res[0]);
+    logger.info(res[1]);
+    results.add(res);
   }
 
   public void stop() {

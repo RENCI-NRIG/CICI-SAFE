@@ -63,6 +63,10 @@ public class SliceHelper extends SliceCommon {
     }
   }
 
+  public void setBw(long bw){
+      this.bw = bw;
+  }
+
   public void processArgs(String[] args) {
     CommandLine cmd = ServerOptions.parseCmd(args);
     String configFilePath = cmd.getOptionValue("config");
@@ -286,7 +290,7 @@ public class SliceHelper extends SliceCommon {
     String res = serverSlice.runCmdNode("ovs-vsctl show", nodeName, false);
     if (res.contains("ovs-vsctl: command not found")) {
       while (true) {
-        String result = serverSlice.runCmdNode("apt-get install -y openvswitch-switch", nodeName, false);
+        String result = serverSlice.runCmdNode("apt-get install -y openvswitch-switch", nodeName, true);
         if (!result.startsWith("error")) {
           break;
         }

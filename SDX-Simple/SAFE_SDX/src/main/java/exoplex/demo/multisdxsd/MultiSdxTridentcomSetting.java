@@ -31,6 +31,25 @@ public class MultiSdxTridentcomSetting extends MultiSdxSDLargeSetting{
 
   }
 
+  @Override
+  public void addSdxSlices() {
+    int sdxKeyBase = 100;
+    int sdxIpBase = 110;
+    String[] sliceNames = new String[]{"SDX-1", "NSP-1", "NSP-2", "NSP-3", "NSP-4","SDX-2"};
+    for (int i = 0; i < numSdx; i++) {
+      String sdxSliceName = sliceNames[i];
+      sdxConfs.put(sdxSliceName, String.format("%ssdx%s.conf", sdxConfigDir, i + 1));
+      String[] sdxArg = new String[]{"-c", sdxConfs.get(sdxSliceName), "-r"};
+      String[] sdxNRArg = new String[]{"-c", sdxConfs.get(sdxSliceName)};
+      sdxSliceNames.add(sdxSliceName);
+      sdxArgs.put(sdxSliceName, sdxArg);
+      sdxNoResetArgs.put(sdxSliceName, sdxNRArg);
+      sdxKeyMap.put(sdxSliceName, String.format("key_p%s", sdxKeyBase + i));
+      sdxUrls.put(sdxSliceName, String.format("http://127.0.0.1:888%s/", i));
+      sdxIpMap.put(sdxSliceName, String.format("192.168.%s.1/24", sdxIpBase));
+      sdxIpBase += 10;
+    }
+  }
 
   @Override
   public void addClientSites() {
@@ -71,18 +90,18 @@ public class MultiSdxTridentcomSetting extends MultiSdxSDLargeSetting{
 
   @Override
   public void setClientASTagAcls() {
-    clientASTagAcls.put(clientSlices.get(0), Arrays.asList(new String[]{"tag0"}));
+    clientASTagAcls.put(clientSlices.get(0), Arrays.asList(new String[]{"tag0","tag2"}));
     clientASTagAcls.put(clientSlices.get(2), Arrays.asList(new String[]{"tag0", "tag1"}));
     clientASTagAcls.put(clientSlices.get(1), Arrays.asList(new String[]{"tag0", "tag1"}));
-    clientASTagAcls.put(clientSlices.get(3), Arrays.asList(new String[]{"tag1"}));
+    clientASTagAcls.put(clientSlices.get(3), Arrays.asList(new String[]{"tag1","tag2"}));
   }
 
   @Override
   public void setUserConnectionTagAcls() {
-    clientTags.put(clientSlices.get(0), Arrays.asList(new String[]{"tag0"}));
+    clientTags.put(clientSlices.get(0), Arrays.asList(new String[]{"tag0", "tag2"}));
     clientTags.put(clientSlices.get(2), Arrays.asList(new String[]{"tag0", "tag1"}));
     clientTags.put(clientSlices.get(1), Arrays.asList(new String[]{"tag0", "tag1"}));
-    clientTags.put(clientSlices.get(3), Arrays.asList(new String[]{"tag1"}));
+    clientTags.put(clientSlices.get(3), Arrays.asList(new String[]{"tag1", "tag2"}));
   }
 
   @Override

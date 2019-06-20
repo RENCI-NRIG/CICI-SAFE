@@ -19,7 +19,8 @@ public abstract class AbstractTestSlice {
   public final Provider<ExogeniClientSlice> exogeniClientSliceProvider;
   public final AbstractTestSetting testSetting;
   final Logger logger = LogManager.getLogger(Exec.class);
-  Long bandwidth = 100000000l;
+  public Long bandwidth = 100000000L;
+  public long stitchBw = 400000000l;
 
   @Inject
   public AbstractTestSlice(Provider<SliceHelper> sliceHelperProvider,

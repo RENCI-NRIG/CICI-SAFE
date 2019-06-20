@@ -40,6 +40,17 @@ public class SdxExogeniClient extends SliceCommon {
   public SdxExogeniClient() {
   }
 
+  public String getManagementIP(String nodeName){
+    if (serverSlice == null) {
+      try {
+        loadSlice();
+      } catch (Exception e) {
+        logger.error(e.getMessage());
+      }
+    }
+      return serverSlice.getManagementIP(nodeName);
+  }
+
   public SdxExogeniClient(String sliceName, String IPPrefix, String safeKeyFile, String[] args) {
     cmd = ServerOptions.parseCmd(args);
     String configFilePath = cmd.getOptionValue("config");
