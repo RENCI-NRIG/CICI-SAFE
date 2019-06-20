@@ -63,11 +63,11 @@ public class SafeManager {
     return safeKeyHash;
   }
 
-  public boolean authorizePrefix(String cushash, String cusip) {
+  public boolean authorizeOwnPrefix(String cushash, String cusip) {
     String[] othervalues = new String[2];
     othervalues[0] = cushash;
     othervalues[1] = cusip;
-    String message = SafeUtils.postSafeStatements(safeServer, "ownPrefix",
+    String message = SafeUtils.postSafeStatements(safeServer, SdxRoutingSlang.authorizeOwnPrefix,
       getSafeKeyHash(),
       othervalues);
     if (message != null && message.contains("Unsatisfied")) {
@@ -83,7 +83,7 @@ public class SafeManager {
     othervalues[1] = String.format("ipv4\\\"%s\\\"", srcip);
     othervalues[2] = dsthash;
     othervalues[3] = String.format("ipv4\\\"%s\\\"", dstip);
-    return SafeUtils.authorize(safeServer, "authZByUserAttr", getSafeKeyHash(),
+    return SafeUtils.authorize(safeServer, SdxRoutingSlang.authZByUserAttr, getSafeKeyHash(),
       othervalues);
   }
 
@@ -104,29 +104,6 @@ public class SafeManager {
       params[4] = String.valueOf(advertise.route.size());
       post(SdxRoutingSlang.postPathTokenSD, params);
     }
-  }
-
-  public boolean authorizeStitchRequest(String customer_slice,
-                                        String customerName,
-                                        String ReservID,
-                                        String keyhash,
-                                        String slicename,
-                                        String nodename
-  ) {
-    /** Post to remote safesets using apache httpclient */
-    String[] othervalues = new String[5];
-    othervalues[0] = customer_slice;
-    othervalues[1] = customerName;
-    othervalues[2] = ReservID;
-    othervalues[3] = slicename;
-    othervalues[4] = nodename;
-    String message = SafeUtils.postSafeStatements(safeServer, "verifyStitch",
-      getSafeKeyHash(),
-      othervalues);
-    if (message == null || message.contains("Unsatisfied")) {
-      return false;
-    } else
-      return true;
   }
 
   public String post(String operation, String[] params) {
@@ -157,17 +134,29 @@ public class SafeManager {
     return res;
   }
 
-  public String postSdPolicySet(String tag, String srcIP, String destIP) {
+  public String postASTagAclEntrySD(String tag, String srcIP, String destIP) {
     String[] params = new String[3];
     params[0] = tag;
     params[1] = srcIP;
     params[2] = destIP;
     String res = SafeUtils.postSafeStatements(safeServer, SdxRoutingSlang.postASTagAclEntrySD,
       getSafeKeyHash(), params);
-    logger.info(res);
     List<String> tokens = SafeUtils.getTokens(res);
-    if (tokens.size() == 2) {
-      return tokens.get(1);
+    if (tokens.size() == 1) {
+      return tokens.get(0);
+    }
+    return null;
+  }
+
+  public String postSdPolicySet(String srcIP, String destIP) {
+    String[] params = new String[2];
+    params[0] = srcIP;
+    params[1] = destIP;
+    String res = SafeUtils.postSafeStatements(safeServer, SdxRoutingSlang.postSdPolicySet,
+        getSafeKeyHash(), params);
+    List<String> tokens = SafeUtils.getTokens(res);
+    if (tokens.size() == 1) {
+      return tokens.get(0);
     }
     return null;
   }
@@ -221,7 +210,7 @@ public class SafeManager {
     String saHash = SafeUtils.getPrincipalId(safeServer, "key_p3");
     String sdxHash = SafeUtils.getPrincipalId(safeServer, this.safeKeyFile);
     othervalues[1] = saHash + ":" + customerSlice;
-    boolean res = SafeUtils.authorize(safeServer, "authorizeStitchByUID", sdxHash, othervalues);
+    boolean res = SafeUtils.authorize(safeServer, SdxRoutingSlang.authorizeStitchByUID, sdxHash, othervalues);
     if (!res) {
       logger.warn("stitchRequest failed");
     }

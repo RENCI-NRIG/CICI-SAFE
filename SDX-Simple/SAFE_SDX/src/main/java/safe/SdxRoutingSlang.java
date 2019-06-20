@@ -53,6 +53,7 @@ public interface SdxRoutingSlang {
   public static final String postTagAclEntry = "postTagAclEntry";
   public static final String postASTagAclEntry = "postASTagAclEntry";
   public static final String postASTagAclEntrySD = "postASTagAclEntrySD";
+  public static final String postSdPolicySet = "postSdPolicySet";
   public static final String postAuthZASPolicy = "postAuthorizeASPolicy";
   public static final String verifyRoute = "verifyRoute";
   public static final String postPathToken = "postPathToken";

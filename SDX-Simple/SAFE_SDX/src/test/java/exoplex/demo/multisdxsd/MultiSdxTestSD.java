@@ -1,11 +1,14 @@
 package exoplex.demo.multisdxsd;
 
+import com.apple.eawt.AppEvent;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import exoplex.demo.AbstractTest;
 import exoplex.demo.AbstractTestSetting;
 import exoplex.demo.AbstractTestSlice;
+import exoplex.experiment.ExperimentBase;
+import exoplex.experiment.flow.FlowManager;
 import exoplex.sdx.core.SdxManager;
 import exoplex.sdx.safe.SafeManager;
 import injection.MultiSdxSDLargeModule;
@@ -19,12 +22,15 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.UUID;
 
 public class MultiSdxTestSD extends AbstractTest {
   final static Logger logger = LogManager.getLogger(MultiSdxTestSD.class);
-  final static AbstractModule module = new MultiSdxTridentcomModule();
+  //final static AbstractModule module = new MultiSdxTridentcomModule();
   //final static AbstractModule module = new MultiSdxSDLargeModule();
+  final static AbstractModule module = new MultiSdxSDModule();
   //final static AbstractModule module = new MultiSdxSDMockModule();
 
   public static void main(String[] args) {
@@ -38,6 +44,7 @@ public class MultiSdxTestSD extends AbstractTest {
     try {
       multiSdxTestSD.testMultiSdxSD();
       //multiSdxTestSD.replaySdnConfiguration("/home/yaoyj11/CICI-SAFE/SDX-Simple/log/sdn.log");
+      //multiSdxTestSD.measureBandwidth();
     } catch (Exception e) {
       e.printStackTrace();
     }
@@ -55,7 +62,7 @@ public class MultiSdxTestSD extends AbstractTest {
   public void before() throws Exception {
     deleteSliceAfterTest = false;
     initTests();
-    deleteSlices();
+    //deleteSlices();
     super.before();
   }
 
@@ -77,14 +84,23 @@ public class MultiSdxTestSD extends AbstractTest {
     stitchCustomerSlices();
     Long t2 = System.currentTimeMillis();
 
+    logger.info("Start advertiseing routes and policies");
     advertiseSDRoutesAndPolicies();
+    //wait for route to be stablized
+    try{
+      Thread.sleep(60000);
+    }catch (Exception e){
+
+    }
 
     connectCustomerNetwork();
     Long t3 = System.currentTimeMillis();
 
+
+    logger.info("Start checking connections");
     checkConnection(3);
     Long t4 = System.currentTimeMillis();
-    traceRoute();
+    //traceRoute();
     Long t5 = System.currentTimeMillis();
     logFlowTables(false);
 
@@ -141,6 +157,33 @@ public class MultiSdxTestSD extends AbstractTest {
     }
   }
 
+  public void measureBandwidth(){
+    startClients();
+    ExperimentBase experiment = new ExperimentBase("~/.ssh/id_rsa");
+    int port = 5001;
+    HashMap<String, Integer> portMap = new HashMap<>();
+    for (Integer[] pair : testSetting.clientConnectionPairs) {
+      int i = pair[0];
+      int j = pair[1];
+      String client = testSetting.clientSlices.get(i);
+      String clientIp = testSetting.clientIpMap.get(client);
+      String clientMIp = exogeniClients.get(client).getManagementIP("CNode1");
+      String peer = testSetting.clientSlices.get(j);
+      String peerMIp = exogeniClients.get(peer).getManagementIP("CNode1");
+      String peerIp = testSetting.clientIpMap.get(peer).replace(".1/24",".2");
+      experiment.addClient(client, clientMIp, clientIp);
+      experiment.addClient(peer, peerMIp, peerIp);
+      int portN = portMap.getOrDefault(peer, port);
+      portMap.put(peer, portN);
+      experiment.addTcpFlow(client, peer, "0", 10, portN);
+      port += 1;
+    }
+    experiment.startFlows(100);
+    experiment.sleep(120);
+    experiment.stopFlows();
+    experiment.printFlowServerResult();
+  }
+
   public void stitchSdxSlices() {
     ArrayList<Thread> tlist = new ArrayList<>();
     for (Integer[] edge : testSetting.sdxNeighbor) {
@@ -173,19 +216,6 @@ public class MultiSdxTestSD extends AbstractTest {
     }
   }
 
-  /*
-  public void stitchSdxSlices() {
-    ArrayList<Thread> tlist = new ArrayList<>();
-    for (Integer[] edge : testSetting.sdxNeighbor) {
-      int i = edge[0];
-      int j = edge[1];
-      String slice1 = testSetting.sdxSliceNames.get(i);
-      String slice2 = testSetting.sdxSliceNames.get(j);
-      sdxManagerMap.get(slice1).adminCmd("stitch", new String[]{testSetting.sdxUrls.get(slice2), "e1"});
-    }
-  }
-  */
-
   private void advertiseSDRoutesAndPolicies() {
     for (String client : testSetting.clientSlices) {
       String clientIp = testSetting.clientIpMap.get(client);
@@ -196,7 +226,7 @@ public class MultiSdxTestSD extends AbstractTest {
           .getLeft(), pair.getRight()));
       }
       if (pairRouteAcls.size() > 0) {
-        logger.debug("\n\n\n\n\n\n\n\n");
+        logger.debug("\n\n");
       }
       List<ImmutablePair<String, String>> pairPolicyAcls = testSetting.clientPolicyASTagAcls
         .getOrDefault(client, new ArrayList<>());
@@ -205,7 +235,7 @@ public class MultiSdxTestSD extends AbstractTest {
           clientIp, pair.getRight()));
       }
       if (pairPolicyAcls.size() > 0) {
-        logger.debug("\n\n\n\n\n\n\n\n");
+        logger.debug("\n\n");
       }
     }
     logger.debug("SD routes made");

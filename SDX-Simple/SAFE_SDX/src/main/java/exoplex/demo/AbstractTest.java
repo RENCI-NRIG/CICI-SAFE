@@ -54,6 +54,22 @@ public abstract class AbstractTest {
     }
   }
 
+  public void startClients(){
+    for (String clientSlice : testSetting.clientSlices) {
+      SdxExogeniClient sdxExogeniClient = injector.getProvider(SdxExogeniClient.class).get();
+      sdxExogeniClient.config(clientSlice,
+          testSetting.clientIpMap.get(clientSlice),
+          testSetting.clientKeyMap.get(clientSlice),
+          testSetting.clientArgs
+      );
+      exogeniClients.put(clientSlice, sdxExogeniClient);
+    }
+    for (String clientSlice : testSetting.clientSlices) {
+      SdxExogeniClient client = exogeniClients.get(clientSlice);
+      client.setServerUrl(testSetting.sdxUrls.get(testSetting.clientSdxMap.get(clientSlice)));
+    }
+  }
+
   public void startSdxServersAndClients(boolean reset) {
     ArrayList<Thread> tlist = new ArrayList<>();
     for (String slice : testSetting.sdxSliceNames) {
@@ -66,6 +82,7 @@ public abstract class AbstractTest {
               SdxManager sdxManager = sdxServer.run(testSetting.sdxArgs.get(slice),
                 testSetting.sdxUrls.get
                   (slice), slice);
+              sdxManager.setBw(testSlice.stitchBw);
               sdxManagerMap.put(slice, sdxManager);
             } else {
               SdxServer sdxServer = injector.getProvider(SdxServer.class).get();
@@ -92,19 +109,7 @@ public abstract class AbstractTest {
 
     }
 
-    for (String clientSlice : testSetting.clientSlices) {
-      SdxExogeniClient sdxExogeniClient = injector.getProvider(SdxExogeniClient.class).get();
-      sdxExogeniClient.config(clientSlice,
-        testSetting.clientIpMap.get(clientSlice),
-        testSetting.clientKeyMap.get(clientSlice),
-        testSetting.clientArgs
-      );
-      exogeniClients.put(clientSlice, sdxExogeniClient);
-    }
-    for (String clientSlice : testSetting.clientSlices) {
-      SdxExogeniClient client = exogeniClients.get(clientSlice);
-      client.setServerUrl(testSetting.sdxUrls.get(testSetting.clientSdxMap.get(clientSlice)));
-    }
+    startClients();
   }
 
   public String getSafeServerIPfromSdxManager(SdxManager sdxManager) {
@@ -230,9 +235,11 @@ public abstract class AbstractTest {
 
   public void logFlowTables(boolean showAll) {
     ArrayList<String> patterns = new ArrayList<>();
+    ArrayList<String> unWantedPatterns = new ArrayList<>();
+    unWantedPatterns.add(".*icmp.*");
     if (!showAll) {
-      String routeFlowPattern = ".*nw_src=%s.*nw_dst=%s.*actions=dec_ttl.*";
-      String routeFlowPattern1 = ".*nw_dst=%s.*actions=dec_ttl.*";
+      String routeFlowPattern = ".*n_packets=[1-9].*nw_src=%s.*nw_dst=%s.*actions=dec_ttl.*";
+      String routeFlowPattern1 = ".*n_packets=[1-9].*nw_dst=%s.*actions=dec_ttl.*";
       for (Integer[] pair : testSetting.clientConnectionPairs) {
         String slice1 = testSetting.clientSlices.get(pair[0]);
         String slice2 = testSetting.clientSlices.get(pair[1]);
@@ -246,7 +253,7 @@ public abstract class AbstractTest {
     }
     for (SdxManager sdxManager : sdxManagerMap.values()) {
       try {
-        sdxManager.logFlowTables(patterns);
+        sdxManager.logFlowTables(patterns, unWantedPatterns);
       } catch (Exception e) {
         e.printStackTrace();
       }

@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class AuthorityMockMultiSdx extends Authority implements SdxRoutingSlang {
 
@@ -41,6 +42,8 @@ public class AuthorityMockMultiSdx extends Authority implements SdxRoutingSlang 
   public AuthorityMockMultiSdx(String safeServer) {
     super(safeServer);
   }
+
+  private ReentrantLock lock = new ReentrantLock();
 
   @Inject
   public AuthorityMockMultiSdx(AbstractTestSetting testSetting) {
@@ -80,6 +83,7 @@ public class AuthorityMockMultiSdx extends Authority implements SdxRoutingSlang 
   }
 
   public void makeSafePreparation() {
+    lock.lock();
     if (!authorizationMade) {
       authorizationMade = true;
       multiSdxSetting();
@@ -97,6 +101,7 @@ public class AuthorityMockMultiSdx extends Authority implements SdxRoutingSlang 
       checkAuthorization();
       logger.debug("safe preparation made");
     }
+    lock.unlock();
   }
 
   private void multiSdxSetting() {

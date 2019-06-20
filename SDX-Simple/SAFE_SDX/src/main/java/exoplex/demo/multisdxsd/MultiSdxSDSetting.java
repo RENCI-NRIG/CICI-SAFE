@@ -12,6 +12,7 @@ public class MultiSdxSDSetting extends AbstractTestSetting {
     numSdx = 4;
     clientArgs = new String[]{"-c", sdxSimpleDir +
       "client-config/multisdx/client" + ".conf"};
+    sliceNameSuffix = "tc";
 
     addSdxNeighbors();
     addClientConnectionPairs();
@@ -21,8 +22,8 @@ public class MultiSdxSDSetting extends AbstractTestSetting {
     addClientSlices();
     setClientSdxMap();
     setSdxASTags();
-    //setClientASTagAcls();
-    setClientASTagAclsForSD();
+    setClientASTagAcls();
+    //setClientASTagAclsForSD();
     setUserConnectionTagAcls();
   }
 
@@ -59,8 +60,9 @@ public class MultiSdxSDSetting extends AbstractTestSetting {
   public void addSdxSlices() {
     int sdxKeyBase = 100;
     int sdxIpBase = 100;
+    String[] sliceNames = new String[]{"SDX-1", "NSP-1", "NSP-2","SDX-2"};
     for (int i = 0; i < numSdx; i++) {
-      String sdxSliceName = String.format("sdx-%s-cn", i + 1);
+      String sdxSliceName = sliceNames[i];
       sdxConfs.put(sdxSliceName, String.format("%ssdx%s.conf", sdxConfigDir, i + 1));
       String[] sdxArg = new String[]{"-c", sdxConfs.get(sdxSliceName), "-r"};
       String[] sdxNRArg = new String[]{"-c", sdxConfs.get(sdxSliceName)};
@@ -79,7 +81,7 @@ public class MultiSdxSDSetting extends AbstractTestSetting {
     int keyBase = 10;
     int ipBase = 10;
     for (int i = 0; i < clientSites.size(); i++) {
-      String clientName = "c" + i + "-cn";
+      String clientName = "c" + i + "-" + sliceNameSuffix;
       clientSlices.add(clientName);
       clientKeyMap.put(clientName, "key_p" + (keyBase + i));
       clientSiteMap.put(clientName, clientSites.get(i));
@@ -98,17 +100,17 @@ public class MultiSdxSDSetting extends AbstractTestSetting {
   }
 
   public void setSdxASTags() {
-    sdxASTags.put(sdxSliceNames.get(0), Arrays.asList(new String[]{"astag0", "astag1"}));
-    sdxASTags.put(sdxSliceNames.get(1), Arrays.asList(new String[]{"astag0"}));
-    sdxASTags.put(sdxSliceNames.get(2), Arrays.asList(new String[]{"astag1"}));
-    sdxASTags.put(sdxSliceNames.get(3), Arrays.asList(new String[]{"astag0", "astag1"}));
+    sdxASTags.put(sdxSliceNames.get(0), Arrays.asList(new String[]{"tag0", "tag1"}));
+    sdxASTags.put(sdxSliceNames.get(1), Arrays.asList(new String[]{"tag0"}));
+    sdxASTags.put(sdxSliceNames.get(2), Arrays.asList(new String[]{"tag1"}));
+    sdxASTags.put(sdxSliceNames.get(3), Arrays.asList(new String[]{"tag0", "tag1"}));
   }
 
   public void setClientASTagAcls() {
-    clientASTagAcls.put(clientSlices.get(0), Arrays.asList(new String[]{"astag0"}));
-    clientASTagAcls.put(clientSlices.get(2), Arrays.asList(new String[]{"astag0"}));
-    clientASTagAcls.put(clientSlices.get(1), Arrays.asList(new String[]{"astag1"}));
-    clientASTagAcls.put(clientSlices.get(3), Arrays.asList(new String[]{"astag1"}));
+    clientASTagAcls.put(clientSlices.get(0), Arrays.asList(new String[]{"tag0"}));
+    clientASTagAcls.put(clientSlices.get(2), Arrays.asList(new String[]{"tag0"}));
+    clientASTagAcls.put(clientSlices.get(1), Arrays.asList(new String[]{"tag1"}));
+    clientASTagAcls.put(clientSlices.get(3), Arrays.asList(new String[]{"tag1"}));
   }
 
   @Override
@@ -121,12 +123,12 @@ public class MultiSdxSDSetting extends AbstractTestSetting {
 
   public void setClientASTagAclsForSD() {
     clientRouteASTagAcls.put(clientSlices.get(0), Arrays.asList(new ImmutablePair[]{new
-      ImmutablePair<String, String>("192.168.30.1/24", "astag0")}));
+      ImmutablePair<String, String>("192.168.30.1/24", "tag0")}));
     clientRouteASTagAcls.put(clientSlices.get(2), Arrays.asList(new ImmutablePair[]{new
-      ImmutablePair<String, String>("192.168.10.1/24", "astag0")}));
+      ImmutablePair<String, String>("192.168.10.1/24", "tag0")}));
     clientRouteASTagAcls.put(clientSlices.get(1), Arrays.asList(new ImmutablePair[]{new
-      ImmutablePair<String, String>("192.168.40.1/24", "astag1")}));
+      ImmutablePair<String, String>("192.168.40.1/24", "tag1")}));
     clientRouteASTagAcls.put(clientSlices.get(3), Arrays.asList(new ImmutablePair[]{new
-      ImmutablePair<String, String>("192.168.20.1/24", "astag1")}));
+      ImmutablePair<String, String>("192.168.20.1/24", "tag1")}));
   }
 }

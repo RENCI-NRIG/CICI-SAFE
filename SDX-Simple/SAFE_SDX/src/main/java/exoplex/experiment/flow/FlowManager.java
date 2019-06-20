@@ -7,8 +7,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class FlowManager extends AsyncTask {
+  final static Logger logger = LogManager.getLogger(FlowManager.class);
   static int DEFAULT_PORT = 5001;
   static int DEFAULT_TIME = 60;
   protected final ArrayList<String[]> iperfClientOut = new ArrayList<>();
@@ -47,16 +50,23 @@ public class FlowManager extends AsyncTask {
     return true;
   }
 
-  public boolean addTcpFlow(String c1, String server, String serverDpIP, String bw, int threads) {
-    IperfServer iperfServer = new IperfServer(server, DEFAULT_PORT, IperfServer.TCP, this.sshKey);
+  public boolean addTcpFlow(String clientIP, String server, String serverDpIP, String bw,
+                            int threads) {
+      return addTcpFlow(clientIP, server, serverDpIP, bw, threads, DEFAULT_PORT);
+  }
+
+  public boolean addTcpFlow(String clientIP, String server, String serverDpIP, String bw,
+                            int threads, int port) {
+    logger.info(String.format("Add Tcp Flow: %s %s %s %s", clientIP, server, serverDpIP, threads));
+    IperfServer iperfServer = new IperfServer(server, port, IperfServer.TCP, this.sshKey);
     if (iperfServers.containsKey(iperfServer.toString())) {
       if (!iperfServers.get(iperfServer.toString()).transportProto.equals(IperfServer.TCP)) {
         return false;
       }
     }
     iperfServers.put(iperfServer.toString(), iperfServer);
-    IperfFlow flow = new IperfFlow(c1, serverDpIP, sshKey, DEFAULT_PORT,
-      DEFAULT_TIME, bw, IperfServer.TCP, threads, iperfServer.toString());
+    IperfFlow flow = new IperfFlow(clientIP, serverDpIP, sshKey, port,
+        DEFAULT_TIME, bw, IperfServer.TCP, threads, iperfServer.toString());
     flows.add(flow);
     return true;
   }
@@ -82,14 +92,17 @@ public class FlowManager extends AsyncTask {
 
   void startFlows() {
     for (IperfServer server : iperfServers.values()) {
+      logger.info(String.format("%s start", server.toString()));
       server.start();
     }
     for (IperfFlow flow : flows) {
+      logger.info(String.format("%s client start", flow.toString()));
       flow.start();
     }
   }
 
   public void stopFlows() {
+    logger.info("stop flows");
     for (IperfServer server : iperfServers.values()) {
       server.stop();
     }
