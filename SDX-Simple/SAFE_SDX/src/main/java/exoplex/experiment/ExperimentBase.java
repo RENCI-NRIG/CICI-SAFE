@@ -38,9 +38,19 @@ public class ExperimentBase {
     tlist = new ArrayList<Thread>();
   }
 
+  public ExperimentBase(String sshKey) {
+    flowManager = new FlowManager(sshKey);
+    clients = new HashMap<String, String[]>();
+    flows = new ArrayList<String[]>();
+    files = new ArrayList<String[]>();
+    tlist = new ArrayList<Thread>();
+  }
+
   public void addClient(String name, String managementIP, String dataplaneIP) {
-    clients.put(name, new String[]{managementIP, dataplaneIP});
-    Exec.sshExec("root", managementIP, "apt-get install -y iperf", sshkey);
+    if(!clients.containsKey(name)) {
+      clients.put(name, new String[]{managementIP, dataplaneIP});
+      Exec.sshExec("root", managementIP, "apt-get install -y iperf; pkill iperf", sshkey);
+    }
   }
 
   public void setLatencyTask(String client, String server) {
@@ -84,6 +94,13 @@ public class ExperimentBase {
     final String mip2 = clients.get(server)[0];
     final String dip2 = clients.get(server)[1];
     flowManager.addTcpFlow(mip1, mip2, dip2, bw, threads);
+  }
+
+  public void addTcpFlow(String client, String server, String bw, int threads, int port) {
+    final String mip1 = clients.get(client)[0];
+    final String mip2 = clients.get(server)[0];
+    final String dip2 = clients.get(server)[1];
+    flowManager.addTcpFlow(mip1, mip2, dip2, bw, threads, port);
   }
 
   public void clearFlows() {
@@ -179,9 +196,9 @@ public class ExperimentBase {
     return "echo currentMillis:$(/bin/date \"+%s%3N\");";
   }
 
-  protected void sleep(int seconds) {
+  public void sleep(int seconds) {
     try {
-      sleep(seconds * 1000);
+      Thread.sleep(seconds * 1000);
     } catch (Exception e) {
 
     }

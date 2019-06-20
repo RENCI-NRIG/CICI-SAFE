@@ -10,7 +10,11 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 public class IperfServer extends AsyncTask {
+  final static Logger logger = LogManager.getLogger(IperfServer.class);
 
   public static String TCP = "tcp";
   public static String UDP = "udp";
@@ -45,8 +49,12 @@ public class IperfServer extends AsyncTask {
     if (transportProto.equals(UDP)) {
       cmd = cmd + " -u";
     }
-    results.add(Exec.sshExec("root", ip, cmd,
-      sshKey));
+    logger.info(cmd);
+    String[] res = Exec.sshExec("root", ip, cmd,
+      sshKey);
+    results.add(res);
+    logger.info(res[0]);
+    logger.info(res[1]);
   }
 
   public void stop() {
@@ -69,6 +77,6 @@ public class IperfServer extends AsyncTask {
 
   @Override
   public String toString() {
-    return String.format("ip %s port", this.ip, this.port);
+    return String.format("ip %s port %s", this.ip, this.port);
   }
 }

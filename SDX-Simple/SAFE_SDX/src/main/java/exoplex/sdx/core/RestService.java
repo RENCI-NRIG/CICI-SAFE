@@ -108,7 +108,7 @@ public class RestService {
     }
     patterns.add(pattern);
     try {
-      return sdxManager.logFlowTables(patterns);
+      return sdxManager.logFlowTables(patterns, new ArrayList<>());
     } catch (Exception e) {
       e.printStackTrace();
       return e.getMessage();
