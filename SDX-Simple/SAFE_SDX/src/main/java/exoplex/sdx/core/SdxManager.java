@@ -465,7 +465,7 @@ public class SdxManager extends SliceHelper {
     for (RouteAdvertise routeAdvertise : advertises) {
       if (!routeAdvertise.advertiserPID.equals(newPeer)) {
         if (!routeAdvertise.route.contains(newPeer.peerPID)) {
-          advertiseBgp(newPeer.peerUrl, routeAdvertise);
+          advertiseBgpAsync(newPeer.peerUrl, routeAdvertise);
         }
       }
     }
@@ -481,6 +481,26 @@ public class SdxManager extends SliceHelper {
   private void advertisePolicy(String peerUrl, PolicyAdvertise advertise) {
     logger.info(String.format("advertisePolicy %s", advertise.toString()));
     HttpUtil.postJSON(peerUrl + "sdx/policy", advertise.toJsonObject());
+  }
+
+  private void advertiseBgpAsync(String peerUrl, RouteAdvertise advertise) {
+    Thread thread = new Thread(){
+      @Override
+      public void run(){
+        HttpUtil.postJSON(peerUrl + "sdx/bgp", advertise.toJsonObject());
+      }
+    };
+    thread.start();
+  }
+
+  private void advertisePolicyAsync(String peerUrl, PolicyAdvertise advertise) {
+    Thread thread = new Thread() {
+      @Override
+      public void run() {
+        HttpUtil.postJSON(peerUrl + "sdx/policy", advertise.toJsonObject());
+      }
+    };
+    thread.start();
   }
 
   private String processUnStitchCmd(String[] params) {
@@ -969,7 +989,16 @@ public class SdxManager extends SliceHelper {
     logger.info("SDX network reset");
   }
 
-  public String processPolicyAdvertise(PolicyAdvertise policyAdvertise) {
+  synchronized public String processPolicyAdvertise(PolicyAdvertise policyAdvertise) {
+    /*
+    if(safeEnabled && !safeManager.authorizeOwnPrefix(policyAdvertise.ownerPID, policyAdvertise.srcPrefix)){
+      logger.debug(String.format("%s doesn't own the source prefix %s", policyAdvertise.ownerPID,
+          policyAdvertise.srcPrefix));
+      return "Authorized policy advertise, the owner doesn't own the prefix";
+    }
+    */
+    //Verify the owner owns the source IP prefix
+
     // route with both source and destination address, find matching pairs
     ArrayList<AdvertiseBase> newAdvertises = advertiseManager.receiveStPolicy
       (policyAdvertise);
@@ -1011,7 +1040,7 @@ public class SdxManager extends SliceHelper {
     return newAdvertises.stream().map(AdvertiseBase::toString).collect(Collectors.joining(","));
   }
 
-  public String processBgpAdvertise(RouteAdvertise routeAdvertise) {
+  synchronized public String processBgpAdvertise(RouteAdvertise routeAdvertise) {
     if (safeEnabled && !safeManager.authorizeBgpAdvertise(routeAdvertise)) {
       logger.warn(String.format("Unauthorized routeAdvertise :%s", routeAdvertise));
       return "";
@@ -1060,7 +1089,7 @@ public class SdxManager extends SliceHelper {
     }
   }
 
-  public PeerRequest processPeerRequest(PeerRequest peerRequest) {
+  synchronized public PeerRequest processPeerRequest(PeerRequest peerRequest) {
     updatePeer(peerRequest);
     PeerRequest reply = new PeerRequest();
     reply.peerUrl = serverurl;
@@ -1068,7 +1097,8 @@ public class SdxManager extends SliceHelper {
     return reply;
   }
 
-  public NotifyResult notifyPrefix(String dest, String gateway, String customer_keyhash) {
+  synchronized public NotifyResult notifyPrefix(String dest, String gateway,
+                                                 String customer_keyhash) {
     logger.info(logPrefix + "received notification for ip prefix " + dest);
     NotifyResult notifyResult = new NotifyResult();
     notifyResult.message = "received notification for " + dest;
@@ -1104,10 +1134,10 @@ public class SdxManager extends SliceHelper {
         if (!advertise.route.contains(peer)) {
           if (advertise.srcPrefix == null && safeManager.verifyAS(advertise.ownerPID, advertise
             .getDestPrefix(), peer, advertise.safeToken)) {
-            advertisePolicy(peerUrls.get(peer), advertise);
+            advertisePolicyAsync(peerUrls.get(peer), advertise);
           } else if (advertise.srcPrefix != null && safeManager.verifyAS(advertise.ownerPID,
             advertise.getSrcPrefix(), advertise.getDestPrefix(), peer, advertise.safeToken)) {
-            advertisePolicy(peerUrls.get(peer), advertise);
+            advertisePolicyAsync(peerUrls.get(peer), advertise);
           }
         }
       }
@@ -1129,7 +1159,7 @@ public class SdxManager extends SliceHelper {
             params[4] = advertise.getLength(1);
             String token = safeManager.post(SdxRoutingSlang.postAdvertise, params);
             advertise.safeToken = token;
-            advertiseBgp(peerUrls.get(peer), advertise);
+            advertiseBgpAsync(peerUrls.get(peer), advertise);
           } else if (advertise.srcPrefix != null && safeManager.verifyAS(advertise.ownerPID,
             advertise.getSrcPrefix(), advertise.getDestPrefix(), peer, advertise.safeToken)) {
             String path = advertise.getFormattedPath();
@@ -1143,7 +1173,7 @@ public class SdxManager extends SliceHelper {
             //TODO: update Safe script and modify this part
             String token = safeManager.post(SdxRoutingSlang.postAdvertiseSD, params);
             advertise.safeToken = token;
-            advertiseBgp(peerUrls.get(peer), advertise);
+            advertiseBgpAsync(peerUrls.get(peer), advertise);
           }
         }
       }
@@ -1160,7 +1190,7 @@ public class SdxManager extends SliceHelper {
     routingmanager.retriveRouteOfPrefix(prefix, SDNController);
   }
 
-  public String stitchChameleon(String site, String nodeName, String customer_keyhash, String
+  synchronized public String stitchChameleon(String site, String nodeName, String customer_keyhash, String
     stitchport,
                                 String vlan, String gateway, String ip) {
     String res = "Stitch request unauthorized";
@@ -1611,27 +1641,32 @@ public class SdxManager extends SliceHelper {
     return num;
   }
 
-  public String logFlowTables(List<String> patterns) {
+  public String logFlowTables(List<String> patterns, List<String> unwantedPatterns) {
     String res = "";
     for (String node : serverSlice.getComputeNodes()) {
       if (node.matches(routerPattern)) {
         res = res + String.format("\n--------------------\nFlow on node %s of slice %s:\n", node,
           sliceName);
-        res = res + logFlowTables(node, patterns);
+        res = res + logFlowTables(node, patterns, unwantedPatterns);
       }
     }
     return res;
   }
 
-  private String logFlowTables(String node, List<String> patterns) {
+  private String logFlowTables(String node, List<String> patterns, List<String> unwantedPatterns) {
     logger.debug("------------------");
     logger.debug(String.format("Flow table: %s - %s", sliceName, node));
     String result = serverSlice.runCmdNode(
-      getEchoTimeCMD() + "ovs-ofctl dump-flows br0",
+      "ovs-ofctl dump-flows br0",
       node);
     String[] parts = result.split("\n");
     String ret = "";
     for (String s : parts) {
+      for(String upattern: unwantedPatterns){
+          if(s.matches(upattern)){
+            break;
+          }
+      }
       if (!patterns.isEmpty()) {
         for (String pattern : patterns) {
           if (s.matches(pattern)) {
