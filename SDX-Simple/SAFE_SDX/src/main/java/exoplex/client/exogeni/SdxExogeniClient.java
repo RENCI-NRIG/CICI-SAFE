@@ -262,6 +262,26 @@ public class SdxExogeniClient extends SliceCommon {
     HttpUtil.postJSON(peerUrl + "sdx/policy", advertise.toJsonObject());
   }
 
+  private void advertiseBgpAsync(String peerUrl, RouteAdvertise advertise) {
+    Thread thread = new Thread(){
+      @Override
+      public void run(){
+        HttpUtil.postJSON(peerUrl + "sdx/bgp", advertise.toJsonObject());
+      }
+    };
+    thread.start();
+  }
+
+  private void advertisePolicyAsync(String peerUrl, PolicyAdvertise advertise) {
+    Thread thread = new Thread() {
+      @Override
+      public void run() {
+        HttpUtil.postJSON(peerUrl + "sdx/policy", advertise.toJsonObject());
+      }
+    };
+    thread.start();
+  }
+
   private void processPolicyCmd(String[] params) {
     String tagAuthorityPid = SafeUtils.getPrincipalId(safeServer, "tagauthority");
     String destPrefix = params[1];
@@ -273,12 +293,42 @@ public class SdxExogeniClient extends SliceCommon {
     policyAdvertise.srcPrefix = srcPrefix;
     policyAdvertise.destPrefix = destPrefix;
     checkSafe();
-    String sdToken = safeManager.postSdPolicySet(tag, policyAdvertise.getSrcPrefix(),
+    String sdToken = safeManager.postASTagAclEntrySD(tag, policyAdvertise.getSrcPrefix(),
+        policyAdvertise.getDestPrefix());
+    String sdSetToken = safeManager.postSdPolicySet(policyAdvertise.getSrcPrefix(),
       policyAdvertise.getDestPrefix());
     policyAdvertise.ownerPID = safeManager.getSafeKeyHash();
-    policyAdvertise.safeToken = sdToken;
-    advertisePolicy(serverurl, policyAdvertise);
+    policyAdvertise.safeToken = sdSetToken;
+    advertisePolicyAsync(serverurl, policyAdvertise);
     logger.debug("client posted SD policy set and made policy advertisement");
+  }
+
+  private void processAclCmd(String[] params) {
+    if (safeEnabled) {
+      String token = null;
+      checkSafe();
+      RouteAdvertise advertise = new RouteAdvertise();
+      advertise.destPrefix = params[1];
+      advertise.srcPrefix = params[2];
+      advertise.advertiserPID = safeKeyHash;
+      advertise.ownerPID = safeKeyHash;
+      advertise.route.add(safeKeyHash);
+      if (params.length > 3) {
+        //need special tag acl
+        // postASTagAclEntrySD
+        String[] vars = new String[3];
+        String tagAuth = SafeUtils.getPrincipalId(safeServer, "tagauthority");
+        String tag = String.format("%s:%s", tagAuth, params[3]);
+        String res = safeManager.postASTagAclEntrySD(tag, advertise.getSrcPrefix(), advertise
+          .getDestPrefix());
+        logger.debug(res);
+        res = safeManager.postSdPolicySet(advertise.getSrcPrefix(), advertise
+            .getDestPrefix());
+        logger.debug(res);
+      }
+      //Post SAFE sets
+      //postInitRouteSD
+    }
   }
 
   private void processBgpCmd(String[] params) {
@@ -297,8 +347,11 @@ public class SdxExogeniClient extends SliceCommon {
         String[] vars = new String[3];
         String tagAuth = SafeUtils.getPrincipalId(safeServer, "tagauthority");
         String tag = String.format("%s:%s", tagAuth, params[3]);
-        String res = safeManager.postSdPolicySet(tag, advertise.getSrcPrefix(), advertise
+        String res = safeManager.postASTagAclEntrySD(tag, advertise.getSrcPrefix(), advertise
           .getDestPrefix());
+        logger.debug(res);
+        res = safeManager.postSdPolicySet(advertise.getSrcPrefix(), advertise
+            .getDestPrefix());
         logger.debug(res);
       }
       //Post SAFE sets
@@ -316,7 +369,7 @@ public class SdxExogeniClient extends SliceCommon {
         SdxRoutingSlang.postInitRouteSD, safeKeyHash, safeparams));
       advertise.safeToken = routeToken;
       //pass the token when making bgpAdvertise
-      advertiseBgp(serverurl, advertise);
+      advertiseBgpAsync(serverurl, advertise);
       logger.debug(String.format("posted initRouteSD statement for dst %s src %s pair", advertise
         .destPrefix, advertise.srcPrefix));
     }
