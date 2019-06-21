@@ -1,6 +1,5 @@
 package exoplex.demo.multisdxsd;
 
-import com.apple.eawt.AppEvent;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -8,7 +7,6 @@ import exoplex.demo.AbstractTest;
 import exoplex.demo.AbstractTestSetting;
 import exoplex.demo.AbstractTestSlice;
 import exoplex.experiment.ExperimentBase;
-import exoplex.experiment.flow.FlowManager;
 import exoplex.sdx.core.SdxManager;
 import exoplex.sdx.safe.SafeManager;
 import injection.MultiSdxSDLargeModule;
@@ -43,7 +41,7 @@ public class MultiSdxTestSD extends AbstractTest {
     SafeManager.setSafeDockerImage(multiSdxTestSD.testSetting.dockerImage);
     try {
       multiSdxTestSD.testMultiSdxSD();
-      //multiSdxTestSD.replaySdnConfiguration("/home/yaoyj11/CICI-SAFE/SDX-Simple/log/sdn.log");
+      //multiSdxTestSD.replaySdnConfiguration("/home/yaoyj11/CICI-SAFE/exoplex/log/sdn.log");
       //multiSdxTestSD.measureBandwidth();
     } catch (Exception e) {
       e.printStackTrace();

@@ -47,7 +47,7 @@ public class ExogeniClientSlice extends SliceHelper {
 
   public void processArgs(String[] args) {
 
-    logger.debug("SDX-Simple " + args[0]);
+    logger.debug("exoplex " + args[0]);
 
     CommandLine cmd = ServerOptions.parseCmd(args);
     String configFilePath = cmd.getOptionValue("config");

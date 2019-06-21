@@ -34,7 +34,7 @@ public abstract class AbstractTestSetting {
   public HashMap<String, List<String>> clientTags = new HashMap<>();
   public ArrayList<Integer[]> clientConnectionPairs = new ArrayList<>();
   public String userDir = System.getProperty("user.dir");
-  public String sdxSimpleDir = userDir.split("SDX-Simple")[0] + "SDX-Simple/";
+  public String sdxSimpleDir = userDir.split("exoplex")[0] + "exoplex/";
   public String[] clientArgs;
   public String dockerImage = "safeserver-v8";
   public String safeServerScript = "sdx-routing.sh";

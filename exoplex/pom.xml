@@ -25,8 +25,8 @@
 
 
     <groupId>safe</groupId>
-    <artifactId>exoplex.sdx-simple</artifactId>
-    <name>exoplex.sdx-simple</name>
+    <artifactId>exoplex</artifactId>
+    <name>exoplex</name>
 
     <build>
         <plugins>
