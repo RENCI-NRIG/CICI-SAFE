@@ -128,11 +128,11 @@ public class SafeAuthority implements SdxRoutingSlang, SafeLang {
       String sliceId = principalMap.get("key_p3") + ":" + slice;
       sliceScid.put(slice, sliceId);
       sliceToken.put(slice, safePost(postSliceSet, "key_p3",
-          new String[]{principalMap.get(sliceKeyMap.get(slice)), sliceId, projectId,
-              sliceControlRef,
-              slicePrivRef}));
+        new String[]{principalMap.get(sliceKeyMap.get(slice)), sliceId, projectId,
+          sliceControlRef,
+          slicePrivRef}));
       SafeUtils.getTokens(passDelegation(sliceKeyMap.get(slice),
-          sliceToken.get(slice), sliceId));
+        sliceToken.get(slice), sliceId));
     }
 
     //UserAcl

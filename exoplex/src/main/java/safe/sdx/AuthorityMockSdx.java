@@ -47,6 +47,7 @@ public class AuthorityMockSdx extends Authority implements SdxRoutingSlang {
       ctx.updateLoggers();
       AuthorityMockSdx authorityMock = new AuthorityMockSdx(defaultSafeServer);
       authorityMock.makeSafePreparation();
+<<<<<<< HEAD
     }
     else if(args.length>=4) {
       if(args[0].equals("auth")){
@@ -96,6 +97,22 @@ public class AuthorityMockSdx extends Authority implements SdxRoutingSlang {
         "delegations to user, sdx allows stitching from user\n"
         + "update userKeyFile method token name  ---- add delegation tokens to related safe sets\n"
       );
+=======
+    } else if (args.length == 4) {
+      String userKeyFile = args[0];
+      String slice = args[1];
+      String ip = args[2];
+      String ss = args[3] + ":7777";
+      logger.info(String.format("UserKeyFile:%s sliceName:%s IpPrefix:%s SafeServer:%s",
+        userKeyFile, slice, ip, ss));
+      AuthorityMockSdx mock = new AuthorityMockSdx(ss);
+      mock.addPrincipals();
+      mock.initPrincipals();
+      mock.addUserSlice(userKeyFile, slice, ip);
+      //mock.checkAuthorization();
+    } else {
+      logger.info("Usage: userKeyFile sliceName IPPrefix safeServerIP\n");
+>>>>>>> master
     }
   }
 
@@ -343,7 +360,11 @@ public class AuthorityMockSdx extends Authority implements SdxRoutingSlang {
 
   void verifyAuthZByUserAttr() throws Exception {
     //authZByUserAttr
+<<<<<<< HEAD
     for (int i = 0; i < slices.size(); i++) {
+=======
+    for (int i = 1; i < slices.size(); i++) {
+>>>>>>> master
       String slice = slices.get(i);
       String user = sliceKeyMap.get(slice);
       String userKey = getPrincipalId(user);

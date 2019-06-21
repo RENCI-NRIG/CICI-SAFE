@@ -60,7 +60,11 @@ public abstract class Authority implements SafeLang {
   }
 
   public String safePost(String method, String principal, Object[] others) {
+<<<<<<< HEAD
     String p = principalMap.getOrDefault(principal, principal);
+=======
+    String p = principalMap.get(principal);
+>>>>>>> master
     String msg = SafeUtils.postSafeStatements(safeServer, method, p, others);
     return SafeUtils.getToken(msg);
   }

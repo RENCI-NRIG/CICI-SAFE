@@ -873,7 +873,7 @@ public class ExoSliceManager extends SliceManager {
   }
 
   public void addCoreEdgeRouterPair(String site, String router1, String router2, String linkname, long bw) {
-    NodeBaseInfo ninfo = NodeBase.getImageInfo(SliceEnv.VMVersion);
+    NodeBaseInfo ninfo = NodeBase.getImageInfo(SliceEnv.OVSVersion);
     String nodeImageShortName = ninfo.nisn;
     String nodeImageURL = ninfo.niurl;
     //http://geni-images.renci.org/images/standard/ubuntu/ub1304-ovs-opendaylight-v1.0.0.xml
@@ -892,7 +892,7 @@ public class ExoSliceManager extends SliceManager {
   }
 
   public void addOvsRouter(String site, String router1) {
-    NodeBaseInfo ninfo = NodeBase.getImageInfo(SliceEnv.VMVersion);
+    NodeBaseInfo ninfo = NodeBase.getImageInfo(SliceEnv.OVSVersion);
     String nodeImageShortName = ninfo.nisn;
     String nodeImageURL = ninfo.niurl;
     //http://geni-images.renci.org/images/standard/ubuntu/ub1304-ovs-opendaylight-v1.0.0.xml
@@ -1017,7 +1017,7 @@ public class ExoSliceManager extends SliceManager {
     synchronized (this) {
       logger.debug(String.format("Adding new OVS router to slice %s on site %s", slice.getName(),
         site));
-      NodeBaseInfo ninfo = NodeBase.getImageInfo(SliceEnv.VMVersion);
+      NodeBaseInfo ninfo = NodeBase.getImageInfo(SliceEnv.OVSVersion);
       String nodeImageShortName = ninfo.nisn;
       String nodeImageURL = ninfo.niurl;
       //http://geni-images.renci.org/images/standard/ubuntu/ub1304-ovs-opendaylight-v1.0.0.xml

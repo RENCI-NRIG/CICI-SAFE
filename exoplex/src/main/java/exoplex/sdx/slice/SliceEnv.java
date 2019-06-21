@@ -3,11 +3,18 @@ package exoplex.sdx.slice;
 import exoplex.sdx.slice.exogeni.NodeBase;
 
 public class SliceEnv {
+<<<<<<< HEAD
   public static final String VMVersion = NodeBase.UBUNTU14;
   public static final String OVSVersion = NodeBase.UBUNTU14;
   public static final String SafeVMVersion = NodeBase.U14Docker;
   public static final String CustomerVMVersion = NodeBase.UBUNTU14;
   //public static final String OFP = "-O OpenFlow15";
   public static final String OFP = "-O OpenFlow13";
+=======
+  public static final String OFP = "-O OpenFlow13";
+  public static final String OVSVersion = NodeBase.UBUNTU14;
+  public static final String SafeVMVersion = "Ubuntu 14.04 Docker";
+  public static final String CustomerVMVersion = "Ubuntu 14.04";
+>>>>>>> master
   //public static final String OFP = "";
 }
