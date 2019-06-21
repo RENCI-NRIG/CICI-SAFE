@@ -1,3 +1,3 @@
 #!/bin/bash
 
-./SAFE_SDX/target/appassembler/bin/AuthorityMock "$@"
+./target/appassembler/bin/AuthorityMock "$@"

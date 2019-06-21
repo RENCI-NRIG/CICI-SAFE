@@ -5,7 +5,7 @@
             <PatternLayout
                     pattern="%highlight{%d{HH:mm:ss} [%t] %-5level %logger{36} - %msg%n}{FATAL=red, ERROR=red, WARN=yellow, INFO=black, DEBUG=green, TRACE=blue}"/>
         </Console>
-        <RollingFile name="RollingFile" fileName="log/sdx-simple.log"
+        <RollingFile name="RollingFile" fileName="log/exoplex.log"
                      filePattern="log/$${date:yyyy-MM}/app-%d{MM-dd-yyyy}-%i.log.gz" append="false">
             <PatternLayout>
                 <Pattern>%d %p %c{1.} [%t] %m%n</Pattern>

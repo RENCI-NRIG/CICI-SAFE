@@ -26,7 +26,7 @@ import java.util.HashMap;
 public class SdxTest {
   final static Logger logger = LogManager.getLogger(SdxTest.class);
   static String userDir = System.getProperty("user.dir");
-  static String sdxSimpleDir = userDir.split("SDX-Simple")[0] + "SDX-Simple/";
+  static String sdxSimpleDir = userDir.split("exoplex")[0] + "exoplex/";
   static String[] riakArgs = new String[]{"-c", sdxSimpleDir + "config/riak.conf"};
   static String[] riakDelArgs = new String[]{"-c", sdxSimpleDir + "config/riak.conf", "-d"};
   static SdxManager sdxManager;
