@@ -12,7 +12,7 @@ import java.io.FileReader;
 import java.lang.reflect.Method;
 
 public class RoutingManagerTest {
-  final static String log = "/Users/yaoyj11/SAFE/SDX-Simple/log/routing-manager.log";
+  final static String log = "/Users/yaoyj11/SAFE/exoplex/log/routing-manager.log";
 
 
   public static void main(String args[]) {

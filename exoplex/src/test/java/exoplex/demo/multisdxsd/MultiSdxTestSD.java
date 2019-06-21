@@ -43,7 +43,7 @@ public class MultiSdxTestSD extends AbstractTest {
     SafeManager.setSafeDockerImage(multiSdxTestSD.testSetting.dockerImage);
     try {
       multiSdxTestSD.testMultiSdxSD();
-      //multiSdxTestSD.replaySdnConfiguration("/home/yaoyj11/CICI-SAFE/SDX-Simple/log/sdn.log");
+      //multiSdxTestSD.replaySdnConfiguration("/home/yaoyj11/CICI-SAFE/exoplex/log/sdn.log");
       //multiSdxTestSD.measureBandwidth();
     } catch (Exception e) {
       e.printStackTrace();

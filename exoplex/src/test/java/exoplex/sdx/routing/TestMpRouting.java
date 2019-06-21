@@ -24,7 +24,7 @@ public class TestMpRouting extends SdxManager {
   static Logger logger = LogManager.getLogger(TestMpRouting.class);
   static String site = SiteBase.get("TAMU");
   static String userDir = System.getProperty("user.dir");
-  static String sdxSimpleDir = userDir.split("SDX-Simple")[0] + "SDX-Simple/";
+  static String sdxSimpleDir = userDir.split("exoplex")[0] + "exoplex/";
   static String[] arg1 = {"-c", sdxSimpleDir + "config/test-mptcp.conf"};
   static TestMpRouting mpr;
 
