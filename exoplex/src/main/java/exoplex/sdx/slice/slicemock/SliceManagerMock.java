@@ -163,7 +163,7 @@ public class SliceManagerMock extends SliceManager implements Serializable {
     reloadSlice();
   }
 
-  private void reloadSlice() throws Exception {
+  public void reloadSlice() throws Exception {
     int i = 0;
     sliceProxy = getSliceProxy(pemLocation, keyLocation, controllerUrl);
     do {
