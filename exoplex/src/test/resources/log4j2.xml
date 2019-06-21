@@ -150,11 +150,9 @@
         </Logger>
         <Logger name="exoplex.sdx.network.RoutingManager" level="info" additivity="false">
             <AppenderRef ref="RoutingRollingFile"/>
-            <AppenderRef ref="Console"/>
         </Logger>
         <Logger name="exoplex.sdx.network.NetworkManager" level="info" additivity="false">
             <AppenderRef ref="NetworkRollingFile"/>
-            <AppenderRef ref="Console"/>
         </Logger>
         <Logger name="exoplex.sdx.slice.exogeni.SliceManager" level="info" additivity="true">
             <AppenderRef ref="SliceRollingFile"/>
