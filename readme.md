@@ -1,3 +1,4 @@
+This is the code repository for Exoplex. The SDN controller code we used are in ryu-apps. The SAFE enginer code is available at https://github.com/RENCI-NRIG/SAFE. The SAFE policy based routing scripts are available at https://github.com/yaoyj11/safe-multisdx
 # Exoplex
 ### 1. Compile code
 The java code is compiled with JDK8.
@@ -30,7 +31,31 @@ The java code is compiled with JDK8.
         brobw:           The bandwidth of links between routers and Bro node
         bro:             whether deploy bro when creating the vsdx or not 
 
-### 3. Run individual SDX and clients
+### 3. To run Tridentcom2019 demo experiments in Junit tests
+Demo experiments are implemented in Junit tests. ExoPlex NSP controllers for different networks run in different threads. Different controllers communicate via rest APIs.
+Settings of the experiments are in src/main/java/exoplex/demo/multisdxsd. In those Java settings code, we set the names of the slices, their interconnections, attributes, etc.
+
+The Junit test for experiment 1 and experiment 2 are in exoplex/src/test/java/exoplex/demo/multisdxsd/MultiSdxTestSD.java:testMultiSDXSD. The tests code for the two demos are the same, with settings different.
+We use __Google Guice__ for dependency injection. We use **MultiSdxSDModule** module for experiment 1 and **MultiSDXTridentcomModule** for experiment 2.
+
+1. To run experiment 1, set the module in MultiSdxTestSD.java to **MultiSDXSDModule**
+        
+        final static AbstractModule module = new MultiSdxSDModule();
+
+Run the tests as Junit test, there are output to the console and more detailed logging are in log/demo.log. You can also modify the before() and after() function to create or delete all slices before or after the test
+        
+        mvn test -Dtest=MultiSdxTestSD#testMultiSdxSD
+
+2. To run experiemnt 2, set the module in MultiSdxTestSD.java to **MultiSDXTridentcomModule**
+
+        final static AbstractModule module = new MultiSdxTridentcomModule();
+ 
+Run the demo
+
+        mvn test -Dtest=MultiSdxTestSD#testMultiSdxSD
+
+
+### 4. Run individual SDX and clients
 
 ##### Run SDX
 
@@ -118,7 +143,7 @@ Another way to do this is using Quagga with zebra enabled, and add routing entri
     ./scripts/createslice.sh -c client-config/alice.conf -d
 
 
-### Stitching External Sites (Chameleon, Duke, ESNet...) to Exogeni
+### 4. Stitching External Sites (Chameleon, Duke, ESNet...) to Exogeni
 1. Run sdx server controller, configure the address and port number that sdx server will listen on ("config.serverurl").
 
      ./scripts/sdxserver.sh -c config/sdx.conf
