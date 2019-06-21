@@ -1,6 +1,5 @@
 package exoplex.demo.multisdxsd;
 
-import com.apple.eawt.AppEvent;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
