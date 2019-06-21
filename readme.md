@@ -63,10 +63,12 @@ The java code is compiled with JDK8.
 
         ./scripts/sdx_exogeni_client.sh -c client-config/alice.conf
 
-    Alice stitch CNode0 to sdx, in alice's controller, run:
+Alice stitch CNode0 to sdx, in alice's controller, run:
+
         stitch CNode0 192.168.10.2 192.168.10.1/24
-    The first IP address without netmask is the address of the interface in customer network. Sdx will communicate with the customer using this address as gateway
-    The second IP address with netmask is the address of the interface in SDX slice, the netmask is required.
+
+The first IP address without netmask is the address of the interface in customer network. Sdx will communicate with the customer using this address as gateway
+The second IP address with netmask is the address of the interface in SDX slice, the netmask is required.
     
 [3] The following commands are equivalent:
     ./scripts/sdx_exogeni_client.sh -c client-config/bob.conf -e "stitch CNode0 192.168.10.2 192.168.10.1/24"
@@ -100,55 +102,46 @@ The safeserverIP is the IP address of the safe server container
 
         ./scripts/sdx_exogeni_client.sh -c client-config/alice.conf -e "unstitch CNode0"
 
- This operation will undo the stitching, delete the broadcast link in Sdx slice, revoke all IP prefixes advertised with the stitching client node as gateway, and delete all routes related with the prefix. After undoing the stitching, SDX server can keep runnning and there is no need to restart plexus controller
+This operation will undo the stitching, delete the broadcast link in Sdx slice, revoke all IP prefixes advertised with the stitching client node as gateway, and delete all routes related with the prefix. After undoing the stitching, SDX server can keep runnning and there is no need to restart plexus controller
 
 [10]. [OPTIONAL]
-    For sdx demo, I added scripts to automatically configure the routing table with quagga in client slice. These scripts depends on the IP addresses assigned to client slice, the topology of client slice, which node in client slice is stitched to sdx slice, and the gateway in sdx slice.
-    
-    Setup routing in client side:
-    An example command of adding an entry to the routing table is as follows, this only supports dest IP address with /32 netmask
-    Another way to do this is using Quagga with zebra enabled, and add routing entries in zebra.conf, dest ip with any netmask is supported
-    
-    In the demo, to enable communication between CNode1 in alice and CNode1 in bob, the commands are:
-    CNode1-alice$ ip route add 192.168.20.2/32 via 192.168.10.1
-    CNode0-alice$ ip route add 192.168.20.2/32 via 192.168.33.1
-    CNode1-bob$  ip route add 192.168.10.2/32 via 192.168.20.1
-    CNode0-bob$ ip route add 192.168.10.2/32 via 192.168.34.1
+For sdx demo, I added scripts to automatically configure the routing table with quagga in client slice. These scripts depends on the IP addresses assigned to client slice, the topology of client slice, which node in client slice is stitched to sdx slice, and the gateway in sdx slice.
+Setup routing in client side:
+An example command of adding an entry to the routing table is as follows, this only supports dest IP address with /32 netmask
+Another way to do this is using Quagga with zebra enabled, and add routing entries in zebra.conf, dest ip with any netmask is supported
+
+        ip route add 192.168.20.2/32 via 192.168.10.1
 
 [11]. Delete a slice
-    We can delete a slice with command: ./scripts/createslice.sh -c configFile -d
+ We can delete a slice with command: ./scripts/createslice.sh -c configFile -d
 
     ./scripts/createslice.sh -c client-config/alice.conf -d
 
 
-### titching External Sites (Chameleon, Duke, ESNet...) to Exogeni
+### Stitching External Sites (Chameleon, Duke, ESNet...) to Exogeni
 1. Run sdx server controller, configure the address and port number that sdx server will listen on ("config.serverurl").
 
      ./scripts/sdxserver.sh -c config/sdx.conf
 
 2.  Stitching Chameleon Node to  SDX slice
-    1) First, create a Chameleon node, using vlan tag "3298"
-    2) For Chameleon slice, we need another safe server for it (In this demo, we use the SAFE server in SDX slice for everything, therefore, this step is skipped). 
-    3) Stitch chameleon node to exogeni slice
+1) First, create a Chameleon node, using vlan tag "3298"
+2) For Chameleon slice, we need another safe server for it (In this demo, we use the SAFE server in SDX slice for everything, therefore, this step is skipped). 
+3) Stitch chameleon node to exogeni slice
 
-                ./scripts/sdx_stitchport_client.sh -c config/chameleon.conf
-                >stitch http://geni-orca.renci.org/owl/ion.rdf#AL2S/Chameleon/Cisco/6509/GigabitEthernet/1/1 3298 [Cameleon_Node_IP] 10.32.98.200/24 [SDX_SITE_NAME] [Optional: sdx node name] 
+        ./scripts/sdx_stitchport_client.sh -c config/chameleon.conf
+        >stitch http://geni-orca.renci.org/owl/ion.rdf#AL2S/Chameleon/Cisco/6509/GigabitEthernet/1/1 3298 [Cameleon_Node_IP] 10.32.98.200/24 [SDX_SITE_NAME] [Optional: sdx node name] 
+
 OR
 
         ./scripts/sdx_stitchport_client.sh -c config/carol.conf -e "stitch http://geni-orca.renci.org/owl/ion.rdf#AL2S/Chameleon/Cisco/6509/GigabitEthernet/1/1 3298  10.32.98.204 10.32.98.200/24 [SDX_SITE_NAME] [STITCH_POINT, e.g., c3]"
 
 [6] When stitching a chameleon node to exogeni node, we know the ip address of the chameleon node, say "10.32.98.204". 
-    In the stitching request, we tell the sdx controller what IP address it should use for the new interface on c3 to the stitchport, we can specify any address in the same subnet as the chameleon node, say "10.32.98.200"
-    Note that in sdx server, we use SDN controller to configure the ip address. The ip address is not configured for the physical interface, so we can't ping from exogeni node to chameleon node. But we can ping from the Chameleon node to the exogeni node.
-    a) Chameleon slice advertises its ip prefixes in the same way as ExoGENI slice does [not tested]
+In the stitching request, we tell the sdx controller what IP address it should use for the new interface on c3 to the stitchport, we can specify any address in the same subnet as the chameleon node, say "10.32.98.200"
+Note that in sdx server, we use SDN controller to configure the ip address. The ip address is not configured for the physical interface, so we can't ping from exogeni node to chameleon node. But we can ping from the Chameleon node to the exogeni node.
+a) Chameleon slice advertises its ip prefixes in the same way as ExoGENI slice does [not tested]
 
         ./scripts/sdx_stitchport_client.sh -c config/carol.conf -e "route 10.32.98.1/24 10.32.98.204 [SDX_SLICE_NAME, e.g., sdx] [STITCH_POINT, e.g., c3]"
 
-    b) Chameleon node set up routing table when it wants to talk with exogeni slices in different subnets
+b) Chameleon node set up routing table when it wants to talk with exogeni slices in different subnets
 
 NOTE: Now we have "-n" option for sdx server and both clients, which can be used to DISABLE SAFE AUTHORIZATION
-
-
-
-
-
