@@ -175,7 +175,7 @@ public class ExoSliceManager extends SliceManager {
     }
   }
 
-  private void reloadSlice() throws Exception {
+  public void reloadSlice() throws Exception {
     int i = 0;
     sliceProxy = getSliceProxy(pemLocation, keyLocation, controllerUrl);
     do {
