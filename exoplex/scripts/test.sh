@@ -1,3 +1,3 @@
 #!/bin/bash
 
-./SAFE_SDX/target/appassembler/bin/SafeSdxTest "$@"
+./target/appassembler/bin/SafeSdxTest "$@"
