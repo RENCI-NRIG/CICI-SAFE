@@ -61,8 +61,8 @@ public class SafeUtils {
   public static String postSafeStatements(String safeserver, String requestName, String
     principal, Object[] othervalues) {
     String res = postSafeStatements(safeserver, requestName, principal, emptyEnvs, othervalues);
-    if (res.contains("Query failed") || res.contains("Unsatisfied Query")) {
-      logger.warn(res);
+    if (res == null || res.contains("Query failed") || res.contains("Unsatisfied Query")) {
+      logger.warn(String.format("%s %s", safeserver,res));
     }
     return res;
   }

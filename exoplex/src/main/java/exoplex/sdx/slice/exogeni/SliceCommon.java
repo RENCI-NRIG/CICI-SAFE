@@ -97,15 +97,17 @@ public abstract class SliceCommon {
     if (conf.hasPath("config.safe")) {
       safeEnabled = conf.getBoolean("config.safe");
     }
-    if (conf.hasPath("config.safeserver")) {
-      safeServerIp = conf.getString("config.safeserver");
-      setSafeServerIp(safeServerIp);
-    }
     if (conf.hasPath("config.plexusinslice")) {
       plexusInSlice = conf.getBoolean("config.plexusinslice");
     }
     if (conf.hasPath("config.safeinslice")) {
       safeInSlice = conf.getBoolean("config.safeinslice");
+    }
+    if(!safeInSlice){
+      if (conf.hasPath("config.safeserver")) {
+        safeServerIp = conf.getString("config.safeserver");
+        setSafeServerIp(safeServerIp);
+      }
     }
     if (conf.hasPath("config.safekey")) {
       safeKeyFile = conf.getString("config.safekey");

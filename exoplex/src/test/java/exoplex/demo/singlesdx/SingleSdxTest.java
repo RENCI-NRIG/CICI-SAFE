@@ -1,7 +1,10 @@
-package exoplex.demo;
+package exoplex.demo.singlesdx;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import exoplex.demo.AbstractTest;
+import exoplex.demo.AbstractTestSetting;
+import exoplex.demo.AbstractTestSlice;
 import injection.SingleSdxModule;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -10,7 +13,6 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
-@Ignore
 public class SingleSdxTest extends AbstractTest {
   final static Logger logger = LogManager.getLogger(SingleSdxTest.class);
 
@@ -21,7 +23,7 @@ public class SingleSdxTest extends AbstractTest {
     singleSdxTest.testSetting = injector.getInstance(AbstractTestSetting.class);
     singleSdxTest.testSlice = injector.getInstance(AbstractTestSlice.class);
     try {
-      singleSdxTest.TestSDX();
+      singleSdxTest.testSDX();
     } catch (Exception e) {
     }
   }
@@ -38,7 +40,7 @@ public class SingleSdxTest extends AbstractTest {
   public void before() throws Exception {
     deleteSliceAfterTest = false;
     initTests();
-    deleteSlices();
+    //deleteSlices();
     super.before();
   }
 
@@ -48,8 +50,13 @@ public class SingleSdxTest extends AbstractTest {
     super.after();
   }
 
+  /**
+   * single sdx test uses exoplex/config/singlesdx/sdx1.conf
+   * Set the sdx key to key_p100 according to the settings
+    * @throws Exception
+   */
   @Test
-  public void TestSDX() throws Exception {
+  public void testSDX() throws Exception {
     startSdxServersAndClients(reset);
     stitchCustomerSlices();
     connectCustomerNetwork();

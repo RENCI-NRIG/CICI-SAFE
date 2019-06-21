@@ -675,7 +675,12 @@ public class ExoSliceManager extends SliceManager {
   }
 
   public String getManagementIP(String nodeName) {
-    return ((ComputeNode) slice.getResourceByName(nodeName)).getManagementIP();
+    ComputeNode node = (ComputeNode)slice.getResourceByName(nodeName);
+    if(node != null) {
+      return ((ComputeNode) slice.getResourceByName(nodeName)).getManagementIP();
+    }else{
+      return null;
+    }
   }
 
   public void copyFile2Node(String lfile, String rfile, String privkey, String nodeName) {

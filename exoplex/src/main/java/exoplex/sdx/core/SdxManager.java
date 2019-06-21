@@ -409,6 +409,7 @@ public class SdxManager extends SliceHelper {
           } else {
             setSafeServerIp(conf.getString("config.safeserver"));
           }
+          safeManager.setSafeServerIp(safeServerIp);
           safeChecked = true;
         }
         jsonparams.put("ckeyhash", safeManager.getSafeKeyHash());
@@ -659,7 +660,7 @@ public class SdxManager extends SliceHelper {
 
     Long t1 = System.currentTimeMillis();
 
-    serverSlice.refresh();
+    serverSlice.loadSlice();
 
     String stitchLinkName = stitchNet.get(customerReserveId);
     String stitchNodeName = stitchLinkName.split("_")[1];
