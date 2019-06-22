@@ -4,6 +4,21 @@ This is the code repository for Exoplex. The SDN controller code we used are in 
 The java code is compiled with JDK8.
 1. Install Orca5 (https://github.com/RENCI-NRIG/orca5)
 2. Install ahab1.7 (https://github.com/RENCI-NRIG/ahab)
+
+   sudo apt install -y maven openjdk-8-jdk
+   WORKING_DIR=~
+   cd $WORKING_DIR
+   git clone https://github.com/RENCI-NRIG/orca5.git
+   cd orca5
+   mvn install
+
+   echo Git Ahab
+   cd $WORKING_DIR
+   cat .ssh/id_rsa.pub >>.ssh/authorized_keys
+   git clone https://github.com/RENCI-NRIG/ahab.git
+   cd ahab
+   mvn install
+
 3. Compile the code
 
         cd CICI-SAFE/exoplex
