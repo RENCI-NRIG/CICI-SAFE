@@ -31,10 +31,6 @@ The java code is compiled with JDK8.
         brobw:           The bandwidth of links between routers and Bro node
         bro:             whether deploy bro when creating the vsdx or not 
 
-<<<<<<< HEAD
-### 3. To run Tridentcom2019 demo experiments in Junit tests
-Demo experiments are implemented in Junit tests. ExoPlex NSP controllers for different networks run in different threads. Different controllers communicate via rest APIs.
-=======
 ### 3. Demo experiments as JUnit test
 Demo experiments are implemented in Junit tests. ExoPlex NSP controllers for different networks run in different threads. Different controllers communicate via rest APIs.
 
@@ -54,7 +50,6 @@ To run the test
 ##### B. MultiSdx Demo
 In multisdx experiments, we have multiple SDX/NSP networks and multiple clients. 
 
->>>>>>> tridentcom2019
 Settings of the experiments are in src/main/java/exoplex/demo/multisdxsd. In those Java settings code, we set the names of the slices, their interconnections, attributes, etc.
 
 The Junit test for experiment 1 and experiment 2 are in exoplex/src/test/java/exoplex/demo/multisdxsd/MultiSdxTestSD.java:testMultiSDXSD. The tests code for the two demos are the same, with settings different.
