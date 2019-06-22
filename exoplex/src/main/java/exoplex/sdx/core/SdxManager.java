@@ -637,12 +637,8 @@ public class SdxManager extends SliceHelper {
       }
       customerNodes.get(customerSafeKeyHash).add(reserveId);
       customerGateway.put(reserveId, gateway);
-<<<<<<< HEAD
     }else{
       logger.info("Unauthorized: stitch request for " + sliceName);
-=======
-    } else {
->>>>>>> master
       res.put("message", String.format("Unauthorized stitch request from (%s, %s)",
         customerSafeKeyHash, customerSlice));
     }
@@ -1223,11 +1219,6 @@ public class SdxManager extends SliceHelper {
           // the requirments
           logger.debug("No existing router at requested site, adding new router");
           String eRouterName = allcoateERouterName(sdxsite);
-<<<<<<< HEAD
-=======
-          String cRouterName = allcoateCRouterName(sdxsite);
-          String eLinkName = allocateELinkName();
->>>>>>> master
           serverSlice.lockSlice();
           serverSlice.refresh();
           serverSlice.addOVSRouter(sdxsite, eRouterName);

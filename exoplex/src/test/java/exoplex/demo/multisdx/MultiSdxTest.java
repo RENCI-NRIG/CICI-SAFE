@@ -5,7 +5,6 @@ import com.google.inject.Injector;
 import exoplex.demo.AbstractTest;
 import exoplex.demo.AbstractTestSetting;
 import exoplex.demo.AbstractTestSlice;
-import exoplex.demo.SdxTest;
 import exoplex.sdx.core.SdxManager;
 import injection.MultiSdxModule;
 import org.apache.logging.log4j.LogManager;
@@ -16,7 +15,7 @@ import org.junit.Test;
 
 
 public class MultiSdxTest extends AbstractTest {
-  final static Logger logger = LogManager.getLogger(SdxTest.class);
+  final static Logger logger = LogManager.getLogger(MultiSdxTest.class);
 
   public static void main(String[] args) {
     MultiSdxTest multiSdxTest = new MultiSdxTest();
