@@ -4,6 +4,21 @@ This is the code repository for Exoplex. The SDN controller code we used are in 
 The java code is compiled with JDK8.
 1. Install Orca5 (https://github.com/RENCI-NRIG/orca5)
 2. Install ahab1.7 (https://github.com/RENCI-NRIG/ahab)
+
+   sudo apt install -y maven openjdk-8-jdk
+   WORKING_DIR=~
+   cd $WORKING_DIR
+   git clone https://github.com/RENCI-NRIG/orca5.git
+   cd orca5
+   mvn install
+
+   echo Git Ahab
+   cd $WORKING_DIR
+   cat .ssh/id_rsa.pub >>.ssh/authorized_keys
+   git clone https://github.com/RENCI-NRIG/ahab.git
+   cd ahab
+   mvn install
+
 3. Compile the code
 
         cd CICI-SAFE/exoplex
@@ -39,13 +54,15 @@ The test implementations are extended from AbstractTest, AbstractTestSlice and A
 In *Test* classes, we use *Google Guice* to determine which *TestSlice* and *TestSetting* classes are used.
 
 ##### A. Single SDX demo
-In single SDX experiment, we have a single SDX slice and multiple customer slices stitching to SDX and communicate via SDX slice
+1. In single SDX experiment, we have a single SDX slice and multiple customer slices stitching to SDX and communicate via SDX slice
 Settings and Slice for single SDX test are in "CICI-SAFE/exoplex/src/main/java/exoplex/demo/singlesdx", the test is implemented in CICI-SAFE/exoplex/src/test/java/exoplex/demo/singlesdx/SingleSdxTest.java
 
 To run the test
 
         cd exoplex
         mvn test -Dtest=SingleSdxTest#testSDX
+
+2. We can also deploy the SDX controller and client controller on multiple hosts. The guide is in demo/aws-deploy.md. A video of step-by-step guide is available at <https://youtu.be/sob9V14e_fA>.
 
 ##### B. MultiSdx Demo
 In multisdx experiments, we have multiple SDX/NSP networks and multiple clients. 

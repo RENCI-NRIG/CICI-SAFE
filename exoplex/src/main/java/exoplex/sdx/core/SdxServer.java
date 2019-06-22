@@ -5,6 +5,7 @@ import com.google.inject.Inject;
 import com.google.inject.Injector;
 import com.google.inject.Provider;
 import injection.MultiSdxModule;
+import injection.SingleSdxModule;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.glassfish.grizzly.http.server.HttpServer;
@@ -30,7 +31,7 @@ public class SdxServer {
 
   public static void main(String[] args) throws IOException, TransportException, Exception {
     System.out.println("starting exoplex.sdx server");
-    Injector injector = Guice.createInjector(new MultiSdxModule());
+    Injector injector = Guice.createInjector(new SingleSdxModule());
     SdxServer sdxServer = injector.getProvider(SdxServer.class).get();
     sdxServer.run(args);
   }

@@ -142,7 +142,6 @@
             <AppenderRef ref="RollingFile"/>
         </Logger>
         <Logger name="exoplex.common.utils.SafeUtils" level="info" additivity="false">
-            <AppenderRef ref="Console"/>
             <AppenderRef ref="SafeRollingFile"/>
         </Logger>
         <Logger name="exoplex.sdx.core.SliceHelper" level="info" additivity="false">

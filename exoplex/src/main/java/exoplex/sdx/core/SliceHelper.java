@@ -58,8 +58,7 @@ public class SliceHelper extends SliceCommon {
   public static void main(String[] args) throws Exception{
     Injector injector = Guice.createInjector(new SingleSdxModule());
     SliceHelper sliceHelper = injector.getInstance(SliceHelper.class);
-    sliceHelper.processArgs(args);
-    sliceHelper.createAndConfigCarrierSlice(sliceHelper.bw);
+    sliceHelper.run(args);
   }
 
   public void setRiakIP(String riakIP) {

@@ -620,7 +620,9 @@ public class SdxManager extends SliceHelper {
       res.put("ip", ip);
       res.put("gateway", gateway);
       res.put("reservID", net1_stitching_GUID);
-      res.put("safeKeyHash", safeManager.getSafeKeyHash());
+      if(safeEnabled) {
+        res.put("safeKeyHash", safeManager.getSafeKeyHash());
+      };
       updateOvsInterface(node);
       routingmanager.newExternalLink(logLink.getLinkName(),
         ip,
