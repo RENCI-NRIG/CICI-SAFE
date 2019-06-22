@@ -10,6 +10,7 @@ import exoplex.sdx.slice.SliceManager;
 import exoplex.sdx.slice.exogeni.NodeBase;
 import exoplex.sdx.slice.exogeni.NodeBaseInfo;
 import exoplex.sdx.slice.exogeni.SiteBase;
+import org.apache.commons.lang.time.DateUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -170,6 +171,8 @@ public class SliceManagerMock extends SliceManager implements Serializable {
       try {
         slice = Slice.loadManifestFile(sliceProxy, sliceName);
         if (slice != null) {
+          Date date = DateUtils.addDays(new Date(), extensionDays);
+          renew(date);
           return;
         }
       } catch (XMLRPCTransportException e) {

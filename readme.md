@@ -31,8 +31,30 @@ The java code is compiled with JDK8.
         brobw:           The bandwidth of links between routers and Bro node
         bro:             whether deploy bro when creating the vsdx or not 
 
+<<<<<<< HEAD
 ### 3. To run Tridentcom2019 demo experiments in Junit tests
 Demo experiments are implemented in Junit tests. ExoPlex NSP controllers for different networks run in different threads. Different controllers communicate via rest APIs.
+=======
+### 3. Demo experiments as JUnit test
+Demo experiments are implemented in Junit tests. ExoPlex NSP controllers for different networks run in different threads. Different controllers communicate via rest APIs.
+
+The test implementations are extended from AbstractTest, AbstractTestSlice and AbstractTestSetting. The *Test* classes contains the test logic, *TestSlice* classes manages creation and deletion of the test slices and *TestSetting* classes manages the settings of the experiment, such as number of SDX slices, number of clients and their attributes etc.
+
+In *Test* classes, we use *Google Guice* to determine which *TestSlice* and *TestSetting* classes are used.
+
+##### A. Single SDX demo
+In single SDX experiment, we have a single SDX slice and multiple customer slices stitching to SDX and communicate via SDX slice
+Settings and Slice for single SDX test are in "CICI-SAFE/exoplex/src/main/java/exoplex/demo/singlesdx", the test is implemented in CICI-SAFE/exoplex/src/test/java/exoplex/demo/singlesdx/SingleSdxTest.java
+
+To run the test
+
+        cd exoplex
+        mvn test -Dtest=SingleSdxTest#testSDX
+
+##### B. MultiSdx Demo
+In multisdx experiments, we have multiple SDX/NSP networks and multiple clients. 
+
+>>>>>>> tridentcom2019
 Settings of the experiments are in src/main/java/exoplex/demo/multisdxsd. In those Java settings code, we set the names of the slices, their interconnections, attributes, etc.
 
 The Junit test for experiment 1 and experiment 2 are in exoplex/src/test/java/exoplex/demo/multisdxsd/MultiSdxTestSD.java:testMultiSDXSD. The tests code for the two demos are the same, with settings different.

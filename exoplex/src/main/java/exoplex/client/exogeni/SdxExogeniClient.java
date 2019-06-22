@@ -10,6 +10,7 @@ import exoplex.common.utils.ServerOptions;
 import exoplex.sdx.advertise.PolicyAdvertise;
 import exoplex.sdx.advertise.RouteAdvertise;
 import exoplex.sdx.safe.SafeManager;
+import exoplex.sdx.slice.SliceEnv;
 import exoplex.sdx.slice.SliceManager;
 import exoplex.sdx.slice.SliceManagerFactory;
 import exoplex.sdx.slice.exogeni.SliceCommon;
@@ -109,7 +110,7 @@ public class SdxExogeniClient extends SliceCommon {
 
   private void loadSlice() throws Exception {
     serverSlice = sliceManagerFactory.create(sliceName, pemLocation, keyLocation, controllerUrl, sshKey);
-    serverSlice.reloadSlice();
+    serverSlice.loadSlice();
   }
 
   public void run(String[] args) {
@@ -248,7 +249,6 @@ public class SdxExogeniClient extends SliceCommon {
         logger.info(String.format("%s connect to %s: Ok", logPrefix, ip));
         return true;
       } else {
-        serverSlice.sleep(1);
       }
     }
     logger.warn(String.format("%s connect to %s: Failed", logPrefix, ip));
@@ -402,11 +402,12 @@ public class SdxExogeniClient extends SliceCommon {
   private void checkSafe() {
     if (safeEnabled && !safeChecked) {
       safeManager = new SafeManager(safeServerIp, safeKeyFile, sshKey);
-      if (safeInSlice && serverSlice.getResourceByName("safe-server") != null) {
-        setSafeServerIp(serverSlice.getManagementIP("safe-server"));
+      if (safeInSlice && serverSlice.getResourceByName(SliceEnv.SAFESERVER) != null) {
+        setSafeServerIp(serverSlice.getManagementIP(SliceEnv.SAFESERVER));
       } else {
         setSafeServerIp(conf.getString("config.safeserver"));
       }
+      safeManager.setSafeServerIp(safeServerIp);
       safeChecked = true;
     }
     if (safeKeyHash == null) {

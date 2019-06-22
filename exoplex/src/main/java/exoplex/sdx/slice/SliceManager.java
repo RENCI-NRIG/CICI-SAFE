@@ -4,6 +4,7 @@ import org.renci.ahab.libtransport.util.TransportException;
 import org.renci.ahab.libtransport.xmlrpc.XMLRPCTransportException;
 
 import java.util.Collection;
+import java.util.Date;
 import java.util.List;
 
 public abstract class SliceManager {
@@ -31,7 +32,7 @@ public abstract class SliceManager {
 
   abstract public String permitStitch(String GUID) throws TransportException;
 
-  abstract public void reloadSlice() throws Exception;
+  abstract public void loadSlice() throws Exception;
 
   abstract public void resetHostNames();
 
@@ -193,4 +194,8 @@ public abstract class SliceManager {
   abstract public Long getBandwidthOfLink(String linkName);
 
   abstract public void sleep(int seconds);
+
+  abstract public void renew(Date newdate);
+
+  abstract public void renew();
 }

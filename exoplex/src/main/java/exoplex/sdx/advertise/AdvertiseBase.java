@@ -104,7 +104,7 @@ public class AdvertiseBase {
       return false;
     }
     for (int i = 0; i < route.size(); i++) {
-      if (this.route.get(i).equals(((AdvertiseBase) routeAdvertise).route.get(i))) {
+      if (!this.route.get(i).equals(((AdvertiseBase) routeAdvertise).route.get(i))) {
         return false;
       }
     }

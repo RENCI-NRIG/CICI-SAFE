@@ -220,6 +220,10 @@ public class MultiSdxTestSD extends AbstractTest {
       List<ImmutablePair<String, String>> pairRouteAcls = testSetting.clientRouteASTagAcls.getOrDefault
         (client, new ArrayList<>());
       for (ImmutablePair<String, String> pair : pairRouteAcls) {
+        exogeniClients.get(client).processCmd(String.format("acl %s %s %s", clientIp, pair
+          .getLeft(), pair.getRight()));
+      }
+      for (ImmutablePair<String, String> pair : pairRouteAcls) {
         exogeniClients.get(client).processCmd(String.format("bgp %s %s %s", clientIp, pair
           .getLeft(), pair.getRight()));
       }

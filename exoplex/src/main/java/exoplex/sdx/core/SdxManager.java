@@ -136,7 +136,7 @@ public class SdxManager extends SliceHelper {
   public void loadSlice() throws TransportException {
     serverSlice = sliceManagerFactory.create(sliceName, pemLocation, keyLocation, controllerUrl, sshKey);
     try {
-      serverSlice.reloadSlice();
+      serverSlice.loadSlice();
     } catch (Exception e) {
       e.printStackTrace();
     }
@@ -409,6 +409,7 @@ public class SdxManager extends SliceHelper {
           } else {
             setSafeServerIp(conf.getString("config.safeserver"));
           }
+          safeManager.setSafeServerIp(safeServerIp);
           safeChecked = true;
         }
         jsonparams.put("ckeyhash", safeManager.getSafeKeyHash());
@@ -660,7 +661,7 @@ public class SdxManager extends SliceHelper {
 
     Long t1 = System.currentTimeMillis();
 
-    serverSlice.refresh();
+    serverSlice.loadSlice();
 
     String stitchLinkName = stitchNet.get(customerReserveId);
     String stitchNodeName = stitchLinkName.split("_")[1];
@@ -1007,8 +1008,8 @@ public class SdxManager extends SliceHelper {
     for (int i = 0; i < newAdvertises.size(); i++) {
       AdvertiseBase newAdvertise = newAdvertises.get(i);
       if (newAdvertise instanceof RouteAdvertise) {
-        logger.info("Updating Bgp advertisement after receiving policies advertisements %s"
-          .format(policyAdvertise.toString()));
+        logger.info(String.format("%s Updating Bgp advertisement after receiving policies " +
+          "advertisement%s", sliceName, policyAdvertise.toString()));
         logger.info(String.format("new advertise: %s", newAdvertise.toString()));
         if (newAdvertise.route.size() > 1) {
           //configure the route if the advertisement is not from a direct customer for access control
@@ -1017,6 +1018,8 @@ public class SdxManager extends SliceHelper {
           String gateway = customerGateway.get(customerReservId);
           String edgeNode = routingmanager.getEdgeRouterByGateway(gateway);
           if (newAdvertise.srcPrefix != null) {
+            logger.debug(String.format("Debug Msg: configuring route for policy %s\n new " +
+              "advertise: %s", policyAdvertise.toString(), newAdvertise.toString()));
             routingmanager.removePath(newAdvertise.destPrefix, newAdvertise.srcPrefix,
               getSDNController());
             routingmanager.configurePath(newAdvertise.destPrefix, newAdvertise.srcPrefix,
@@ -1058,13 +1061,15 @@ public class SdxManager extends SliceHelper {
       } else {
         newAdvertise.safeToken = routeAdvertise.safeToken;
         //Updates
-        //TODO retrive previous routes, how to to it safely?
+        //TODO retrive previous routes, how to do it safely?
         if (routeAdvertise.route.size() > 1) {
           //configure the route if the advertisement is not from a direct customer for access control
           //routingmanager.retriveRouteOfPrefix(routeAdvertise.prefix, SDNController);
           String customerReservId = customerNodes.get(routeAdvertise.advertiserPID).iterator().next();
           String gateway = customerGateway.get(customerReservId);
           String edgeNode = routingmanager.getEdgeRouterByGateway(gateway);
+          logger.debug(String.format("Debug Msg: configuring route for %s", routeAdvertise.toString
+            ()));
           routingmanager.removePath(routeAdvertise.destPrefix, getSDNController());
           routingmanager.configurePath(routeAdvertise.destPrefix, edgeNode, gateway, getSDNController
             ());
@@ -1079,6 +1084,8 @@ public class SdxManager extends SliceHelper {
         String customerReservId = customerNodes.get(routeAdvertise.advertiserPID).iterator().next();
         String gateway = customerGateway.get(customerReservId);
         String edgeNode = routingmanager.getEdgeRouterByGateway(gateway);
+        logger.debug(String.format("Debug Msg: configuring route for %s", routeAdvertise.toString
+          ()));
         routingmanager.removePath(routeAdvertise.destPrefix, routeAdvertise.srcPrefix,
           getSDNController());
         routingmanager.configurePath(routeAdvertise.destPrefix, routeAdvertise.srcPrefix, edgeNode,

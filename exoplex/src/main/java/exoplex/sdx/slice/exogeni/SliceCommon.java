@@ -97,15 +97,17 @@ public abstract class SliceCommon {
     if (conf.hasPath("config.safe")) {
       safeEnabled = conf.getBoolean("config.safe");
     }
-    if (conf.hasPath("config.safeserver")) {
-      safeServerIp = conf.getString("config.safeserver");
-      setSafeServerIp(safeServerIp);
-    }
     if (conf.hasPath("config.plexusinslice")) {
       plexusInSlice = conf.getBoolean("config.plexusinslice");
     }
     if (conf.hasPath("config.safeinslice")) {
       safeInSlice = conf.getBoolean("config.safeinslice");
+    }
+    if(!safeInSlice){
+      if (conf.hasPath("config.safeserver")) {
+        safeServerIp = conf.getString("config.safeserver");
+        setSafeServerIp(safeServerIp);
+      }
     }
     if (conf.hasPath("config.safekey")) {
       safeKeyFile = conf.getString("config.safekey");
@@ -140,7 +142,7 @@ public abstract class SliceCommon {
       }
       br.close();
     } catch (Exception e) {
-      logger.warn(e.getMessage());
+      logger.debug(e.getMessage());
     }
     return res;
   }
@@ -168,7 +170,7 @@ public abstract class SliceCommon {
       }
       br.close();
     } catch (Exception e) {
-      logger.warn("Topology not save to file");
+      logger.debug("Topology not save to file");
     }
   }
 

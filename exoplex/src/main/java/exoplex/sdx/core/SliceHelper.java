@@ -154,7 +154,7 @@ public class SliceHelper extends SliceCommon {
       SliceManager carrier = createCarrierSlice(carrierName, routerNum, bw);
       carrier.commitAndWait();
       try {
-        carrier.reloadSlice();
+        carrier.loadSlice();
       } catch (Exception e) {
         carrier = createCarrierSlice(carrierName, routerNum, bw);
         carrier.commitAndWait();

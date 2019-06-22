@@ -175,7 +175,7 @@ public class ExoSliceManager extends SliceManager {
     }
   }
 
-  public void reloadSlice() throws Exception {
+  private void reloadSlice() throws Exception {
     int i = 0;
     sliceProxy = getSliceProxy(pemLocation, keyLocation, controllerUrl);
     do {
@@ -675,7 +675,12 @@ public class ExoSliceManager extends SliceManager {
   }
 
   public String getManagementIP(String nodeName) {
-    return ((ComputeNode) slice.getResourceByName(nodeName)).getManagementIP();
+    ComputeNode node = (ComputeNode)slice.getResourceByName(nodeName);
+    if(node != null) {
+      return ((ComputeNode) slice.getResourceByName(nodeName)).getManagementIP();
+    }else{
+      return null;
+    }
   }
 
   public void copyFile2Node(String lfile, String rfile, String privkey, String nodeName) {
@@ -949,7 +954,6 @@ public class ExoSliceManager extends SliceManager {
 
   public void stitch(String RID, String customerName, String CID, String secret,
                      String newip) {
-    logger.debug("ndllib TestDriver: START");
     //Main Example Code
     Long t1 = System.currentTimeMillis();
     try {
