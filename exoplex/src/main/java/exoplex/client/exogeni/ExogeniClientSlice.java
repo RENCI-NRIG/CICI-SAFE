@@ -10,6 +10,7 @@ import exoplex.sdx.safe.SafeManager;
 import exoplex.sdx.slice.SliceManager;
 import exoplex.sdx.slice.exogeni.SiteBase;
 import injection.ExoGeniSliceModule;
+import injection.SingleSdxModule;
 import org.apache.commons.cli.CommandLine;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -40,8 +41,9 @@ public class ExogeniClientSlice extends SliceHelper {
   }
 
   public static void main(String[] args) throws Exception {
-    Injector injector = Guice.createInjector(new ExoGeniSliceModule());
+    Injector injector = Guice.createInjector(new SingleSdxModule());
     ExogeniClientSlice cs = injector.getProvider(ExogeniClientSlice.class).get();
+    cs.processArgs(args);
     cs.run();
   }
 

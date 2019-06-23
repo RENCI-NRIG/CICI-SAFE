@@ -97,15 +97,15 @@
 
    echo $res
 
-   principalId=$(echo $res | cut -d"'" -f 2)
+   export principalId=$(echo $res | cut -d"'" -f 2)
 
    echo principalId for ${SAFE_KEYPAIR} is $principalId
 
 ## 4. init safe sets for the new keypair, post policies
    echo ${principalId}
-   WORKING_DIR=~
-   TAGACL='tag0'
-   BIN_DIR=${WORKING_DIR}/CICI-SAFE/exoplex/target/appassembler/bin
+   export WORKING_DIR=~
+   export TAGACL='tag0'
+   export BIN_DIR=${WORKING_DIR}/CICI-SAFE/exoplex/target/appassembler/bin
    ${BIN_DIR}/AuthorityMock init ${principalId} $TAGACL ${SAFE_SERVER}
 
 ## 5. Ask the authorities to make delegations to the client. After that, copy and paste each line from the output of authority to Params

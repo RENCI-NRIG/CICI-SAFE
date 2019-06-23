@@ -3,7 +3,9 @@
  */
 package exoplex.client.exogeni;
 
+import com.google.inject.Guice;
 import com.google.inject.Inject;
+import com.google.inject.Injector;
 import exoplex.common.utils.HttpUtil;
 import exoplex.common.utils.SafeUtils;
 import exoplex.common.utils.ServerOptions;
@@ -14,6 +16,7 @@ import exoplex.sdx.slice.SliceEnv;
 import exoplex.sdx.slice.SliceManager;
 import exoplex.sdx.slice.SliceManagerFactory;
 import exoplex.sdx.slice.exogeni.SliceCommon;
+import injection.SingleSdxModule;
 import org.apache.commons.cli.CommandLine;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -83,8 +86,16 @@ public class SdxExogeniClient extends SliceCommon {
 
   public static void main(String[] args) {
 
-    SdxExogeniClient sdxExogeniClient = new SdxExogeniClient(args);
+    Injector injector = Guice.createInjector(new SingleSdxModule());
+    SdxExogeniClient sdxExogeniClient = injector.getInstance(SdxExogeniClient.class);
     sdxExogeniClient.run(args);
+  }
+
+  public void parseArgs(String[] args){
+    cmd = ServerOptions.parseCmd(args);
+    String configFilePath = cmd.getOptionValue("config");
+    readConfig(configFilePath);
+    logPrefix = "[" + sliceName + "] ";
   }
 
   public void config(String sliceName, String IPPrefix, String safeKeyFile, String[] args) {
