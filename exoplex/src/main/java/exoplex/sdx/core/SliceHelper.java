@@ -1,6 +1,9 @@
 package exoplex.sdx.core;
 
+import com.google.inject.AbstractModule;
+import com.google.inject.Guice;
 import com.google.inject.Inject;
+import com.google.inject.Injector;
 import exoplex.common.utils.PathUtil;
 import exoplex.common.utils.ServerOptions;
 import exoplex.sdx.network.Link;
@@ -10,6 +13,7 @@ import exoplex.sdx.slice.Scripts;
 import exoplex.sdx.slice.SliceManager;
 import exoplex.sdx.slice.SliceManagerFactory;
 import exoplex.sdx.slice.exogeni.SliceCommon;
+import injection.SingleSdxModule;
 import org.apache.commons.cli.CommandLine;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -49,6 +53,13 @@ public class SliceHelper extends SliceCommon {
   @Inject
   public SliceHelper(Authority authority) {
     this.authority = authority;
+  }
+
+  public static void main(String[] args) throws Exception{
+    Injector injector = Guice.createInjector(new SingleSdxModule());
+    SliceHelper sliceHelper = injector.getInstance(SliceHelper.class);
+    sliceHelper.processArgs(args);
+    sliceHelper.createAndConfigCarrierSlice(sliceHelper.bw);
   }
 
   public void setRiakIP(String riakIP) {

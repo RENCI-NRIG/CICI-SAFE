@@ -241,5 +241,6 @@ public class MultiSdxTestSD extends AbstractTest {
       }
     }
     logger.debug("SD routes made");
+    deleteSliceAfterTest = true;
   }
 }
