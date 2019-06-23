@@ -39,13 +39,15 @@ The test implementations are extended from AbstractTest, AbstractTestSlice and A
 In *Test* classes, we use *Google Guice* to determine which *TestSlice* and *TestSetting* classes are used.
 
 ##### A. Single SDX demo
-In single SDX experiment, we have a single SDX slice and multiple customer slices stitching to SDX and communicate via SDX slice
+1. In single SDX experiment, we have a single SDX slice and multiple customer slices stitching to SDX and communicate via SDX slice
 Settings and Slice for single SDX test are in "CICI-SAFE/exoplex/src/main/java/exoplex/demo/singlesdx", the test is implemented in CICI-SAFE/exoplex/src/test/java/exoplex/demo/singlesdx/SingleSdxTest.java
 
 To run the test
 
         cd exoplex
         mvn test -Dtest=SingleSdxTest#testSDX
+
+2. We can also deploy the SDX controller and client controller on multiple hosts. The guide is in demo/aws-deploy.md. A video of step-by-step guide is available at <https://youtu.be/sob9V14e_fA>.
 
 ##### B. MultiSdx Demo
 In multisdx experiments, we have multiple SDX/NSP networks and multiple clients. 
