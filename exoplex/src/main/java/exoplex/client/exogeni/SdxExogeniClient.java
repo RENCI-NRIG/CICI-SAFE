@@ -88,6 +88,7 @@ public class SdxExogeniClient extends SliceCommon {
 
     Injector injector = Guice.createInjector(new SingleSdxModule());
     SdxExogeniClient sdxExogeniClient = injector.getInstance(SdxExogeniClient.class);
+    sdxExogeniClient.parseArgs(args);
     sdxExogeniClient.run(args);
   }
 
@@ -280,6 +281,7 @@ public class SdxExogeniClient extends SliceCommon {
       try {
         jsonparams.put("bandwidth", Long.valueOf(params[3]));
       } catch (Exception e) {
+        jsonparams.put("bandwidth", 0l);
       }
       String res = HttpUtil.postJSON(serverurl + "sdx/connectionrequest", jsonparams);
       logger.info(logPrefix + "get connection result from server:\n" + res);

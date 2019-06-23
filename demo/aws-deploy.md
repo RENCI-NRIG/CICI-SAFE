@@ -1,5 +1,5 @@
-# Deploy SDXsudo apt install -y maven openjdk-8-jdk
-   e
+# Deploy SDX
+
 ## 1. deploy riak server on VM1
 ### a) 
   sudo apt install -y docker.io
@@ -84,7 +84,7 @@
   export riak_ip="IP address of VM1"
   sudo docker pull yaoyj11/safeserver-v7
   sudo docker run -i -t -d -p 7777:7777 -h safe --name safe yaoyj11/safeserver-v7
-  sudo docker exec -itd safe /bin/bash -c  "cd /root/safe;sed -i 's/RIAKSERVER/$riak_ip/g' safe-server/src/main/resources/application.conf;./prdn.sh"
+  sudo docker exec -itd safe /bin/bash -c  "cd /root/safe;sed -i 's/RIAKSERVER/$riak_ip/g' safe-server/src/main/resources/application.conf;./sdx-routing.sh"
 
 ## 3. generate safe key-pair for client
    SAFE_KEYPAIR="alice"
@@ -119,5 +119,8 @@
 ## 7. stitch to sdx
    ${BIN_DIR}/SafeSdxExogeniClient -c client-config/c0.conf -e 'stitch CNode1 192.168.10.2 192.168.10.1/24'
 
-## 8. request connection
+## 8. advertise prefix
+   ${BIN_DIR}/SafeSdxExogeniClient -c client-config/c0.conf -e 'route 192.168.10.1/24 192.169.10.2'
+
+## 9. request connection
    ${BIN_DIR}/SafeSdxExogeniClient -c client-config/c0.conf -e 'link 192.168.10.1/24 192.168.20.1/24'
