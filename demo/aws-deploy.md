@@ -64,7 +64,7 @@
   sudo docker run -i -t -d -p 7777:7777 -h safe --name safe yaoyj11/safeserver-v7
   sudo docker exec -itd safe /bin/bash -c  "cd /root/safe;sed -i 's/RIAKSERVER/$riak_ip/g' safe-server/src/main/resources/application.conf;./prdn.sh"
 
-## 2. make delegations to a client: exogeni slice authorization, ip allocation, tag delegation
+## 2. [NOT NOW, will come back to this step after creating client SAFE key] make delegations to a client: exogeni slice authorization, ip allocation, tag delegation
 
    SAFE_SERVER=localhost
    USERKEYHASH="82fCYt8XXlNAJnDuZZABTcURxz2ZpOwT9IXq6rbSHv0="
@@ -72,7 +72,7 @@
    USERIP="192.168.10.1/24"
    USERTAG="tag0"
 
-   BIN_DIR=~/CICI-SAFE/exoplex/target/appassembler/bin
+   export BIN_DIR=~/CICI-SAFE/exoplex/target/appassembler/bin
    ${BIN_DIR}/AuthorityMock auth ${USERKEYHASH} ${USERSLICE} ${USERIP} ${USERTAG} ${SAFE_SERVER}
 
 
@@ -84,7 +84,7 @@
   export riak_ip="IP address of VM1"
   sudo docker pull yaoyj11/safeserver-v7
   sudo docker run -i -t -d -p 7777:7777 -h safe --name safe yaoyj11/safeserver-v7
-  sudo docker exec -itd safe /bin/bash -c  "cd /root/safe;sed -i 's/RIAKSERVER/$riak_ip/g' safe-server/src/main/resources/application.conf;./sdx-routing.sh"
+  sudo docker exec -itd safe /bin/bash -c  "cd /root/safe;sed -i 's/RIAKSERVER/$riak_ip/g' safe-server/src/main/resources/application.conf;./prdn.sh"
 
 ## 3. generate safe key-pair for client
    SAFE_KEYPAIR="alice"
