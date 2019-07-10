@@ -36,7 +36,7 @@ public class SiteBase {
           return geniSite;
         }
       }
-      return null;
+      return site;
     }
   }
 }
