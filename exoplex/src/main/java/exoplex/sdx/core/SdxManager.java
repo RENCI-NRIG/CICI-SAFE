@@ -576,12 +576,9 @@ public class SdxManager extends SliceHelper {
         // the requirments
         logger.debug("No existing router at requested site, adding new router");
         String eRouterName = allcoateERouterName(site);
-        String cRouterName = allcoateCRouterName(site);
-        String eLinkName = allocateELinkName();
         serverSlice.lockSlice();
         serverSlice.refresh();
         serverSlice.addOVSRouter(site, eRouterName);
-        //serverSlice.addCoreEdgeRouterPair(site, cRouterName, eRouterName, eLinkName, bw);
         node = serverSlice.getComputeNode(eRouterName);
         stitchname = allocateStitchLinkName(ip, node);
 
@@ -589,22 +586,9 @@ public class SdxManager extends SliceHelper {
         serverSlice.stitchNetToNode(net, node, ip, "255.255.255.0");
 
         serverSlice.commitAndWait(10, Arrays.asList(new String[]{stitchname, eRouterName}));
-        //serverSlice.commitAndWait(10, Arrays.asList(new String[]{stitchname, cRouterName,
-        //  eRouterName, eLinkName}));
         serverSlice.refresh();
         copyRouterScript(serverSlice, eRouterName);
         configRouter(eRouterName);
-        //Link internal_Log_link = new Link(eLinkName, cRouterName, eRouterName);
-        //int ip_1 = getAvailableIP();
-        //internal_Log_link.setIP(IPPrefix + String.valueOf(ip_1));
-        //links.put(eLinkName, internal_Log_link);
-        //routingmanager.newInternalLink(internal_Log_link.getLinkName(),
-        //    internal_Log_link.getIP(1),
-        //    internal_Log_link.getNodeA(),
-        //    internal_Log_link.getIP(2),
-        //    internal_Log_link.getNodeB(),
-        //    SDNController,
-        //    bw);
         logger.debug("Configured the new router in RoutingManager");
       }
 
