@@ -13,7 +13,7 @@
 # @load frameworks/control/controllee.bro
 # @load frameworks/control/controller.bro
 @load frameworks/dpd/detect-protocols.bro
-@load frameworks/dpd/packet-segment-logging.bro
+@load frameworks/dpd/packet-range-logging.bro
 @load frameworks/intel/do_notice.bro
 @load frameworks/intel/do_expire.bro
 @load frameworks/intel/whitelist.bro
