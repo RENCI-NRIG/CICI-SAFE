@@ -5,12 +5,10 @@ import com.typesafe.config.ConfigFactory;
 import exoplex.sdx.network.Link;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.json.JSONObject;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Pattern;
 
 
@@ -51,6 +49,69 @@ public abstract class SliceCommon {
 
   public String getSliceName() {
     return sliceName;
+  }
+
+  public void readConfigFromJson(String configJsonString) {
+    JSONObject config = new JSONObject(configJsonString);
+
+    type = config.getString("config.type");
+    if (config.has("config.exogenism")) {
+      controllerUrl = config.getString("config.exogenism");
+    }
+    if (config.has("config.serverurl")) {
+      serverurl = config.getString("config.serverurl");
+    }
+    if (config.has("config.exogenipem")) {
+      pemLocation = config.getString("config.exogenipem");
+      keyLocation = config.getString("config.exogenipem");
+    }
+    if (config.has("config.sshkey")) {
+      sshKey = config.getString("config.sshkey");
+    }
+    if (config.has("config.slicename")) {
+      sliceName = config.getString("config.slicename");
+    }
+    if (config.has("config.topodir")) {
+      topodir = config.getString("config.topodir");
+      topofile = topodir + sliceName + ".topo";
+    }
+    if (config.has("config.serversite")) {
+      serverSite = SiteBase.get(config.getString("config.serversite"));
+    }
+    if (config.has("config.riak")) {
+      riakIp = config.getString("config.riak");
+    }
+    if (config.has("config.controllersite")) {
+      controllerSite = SiteBase.get(config.getString("config.controllersite"));
+    }
+    if (config.has("config.clientsites")) {
+      String clientSitesStr = config.getString("config.clientsites");
+      clientSites = new ArrayList<String>();
+      for (String site : clientSitesStr.split(":")) {
+        clientSites.add(SiteBase.get(site));
+      }
+    }
+    if (config.has("config.safe")) {
+      safeEnabled = config.getBoolean("config.safe");
+    }
+    if (config.has("config.plexusinslice")) {
+      plexusInSlice = config.getBoolean("config.plexusinslice");
+    }
+    if (config.has("config.safeinslice")) {
+      safeInSlice = config.getBoolean("config.safeinslice");
+    }
+    if(!safeInSlice){
+      if (config.has("config.safeserver")) {
+        safeServerIp = config.getString("config.safeserver");
+        setSafeServerIp(safeServerIp);
+      }
+    }
+    if (config.has("config.safekey")) {
+      safeKeyFile = config.getString("config.safekey");
+    }
+    if (config.has("config.sitelist")) {
+      sitelist = Arrays.asList(config.getString("config.sitelist").split(","));
+    }
   }
 
   public void readConfig(String configfilepath) {

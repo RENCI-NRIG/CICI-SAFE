@@ -214,22 +214,20 @@ public class ExoSliceManager extends SliceManager {
     return name;
   }
 
-  public String stitchNetToNode(String netName, String nodeName) {
-    Network net0 = (Network) slice.getResourceByName(netName);
-    InterfaceNode2Net ifaceNode0 = (InterfaceNode2Net) net0.stitch(slice.getResourceByName(nodeName));
+  public String stitchNetToNode(BroadcastNetwork network, ComputeNode node) {
+    InterfaceNode2Net ifaceNode0 = (InterfaceNode2Net) network.stitch(node);
     return ifaceNode0.getName();
   }
 
-  public String stitchNetToNode(String netName, String nodeName, String ip, String
+  public String stitchNetToNode(BroadcastNetwork network, ComputeNode node, String ip, String
     netmask) {
-    Network net0 = (Network) slice.getResourceByName(netName);
-    InterfaceNode2Net ifaceNode0 = (InterfaceNode2Net) net0.stitch(slice.getResourceByName(nodeName));
+    InterfaceNode2Net ifaceNode0 = (InterfaceNode2Net) network.stitch(node);
     ifaceNode0.setIpAddress(ip);
     ifaceNode0.setNetmask(netmask);
     return ifaceNode0.getName();
   }
 
-  public String addComputeNode(
+  public ComputeNode addComputeNode(
     String name, String nodeImageURL,
     String nodeImageHash, String nodeImageShortName, String nodeNodeType, String site,
     String nodePostBootScript) {
@@ -240,7 +238,7 @@ public class ExoSliceManager extends SliceManager {
     if (nodePostBootScript != null) {
       node0.setPostBootScript(nodePostBootScript);
     }
-    return name;
+    return node0;
   }
 
   public String addComputeNode(String site, String name) {
@@ -267,25 +265,23 @@ public class ExoSliceManager extends SliceManager {
     return this.slice.addStorageNode(name, capacity, mountpnt);
   }
 
-  public String addStitchPort(String name, String label, String port, long bandwidth) {
+  public StitchPort addStitchPort(String name, String label, String port, long bandwidth) {
     logger.info(String.format("addStitchPort %s %s %s %s", name, label, port, bandwidth));
-    return this.slice.addStitchPort(name, label, port, bandwidth).getName();
+    return this.slice.addStitchPort(name, label, port, bandwidth);
   }
 
-  public void stitchSptoNode(String spName, String nodeName) {
-    StitchPort sp = (StitchPort) slice.getResourceByName(spName);
-    ComputeNode node = (ComputeNode) slice.getResourceByName(nodeName);
-    sp.stitch(node);
+  public void stitchSptoNode(StitchPort stitchPort, ComputeNode computeNode) {
+    stitchPort.stitch(computeNode);
   }
 
-  public String addBroadcastLink(String name, long bandwidth) {
+  public BroadcastNetwork addBroadcastLink(String name, long bandwidth) {
     synchronized (this) {
       logger.info(String.format("addBroadcastLink %s %s", name, bandwidth));
-      return this.slice.addBroadcastLink(name, bandwidth).getName();
+      return this.slice.addBroadcastLink(name, bandwidth);
     }
   }
 
-  public String addBroadcastLink(String name) {
+  public BroadcastNetwork addBroadcastLink(String name) {
     synchronized (this) {
       return this.addBroadcastLink(name, DEFAULT_BW);
     }
@@ -337,7 +333,7 @@ public class ExoSliceManager extends SliceManager {
     return slice.getResourceByName(netName).getStitchingGUID();
   }
 
-  public String getComputeNode(String nm) {
+  public ComputeNode getComputeNode(String nm) {
     ComputeNode node = (ComputeNode) this.slice.getResourceByName(nm);
     while (node == null || node.getState() == null || node.getManagementIP() == null) {
       logger.debug(String.format("getComputeNode %s", nm));
@@ -348,7 +344,7 @@ public class ExoSliceManager extends SliceManager {
       }
       node = (ComputeNode) this.slice.getResourceByName(nm);
     }
-    return node.getName();
+    return node;
   }
 
   public Interface stitch(RequestResource r1, RequestResource r2) {
@@ -885,13 +881,13 @@ public class ExoSliceManager extends SliceManager {
     String nodeImageHash = ninfo.nihash;
     String nodeNodeType = "XO Medium";
     String nodePostBootScript = Scripts.getOVSScript();
-    String node0 = addComputeNode(router1, nodeImageURL,
+    ComputeNode node0 = addComputeNode(router1, nodeImageURL,
       nodeImageHash, nodeImageShortName, nodeNodeType, site,
       nodePostBootScript);
-    String node1 = addComputeNode(router2, nodeImageURL,
+    ComputeNode node1 = addComputeNode(router2, nodeImageURL,
       nodeImageHash, nodeImageShortName, nodeNodeType, site,
       nodePostBootScript);
-    String bronet = addBroadcastLink(linkname, bw);
+    BroadcastNetwork bronet = addBroadcastLink(linkname, bw);
     stitchNetToNode(bronet, node0);
     stitchNetToNode(bronet, node1);
   }
@@ -938,7 +934,7 @@ public class ExoSliceManager extends SliceManager {
   }
 
   //We always add the bro when we add the edge router
-  public String addBro(String broname, String domain) {
+  public ComputeNode addBro(String broname, String domain) {
     String broN = "Centos 7.4 Bro";
     String broURL =
       "http://geni-images.renci.org/images/standard/centos/centos7.4-bro-v1.0.4/centos7.4-demo.bro-v1.0.4.xml";
@@ -949,7 +945,7 @@ public class ExoSliceManager extends SliceManager {
     bro.setDomain(domain);
     bro.setNodeType(broType);
     bro.setPostBootScript(Scripts.getBroScripts());
-    return broname;
+    return bro;
   }
 
   public void stitch(String RID, String customerName, String CID, String secret,
@@ -1017,7 +1013,7 @@ public class ExoSliceManager extends SliceManager {
     return res[1];
   }
 
-  public String addOVSRouter(String site, String name) {
+  public ComputeNode addOVSRouter(String site, String name) {
     synchronized (this) {
       logger.debug(String.format("Adding new OVS router to slice %s on site %s", slice.getName(),
         site));
@@ -1033,7 +1029,7 @@ public class ExoSliceManager extends SliceManager {
       node0.setNodeType(nodeNodeType);
       node0.setDomain(SiteBase.get(site));
       node0.setPostBootScript(nodePostBootScript);
-      return node0.getName();
+      return node0;
     }
   }
 

@@ -27,6 +27,7 @@
     <groupId>safe</groupId>
     <artifactId>exoplex</artifactId>
     <name>exoplex</name>
+    <version>0.1-SNAPSHOT</version>
 
     <build>
         <plugins>
@@ -254,5 +255,4 @@
     </dependencies>
 
 
-    <version>0.1-SNAPSHOT</version>
 </project>

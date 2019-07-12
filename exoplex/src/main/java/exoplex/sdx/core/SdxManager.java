@@ -18,7 +18,10 @@ import org.apache.commons.cli.CommandLine;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.json.JSONObject;
+import org.renci.ahab.libndl.resources.request.BroadcastNetwork;
+import org.renci.ahab.libndl.resources.request.ComputeNode;
 import org.renci.ahab.libndl.resources.request.InterfaceNode2Net;
+import org.renci.ahab.libndl.resources.request.StitchPort;
 import org.renci.ahab.libtransport.util.TransportException;
 import safe.Authority;
 import safe.SdxRoutingSlang;
@@ -325,9 +328,9 @@ public class SdxManager extends SliceHelper {
     serverSlice.lockSlice();
     serverSlice.refresh();
     int times = 1;
-    String node = serverSlice.getComputeNode(nodeName);
+    ComputeNode node = serverSlice.getComputeNode(nodeName);
     while (true) {
-      String mysp = serverSlice.addStitchPort(spName, vlan, stitchUrl, bw);
+      StitchPort mysp = serverSlice.addStitchPort(spName, vlan, stitchUrl, bw);
       serverSlice.stitchSptoNode(mysp, node);
       int newNum;
       if(serverSlice.commitAndWait(10, Arrays.asList(new String[]{spName + "-net"}))) {
@@ -386,10 +389,10 @@ public class SdxManager extends SliceHelper {
       String myAddress = ip.split("/")[0];
       String urAddressPrefix = l1.getIP(1);
 
-      String node0_s2 = serverSlice.getComputeNode(myNode);
-      String node0_s2_stitching_GUID = serverSlice.getStitchingGUID(node0_s2);
+      ComputeNode node0_s2 = serverSlice.getComputeNode(myNode);
+      String node0_s2_stitching_GUID = serverSlice.getStitchingGUID(node0_s2.getName());
       String secret = serverSlice.permitStitch(node0_s2_stitching_GUID);
-      String sdxsite = serverSlice.getNodeDomain(node0_s2);
+      String sdxsite = serverSlice.getNodeDomain(node0_s2.getName());
       //post stitch request to SAFE
       JSONObject jsonparams = new JSONObject();
       jsonparams.put("sdxsite", sdxsite);
@@ -549,25 +552,25 @@ public class SdxManager extends SliceHelper {
     logger.info(logPrefix + "new stitch request from " + customerSlice + " for " + sliceName + " at " +
       "" + site);
     logger.debug("new stitch request for " + sliceName + " at " + site);
+    serverSlice.loadSlice();
     //if(!safeEnabled || authorizeStitchRequest(customer_slice,customerName,reserveId, safeKeyHash,
     if (!safeEnabled || safeManager.authorizeStitchRequest(customerSafeKeyHash, customerSlice)) {
       if (safeEnabled) {
         logger.info("Authorized: stitch request for " + sliceName);
       }
       String stitchname = null;
-      String net = null;
-      String node = null;
+      ComputeNode node = null;
       serverSlice.refresh();
       if (sdxnode != null && serverSlice.getComputeNode(sdxnode) != null) {
         node = serverSlice.getComputeNode(sdxnode);
-        stitchname = allocateStitchLinkName(ip, node);
-        addLink(stitchname, node, bw);
+        stitchname = allocateStitchLinkName(ip, node.getName());
+        addLink(stitchname, node.getName(), bw);
         serverSlice.refresh();
       } else if (sdxnode == null && edgeRouters.containsKey(site) && edgeRouters.get(site).size() >
         0) {
         node = serverSlice.getComputeNode(edgeRouters.get(site).get(0));
-        stitchname = allocateStitchLinkName(ip, node);
-        addLink(stitchname, node, bw);
+        stitchname = allocateStitchLinkName(ip, node.getName());
+        addLink(stitchname, node.getName(), bw);
         serverSlice.refresh();
 
       } else {
@@ -579,12 +582,11 @@ public class SdxManager extends SliceHelper {
         String eRouterName = allcoateERouterName(site);
         serverSlice.lockSlice();
         serverSlice.refresh();
-        serverSlice.addOVSRouter(site, eRouterName);
-        node = serverSlice.getComputeNode(eRouterName);
-        stitchname = allocateStitchLinkName(ip, node);
+        node = serverSlice.addOVSRouter(site, eRouterName);
+        stitchname = allocateStitchLinkName(ip, node.getName());
 
-        net = serverSlice.addBroadcastLink(stitchname, bw);
-        serverSlice.stitchNetToNode(net, node, ip, "255.255.255.0");
+        BroadcastNetwork broadcastNetwork = serverSlice.addBroadcastLink(stitchname, bw);
+        serverSlice.stitchNetToNode(broadcastNetwork, node, ip, "255.255.255.0");
 
         serverSlice.commitAndWait(10, Arrays.asList(new String[]{stitchname, eRouterName}));
         serverSlice.refresh();
@@ -597,7 +599,7 @@ public class SdxManager extends SliceHelper {
       logger.debug("net1_stitching_GUID: " + net1_stitching_GUID);
       Link logLink = new Link();
       logLink.setName(stitchname);
-      logLink.addNode(node);
+      logLink.addNode(node.getName());
       links.put(stitchname, logLink);
       serverSlice.stitch(net1_stitching_GUID, customerSlice, reserveId, secret, gateway + "/" + ip
         .split("/")[1]);
@@ -607,7 +609,7 @@ public class SdxManager extends SliceHelper {
       if(safeEnabled) {
         res.put("safeKeyHash", safeManager.getSafeKeyHash());
       };
-      updateOvsInterface(node);
+      updateOvsInterface(node.getName());
       routingmanager.newExternalLink(logLink.getLinkName(),
         ip,
         logLink.getNodeA(),
@@ -692,11 +694,11 @@ public class SdxManager extends SliceHelper {
     serverSlice.refresh();
     logger.info(logPrefix + "deploying new bro instance to " + routerName);
     Long t1 = System.currentTimeMillis();
-    String router = serverSlice.getComputeNode(routerName);
-    String broName = getBroName(router);
+    ComputeNode router = serverSlice.getComputeNode(routerName);
+    String broName = getBroName(router.getName());
     long brobw = conf.getLong("config.brobw");
     int ip_to_use = getAvailableIP();
-    serverSlice.addBro(broName, serverSlice.getNodeDomain(router));
+    serverSlice.addBro(broName, serverSlice.getNodeDomain(router.getName()));
     ArrayList<String> resources = new ArrayList<String>();
     String linkName = getBroLinkName(broName, ip_to_use);
     serverSlice.addLink(linkName, "192.168." + ip_to_use + ".1", "192.168." +
@@ -710,7 +712,7 @@ public class SdxManager extends SliceHelper {
     updateOvsInterface(routerName);
     Link logLink = new Link();
     logLink.setName(getBroLinkName(broName, ip_to_use));
-    logLink.addNode(router);
+    logLink.addNode(router.getName());
     usedip.add(ip_to_use);
     logLink.setIP(IPPrefix + ip_to_use);
     logLink.setMask(mask);
@@ -905,18 +907,18 @@ public class SdxManager extends SliceHelper {
       serverSlice.refresh();
       String c1 = getCoreRouterByEdgeRouter(n1);
       String c2 = getCoreRouterByEdgeRouter(n2);
-      String node1 = serverSlice.getComputeNode(c1);
-      String node2 = serverSlice.getComputeNode(c2);
+      ComputeNode node1 = serverSlice.getComputeNode(c1);
+      ComputeNode node2 = serverSlice.getComputeNode(c2);
 
       String link1 = allocateCLinkName();
       logger.debug(logPrefix + "Add link: " + link1);
       long linkbw = 2 * bandwidth;
-      addLink(link1, node1, node2, bw);
+      addLink(link1, node1.getName(), node2.getName(), bw);
 
       Link l1 = new Link();
       l1.setName(link1);
-      l1.addNode(node1);
-      l1.addNode(node2);
+      l1.addNode(node1.getName());
+      l1.addNode(node2.getName());
       l1.setCapacity(linkbw);
       l1.setMask(mask);
       links.put(link1, l1);
@@ -1198,7 +1200,7 @@ public class SdxManager extends SliceHelper {
         //FIX ME: do stitching
         logger.info(logPrefix + "Chameleon Stitch Request from " + customer_keyhash + " Authorized");
         serverSlice.refresh();
-        String node = null;
+        ComputeNode node = null;
         if (nodeName != null) {
           node = serverSlice.getComputeNode(nodeName);
         } else if (nodeName == null && edgeRouters.containsKey(sdxsite) && edgeRouters.get(sdxsite)
@@ -1234,7 +1236,7 @@ public class SdxManager extends SliceHelper {
           //  internal_Log_link.getNodeB(),
           //  SDNController,
           //  bw);
-          nodeName = node;
+          nodeName = node.getName();
           logger.debug("Configured the new router in RoutingManager");
         }
         String stitchname = "sp-" + nodeName + "-" + ip.replace("/", "__").replace(".", "_");

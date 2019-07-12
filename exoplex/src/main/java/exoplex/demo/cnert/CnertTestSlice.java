@@ -10,6 +10,9 @@ import exoplex.sdx.slice.SliceManager;
 import exoplex.sdx.slice.SliceManagerFactory;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.renci.ahab.libndl.resources.request.BroadcastNetwork;
+import org.renci.ahab.libndl.resources.request.ComputeNode;
+import org.renci.ahab.libndl.resources.request.StitchPort;
 import org.renci.ahab.libtransport.util.TransportException;
 import org.renci.ahab.libtransport.xmlrpc.XMLRPCTransportException;
 import safe.Authority;
@@ -286,30 +289,33 @@ public class CnertTestSlice extends SliceHelper {
 
     String scripts = "apt-get install -y vsftpd iperf\n";
 
-    String nodeName = s.addComputeNode("node0", nodeImageURL, nodeImageHash, nodeImageShortName,
+    ComputeNode nodeName = s.addComputeNode("node0", nodeImageURL, nodeImageHash, nodeImageShortName,
       nodeNodeType, clientSites.get(0), scripts);
-    String netName = s.addBroadcastLink("stitch_c0_10", cnodebw);
+    BroadcastNetwork netName = s.addBroadcastLink("stitch_c0_10", cnodebw);
     String interfaceName = s.stitchNetToNode(netName, nodeName, "192.168.10.2", "255.255.255.0");
-    s.stitchNetToNode(netName, "c0");
+    ComputeNode computeNode = s.getComputeNode("c0");
+    s.stitchNetToNode(netName, computeNode);
 
-    String cnode1 = s.addComputeNode("node1", nodeImageURL, nodeImageHash, nodeImageShortName,
+    ComputeNode cnode1 = s.addComputeNode("node1", nodeImageURL, nodeImageHash, nodeImageShortName,
       nodeNodeType, clientSites.get(0), scripts);
-    String net1 = s.addBroadcastLink("stitch_c0_20", cnodebw);
+    BroadcastNetwork net1 = s.addBroadcastLink("stitch_c0_20", cnodebw);
     s.stitchNetToNode(net1, cnode1, "192.168.20.2", "255.255.255.0");
-    s.stitchNetToNode(net1, "c0");
+    s.stitchNetToNode(net1, computeNode);
 
 
-    String cnode2 = s.addComputeNode("node2", nodeImageURL, nodeImageHash, nodeImageShortName,
+    ComputeNode cnode2 = s.addComputeNode("node2", nodeImageURL, nodeImageHash, nodeImageShortName,
       nodeNodeType, clientSites.get(1), scripts);
-    String net2 = s.addBroadcastLink("stitch_c2_30", cnodebw);
+    BroadcastNetwork net2 = s.addBroadcastLink("stitch_c2_30", cnodebw);
     s.stitchNetToNode(net2, cnode2, "192.168.30.2", "255.255.255.0");
-    s.stitchNetToNode(net2, "c" + (num - 1));
+    ComputeNode computeNode1 = s.getComputeNode("c" + (num - 1));
+    s.stitchNetToNode(net2, computeNode1);
 
-    String cnode3 = s.addComputeNode("node3", nodeImageURL, nodeImageHash, nodeImageShortName,
+    ComputeNode cnode3 = s.addComputeNode("node3", nodeImageURL, nodeImageHash, nodeImageShortName,
       nodeNodeType, clientSites.get(1), scripts);
-    String net3 = s.addBroadcastLink("stitch_c2_40", cnodebw);
+    BroadcastNetwork net3 = s.addBroadcastLink("stitch_c2_40", cnodebw);
     s.stitchNetToNode(net3, cnode3, "192.168.40.2", "255.255.255.0");
-    s.stitchNetToNode(net3, c3);
+    ComputeNode computeNode2 = s.getComputeNode("c" + (num - 1));
+    s.stitchNetToNode(net3, computeNode2);
     return s;
   }
 
@@ -320,31 +326,31 @@ public class CnertTestSlice extends SliceHelper {
     String nodeNodeType = "XO Extra large";
     SliceManager s = createCarrierSlice(sliceName, num, bw);
     //Now add two customer node to c0 and c3
-    String c0 = "c0";
-    String c1 = "c1";
-    String c2 = "c2";
+    ComputeNode c0 = s.getComputeNode("c0");
+    ComputeNode c1 = s.getComputeNode("c1");
+    ComputeNode c2 = s.getComputeNode("c2");
     String scripts = Scripts.getCustomerScript() + "apt-get install -y vsftpd iperf\n";
 
-    String nodeName = s.addComputeNode("node0", nodeImageURL, nodeImageHash, nodeImageShortName,
+    ComputeNode nodeName = s.addComputeNode("node0", nodeImageURL, nodeImageHash, nodeImageShortName,
       nodeNodeType, clientSites.get(0), scripts);
-    String netName = s.addBroadcastLink("stitch_c0_10", bw);
+    BroadcastNetwork netName = s.addBroadcastLink("stitch_c0_10", bw);
     String interfaceName = s.stitchNetToNode(netName, nodeName, "192.168.10.2", "255.255.255.0");
     s.stitchNetToNode(netName, c0);
 
-    String cnode1 = s.addComputeNode("node1", nodeImageURL, nodeImageHash, nodeImageShortName,
+    ComputeNode cnode1 = s.addComputeNode("node1", nodeImageURL, nodeImageHash, nodeImageShortName,
       nodeNodeType, clientSites.get(1), scripts);
-    String net1 = s.addBroadcastLink("stitch_c0_20", bw);
+    BroadcastNetwork net1 = s.addBroadcastLink("stitch_c0_20", bw);
     s.stitchNetToNode(net1, cnode1, "192.168.20.2", "255.255.255.0");
     s.stitchNetToNode(net1, c1);
 
-    String cnode2 = s.addComputeNode("node2", nodeImageURL, nodeImageHash, nodeImageShortName,
+    ComputeNode cnode2 = s.addComputeNode("node2", nodeImageURL, nodeImageHash, nodeImageShortName,
       nodeNodeType, clientSites.get(2), scripts);
-    String net2 = s.addBroadcastLink("stitch_c2_30", bw);
+    BroadcastNetwork net2 = s.addBroadcastLink("stitch_c2_30", bw);
     s.stitchNetToNode(net2, cnode2, "192.168.30.2", "255.255.255.0");
     s.stitchNetToNode(net2, c2);
 
 
-    String net3 = s.addBroadcastLink("dl-c0-c2", bw);
+    BroadcastNetwork net3 = s.addBroadcastLink("dl-c0-c2", bw);
     String ifaceNode3 = s.stitchNetToNode(net3, c2);
     s.stitchNetToNode(net3, c0);
     return s;
@@ -359,12 +365,12 @@ public class CnertTestSlice extends SliceHelper {
     //Now add two customer node to c0 and c3
     String scripts = Scripts.getCustomerScript() + "apt-get install -y vsftpd iperf\n";
 
-    String c0 = "c0";
-    String c3 = "c" + (num - 1);
+    ComputeNode c0 = s.getComputeNode("c0");
+    ComputeNode c3 = s.getComputeNode("c" + (num - 1));
 
-    String nodeName = s.addComputeNode("node0", nodeImageURL, nodeImageHash, nodeImageShortName,
+    ComputeNode nodeName = s.addComputeNode("node0", nodeImageURL, nodeImageHash, nodeImageShortName,
       nodeNodeType, clientSites.get(0), scripts);
-    String netName = s.addBroadcastLink("stitch_c0_10", bw);
+    BroadcastNetwork netName = s.addBroadcastLink("stitch_c0_10", bw);
     s.stitchNetToNode(netName, nodeName, "192.168.10.2", "255.255.255.0");
     s.stitchNetToNode(netName, c0);
 
@@ -385,11 +391,11 @@ public class CnertTestSlice extends SliceHelper {
     String nodeName1 = "node" + (num - 1);
     String stitchName = "stitch_c" + (num - 1) + "_20";
     String site = clientSites.get((num - 1) % clientSites.size());
-    s.addComputeNode(nodeName1, nodeImageURL, nodeImageHash, nodeImageShortName,
+    ComputeNode node1 = s.addComputeNode(nodeName1, nodeImageURL, nodeImageHash, nodeImageShortName,
       nodeNodeType, site, scripts);
-    s.addBroadcastLink(stitchName, bw);
-    s.stitchNetToNode(stitchName, nodeName1, "192.168.20.2", "255.255.255.0");
-    s.stitchNetToNode(stitchName, c3);
+    BroadcastNetwork broadcastNetwork = s.addBroadcastLink(stitchName, bw);
+    s.stitchNetToNode(broadcastNetwork, node1, "192.168.20.2", "255.255.255.0");
+    s.stitchNetToNode(broadcastNetwork, c3);
     return s;
   }
 
@@ -401,18 +407,18 @@ public class CnertTestSlice extends SliceHelper {
     SliceManager s = createCarrierSlice(sliceName, num, bw);
     String scripts = "apt-get install -y vsftpd iperf\n";
     //Now add two customer node to c0 and c3
-    String c0 = "c0";
+    ComputeNode c0 = s.getComputeNode("c0");
 
-    String nodeName = s.addComputeNode("node0", nodeImageURL, nodeImageHash, nodeImageShortName,
+    ComputeNode nodeName = s.addComputeNode("node0", nodeImageURL, nodeImageHash, nodeImageShortName,
       nodeNodeType, clientSites.get(0), scripts);
-    String netName = s.addBroadcastLink("stitch_c0_10", bw);
+    BroadcastNetwork netName = s.addBroadcastLink("stitch_c0_10", bw);
     s.stitchNetToNode(netName, nodeName, "192.168.10.2", "255.255.255.0");
     s.stitchNetToNode(netName, c0);
 
 
     s.commitAndWait();
     s.loadSlice();
-    String c3 = s.getComputeNode("c" + (num - 1));
+    ComputeNode c3 = s.getComputeNode("c" + (num - 1));
     String ip = "10.32.90.106/24";
     String gateway = "10.32.90.105";
     String vlan = "3290";
@@ -421,7 +427,7 @@ public class CnertTestSlice extends SliceHelper {
       + '-' + gateway.split("\\.")[3];
 
     System.out.println("Stitching to Chameleon {" + "stitchname: " + stitchname + " vlan:" + vlan + " stithport: " + stitchport + "}");
-    String mysp = s.addStitchPort(stitchname, vlan, stitchport, bw);
+    StitchPort mysp = s.addStitchPort(stitchname, vlan, stitchport, bw);
     s.stitchSptoNode(mysp, c3);
 
     return s;
@@ -443,15 +449,15 @@ public class CnertTestSlice extends SliceHelper {
     //  +"sed -i -- 's/ospfd=no/ospfd=yes/g' /etc/quagga/daemons\n";
     String nodePostBootScript = Scripts.getOVSScript();
     ArrayList<String> nodelist = new ArrayList<>();
-    ArrayList<String> netlist = new ArrayList<>();
+    ArrayList<BroadcastNetwork> netlist = new ArrayList<>();
     ArrayList<String> stitchlist = new ArrayList<>();
     for (int i = 0; i < num; i++) {
 
-      String node0 = s.addComputeNode(((i == 0 || i == (num - 1)) ? "node" : "c") + String
+      ComputeNode node0 = s.addComputeNode(((i == 0 || i == (num - 1)) ? "node" : "c") + String
           .valueOf(i), nodeImageURL, nodeImageHash, nodeImageShortName,
         nodeNodeType, clientSites.get(i % clientSites.size()), nodePostBootScript);
 
-      nodelist.add(node0);
+      nodelist.add(node0.getName());
 
       //for(int j=0;j<numstitches;j++){
       //  Network net1 = s.addBroadcastLink("stitch"+String.valueOf(i)+ String.valueOf(j),bw);
@@ -468,13 +474,13 @@ public class CnertTestSlice extends SliceHelper {
           linkname = "stitch_c2_20";
         }
 
-        String net2 = s.addBroadcastLink(linkname, bw);
-        s.stitchNetToNode(linkname, node0, "192.168." + String.valueOf(start + i) + ".1",
+        BroadcastNetwork net2 = s.addBroadcastLink(linkname, bw);
+        s.stitchNetToNode(net2, node0, "192.168." + String.valueOf(start + i) + ".1",
           "255.255.255.0");
         netlist.add(net2);
       }
       if (i != 0) {
-        String net = netlist.get(i - 1);
+        BroadcastNetwork net = netlist.get(i - 1);
         s.stitchNetToNode(net, node0, "192.168." + String.valueOf(start + i - 1) + ".2",
           "255.255.255.0");
       }

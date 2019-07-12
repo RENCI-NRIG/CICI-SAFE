@@ -17,6 +17,8 @@ import injection.SingleSdxModule;
 import org.apache.commons.cli.CommandLine;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.renci.ahab.libndl.resources.request.BroadcastNetwork;
+import org.renci.ahab.libndl.resources.request.ComputeNode;
 import safe.Authority;
 
 import java.io.FileOutputStream;
@@ -422,7 +424,7 @@ public class SliceHelper extends SliceCommon {
       if (BRO && i == 0) {
         long brobw = conf.getLong("config.brobw");
         String node1 = "e" + i;
-        String broNode = s.addBro("bro0_e" + i, s.getNodeDomain(node1));
+        ComputeNode broNode = s.addBro("bro0_e" + i, s.getNodeDomain(node1));
         int ip_to_use = curip++;
 
         /*
@@ -437,10 +439,11 @@ public class SliceHelper extends SliceCommon {
         ifaceNode2.setNetmask("255.255.255.0");
         */
 
-        String bronet = s.addBroadcastLink(getBroLinkName(broNode,
+        BroadcastNetwork bronet = s.addBroadcastLink(getBroLinkName(broNode.getName(),
           ip_to_use),
           bw);
-        s.stitchNetToNode(bronet, node1, "192.168." + String.valueOf(ip_to_use) + ".1",
+        ComputeNode computeNode = s.getComputeNode(node1);
+        s.stitchNetToNode(bronet, computeNode, "192.168." + String.valueOf(ip_to_use) + ".1",
           "255.255.255.0");
         s.stitchNetToNode(bronet, broNode, "192.168." + String.valueOf(ip_to_use) + ".2",
           "255.255.255.0");
@@ -466,9 +469,11 @@ public class SliceHelper extends SliceCommon {
 
   private Link addLink(SliceManager s, String linkname, String node0, String node1,
                        Long bw) {
-    String net2 = s.addBroadcastLink(linkname, bw);
-    s.stitchNetToNode(net2, node0);
-    s.stitchNetToNode(net2, node1);
+    BroadcastNetwork net2 = s.addBroadcastLink(linkname, bw);
+    ComputeNode computeNode0 = s.getComputeNode(node0);
+    ComputeNode computeNode1 = s.getComputeNode(node1);
+    s.stitchNetToNode(net2, computeNode0);
+    s.stitchNetToNode(net2, computeNode1);
 
     Link logLink = new Link();
     logLink.addNode(node0);

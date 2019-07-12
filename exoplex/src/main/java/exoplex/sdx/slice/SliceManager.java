@@ -1,5 +1,8 @@
 package exoplex.sdx.slice;
 
+import org.renci.ahab.libndl.resources.request.BroadcastNetwork;
+import org.renci.ahab.libndl.resources.request.ComputeNode;
+import org.renci.ahab.libndl.resources.request.StitchPort;
 import org.renci.ahab.libtransport.util.TransportException;
 import org.renci.ahab.libtransport.xmlrpc.XMLRPCTransportException;
 
@@ -40,23 +43,23 @@ public abstract class SliceManager {
 
   abstract public String addComputeNode(String site, String name);
 
-  abstract public String stitchNetToNode(String netName, String nodeName);
+  abstract public String stitchNetToNode(BroadcastNetwork netName, ComputeNode nodeName);
 
-  abstract public String stitchNetToNode(String netName, String nodeName, String ip, String
+  abstract public String stitchNetToNode(BroadcastNetwork netName, ComputeNode nodeName, String ip, String
     netmask);
 
-  abstract public String addComputeNode(
+  abstract public ComputeNode addComputeNode(
     String name, String nodeImageURL,
     String nodeImageHash, String nodeImageShortName, String nodeNodeType, String site,
     String nodePostBootScript);
 
-  abstract public String addStitchPort(String name, String label, String port, long bandwidth);
+  abstract public StitchPort addStitchPort(String name, String label, String port, long bandwidth);
 
-  abstract public void stitchSptoNode(String spName, String nodeName);
+  abstract public void stitchSptoNode(StitchPort spName, ComputeNode nodeName);
 
-  abstract public String addBroadcastLink(String name, long bandwidth);
+  abstract public BroadcastNetwork addBroadcastLink(String name, long bandwidth);
 
-  abstract public String addBroadcastLink(String name);
+  abstract public BroadcastNetwork addBroadcastLink(String name);
 
   abstract public String attach(String nodeName, String linkName, String ip, String netmask);
 
@@ -64,7 +67,7 @@ public abstract class SliceManager {
 
   abstract public String getStitchingGUID(String netName);
 
-  abstract public String getComputeNode(String nm);
+  abstract public ComputeNode getComputeNode(String nm);
 
   abstract public void unstitch(String stitchLinkName, String customerSlice, String customerGUID);
 
@@ -155,7 +158,7 @@ public abstract class SliceManager {
   abstract public void addPlexusController(String controllerSite, String name);
 
   //We always add the bro when we add the edge router
-  abstract public String addBro(String broname, String domain);
+  abstract public ComputeNode addBro(String broname, String domain);
 
   abstract public void stitch(String RID, String customerName, String CID, String secret,
                               String newip);
@@ -165,7 +168,7 @@ public abstract class SliceManager {
 
   abstract public String getDpid(String routerName, String sshkey);
 
-  abstract public String addOVSRouter(String site, String name);
+  abstract public ComputeNode addOVSRouter(String site, String name);
 
   abstract public void printNetworkInfo();
 
