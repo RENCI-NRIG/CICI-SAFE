@@ -24,7 +24,7 @@ import org.renci.ahab.libtransport.util.UtilTransportException;
 import org.renci.ahab.libtransport.xmlrpc.XMLRPCProxyFactory;
 import org.renci.ahab.libtransport.xmlrpc.XMLRPCTransportException;
 
-import java.io.Serializable;
+import java.io.*;
 import java.net.URL;
 import java.util.*;
 import java.util.concurrent.locks.ReentrantLock;
@@ -41,8 +41,8 @@ public class SliceManagerMock extends SliceManager implements Serializable {
   private static final long serialVersionUID = 1L;
   private static final int COMMIT_COUNT = 5;
   private static final int INTERVAL = 10;
-  public static HashMap<String, String> dpidMap = new HashMap<>();
-  public static HashMap<String, Integer> interfaceNumMap = new HashMap<>();
+  public  HashMap<String, String> dpidMap = new HashMap<>();
+  public  HashMap<String, Integer> interfaceNumMap = new HashMap<>();
   static int dpidCount = 1;
   private ReentrantLock lock = new ReentrantLock();
   private ISliceTransportAPIv1 sliceProxy;
@@ -79,6 +79,32 @@ public class SliceManagerMock extends SliceManager implements Serializable {
       assert (false);
     }
     return sliceProxy;
+  }
+
+  public void writeToFile(String fileName){
+    File f = new File(fileName);
+    try {
+      ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(f));
+      oos.writeObject(this);
+      oos.flush();
+      oos.close();
+    }catch (Exception e){
+      e.printStackTrace();
+    }
+  }
+
+  public void loadFromFile(String fileName){
+    File f = new File(fileName);
+    try {
+      ObjectInputStream oos = new ObjectInputStream(new FileInputStream(f));
+      SliceManagerMock sliceManagerMock = (SliceManagerMock) oos.readObject();
+      this.slice = sliceManagerMock.slice;
+      this.dpidMap = sliceManagerMock.dpidMap;
+      this.interfaceNumMap = sliceManagerMock.interfaceNumMap;
+      oos.close();
+    }catch (Exception e){
+      e.printStackTrace();
+    }
   }
 
   public Collection<String> getBroadcastLinks() {
