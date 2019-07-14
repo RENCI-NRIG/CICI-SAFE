@@ -2,6 +2,9 @@ package aqt;
 
 import java.util.Objects;
 
+/*
+Make sure Range is immutable
+ */
 public class Range {
     private long start;
     private long length;
@@ -39,6 +42,6 @@ public class Range {
 
     @Override
     public String toString(){
-        return String.format("(%s, %s)", start, start + length);
+        return String.format("(%s, %s)", start, start + length - 1);
     }
 }

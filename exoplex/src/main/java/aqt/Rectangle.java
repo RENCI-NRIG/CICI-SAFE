@@ -2,6 +2,9 @@ package aqt;
 
 import java.util.Objects;
 
+/**
+ * Make sure Rectangle is immutable
+ */
 public class Rectangle extends Object{
     private Range x;
     private Range y;
@@ -9,6 +12,15 @@ public class Rectangle extends Object{
     public Rectangle(long x, long y, long w, long h){
         this.x = new Range(x, w);
         this.y = new Range(y, h);
+    }
+
+    public Rectangle(Range range1, Range range2){
+        this.x = range1;
+        this.y = range2;
+    }
+
+    public long getArea(){
+        return this.x.getLength() * this.y.getLength();
     }
 
     public long getX(){
