@@ -266,4 +266,12 @@ public abstract class AbstractTest {
     checkConnection();
     logger.info("replay done");
   }
+
+  public void sleep(int seconds){
+    try{
+      Thread.sleep(seconds * 1000);
+    }catch (Exception e){
+
+    }
+  }
 }

@@ -232,12 +232,14 @@ public class AdvertiseManager {
   }
 
   public RouteAdvertise getAdvertise(String destPrefix, String srcPrefix) {
-    ImmutablePair<String, String> key = new ImmutablePair<String, String>(destPrefix, srcPrefix);
+    Rectangle key = PrefixUtil.prefixPairToRectangle(destPrefix, srcPrefix);
     if (routeTable.containsKey(key)) {
       return routeTable.get(key).get(0);
     }
-    if (routeTable.containsKey(destPrefix)) {
-      return routeTable.get(destPrefix).get(0);
+    Rectangle key1 = PrefixUtil.prefixPairToRectangle(destPrefix,
+        DEFAULT_PREFIX);
+    if (routeTable.containsKey(key1)) {
+      return routeTable.get(key1).get(0);
     } else {
       return null;
     }
