@@ -1,5 +1,6 @@
 package exoplex.sdx.slice.slicemock;
 
+import com.google.inject.Inject;
 import exoplex.sdx.slice.SliceManager;
 import org.junit.After;
 import org.junit.Before;
@@ -7,6 +8,7 @@ import org.junit.Ignore;
 import org.junit.Test;
 import org.renci.ahab.libndl.Slice;
 
+@Ignore
 public class SliceManagerMockTest {
 
     @Test

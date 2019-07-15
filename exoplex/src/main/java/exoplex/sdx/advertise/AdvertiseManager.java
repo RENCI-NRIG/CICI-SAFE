@@ -21,12 +21,6 @@ public class AdvertiseManager {
   AreaBasedQuadTree policyIndex = new AreaBasedQuadTree();
   ConcurrentHashMap<Rectangle, ArrayList<RouteAdvertise>> routeTable = new ConcurrentHashMap<>();
   ConcurrentHashMap<Rectangle, PolicyAdvertise> policyTable = new ConcurrentHashMap<>();
-  /*
-  ConcurrentHashMap<ImmutablePair<String, String>, ArrayList<RouteAdvertise>> stPairBgpTable = new
-    ConcurrentHashMap<>();
-  ConcurrentHashMap<ImmutablePair<String, String>, ArrayList<PolicyAdvertise>> stPairPolicyTable =
-    new ConcurrentHashMap<>();
-   */
   ConcurrentHashMap<Rectangle, RouteAdvertise> advertisedRoutes = new ConcurrentHashMap<>();
   ConcurrentHashMap<Rectangle, PolicyAdvertise> advertisedPolicies = new ConcurrentHashMap<>();
   ConcurrentHashMap<Rectangle, ArrayList<ImmutablePair<PolicyAdvertise,

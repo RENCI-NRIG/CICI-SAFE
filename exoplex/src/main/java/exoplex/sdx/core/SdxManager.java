@@ -643,8 +643,7 @@ public class SdxManager extends SliceHelper {
 
     Long t1 = System.currentTimeMillis();
 
-    serverSlice.refresh();
-
+    serverSlice.loadSlice();
     String stitchLinkName = stitchNet.get(customerReserveId);
     String stitchNodeName = stitchLinkName.split("_")[1];
 

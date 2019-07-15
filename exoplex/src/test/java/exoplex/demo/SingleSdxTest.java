@@ -2,6 +2,7 @@ package exoplex.demo;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import exoplex.sdx.core.SdxManager;
 import injection.SingleSdxModule;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -10,7 +11,6 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
-@Ignore
 public class SingleSdxTest extends AbstractTest {
   final static Logger logger = LogManager.getLogger(SingleSdxTest.class);
 
@@ -36,7 +36,7 @@ public class SingleSdxTest extends AbstractTest {
   @Before
   @Override
   public void before() throws Exception {
-    deleteSliceAfterTest = false;
+    deleteSliceAfterTest = true;
     initTests();
     deleteSlices();
     super.before();
@@ -59,5 +59,13 @@ public class SingleSdxTest extends AbstractTest {
     connectCustomerNetwork();
     checkConnection();
     unStitchCustomerSlices();
+  }
+
+  @Override
+  public void startSdxServersAndClients(boolean reset) {
+    super.startSdxServersAndClients(reset);
+    SdxManager sdxManager = sdxManagerMap.values().iterator().next();
+    String safeServerIp = getSafeServerIPfromSdxManager(sdxManager);
+    setClientSafeServerIp(safeServerIp);
   }
 }

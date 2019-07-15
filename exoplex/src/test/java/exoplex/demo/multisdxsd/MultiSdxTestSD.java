@@ -1,6 +1,5 @@
 package exoplex.demo.multisdxsd;
 
-import com.apple.eawt.AppEvent;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -60,7 +59,7 @@ public class MultiSdxTestSD extends AbstractTest {
   @Before
   @Override
   public void before() throws Exception {
-    deleteSliceAfterTest = false;
+    deleteSliceAfterTest = true;
     initTests();
     //deleteSlices();
     super.before();

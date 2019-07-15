@@ -184,5 +184,4 @@ public abstract class SliceCommon {
   protected boolean patternMatch(String str, String pattern) {
     return Pattern.compile(pattern).matcher(str).matches();
   }
-
 }
