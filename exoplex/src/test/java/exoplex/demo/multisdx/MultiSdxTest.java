@@ -43,7 +43,7 @@ public class MultiSdxTest extends AbstractTest {
   @Before
   @Override
   public void before() throws Exception {
-    deleteSliceAfterTest = true;
+    deleteSliceAfterTest = false;
     initTests();
     deleteSlices();
     super.before();
@@ -64,6 +64,7 @@ public class MultiSdxTest extends AbstractTest {
     Long t1 = System.currentTimeMillis();
     stitchCustomerSlices();
     Long t2 = System.currentTimeMillis();
+    sleep(10);
     connectCustomerNetwork();
     Long t3 = System.currentTimeMillis();
     checkConnection();
