@@ -54,7 +54,7 @@ public abstract class AbstractTest {
     if (deleteSliceAfterTest) {
       deleteSlices();
     }
-    logger.info("shuttin down all http servers")
+    logger.info("shuttin down all http servers");
     RestService.shutDownAllHttpServers();
   }
 
