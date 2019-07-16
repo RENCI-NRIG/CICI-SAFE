@@ -894,34 +894,36 @@ public class SdxManager extends SliceHelper {
       return "Prefix unrecognized.";
     }
     boolean res = true;
-    if (!routingmanager.findPath(n1, n2, bandwidth)) {
-      serverSlice.loadSlice();
-      String link1 = allocateCLinkName();
-      logger.debug(logPrefix + "Add link: " + link1);
-      long linkbw = 2 * bandwidth;
-      addLink(link1, n1, n2, bw);
+    synchronized (routingmanager) {
+      if (!routingmanager.findPath(n1, n2, bandwidth)) {
+        serverSlice.loadSlice();
+        String link1 = allocateCLinkName();
+        logger.debug(logPrefix + "Add link: " + link1);
+        long linkbw = 2 * bandwidth;
+        addLink(link1, n1, n2, bw);
 
-      Link l1 = new Link();
-      l1.setName(link1);
-      l1.addNode(n1);
-      l1.addNode(n2);
-      l1.setCapacity(linkbw);
-      l1.setMask(mask);
-      links.put(link1, l1);
-      int ip_to_use = getAvailableIP();
-      l1.setIP(IPPrefix + ip_to_use);
-      String param = "";
-      updateOvsInterface(n1);
-      updateOvsInterface(n2);
+        Link l1 = new Link();
+        l1.setName(link1);
+        l1.addNode(n1);
+        l1.addNode(n2);
+        l1.setCapacity(linkbw);
+        l1.setMask(mask);
+        links.put(link1, l1);
+        int ip_to_use = getAvailableIP();
+        l1.setIP(IPPrefix + ip_to_use);
+        String param = "";
+        updateOvsInterface(n1);
+        updateOvsInterface(n2);
 
-      //TODO: why nodeb dpid could be null
-      res = routingmanager.newInternalLink(l1.getLinkName(),
-        l1.getIP(1),
-        l1.getNodeA(),
-        l1.getIP(2),
-        l1.getNodeB(),
-        SDNController,
-        linkbw);
+        //TODO: why nodeb dpid could be null
+        res = routingmanager.newInternalLink(l1.getLinkName(),
+            l1.getIP(1),
+            l1.getNodeA(),
+            l1.getIP(2),
+            l1.getNodeB(),
+            SDNController,
+            linkbw);
+      }
     }
     //configure routing
     if (res) {
