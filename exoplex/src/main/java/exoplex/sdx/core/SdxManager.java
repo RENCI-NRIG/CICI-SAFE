@@ -259,11 +259,11 @@ public class SdxManager extends SliceHelper {
     node1, String node2, long bw) throws TransportException, Exception {
     int numInterfaces1 = serverSlice.getInterfaceNum(node1);
     int numInterfaces2 = serverSlice.getInterfaceNum(node2);
-    serverSlice.lockSlice();
+    //serverSlice.lockSlice();
     int times = 1;
     while (true) {
       serverSlice.addLink(linkName, node1, node2, bw);
-      if (serverSlice.commitAndWait(10, Arrays.asList(new String[]{linkName}))) {
+      if (serverSlice.commitAndWait(10, Arrays.asList(linkName))) {
         int newNum1 = serverSlice.getInterfaceNum(node1);
         int newNum2 = serverSlice.getInterfaceNum(node2);
         while(newNum1 <= numInterfaces1 || newNum2 <= numInterfaces2){
@@ -292,7 +292,7 @@ public class SdxManager extends SliceHelper {
       return false;
     }
     int numInterfaces = serverSlice.getInterfaceNum(nodeName);
-    serverSlice.lockSlice();
+    //serverSlice.lockSlice();
     serverSlice.refresh();
     int times = 1;
     while (true) {
@@ -557,18 +557,16 @@ public class SdxManager extends SliceHelper {
       String stitchname = null;
       String net = null;
       String node = null;
-      serverSlice.refresh();
+      serverSlice.loadSlice();
       if (sdxnode != null && serverSlice.getComputeNode(sdxnode) != null) {
         node = serverSlice.getComputeNode(sdxnode);
         stitchname = allocateStitchLinkName(ip, node);
         addLink(stitchname, node, bw);
-        serverSlice.refresh();
       } else if (sdxnode == null && edgeRouters.containsKey(site) && edgeRouters.get(site).size() >
         0) {
         node = serverSlice.getComputeNode(edgeRouters.get(site).get(0));
         stitchname = allocateStitchLinkName(ip, node);
         addLink(stitchname, node, bw);
-        serverSlice.refresh();
 
       } else {
         //if node not exists, add another node to the slice
@@ -576,20 +574,19 @@ public class SdxManager extends SliceHelper {
         //later when a customer requests connection between site a and site b, we add another logLink to meet
         // the requirments
         logger.debug("No existing router at requested site, adding new router");
-        String eRouterName = allcoateERouterName(site);
-        serverSlice.lockSlice();
-        serverSlice.refresh();
-        serverSlice.addOVSRouter(site, eRouterName);
-        node = serverSlice.getComputeNode(eRouterName);
+        node = allcoateERouterName(site);
+        //serverSlice.lockSlice();
+        //serverSlice.refresh();
+        serverSlice.addOVSRouter(site, node);
         stitchname = allocateStitchLinkName(ip, node);
 
         net = serverSlice.addBroadcastLink(stitchname, bw);
-        serverSlice.stitchNetToNode(net, node, ip, "255.255.255.0");
+        serverSlice.stitchNetToNode(net, node);
 
-        serverSlice.commitAndWait(10, Arrays.asList(new String[]{stitchname, eRouterName}));
-        serverSlice.refresh();
-        copyRouterScript(serverSlice, eRouterName);
-        configRouter(eRouterName);
+        serverSlice.commitAndWait(10, Arrays.asList(stitchname, node));
+        //serverSlice.refresh();
+        copyRouterScript(serverSlice, node);
+        configRouter(node);
         logger.debug("Configured the new router in RoutingManager");
       }
 
@@ -647,7 +644,6 @@ public class SdxManager extends SliceHelper {
     Long t1 = System.currentTimeMillis();
 
     serverSlice.loadSlice();
-
     String stitchLinkName = stitchNet.get(customerReserveId);
     String stitchNodeName = stitchLinkName.split("_")[1];
 
@@ -793,7 +789,9 @@ public class SdxManager extends SliceHelper {
 
   private String allocateStitchLinkName(String ip, String nodeName) {
     String sname = ip.replace(".", "_").replace("/", "_");
-    return "stitch_" + nodeName + "_" + sname;
+    String stitch =  "stitch_" + nodeName + "_" + sname;
+    logger.debug(String.format("Name of new link %s", stitch));
+    return stitch;
   }
 
   private String allcoateCRouterName(String site) {
@@ -899,42 +897,36 @@ public class SdxManager extends SliceHelper {
       return "Prefix unrecognized.";
     }
     boolean res = true;
-    if (!routingmanager.findPath(n1, n2, bandwidth)) {
-      serverSlice.lockSlice();
-      serverSlice.refresh();
-      String c1 = getCoreRouterByEdgeRouter(n1);
-      String c2 = getCoreRouterByEdgeRouter(n2);
-      String node1 = serverSlice.getComputeNode(c1);
-      String node2 = serverSlice.getComputeNode(c2);
+    synchronized (routingmanager) {
+      if (!routingmanager.findPath(n1, n2, bandwidth)) {
+        serverSlice.loadSlice();
+        String link1 = allocateCLinkName();
+        logger.debug(logPrefix + "Add link: " + link1);
+        long linkbw = 2 * bandwidth;
+        addLink(link1, n1, n2, bw);
 
-      String link1 = allocateCLinkName();
-      logger.debug(logPrefix + "Add link: " + link1);
-      long linkbw = 2 * bandwidth;
-      addLink(link1, node1, node2, bw);
+        Link l1 = new Link();
+        l1.setName(link1);
+        l1.addNode(n1);
+        l1.addNode(n2);
+        l1.setCapacity(linkbw);
+        l1.setMask(mask);
+        links.put(link1, l1);
+        int ip_to_use = getAvailableIP();
+        l1.setIP(IPPrefix + ip_to_use);
+        String param = "";
+        updateOvsInterface(n1);
+        updateOvsInterface(n2);
 
-      Link l1 = new Link();
-      l1.setName(link1);
-      l1.addNode(node1);
-      l1.addNode(node2);
-      l1.setCapacity(linkbw);
-      l1.setMask(mask);
-      links.put(link1, l1);
-      int ip_to_use = getAvailableIP();
-      l1.setIP(IPPrefix + ip_to_use);
-      String param = "";
-      updateOvsInterface(c1);
-      updateOvsInterface(c2);
-
-      //TODO: why nodeb dpid could be null
-      res = routingmanager.newInternalLink(l1.getLinkName(),
-        l1.getIP(1),
-        l1.getNodeA(),
-        l1.getIP(2),
-        l1.getNodeB(),
-        SDNController,
-        linkbw);
-      //set ip address
-      //add link to links
+        //TODO: why nodeb dpid could be null
+        res = routingmanager.newInternalLink(l1.getLinkName(),
+            l1.getIP(1),
+            l1.getNodeA(),
+            l1.getIP(2),
+            l1.getNodeB(),
+            SDNController,
+            linkbw);
+      }
     }
     //configure routing
     if (res) {
@@ -1113,8 +1105,6 @@ public class SdxManager extends SliceHelper {
         gatewayPrefixes.put(gateway, new HashSet());
       }
       gatewayPrefixes.get(gateway).add(dest);
-      //RouteAdvertise advertise = advertiseManager.initAdvertise(customer_keyhash, dest);
-      //propagateBgpAdvertise(advertise);
       notifyResult.result = true;
       notifyResult.safeKeyHash = safeManager.getSafeKeyHash();
     }
