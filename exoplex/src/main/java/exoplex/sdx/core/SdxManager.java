@@ -557,7 +557,7 @@ public class SdxManager extends SliceHelper {
       String stitchname = null;
       String net = null;
       String node = null;
-      serverSlice.refresh();
+      serverSlice.loadSlice();
       if (sdxnode != null && serverSlice.getComputeNode(sdxnode) != null) {
         node = serverSlice.getComputeNode(sdxnode);
         stitchname = allocateStitchLinkName(ip, node);

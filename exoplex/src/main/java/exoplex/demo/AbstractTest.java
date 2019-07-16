@@ -188,6 +188,10 @@ public abstract class AbstractTest {
         flag = false;
       }
     }
+    if(!flag){
+      deleteSliceAfterTest = false;
+    }
+    assert flag;
     return flag;
   }
 
