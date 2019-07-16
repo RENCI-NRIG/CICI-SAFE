@@ -58,7 +58,7 @@ public class MultiSdxTestSD extends AbstractTest {
   @Before
   @Override
   public void before() throws Exception {
-    deleteSliceAfterTest = false;
+    deleteSliceAfterTest = true;
     initTests();
     //deleteSlices();
     super.before();

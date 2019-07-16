@@ -868,8 +868,8 @@ public class ExoSliceManager extends SliceManager {
     ComputeNode node_1 = (ComputeNode) slice.getResourceByName(node1);
     ComputeNode node_2 = (ComputeNode) slice.getResourceByName(node2);
     Network net = slice.addBroadcastLink(linkName, bw);
-    InterfaceNode2Net ifaceNode0 = (InterfaceNode2Net) net.stitch(node_1);
-    InterfaceNode2Net ifaceNode1 = (InterfaceNode2Net) net.stitch(node_2);
+    net.stitch(node_1);
+    net.stitch(node_2);
   }
 
   public String getNodeDomain(String nodeName) {
@@ -881,7 +881,6 @@ public class ExoSliceManager extends SliceManager {
     NodeBaseInfo ninfo = NodeBase.getImageInfo(SliceEnv.OVSVersion);
     String nodeImageShortName = ninfo.nisn;
     String nodeImageURL = ninfo.niurl;
-    //http://geni-images.renci.org/images/standard/ubuntu/ub1304-ovs-opendaylight-v1.0.0.xml
     String nodeImageHash = ninfo.nihash;
     String nodeNodeType = "XO Medium";
     String nodePostBootScript = Scripts.getOVSScript();
@@ -900,7 +899,6 @@ public class ExoSliceManager extends SliceManager {
     NodeBaseInfo ninfo = NodeBase.getImageInfo(SliceEnv.OVSVersion);
     String nodeImageShortName = ninfo.nisn;
     String nodeImageURL = ninfo.niurl;
-    //http://geni-images.renci.org/images/standard/ubuntu/ub1304-ovs-opendaylight-v1.0.0.xml
     String nodeImageHash = ninfo.nihash;
     String nodeNodeType = "XO Medium";
     String nodePostBootScript = Scripts.getOVSScript();
@@ -939,11 +937,10 @@ public class ExoSliceManager extends SliceManager {
 
   //We always add the bro when we add the edge router
   public String addBro(String broname, String domain) {
-    String broN = "Centos 7.4 Bro";
-    String broURL =
-      "http://geni-images.renci.org/images/standard/centos/centos7.4-bro-v1.0.4/centos7.4-demo.bro-v1.0.4.xml";
-    String broHash = "50c973571fc6da95c3f70d0f71c9aea1659ff780";
-    String broType = "XO Medium";
+    String broN = NodeBase.CENTOS_BRO;
+    String broURL = NodeBase.getImageInfo(broN).niurl;
+    String broHash = NodeBase.getImageInfo(broN).nihash;
+    String broType = NodeBase.xoMedium;
     ComputeNode bro = this.slice.addComputeNode(broname);
     bro.setImage(broURL, broHash, broN);
     bro.setDomain(domain);

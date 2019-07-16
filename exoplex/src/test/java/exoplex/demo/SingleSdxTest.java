@@ -36,7 +36,7 @@ public class SingleSdxTest extends AbstractTest {
   @Before
   @Override
   public void before() throws Exception {
-    deleteSliceAfterTest = false;
+    deleteSliceAfterTest = true;
     initTests();
     super.before();
   }
