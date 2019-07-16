@@ -4,6 +4,7 @@ import exoplex.sdx.advertise.PolicyAdvertise;
 import exoplex.sdx.advertise.RouteAdvertise;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.glassfish.grizzly.http.server.HttpServer;
 import org.json.JSONObject;
 
 import javax.ws.rs.*;
@@ -12,6 +13,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.UriInfo;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 
 /**
  * Root resource (exposed at "myresource" path)
@@ -24,6 +26,17 @@ import java.util.HashMap;
 public class RestService {
   final static Logger logger = LogManager.getLogger(RestService.class);
   private static HashMap<Integer, SdxManager> sdxManagerMap = new HashMap<>();
+  private  static HashSet<HttpServer> httpServers = new HashSet<>();
+
+  public static void registerHttpServer(HttpServer server){
+    httpServers.add(server);
+  }
+
+  public static void shutDownAllHttpServers(){
+    for(HttpServer server: httpServers){
+      server.shutdownNow();
+    }
+  }
 
   public static void registerSdxManager(Integer port, SdxManager sdxManager) {
     sdxManagerMap.put(port, sdxManager);
