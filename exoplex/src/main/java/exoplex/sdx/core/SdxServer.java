@@ -67,6 +67,7 @@ public class SdxServer {
     RestService.registerSdxManager(uri.getPort(), sdxManager);
     logger.debug("Starting on " + url);
     final HttpServer server = startServer(uri);
+    RestService.registerHttpServer(server);
     logger.debug("Sdx server has started, listening on " + url);
     System.out.println("Sdx server has started, listening on " + url);
     return sdxManager;
