@@ -5,6 +5,7 @@ import com.google.inject.Injector;
 import exoplex.demo.AbstractTest;
 import exoplex.demo.AbstractTestSetting;
 import exoplex.demo.AbstractTestSlice;
+import exoplex.sdx.core.SdxManager;
 import injection.SingleSdxModule;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -38,7 +39,7 @@ public class SingleSdxTest extends AbstractTest {
   @Before
   @Override
   public void before() throws Exception {
-    deleteSliceAfterTest = false;
+    deleteSliceAfterTest = true;
     initTests();
     //deleteSlices();
     super.before();
@@ -66,5 +67,13 @@ public class SingleSdxTest extends AbstractTest {
     connectCustomerNetwork();
     checkConnection();
     unStitchCustomerSlices();
+  }
+
+  @Override
+  public void startSdxServersAndClients(boolean reset) {
+    super.startSdxServersAndClients(reset);
+    SdxManager sdxManager = sdxManagerMap.values().iterator().next();
+    String safeServerIp = getSafeServerIPfromSdxManager(sdxManager);
+    setClientSafeServerIp(safeServerIp);
   }
 }

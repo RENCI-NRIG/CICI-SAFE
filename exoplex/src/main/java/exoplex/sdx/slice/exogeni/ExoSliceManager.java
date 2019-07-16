@@ -390,11 +390,6 @@ public class ExoSliceManager extends SliceManager {
     do {
       try {
         slice.commit();
-        try {
-          lock.unlock();
-        } catch (Exception e) {
-          ;
-        }
         return;
       } catch (XMLRPCTransportException var7) {
         logger.debug(var7.getMessage());

@@ -4,6 +4,7 @@ import exoplex.sdx.advertise.PolicyAdvertise;
 import exoplex.sdx.advertise.RouteAdvertise;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.glassfish.grizzly.http.server.HttpServer;
 import org.json.JSONObject;
 
 import javax.ws.rs.*;
@@ -12,6 +13,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.UriInfo;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 
 /**
  * Root resource (exposed at "myresource" path)
@@ -24,6 +26,17 @@ import java.util.HashMap;
 public class RestService {
   final static Logger logger = LogManager.getLogger(RestService.class);
   private static HashMap<Integer, SdxManager> sdxManagerMap = new HashMap<>();
+  private  static HashSet<HttpServer> httpServers = new HashSet<>();
+
+  public static void registerHttpServer(HttpServer server){
+    httpServers.add(server);
+  }
+
+  public static void shutDownAllHttpServers(){
+    for(HttpServer server: httpServers){
+      server.shutdownNow();
+    }
+  }
 
   public static void registerSdxManager(Integer port, SdxManager sdxManager) {
     sdxManagerMap.put(port, sdxManager);
@@ -162,6 +175,8 @@ public class RestService {
     } catch (Exception e) {
       e.printStackTrace();
       return new StitchResult();
+    } finally {
+      sdxManager.unlockSlice();
     }
   }
 
@@ -180,6 +195,8 @@ public class RestService {
     } catch (Exception e) {
       e.printStackTrace();
       return String.format("UndoStitch Failed: %s", e.getMessage());
+    } finally {
+      sdxManager.unlockSlice();
     }
   }
 
@@ -198,6 +215,8 @@ public class RestService {
     } catch (Exception e) {
       e.printStackTrace();
       return e.getMessage();
+    } finally {
+      sdxManager.unlockSlice();
     }
   }
 
@@ -208,9 +227,16 @@ public class RestService {
   public String stitchChameleon(@Context UriInfo uriInfo, StitchChameleon sr) {
     logger.debug("got chameleon stitch request: \n" + sr.toString());
     SdxManager sdxManager = sdxManagerMap.get(uriInfo.getBaseUri().getPort());
-    String res = sdxManager.stitchChameleon(sr.sdxsite, sr.sdxnode,
-      sr.ckeyhash, sr.stitchport, sr.vlan, sr.gateway, sr.ip);
-    return res;
+    try {
+      String res = sdxManager.stitchChameleon(sr.sdxsite, sr.sdxnode,
+          sr.ckeyhash, sr.stitchport, sr.vlan, sr.gateway, sr.ip);
+      return res;
+    } catch (Exception e){
+      e.printStackTrace();
+      return e.getMessage();
+    } finally {
+      sdxManager.unlockSlice();
+    }
   }
 
   @POST
@@ -239,6 +265,8 @@ public class RestService {
       e.printStackTrace();
       res = "Failed to get Bro Load";
       logger.warn(res);
+    } finally {
+      sdxManager.unlockSlice();
     }
     return res;
   }

@@ -110,7 +110,8 @@ defcon routingPolicy() :-
 
     compliantPath(?Owner,?SrcIP,?DstIP,?Path) :-
       eq([?Owner|?Tail],?Path),
-      eq(?Tail,[]).
+      eq(?Tail,[]),
+      ownPrefix(?Owner, ?DstIP).
 
     compliantPath(?Owner,?SrcIP,?DstIP,?Path) :-
       eq([?Owner|?Tail],?Path),
