@@ -584,12 +584,9 @@ public class SdxManager extends SliceHelper {
         serverSlice.refresh();
         node = serverSlice.addOVSRouter(site, eRouterName);
         stitchname = allocateStitchLinkName(ip, node.getName());
-
-        BroadcastNetwork broadcastNetwork = serverSlice.addBroadcastLink(stitchname, bw);
-        serverSlice.stitchNetToNode(broadcastNetwork, node, ip, "255.255.255.0");
-
-        serverSlice.commitAndWait(10, Arrays.asList(new String[]{stitchname, eRouterName}));
-        serverSlice.refresh();
+        serverSlice.addBroadcastLinkAndStitchToNode(stitchname, bw, node, ip.split("/")[0], "255.255.255.0");
+        serverSlice.commitAndWait(10, Arrays.asList(new String[]{eRouterName}));
+        serverSlice.loadSlice();
         copyRouterScript(serverSlice, eRouterName);
         configRouter(eRouterName);
         logger.debug("Configured the new router in RoutingManager");
@@ -601,8 +598,8 @@ public class SdxManager extends SliceHelper {
       logLink.setName(stitchname);
       logLink.addNode(node.getName());
       links.put(stitchname, logLink);
-      serverSlice.stitch(net1_stitching_GUID, customerSlice, reserveId, secret, gateway + "/" + ip
-        .split("/")[1]);
+      //serverSlice.stitch(net1_stitching_GUID, customerSlice, reserveId, secret, gateway);
+      serverSlice.stitch(net1_stitching_GUID, customerSlice, reserveId, secret, gateway + "/" + ip.split("/")[1]);
       res.put("ip", ip);
       res.put("gateway", gateway);
       res.put("reservID", net1_stitching_GUID);
@@ -1102,25 +1099,33 @@ public class SdxManager extends SliceHelper {
     boolean flag = false;
     String router = routingmanager.getEdgeRouterByGateway(gateway);
     if (router == null) {
-      logger.warn(logPrefix + "Cannot find a router with cusotmer gateway" + gateway);
+      logger.info(logPrefix + "Cannot find a router with cusotmer gateway" + gateway);
       notifyResult.message = notifyResult.message + " Cannot find a router with customer gateway " +
         gateway;
     } else {
+      logger.info("added " + dest + "=>" + gateway);
       prefixGateway.put(dest, gateway);
+      logger.info("added " + dest + "=>" + customer_keyhash);
       prefixKeyHash.put(dest, customer_keyhash);
       if (!customerPrefixes.containsKey(customer_keyhash)) {
         customerPrefixes.put(customer_keyhash, new HashSet<>());
+        logger.info("added " +customer_keyhash + "=>");
       }
       customerPrefixes.get(customer_keyhash).add(dest);
       if (!gatewayPrefixes.containsKey(gateway)) {
         gatewayPrefixes.put(gateway, new HashSet());
+        logger.info("added " + gateway + "=>");
       }
       gatewayPrefixes.get(gateway).add(dest);
+      logger.info("added " + dest + " to " + gateway);
       //RouteAdvertise advertise = advertiseManager.initAdvertise(customer_keyhash, dest);
       //propagateBgpAdvertise(advertise);
       notifyResult.result = true;
-      notifyResult.safeKeyHash = safeManager.getSafeKeyHash();
+      if(safeEnabled) {
+         notifyResult.safeKeyHash = safeManager.getSafeKeyHash();
+      }
     }
+    logger.info("notifyResult=" + notifyResult.toString());
     return notifyResult;
   }
 

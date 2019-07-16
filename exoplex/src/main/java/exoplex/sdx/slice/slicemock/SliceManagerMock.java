@@ -282,6 +282,18 @@ public class SliceManagerMock extends SliceManager implements Serializable {
     return this.addBroadcastLink(name, DEFAULT_BW);
   }
 
+    public BroadcastNetwork addBroadcastLinkAndStitchToNode(String name, long bandwidth, ComputeNode computeNode, String ip, String netmask) {
+        BroadcastNetwork broadcastNetwork = null;
+        synchronized (this) {
+            logger.info(String.format("addBroadcastLink %s %s", name, bandwidth));
+            broadcastNetwork = this.slice.addBroadcastLink(name, bandwidth);
+            InterfaceNode2Net interfaceNode2Net = (InterfaceNode2Net) broadcastNetwork.stitch(computeNode);
+            interfaceNode2Net.setIpAddress(ip);
+            interfaceNode2Net.setNetmask(netmask);
+        }
+        return broadcastNetwork;
+    }
+
   public String attach(String nodeName, String linkName, String ip, String netmask) {
     ComputeNode node = null;
     BroadcastNetwork link = null;

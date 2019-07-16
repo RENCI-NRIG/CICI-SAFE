@@ -61,6 +61,8 @@ public abstract class SliceManager {
 
   abstract public BroadcastNetwork addBroadcastLink(String name);
 
+  abstract public BroadcastNetwork addBroadcastLinkAndStitchToNode(String name, long bandwidth, ComputeNode computeNode, String ip, String netmask);
+
   abstract public String attach(String nodeName, String linkName, String ip, String netmask);
 
   abstract public String attach(String nodeName, String linkName);

@@ -73,13 +73,13 @@ public class RoutingManager {
   public boolean newExternalLink(String linkName, String ipa, String routerA, String gw, String
     controller) {
     logger.info(String.format("newLink %s %s %s %s %s", linkName, ipa, routerA, gw, controller));
-    logger.debug("RoutingManager: new stitchpoint " + routerA + " " + ipa);
+    logger.info("RoutingManager: new stitchpoint " + routerA + " " + ipa);
     networkManager.addLink(linkName, ipa, routerA, gw);
     String dpid = networkManager.getRouter(routerA).getDPID();
     String cmd[] = SdnUtil.addrCMD(ipa, dpid, controller);
     boolean result = true;
     String res = postSdnCmd(cmd[0], new JSONObject(cmd[1]));
-    logger.debug(res);
+    logger.info(res);
     cmd[cmd.length - 1] = res;
     if (res.toString().contains("success")) {
       int id = Integer.valueOf(res.split("address_id=")[1].split("]")[0]);
@@ -89,6 +89,7 @@ public class RoutingManager {
     } else {
       result = false;
     }
+    logger.info("result=" + result);
     return result;
   }
 
