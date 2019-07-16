@@ -46,7 +46,7 @@ public class MultiSdxTest extends AbstractTest {
   public void before() throws Exception {
     deleteSliceAfterTest = false;
     initTests();
-    deleteSlices();
+    //deleteSlices();
     super.before();
   }
 
