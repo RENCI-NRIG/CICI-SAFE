@@ -256,36 +256,43 @@ public class SdxManager extends SliceHelper {
 
 
   private boolean addLink(String linkName, String
-    node1, String node2, long bw) throws TransportException, Exception {
+    node1, String node2, long bw) {
     int numInterfaces1 = serverSlice.getInterfaceNum(node1);
     int numInterfaces2 = serverSlice.getInterfaceNum(node2);
     serverSlice.lockSlice();
-    int times = 1;
-    while (true) {
-      serverSlice.addLink(linkName, node1, node2, bw);
-      if (serverSlice.commitAndWait(10, Arrays.asList(new String[]{linkName}))) {
-        int newNum1 = serverSlice.getInterfaceNum(node1);
-        int newNum2 = serverSlice.getInterfaceNum(node2);
-        while(newNum1 <= numInterfaces1 || newNum2 <= numInterfaces2){
-          serverSlice.sleep(5);
-          newNum1 = serverSlice.getInterfaceNum(node1);
-          newNum2 = serverSlice.getInterfaceNum(node2);
+    try {
+      int times = 1;
+      while (true) {
+        serverSlice.addLink(linkName, node1, node2, bw);
+        if (serverSlice.commitAndWait(10, Arrays.asList(linkName))) {
+          int newNum1 = serverSlice.getInterfaceNum(node1);
+          int newNum2 = serverSlice.getInterfaceNum(node2);
+          while (newNum1 <= numInterfaces1 || newNum2 <= numInterfaces2) {
+            serverSlice.sleep(5);
+            newNum1 = serverSlice.getInterfaceNum(node1);
+            newNum2 = serverSlice.getInterfaceNum(node2);
+          }
+          if (times > 1) {
+            logger.warn(String.format("Tried %s times to add a stitchlink", times));
+          }
+          break;
         }
-        if (times > 1) {
-          logger.warn(String.format("Tried %s times to add a stitchlink", times));
-        }
-        break;
+        serverSlice.deleteResource(linkName);
+        serverSlice.commitAndWait();
+        serverSlice.refresh();
+        times++;
       }
-      serverSlice.deleteResource(linkName);
-      serverSlice.commitAndWait();
-      serverSlice.refresh();
-      times++;
+    } catch (Exception e){
+        e.printStackTrace();
+        return false;
+    } finally {
+      serverSlice.unLockSlice();
     }
     updateMacAddr();
     return true;
   }
 
-  private boolean addLink(String stitchName, String nodeName, long bw) throws TransportException, Exception {
+  private boolean addLink(String stitchName, String nodeName, long bw) {
     //TODO use another SliceManager module that mimic the addition of the stitch link
     logger.info(String.format("Adding link %s %s %s Mbps", stitchName, nodeName, bw/1000000));
     if (serverSlice.getResourceByName(stitchName) != null) {
@@ -294,57 +301,70 @@ public class SdxManager extends SliceHelper {
     int numInterfaces = serverSlice.getInterfaceNum(nodeName);
     serverSlice.lockSlice();
     serverSlice.refresh();
-    int times = 1;
-    while (true) {
-      serverSlice.addLink(stitchName, nodeName, bw);
-      if( serverSlice.commitAndWait(10, Arrays.asList(new String[]{stitchName}))) {
-        int newNum;
-        do{
-          serverSlice.sleep(10);
-          newNum = serverSlice.getInterfaceNum(nodeName);
-        }while (newNum <= numInterfaces);
-        if (times > 1) {
-          logger.warn(String.format("Tried %s times to add a stitchlink", times));
+    try {
+      int times = 1;
+      while (true) {
+        serverSlice.addLink(stitchName, nodeName, bw);
+        if (serverSlice.commitAndWait(10, Arrays.asList(new String[]{stitchName}))) {
+          int newNum;
+          do {
+            serverSlice.sleep(10);
+            newNum = serverSlice.getInterfaceNum(nodeName);
+          } while (newNum <= numInterfaces);
+          if (times > 1) {
+            logger.warn(String.format("Tried %s times to add a stitchlink", times));
+          }
+          break;
+        } else {
+          serverSlice.deleteResource(stitchName);
+          serverSlice.commitAndWait();
+          serverSlice.refresh();
+          times++;
         }
-        break;
-      }else {
-        serverSlice.deleteResource(stitchName);
-        serverSlice.commitAndWait();
-        serverSlice.refresh();
-        times++;
       }
+    }catch (Exception e){
+      e.printStackTrace();
+      return false;
+    } finally {
+      serverSlice.unLockSlice();
     }
     updateMacAddr();
     return true;
   }
 
   private boolean addStitchPort(String spName, String nodeName, String stitchUrl, String vlan, long
-    bw) throws
-    TransportException, Exception {
+    bw) {
     int numInterfaces = serverSlice.getInterfaceNum(nodeName);
     serverSlice.lockSlice();
     serverSlice.refresh();
-    int times = 1;
-    String node = serverSlice.getComputeNode(nodeName);
-    while (true) {
-      String mysp = serverSlice.addStitchPort(spName, vlan, stitchUrl, bw);
-      serverSlice.stitchSptoNode(mysp, node);
-      int newNum;
-      if(serverSlice.commitAndWait(10, Arrays.asList(new String[]{spName + "-net"}))) {
-        do {
-          serverSlice.sleep(5);
-          newNum = serverSlice.getInterfaceNum(nodeName);
-        } while (newNum <= numInterfaces);
-        if (times > 1) {
-          logger.warn(String.format("Tried %s times to add a stitchlink", times));
+    try {
+      int times = 1;
+      String node = serverSlice.getComputeNode(nodeName);
+      while (true) {
+        String mysp = serverSlice.addStitchPort(spName, vlan, stitchUrl, bw);
+        serverSlice.stitchSptoNode(mysp, node);
+        int newNum;
+        if (serverSlice.commitAndWait(10, Arrays.asList(new String[]{spName + "-net"}))) {
+          do {
+            serverSlice.sleep(5);
+            newNum = serverSlice.getInterfaceNum(nodeName);
+          } while (newNum <= numInterfaces);
+          if (times > 1) {
+            logger.warn(String.format("Tried %s times to add a stitchlink", times));
+          }
+          break;
+        } else {
+          serverSlice.deleteResource(spName);
+          serverSlice.commitAndWait();
+          serverSlice.refresh();
+          times++;
         }
-        break;
-      }else{
-        serverSlice.deleteResource(spName);
-        serverSlice.commitAndWait();
-        serverSlice.refresh();
-        times++;
       }
+    } catch (Exception e){
+      e.printStackTrace();
+      return false;
+    } finally {
+      serverSlice.unLockSlice();
     }
     updateMacAddr();
     return true;
@@ -531,6 +551,10 @@ public class SdxManager extends SliceHelper {
     return null;
   }
 
+  public void unlockSlice(){
+    serverSlice.unLockSlice();
+  }
+
   synchronized public JSONObject stitchRequest(
     String site,
     String customerSafeKeyHash,
@@ -557,18 +581,16 @@ public class SdxManager extends SliceHelper {
       String stitchname = null;
       String net = null;
       String node = null;
-      serverSlice.refresh();
+      serverSlice.loadSlice();
       if (sdxnode != null && serverSlice.getComputeNode(sdxnode) != null) {
         node = serverSlice.getComputeNode(sdxnode);
         stitchname = allocateStitchLinkName(ip, node);
         addLink(stitchname, node, bw);
-        serverSlice.refresh();
       } else if (sdxnode == null && edgeRouters.containsKey(site) && edgeRouters.get(site).size() >
         0) {
         node = serverSlice.getComputeNode(edgeRouters.get(site).get(0));
         stitchname = allocateStitchLinkName(ip, node);
         addLink(stitchname, node, bw);
-        serverSlice.refresh();
 
       } else {
         //if node not exists, add another node to the slice
@@ -576,20 +598,18 @@ public class SdxManager extends SliceHelper {
         //later when a customer requests connection between site a and site b, we add another logLink to meet
         // the requirments
         logger.debug("No existing router at requested site, adding new router");
-        String eRouterName = allcoateERouterName(site);
+        node = allcoateERouterName(site);
         serverSlice.lockSlice();
-        serverSlice.refresh();
-        serverSlice.addOVSRouter(site, eRouterName);
-        node = serverSlice.getComputeNode(eRouterName);
+        serverSlice.addOVSRouter(site, node);
         stitchname = allocateStitchLinkName(ip, node);
 
         net = serverSlice.addBroadcastLink(stitchname, bw);
-        serverSlice.stitchNetToNode(net, node, ip, "255.255.255.0");
+        serverSlice.stitchNetToNode(net, node);
 
-        serverSlice.commitAndWait(10, Arrays.asList(new String[]{stitchname, eRouterName}));
-        serverSlice.refresh();
-        copyRouterScript(serverSlice, eRouterName);
-        configRouter(eRouterName);
+        serverSlice.commitAndWait(10, Arrays.asList(stitchname, node));
+        serverSlice.unLockSlice();
+        copyRouterScript(serverSlice, node);
+        configRouter(node);
         logger.debug("Configured the new router in RoutingManager");
       }
 
@@ -647,7 +667,6 @@ public class SdxManager extends SliceHelper {
     Long t1 = System.currentTimeMillis();
 
     serverSlice.loadSlice();
-
     String stitchLinkName = stitchNet.get(customerReserveId);
     String stitchNodeName = stitchLinkName.split("_")[1];
 
@@ -703,6 +722,7 @@ public class SdxManager extends SliceHelper {
     resources.add(broName);
     resources.add(linkName);
     serverSlice.commitAndWait(10, resources);
+    serverSlice.unLockSlice();
     serverSlice.refresh();
     String resource_dir = conf.getString("config.resourcedir");
     serverSlice.configBroNode(broName, routerName, resource_dir, SDNControllerIP, serverurl, sshKey);
@@ -793,7 +813,9 @@ public class SdxManager extends SliceHelper {
 
   private String allocateStitchLinkName(String ip, String nodeName) {
     String sname = ip.replace(".", "_").replace("/", "_");
-    return "stitch_" + nodeName + "_" + sname;
+    String stitch =  "stitch_" + nodeName + "_" + sname;
+    logger.debug(String.format("Name of new link %s", stitch));
+    return stitch;
   }
 
   private String allcoateCRouterName(String site) {
@@ -899,42 +921,36 @@ public class SdxManager extends SliceHelper {
       return "Prefix unrecognized.";
     }
     boolean res = true;
-    if (!routingmanager.findPath(n1, n2, bandwidth)) {
-      serverSlice.lockSlice();
-      serverSlice.refresh();
-      String c1 = getCoreRouterByEdgeRouter(n1);
-      String c2 = getCoreRouterByEdgeRouter(n2);
-      String node1 = serverSlice.getComputeNode(c1);
-      String node2 = serverSlice.getComputeNode(c2);
+    synchronized (routingmanager) {
+      if (!routingmanager.findPath(n1, n2, bandwidth)) {
+        serverSlice.loadSlice();
+        String link1 = allocateCLinkName();
+        logger.debug(logPrefix + "Add link: " + link1);
+        long linkbw = 2 * bandwidth;
+        addLink(link1, n1, n2, bw);
 
-      String link1 = allocateCLinkName();
-      logger.debug(logPrefix + "Add link: " + link1);
-      long linkbw = 2 * bandwidth;
-      addLink(link1, node1, node2, bw);
+        Link l1 = new Link();
+        l1.setName(link1);
+        l1.addNode(n1);
+        l1.addNode(n2);
+        l1.setCapacity(linkbw);
+        l1.setMask(mask);
+        links.put(link1, l1);
+        int ip_to_use = getAvailableIP();
+        l1.setIP(IPPrefix + ip_to_use);
+        String param = "";
+        updateOvsInterface(n1);
+        updateOvsInterface(n2);
 
-      Link l1 = new Link();
-      l1.setName(link1);
-      l1.addNode(node1);
-      l1.addNode(node2);
-      l1.setCapacity(linkbw);
-      l1.setMask(mask);
-      links.put(link1, l1);
-      int ip_to_use = getAvailableIP();
-      l1.setIP(IPPrefix + ip_to_use);
-      String param = "";
-      updateOvsInterface(c1);
-      updateOvsInterface(c2);
-
-      //TODO: why nodeb dpid could be null
-      res = routingmanager.newInternalLink(l1.getLinkName(),
-        l1.getIP(1),
-        l1.getNodeA(),
-        l1.getIP(2),
-        l1.getNodeB(),
-        SDNController,
-        linkbw);
-      //set ip address
-      //add link to links
+        //TODO: why nodeb dpid could be null
+        res = routingmanager.newInternalLink(l1.getLinkName(),
+            l1.getIP(1),
+            l1.getNodeA(),
+            l1.getIP(2),
+            l1.getNodeB(),
+            SDNController,
+            linkbw);
+      }
     }
     //configure routing
     if (res) {
@@ -1113,8 +1129,6 @@ public class SdxManager extends SliceHelper {
         gatewayPrefixes.put(gateway, new HashSet());
       }
       gatewayPrefixes.get(gateway).add(dest);
-      //RouteAdvertise advertise = advertiseManager.initAdvertise(customer_keyhash, dest);
-      //propagateBgpAdvertise(advertise);
       notifyResult.result = true;
       notifyResult.safeKeyHash = safeManager.getSafeKeyHash();
     }
@@ -1193,6 +1207,7 @@ public class SdxManager extends SliceHelper {
       vlan)) {
       //FIX ME: do stitching
       logger.info("Chameleon Stitch Request from " + customer_keyhash + " Authorized");
+      serverSlice.lockSlice();
       try {
         //FIX ME: do stitching
         logger.info(logPrefix + "Chameleon Stitch Request from " + customer_keyhash + " Authorized");
@@ -1211,30 +1226,13 @@ public class SdxManager extends SliceHelper {
           // the requirments
           logger.debug("No existing router at requested site, adding new router");
           String eRouterName = allcoateERouterName(sdxsite);
-          String cRouterName = allcoateCRouterName(sdxsite);
-          String eLinkName = allocateELinkName();
-          serverSlice.lockSlice();
           serverSlice.refresh();
           serverSlice.addOVSRouter(sdxsite, eRouterName);
-          //serverSlice.addCoreEdgeRouterPair(sdxsite, cRouterName, eRouterName, eLinkName, bw);
           node = serverSlice.getComputeNode(eRouterName);
           serverSlice.commitAndWait(10, Arrays.asList(new String[]{eRouterName}));
-          serverSlice.refresh();
-          //copyRouterScript(serverSlice, cRouterName);
-          //configRouter(cRouterName);
+          serverSlice.unLockSlice();
           copyRouterScript(serverSlice, eRouterName);
           configRouter(eRouterName);
-          //Link internal_Log_link = new Link(eLinkName, cRouterName, eRouterName);
-          //int ip_1 = getAvailableIP();
-          //internal_Log_link.setIP(IPPrefix + String.valueOf(ip_1));
-          //links.put(eLinkName, internal_Log_link);
-          //routingmanager.newInternalLink(internal_Log_link.getLinkName(),
-          //  internal_Log_link.getIP(1),
-          //  internal_Log_link.getNodeA(),
-          //  internal_Log_link.getIP(2),
-          //  internal_Log_link.getNodeB(),
-          //  SDNController,
-          //  bw);
           nodeName = node;
           logger.debug("Configured the new router in RoutingManager");
         }
@@ -1242,10 +1240,6 @@ public class SdxManager extends SliceHelper {
         logger.info(logPrefix + "Stitching to Chameleon {" + "stitchname: " + stitchname + " vlan:" +
           vlan + " stithport: " + stitchport + "}");
         addStitchPort(stitchname, nodeName, stitchport, vlan, bw);
-        //StitchPort mysp = serverSlice.addStitchPort(stitchname, vlan, stitchport, bw);
-        //mysp.stitch(node);
-        //serverSlice.commit();
-        //serverSlice.waitTillActive();
         updateOvsInterface(nodeName);
         //routingmanager.replayCmds(routingmanager.getDPID(nodeName));
         routingmanager.newExternalLink(stitchname, ip, nodeName, gateway, SDNController);
@@ -1254,6 +1248,8 @@ public class SdxManager extends SliceHelper {
       } catch (Exception e) {
         res = "Stitch request failed.\n SdxServer exception in commiting stitching opoeration";
         e.printStackTrace();
+      } finally {
+        serverSlice.unLockSlice();
       }
     }
     return res;

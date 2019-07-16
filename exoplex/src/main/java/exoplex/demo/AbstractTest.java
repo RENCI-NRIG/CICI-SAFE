@@ -2,6 +2,7 @@ package exoplex.demo;
 
 import com.google.inject.Injector;
 import exoplex.client.exogeni.SdxExogeniClient;
+import exoplex.sdx.core.RestService;
 import exoplex.sdx.core.SdxManager;
 import exoplex.sdx.core.SdxServer;
 import exoplex.sdx.network.SdnReplay;
@@ -49,9 +50,12 @@ public abstract class AbstractTest {
   }
 
   public void after() throws Exception {
+    //terminate HTTP servers
     if (deleteSliceAfterTest) {
       deleteSlices();
     }
+    logger.info("shuttin down all http servers");
+    RestService.shutDownAllHttpServers();
   }
 
   public void startClients(){
@@ -188,6 +192,10 @@ public abstract class AbstractTest {
         flag = false;
       }
     }
+    if(!flag){
+      deleteSliceAfterTest = false;
+    }
+    assert flag;
     return flag;
   }
 
