@@ -299,7 +299,7 @@ public class SdxManager extends SliceHelper {
       return false;
     }
     int numInterfaces = serverSlice.getInterfaceNum(nodeName);
-    //serverSlice.lockSlice();
+    serverSlice.lockSlice();
     serverSlice.refresh();
     try {
       int times = 1;

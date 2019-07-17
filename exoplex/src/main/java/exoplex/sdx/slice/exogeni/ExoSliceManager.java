@@ -158,7 +158,10 @@ public class ExoSliceManager extends SliceManager {
   }
 
   synchronized public void unLockSlice() {
-    lock.unlock();
+    try {
+      lock.unlock();
+    } catch (Exception e){
+    }
   }
 
   synchronized public void abort() {
@@ -536,9 +539,8 @@ public class ExoSliceManager extends SliceManager {
   }
 
   synchronized public void waitTillActive(int interval) throws Exception {
-    List<String> computeNodes = getComputeNodes().stream().collect
-      (Collectors.toList());
-    List<String> links = getBroadcastLinks().stream().collect(Collectors.toList());
+    List<String> computeNodes = new ArrayList<>(getComputeNodes());
+    List<String> links = new ArrayList<>(getBroadcastLinks());
     computeNodes.addAll(links);
     waitTillActive(interval, computeNodes);
   }
@@ -930,7 +932,7 @@ public class ExoSliceManager extends SliceManager {
                              String safeDockerImage, String
     safeServerScript) {
     addDocker(siteName, "safe-server", Scripts.getSafeScript_v1(riakIp, safeDockerImage,
-      safeServerScript), NodeBase.xoMedium);
+      safeServerScript), NodeBase.xoLarge);
   }
 
   synchronized public void addPlexusController(String controllerSite, String name) {
