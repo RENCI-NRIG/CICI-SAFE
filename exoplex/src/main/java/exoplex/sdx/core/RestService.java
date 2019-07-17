@@ -261,6 +261,8 @@ public class RestService {
       e.printStackTrace();
       res = "Failed to get Bro Load";
       logger.warn(res);
+    } finally {
+      sdxManager.unlockSlice();
     }
     return res;
   }
