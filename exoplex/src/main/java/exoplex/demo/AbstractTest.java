@@ -167,8 +167,8 @@ public abstract class AbstractTest {
       String clientIp = testSetting.clientIpMap.get(client);
       String peer = testSetting.clientSlices.get(j);
       String peerIp = testSetting.clientIpMap.get(peer);
-      exogeniClients.get(client).processCmdAsync(String.format("link %s %s", clientIp, peerIp));
-      exogeniClients.get(peer).processCmdAsync(String.format("link %s %s", peerIp, clientIp));
+      exogeniClients.get(client).processCmd(String.format("link %s %s", clientIp, peerIp));
+      exogeniClients.get(peer).processCmd(String.format("link %s %s", peerIp, clientIp));
     }
     logger.debug("connection ends");
   }
