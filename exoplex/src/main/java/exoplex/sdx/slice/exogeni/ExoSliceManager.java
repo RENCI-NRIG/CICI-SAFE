@@ -161,6 +161,7 @@ public class ExoSliceManager extends SliceManager {
     try {
       lock.unlock();
     } catch (Exception e){
+      logger.warn(String.format("unlock slice %s", e.getMessage()));
     }
   }
 

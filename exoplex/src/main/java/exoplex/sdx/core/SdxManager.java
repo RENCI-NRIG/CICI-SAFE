@@ -904,7 +904,8 @@ public class SdxManager extends SliceHelper {
         logger.info("Unauthorized connection request");
         return "Unauthorized connection request";
       } else {
-        logger.info("Authorized connection request");
+        logger.info(String.format("Authorized connection request <%s, %s>",
+            self_prefix, target_prefix));
       }
     }
     String n1 = routingmanager.getEdgeRouterByGateway(prefixGateway.get(self_prefix));

@@ -230,7 +230,8 @@ public class RoutingManager {
    * @param bw
    * @return
    */
-  public boolean configurePath(String dstIP, String dstNode, String srcIP, String
+  public synchronized boolean configurePath(String dstIP, String dstNode, String srcIP,
+                                String
     srcNode, String gateway, String controller, long bw) {
     logger.info(String.format("configurePath %s %s %s %s %s %s %s", dstIP, dstNode, srcIP,
       srcNode, gateway, controller, bw));
