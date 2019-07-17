@@ -628,7 +628,8 @@ public class SdxManager extends SliceHelper {
     return res;
   }
 
-  public String undoStitch(String customerSafeKeyHash, String customerSlice, String
+  synchronized public String undoStitch(String customerSafeKeyHash, String customerSlice,
+                            String
     customerReserveId) throws TransportException, Exception {
     logger.debug("ndllib TestDriver: START");
     logger.info(String.format("Undostitch request from %s for (%s, %s)", customerSafeKeyHash,
@@ -859,7 +860,8 @@ public class SdxManager extends SliceHelper {
     }
   }
 
-  public String connectionRequest(String ckeyhash, String self_prefix, String target_prefix, long bandwidth) throws Exception {
+  synchronized public String connectionRequest(String ckeyhash, String self_prefix,
+                                   String target_prefix, long bandwidth) throws Exception {
     logger.info(String.format("Connection request between %s and %s", self_prefix, target_prefix));
     //String n1=computenodes.get(site1).get(0);
     //String n2=computenodes.get(site2).get(0);
@@ -897,47 +899,45 @@ public class SdxManager extends SliceHelper {
       return "Prefix unrecognized.";
     }
     boolean res = true;
-    synchronized (routingmanager) {
-      if (!routingmanager.findPath(n1, n2, bandwidth)) {
-        serverSlice.loadSlice();
-        String link1 = allocateCLinkName();
-        logger.debug(logPrefix + "Add link: " + link1);
-        long linkbw = 2 * bandwidth;
-        addLink(link1, n1, n2, bw);
+    if (!routingmanager.findPath(n1, n2, bandwidth)) {
+      serverSlice.loadSlice();
+      String link1 = allocateCLinkName();
+      logger.debug(logPrefix + "Add link: " + link1);
+      long linkbw = 2 * bandwidth;
+      addLink(link1, n1, n2, bw);
 
-        Link l1 = new Link();
-        l1.setName(link1);
-        l1.addNode(n1);
-        l1.addNode(n2);
-        l1.setCapacity(linkbw);
-        l1.setMask(mask);
-        links.put(link1, l1);
-        int ip_to_use = getAvailableIP();
-        l1.setIP(IPPrefix + ip_to_use);
-        String param = "";
-        updateOvsInterface(n1);
-        updateOvsInterface(n2);
+      Link l1 = new Link();
+      l1.setName(link1);
+      l1.addNode(n1);
+      l1.addNode(n2);
+      l1.setCapacity(linkbw);
+      l1.setMask(mask);
+      links.put(link1, l1);
+      int ip_to_use = getAvailableIP();
+      l1.setIP(IPPrefix + ip_to_use);
+      String param = "";
+      updateOvsInterface(n1);
+      updateOvsInterface(n2);
 
-        //TODO: why nodeb dpid could be null
-        res = routingmanager.newInternalLink(l1.getLinkName(),
-            l1.getIP(1),
-            l1.getNodeA(),
-            l1.getIP(2),
-            l1.getNodeB(),
-            SDNController,
-            linkbw);
-      }
+      //TODO: why nodeb dpid could be null
+      res = routingmanager.newInternalLink(l1.getLinkName(),
+          l1.getIP(1),
+          l1.getNodeA(),
+          l1.getIP(2),
+          l1.getNodeB(),
+          SDNController,
+          linkbw);
     }
     //configure routing
     if (res) {
       writeLinks(topofile);
       logger.debug("Link added successfully, configuring routes");
       if (routingmanager.configurePath(self_prefix, n1, target_prefix, n2, findGatewayForPrefix
-        (self_prefix), SDNController, bandwidth)
+          (self_prefix), SDNController, bandwidth)
         //&&
         //  routingmanager.configurePath(target_prefix, n2, self_prefix, n1, prefixGateway.get
         //      (target_prefix), SDNController, 0)){
-        ) {
+      ) {
         logger.info(logPrefix + "Routing set up for " + self_prefix + " and " + target_prefix);
         logger.debug(logPrefix + "Routing set up for " + self_prefix + " and " + target_prefix);
         //TODO: auto select edge router
@@ -954,9 +954,9 @@ public class SdxManager extends SliceHelper {
         return "route configured: " + res;
       } else {
         logger.info(logPrefix + "Route for " + self_prefix + " and " + target_prefix +
-          "Failed");
+            "Failed");
         logger.debug(logPrefix + "Route for " + self_prefix + " and " + target_prefix +
-          "Failed");
+            "Failed");
       }
     }
     return "route configured: " + res;
@@ -1106,7 +1106,9 @@ public class SdxManager extends SliceHelper {
       }
       gatewayPrefixes.get(gateway).add(dest);
       notifyResult.result = true;
-      notifyResult.safeKeyHash = safeManager.getSafeKeyHash();
+      if(safeEnabled) {
+        notifyResult.safeKeyHash = safeManager.getSafeKeyHash();
+      }
     }
     return notifyResult;
   }

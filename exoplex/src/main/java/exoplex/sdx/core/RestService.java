@@ -174,6 +174,7 @@ public class RestService {
       return new StitchResult(res);
     } catch (Exception e) {
       e.printStackTrace();
+      sdxManager.unlockSlice();
       return new StitchResult();
     }
   }
@@ -192,6 +193,7 @@ public class RestService {
       return res;
     } catch (Exception e) {
       e.printStackTrace();
+      sdxManager.unlockSlice();
       return String.format("UndoStitch Failed: %s", e.getMessage());
     }
   }
@@ -210,6 +212,7 @@ public class RestService {
       return res;
     } catch (Exception e) {
       e.printStackTrace();
+      sdxManager.unlockSlice();
       return e.getMessage();
     }
   }
@@ -221,9 +224,15 @@ public class RestService {
   public String stitchChameleon(@Context UriInfo uriInfo, StitchChameleon sr) {
     logger.debug("got chameleon stitch request: \n" + sr.toString());
     SdxManager sdxManager = sdxManagerMap.get(uriInfo.getBaseUri().getPort());
-    String res = sdxManager.stitchChameleon(sr.sdxsite, sr.sdxnode,
-      sr.ckeyhash, sr.stitchport, sr.vlan, sr.gateway, sr.ip);
-    return res;
+    try {
+      String res = sdxManager.stitchChameleon(sr.sdxsite, sr.sdxnode,
+          sr.ckeyhash, sr.stitchport, sr.vlan, sr.gateway, sr.ip);
+      return res;
+    } catch (Exception e){
+      e.printStackTrace();
+      sdxManager.unlockSlice();
+      return e.getMessage();
+    }
   }
 
   @POST
@@ -403,10 +412,11 @@ class StitchResult {
     } else {
       this.reservID = "";
     }
-    if (!gateway.equals("") && !ip.equals(""))
-      result = true;
-    else
-      result = false;
+    if (!gateway.equals("") && !ip.equals("")) {
+      this.result = true;
+    } else {
+      this.result = false;
+    }
     this.message = res.getString("message");
   }
 }
