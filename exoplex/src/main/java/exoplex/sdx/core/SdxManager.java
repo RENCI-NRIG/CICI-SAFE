@@ -1132,7 +1132,9 @@ public class SdxManager extends SliceHelper {
       }
       gatewayPrefixes.get(gateway).add(dest);
       notifyResult.result = true;
-      notifyResult.safeKeyHash = safeManager.getSafeKeyHash();
+      if(safeEnabled) {
+        notifyResult.safeKeyHash = safeManager.getSafeKeyHash();
+      }
     }
     return notifyResult;
   }
