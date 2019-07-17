@@ -174,9 +174,8 @@ public class RestService {
       return new StitchResult(res);
     } catch (Exception e) {
       e.printStackTrace();
-      return new StitchResult();
-    } finally {
       sdxManager.unlockSlice();
+      return new StitchResult();
     }
   }
 
@@ -194,9 +193,8 @@ public class RestService {
       return res;
     } catch (Exception e) {
       e.printStackTrace();
-      return String.format("UndoStitch Failed: %s", e.getMessage());
-    } finally {
       sdxManager.unlockSlice();
+      return String.format("UndoStitch Failed: %s", e.getMessage());
     }
   }
 
@@ -214,9 +212,8 @@ public class RestService {
       return res;
     } catch (Exception e) {
       e.printStackTrace();
-      return e.getMessage();
-    } finally {
       sdxManager.unlockSlice();
+      return e.getMessage();
     }
   }
 
@@ -233,9 +230,8 @@ public class RestService {
       return res;
     } catch (Exception e){
       e.printStackTrace();
-      return e.getMessage();
-    } finally {
       sdxManager.unlockSlice();
+      return e.getMessage();
     }
   }
 
@@ -418,10 +414,11 @@ class StitchResult {
     } else {
       this.reservID = "";
     }
-    if (!gateway.equals("") && !ip.equals(""))
-      result = true;
-    else
-      result = false;
+    if (!gateway.equals("") && !ip.equals("")) {
+      this.result = true;
+    } else {
+      this.result = false;
+    }
     this.message = res.getString("message");
   }
 }

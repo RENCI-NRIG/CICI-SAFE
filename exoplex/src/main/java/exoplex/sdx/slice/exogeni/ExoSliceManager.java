@@ -112,7 +112,7 @@ public class ExoSliceManager extends SliceManager {
         sliceProxy.permitSliceStitch(sliceName, GUID, secret);
         break;
       } catch (TransportException e) {
-        // TODO Auto-generated catch block
+        // TODO Auto-generated catch blocksynchronized
         logger.warn("Failed to permit stitch, retry");
         times++;
         if (times == COMMIT_COUNT) {
@@ -154,23 +154,24 @@ public class ExoSliceManager extends SliceManager {
   }
 
   synchronized public void lockSlice() {
+    logger.debug("lock slice");
     lock.lock();
   }
 
   synchronized public void unLockSlice() {
     try {
+      logger.debug("unlock slice");
       lock.unlock();
-    } catch (Exception e){
-      logger.warn(String.format("unlock slice %s", e.getMessage()));
+    }catch (Exception e){
+      logger.warn("unLockSlice redundant");
     }
   }
 
   synchronized public void abort() {
     try {
       reloadSlice();
-      lock.unlock();
+      unLockSlice();
     } catch (Exception e) {
-
     }
   }
 
