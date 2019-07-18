@@ -6,6 +6,8 @@ import net.jcip.annotations.ThreadSafe;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import javax.validation.constraints.Max;
+
 /**
  * https://link.springer.com/content/pdf/10.1007/978-0-387-35580-1_4.pdf
  *
@@ -24,9 +26,9 @@ public class AreaBasedQuadTree {
 
     //Crossing filter set
 
-    private Set<Range> cfsX;
+    private PrefixTree cfsX;
 
-    private Set<Range> cfsY;
+    private PrefixTree cfsY;
 
     private Set<Rectangle> objects;
 
@@ -52,8 +54,8 @@ public class AreaBasedQuadTree {
     public AreaBasedQuadTree(){
         this.level = 0;
         this.area = new Rectangle(0, 0, MAX_IP + 1, MAX_IP + 1);
-        this.cfsX = new HashSet<>();
-        this.cfsY = new HashSet<>();
+        this.cfsX = new PrefixTree(0, MAX_IP + 1);
+        this.cfsY = new PrefixTree(0, MAX_IP + 1);
         this.children = new AreaBasedQuadTree[4];
         this.objects = new HashSet<>();
     }
@@ -61,8 +63,8 @@ public class AreaBasedQuadTree {
     public AreaBasedQuadTree(int level, Rectangle area, AreaBasedQuadTree parent){
         this.level = level;
         this.area = area;
-        this.cfsX = new HashSet<>();
-        this.cfsY = new HashSet<>();
+        this.cfsX = new PrefixTree(area.getX(), area.getW());
+        this.cfsY = new PrefixTree(area.getY(), area.getH());
         this.objects = new HashSet<>();
         this.children = new AreaBasedQuadTree[4];
     }
@@ -180,27 +182,13 @@ public class AreaBasedQuadTree {
     // Return all original rectangles that intersects with the query, not the intersections
     public synchronized Collection<Rectangle> query(Rectangle query){
         List<Rectangle> result = new ArrayList<>();
-        for(Range yseg: this.cfsY){
-            long qy1 = query.getY();
-            long qy2 = query.getY() + query.getH();
-            //left inclusive, right exclusive
-            long y1 = yseg.getStart();
-            long y2 = yseg.getLength() + yseg.getStart();
-            if((y1 >= qy1 && y2 <= qy2)
-                ||(qy1 >= y1 && qy2 <= y2)){
-                result.add(new Rectangle(this.area.getX(), y1, this.area.getW(), yseg.getLength()));
-            }
+        for(Range yseg: this.cfsY.query(query.getYSegment())){
+                result.add(new Rectangle(this.area.getX(), yseg.getStart(),
+                    this.area.getW(), yseg.getLength()));
         }
-        for(Range xseg: this.cfsX){
-            long qx1 = query.getX();
-            long qx2 = query.getX() + query.getW();
-            //left inclusive, right exclusive
-            long x1 = xseg.getStart();
-            long x2 = xseg.getLength() + xseg.getStart();
-            if((x1 >= qx1 && x2 <= qx2)
-                ||(qx1 >= x1 && qx2 <= x2)){
-                result.add(new Rectangle(x1, this.area.getY(), xseg.getLength(), this.area.getH()));
-            }
+        for(Range xseg: this.cfsX.query(query.getXSegment())){
+                result.add(new Rectangle(xseg.getStart(), this.area.getY(),
+                    xseg.getLength(), this.area.getH()));
         }
         //if the query intersects with the objects, add intersected area to the result
         for(Rectangle rect: this.objects){
