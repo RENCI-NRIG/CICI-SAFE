@@ -44,4 +44,12 @@ public class Range {
     public String toString(){
         return String.format("(%s, %s)", start, start + length - 1);
     }
+
+    public boolean covers(Range range){
+        if(this.start <= range.getStart()
+            && this.start + this.length >= range.getStart() + range.getLength()){
+            return true;
+        }
+        return false;
+    }
 }
