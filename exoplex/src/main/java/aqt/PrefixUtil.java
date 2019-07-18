@@ -1,5 +1,6 @@
 package aqt;
 
+import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.net.util.SubnetUtils;
 import org.apache.commons.net.util.SubnetUtils.SubnetInfo;
 
@@ -16,9 +17,18 @@ public class PrefixUtil {
         SubnetUtils subnetUtils = new SubnetUtils(prefix);
         SubnetInfo subnetInfo = subnetUtils.getInfo();
         String lowAddr = subnetInfo.getLowAddress();
-        int lowAddrInt = subnetInfo.asInteger(lowAddr);
         return new Range(addressToLong(subnetInfo.getLowAddress()) - 1,
             subnetInfo.getAddressCountLong() + 2);
+    }
+
+    static public String longToAddr(long addr){
+        String ip = String.format("%s.%s.%s.%s",
+            (addr >> 24) & 0xff,
+            (addr >> 16) & 0xff,
+            (addr >> 8) & 0xff,
+            addr & 0xff
+            );
+        return ip;
     }
 
     static public Rectangle prefixPairToRectangle(String prefix1, String prefix2){
