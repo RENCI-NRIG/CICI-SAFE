@@ -20,7 +20,7 @@ public class AreaBasedQuadTree {
     static final long MAX_IP =  4294967295L;
 
     // maximum number of objects cached in a node before splitting the node
-    static final int MAX_CACHED = 4;
+    static final int MAX_CACHED = 8;
 
     private AreaBasedQuadTree[] children;
 
