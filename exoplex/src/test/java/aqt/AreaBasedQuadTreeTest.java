@@ -38,14 +38,14 @@ public class AreaBasedQuadTreeTest {
 
     @Test
     public void testScale(){
-        long start = System.currentTimeMillis();
-        long width = 2048*8;
+        long width = 2048*32;
         root = new Rectangle(0, 0, width, width);
         //aqt = new AreaBasedQuadTree(0, root, null);
         Rectangle[] splits = verticalSplit(root);
         LinkedList<Rectangle> lists = new LinkedList<>();
         lists.addAll(Arrays.asList(splits));
         Random random = new Random();
+        long start = System.currentTimeMillis();
         while (lists.size() > 0){
             Rectangle currentRectangle = lists.poll();
             if(random.nextInt()%2 == 0){
@@ -63,12 +63,24 @@ public class AreaBasedQuadTreeTest {
             }
         }
         long end = System.currentTimeMillis();
-        logger.debug(String.format("Inserted %s rectangles in %s ms", this.rectangles.size(),
-            end - start));
+        logger.debug(String.format("Inserted %s rectangles in %s ms. " +
+            "Throughput %s/s", this.rectangles.size(), end - start,
+            this.rectangles.size()*1000.0/(end - start)));
         verifyResult();
         logger.debug(String.format("verified rectangles in %s ms",
             System.currentTimeMillis() - end
         ));
+        lists.clear();
+        lists.addAll(this.rectangles);
+        start = System.currentTimeMillis();
+        for(Rectangle rectangle: lists){
+            removeRectangle(rectangle);
+        }
+        end = System.currentTimeMillis();
+        logger.debug(String.format("Removed %s rectangles in %s ms",
+            lists.size(),
+            end - start));
+        verifyResult();
     }
 
     @Test
@@ -91,6 +103,11 @@ public class AreaBasedQuadTreeTest {
     private void insertRectangle(Rectangle rectangle){
         aqt.insert(rectangle);
         rectangles.add(rectangle);
+    }
+
+    private void removeRectangle(Rectangle rectangle){
+        aqt.remove(rectangle);
+        rectangles.remove(rectangle);
     }
 
     private Rectangle[] verticalSplit(Rectangle rectangle){

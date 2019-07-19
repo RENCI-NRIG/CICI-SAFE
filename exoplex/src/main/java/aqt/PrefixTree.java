@@ -1,6 +1,7 @@
 package aqt;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
@@ -9,6 +10,8 @@ import org.apache.logging.log4j.Logger;
 public class PrefixTree {
     static final Logger logger = LogManager.getLogger(PrefixTree.class);
 
+    static final int MAX_NUM = 4;
+
     //Prefix range of the node
     Range range;
 
@@ -16,6 +19,8 @@ public class PrefixTree {
     boolean valid;
 
     boolean empty;
+
+    final HashSet<Range> cachedObjects;
 
     PrefixTree left;
 
@@ -27,6 +32,7 @@ public class PrefixTree {
         this.left = null;
         this.right = null;
         this.empty = true;
+        cachedObjects = new HashSet<>();
     }
 
     public PrefixTree(long low, long width){
@@ -35,6 +41,7 @@ public class PrefixTree {
         this.left = null;
         this.right = null;
         this.empty = true;
+        cachedObjects = new HashSet<>();
     }
 
     /**
@@ -51,14 +58,26 @@ public class PrefixTree {
             this.valid = true;
             this.empty = false;
             return;
-        } else if(range.covers(this.range)){
+        } else if(!this.range.covers(range)){
             return;
         }
         this.empty = false;
-        splitNode();
-        if(this.left.covers(range)){
+        if(this.left == null) {
+            cachedObjects.add(range);
+            if (cachedObjects.size() > MAX_NUM) {
+                splitNode();
+                for (Range obj : this.cachedObjects) {
+                    if (this.left.covers(obj)) {
+                        this.left.add(obj);
+                    } else {
+                        this.right.add(obj);
+                    }
+                }
+                cachedObjects.clear();
+            }
+        } else if(this.left.covers(range)){
             this.left.add(range);
-        }else{
+        } else {
             this.right.add(range);
         }
     }
@@ -67,15 +86,21 @@ public class PrefixTree {
         //logger.info(String.format("%s remove %s", this.range, range));
         if(this.range.equals(range)){
             this.valid = false;
-        }else if(this.left.covers(range)){
-            this.left.remove(range);
-        }else{
-            this.right.remove(range);
+        } else if(this.left!= null) {
+            if (this.left.covers(range)) {
+                this.left.remove(range);
+            } else {
+                this.right.remove(range);
+            }
+            if(this.left.isEmpty() && this.right.isEmpty()){
+                this.right = null;
+                this.left = null;
+            }
+        } else {
+            this.cachedObjects.remove(range);
         }
-        if(!valid && (this.left == null || (this.left.isEmpty() && this.right.isEmpty()))){
+        if(!valid  && this.cachedObjects.isEmpty() && this.left == null){
             this.empty = true;
-            this.left = null;
-            this.right = null;
         }
     }
 
@@ -85,6 +110,8 @@ public class PrefixTree {
             if(this.left != null) {
                 result.addAll(this.left.query(query));
                 result.addAll(this.right.query(query));
+            } else {
+                result.addAll(this.cachedObjects);
             }
             if(this.valid){
                 result.add(this.range);
@@ -99,6 +126,12 @@ public class PrefixTree {
                 result.addAll(this.left.query(query));
             }else{
                 result.addAll(this.right.query(query));
+            }
+        } else{
+            for(Range range: this.cachedObjects){
+                if(range.covers(query) || query.covers(range)){
+                    result.add(range);
+                }
             }
         }
         return result;
