@@ -92,14 +92,11 @@ public class PrefixTree {
             } else {
                 this.right.remove(range);
             }
-            if(this.left.isEmpty() && this.right.isEmpty()){
-                this.right = null;
-                this.left = null;
-            }
         } else {
             this.cachedObjects.remove(range);
         }
-        if(!valid  && this.cachedObjects.isEmpty() && this.left == null){
+        if(!valid  && this.cachedObjects.isEmpty()
+            && (this.left == null || (this.left.isEmpty() && this.right.isEmpty()))){
             this.empty = true;
         }
     }

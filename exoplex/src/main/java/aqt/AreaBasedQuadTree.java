@@ -34,6 +34,8 @@ public class AreaBasedQuadTree {
 
     private int level;
 
+    private boolean empty;
+
     private Rectangle area;
 
     public synchronized boolean isEmpty(){
@@ -58,6 +60,7 @@ public class AreaBasedQuadTree {
         this.cfsY = new PrefixTree(0, MAX_IP + 1);
         this.children = new AreaBasedQuadTree[4];
         this.objects = new HashSet<>();
+        this.empty = true;
     }
 
     public AreaBasedQuadTree(int level, Rectangle area, AreaBasedQuadTree parent){
@@ -67,6 +70,7 @@ public class AreaBasedQuadTree {
         this.cfsY = new PrefixTree(area.getY(), area.getH());
         this.objects = new HashSet<>();
         this.children = new AreaBasedQuadTree[4];
+        this.empty = true;
     }
 
     public synchronized void insert(Rectangle rect){
@@ -75,6 +79,7 @@ public class AreaBasedQuadTree {
                 rect));
             return;
         }
+        this.empty = false;
         //if the inserted rect is crossing the area in any dimension, add to CFS
         if(rect.getX() == this.area.getX() && rect.getW() == this.area.getW()){
             cfsY.add(rect.getYSegment());
@@ -103,6 +108,23 @@ public class AreaBasedQuadTree {
             }
             objects.clear();
         }
+    }
+
+    private void checkEmpty(){
+        if(this.cfsX.isEmpty() && this.cfsY.isEmpty()
+            && this.objects.isEmpty()){
+            if(this.children[0] == null){
+                this.empty = true;
+            }
+            for(AreaBasedQuadTree child: children){
+                if (! child.isEmpty()){
+                    this.empty = false;
+                    return;
+                }
+            }
+            this.empty = true;
+        }
+        this.empty = false;
     }
 
     public synchronized void remove(Rectangle rect){
