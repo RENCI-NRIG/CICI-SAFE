@@ -131,14 +131,10 @@ public class AreaBasedQuadTree {
         //if the inserted rect is crossing the area in any dimension, add to CFS
         if(rect.getX() == this.area.getX() && rect.getW() == this.area.getW()){
             cfsY.remove(rect.getYSegment());
-            return;
-        }
-        if(rect.getY() == this.area.getY() && rect.getH() == this.area.getH()){
+        } else if(rect.getY() == this.area.getY() && rect.getH() == this.area.getH()){
             cfsX.remove(rect.getXSegment());
             return;
-        }
-        //if the rectangle is in its child, remove
-        if(!objects.remove(rect)) {
+        } else if(!objects.remove(rect)) {
             if (children[0] == null) {
                 return;
             }
@@ -154,6 +150,9 @@ public class AreaBasedQuadTree {
             if (childEmpty) {
                 clearChildren();
             }
+        }
+        if(cfsX.isEmpty() && cfsY.isEmpty() && this.objects.isEmpty() && this.children[0] == null){
+            this.empty = true;
         }
     }
 

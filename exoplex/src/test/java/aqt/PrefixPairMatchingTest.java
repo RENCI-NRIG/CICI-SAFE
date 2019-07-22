@@ -1,6 +1,8 @@
 package aqt;
 
+import exoplex.sdx.advertise.AdvertiseManager;
 import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.jena.atlas.lib.CollectionUtils;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -9,12 +11,14 @@ import org.apache.logging.log4j.Logger;
 
 import javax.management.ImmutableDescriptor;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Ignore
 public class PrefixPairMatchingTest {
     static final Logger logger = LogManager.getLogger(PrefixPairMatchingTest.class);
     AreaBasedQuadTree aqt;
     HashSet<String> prefixes;
+    HashSet<String>[] prefixesByLength;
     HashSet<String> largePrefixes;
     HashMap<Rectangle, ImmutablePair<String, String>> rectanglePrefixPair;
     HashMap<ImmutablePair<String, String>, Rectangle> prefixPairRectangle;
@@ -22,8 +26,8 @@ public class PrefixPairMatchingTest {
     ArrayList<ImmutablePair<String, String>> largePrefixpairs;
     Rectangle root;
     Random random;
-    int prefixNum = 4000;
-    int prefixPairBase = 2000000;
+    int prefixNum = 3000;
+    int prefixPairBase = 400000;
 
     @Before
     public void before(){
@@ -67,7 +71,10 @@ public class PrefixPairMatchingTest {
         logger.info("generating ip prefixes");
         generatePrefixes(prefixNum);
         logger.info("generating ip prefix pairs");
-        generatePrefixPairs(prefixPairNum);
+        //generatePrefixPairs(prefixPairNum);
+        generatePrefixPairs(prefixPairNum, 1000, 10, 3);
+        Collections.shuffle(prefixPairs);
+        Collections.shuffle(largePrefixpairs);
         //insertPrefixes
         logger.info("start bench mark");
         long start = System.currentTimeMillis();
@@ -106,22 +113,107 @@ public class PrefixPairMatchingTest {
             "Throughput %s/s   unit time: %s us", size, end - start,
             size*1000.0/(end - start), (end - start) * 1000.0 / size));
         int sum = 0;
+        int[] ls = new int[100];
         for(Integer s: overlappedSize){
+            if(s < 100){
+                ls[s]++;
+            }
             sum += s;
         }
         logger.info(String.format("Average overlapped size: %s",
             sum * 1.0 / overlappedSize.size()));
+        ArrayList<String> lss = new ArrayList<>();
+        for(int i: ls){
+            lss.add(String.valueOf(i));
+        }
+        logger.info(String.format("[%s]", String.join(",", lss)));
     }
 
     //generate prefixes %8 %12 %16 %20 %24 in ratio: 1:2:4:8:16
     private void generatePrefixes(int num){
+        int base = 0;
+        int mask = 8;
+        int shift = 8;
+        int maxMask = 24;
+        prefixesByLength = new HashSet[maxMask/shift];
+        for(int i = 0; i< maxMask/shift; i++){
+            prefixesByLength[i] = new HashSet<>();
+        }
         generateSubPrefix(0, 8, 8, 24, 200, num);
         logger.info(String.format("number of prefixes %s", this.prefixes.size()));
     }
 
+    /**
+     *
+     * @param totalNum total number of prefixes
+     * @param numDestOnly (0.0.0.0/0, destPrefix)
+     * @param ratio  number of prefixPairs
+     */
+    private void generatePrefixPairs(int totalNum, int numDestOnly, int ratio
+        , int levels){
+        //generated
+        int nd = 0;
+        int[] threshold = new int[levels];
+        int base = 1;
+        threshold[0] = 1;
+        for(int i = 1; i< levels; i++){
+            threshold[i] = threshold[i - 1] * (ratio + 1);
+        }
+        ArrayList<String>[] pls = new ArrayList[levels];
+        for(int i = 0; i< levels; i++){
+            pls[i] = new ArrayList<>(prefixesByLength[i]);
+        }
+        int MAX  = threshold[levels - 1];
+        while(prefixPairs.size() < totalNum){
+            int rand = random.nextInt(MAX);
+            int rand2 = random.nextInt(MAX);
+            String prefix1=null;
+            String prefix2=null;
+            for(int i = 0; i< levels; i++){
+                if(rand < threshold[i]){
+                    int idx1 = random.nextInt(pls[i].size());
+                    prefix1 = pls[i].get(idx1);
+                    if(nd < numDestOnly){
+                        nd ++;
+                        ImmutablePair<String, String> pair =
+                            new ImmutablePair<>("0.0.0.0/0", prefix1);
+                        prefixPairs.add(pair);
+                        largePrefixpairs.add(pair);
+                        Rectangle rectangle =
+                            PrefixUtil.prefixPairToRectangle("0.0.0.0/0",
+                            prefix1);
+                        rectanglePrefixPair.put(rectangle, pair);
+                        prefixPairRectangle.put(pair, rectangle);
+                    }
+                    break;
+                }
+            }
+            for(int i = 0; i< levels; i++){
+                if(rand2 < threshold[i]){
+                    int idx2 = random.nextInt(pls[i].size());
+                    prefix2 = pls[i].get(idx2);
+                    break;
+                }
+            }
+            ImmutablePair<String, String> pair = new ImmutablePair<>(prefix1,
+                prefix2);
+            prefixPairs.add(pair);
+            if(!prefix1.endsWith("/24") || !prefix2.endsWith("/24")){
+                largePrefixpairs.add(pair);
+            }
+            Rectangle rectangle = PrefixUtil.prefixPairToRectangle(prefix1,
+                prefix2);
+            rectanglePrefixPair.put(rectangle, pair);
+            prefixPairRectangle.put(pair, rectangle);
+        }
+        logger.info(String.format("number of unique prefix pairs %s\nnumber" +
+                " of prefix pairs %s", rectanglePrefixPair.size(),
+            prefixPairs.size()));
+    }
+
     private void generatePrefixPairs(int num){
         ArrayList<String> ps = new ArrayList<>(this.prefixes);
-        ArrayList<String> lps = new ArrayList<>(this.prefixes);
+        ArrayList<String> lps = new ArrayList<>(this.largePrefixes);
         while(prefixPairs.size() < num){
             String prefix1, prefix2;
             if(random.nextInt()%5 != 0){
@@ -170,6 +262,7 @@ public class PrefixPairMatchingTest {
                 PrefixUtil.longToAddr(base), mask);
             if(mask >= 8) {
                 prefixes.add(prefix);
+                prefixesByLength[mask/shift - 1].add(prefix);
             }
             if(mask < maxMask){
                 largePrefixes.add(prefix);
