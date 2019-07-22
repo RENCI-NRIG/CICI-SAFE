@@ -26,8 +26,8 @@ public class PrefixPairMatchingTest {
     ArrayList<ImmutablePair<String, String>> largePrefixpairs;
     Rectangle root;
     static Random random;
-    static int prefixNum = 3000;
-    static int prefixPairBase = 400000;
+    static int prefixNum = 10000;
+    static int prefixPairBase = 4000000;
 
     @BeforeClass
     static public void setUp(){
