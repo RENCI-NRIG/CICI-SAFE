@@ -4,6 +4,7 @@ import exoplex.sdx.advertise.AdvertiseManager;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.jena.atlas.lib.CollectionUtils;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.apache.logging.log4j.LogManager;
@@ -13,28 +14,34 @@ import javax.management.ImmutableDescriptor;
 import java.util.*;
 import java.util.stream.Collectors;
 
-@Ignore
 public class PrefixPairMatchingTest {
     static final Logger logger = LogManager.getLogger(PrefixPairMatchingTest.class);
     AreaBasedQuadTree aqt;
-    HashSet<String> prefixes;
-    HashSet<String>[] prefixesByLength;
-    HashSet<String> largePrefixes;
+    static HashSet<String> prefixes;
+    static HashSet<String>[] prefixesByLength;
+    static HashSet<String> largePrefixes;
     HashMap<Rectangle, ImmutablePair<String, String>> rectanglePrefixPair;
     HashMap<ImmutablePair<String, String>, Rectangle> prefixPairRectangle;
     ArrayList<ImmutablePair<String, String>> prefixPairs;
     ArrayList<ImmutablePair<String, String>> largePrefixpairs;
     Rectangle root;
-    Random random;
-    int prefixNum = 3000;
-    int prefixPairBase = 400000;
+    static Random random;
+    static int prefixNum = 3000;
+    static int prefixPairBase = 400000;
+
+    @BeforeClass
+    static public void setUp(){
+        prefixes = new HashSet<>();
+        largePrefixes = new HashSet<>();
+        random = new Random();
+        random.setSeed(99917);
+        logger.info("generating ip prefixes");
+        generatePrefixes(prefixNum);
+    }
 
     @Before
     public void before(){
-        prefixes = new HashSet<>();
-        largePrefixes = new HashSet<>();
         aqt = new AreaBasedQuadTree();
-        random = new Random();
         rectanglePrefixPair = new HashMap<>();
         prefixPairRectangle = new HashMap<>();
         prefixPairs = new ArrayList<>();
@@ -43,33 +50,30 @@ public class PrefixPairMatchingTest {
 
     @Test
     public void test1(){
-        testIPPrefixMatching(prefixNum, prefixPairBase);
+        testIPPrefixMatching(prefixPairBase);
     }
 
     @Test
     public void test2(){
-        testIPPrefixMatching(prefixNum, 2*prefixPairBase);
+        testIPPrefixMatching(2*prefixPairBase);
     }
 
     @Test
     public void test3(){
-        testIPPrefixMatching(prefixNum, 4*prefixPairBase);
+        testIPPrefixMatching(4*prefixPairBase);
     }
 
     @Test
     public void test4(){
-        testIPPrefixMatching(prefixNum, 8*prefixPairBase);
+        testIPPrefixMatching(8*prefixPairBase);
     }
 
     @Test
     public void test5(){
-        testIPPrefixMatching(prefixNum, 16*prefixPairBase);
+        testIPPrefixMatching(16*prefixPairBase);
     }
 
-    private void testIPPrefixMatching(int prefixNum, int prefixPairNum){
-        random.setSeed(99917);
-        logger.info("generating ip prefixes");
-        generatePrefixes(prefixNum);
+    private void testIPPrefixMatching(int prefixPairNum){
         logger.info("generating ip prefix pairs");
         //generatePrefixPairs(prefixPairNum);
         generatePrefixPairs(prefixPairNum, 1000, 10, 3);
@@ -130,7 +134,7 @@ public class PrefixPairMatchingTest {
     }
 
     //generate prefixes %8 %12 %16 %20 %24 in ratio: 1:2:4:8:16
-    private void generatePrefixes(int num){
+    static private void generatePrefixes(int num){
         int base = 0;
         int mask = 8;
         int shift = 8;
@@ -140,7 +144,7 @@ public class PrefixPairMatchingTest {
             prefixesByLength[i] = new HashSet<>();
         }
         generateSubPrefix(0, 8, 8, 24, 200, num);
-        logger.info(String.format("number of prefixes %s", this.prefixes.size()));
+        logger.info(String.format("number of prefixes %s", prefixes.size()));
     }
 
     /**
@@ -249,7 +253,8 @@ public class PrefixPairMatchingTest {
      * @param maxMask
      * @param num
      */
-    private void generateSubPrefix(long base, int mask, int shift, int maxMask,
+    static private void generateSubPrefix(long base, int mask, int shift,
+                                     int maxMask,
         int num, int maxNum){
         int range = 1 << shift;
         for(int i = 0; i< num; i++){
