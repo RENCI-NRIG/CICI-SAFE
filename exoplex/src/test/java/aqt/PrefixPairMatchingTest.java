@@ -23,7 +23,7 @@ public class PrefixPairMatchingTest {
     HashMap<Rectangle, ImmutablePair<String, String>> rectanglePrefixPair;
     HashMap<ImmutablePair<String, String>, Rectangle> prefixPairRectangle;
     ArrayList<ImmutablePair<String, String>> prefixPairs;
-    ArrayList<ImmutablePair<String, String>> largePrefixPairs;
+    ArrayList<ImmutablePair<String, String>> queries;
     Rectangle root;
     static Random random;
     static int prefixNum = 10000;
@@ -34,35 +34,35 @@ public class PrefixPairMatchingTest {
         prefixes = new HashSet<>();
         largePrefixes = new HashSet<>();
         random = new Random();
-        random.setSeed(99917);
+        random.setSeed(89917);
+        //random.setSeed(99917);
         logger.info("generating ip prefixes");
         generatePrefixes(prefixNum);
     }
 
     @Before
     public void before(){
-        aqt = new AreaBasedQuadTree();
         rectanglePrefixPair = new HashMap<>();
         prefixPairRectangle = new HashMap<>();
         prefixPairs = new ArrayList<>();
-        largePrefixPairs = new ArrayList<>();
+        queries = new ArrayList<>();
     }
 
     @Test
     public void test(){
 	int[] multiplier = new int[]{1,2,3,4,5,6,7,8,9,10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20};
 	for( int m: multiplier){
-            before();
-       	    testIPPrefixMatching(prefixPairBase * m, 10000 * m, 50 - m * 2);
+            aqt = new AreaBasedQuadTree();
+       	    testIPPrefixMatching(prefixPairBase * m, 10000, 50 - m);
 	}
     }
 
     private void testIPPrefixMatching(int prefixPairNum, int dOnly, int ratio){
         logger.info("generating ip prefix pairs");
         //generatePrefixPairs(prefixPairNum);
-        generatePrefixPairs(prefixPairNum, 10000, 20, 3);
+        generatePrefixPairs(prefixPairNum, dOnly, ratio, 3);
         Collections.shuffle(prefixPairs);
-        Collections.shuffle(largePrefixPairs);
+        Collections.shuffle(queries);
         //insertPrefixes
         logger.info("start bench mark");
         long start = System.currentTimeMillis();
@@ -80,16 +80,17 @@ public class PrefixPairMatchingTest {
         //query
         start = end;
         ArrayList<Integer> overlappedSize = new ArrayList<>();
-        for(ImmutablePair<String, String> pair: largePrefixPairs){
+        for(ImmutablePair<String, String> pair: queries){
             Rectangle rectangle = this.prefixPairRectangle.get(pair);
             overlappedSize.add(aqt.query(rectangle).size());
         }
         end = System.currentTimeMillis();
         logger.debug(String.format("queried %s prefixes in %s ms. " +
-                "Throughput %s/s  unit time %s us", this.largePrefixPairs.size(),
+                "Throughput %s/s  unit time %s us", 
+	    queries.size(),
             end - start,
-            this.largePrefixPairs.size()*1000.0/(end - start),
-            (end - start) * 1000.0 / this.largePrefixPairs.size()));
+            queries.size()*1000.0/(end - start),
+            (end - start) * 1000.0 / queries.size()));
         start = end;
         int size = this.prefixPairs.size();
         for(ImmutablePair<String, String> pair: prefixPairs){
@@ -100,10 +101,10 @@ public class PrefixPairMatchingTest {
         logger.debug(String.format("deleted %s prefixes in %s ms. " +
             "Throughput %s/s   unit time: %s us", size, end - start,
             size*1000.0/(end - start), (end - start) * 1000.0 / size));
-        int sum = 0;
-        int[] ls = new int[100];
+        long sum = 0;
+        int[] ls = new int[200];
         for(Integer s: overlappedSize){
-            if(s < 100){
+            if(s < 200){
                 ls[s]++;
             }
             sum += s;
@@ -152,6 +153,8 @@ public class PrefixPairMatchingTest {
             pls[i] = new ArrayList<>(prefixesByLength[i]);
         }
         int MAX  = threshold[levels - 1];
+	long sumLength = 0;
+        long numPrefix = 0;
         while(prefixPairs.size() < totalNum){
             int rand = random.nextInt(MAX);
             int rand2 = random.nextInt(MAX);
@@ -166,7 +169,9 @@ public class PrefixPairMatchingTest {
                         ImmutablePair<String, String> pair =
                             new ImmutablePair<>("0.0.0.0/0", prefix1);
                         prefixPairs.add(pair);
-                        largePrefixPairs.add(pair);
+			numPrefix += 2;
+			sumLength += Integer.valueOf(prefix1.split("/")[1]);
+                        queries.add(pair);
                         Rectangle rectangle =
                             PrefixUtil.prefixPairToRectangle("0.0.0.0/0",
                             prefix1);
@@ -188,9 +193,10 @@ public class PrefixPairMatchingTest {
                 ImmutablePair<String, String> pair = new ImmutablePair<>(prefix1,
                     prefix2);
                 prefixPairs.add(pair);
-                if(!prefix1.endsWith("/24") || !prefix2.endsWith("/24")){
-                    largePrefixPairs.add(pair);
-                }
+		numPrefix += 2;
+		sumLength = sumLength + Integer.valueOf(prefix1.split("/")[1])
+		    + Integer.valueOf(prefix2.split("/")[1]);
+                queries.add(pair);
                 Rectangle rectangle = PrefixUtil.prefixPairToRectangle(prefix1,
                     prefix2);
                 rectanglePrefixPair.put(rectangle, pair);
@@ -200,6 +206,7 @@ public class PrefixPairMatchingTest {
         logger.info(String.format("number of unique prefix pairs %s\nnumber" +
                 " of prefix pairs %s", rectanglePrefixPair.size(),
             prefixPairs.size()));
+	logger.info(String.format("Average prefix lenth for prefix pairs: %s", sumLength * 1.0 /numPrefix));
     }
 
     private void generatePrefixPairs(int num){
@@ -221,7 +228,7 @@ public class PrefixPairMatchingTest {
             ImmutablePair<String, String> pair = new ImmutablePair<>(prefix1,
                 prefix2);
             if(!prefix1.endsWith("/24") || !prefix2.endsWith("/24")){
-                largePrefixPairs.add(pair);
+                queries.add(pair);
             }
             rectanglePrefixPair.put(rectangle, pair);
             prefixPairs.add(pair);
