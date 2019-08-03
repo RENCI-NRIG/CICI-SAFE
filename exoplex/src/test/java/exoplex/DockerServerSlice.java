@@ -8,7 +8,7 @@ import exoplex.sdx.network.RoutingManager;
 import exoplex.sdx.safe.SafeManager;
 import exoplex.sdx.slice.SliceManager;
 import exoplex.sdx.slice.exogeni.SiteBase;
-import injection.ExoGeniSliceModule;
+import exoplex.sdx.slice.exogeni.ExoGeniSliceModule;
 import org.apache.commons.cli.CommandLine;
 
 public class DockerServerSlice extends SliceHelper {

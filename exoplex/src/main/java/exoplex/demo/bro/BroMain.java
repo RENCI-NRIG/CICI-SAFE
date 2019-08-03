@@ -3,7 +3,7 @@ package exoplex.demo.bro;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import exoplex.sdx.core.SdxManager;
-import injection.MultiSdxModule;
+import exoplex.demo.multisdx.MultiSdxModule;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 

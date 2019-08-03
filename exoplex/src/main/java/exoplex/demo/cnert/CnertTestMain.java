@@ -9,7 +9,7 @@ import exoplex.client.exogeni.SdxExogeniClient;
 import exoplex.client.stitchport.SdxStitchPortClient;
 import exoplex.sdx.core.SdxManager;
 import exoplex.sdx.core.SdxServer;
-import injection.MultiSdxModule;
+import exoplex.demo.multisdx.MultiSdxModule;
 import org.apache.commons.cli.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

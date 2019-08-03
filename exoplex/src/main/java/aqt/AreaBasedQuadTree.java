@@ -1,6 +1,7 @@
 package aqt;
 
 import java.util.*;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import net.jcip.annotations.ThreadSafe;
 import org.apache.logging.log4j.LogManager;
@@ -38,19 +39,10 @@ public class AreaBasedQuadTree {
 
     private Rectangle area;
 
+    private ReentrantReadWriteLock readWriteLock;
+
     public synchronized boolean isEmpty(){
-        if(!cfsX.isEmpty() || ! cfsY.isEmpty() || ! objects.isEmpty()){
-            return false;
-        }
-        if(this.children[0] != null){
-            for(AreaBasedQuadTree child: this.children){
-                if(!child.isEmpty()){
-                    return false;
-                }
-            }
-        }
-        clearChildren();
-        return true;
+        return empty;
     }
 
     public AreaBasedQuadTree(){
@@ -61,6 +53,7 @@ public class AreaBasedQuadTree {
         this.children = new AreaBasedQuadTree[4];
         this.objects = new HashSet<>();
         this.empty = true;
+        this.readWriteLock = new ReentrantReadWriteLock();
     }
 
     public AreaBasedQuadTree(int level, Rectangle area, AreaBasedQuadTree parent){
@@ -71,42 +64,50 @@ public class AreaBasedQuadTree {
         this.objects = new HashSet<>();
         this.children = new AreaBasedQuadTree[4];
         this.empty = true;
+        this.readWriteLock = new ReentrantReadWriteLock();
     }
 
-    public synchronized void insert(Rectangle rect){
-        if(!this.area.contains(rect)){
-            logger.debug(String.format("Rectangle %s is fully contained in this node, not added",
-                rect));
-            return;
-        }
-        this.empty = false;
-        //if the inserted rect is crossing the area in any dimension, add to CFS
-        if(rect.getX() == this.area.getX() && rect.getW() == this.area.getW()){
-            cfsY.add(rect.getYSegment());
-            return;
-        }
-        if(rect.getY() == this.area.getY() && rect.getH() == this.area.getH()){
-            cfsX.add(rect.getXSegment());
-            return;
-        }
-        //if not crossing, then the rectangle must be fully contained in one of its children,
-        // because the rectangle is a IP prefix pair.
-        //check if children are not null
-        objects.add(rect);
-        //split node
-        if(objects.size() > MAX_CACHED) {
-            if (children[0] == null) {
-                splitNode();
+    public void insert(Rectangle rect){
+        readWriteLock.writeLock().tryLock();
+        try {
+            if (!this.area.contains(rect)) {
+                logger.debug(String.format("Rectangle %s is fully contained in this node, not added",
+                    rect));
+                return;
             }
-            for(Rectangle r: objects) {
-                for (AreaBasedQuadTree child : this.children) {
-                    if (child.contains(r)) {
-                        child.insert(r);
-                        break;
+            this.empty = false;
+            //if the inserted rect is crossing the area in any dimension, add to CFS
+            if (rect.getX() == this.area.getX() && rect.getW() == this.area.getW()) {
+                cfsY.add(rect.getYSegment());
+                return;
+            }
+            if (rect.getY() == this.area.getY() && rect.getH() == this.area.getH()) {
+                cfsX.add(rect.getXSegment());
+                return;
+            }
+            //if not crossing, then the rectangle must be fully contained in one of its children,
+            // because the rectangle is a IP prefix pair.
+            //check if children are not null
+            if (children[0] == null) {
+                objects.add(rect);
+            }
+            //split node
+            if (objects.size() > MAX_CACHED) {
+                if (children[0] == null) {
+                    splitNode();
+                }
+                for (Rectangle r : objects) {
+                    for (AreaBasedQuadTree child : this.children) {
+                        if (child.contains(r)) {
+                            child.insert(r);
+                            break;
+                        }
                     }
                 }
+                objects.clear();
             }
-            objects.clear();
+        }finally {
+            readWriteLock.writeLock().unlock();
         }
     }
 
@@ -127,32 +128,37 @@ public class AreaBasedQuadTree {
         this.empty = false;
     }
 
-    public synchronized void remove(Rectangle rect){
-        //if the inserted rect is crossing the area in any dimension, add to CFS
-        if(rect.getX() == this.area.getX() && rect.getW() == this.area.getW()){
-            cfsY.remove(rect.getYSegment());
-        } else if(rect.getY() == this.area.getY() && rect.getH() == this.area.getH()){
-            cfsX.remove(rect.getXSegment());
-            return;
-        } else if(!objects.remove(rect)) {
-            if (children[0] == null) {
+    public void remove(Rectangle rect){
+        readWriteLock.writeLock().tryLock();
+        try {
+            //if the inserted rect is crossing the area in any dimension, add to CFS
+            if (rect.getX() == this.area.getX() && rect.getW() == this.area.getW()) {
+                cfsY.remove(rect.getYSegment());
+            } else if (rect.getY() == this.area.getY() && rect.getH() == this.area.getH()) {
+                cfsX.remove(rect.getXSegment());
                 return;
-            }
-            boolean childEmpty = true;
-            for (AreaBasedQuadTree child : this.children) {
-                if (child.contains(rect)) {
-                    child.remove(rect);
+            } else if (!objects.remove(rect)) {
+                if (children[0] == null) {
+                    return;
                 }
-                if (!child.isEmpty()) {
-                    childEmpty = false;
+                boolean childEmpty = true;
+                for (AreaBasedQuadTree child : this.children) {
+                    if (child.contains(rect)) {
+                        child.remove(rect);
+                    }
+                    if (!child.isEmpty()) {
+                        childEmpty = false;
+                    }
+                }
+                if (childEmpty) {
+                    clearChildren();
                 }
             }
-            if (childEmpty) {
-                clearChildren();
+            if (cfsX.isEmpty() && cfsY.isEmpty() && this.objects.isEmpty() && this.children[0] == null) {
+                this.empty = true;
             }
-        }
-        if(cfsX.isEmpty() && cfsY.isEmpty() && this.objects.isEmpty() && this.children[0] == null){
-            this.empty = true;
+        }finally {
+            readWriteLock.writeLock().unlock();
         }
     }
 
@@ -162,14 +168,19 @@ public class AreaBasedQuadTree {
         }
     }
 
-    public synchronized boolean contains(Rectangle rectangle){
-        if(rectangle.getX() >= this.area.getX()
-            && rectangle.getY() >= this.area.getY()
-            && (rectangle.getX() + rectangle.getW()) <= (this.area.getX() + this.area.getW())
-            && (rectangle.getY() + rectangle.getH()) <= (this.area.getY() + this.area.getH())){
-            return true;
-        }else{
-            return false;
+    public boolean contains(Rectangle rectangle){
+        readWriteLock.readLock().tryLock();
+        try {
+            if (rectangle.getX() >= this.area.getX()
+                && rectangle.getY() >= this.area.getY()
+                && (rectangle.getX() + rectangle.getW()) <= (this.area.getX() + this.area.getW())
+                && (rectangle.getY() + rectangle.getH()) <= (this.area.getY() + this.area.getH())) {
+                return true;
+            } else {
+                return false;
+            }
+        }finally {
+            readWriteLock.readLock().unlock();
         }
     }
 
@@ -202,6 +213,7 @@ public class AreaBasedQuadTree {
 
     // Return all original rectangles that intersects with the query, not the intersections
     public synchronized Collection<Rectangle> query(Rectangle query){
+        readWriteLock.readLock().tryLock();
         List<Rectangle> result = new ArrayList<>();
         for(Range yseg: this.cfsY.query(query.getYSegment())){
                 result.add(new Rectangle(this.area.getX(), yseg.getStart(),
@@ -227,6 +239,7 @@ public class AreaBasedQuadTree {
                 }
             }
         }
+        readWriteLock.readLock().unlock();
         return result;
     }
 }
