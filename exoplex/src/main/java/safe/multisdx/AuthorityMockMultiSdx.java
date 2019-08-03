@@ -5,7 +5,7 @@ import com.google.inject.Inject;
 import com.google.inject.Injector;
 import exoplex.common.utils.SafeUtils;
 import exoplex.demo.AbstractTestSetting;
-import injection.MultiSdxSDModule;
+import exoplex.demo.multisdxsd.MultiSdxSDModule;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

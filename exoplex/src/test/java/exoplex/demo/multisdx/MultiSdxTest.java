@@ -6,7 +6,6 @@ import exoplex.demo.AbstractTest;
 import exoplex.demo.AbstractTestSetting;
 import exoplex.demo.AbstractTestSlice;
 import exoplex.sdx.core.SdxManager;
-import injection.MultiSdxModule;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.After;

@@ -4,7 +4,7 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import exoplex.common.utils.ServerOptions;
 import exoplex.sdx.core.SdxManager;
-import injection.MultiSdxModule;
+import exoplex.demo.multisdx.MultiSdxModule;
 import org.apache.commons.cli.CommandLine;
 
 import java.io.BufferedReader;

@@ -7,12 +7,8 @@ import exoplex.demo.AbstractTest;
 import exoplex.demo.AbstractTestSetting;
 import exoplex.demo.AbstractTestSlice;
 import exoplex.experiment.ExperimentBase;
-import exoplex.experiment.flow.FlowManager;
 import exoplex.sdx.core.SdxManager;
 import exoplex.sdx.safe.SafeManager;
-import injection.MultiSdxSDLargeModule;
-import injection.MultiSdxSDModule;
-import injection.MultiSdxTridentcomModule;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -23,7 +19,6 @@ import org.junit.Test;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.UUID;
 
 public class MultiSdxTestSD extends AbstractTest {
   final static Logger logger = LogManager.getLogger(MultiSdxTestSD.class);

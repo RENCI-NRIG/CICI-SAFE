@@ -10,7 +10,7 @@ import org.apache.logging.log4j.Logger;
 public class PrefixTree {
     static final Logger logger = LogManager.getLogger(PrefixTree.class);
 
-    static final int MAX_NUM = 4;
+    static final int MAX_NUM = 8;
 
     //Prefix range of the node
     Range range;
@@ -92,14 +92,11 @@ public class PrefixTree {
             } else {
                 this.right.remove(range);
             }
-            if(this.left.isEmpty() && this.right.isEmpty()){
-                this.right = null;
-                this.left = null;
-            }
         } else {
             this.cachedObjects.remove(range);
         }
-        if(!valid  && this.cachedObjects.isEmpty() && this.left == null){
+        if(!valid  && this.cachedObjects.isEmpty()
+            && (this.left == null || (this.left.isEmpty() && this.right.isEmpty()))){
             this.empty = true;
         }
     }
