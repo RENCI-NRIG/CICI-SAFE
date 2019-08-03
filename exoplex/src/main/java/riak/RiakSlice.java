@@ -8,7 +8,7 @@ import exoplex.sdx.slice.Scripts;
 import exoplex.sdx.slice.SliceManager;
 import exoplex.sdx.slice.SliceManagerFactory;
 import exoplex.sdx.slice.exogeni.SliceCommon;
-import injection.ExoGeniSliceModule;
+import exoplex.sdx.slice.exogeni.ExoGeniSliceModule;
 import org.apache.commons.cli.CommandLine;
 
 public class RiakSlice extends SliceCommon {

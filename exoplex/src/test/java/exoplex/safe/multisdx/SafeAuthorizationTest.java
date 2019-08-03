@@ -9,7 +9,7 @@ import exoplex.sdx.advertise.AdvertiseManager;
 import exoplex.sdx.advertise.PolicyAdvertise;
 import exoplex.sdx.advertise.RouteAdvertise;
 import exoplex.sdx.safe.SafeManager;
-import injection.MultiSdxModule;
+import exoplex.demo.multisdx.MultiSdxModule;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;

@@ -1,4 +1,4 @@
-package injection;
+package exoplex.demo.multisdxsd;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.assistedinject.FactoryProvider;
