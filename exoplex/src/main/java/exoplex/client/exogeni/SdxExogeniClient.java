@@ -270,12 +270,6 @@ public class SdxExogeniClient extends SliceCommon {
   private void processConnectionCmd(String[] params) {
     try {
       JSONObject jsonparams = new JSONObject();
-      if (safeEnabled) {
-        checkSafe();
-        jsonparams.put("ckeyhash", safeManager.getSafeKeyHash());
-      } else {
-        jsonparams.put("ckeyhash", sliceName);
-      }
       jsonparams.put("self_prefix", params[1]);
       jsonparams.put("target_prefix", params[2]);
       try {

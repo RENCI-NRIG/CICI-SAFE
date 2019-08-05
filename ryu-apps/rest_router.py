@@ -19,6 +19,9 @@ import logging
 import numbers
 import socket
 import struct
+import sys
+import json
+import urllib2
 
 import json
 
@@ -210,6 +213,9 @@ def get_priority_type(priority, vid):
     if vid:
         priority -= PRIORITY_VLAN_SHIFT
     return priority
+
+def get_sdx_url():
+    return sys.argv[-1]
 
 
 class NotFoundError(RyuException):
@@ -1166,6 +1172,20 @@ class VlanRouter(object):
                 if gw_address is not None:
                     src_ip = gw_address.default_gw
                     dst_ip = route.gateway_ip
+            else:
+            #note: yjyao
+                data={}
+                data['src'] = srcip
+                data['dest'] = dstip
+                try:
+                    print(data)
+                    print("sending request to sdx controller")
+                    req = urllib2.Request(get_sdx_url())
+                    req.add_header('Content-Type', 'application/json')
+                    response = urllib2.urlopen(req, json.dumps(data))
+                    print(response.read())
+                except:
+                    print("An exception when sending request to sdx")
 
         if src_ip is not None:
             self.packet_buffer.add(in_port, header_list, msg.data)

@@ -10,7 +10,7 @@ import org.json.JSONObject;
 import java.util.*;
 
 public class RoutingManager {
-  public final static String plexusImage = "yaoyj11/plexus-v1";
+  public final static String plexusImage = "yaoyj11/plexus-v2";
   final static Logger logger = LogManager.getLogger(RoutingManager.class);
   final static Logger sdnLogger = LogManager.getLogger("SdnCmds");
   final static int MAX_RATE = 2000000;
@@ -54,7 +54,7 @@ public class RoutingManager {
     logger.debug("RoutingManager: new router " + routerName + " " + dpid);
     logger.info(String.format("newRouter %s %s %s", routerName, dpid, managementIP));
     if (networkManager.getRouter(routerName) == null) {
-//      logger.debug(dpid+":my dpid");
+      //      logger.debug(dpid+":my dpid");
       networkManager.putRouter(new Router(routerName, dpid, managementIP));
       ArrayList<Long> newqueue = new ArrayList<>();
       newqueue.add(Long.valueOf(1000000));
@@ -145,6 +145,30 @@ public class RoutingManager {
       result = false;
     }
     return result;
+  }
+
+  private void monitor(String dstIP, String srcIP, String routerName,
+                      String controller) {
+    logger.info(String.format("monitor %s %s %s", dstIP, routerName, controller));
+    String[] cmd = SdnUtil.controllerFlowCmd(controller, getDPID(routerName),
+      dstIP, srcIP, 3);
+    addEntry_HashList(sdncmds, getDPID(routerName), cmd);
+    String res = postSdnCmd(cmd[0], new JSONObject(cmd[1]));
+    logger.debug(res);
+    if (res.contains("success")) {
+      logger.debug(String.format("Add monitor flow dstIP %s success", dstIP));
+    } else {
+      logger.warn("failed to install monitor flow");
+    }
+  }
+
+  /**
+   * Forward matched packets to controller
+   */
+  public void monitorOnAllRouter(String dstIP, String srcIP, String controller) {
+    for (String routerName : networkManager.getAllRouters()) {
+      monitor(dstIP, srcIP, routerName, controller);
+    }
   }
 
   /**
@@ -277,7 +301,7 @@ public class RoutingManager {
     logger.info(String.format("removePath %s %s", dstIP, controller));
     try {
       removePathId(getPathID(null, dstIP), controller);
-    }catch (Exception e){
+    } catch (Exception e) {
       logger.warn(String.format("Exception when removing path %s %s", dstIP, controller));
     }
   }
@@ -295,7 +319,7 @@ public class RoutingManager {
     if (pairPath.containsKey(pathId)) {
       ArrayList<String[]> paths = pairPath.get(pathId);
       for (String[] path : paths) {
-        if(route_id.containsKey(getRouteKey(pathId, path[0]))) {
+        if (route_id.containsKey(getRouteKey(pathId, path[0]))) {
           int routeid = route_id.get(getRouteKey(pathId, path[0]));
           deleteRoute(path[0], String.valueOf(routeid), controller);
         }

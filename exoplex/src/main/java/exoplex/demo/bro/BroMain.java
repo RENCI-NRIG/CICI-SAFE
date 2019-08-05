@@ -98,8 +98,8 @@ public class BroMain {
   }
 
   static boolean configFlows(SdxManager sdxManager) throws Exception {
-    sdxManager.connectionRequest("not used", "192.168.10.1/24", "192.168.30.1/24", 0);
-    sdxManager.connectionRequest("not used", "192.168.20.1/24", "192.168.40.1/24", 0);
+    sdxManager.connectionRequest( "192.168.10.1/24", "192.168.30.1/24", 0);
+    sdxManager.connectionRequest( "192.168.20.1/24", "192.168.40.1/24", 0);
     sdxManager.setMirror(routerName, "192.168.10.1/24", "192.168.30.1/24");
     sdxManager.setMirror(routerName, "192.168.20.1/24", "192.168.40.1/24");
     String routeFlowPattern = ".*nw_src.*nw_dst.*actions=dec_ttl.*load.*";
