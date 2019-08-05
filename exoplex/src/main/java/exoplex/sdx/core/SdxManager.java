@@ -1,5 +1,6 @@
 package exoplex.sdx.core;
 
+import aqt.PrefixUtil;
 import com.google.inject.Inject;
 import exoplex.common.utils.HttpUtil;
 import exoplex.common.utils.ServerOptions;
@@ -8,8 +9,11 @@ import exoplex.sdx.advertise.AdvertiseManager;
 import exoplex.sdx.advertise.PolicyAdvertise;
 import exoplex.sdx.advertise.RouteAdvertise;
 import exoplex.sdx.bro.BroManager;
+import exoplex.sdx.core.restutil.NotifyResult;
+import exoplex.sdx.core.restutil.PeerRequest;
 import exoplex.sdx.network.Link;
 import exoplex.sdx.network.RoutingManager;
+import exoplex.sdx.network.SdnUtil;
 import exoplex.sdx.safe.SafeManager;
 import exoplex.sdx.slice.SliceEnv;
 import exoplex.sdx.slice.SliceManager;
@@ -72,6 +76,7 @@ public class SdxManager extends SliceHelper {
   private String logPrefix = "";
   private boolean safeChecked = false;
   private HashSet<Integer> usedip = new HashSet<Integer>();
+  private String publicUrl = null;
 
   private ConcurrentHashMap<String, String> prefixGateway = new ConcurrentHashMap<String, String>();
   private ConcurrentHashMap<String, HashSet<String>> gatewayPrefixes = new ConcurrentHashMap();
@@ -146,7 +151,15 @@ public class SdxManager extends SliceHelper {
     loadSlice();
     broManager = new BroManager(serverSlice, routingmanager, this);
     logPrefix += "[" + sliceName + "]";
-
+    if(conf.hasPath("config.publicurl")){
+      this.publicUrl = conf.getString("config.publicurl");
+      logger.info(String.format("public url: %s", this.publicUrl));
+    } {
+      this.publicUrl = serverurl;
+      logger.warn(String.format("config.publicurl not found in configuration file, using %s" +
+        " instead\n Sdn controller might not be able to notify new packet to " +
+        "sdx", serverurl));
+    }
     checkSdxPrerequisites(serverSlice);
 
     if (plexusInSlice) {
@@ -378,6 +391,26 @@ public class SdxManager extends SliceHelper {
     } else {
       return String.format("Unrecognized operation: %s\n Supported Operations: %s", operation,
         String.join(",", supportedOperations));
+    }
+  }
+
+  /**
+   * Now this will be triggered by the first incoming packet, so the
+   * self_prefix should be dest
+   * @param src
+   * @param dest
+   * @return
+   */
+  public String processPacketIn(String src, String dest){
+    logger.info(String.format("Packet in event: src %s dst: %s", src, dest));
+    try {
+      String res = this.connectionRequest(dest, src, 0);
+      logger.info(res);
+      return res;
+    } catch (Exception e){
+      logger.warn(String.format("failed to enable connection for %s <-> %s",
+        src, dest));
+      return "failure";
     }
   }
 
@@ -885,24 +918,49 @@ public class SdxManager extends SliceHelper {
     }
   }
 
-  synchronized public String connectionRequest(String ckeyhash, String self_prefix,
+  synchronized public String connectionRequest(String self_prefix,
                                    String target_prefix, long bandwidth) throws Exception {
     logger.info(String.format("Connection request between %s and %s", self_prefix, target_prefix));
     //String n1=computenodes.get(site1).get(0);
     //String n2=computenodes.get(site2).get(0);
     if (safeEnabled) {
       String targetHash = null;
-      if (prefixKeyHash.containsKey(target_prefix)) {
-        targetHash = prefixKeyHash.get(target_prefix);
-      } else {
-        RouteAdvertise advertise = advertiseManager.getAdvertise(target_prefix, self_prefix);
+      String cKeyHash = null;
+      if(self_prefix.matches(SdnUtil.IP_PATTERN)){
+        self_prefix = self_prefix + "/32";
+      }
+      if(target_prefix.matches(SdnUtil.IP_PATTERN)){
+        target_prefix = target_prefix + "/32";
+      }
+      for(String prefix: prefixKeyHash.keySet()){
+        if(PrefixUtil.prefixToRange(prefix).covers(PrefixUtil.prefixToRange(self_prefix))) {
+          cKeyHash = prefixKeyHash.get(prefix);
+          self_prefix = prefix;
+        }
+        if(PrefixUtil.prefixToRange(prefix).covers(PrefixUtil.prefixToRange(target_prefix))) {
+          targetHash = prefixKeyHash.get(prefix);
+          target_prefix = prefix;
+        }
+      }
+      if(cKeyHash == null) {
+        RouteAdvertise advertise = advertiseManager.getAdvertise(self_prefix,
+          target_prefix);
         if (advertise == null) {
-          return "target prefix unrecognized.";
+          return String.format("prefix %s unrecognized.", self_prefix);
         } else {
           targetHash = advertise.ownerPID;
         }
       }
-      if (!safeManager.authorizeConnectivity(ckeyhash, self_prefix, targetHash, target_prefix)) {
+      if(targetHash == null){
+        RouteAdvertise advertise = advertiseManager.getAdvertise(target_prefix, self_prefix);
+        if (advertise == null) {
+          return String.format("prefix %s unrecognized.", target_prefix);
+        } else {
+          targetHash = advertise.ownerPID;
+        }
+      }
+      if (!safeManager.authorizeConnectivity(cKeyHash, self_prefix, targetHash,
+        target_prefix)) {
         logger.info("Unauthorized connection request");
         return "Unauthorized connection request";
       } else {
@@ -1110,7 +1168,7 @@ public class SdxManager extends SliceHelper {
   }
 
   synchronized public NotifyResult notifyPrefix(String dest, String gateway,
-                                                 String customer_keyhash) {
+                                                String customer_keyhash) {
     logger.info(logPrefix + "received notification for ip prefix " + dest);
     NotifyResult notifyResult = new NotifyResult();
     notifyResult.message = "received notification for " + dest;
@@ -1135,6 +1193,11 @@ public class SdxManager extends SliceHelper {
       if(safeEnabled) {
         notifyResult.safeKeyHash = safeManager.getSafeKeyHash();
       }
+      //monitor the frist package
+      routingmanager.monitorOnAllRouter(dest, SdnUtil.DEFAULT_ROUTE,
+        SDNController);
+      routingmanager.monitorOnAllRouter(SdnUtil.DEFAULT_ROUTE, dest,
+        SDNController);
     }
     return notifyResult;
   }
@@ -1282,9 +1345,13 @@ public class SdxManager extends SliceHelper {
       logger.debug("Restarting Plexus Controller");
       logger.info(logPrefix + "Restarting Plexus Controller: " + plexusip);
       delFlows();
-      String script = "docker exec -d plexus /bin/bash -c  \"cd /root;pkill ryu-manager; " +
-        "ryu-manager --log-file ~/log --default-log-level 1 ryu/ryu/app/rest_conf_switch.py ryu/ryu/app/rest_router.py " +
-        "ryu/ryu/app/ofctl_rest.py\"\n";
+      String script = "docker exec -d plexus /bin/bash -c  \"cd /root;pkill ryu-manager; "
+        + "ryu-manager --log-file ~/log --default-log-level 1 "
+        + "ryu/ryu/app/rest_conf_switch.py ryu/ryu/app/rest_router.py "
+        + "ryu/ryu/app/ofctl_rest.py %s\"\n";
+      String sdxMonitorUrl = this.publicUrl + "sdx/flow/packetin";
+      //reuse ryu-manager option for sdx url
+      script = String.format(script, String.format("--zapi-db-url %s", sdxMonitorUrl));
       //String script = "docker exec -d plexus /bin/bash -c  \"cd /root;pkill ryu-manager;
       // ryu-manager ryu/ryu/app/rest_router.py|tee log\"\n";
       serverSlice.runCmdByIP(script, plexusip, false);
