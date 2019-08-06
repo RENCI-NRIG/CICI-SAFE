@@ -8,7 +8,7 @@ import exoplex.common.utils.PathUtil;
 import exoplex.common.utils.ScpTo;
 import exoplex.sdx.network.RoutingManager;
 import exoplex.sdx.slice.Scripts;
-import exoplex.sdx.slice.SliceEnv;
+import exoplex.sdx.slice.SliceProperties;
 import exoplex.sdx.slice.SliceManager;
 import net.jcip.annotations.ThreadSafe;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -43,6 +43,8 @@ public class ExoSliceManager extends SliceManager {
   private SliceAccessContext<SSHAccessToken> sctx;
   private Slice slice;
   private HashSet<String> reachableNodes = new HashSet<>();
+  private HashMap<String, String> postBootScriptsMap = new HashMap<>();
+  private List<Thread> threadList = new ArrayList<>();
 
   @Inject
   public ExoSliceManager(@Assisted("sliceName") String sliceName,
@@ -90,8 +92,8 @@ public class ExoSliceManager extends SliceManager {
       SSHAccessTokenFileFactory fac;
       fac = new SSHAccessTokenFileFactory(sshKey + ".pub", false);
       SSHAccessToken t = fac.getPopulatedToken();
-      sctx.addToken("root", "root", t);
-      sctx.addToken("root", t);
+      sctx.addToken(SliceProperties.userName, SliceProperties.userName, t);
+      sctx.addToken(SliceProperties.userName, t);
     } catch (UtilTransportException e) {
       // TODO Auto-generated catch block
       e.printStackTrace();
@@ -210,7 +212,7 @@ public class ExoSliceManager extends SliceManager {
 
   synchronized public void resetHostNames() {
     for (ComputeNode node : slice.getComputeNodes()) {
-      runCmdByIP(String.format("hostnamectl set-hostname %s-%s", sliceName, node.getName()),
+      runCmdByIP(String.format("sudo hostnamectl set-hostname %s-%s", sliceName, node.getName()),
         node.getManagementIP(), false);
     }
   }
@@ -246,6 +248,7 @@ public class ExoSliceManager extends SliceManager {
     node0.setDomain(SiteBase.get(site));
     if (nodePostBootScript != null) {
       node0.setPostBootScript(nodePostBootScript);
+      postBootScriptsMap.put(name, nodePostBootScript);
     }
     return name;
   }
@@ -255,11 +258,11 @@ public class ExoSliceManager extends SliceManager {
     if (slice == null) {
       createSlice();
     }
-    NodeBaseInfo ninfo = NodeBase.getImageInfo(SliceEnv.CustomerVMVersion);
-    String nodeImageShortName = ninfo.nisn;
-    String nodeImageURL = ninfo.niurl;
+    NodeBaseInfo ninfo = NodeBase.getImageInfo(SliceProperties.CustomerVMVersion);
+    String nodeImageShortName = ninfo.imageName;
+    String nodeImageURL = ninfo.imageUrl;
     //http://geni-images.renci.org/images/standard/ubuntu/ub1304-ovs-opendaylight-v1.0.0.xml
-    String nodeImageHash = ninfo.nihash;
+    String nodeImageHash = ninfo.imageHash;
     String nodeNodeType = "XO Medium";
     String nodePostBootScript = Scripts.getCustomerScript();
     ComputeNode node0 = slice.addComputeNode(name);
@@ -267,6 +270,7 @@ public class ExoSliceManager extends SliceManager {
     node0.setNodeType(nodeNodeType);
     node0.setDomain(SiteBase.get(site));
     node0.setPostBootScript(nodePostBootScript);
+    postBootScriptsMap.put(name, nodePostBootScript);
     return node0.getName();
   }
 
@@ -601,10 +605,14 @@ public class ExoSliceManager extends SliceManager {
         e.printStackTrace();
       }
     }
-    logger.info("Done, those  resources are active now: " + String.join(",", resources));
     for (String n : getComputeNodes()) {
       logger.debug("ComputeNode: " + n + ", Managment IP =  " + getManagementIP(n));
+      if(postBootScriptsMap.containsKey(n)){
+        runCmdNodeAsync(postBootScriptsMap.remove(n), n, false);
+      }
     }
+    joinAllThreads();
+    logger.info("Done, those  resources are active now: " + String.join(",", resources));
     return true;
   }
 
@@ -618,7 +626,7 @@ public class ExoSliceManager extends SliceManager {
           synchronized public void run() {
             try {
               logger.debug("scp config file to " + mip);
-              ScpTo.Scp(lfile, "root", mip, rfile, privkey);
+              ScpTo.Scp(lfile, SliceProperties.userName, mip, rfile, privkey);
             } catch (Exception e) {
               e.printStackTrace();
             }
@@ -655,7 +663,7 @@ public class ExoSliceManager extends SliceManager {
           synchronized public void run() {
             try {
               logger.debug("scp config file to " + mip);
-              ScpTo.Scp(lfile, "root", mip, rfile, privkey);
+              ScpTo.Scp(lfile, SliceProperties.userName, mip, rfile, privkey);
             } catch (Exception e) {
               e.printStackTrace();
             }
@@ -689,7 +697,7 @@ public class ExoSliceManager extends SliceManager {
     String ip = getManagementIP(nodeName);
     try {
       logger.debug(String.format("scp file %s to %s", lfile, ip));
-      ScpTo.Scp(lfile, "root", ip, rfile, privkey);
+      ScpTo.Scp(lfile, SliceProperties.userName, ip, rfile, privkey);
     } catch (Exception e) {
       e.printStackTrace();
     }
@@ -707,11 +715,7 @@ public class ExoSliceManager extends SliceManager {
           try {
             logger.debug(String.format("[%s-%s-%s] run commands: %s", sliceName, c.getName(),mip,
              cmd ));
-            String res = Exec.sshExec("root", mip, cmd, sshkey)[0];
-            while (res.startsWith("error") && repeat) {
-              sleep(5);
-              res = Exec.sshExec("root", mip, cmd, sshkey)[0];
-            }
+            runCmdByIP(cmd, mip, repeat);
           } catch (Exception e) {
             logger.warn("exception when running command");
           }
@@ -736,10 +740,22 @@ public class ExoSliceManager extends SliceManager {
    * @return true is there is uninstalled software
    */
   private boolean processCmdRes(String mip, String res) {
+    if(res == null) {
+      return true;
+    }
     logger.debug(String.format("%s processing result from %s: %s", sliceName, mip, res));
     if (res.contains("ovs-vsctl: command not found") || res.contains("ovs-ofctl: command not found")) {
-      String[] result = Exec.sshExec("root", mip, "apt-get install -y openvswitch-switch",
-        sshKey);
+      String[] result = Exec.sshExec(SliceProperties.userName, mip,
+        Scripts.installOVS(), sshKey);
+      if (result[0].startsWith("error")) {
+        return true;
+      } else {
+        return false;
+      }
+    }
+    if (res.contains("docker: command not found")) {
+      String[] result = Exec.sshExec(SliceProperties.userName, mip,
+        Scripts.installDocker(), sshKey);
       if (result[0].startsWith("error")) {
         return true;
       } else {
@@ -747,15 +763,20 @@ public class ExoSliceManager extends SliceManager {
       }
     }
     if(res.contains("Unable to lock")){
-      Exec.sshExec("root", mip, "rm /var/lib/dpkg/lock;dpkg --configure -a",
+      Exec.sshExec(SliceProperties.userName, mip, "sudo rm /var/lib/dpkg/lock;dpkg --configure -a",
         sshKey);
     }
     if(res.contains("dpkg was interrupted")){
-      Exec.sshExec("root", mip, "dpkg --configure -a",
+      Exec.sshExec(SliceProperties.userName, mip, "sudo dpkg --configure -a",
           sshKey);
     }
     if(res.contains("traceroute: command not found")){
-      Exec.sshExec("root", mip, "apt-get install -y traceroute", sshKey);
+      Exec.sshExec(SliceProperties.userName, mip, Scripts.installTraceRoute()
+        , sshKey);
+    }
+    if(res.contains("can't read /etc/quagga/daemons: No such file or directory")){
+      Exec.sshExec(SliceProperties.userName, mip, Scripts.enableZebra()
+        , sshKey);
     }
     return false;
   }
@@ -773,21 +794,56 @@ public class ExoSliceManager extends SliceManager {
     return runCmdByIP(cmd, mip, false);
   }
 
-  public int getInterfaceNum(String nodeName) {
-    String res = runCmdNode("/bin/bash /root/ifaces.sh", nodeName);
+  public void runCmdNodeAsync(final String cmd, String nodeName,
+                              boolean repeat) {
+    String mip = getManagementIP(nodeName);
+    Thread t = new Thread() {
+      @Override
+      public void run() {
+        runCmdByIP(cmd, mip, repeat);
+      }
+    };
+    t.start();
+    threadList.add(t);
+  }
+
+  public void joinAllThreads() {
+    for(Thread t: threadList){
+      try {
+        t.join();
+      } catch (Exception e){
+
+      }
+    }
+  }
+
+  public List<String> getPhysicalInterfaces(String nodeName) {
+    String res = runCmdNode(String.format("sudo /bin/bash %s/ifaces.sh",
+      SliceProperties.homeDir),
+      nodeName);
     logger.debug(String.format("%s %s Interfaces: %s", sliceName, nodeName, res).replace("\n",
       " "));
-    int num = res.split("\n").length;
-    return num;
+    String[] ifaces= res.replace(" ","").split("\n");
+    ArrayList<String> interfaces = new ArrayList<>();
+    for(String s: ifaces){
+      String ss = s.replace(" ","").replace("\n", "");
+      if(ss.length() > 1) {
+        interfaces.add(ss);
+      }
+    }
+    return interfaces;
   }
 
   public String runCmdByIP(final String cmd, String mip, boolean repeat) {
     logger.debug(String.format("[%s-%s] run commands: %s", sliceName, mip, cmd));
-    String res[] = Exec.sshExec("root", mip, cmd, sshKey);
-    while (repeat && (res[0] == null || res[0].startsWith("error"))) {
+    String res[] = Exec.sshExec(SliceProperties.userName, mip, cmd, sshKey);
+    if (repeat && (res[0] == null
+      || res[0].startsWith("error")
+      || res[0].contains("Could not get lock")
+      || res[0].contains("command not found"))) {
       logger.debug(res[1]);
       processCmdRes(mip, res[1]);
-      res = Exec.sshExec("root", mip, cmd, sshKey);
+      res = Exec.sshExec(SliceProperties.userName, mip, cmd, sshKey);
       if (res[0].startsWith("error")) {
         try {
           Thread.sleep(1000);
@@ -883,10 +939,10 @@ public class ExoSliceManager extends SliceManager {
 
   synchronized public void addCoreEdgeRouterPair(String site, String router1,
                                      String router2, String linkname, long bw) {
-    NodeBaseInfo ninfo = NodeBase.getImageInfo(SliceEnv.OVSVersion);
-    String nodeImageShortName = ninfo.nisn;
-    String nodeImageURL = ninfo.niurl;
-    String nodeImageHash = ninfo.nihash;
+    NodeBaseInfo ninfo = NodeBase.getImageInfo(SliceProperties.OVSVersion);
+    String nodeImageShortName = ninfo.imageName;
+    String nodeImageURL = ninfo.imageUrl;
+    String nodeImageHash = ninfo.imageHash;
     String nodeNodeType = "XO Medium";
     String nodePostBootScript = Scripts.getOVSScript();
     String node0 = addComputeNode(router1, nodeImageURL,
@@ -901,10 +957,10 @@ public class ExoSliceManager extends SliceManager {
   }
 
   synchronized public void addOvsRouter(String site, String router1) {
-    NodeBaseInfo ninfo = NodeBase.getImageInfo(SliceEnv.OVSVersion);
-    String nodeImageShortName = ninfo.nisn;
-    String nodeImageURL = ninfo.niurl;
-    String nodeImageHash = ninfo.nihash;
+    NodeBaseInfo ninfo = NodeBase.getImageInfo(SliceProperties.OVSVersion);
+    String nodeImageShortName = ninfo.imageName;
+    String nodeImageURL = ninfo.imageUrl;
+    String nodeImageHash = ninfo.imageHash;
     String nodeNodeType = "XO Medium";
     String nodePostBootScript = Scripts.getOVSScript();
     addComputeNode(router1, nodeImageURL,
@@ -913,17 +969,20 @@ public class ExoSliceManager extends SliceManager {
   }
 
   synchronized public void addDocker(String siteName, String nodeName, String script,
-                         String size) {
-    NodeBaseInfo ninfo = NodeBase.getImageInfo(NodeBase.U14Docker);
-    String dockerImageShortName = ninfo.nisn;
-    String dockerImageURL = ninfo.niurl;
-    String dockerImageHash = ninfo.nihash;
-    String dockerNodeType = "XO Medium";
+                         String type) {
+    NodeBaseInfo ninfo = NodeBase.getImageInfo(SliceProperties.DockerVersion);
+    String dockerImageShortName = ninfo.imageName;
+    String dockerImageURL = ninfo.imageUrl;
+    String dockerImageHash = ninfo.imageHash;
+    String dockerNodeType = type;
     ComputeNode node0 = this.slice.addComputeNode(nodeName);
     node0.setImage(dockerImageURL, dockerImageHash, dockerImageShortName);
     node0.setNodeType(dockerNodeType);
-    node0.setDomain(siteName);
-    node0.setPostBootScript(script);
+    node0.setDomain(SiteBase.get(siteName));
+    String postBootScript =
+      Scripts.preBootScripts() + Scripts.installDocker() + script;
+    node0.setPostBootScript(postBootScript);
+    postBootScriptsMap.put(nodeName, postBootScript);
   }
 
   synchronized public void addRiakServer(String siteName, String nodeName) {
@@ -944,15 +1003,18 @@ public class ExoSliceManager extends SliceManager {
 
   //We always add the bro when we add the edge router
   synchronized public String addBro(String broname, String domain) {
-    String broN = NodeBase.CENTOS_BRO;
-    String broURL = NodeBase.getImageInfo(broN).niurl;
-    String broHash = NodeBase.getImageInfo(broN).nihash;
+    logger.warn("The old bro image is not supported in ExoGENI, bro might not" +
+      " be properly installed in the node");
+    String broN = NodeBase.CENTOS_7_6;
+    String broURL = NodeBase.getImageInfo(broN).imageUrl;
+    String broHash = NodeBase.getImageInfo(broN).imageHash;
     String broType = NodeBase.xoMedium;
     ComputeNode bro = this.slice.addComputeNode(broname);
     bro.setImage(broURL, broHash, broN);
     bro.setDomain(domain);
     bro.setNodeType(broType);
     bro.setPostBootScript(Scripts.getBroScripts());
+    postBootScriptsMap.put(broname, Scripts.getBroScripts());
     return broname;
   }
 
@@ -979,46 +1041,58 @@ public class ExoSliceManager extends SliceManager {
                              String resourceDir, String
     SDNControllerIP, String serverurl, String sshkey) {
     // Bro uses 'eth1"
-    Exec.sshExec("root", getManagementIP(nodeName), "sed -i 's/eth0/eth1/' " +
+    Exec.sshExec(SliceProperties.userName, getManagementIP(nodeName), "sudo sed -i " +
+      "'s/eth0/eth1/' " +
       "/opt/bro/etc/node.cfg", sshkey);
 
-    copyFile2Node(PathUtil.joinFilePath(resourceDir, "bro/test.bro"), "/root/test.bro", sshkey,
+    copyFile2Node(PathUtil.joinFilePath(resourceDir, "bro/test.bro"),
+      String.format("%stest.bro", SliceProperties.homeDir), sshkey,
       nodeName);
     copyFile2Node(PathUtil.joinFilePath(resourceDir, "bro/test-all-policy.bro"),
-      "/root/test-all-policy.bro",
+      String.format("%s/test-all-policy.bro", SliceProperties.homeDir),
       sshkey, nodeName);
-    copyFile2Node(PathUtil.joinFilePath(resourceDir, "bro/detect.bro"), "/root/detect.bro",
+    copyFile2Node(PathUtil.joinFilePath(resourceDir, "bro/detect.bro"),
+      String.format("%s/detect.bro", SliceProperties.homeDir),
       sshkey,
       nodeName);
     copyFile2Node(PathUtil.joinFilePath(resourceDir, "bro/detect-all-policy.bro"),
-      "/root/detect-all-policy.bro", sshkey, nodeName);
-    copyFile2Node(PathUtil.joinFilePath(resourceDir, "bro/evil.txt"), "/root/evil.txt", sshkey,
+      String.format("%s/detect-all-policy.bro", SliceProperties.homeDir), sshkey,
       nodeName);
-    copyFile2Node(PathUtil.joinFilePath(resourceDir, "bro/reporter.py"), "/root/reporter.py",
+    copyFile2Node(PathUtil.joinFilePath(resourceDir, "bro/evil.txt"),
+      String.format("%sevil.txt", SliceProperties.homeDir), sshkey,
+      nodeName);
+    copyFile2Node(PathUtil.joinFilePath(resourceDir, "bro/reporter.py"),
+      String.format("%s/reporter.py", SliceProperties.homeDir),
       sshkey, nodeName);
     copyFile2Slice(PathUtil.joinFilePath(resourceDir, "bro/cpu_percentage.sh"),
-      "/root/cpu_percentage.sh",
+      String.format("%s/cpu_percentage.sh", SliceProperties.homeDir),
       sshkey, nodeName);
 
-    Exec.sshExec("root", getManagementIP(nodeName), "sed -i 's/bogus_addr/" +
-      SDNControllerIP + "/' *.bro", sshkey);
+    Exec.sshExec(SliceProperties.userName, getManagementIP(nodeName),
+      "sudo sed -i 's/bogus_addr/" + SDNControllerIP + "/' *.bro", sshkey);
 
     String url = serverurl.replace("/", "\\/");
-    Exec.sshExec("root", getManagementIP(nodeName), "sed -i 's/bogus_addr/" +
+    Exec.sshExec(SliceProperties.userName, getManagementIP(nodeName),
+      "sudo sed -i 's/bogus_addr/" +
       url + "/g' reporter.py", sshkey);
 
     String dpid = getDpid(edgeRouter, sshkey);
-    Exec.sshExec("root", getManagementIP(nodeName), "sed -i 's/bogus_dpid/" +
+    Exec.sshExec(SliceProperties.userName, getManagementIP(nodeName),
+      "sudo sed -i 's/bogus_dpid/" +
       Long.parseLong(dpid, 16) + "/' *.bro", sshkey);
-    Exec.sshExec("root", getManagementIP(nodeName), "broctl deploy&", sshkey);
-    Exec.sshExec("root", getManagementIP(nodeName), "python reporter & disown", sshkey);
-    Exec.sshExec("root", getManagementIP(nodeName),
-      "/usr/bin/rm *.log; pkill bro; /usr/bin/screen -d -m /opt/bro/bin/bro " +
+    Exec.sshExec(SliceProperties.userName, getManagementIP(nodeName),
+      "sudo broctl deploy&", sshkey);
+    Exec.sshExec(SliceProperties.userName, getManagementIP(nodeName),
+      "sudo python reporter & disown", sshkey);
+    Exec.sshExec(SliceProperties.userName, getManagementIP(nodeName),
+      "sudo /usr/bin/rm *.log; sudo pkill bro; sudo /usr/bin/screen -d -m " +
+        "sudo /opt/bro/bin/bro " +
         "-i eth1 " + "test-all-policy.bro", sshkey);
   }
 
   public String getDpid(String routerName, String sshkey) {
-    String[] res = runCmdNode("/bin/bash ~/dpid.sh", routerName, true).split(" ");
+    String[] res =
+      runCmdNode("sudo /bin/bash ~/dpid.sh", routerName, true).split(" ");
     res[1] = res[1].replace("\n", "");
     return res[1];
   }
@@ -1027,18 +1101,20 @@ public class ExoSliceManager extends SliceManager {
     synchronized (this) {
       logger.debug(String.format("Adding new OVS router to slice %s on site %s", slice.getName(),
         site));
-      NodeBaseInfo ninfo = NodeBase.getImageInfo(SliceEnv.OVSVersion);
-      String nodeImageShortName = ninfo.nisn;
-      String nodeImageURL = ninfo.niurl;
+      NodeBaseInfo ninfo = NodeBase.getImageInfo(SliceProperties.OVSVersion);
+      String nodeImageShortName = ninfo.imageName;
+      String nodeImageURL = ninfo.imageUrl;
       //http://geni-images.renci.org/images/standard/ubuntu/ub1304-ovs-opendaylight-v1.0.0.xml
-      String nodeImageHash = ninfo.nihash;
+      String nodeImageHash = ninfo.imageHash;
       String nodeNodeType = "XO Medium";
       String nodePostBootScript = Scripts.getOVSScript();
       ComputeNode node0 = slice.addComputeNode(name);
       node0.setImage(nodeImageURL, nodeImageHash, nodeImageShortName);
       node0.setNodeType(nodeNodeType);
       node0.setDomain(SiteBase.get(site));
-      node0.setPostBootScript(nodePostBootScript);
+      String postBootScripts = Scripts.preBootScripts() + nodePostBootScript;
+      node0.setPostBootScript(postBootScripts);
+      postBootScriptsMap.put(name, postBootScripts);
       return node0.getName();
     }
   }

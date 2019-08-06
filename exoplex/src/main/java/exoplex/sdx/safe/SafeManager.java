@@ -4,6 +4,7 @@ import exoplex.common.utils.Exec;
 import exoplex.common.utils.SafeUtils;
 import exoplex.sdx.advertise.RouteAdvertise;
 import exoplex.sdx.slice.Scripts;
+import exoplex.sdx.slice.SliceProperties;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import safe.SdxRoutingSlang;
@@ -254,7 +255,7 @@ public class SafeManager {
   }
 
   public void restartSafeServer() {
-    Exec.sshExec("root", safeServerIp, Scripts.restartSafe_v1(safeServerScript), sshKey);
+    Exec.sshExec(SliceProperties.userName, safeServerIp, Scripts.restartSafe_v1(safeServerScript), sshKey);
   }
 
   public void deploySafeScripts() {
@@ -266,25 +267,27 @@ public class SafeManager {
       return true;
     }
     while (true) {
-      String result = Exec.sshExec("root", safeServerIp, "docker images", sshKey)[0];
+      String result = Exec.sshExec(SliceProperties.userName, safeServerIp,
+        Scripts.dockerImages(), sshKey)[0];
       if (result.contains(safeDockerImage)) {
         break;
       } else {
-        Exec.sshExec("root", safeServerIp, Scripts.getSafeScript_v1(riakIp, safeDockerImage,
+        Exec.sshExec(SliceProperties.userName, safeServerIp, Scripts.getSafeScript_v1(riakIp, safeDockerImage,
           safeServerScript), sshKey);
       }
     }
     while (true) {
-      String result = Exec.sshExec("root", safeServerIp, "docker ps", sshKey)[0];
+      String result = Exec.sshExec(SliceProperties.userName, safeServerIp,
+        Scripts.dockerPs(), sshKey)[0];
       if (result.contains("safe")) {
         break;
       } else {
-        Exec.sshExec("root", safeServerIp, Scripts.getSafeScript_v1(riakIp, safeDockerImage,
+        Exec.sshExec(SliceProperties.userName, safeServerIp, Scripts.getSafeScript_v1(riakIp, safeDockerImage,
           safeServerScript),
           sshKey);
       }
     }
-    Exec.sshExec("root", safeServerIp, Scripts.restartSafe_v1(safeServerScript), sshKey);
+    Exec.sshExec(SliceProperties.userName, safeServerIp, Scripts.restartSafe_v1(safeServerScript), sshKey);
     while (true) {
       if (safeServerAlive()) {
         break;

@@ -26,5 +26,6 @@ public class SingleSdxSlice extends AbstractTestSlice {
     Injector injector = Guice.createInjector(new SingleSdxModule());
     AbstractTestSlice multiSdxSlice = injector.getInstance(AbstractTestSlice.class);
     multiSdxSlice.createSdxSlices(null);
+    multiSdxSlice.runThreads();
   }
 }

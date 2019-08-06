@@ -30,14 +30,14 @@ public class SingleSdxSetting extends AbstractTestSetting {
 
   @Override
   public void addClientSites() {
+    clientSites.add("TAMU");
     clientSites.add("UH");
     clientSites.add("UFL");
-    clientSites.add("TAMU");
   }
 
   @Override
   public void addSdxSites() {
-    sdxSites.put(sdxSliceNames.get(0), new String[]{"UH", "UFL"});
+    sdxSites.put(sdxSliceNames.get(0), new String[]{"TAMU", "UH", "UFL"});
   }
 
   @Override
@@ -54,7 +54,7 @@ public class SingleSdxSetting extends AbstractTestSetting {
       sdxArgs.put(sdxSliceName, sdxArg);
       sdxNoResetArgs.put(sdxSliceName, sdxNRArg);
       sdxKeyMap.put(sdxSliceName, String.format("key_p%s", sdxKeyBase + i));
-      sdxUrls.put(sdxSliceName, String.format("http://127.0.0.1:888%s/", i));
+      sdxUrls.put(sdxSliceName, String.format("http://0.0.0.0:888%s/", i));
       sdxIpMap.put(sdxSliceName, String.format("192.168.%s.1/24", sdxIpBase));
       sdxIpBase += 20;
     }

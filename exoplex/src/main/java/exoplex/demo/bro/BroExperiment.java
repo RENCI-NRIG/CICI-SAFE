@@ -3,6 +3,7 @@ package exoplex.demo.bro;
 import exoplex.common.utils.Exec;
 import exoplex.experiment.ExperimentBase;
 import exoplex.sdx.core.SdxManager;
+import exoplex.sdx.slice.SliceProperties;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -36,7 +37,7 @@ public class BroExperiment extends ExperimentBase {
 
   public void stopBro() {
     logger.debug("Stop Bro");
-    Exec.sshExec("root", broIP, "pkill bro", sshkey);
+    Exec.sshExec(SliceProperties.userName, broIP, "pkill bro", sshkey);
   }
 
   public void getFileAndEchoTime(int times) {
@@ -48,7 +49,7 @@ public class BroExperiment extends ExperimentBase {
       tlist.add(new Thread() {
         @Override
         public void run() {
-          ftpClientOut.add(Exec.sshExec("root", mip1, fetchFileCMD
+          ftpClientOut.add(Exec.sshExec(SliceProperties.userName, mip1, fetchFileCMD
             (ftpuser, ftppw, dip2, file[2], 1) + getEchoTimeCMD() + fetchFileCMD(ftpuser, ftppw,
             dip2, file[2], times - 1), sshkey));
           flowPattern = ".*table=0.*nw_src=" + dip1 + " actions=drop.*";
@@ -66,7 +67,7 @@ public class BroExperiment extends ExperimentBase {
       tlist.add(new Thread() {
         @Override
         public void run() {
-          pingClientOut.add(Exec.sshExec("root", mip1, fetchFileCMD
+          pingClientOut.add(Exec.sshExec(SliceProperties.userName, mip1, fetchFileCMD
             (ftpuser, ftppw, dip2, file[2], 1) + "ping -i 0.01 -c 3000 " + dip2, sshkey));
           stopFlows();
           stopBro();
@@ -84,8 +85,8 @@ public class BroExperiment extends ExperimentBase {
     tlist.add(new Thread() {
       @Override
       public void run() {
-        Exec.sshExec("root", broIP, "pkill bro", sshkey);
-        broOut.add(Exec.sshExec("root", broIP, "/opt/bro/bin/bro -i eth1 " +
+        Exec.sshExec(SliceProperties.userName, broIP, "pkill bro", sshkey);
+        broOut.add(Exec.sshExec(SliceProperties.userName, broIP, "/opt/bro/bin/bro -i eth1 " +
           "detect-all-policy.bro", sshkey));
         stopFlows();
       }
@@ -102,10 +103,11 @@ public class BroExperiment extends ExperimentBase {
     tlist.add(new Thread() {
       @Override
       public void run() {
-        cpuOut.add(Exec.sshExec("root", broIP, "/bin/bash /root/cpu_percentage.sh " +
-            times,
+        cpuOut.add(Exec.sshExec(SliceProperties.userName, broIP,
+          String.format("sudo /bin/bash %scpu_percentage.sh %s",
+            SliceProperties.homeDir, times),
           sshkey));
-        Exec.sshExec("root", broIP, "pkill bro", sshkey);
+        Exec.sshExec(SliceProperties.userName, broIP, "sudo pkill bro", sshkey);
       }
     });
     tlist.get(tlist.size() - 1).start();
@@ -201,8 +203,8 @@ public class BroExperiment extends ExperimentBase {
     tlist.add(new Thread() {
       @Override
       public void run() {
-        Exec.sshExec("root", broIP, "pkill bro", sshkey);
-        broOut.add(Exec.sshExec("root", broIP, "/opt/bro/bin/bro -i eth1 " +
+        Exec.sshExec(SliceProperties.userName, broIP, "pkill bro", sshkey);
+        broOut.add(Exec.sshExec(SliceProperties.userName, broIP, "/opt/bro/bin/bro -i eth1 " +
           "detect-all-policy.bro", sshkey));
         stopFlows();
       }
@@ -222,8 +224,9 @@ public class BroExperiment extends ExperimentBase {
     tlist.add(new Thread() {
       @Override
       public void run() {
-        cpuOut.add(Exec.sshExec("root", broIP, "/bin/bash /root/cpu_percentage.sh " +
-            cpuTimes,
+        cpuOut.add(Exec.sshExec(SliceProperties.userName, broIP,
+          String.format("sudo /bin/bash %scpu_percentage.sh %s",
+            SliceProperties.homeDir, cpuTimes),
           sshkey));
       }
     });
@@ -337,7 +340,7 @@ public class BroExperiment extends ExperimentBase {
     tlist.add(new Thread() {
       @Override
       public void run() {
-        broOut.add(Exec.sshExec("root", broIP, "/usr/bin/rm *.log; pkill bro; /opt/bro/bin/bro " +
+        broOut.add(Exec.sshExec(SliceProperties.userName, broIP, "/usr/bin/rm *.log; pkill bro; /opt/bro/bin/bro " +
           "-i eth1 test-all-policy.bro", sshkey));
         stopFlows();
       }

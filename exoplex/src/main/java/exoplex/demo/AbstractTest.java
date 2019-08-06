@@ -40,6 +40,7 @@ public abstract class AbstractTest {
     String riakIP = riakSlice.run(testSetting.riakArgs);
     testSlice.createSdxSlices(riakIP);
     testSlice.createClientSlices(riakIP);
+    testSlice.runThreads();
   }
 
   public void deleteSlices() throws Exception {
@@ -160,6 +161,9 @@ public abstract class AbstractTest {
   }
 
   public void connectCustomerNetwork() {
+    if(! testSetting.explicitConnectionRequest){
+      return;
+    }
     for (Integer[] pair : testSetting.clientConnectionPairs) {
       int i = pair[0];
       int j = pair[1];

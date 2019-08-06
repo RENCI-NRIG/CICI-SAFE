@@ -100,6 +100,7 @@ public class SliceHelper extends SliceCommon {
 
   @Override
   public void readConfig(String configFilePath) {
+    logger.info("reading from config " + configFilePath);
     super.readConfig(configFilePath);
     if (conf.hasPath("config.bw")) {
       bw = conf.getLong("config.bw");
@@ -110,6 +111,7 @@ public class SliceHelper extends SliceCommon {
     }
     if (conf.hasPath("config.serverurl")) {
       serverurl = conf.getString("config.serverurl");
+      logger.debug(String.format("%s: %s", "config.serverurl", serverurl));
     }
   }
 
@@ -178,7 +180,7 @@ public class SliceHelper extends SliceCommon {
       checkSdxPrerequisites(carrier);
 
       logger.debug("Plexus Controller IP: " + SDNControllerIP);
-      carrier.runCmdSlice("/bin/bash ~/ovsbridge.sh " + SDNControllerIP + ":6633", sshKey,
+      carrier.runCmdSlice("sudo /bin/bash ~/ovsbridge.sh " + SDNControllerIP + ":6633", sshKey,
         routerPattern, true);
 
       if (BRO) {
@@ -193,12 +195,15 @@ public class SliceHelper extends SliceCommon {
   }
 
   public void configFTPService(SliceManager carrier, String nodePattern, String username, String passwd) {
-    carrier.runCmdSlice("apt-get install -y vsftpd", sshKey, nodePattern, true);
-    carrier.runCmdSlice("/usr/sbin/useradd " + username + "; echo -e \"" + passwd + "\\n" +
+    carrier.runCmdSlice(Scripts.installVsftpd(), sshKey, nodePattern, true);
+    carrier.runCmdSlice("sudo /usr/sbin/useradd " + username + "; echo -e \"" + passwd + "\\n" +
       passwd + "\\n\" | passwd " + username, sshKey, nodePattern, true);
     carrier.runCmdSlice("mkdir /home/" + username, sshKey, nodePattern, false);
-    carrier.runCmdSlice("/bin/sed -i \"s/pam_service_name=vsftpd/pam_service_name=ftp/\" " +
-      "/etc/vsftpd.conf; service vsftpd restart", sshKey, nodePattern, true);
+    carrier.runCmdSlice("sudo /bin/sed -i \"s/pam_service_name=vsftpd" +
+      "/pam_service_name=ftp/\" " +
+      "/etc/vsftpd.conf;" +
+        "sudo service vsftpd restart", sshKey, nodePattern,
+      true);
     String resource_dir = conf.getString("config.resourcedir");
     carrier.copyFile2Slice(PathUtil.joinFilePath(resource_dir, "bro/evil.txt"), "/home/" +
         username +
@@ -296,10 +301,10 @@ public class SliceHelper extends SliceCommon {
   */
 
   public void checkOVS(SliceManager serverSlice, String nodeName) {
-    String res = serverSlice.runCmdNode("ovs-vsctl show", nodeName, false);
+    String res = serverSlice.runCmdNode("sudo ovs-vsctl show", nodeName, false);
     if (res.contains("ovs-vsctl: command not found")) {
       while (true) {
-        String result = serverSlice.runCmdNode("apt-get install -y openvswitch-switch", nodeName, true);
+        String result = serverSlice.runCmdNode(Scripts.installOVS(), nodeName, true);
         if (!result.startsWith("error")) {
           break;
         }
@@ -348,26 +353,28 @@ public class SliceHelper extends SliceCommon {
   protected boolean checkPlexus(SliceManager serverSlice, String SDNControllerIP, String
     plexusImage) {
     if (plexusInSlice) {
-      String result = serverSlice.runCmdByIP("docker ps", SDNControllerIP, false);
+      String result = serverSlice.runCmdByIP(Scripts.dockerPs(), SDNControllerIP,
+        false);
       if (result.contains("plexus")) {
         logger.debug("plexus controller has started");
       } else {
         logger.debug("plexus controller hasn't started, restarting it");
-        result = serverSlice.runCmdByIP("docker images", SDNControllerIP, false);
+        result = serverSlice.runCmdByIP("sudo docker images", SDNControllerIP, false);
         if (result.contains(plexusImage)) {
           logger.debug("found plexus image, starting plexus container");
-          serverSlice.runCmdByIP(String.format("docker run -i -t -d -p 8080:8080 "
+          serverSlice.runCmdByIP(String.format("sudo docker run -i -t -d -p 8080:8080 "
               + " -p 6633:6633 -p 3000:3000 -h plexus --name plexus %s", plexusImage),
             SDNControllerIP, false);
         } else {
 
           logger.debug("plexus image not found, downloading...");
-          serverSlice.runCmdByIP(String.format("docker pull %s", plexusImage), SDNControllerIP, false);
-          serverSlice.runCmdByIP(String.format("docker run -i -t -d -p 8080:8080 -p"
+          serverSlice.runCmdByIP(String.format("sudo docker pull %s", plexusImage),
+            SDNControllerIP, false);
+          serverSlice.runCmdByIP(String.format("sudo docker run -i -t -d -p 8080:8080 -p"
               + " 6633:6633 -p 3000:3000 -h plexus --name plexus %s", plexusImage), SDNControllerIP,
             false);
         }
-        result = serverSlice.runCmdByIP("docker ps", SDNControllerIP, false);
+        result = serverSlice.runCmdByIP(Scripts.dockerPs(), SDNControllerIP, false);
         if (result.contains("plexus")) {
           logger.debug("plexus controller has started");
         } else {

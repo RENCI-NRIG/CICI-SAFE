@@ -8,6 +8,7 @@ import com.jcraft.jsch.Session;
 import exoplex.common.utils.ScpTo;
 import exoplex.sdx.slice.SliceManager;
 import exoplex.sdx.slice.SliceManagerFactory;
+import exoplex.sdx.slice.SliceProperties;
 import exoplex.sdx.slice.exogeni.SliceCommon;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -161,25 +162,8 @@ public abstract class SliceBase extends SliceCommon {
 
   public void sftpToNode(ComputeNode c, String path) throws SampleSlice.SliceBaseException {
     String[] pathParts = path.split("/");
-    String dstPath = "/root/" + pathParts[pathParts.length - 1];
-    ScpTo.Scp(path, "root", c.getManagementIP(), dstPath, sshKey);
-
-    /*
-    ChannelSftp channel;
-    try {
-      Session session = makeSshSession(c);
-      channel = (ChannelSftp) session.openChannel("sftp");
-      channel.connect();
-
-      String[] pathParts = path.split("/");
-      String dstPath = "/root/" + pathParts[pathParts.length - 1];
-      System.out.println("dst path: " + dstPath);
-      channel.put(getClass().getResourceAsStream(path), dstPath);
-    } catch (SftpException | JSchException e) {
-      throw new SliceBaseException(e);
-    }
-    channel.disconnect();
-    */
+    String dstPath = SliceProperties.homeDir + pathParts[pathParts.length - 1];
+    ScpTo.Scp(path, SliceProperties.userName, c.getManagementIP(), dstPath, sshKey);
   }
 
   public void releaseSshChannels() {
@@ -240,7 +224,7 @@ public abstract class SliceBase extends SliceCommon {
 
       JSch jsch = new JSch();
       jsch.addIdentity(sshKey);
-      Session session = jsch.getSession("root", cnodeIp, 22);
+      Session session = jsch.getSession(SliceProperties.userName, cnodeIp, 22);
 
       Properties config = new Properties();
       config.put("StrictHostKeyChecking", "no");

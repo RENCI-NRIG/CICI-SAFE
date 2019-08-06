@@ -118,7 +118,7 @@ public abstract class SliceManager {
 
   abstract public String runCmdNode(final String cmd, String nodeName);
 
-  abstract public int getInterfaceNum(String nodeName);
+  abstract public List<String> getPhysicalInterfaces(String nodeName);
 
   abstract public String runCmdByIP(final String cmd, String mip, boolean repeat);
 
