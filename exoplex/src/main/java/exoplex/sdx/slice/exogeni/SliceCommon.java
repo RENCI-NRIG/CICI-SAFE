@@ -54,6 +54,7 @@ public abstract class SliceCommon {
   }
 
   public void readConfig(String configfilepath) {
+    logger.info(String.format("Loading configuration from %s", configfilepath));
     File myConfigFile = new File(configfilepath);
     Config fileConfig = ConfigFactory.parseFile(myConfigFile);
     conf = ConfigFactory.load(fileConfig);

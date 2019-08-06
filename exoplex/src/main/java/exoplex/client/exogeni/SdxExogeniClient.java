@@ -503,7 +503,9 @@ public class SdxExogeniClient extends SliceCommon {
         jsonparams.put("ckeyhash", sliceName);
       }
       int interfaceNum = serverSlice.getPhysicalInterfaces(nodeName).size();
-      logger.debug("Sending stitch request to Sdx server");
+      logger.debug(String.format(logPrefix + "Number of dataplane interfaces before " +
+        "stitching: %s", interfaceNum));
+      logger.debug(logPrefix  + "Sending stitch request to Sdx server");
       String r = HttpUtil.postJSON(serverurl + "sdx/stitchrequest", jsonparams);
       logger.debug(r);
       JSONObject res = new JSONObject(r);
@@ -517,6 +519,8 @@ public class SdxExogeniClient extends SliceCommon {
         while(interfaces.size() <= interfaceNum){
           sleep(5);
           interfaces = serverSlice.getPhysicalInterfaces(nodeName);
+          logger.debug(String.format(logPrefix + "Number of dataplane " +
+            "interfaces: %s", interfaces.size()));
         }
         String newInterface = interfaces.get(interfaces.size() - 1);
 
