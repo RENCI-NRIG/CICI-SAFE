@@ -58,11 +58,11 @@ public class SingleSdxTest extends AbstractTest {
   public void testSDX() throws Exception {
     startSdxServersAndClients(reset);
     stitchCustomerSlices();
-    connectCustomerNetwork();
+    //connectCustomerNetwork();
     checkConnection();
     unStitchCustomerSlices();
     stitchCustomerSlices();
-    connectCustomerNetwork();
+    //connectCustomerNetwork();
     checkConnection();
     unStitchCustomerSlices();
   }
