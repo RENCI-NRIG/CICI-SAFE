@@ -12,6 +12,7 @@ import exoplex.common.utils.ServerOptions;
 import exoplex.sdx.advertise.PolicyAdvertise;
 import exoplex.sdx.advertise.RouteAdvertise;
 import exoplex.sdx.safe.SafeManager;
+import exoplex.sdx.slice.Scripts;
 import exoplex.sdx.slice.SliceProperties;
 import exoplex.sdx.slice.SliceManager;
 import exoplex.sdx.slice.SliceManagerFactory;
@@ -517,7 +518,7 @@ public class SdxExogeniClient extends SliceCommon {
         String gateway = params[3].split("/")[0];
         serverSlice.runCmdNode("sudo bash -c 'echo \"ip route 192.168.1.1/16 " + gateway +
           "\" >>/etc/quagga/zebra.conf'", node0_s2, false);
-        serverSlice.runCmdNode("sudo /etc/init.d/quagga restart", node0_s2,
+        serverSlice.runCmdNode(Scripts.restartQuagga(), node0_s2,
           false);
         if (ping(node0_s2, gateway)) {
           logger.info(String.format("Ping to %s works", gateway));

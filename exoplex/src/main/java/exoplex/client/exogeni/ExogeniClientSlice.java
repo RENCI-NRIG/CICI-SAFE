@@ -138,8 +138,7 @@ public class ExogeniClientSlice extends SliceHelper {
         " >>/etc/quagga/zebra.conf\" ", sshKey);
       Exec.sshExec(SliceProperties.userName, mip, Scripts.enableZebra(), sshKey);
     }
-    Exec.sshExec(SliceProperties.userName, mip, "sudo /etc/init.d/quagga " +
-      "restart", sshKey);
+    Exec.sshExec(SliceProperties.userName, mip, Scripts.restartQuagga(), sshKey);
   }
 
   public void run(String customerName, String ipPrefix, String site, String riakIp) throws

@@ -160,4 +160,12 @@ public class Scripts {
   public static String installNetTools() {
     return "sudo apt-get install -y -qq net-tools;";
   }
+
+  public static String restartQuagga() {
+    return "sudo service quagga restart;";
+  }
+
+  public static String stopQuagga() {
+    return "sudo service quagga stop;";
+  }
 }

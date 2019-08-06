@@ -125,7 +125,7 @@ public class TestMpRouting extends SdxManager {
       ".conf", sshKey, "(CNode1)", true);
     carrier.runCmdSlice("echo \"ip route 192.168.1.1/16 192.168.30.1\" >>/etc/quagga/zebra" +
       ".conf", sshKey, "(CNode2)", true);
-    carrier.runCmdSlice("/etc/init.d/quagga restart", sshKey, "(CNode\\d+)", true);
+    carrier.runCmdSlice(Scripts.restartQuagga(), sshKey, "(CNode\\d+)", true);
   }
 
   public SliceManager createTestSlice() {
