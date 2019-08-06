@@ -110,6 +110,7 @@ public class SliceHelper extends SliceCommon {
     }
     if (conf.hasPath("config.serverurl")) {
       serverurl = conf.getString("config.serverurl");
+      logger.debug(String.format("%s: %s", "config.serverurl", serverurl));
     }
   }
 
