@@ -823,8 +823,15 @@ public class ExoSliceManager extends SliceManager {
       nodeName);
     logger.debug(String.format("%s %s Interfaces: %s", sliceName, nodeName, res).replace("\n",
       " "));
-    String[] ifaces= res.split("\n");
-    return Arrays.asList(ifaces);
+    String[] ifaces= res.replace(" ","").split("\n");
+    ArrayList<String> interfaces = new ArrayList<>();
+    for(String s: ifaces){
+      String ss = s.replace(" ","").replace("\n", "");
+      if(ss.length() > 1) {
+        interfaces.add(ss);
+      }
+    }
+    return interfaces;
   }
 
   public String runCmdByIP(final String cmd, String mip, boolean repeat) {
