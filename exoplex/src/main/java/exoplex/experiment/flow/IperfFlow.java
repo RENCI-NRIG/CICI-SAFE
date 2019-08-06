@@ -71,7 +71,7 @@ public class IperfFlow extends AsyncTask {
   public void stop() {
     lock.lock();
     if (started) {
-      Exec.sshExec(SliceProperties.userName, managementIp, "pkill iperf", sshKey);
+      Exec.sshExec(SliceProperties.userName, managementIp, "sudo pkill iperf", sshKey);
       started = false;
     }
     lock.unlock();

@@ -223,14 +223,16 @@ public class SdxManager extends SliceHelper {
 
   public void delFlows() {
     //routingmanager.deleteAllFlows(getSDNController());
-    serverSlice.runCmdSlice(String.format("ovs-ofctl %s del-flows br0", SliceProperties.OFP), sshKey,
+    serverSlice.runCmdSlice(String.format("sudo ovs-ofctl %s del-flows br0", SliceProperties.OFP),
+      sshKey,
       routerPattern,
       false);
   }
 
   public void delBridges() {
     routingmanager = new RoutingManager();
-    serverSlice.runCmdSlice(String.format("ovs-vsctl %s del-br br0", SliceProperties.OFP), sshKey,
+    serverSlice.runCmdSlice(String.format("sudo ovs-vsctl %s del-br br0", SliceProperties.OFP),
+      sshKey,
       routerPattern,
       false);
   }
@@ -1658,7 +1660,7 @@ public class SdxManager extends SliceHelper {
     logger.debug("Get flow installation time on " + routername + " for " + flowPattern);
     try {
       String result = serverSlice.runCmdNode(
-        getEchoTimeCMD() + "ovs-ofctl dump-flows br0",
+        getEchoTimeCMD() + "sudo ovs-ofctl dump-flows br0",
         routername);
       String[] parts = result.split("\n");
       String curMillis = parts[0].split(":")[1];
@@ -1686,7 +1688,7 @@ public class SdxManager extends SliceHelper {
 
   public int getNumRouteEntries(String routerName, String flowPattern) {
     String result = serverSlice.runCmdNode(
-      getEchoTimeCMD() + "ovs-ofctl dump-flows br0",
+      getEchoTimeCMD() + "sudo ovs-ofctl dump-flows br0",
       routerName);
     String[] parts = result.split("\n");
     String curMillis = parts[0].split(":")[1];
@@ -1716,7 +1718,7 @@ public class SdxManager extends SliceHelper {
     logger.debug("------------------");
     logger.debug(String.format("Flow table: %s - %s", sliceName, node));
     String result = serverSlice.runCmdNode(
-      "ovs-ofctl dump-flows br0",
+      "sudo ovs-ofctl dump-flows br0",
       node);
     String[] parts = result.split("\n");
     String ret = "";

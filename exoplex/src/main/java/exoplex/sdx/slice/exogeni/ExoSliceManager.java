@@ -763,11 +763,11 @@ public class ExoSliceManager extends SliceManager {
       }
     }
     if(res.contains("Unable to lock")){
-      Exec.sshExec(SliceProperties.userName, mip, "rm /var/lib/dpkg/lock;dpkg --configure -a",
+      Exec.sshExec(SliceProperties.userName, mip, "sudo rm /var/lib/dpkg/lock;dpkg --configure -a",
         sshKey);
     }
     if(res.contains("dpkg was interrupted")){
-      Exec.sshExec(SliceProperties.userName, mip, "dpkg --configure -a",
+      Exec.sshExec(SliceProperties.userName, mip, "sudo dpkg --configure -a",
           sshKey);
     }
     if(res.contains("traceroute: command not found")){
@@ -775,8 +775,7 @@ public class ExoSliceManager extends SliceManager {
         , sshKey);
     }
     if(res.contains("can't read /etc/quagga/daemons: No such file or directory")){
-      Exec.sshExec(SliceProperties.userName, mip, "echo zebra=yes " +
-          ">/etc/quagga/daemons"
+      Exec.sshExec(SliceProperties.userName, mip, Scripts.enableZebra()
         , sshKey);
     }
     return false;
@@ -1035,7 +1034,8 @@ public class ExoSliceManager extends SliceManager {
                              String resourceDir, String
     SDNControllerIP, String serverurl, String sshkey) {
     // Bro uses 'eth1"
-    Exec.sshExec(SliceProperties.userName, getManagementIP(nodeName), "sed -i 's/eth0/eth1/' " +
+    Exec.sshExec(SliceProperties.userName, getManagementIP(nodeName), "sudo sed -i " +
+      "'s/eth0/eth1/' " +
       "/opt/bro/etc/node.cfg", sshkey);
 
     copyFile2Node(PathUtil.joinFilePath(resourceDir, "bro/test.bro"),

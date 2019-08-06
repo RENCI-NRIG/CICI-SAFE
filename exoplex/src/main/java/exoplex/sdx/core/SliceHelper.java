@@ -299,7 +299,7 @@ public class SliceHelper extends SliceCommon {
   */
 
   public void checkOVS(SliceManager serverSlice, String nodeName) {
-    String res = serverSlice.runCmdNode("ovs-vsctl show", nodeName, false);
+    String res = serverSlice.runCmdNode("sudo ovs-vsctl show", nodeName, false);
     if (res.contains("ovs-vsctl: command not found")) {
       while (true) {
         String result = serverSlice.runCmdNode(Scripts.installOVS(), nodeName, true);

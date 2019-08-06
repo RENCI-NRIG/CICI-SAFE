@@ -80,7 +80,7 @@ public class MeasureLatency extends AsyncTask implements TaskInterface {
 
   @Override
   public void stop() {
-    Exec.sshExec(SliceProperties.userName, managementIP, "pkill ping", sshKey);
+    Exec.sshExec(SliceProperties.userName, managementIP, "sudo pkill ping", sshKey);
   }
 
   private void parseResults(String result, Long currentTime) {
