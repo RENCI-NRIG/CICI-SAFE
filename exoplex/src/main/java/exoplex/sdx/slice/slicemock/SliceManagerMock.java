@@ -229,7 +229,7 @@ public class SliceManagerMock extends SliceManager implements Serializable {
 
   public void resetHostNames() {
     for (ComputeNode node : slice.getComputeNodes()) {
-      runCmdByIP(String.format("hostnamectl set-hostname %s-%s", sliceName, node.getName()),
+      runCmdByIP(String.format("sudo hostnamectl set-hostname %s-%s", sliceName, node.getName()),
         node.getManagementIP(), false);
     }
   }
@@ -662,7 +662,7 @@ public class SliceManagerMock extends SliceManager implements Serializable {
     node0.setImage(dockerImageURL, dockerImageHash, dockerImageShortName);
     node0.setNodeType(dockerNodeType);
     node0.setDomain(siteName);
-    String dockerScript = "apt-get update;apt install -y docker.io;";
+    String dockerScript = Scripts.preBootScripts() + Scripts.installDocker() ;
     node0.setPostBootScript(dockerScript + script);
   }
 

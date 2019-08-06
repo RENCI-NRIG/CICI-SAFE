@@ -357,17 +357,18 @@ public class SliceHelper extends SliceCommon {
         logger.debug("plexus controller has started");
       } else {
         logger.debug("plexus controller hasn't started, restarting it");
-        result = serverSlice.runCmdByIP("docker images", SDNControllerIP, false);
+        result = serverSlice.runCmdByIP("sudo docker images", SDNControllerIP, false);
         if (result.contains(plexusImage)) {
           logger.debug("found plexus image, starting plexus container");
-          serverSlice.runCmdByIP(String.format("docker run -i -t -d -p 8080:8080 "
+          serverSlice.runCmdByIP(String.format("sudo docker run -i -t -d -p 8080:8080 "
               + " -p 6633:6633 -p 3000:3000 -h plexus --name plexus %s", plexusImage),
             SDNControllerIP, false);
         } else {
 
           logger.debug("plexus image not found, downloading...");
-          serverSlice.runCmdByIP(String.format("docker pull %s", plexusImage), SDNControllerIP, false);
-          serverSlice.runCmdByIP(String.format("docker run -i -t -d -p 8080:8080 -p"
+          serverSlice.runCmdByIP(String.format("sudo docker pull %s", plexusImage),
+            SDNControllerIP, false);
+          serverSlice.runCmdByIP(String.format("sudo docker run -i -t -d -p 8080:8080 -p"
               + " 6633:6633 -p 3000:3000 -h plexus --name plexus %s", plexusImage), SDNControllerIP,
             false);
         }

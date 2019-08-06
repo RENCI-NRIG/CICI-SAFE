@@ -212,7 +212,7 @@ public class ExoSliceManager extends SliceManager {
 
   synchronized public void resetHostNames() {
     for (ComputeNode node : slice.getComputeNodes()) {
-      runCmdByIP(String.format("hostnamectl set-hostname %s-%s", sliceName, node.getName()),
+      runCmdByIP(String.format("sudo hostnamectl set-hostname %s-%s", sliceName, node.getName()),
         node.getManagementIP(), false);
     }
   }

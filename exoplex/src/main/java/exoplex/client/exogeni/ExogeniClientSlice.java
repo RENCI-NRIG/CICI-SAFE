@@ -111,12 +111,8 @@ public class ExogeniClientSlice extends SliceHelper {
       "CNode\\d+",
       true);
     for (String node : c1.getComputeNodes()) {
-      String res[] = Exec.sshExec(SliceProperties.userName, c1.getManagementIP(node),
-        "sudo ls /etc/init.d", sshKey);
-      while (!res[0].contains("quagga")) {
-        res = Exec.sshExec(SliceProperties.userName, c1.getManagementIP(node),
+        Exec.sshExec(SliceProperties.userName, c1.getManagementIP(node),
           Scripts.installQuagga(), sshKey);
-      }
     }
     c1.runCmdSlice(Scripts.enableZebra(),
       sshKey,

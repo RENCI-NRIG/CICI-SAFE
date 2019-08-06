@@ -154,7 +154,7 @@ public class SdxManager extends SliceHelper {
     if(conf.hasPath("config.publicurl")){
       this.publicUrl = conf.getString("config.publicurl");
       logger.info(String.format("public url: %s", this.publicUrl));
-    } {
+    } else {
       this.publicUrl = serverurl;
       logger.warn(String.format("config.publicurl not found in configuration file, using %s" +
         " instead\n Sdn controller might not be able to notify new packet to " +
@@ -1343,7 +1343,7 @@ public class SdxManager extends SliceHelper {
       logger.debug("Restarting Plexus Controller");
       logger.info(logPrefix + "Restarting Plexus Controller: " + plexusip);
       delFlows();
-      String script = "docker exec -d plexus /bin/bash -c  \"cd /root;pkill ryu-manager; "
+      String script = "sudo docker exec -d plexus /bin/bash -c  \"cd /root;pkill ryu-manager; "
         + "ryu-manager --log-file ~/log --default-log-level 1 "
         + "ryu/ryu/app/rest_conf_switch.py ryu/ryu/app/rest_router.py "
         + "ryu/ryu/app/ofctl_rest.py %s\"\n";
