@@ -547,7 +547,7 @@ public class SliceManagerMock extends SliceManager implements Serializable {
     return "to be implemented";
   }
 
-  public int getInterfaceNum(String nodeName) {
+  public List<String> getPhysicalInterfaces(String nodeName) {
     String key = String.format("%s_%s", sliceName, nodeName);
     if (interfaceNumMap.containsKey(key)) {
       int num = interfaceNumMap.get(key);
@@ -556,7 +556,12 @@ public class SliceManagerMock extends SliceManager implements Serializable {
     } else {
       interfaceNumMap.put(key, 1);
     }
-    return interfaceNumMap.get(key);
+    int num =  interfaceNumMap.get(key);
+    ArrayList<String> res = new ArrayList<>();
+    for(int i = 1; i <=num; i ++){
+      res.add("eth" + i);
+    }
+    return res;
   }
 
   public String runCmdByIP(final String cmd, String mip, boolean repeat) {

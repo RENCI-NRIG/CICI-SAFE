@@ -817,14 +817,14 @@ public class ExoSliceManager extends SliceManager {
     }
   }
 
-  public int getInterfaceNum(String nodeName) {
+  public List<String> getPhysicalInterfaces(String nodeName) {
     String res = runCmdNode(String.format("sudo /bin/bash %s/ifaces.sh",
       SliceProperties.homeDir),
       nodeName);
     logger.debug(String.format("%s %s Interfaces: %s", sliceName, nodeName, res).replace("\n",
       " "));
-    int num = res.split("\n").length;
-    return num;
+    String[] ifaces= res.split("\n");
+    return Arrays.asList(ifaces);
   }
 
   public String runCmdByIP(final String cmd, String mip, boolean repeat) {

@@ -272,20 +272,20 @@ public class SdxManager extends SliceHelper {
 
   private boolean addLink(String linkName, String
     node1, String node2, long bw) {
-    int numInterfaces1 = serverSlice.getInterfaceNum(node1);
-    int numInterfaces2 = serverSlice.getInterfaceNum(node2);
+    int numInterfaces1 = serverSlice.getPhysicalInterfaces(node1).size();
+    int numInterfaces2 = serverSlice.getPhysicalInterfaces(node2).size();
     serverSlice.lockSlice();
     try {
       int times = 1;
       while (true) {
         serverSlice.addLink(linkName, node1, node2, bw);
         if (serverSlice.commitAndWait(10, Arrays.asList(linkName))) {
-          int newNum1 = serverSlice.getInterfaceNum(node1);
-          int newNum2 = serverSlice.getInterfaceNum(node2);
+          int newNum1 = serverSlice.getPhysicalInterfaces(node1).size();
+          int newNum2 = serverSlice.getPhysicalInterfaces(node2).size();
           while (newNum1 <= numInterfaces1 || newNum2 <= numInterfaces2) {
             serverSlice.sleep(5);
-            newNum1 = serverSlice.getInterfaceNum(node1);
-            newNum2 = serverSlice.getInterfaceNum(node2);
+            newNum1 = serverSlice.getPhysicalInterfaces(node1).size();
+            newNum2 = serverSlice.getPhysicalInterfaces(node2).size();
           }
           if (times > 1) {
             logger.warn(String.format("Tried %s times to add a stitchlink", times));
@@ -313,7 +313,7 @@ public class SdxManager extends SliceHelper {
     if (serverSlice.getResourceByName(stitchName) != null) {
       return false;
     }
-    int numInterfaces = serverSlice.getInterfaceNum(nodeName);
+    int numInterfaces = serverSlice.getPhysicalInterfaces(nodeName).size();
     serverSlice.lockSlice();
     serverSlice.refresh();
     try {
@@ -324,7 +324,7 @@ public class SdxManager extends SliceHelper {
           int newNum;
           do {
             serverSlice.sleep(10);
-            newNum = serverSlice.getInterfaceNum(nodeName);
+            newNum = serverSlice.getPhysicalInterfaces(nodeName).size();
           } while (newNum <= numInterfaces);
           if (times > 1) {
             logger.warn(String.format("Tried %s times to add a stitchlink", times));
@@ -349,7 +349,7 @@ public class SdxManager extends SliceHelper {
 
   private boolean addStitchPort(String spName, String nodeName, String stitchUrl, String vlan, long
     bw) {
-    int numInterfaces = serverSlice.getInterfaceNum(nodeName);
+    int numInterfaces = serverSlice.getPhysicalInterfaces(nodeName).size();
     serverSlice.lockSlice();
     serverSlice.refresh();
     try {
@@ -362,7 +362,7 @@ public class SdxManager extends SliceHelper {
         if (serverSlice.commitAndWait(10, Arrays.asList(new String[]{spName + "-net"}))) {
           do {
             serverSlice.sleep(5);
-            newNum = serverSlice.getInterfaceNum(nodeName);
+            newNum = serverSlice.getPhysicalInterfaces(nodeName).size();
           } while (newNum <= numInterfaces);
           if (times > 1) {
             logger.warn(String.format("Tried %s times to add a stitchlink", times));
@@ -472,7 +472,7 @@ public class SdxManager extends SliceHelper {
         jsonparams.put("ckeyhash", sliceName);
       }
       logger.debug("Sending stitch request to Sdx server");
-      int interfaceNum = serverSlice.getInterfaceNum(myNode);
+      int interfaceNum = serverSlice.getPhysicalInterfaces(myNode).size();
       String r = HttpUtil.postJSON(serverURI + "sdx/stitchrequest", jsonparams);
       logger.debug(r);
       JSONObject res = new JSONObject(r);
@@ -484,7 +484,7 @@ public class SdxManager extends SliceHelper {
         String gateway = urAddressPrefix.split("/")[0];
         int ifNumAfter = interfaceNum;
         do {
-          ifNumAfter = serverSlice.getInterfaceNum(myNode);
+          ifNumAfter = serverSlice.getPhysicalInterfaces(myNode).size();
           updateOvsInterface(myNode);
         } while (ifNumAfter <= interfaceNum);
         routingmanager.newExternalLink(l1.getLinkName(), ip, myNode, gateway, SDNController);

@@ -26,6 +26,7 @@ import safe.SdxRoutingSlang;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.util.List;
 
 /**
  * @author geni-orca
@@ -479,16 +480,16 @@ public class SdxExogeniClient extends SliceCommon {
       }
     }
     try {
-      String node0_s2 = serverSlice.getResourceByName(params[1]);
-      String node0_s2_stitching_GUID = serverSlice.getStitchingGUID(node0_s2);
-      String secret = serverSlice.permitStitch(node0_s2_stitching_GUID);
-      logger.debug("node0_s2_stitching_GUID: " + node0_s2_stitching_GUID);
-      String sdxsite = serverSlice.getNodeDomain(node0_s2);
+      String nodeName = serverSlice.getResourceByName(params[1]);
+      String nodeStitchingGUID = serverSlice.getStitchingGUID(nodeName);
+      String secret = serverSlice.permitStitch(nodeStitchingGUID);
+      logger.debug("nodeStitchingGUID: " + nodeStitchingGUID);
+      String sdxsite = serverSlice.getNodeDomain(nodeName);
       //post stitch request to SAFE
       JSONObject jsonparams = new JSONObject();
       jsonparams.put("sdxsite", sdxsite);
       jsonparams.put("cslice", sliceName);
-      jsonparams.put("creservid", node0_s2_stitching_GUID);
+      jsonparams.put("creservid", nodeStitchingGUID);
       jsonparams.put("secret", secret);
       jsonparams.put("gateway", params[2]);
       jsonparams.put("ip", params[3]);
@@ -501,6 +502,7 @@ public class SdxExogeniClient extends SliceCommon {
       } else {
         jsonparams.put("ckeyhash", sliceName);
       }
+      int interfaceNum = serverSlice.getPhysicalInterfaces(nodeName).size();
       logger.debug("Sending stitch request to Sdx server");
       String r = HttpUtil.postJSON(serverurl + "sdx/stitchrequest", jsonparams);
       logger.debug(r);
@@ -511,16 +513,23 @@ public class SdxExogeniClient extends SliceCommon {
       } else {
         String ip = params[2] + "/" + params[3].split("/")[1];
         logger.info(logPrefix + "set IP address of the stitch interface to " + ip);
-        serverSlice.sleep(5);
-        String mip = serverSlice.getManagementIP(node0_s2);
-        String result = serverSlice.runCmdNode("sudo ifconfig ens6 " + ip,
-          node0_s2, false);
+        List<String> interfaces = serverSlice.getPhysicalInterfaces(nodeName);
+        while(interfaces.size() <= interfaceNum){
+          sleep(5);
+          interfaces = serverSlice.getPhysicalInterfaces(nodeName);
+        }
+        String newInterface = interfaces.get(interfaces.size() - 1);
+
+        String mip = serverSlice.getManagementIP(nodeName);
+        String result = serverSlice.runCmdNode(String.format("sudo ifconfig " +
+            "%s %s", newInterface, ip),
+          nodeName, false);
         String gateway = params[3].split("/")[0];
         serverSlice.runCmdNode("sudo bash -c 'echo \"ip route 192.168.1.1/16 " + gateway +
-          "\" >>/etc/quagga/zebra.conf'", node0_s2, false);
-        serverSlice.runCmdNode(Scripts.restartQuagga(), node0_s2,
+          "\" >>/etc/quagga/zebra.conf'", nodeName, false);
+        serverSlice.runCmdNode(Scripts.restartQuagga(), nodeName,
           false);
-        if (ping(node0_s2, gateway)) {
+        if (ping(nodeName, gateway)) {
           logger.info(String.format("Ping to %s works", gateway));
           logger.info(logPrefix + "stitch completed.");
         } else {
