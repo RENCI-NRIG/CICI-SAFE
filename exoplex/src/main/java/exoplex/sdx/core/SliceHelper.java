@@ -193,12 +193,15 @@ public class SliceHelper extends SliceCommon {
   }
 
   public void configFTPService(SliceManager carrier, String nodePattern, String username, String passwd) {
-    carrier.runCmdSlice("apt-get install -y vsftpd", sshKey, nodePattern, true);
+    carrier.runCmdSlice(Scripts.installVsftpd(), sshKey, nodePattern, true);
     carrier.runCmdSlice("/usr/sbin/useradd " + username + "; echo -e \"" + passwd + "\\n" +
       passwd + "\\n\" | passwd " + username, sshKey, nodePattern, true);
     carrier.runCmdSlice("mkdir /home/" + username, sshKey, nodePattern, false);
-    carrier.runCmdSlice("/bin/sed -i \"s/pam_service_name=vsftpd/pam_service_name=ftp/\" " +
-      "/etc/vsftpd.conf; service vsftpd restart", sshKey, nodePattern, true);
+    carrier.runCmdSlice("sudo /bin/sed -i \"s/pam_service_name=vsftpd" +
+      "/pam_service_name=ftp/\" " +
+      "/etc/vsftpd.conf;" +
+        "sudo service vsftpd restart", sshKey, nodePattern,
+      true);
     String resource_dir = conf.getString("config.resourcedir");
     carrier.copyFile2Slice(PathUtil.joinFilePath(resource_dir, "bro/evil.txt"), "/home/" +
         username +
@@ -299,7 +302,7 @@ public class SliceHelper extends SliceCommon {
     String res = serverSlice.runCmdNode("ovs-vsctl show", nodeName, false);
     if (res.contains("ovs-vsctl: command not found")) {
       while (true) {
-        String result = serverSlice.runCmdNode("apt-get install -y openvswitch-switch", nodeName, true);
+        String result = serverSlice.runCmdNode(Scripts.installOVS(), nodeName, true);
         if (!result.startsWith("error")) {
           break;
         }
@@ -348,7 +351,8 @@ public class SliceHelper extends SliceCommon {
   protected boolean checkPlexus(SliceManager serverSlice, String SDNControllerIP, String
     plexusImage) {
     if (plexusInSlice) {
-      String result = serverSlice.runCmdByIP("docker ps", SDNControllerIP, false);
+      String result = serverSlice.runCmdByIP(Scripts.dockerPs(), SDNControllerIP,
+        false);
       if (result.contains("plexus")) {
         logger.debug("plexus controller has started");
       } else {
@@ -367,7 +371,7 @@ public class SliceHelper extends SliceCommon {
               + " 6633:6633 -p 3000:3000 -h plexus --name plexus %s", plexusImage), SDNControllerIP,
             false);
         }
-        result = serverSlice.runCmdByIP("docker ps", SDNControllerIP, false);
+        result = serverSlice.runCmdByIP(Scripts.dockerPs(), SDNControllerIP, false);
         if (result.contains("plexus")) {
           logger.debug("plexus controller has started");
         } else {

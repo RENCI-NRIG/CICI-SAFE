@@ -4,6 +4,7 @@ import exoplex.common.utils.Exec;
 import exoplex.common.utils.HttpUtil;
 import exoplex.common.utils.SafeUtils;
 import exoplex.common.utils.ServerOptions;
+import exoplex.sdx.slice.SliceProperties;
 import exoplex.sdx.slice.exogeni.SiteBase;
 import exoplex.sdx.slice.exogeni.SliceCommon;
 import org.apache.commons.cli.CommandLine;
@@ -160,7 +161,8 @@ public class SdxStitchPortClient extends SliceCommon {
   }
 
   private void configOSPFForNewInterface(ComputeNode c, String newip) {
-    Exec.sshExec("root", c.getManagementIP(), "/bin/bash ~/configospfforif.sh " + newip, "~/.ssh/id_rsa");
+    Exec.sshExec(SliceProperties.userName, c.getManagementIP(),
+      "/bin/bash ~/configospfforif.sh " + newip, "~/.ssh/id_rsa");
   }
 
   public void getNetworkInfo(Slice s) {

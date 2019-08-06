@@ -15,7 +15,7 @@ import exoplex.sdx.network.Link;
 import exoplex.sdx.network.RoutingManager;
 import exoplex.sdx.network.SdnUtil;
 import exoplex.sdx.safe.SafeManager;
-import exoplex.sdx.slice.SliceEnv;
+import exoplex.sdx.slice.SliceProperties;
 import exoplex.sdx.slice.SliceManager;
 import exoplex.sdx.slice.exogeni.SiteBase;
 import org.apache.commons.cli.CommandLine;
@@ -223,14 +223,14 @@ public class SdxManager extends SliceHelper {
 
   public void delFlows() {
     //routingmanager.deleteAllFlows(getSDNController());
-    serverSlice.runCmdSlice(String.format("ovs-ofctl %s del-flows br0", SliceEnv.OFP), sshKey,
+    serverSlice.runCmdSlice(String.format("ovs-ofctl %s del-flows br0", SliceProperties.OFP), sshKey,
       routerPattern,
       false);
   }
 
   public void delBridges() {
     routingmanager = new RoutingManager();
-    serverSlice.runCmdSlice(String.format("ovs-vsctl %s del-br br0", SliceEnv.OFP), sshKey,
+    serverSlice.runCmdSlice(String.format("ovs-vsctl %s del-br br0", SliceProperties.OFP), sshKey,
       routerPattern,
       false);
   }

@@ -60,7 +60,7 @@ public class CnertTestSlice extends SliceHelper {
       }
       System.out.println("Plexus Controler IP: " + SDNControllerIP);
       carrier.runCmdSlice("/bin/bash ~/ovsbridge.sh " + SDNControllerIP + ":6633", sshKey, "(^c\\d+)", true);
-      carrier.runCmdSlice("apt-get -y install quagga", "(node\\d+)", sshKey, true);
+      carrier.runCmdSlice(Scripts.installQuagga(), "(node\\d+)", sshKey, true);
       carrier.runCmdSlice("sed -i -- 's/zebra=no/zebra=yes/g' /etc/quagga/daemons", sshKey, "(node\\d+)", true);
       //carrier.runCmdSlice("sed -i -- 's/ospfd=no/ospfd=yes/g' /etc/quagga/daemons", sshKey,
       // "(node\\d+)", true);
@@ -131,7 +131,7 @@ public class CnertTestSlice extends SliceHelper {
       System.out.println("Plexus Controler IP: " + SDNControllerIP);
       carrier.runCmdSlice("/bin/bash ~/ovsbridge.sh " + SDNControllerIP + ":6633", sshKey, "(^c\\d+)",
         true);
-      carrier.runCmdSlice("apt-get -y install quagga", sshKey, "(node\\d+)", true);
+      carrier.runCmdSlice(Scripts.installQuagga(), sshKey, "(node\\d+)", true);
       carrier.runCmdSlice("sed -i -- 's/zebra=no/zebra=yes/g' /etc/quagga/daemons", sshKey, "(node\\d+)", true);
       //carrier.runCmdSlice("sed -i -- 's/ospfd=no/ospfd=yes/g' /etc/quagga/daemons", sshKey,
       // "(node\\d+)", true);
@@ -192,7 +192,7 @@ public class CnertTestSlice extends SliceHelper {
       //}
       System.out.println("Plexus Controler IP: " + SDNControllerIP);
       carrier.runCmdSlice("/bin/bash ~/ovsbridge.sh " + SDNControllerIP + ":6633", sshKey, "(c\\d+)", true);
-      carrier.runCmdSlice("apt-get -y install quagga", sshKey, "(node\\d+)", true);
+      carrier.runCmdSlice(Scripts.installQuagga(), sshKey, "(node\\d+)", true);
       carrier.runCmdSlice("sed -i -- 's/zebra=no/zebra=yes/g' /etc/quagga/daemons", sshKey, "(node\\d+)", true);
       //carrier.runCmdSlice("sed -i -- 's/ospfd=no/ospfd=yes/g' /etc/quagga/daemons", sshKey,
       // "(node\\d+)", true);
@@ -250,7 +250,7 @@ public class CnertTestSlice extends SliceHelper {
       //}
       System.out.println("Plexus Controler IP: " + SDNControllerIP);
       carrier.runCmdSlice("/bin/bash ~/ovsbridge.sh " + SDNControllerIP + ":6633", sshKey, "(c\\d+)", true);
-      carrier.runCmdSlice("apt-get -y install quagga", sshKey, "(node\\d+)", true);
+      carrier.runCmdSlice(Scripts.installQuagga(), sshKey, "(node\\d+)", true);
       carrier.runCmdSlice("sed -i -- 's/zebra=no/zebra=yes/g' /etc/quagga/daemons", sshKey, "(node\\d+)", true);
       //carrier.runCmdSlice("sed -i -- 's/ospfd=no/ospfd=yes/g' /etc/quagga/daemons", sshKey,
       // "(node\\d+)", true);
@@ -284,7 +284,7 @@ public class CnertTestSlice extends SliceHelper {
     //Now add two customer node to c0 and c3
     String c3 = "c" + (num - 1);
 
-    String scripts = "apt-get install -y vsftpd iperf\n";
+    String scripts = Scripts.installVsftpd() + Scripts.installIperf();
 
     String nodeName = s.addComputeNode("node0", nodeImageURL, nodeImageHash, nodeImageShortName,
       nodeNodeType, clientSites.get(0), scripts);
@@ -323,7 +323,8 @@ public class CnertTestSlice extends SliceHelper {
     String c0 = "c0";
     String c1 = "c1";
     String c2 = "c2";
-    String scripts = Scripts.getCustomerScript() + "apt-get install -y vsftpd iperf\n";
+    String scripts =
+      Scripts.getCustomerScript() + Scripts.installVsftpd() + Scripts.installIperf();
 
     String nodeName = s.addComputeNode("node0", nodeImageURL, nodeImageHash, nodeImageShortName,
       nodeNodeType, clientSites.get(0), scripts);
@@ -357,7 +358,8 @@ public class CnertTestSlice extends SliceHelper {
     String nodeNodeType = "XO Extra large";
     SliceManager s = createCarrierSlice(sliceName, num, bw);
     //Now add two customer node to c0 and c3
-    String scripts = Scripts.getCustomerScript() + "apt-get install -y vsftpd iperf\n";
+    String scripts = Scripts.getCustomerScript()
+      + Scripts.installVsftpd() + Scripts.installIperf();
 
     String c0 = "c0";
     String c3 = "c" + (num - 1);
@@ -399,7 +401,7 @@ public class CnertTestSlice extends SliceHelper {
     String nodeImageHash = "9394ca154aa35eb55e604503ae7943ddaecc6ca5";
     String nodeNodeType = "XO Extra large";
     SliceManager s = createCarrierSlice(sliceName, num, bw);
-    String scripts = "apt-get install -y vsftpd iperf\n";
+    String scripts = Scripts.installVsftpd() + Scripts.installIperf();
     //Now add two customer node to c0 and c3
     String c0 = "c0";
 

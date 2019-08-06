@@ -12,7 +12,7 @@ import exoplex.common.utils.ServerOptions;
 import exoplex.sdx.advertise.PolicyAdvertise;
 import exoplex.sdx.advertise.RouteAdvertise;
 import exoplex.sdx.safe.SafeManager;
-import exoplex.sdx.slice.SliceEnv;
+import exoplex.sdx.slice.SliceProperties;
 import exoplex.sdx.slice.SliceManager;
 import exoplex.sdx.slice.SliceManagerFactory;
 import exoplex.sdx.slice.exogeni.SliceCommon;
@@ -409,8 +409,8 @@ public class SdxExogeniClient extends SliceCommon {
   private void checkSafe() {
     if (safeEnabled && !safeChecked) {
       safeManager = new SafeManager(safeServerIp, safeKeyFile, sshKey);
-      if (safeInSlice && serverSlice.getResourceByName(SliceEnv.SAFESERVER) != null) {
-        setSafeServerIp(serverSlice.getManagementIP(SliceEnv.SAFESERVER));
+      if (safeInSlice && serverSlice.getResourceByName(SliceProperties.SAFESERVER) != null) {
+        setSafeServerIp(serverSlice.getManagementIP(SliceProperties.SAFESERVER));
       } else {
         setSafeServerIp(conf.getString("config.safeserver"));
       }
@@ -512,11 +512,13 @@ public class SdxExogeniClient extends SliceCommon {
         logger.info(logPrefix + "set IP address of the stitch interface to " + ip);
         serverSlice.sleep(5);
         String mip = serverSlice.getManagementIP(node0_s2);
-        String result = serverSlice.runCmdNode("ifconfig eth1 " + ip, node0_s2, false);
+        String result = serverSlice.runCmdNode("sudo ifconfig ens6 " + ip,
+          node0_s2, false);
         String gateway = params[3].split("/")[0];
-        serverSlice.runCmdNode("echo \"ip route 192.168.1.1/16 " + gateway +
+        serverSlice.runCmdNode("sudo echo \"ip route 192.168.1.1/16 " + gateway +
           "\" >>/etc/quagga/zebra.conf  ", node0_s2, false);
-        serverSlice.runCmdNode("/etc/init.d/quagga restart", node0_s2, false);
+        serverSlice.runCmdNode("sudo /etc/init.d/quagga restart", node0_s2,
+          false);
         if (ping(node0_s2, gateway)) {
           logger.info(String.format("Ping to %s works", gateway));
           logger.info(logPrefix + "stitch completed.");
@@ -563,7 +565,8 @@ public class SdxExogeniClient extends SliceCommon {
   }
 
   private void configOSPFForNewInterface(String c, String newip) {
-    serverSlice.runCmdNode("/bin/bash ~/configospfforif.sh " + newip, c, false);
+    serverSlice.runCmdNode("sudo /bin/bash ~/configospfforif.sh " + newip, c,
+      false);
   }
 }
 

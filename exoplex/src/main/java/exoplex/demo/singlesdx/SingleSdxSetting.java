@@ -30,14 +30,14 @@ public class SingleSdxSetting extends AbstractTestSetting {
 
   @Override
   public void addClientSites() {
+    clientSites.add("TAMU");
     clientSites.add("UH");
     clientSites.add("UFL");
-    clientSites.add("TAMU");
   }
 
   @Override
   public void addSdxSites() {
-    sdxSites.put(sdxSliceNames.get(0), new String[]{"UH", "UFL"});
+    sdxSites.put(sdxSliceNames.get(0), new String[]{"TAMU", "UH", "UFL"});
   }
 
   @Override

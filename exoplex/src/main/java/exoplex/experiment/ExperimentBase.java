@@ -4,6 +4,8 @@ import exoplex.common.utils.Exec;
 import exoplex.experiment.flow.FlowManager;
 import exoplex.experiment.latency.MeasureLatency;
 import exoplex.sdx.core.SdxManager;
+import exoplex.sdx.slice.Scripts;
+import exoplex.sdx.slice.SliceProperties;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -49,7 +51,9 @@ public class ExperimentBase {
   public void addClient(String name, String managementIP, String dataplaneIP) {
     if(!clients.containsKey(name)) {
       clients.put(name, new String[]{managementIP, dataplaneIP});
-      Exec.sshExec("root", managementIP, "apt-get install -y iperf; pkill iperf", sshkey);
+      Exec.sshExec(SliceProperties.userName, managementIP, Scripts.installIperf() +
+          " pkill iperf",
+        sshkey);
     }
   }
 
@@ -167,7 +171,8 @@ public class ExperimentBase {
       final String mip2 = clients.get(file[1])[0];
       final String dip2 = clients.get(file[1])[1];
 
-      tlist.add(new Thread(() -> ftpClientOut.add(Exec.sshExec("root", mip1, fetchFileCMD
+      tlist.add(new Thread(() -> ftpClientOut.add(Exec.sshExec(SliceProperties.userName, mip1,
+        fetchFileCMD
         (ftpuser, ftppw, dip2, file[2], times), sshkey))));
 
       tlist.get(tlist.size() - 1).start();
