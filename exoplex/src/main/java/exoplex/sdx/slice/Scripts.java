@@ -92,7 +92,7 @@ public class Scripts {
   }
 
   public static String preBootScripts() {
-    return stopAptDailyService() + aptUpdate();
+    return stopAptDailyService() + aptUpdate() + installNetTools();
   }
 
   public static String delayDailyService() {
@@ -155,5 +155,9 @@ public class Scripts {
 
   public static String enableZebra() {
     return "sudo bash -c \"echo 'zebra=yes' > /etc/quagga/daemons\";";
+  }
+
+  public static String installNetTools() {
+    return "sudo apt-get install -y -qq net-tools;";
   }
 }
