@@ -162,7 +162,7 @@ public class SdxStitchPortClient extends SliceCommon {
 
   private void configOSPFForNewInterface(ComputeNode c, String newip) {
     Exec.sshExec(SliceProperties.userName, c.getManagementIP(),
-      "/bin/bash ~/configospfforif.sh " + newip, "~/.ssh/id_rsa");
+      "sudo /bin/bash ~/configospfforif.sh " + newip, "~/.ssh/id_rsa");
   }
 
   public void getNetworkInfo(Slice s) {

@@ -249,7 +249,8 @@ public class CnertTestSlice extends SliceHelper {
       //  System.exit(-1);
       //}
       System.out.println("Plexus Controler IP: " + SDNControllerIP);
-      carrier.runCmdSlice("/bin/bash ~/ovsbridge.sh " + SDNControllerIP + ":6633", sshKey, "(c\\d+)", true);
+      carrier.runCmdSlice("sudo /bin/bash ~/ovsbridge.sh " + SDNControllerIP + ":6633", sshKey,
+        "(c\\d+)", true);
       carrier.runCmdSlice(Scripts.installQuagga(), sshKey, "(node\\d+)", true);
       carrier.runCmdSlice("sed -i -- 's/zebra=no/zebra=yes/g' /etc/quagga/daemons", sshKey, "(node\\d+)", true);
       //carrier.runCmdSlice("sed -i -- 's/ospfd=no/ospfd=yes/g' /etc/quagga/daemons", sshKey,

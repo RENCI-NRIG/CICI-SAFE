@@ -178,7 +178,7 @@ public class SliceHelper extends SliceCommon {
       checkSdxPrerequisites(carrier);
 
       logger.debug("Plexus Controller IP: " + SDNControllerIP);
-      carrier.runCmdSlice("/bin/bash ~/ovsbridge.sh " + SDNControllerIP + ":6633", sshKey,
+      carrier.runCmdSlice("sudo /bin/bash ~/ovsbridge.sh " + SDNControllerIP + ":6633", sshKey,
         routerPattern, true);
 
       if (BRO) {
@@ -194,7 +194,7 @@ public class SliceHelper extends SliceCommon {
 
   public void configFTPService(SliceManager carrier, String nodePattern, String username, String passwd) {
     carrier.runCmdSlice(Scripts.installVsftpd(), sshKey, nodePattern, true);
-    carrier.runCmdSlice("/usr/sbin/useradd " + username + "; echo -e \"" + passwd + "\\n" +
+    carrier.runCmdSlice("sudo /usr/sbin/useradd " + username + "; echo -e \"" + passwd + "\\n" +
       passwd + "\\n\" | passwd " + username, sshKey, nodePattern, true);
     carrier.runCmdSlice("mkdir /home/" + username, sshKey, nodePattern, false);
     carrier.runCmdSlice("sudo /bin/sed -i \"s/pam_service_name=vsftpd" +
