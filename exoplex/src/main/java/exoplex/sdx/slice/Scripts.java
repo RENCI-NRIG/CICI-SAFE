@@ -26,7 +26,8 @@ public class Scripts {
   }
 
   public static String getCustomerScript() {
-    String nodePostBootScript = aptUpdate()
+    String nodePostBootScript =
+      preBootScripts()
       + installIperf()
       + installQuagga()
       + "sudo sed -i -- 's/zebra=no/zebra=yes/g' /etc/quagga/daemons\n"
@@ -162,10 +163,10 @@ public class Scripts {
   }
 
   public static String restartQuagga() {
-    return "sudo service quagga restart;";
+    return "sudo service zebra restart;";
   }
 
   public static String stopQuagga() {
-    return "sudo service quagga stop;";
+    return "sudo service zebra stop;";
   }
 }

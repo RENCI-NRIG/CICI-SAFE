@@ -106,8 +106,9 @@ public class ExogeniClientSlice extends SliceHelper {
 
   public void configQuaggaRouting(SliceManager c1) {
     c1.runCmdSlice(Scripts.aptUpdate() + Scripts.installQuagga()
-        + Scripts.installIperf() + Scripts.installTraceRoute(),
-       sshKey,
+      + Scripts.installNetTools()
+      + Scripts.installIperf() + Scripts.installTraceRoute(),
+      sshKey,
       "CNode\\d+",
       true);
     for (String node : c1.getComputeNodes()) {
