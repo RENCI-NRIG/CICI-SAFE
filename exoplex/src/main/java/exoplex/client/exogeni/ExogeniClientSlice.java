@@ -7,7 +7,9 @@ import exoplex.common.utils.Exec;
 import exoplex.common.utils.ServerOptions;
 import exoplex.sdx.core.SliceHelper;
 import exoplex.sdx.safe.SafeManager;
+import exoplex.sdx.slice.Scripts;
 import exoplex.sdx.slice.SliceManager;
+import exoplex.sdx.slice.SliceProperties;
 import exoplex.sdx.slice.exogeni.SiteBase;
 import exoplex.demo.singlesdx.SingleSdxModule;
 import org.apache.commons.cli.CommandLine;
@@ -103,30 +105,36 @@ public class ExogeniClientSlice extends SliceHelper {
   }
 
   public void configQuaggaRouting(SliceManager c1) {
-    c1.runCmdSlice("apt-get update; apt-get install -y quagga traceroute iperf", sshKey,
+    c1.runCmdSlice(Scripts.aptUpdate() + Scripts.installQuagga()
+      + Scripts.installNetTools()
+      + Scripts.installIperf() + Scripts.installTraceRoute(),
+      sshKey,
       "CNode\\d+",
       true);
     for (String node : c1.getComputeNodes()) {
-      String res[] = Exec.sshExec("root", c1.getManagementIP(node), "ls /etc/init.d", sshKey);
-      while (!res[0].contains("quagga")) {
-        res = Exec.sshExec("root", c1.getManagementIP(node), "apt-get install -y quagga", sshKey);
-      }
+      Exec.sshExec(SliceProperties.userName, c1.getManagementIP(node),
+        Scripts.installQuagga(), sshKey);
     }
-    c1.runCmdSlice("sed -i -- 's/zebra=no/zebra=yes/g' /etc/quagga/daemons", sshKey, "CNode\\d+",
+    c1.runCmdSlice(Scripts.enableZebra(),
+      sshKey,
+      "CNode\\d+",
       true);
     String Prefix = subnet.split("/")[0];
     String mip = c1.getManagementIP("CNode1");
-    Exec.sshExec("root", mip, "echo \"ip route 192.168.1.1/16 " + Prefix + "\" >>/etc/quagga/zebra.conf  ", sshKey);
-    Exec.sshExec("root", mip, "sed -i -- 's/zebra=no/zebra=yes/g' /etc/quagga/daemons\n", sshKey);
-    String res[] = Exec.sshExec("root", mip, "ls /etc/quagga", sshKey);
-    while (!res[0].contains("zebra.conf") || !res[0].contains("zebra.conf")) {
-      c1.runCmdSlice("apt-get update; apt-get install -y quagga iperf", sshKey, "CNode\\d+",
-        true);
-      res = Exec.sshExec("root", mip, "ls /etc/quagga", sshKey);
-      Exec.sshExec("root", mip, "echo \"ip route 192.168.1.1/16 " + Prefix + "\" >>/etc/quagga/zebra.conf  ", sshKey);
-      Exec.sshExec("root", mip, "sed -i -- 's/zebra=no/zebra=yes/g' /etc/quagga/daemons\n", sshKey);
+    Exec.sshExec(SliceProperties.userName, mip,
+      "sudo bash -c \"echo \"ip route 192.168.1.1/16 " + Prefix +
+      "\" >>/etc/quagga/zebra.conf\"", sshKey);
+    Exec.sshExec(SliceProperties.userName, mip, Scripts.enableZebra(), sshKey);
+    String res[] = Exec.sshExec(SliceProperties.userName, mip, "sudo ls " +
+        "/etc/quagga",
+      sshKey);
+    if(!res[0].contains("zebra.conf")) {
+      Exec.sshExec(SliceProperties.userName, mip,
+        "sudo bash -c \"echo \"ip route 192.168.1.1/16 " + Prefix + "\"" +
+        " >>/etc/quagga/zebra.conf\" ", sshKey);
+      Exec.sshExec(SliceProperties.userName, mip, Scripts.enableZebra(), sshKey);
     }
-    Exec.sshExec("root", mip, "/etc/init.d/quagga restart", sshKey);
+    Exec.sshExec(SliceProperties.userName, mip, Scripts.restartQuagga(), sshKey);
   }
 
   public void run(String customerName, String ipPrefix, String site, String riakIp) throws
@@ -148,7 +156,7 @@ public class ExogeniClientSlice extends SliceHelper {
         String safeIp = c1.getManagementIP("safe-server");
         checkSafeServer(safeIp, riakIp);
       }
-      //copyFile2Slice(c1, "/home/yaoyj11/project/exo-geni/SAFE_SDX/src/main/resources/scripts/configospffornewif.sh","~/configospffornewif.sh","~/.ssh/id_rsa");
+      checkScripts(c1, "CNode1");
       //copyFile2Slice(c1, "/home/yaoyj11/project/exo-geni/SAFE_SDX/src/main/resources/scripts/configospffornewif.sh","~/configospffornewif.sh","~/.ssh/id_rsa");
       //runCmdSlice(c1,"/bin/bash ~/ospfautoconfig.sh","~/.ssh/id_rsa");
       //configFTPService(c1, "(CNode1)", "ftpuser", "ftp");

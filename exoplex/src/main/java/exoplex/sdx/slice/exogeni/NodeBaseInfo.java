@@ -1,17 +1,13 @@
 package exoplex.sdx.slice.exogeni;
 
 public class NodeBaseInfo {
-  public String nisn;
-  public String niurl;
-  public String nihash;
-  public String ntype;
-  public String domain;
+  public String imageName;
+  public String imageUrl;
+  public String imageHash;
 
-  public NodeBaseInfo(String nisn, String niurl, String nihash, String ntype, String domain) {
-    this.nisn = nisn;
-    this.niurl = niurl;
-    this.nihash = nihash;
-    this.ntype = ntype;
-    this.domain = domain;
+  public NodeBaseInfo(String imageName, String imageUrl, String imageHash) {
+    this.imageName = imageName;
+    this.imageUrl = imageUrl;
+    this.imageHash = imageHash;
   }
 }

@@ -5,7 +5,7 @@ import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
 import exoplex.sdx.network.RoutingManager;
 import exoplex.sdx.slice.Scripts;
-import exoplex.sdx.slice.SliceEnv;
+import exoplex.sdx.slice.SliceProperties;
 import exoplex.sdx.slice.SliceManager;
 import exoplex.sdx.slice.exogeni.NodeBase;
 import exoplex.sdx.slice.exogeni.NodeBaseInfo;
@@ -122,8 +122,8 @@ public class SliceManagerMock extends SliceManager implements Serializable {
       SSHAccessTokenFileFactory fac;
       fac = new SSHAccessTokenFileFactory(sshKey + ".pub", false);
       SSHAccessToken t = fac.getPopulatedToken();
-      sctx.addToken("root", "root", t);
-      sctx.addToken("root", t);
+      sctx.addToken(SliceProperties.userName, SliceProperties.userName, t);
+      sctx.addToken(SliceProperties.userName, t);
     } catch (UtilTransportException e) {
       // TODO Auto-generated catch block
       e.printStackTrace();
@@ -229,7 +229,7 @@ public class SliceManagerMock extends SliceManager implements Serializable {
 
   public void resetHostNames() {
     for (ComputeNode node : slice.getComputeNodes()) {
-      runCmdByIP(String.format("hostnamectl set-hostname %s-%s", sliceName, node.getName()),
+      runCmdByIP(String.format("sudo hostnamectl set-hostname %s-%s", sliceName, node.getName()),
         node.getManagementIP(), false);
     }
   }
@@ -274,11 +274,11 @@ public class SliceManagerMock extends SliceManager implements Serializable {
     if (slice == null) {
       createSlice();
     }
-    NodeBaseInfo ninfo = NodeBase.getImageInfo(SliceEnv.CustomerVMVersion);
-    String nodeImageShortName = ninfo.nisn;
-    String nodeImageURL = ninfo.niurl;
+    NodeBaseInfo ninfo = NodeBase.getImageInfo(SliceProperties.CustomerVMVersion);
+    String nodeImageShortName = ninfo.imageName;
+    String nodeImageURL = ninfo.imageUrl;
     //http://geni-images.renci.org/images/standard/ubuntu/ub1304-ovs-opendaylight-v1.0.0.xml
-    String nodeImageHash = ninfo.nihash;
+    String nodeImageHash = ninfo.imageHash;
     String nodeNodeType = "XO Medium";
     String nodePostBootScript = Scripts.getCustomerScript();
     ComputeNode node0 = slice.addComputeNode(name);
@@ -547,7 +547,7 @@ public class SliceManagerMock extends SliceManager implements Serializable {
     return "to be implemented";
   }
 
-  public int getInterfaceNum(String nodeName) {
+  public List<String> getPhysicalInterfaces(String nodeName) {
     String key = String.format("%s_%s", sliceName, nodeName);
     if (interfaceNumMap.containsKey(key)) {
       int num = interfaceNumMap.get(key);
@@ -556,7 +556,12 @@ public class SliceManagerMock extends SliceManager implements Serializable {
     } else {
       interfaceNumMap.put(key, 1);
     }
-    return interfaceNumMap.get(key);
+    int num =  interfaceNumMap.get(key);
+    ArrayList<String> res = new ArrayList<>();
+    for(int i = 1; i <=num; i ++){
+      res.add("eth" + i);
+    }
+    return res;
   }
 
   public String runCmdByIP(final String cmd, String mip, boolean repeat) {
@@ -621,11 +626,11 @@ public class SliceManagerMock extends SliceManager implements Serializable {
   }
 
   public void addCoreEdgeRouterPair(String site, String router1, String router2, String linkname, long bw) {
-    NodeBaseInfo ninfo = NodeBase.getImageInfo(SliceEnv.OVSVersion);
-    String nodeImageShortName = ninfo.nisn;
-    String nodeImageURL = ninfo.niurl;
+    NodeBaseInfo ninfo = NodeBase.getImageInfo(SliceProperties.OVSVersion);
+    String nodeImageShortName = ninfo.imageName;
+    String nodeImageURL = ninfo.imageUrl;
     //http://geni-images.renci.org/images/standard/ubuntu/ub1304-ovs-opendaylight-v1.0.0.xml
-    String nodeImageHash = ninfo.nihash;
+    String nodeImageHash = ninfo.imageHash;
     String nodeNodeType = "XO Medium";
     String nodePostBootScript = Scripts.getOVSScript();
     String node0 = addComputeNode(router1, nodeImageURL,
@@ -640,11 +645,11 @@ public class SliceManagerMock extends SliceManager implements Serializable {
   }
 
   public void addOvsRouter(String site, String router1) {
-    NodeBaseInfo ninfo = NodeBase.getImageInfo(SliceEnv.OVSVersion);
-    String nodeImageShortName = ninfo.nisn;
-    String nodeImageURL = ninfo.niurl;
+    NodeBaseInfo ninfo = NodeBase.getImageInfo(SliceProperties.OVSVersion);
+    String nodeImageShortName = ninfo.imageName;
+    String nodeImageURL = ninfo.imageUrl;
     //http://geni-images.renci.org/images/standard/ubuntu/ub1304-ovs-opendaylight-v1.0.0.xml
-    String nodeImageHash = ninfo.nihash;
+    String nodeImageHash = ninfo.imageHash;
     String nodeNodeType = "XO Medium";
     String nodePostBootScript = Scripts.getOVSScript();
     addComputeNode(router1, nodeImageURL,
@@ -653,16 +658,17 @@ public class SliceManagerMock extends SliceManager implements Serializable {
   }
 
   public void addDocker(String siteName, String nodeName, String script, String size) {
-    NodeBaseInfo ninfo = NodeBase.getImageInfo(NodeBase.U14Docker);
-    String dockerImageShortName = ninfo.nisn;
-    String dockerImageURL = ninfo.niurl;
-    String dockerImageHash = ninfo.nihash;
+    NodeBaseInfo ninfo = NodeBase.getImageInfo(NodeBase.UBUNTU16);
+    String dockerImageShortName = ninfo.imageName;
+    String dockerImageURL = ninfo.imageUrl;
+    String dockerImageHash = ninfo.imageHash;
     String dockerNodeType = "XO Medium";
     ComputeNode node0 = this.slice.addComputeNode(nodeName);
     node0.setImage(dockerImageURL, dockerImageHash, dockerImageShortName);
     node0.setNodeType(dockerNodeType);
     node0.setDomain(siteName);
-    node0.setPostBootScript(script);
+    String dockerScript = Scripts.preBootScripts() + Scripts.installDocker() ;
+    node0.setPostBootScript(dockerScript + script);
   }
 
   public void addRiakServer(String siteName, String nodeName) {
@@ -719,11 +725,11 @@ public class SliceManagerMock extends SliceManager implements Serializable {
   public String addOVSRouter(String site, String name) {
     logger.debug(String.format("Adding new OVS router to slice %s on site %s", slice.getName(),
       site));
-    NodeBaseInfo ninfo = NodeBase.getImageInfo(SliceEnv.OVSVersion);
-    String nodeImageShortName = ninfo.nisn;
-    String nodeImageURL = ninfo.niurl;
+    NodeBaseInfo ninfo = NodeBase.getImageInfo(SliceProperties.OVSVersion);
+    String nodeImageShortName = ninfo.imageName;
+    String nodeImageURL = ninfo.imageUrl;
     //http://geni-images.renci.org/images/standard/ubuntu/ub1304-ovs-opendaylight-v1.0.0.xml
-    String nodeImageHash = ninfo.nihash;
+    String nodeImageHash = ninfo.imageHash;
     String nodeNodeType = "XO Medium";
     String nodePostBootScript = Scripts.getOVSScript();
     ComputeNode node0 = slice.addComputeNode(name);

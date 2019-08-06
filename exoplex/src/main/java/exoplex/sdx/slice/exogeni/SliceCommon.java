@@ -54,25 +54,31 @@ public abstract class SliceCommon {
   }
 
   public void readConfig(String configfilepath) {
+    logger.info(String.format("Loading configuration from %s", configfilepath));
     File myConfigFile = new File(configfilepath);
     Config fileConfig = ConfigFactory.parseFile(myConfigFile);
     conf = ConfigFactory.load(fileConfig);
     type = conf.getString("config.type");
     if (conf.hasPath("config.exogenism")) {
       controllerUrl = conf.getString("config.exogenism");
+      logger.debug(String.format("%s: %s", "config.exogenism", controllerUrl));
     }
     if (conf.hasPath("config.serverurl")) {
       serverurl = conf.getString("config.serverurl");
+      logger.debug(String.format("%s: %s", "config.serverurl", serverurl));
     }
     if (conf.hasPath("config.exogenipem")) {
       pemLocation = conf.getString("config.exogenipem");
       keyLocation = conf.getString("config.exogenipem");
+      logger.debug(String.format("%s: %s", "config.exogenipem", pemLocation));
     }
     if (conf.hasPath("config.sshkey")) {
       sshKey = conf.getString("config.sshkey");
+      logger.debug(String.format("%s: %s", "config.sshkey", sshKey));
     }
     if (conf.hasPath("config.slicename")) {
       sliceName = conf.getString("config.slicename");
+      logger.debug(String.format("%s: %s", "config.slicename", sliceName));
     }
     if (conf.hasPath("config.topodir")) {
       topodir = conf.getString("config.topodir");
@@ -106,6 +112,7 @@ public abstract class SliceCommon {
     if(!safeInSlice){
       if (conf.hasPath("config.safeserver")) {
         safeServerIp = conf.getString("config.safeserver");
+        logger.debug(String.format("%s: %s", "config.safeserver", safeServerIp));
         setSafeServerIp(safeServerIp);
       }
     }

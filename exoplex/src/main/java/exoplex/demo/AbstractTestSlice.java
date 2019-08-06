@@ -21,6 +21,7 @@ public abstract class AbstractTestSlice {
   final Logger logger = LogManager.getLogger(Exec.class);
   public Long bandwidth = 100000000L;
   public long stitchBw = 400000000l;
+  private List<Thread> threadList = new ArrayList<>();
 
   @Inject
   public AbstractTestSlice(Provider<SliceHelper> sliceHelperProvider,
@@ -32,7 +33,6 @@ public abstract class AbstractTestSlice {
   }
 
   public void createClientSlices(String riakIp) {
-    ArrayList<Thread> tlist = new ArrayList<>();
     for (String clientSlice : testSetting.clientSlices) {
       Thread t = new Thread() {
         @Override
@@ -40,17 +40,7 @@ public abstract class AbstractTestSlice {
           createClientSlice(clientSlice, riakIp);
         }
       };
-      tlist.add(t);
-    }
-    for (Thread t : tlist) {
-      t.start();
-    }
-    try {
-      for (Thread t : tlist) {
-        t.join();
-      }
-    } catch (Exception e) {
-
+      threadList.add(t);
     }
   }
 
@@ -85,7 +75,6 @@ public abstract class AbstractTestSlice {
   }
 
   public void createSdxSlices(String riakIP) {
-    ArrayList<Thread> tlist = new ArrayList<>();
     for (int i = 0; i < testSetting.sdxSliceNames.size(); i++) {
       final String sliceName = testSetting.sdxSliceNames.get(i);
       final String configFile = testSetting.sdxConfs.get(sliceName);
@@ -102,18 +91,22 @@ public abstract class AbstractTestSlice {
           }
         }
       };
-      tlist.add(t);
+      threadList.add(t);
     }
-    for (Thread t : tlist) {
+  }
+
+  public void runThreads(){
+    for(Thread t: threadList){
       t.start();
     }
-    try {
-      for (Thread t : tlist) {
+    for(Thread t: threadList){
+      try{
         t.join();
+      } catch (Exception e){
+        logger.warn(e.getMessage());
       }
-    } catch (Exception e) {
-      e.printStackTrace();
     }
+    threadList.clear();
   }
 
   public void deleteSdxSlices() {

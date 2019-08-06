@@ -39,14 +39,14 @@ public class SingleSdxTest extends AbstractTest {
   public void before() throws Exception {
     deleteSliceAfterTest = true;
     initTests();
-    deleteSlices();
+    //deleteSlices();
     super.before();
   }
 
   @After
   @Override
   public void after() throws Exception {
-    super.after();
+    //super.after();
   }
 
   /**

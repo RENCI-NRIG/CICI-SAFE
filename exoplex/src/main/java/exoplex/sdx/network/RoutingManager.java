@@ -2,6 +2,7 @@ package exoplex.sdx.network;
 
 import exoplex.common.utils.Exec;
 import exoplex.common.utils.HttpUtil;
+import exoplex.sdx.slice.SliceProperties;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.json.JSONArray;
@@ -635,8 +636,8 @@ public class RoutingManager {
   }
 
   public String getFlowOnRouter(String ip, String srcIp, String destIp, String sshKey) {
-    String result = Exec.sshExec("root", ip,
-      "ovs-ofctl dump-flows br0", sshKey)[0];
+    String result = Exec.sshExec(SliceProperties.userName, ip,
+      "sudo ovs-ofctl dump-flows br0", sshKey)[0];
     String[] parts = result.split("\n");
     String res = "";
     for (String s : parts) {
@@ -648,8 +649,8 @@ public class RoutingManager {
   }
 
   public List<String> getFlowsOnRouter(Map<String, String> fieldMap, String ip, String sshKey) {
-    String result = Exec.sshExec("root", ip,
-      "ovs-ofctl dump-flows br0", sshKey)[0];
+    String result = Exec.sshExec(SliceProperties.userName, ip,
+      "sudo ovs-ofctl dump-flows br0", sshKey)[0];
     String[] parts = result.split("\n");
     ArrayList<String> res = new ArrayList<>();
     for (String s : parts) {
