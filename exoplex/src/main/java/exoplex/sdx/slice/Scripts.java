@@ -31,7 +31,7 @@ public class Scripts {
       + installQuagga()
       + "sudo sed -i -- 's/zebra=no/zebra=yes/g' /etc/quagga/daemons\n"
       + "sudo sed -i -- 's/ospfd=no/ospfd=yes/g' /etc/quagga/daemons\n"
-      + "sudo echo \"1\" > /proc/sys/net/ipv4/ip_forward\n"
+      + "sudo bash -c 'echo \"1\" > /proc/sys/net/ipv4/ip_forward'\n"
       + "sudo /etc/init.d/neuca stop\n";
     return nodePostBootScript;
   }

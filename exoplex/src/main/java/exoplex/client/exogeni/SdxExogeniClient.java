@@ -515,8 +515,8 @@ public class SdxExogeniClient extends SliceCommon {
         String result = serverSlice.runCmdNode("sudo ifconfig ens6 " + ip,
           node0_s2, false);
         String gateway = params[3].split("/")[0];
-        serverSlice.runCmdNode("sudo echo \"ip route 192.168.1.1/16 " + gateway +
-          "\" >>/etc/quagga/zebra.conf  ", node0_s2, false);
+        serverSlice.runCmdNode("sudo bash -c 'echo \"ip route 192.168.1.1/16 " + gateway +
+          "\" >>/etc/quagga/zebra.conf'", node0_s2, false);
         serverSlice.runCmdNode("sudo /etc/init.d/quagga restart", node0_s2,
           false);
         if (ping(node0_s2, gateway)) {
