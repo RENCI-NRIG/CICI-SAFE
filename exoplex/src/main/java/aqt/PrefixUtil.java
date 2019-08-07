@@ -21,6 +21,10 @@ public class PrefixUtil {
             subnetInfo.getAddressCountLong() + 2);
     }
 
+    static public Range addressToRange(String address){
+      return new Range(addressToLong(address), 1);
+    }
+
     static public String longToAddr(long addr){
         String ip = String.format("%s.%s.%s.%s",
             (addr >> 24) & 0xff,

@@ -1,6 +1,7 @@
 package exoplex.sdx.core;
 
 import aqt.PrefixUtil;
+import aqt.Range;
 import com.google.inject.Inject;
 import exoplex.common.utils.HttpUtil;
 import exoplex.common.utils.ServerOptions;
@@ -927,18 +928,23 @@ public class SdxManager extends SliceHelper {
     if (safeEnabled) {
       String targetHash = null;
       String cKeyHash = null;
+      Range selfRange, targetRange;
       if(self_prefix.matches(SdnUtil.IP_PATTERN)){
-        self_prefix = self_prefix + "/32";
+        selfRange = PrefixUtil.addressToRange(self_prefix);
+      } else {
+        selfRange = PrefixUtil.prefixToRange(self_prefix);
       }
       if(target_prefix.matches(SdnUtil.IP_PATTERN)){
-        target_prefix = target_prefix + "/32";
+        targetRange = PrefixUtil.addressToRange(target_prefix);
+      } else {
+        targetRange = PrefixUtil.prefixToRange(target_prefix);
       }
       for(String prefix: prefixKeyHash.keySet()){
-        if(PrefixUtil.prefixToRange(prefix).covers(PrefixUtil.prefixToRange(self_prefix))) {
+        if(PrefixUtil.prefixToRange(prefix).covers(selfRange)) {
           cKeyHash = prefixKeyHash.get(prefix);
           self_prefix = prefix;
         }
-        if(PrefixUtil.prefixToRange(prefix).covers(PrefixUtil.prefixToRange(target_prefix))) {
+        if(PrefixUtil.prefixToRange(prefix).covers(targetRange)) {
           targetHash = prefixKeyHash.get(prefix);
           target_prefix = prefix;
         }
