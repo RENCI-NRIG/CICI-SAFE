@@ -11,7 +11,7 @@ import org.json.JSONObject;
 import java.util.*;
 
 public class RoutingManager {
-  public final static String plexusImage = "yaoyj11/plexus-v2";
+  public final static String plexusImage = "yaoyj11/plexus-v3";
   final static Logger logger = LogManager.getLogger(RoutingManager.class);
   final static Logger sdnLogger = LogManager.getLogger("SdnCmds");
   final static int MAX_RATE = 2000000;

@@ -39,8 +39,8 @@ public class SingleSdxTest extends AbstractTest {
   public void before() throws Exception {
     deleteSliceAfterTest = true;
     initTests();
-    deleteSlices();
-    super.before();
+    //deleteSlices();
+    //super.before();
   }
 
   @After
@@ -58,13 +58,13 @@ public class SingleSdxTest extends AbstractTest {
   public void testSDX() throws Exception {
     startSdxServersAndClients(reset);
     stitchCustomerSlices();
-    connectCustomerNetwork();
-    checkConnection();
-    unStitchCustomerSlices();
-    stitchCustomerSlices();
-    connectCustomerNetwork();
-    checkConnection();
-    unStitchCustomerSlices();
+    //connectCustomerNetwork();
+    checkConnection(1);
+    //unStitchCustomerSlices();
+    //stitchCustomerSlices();
+    //connectCustomerNetwork();
+    //checkConnection();
+    //unStitchCustomerSlices();
   }
 
   @Override
