@@ -53,15 +53,15 @@ public class MultiSdxTridentcomSetting extends MultiSdxSDLargeSetting{
 
   @Override
   public void addClientSites() {
-    clientSites.add("TAMU");
-    clientSites.add("TAMU");
-    clientSites.add("TAMU");
-    clientSites.add("TAMU");
+    clientSites.add("UFL");
+    clientSites.add("UFL");
+    clientSites.add("UFL");
+    clientSites.add("UFL");
   }
 
   @Override
   public void addSdxSites() {
-    String[] sites = new String[]{"TAMU", "UH", "UH", "UH", "TAMU"};
+    String[] sites = new String[]{"UFL", "TAMU", "TAMU", "TAMU", "UFL"};
     sdxSites.put(sdxSliceNames.get(0), new String[]{sites[0], sites[1]});
     sdxSites.put(sdxSliceNames.get(1), new String[]{sites[1], sites[2]});
     sdxSites.put(sdxSliceNames.get(2), new String[]{sites[1], sites[2]});

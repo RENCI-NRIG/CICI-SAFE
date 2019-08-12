@@ -7,6 +7,7 @@ import java.util.Arrays;
 
 public class MultiSdxSDSetting extends AbstractTestSetting {
   public String sdxConfigDir = sdxSimpleDir + "config/multisdx/";
+  public boolean explicitConnectionRequest = false;
 
   public MultiSdxSDSetting() {
     numSdx = 4;
