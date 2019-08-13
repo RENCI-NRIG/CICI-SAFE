@@ -3,15 +3,14 @@ package exoplex.demo.multisdxsd;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 
 import java.util.Arrays;
-import java.util.HashMap;
 
-public class MultiSdxTridentcomSetting extends MultiSdxSDLargeSetting{
+public class MultiSdxTridentcomSetting extends MultiSdxSDLargeSetting {
 
-  public MultiSdxTridentcomSetting(){
+  public MultiSdxTridentcomSetting() {
   }
 
   @Override
-  public void setting(){
+  public void setting() {
     numSdx = 6;
     sliceNameSuffix = "tc";
     clientArgs = new String[]{"-c", sdxSimpleDir +
@@ -35,7 +34,7 @@ public class MultiSdxTridentcomSetting extends MultiSdxSDLargeSetting{
   public void addSdxSlices() {
     int sdxKeyBase = 100;
     int sdxIpBase = 110;
-    String[] sliceNames = new String[]{"SDX-1", "NSP-1", "NSP-2", "NSP-3", "NSP-4","SDX-2"};
+    String[] sliceNames = new String[]{"SDX-1", "NSP-1", "NSP-2", "NSP-3", "NSP-4", "SDX-2"};
     for (int i = 0; i < numSdx; i++) {
       String sdxSliceName = sliceNames[i];
       sdxConfs.put(sdxSliceName, String.format("%ssdx%s.conf", sdxConfigDir, i + 1));
@@ -90,10 +89,10 @@ public class MultiSdxTridentcomSetting extends MultiSdxSDLargeSetting{
 
   @Override
   public void setClientASTagAcls() {
-    clientASTagAcls.put(clientSlices.get(0), Arrays.asList(new String[]{"tag0","tag2"}));
+    clientASTagAcls.put(clientSlices.get(0), Arrays.asList(new String[]{"tag0", "tag2"}));
     clientASTagAcls.put(clientSlices.get(2), Arrays.asList(new String[]{"tag0", "tag1"}));
     clientASTagAcls.put(clientSlices.get(1), Arrays.asList(new String[]{"tag0", "tag1"}));
-    clientASTagAcls.put(clientSlices.get(3), Arrays.asList(new String[]{"tag1","tag2"}));
+    clientASTagAcls.put(clientSlices.get(3), Arrays.asList(new String[]{"tag1", "tag2"}));
   }
 
   @Override
@@ -134,7 +133,7 @@ public class MultiSdxTridentcomSetting extends MultiSdxSDLargeSetting{
     }));
     clientPolicyASTagAcls.put(clientSlices.get(2), Arrays.asList(new ImmutablePair[]{
       new ImmutablePair<String, String>("192.168.10.1/24", "tag0")
-      ,new ImmutablePair<String, String>("192.168.10.1/24", "tag1")
+      , new ImmutablePair<String, String>("192.168.10.1/24", "tag1")
     }));
     clientPolicyASTagAcls.put(clientSlices.get(3), Arrays.asList(new ImmutablePair[]{
       new ImmutablePair<String, String>("192.168.20.1/24", "tag1"),

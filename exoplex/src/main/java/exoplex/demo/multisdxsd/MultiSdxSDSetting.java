@@ -60,7 +60,7 @@ public class MultiSdxSDSetting extends AbstractTestSetting {
   public void addSdxSlices() {
     int sdxKeyBase = 100;
     int sdxIpBase = 100;
-    String[] sliceNames = new String[]{"SDX-1", "NSP-1", "NSP-2","SDX-2"};
+    String[] sliceNames = new String[]{"SDX-1", "NSP-1", "NSP-2", "SDX-2"};
     for (int i = 0; i < numSdx; i++) {
       String sdxSliceName = sliceNames[i];
       sdxConfs.put(sdxSliceName, String.format("%ssdx%s.conf", sdxConfigDir, i + 1));

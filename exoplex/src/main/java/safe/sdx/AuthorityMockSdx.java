@@ -47,20 +47,54 @@ public class AuthorityMockSdx extends Authority implements SdxRoutingSlang {
       ctx.updateLoggers();
       AuthorityMockSdx authorityMock = new AuthorityMockSdx(defaultSafeServer);
       authorityMock.makeSafePreparation();
-    } else if (args.length == 4) {
-      String userKeyFile = args[0];
-      String slice = args[1];
-      String ip = args[2];
-      String ss = args[3] + ":7777";
-      logger.info(String.format("UserKeyFile:%s sliceName:%s IpPrefix:%s SafeServer:%s",
-        userKeyFile, slice, ip, ss));
-      AuthorityMockSdx mock = new AuthorityMockSdx(ss);
-      mock.addPrincipals();
-      mock.initPrincipals();
-      mock.addUserSlice(userKeyFile, slice, ip);
-      //mock.checkAuthorization();
+    } else if (args.length >= 4) {
+      if (args[0].equals("auth")) {
+        String userKey = args[1];
+        String slice = args[2];
+        String ip = args[3];
+        String tag = args[4];
+        String ss = args[5] + ":7777";
+        logger.info(String.format("UserKey:%s sliceName:%s IpPrefix:%s Tag: %s SafeServerIP:%s",
+          userKey, slice, ip, tag, ss));
+        AuthorityMockSdx mock = new AuthorityMockSdx(ss);
+        mock.authorityDelegation(userKey, slice, ip, tag);
+      } else if (args[0].equals("update")) {
+        String userKey = args[1];
+        String method = args[2];
+        String token = args[3];
+        String name = args[4];
+        String ss = args[5] + ":7777";
+        AuthorityMockSdx mock = new AuthorityMockSdx(ss);
+        mock.updateTokens(userKey, method, token, name);
+      } else if (args[0].equals("init")) {
+        String userKey = args[1];
+        String tagAcl = args[2];
+        String ss = args[3] + ":7777";
+        AuthorityMockSdx mock = new AuthorityMockSdx(ss);
+        mock.initUser(userKey, tagAcl);
+      } else {
+        String userKeyFile = args[0];
+        String slice = args[1];
+        String ip = args[2];
+        String ss = args[3] + ":7777";
+        String tag = "tag0";
+        logger.info(String.format("UserKeyFile:%s sliceName:%s IpPrefix:%s SafeServerIP:%s Tag: %s",
+          userKeyFile, slice, ip, ss, tag));
+        AuthorityMockSdx mock = new AuthorityMockSdx(ss);
+        mock.addPrincipals();
+        mock.initPrincipals();
+        mock.addUserSlice(userKeyFile, slice, ip);
+        //mock.checkAuthorization();
+      }
     } else {
-      logger.info("Usage: userKeyFile sliceName IPPrefix safeServerIP\n");
+      logger.info("Usage:\n userKeyFile sliceName IPPrefix safeServerIP  ---- default " +
+        "delegations\n"
+        + "init userKeyFile tag safeServerIP  ---- initialize user, allows connection from " +
+        "peer with the tag\n"
+        + "auth userKeyHash slicename userIp userTag safeserverIP  ---- authorities make " +
+        "delegations to user, sdx allows stitching from user\n"
+        + "update userKeyFile method token name  ---- add delegation tokens to related safe sets\n"
+      );
     }
   }
 

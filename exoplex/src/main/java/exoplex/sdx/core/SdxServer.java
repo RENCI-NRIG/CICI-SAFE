@@ -48,12 +48,12 @@ public class SdxServer {
     System.out.println("starting exoplex.sdx server");
     SdxManager sdxManager = sdxManagerProvider.get();
     sdxManager.startSdxServer(args);
-    URI uri = URI.create(sdxManager.serverurl);
+    URI uri = URI.create(sdxManager.getServerUrl());
     RestService.registerSdxManager(uri.getPort(), sdxManager);
-    logger.debug("Starting on " + sdxManager.serverurl);
+    logger.debug("Starting on " + sdxManager.getServerUrl());
     final HttpServer server = startServer(uri);
-    logger.debug("Sdx server has started, listening on " + sdxManager.serverurl);
-    System.out.println("Sdx server has started, listening on " + sdxManager.serverurl);
+    logger.debug("Sdx server has started, listening on " + sdxManager.getServerUrl());
+    System.out.println("Sdx server has started, listening on " + sdxManager.getServerUrl());
     return sdxManager;
   }
 
@@ -62,7 +62,7 @@ public class SdxServer {
     System.out.println("starting exoplex.sdx server");
     SdxManager sdxManager = sdxManagerProvider.get();
     sdxManager.startSdxServer(args, sliceName);
-    sdxManager.serverurl = url;
+    sdxManager.setServerUrl(url);
     URI uri = URI.create(url);
     RestService.registerSdxManager(uri.getPort(), sdxManager);
     logger.debug("Starting on " + url);

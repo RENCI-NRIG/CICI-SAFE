@@ -28,26 +28,26 @@ public class Scripts {
   public static String getCustomerScript() {
     String nodePostBootScript =
       preBootScripts()
-      + installIperf()
-      + installQuagga()
-      + "sudo sed -i -- 's/zebra=no/zebra=yes/g' /etc/quagga/daemons\n"
-      + "sudo sed -i -- 's/ospfd=no/ospfd=yes/g' /etc/quagga/daemons\n"
-      + "sudo bash -c 'echo \"1\" > /proc/sys/net/ipv4/ip_forward'\n"
-      + "sudo /etc/init.d/neuca stop\n";
+        + installIperf()
+        + installQuagga()
+        + "sudo sed -i -- 's/zebra=no/zebra=yes/g' /etc/quagga/daemons\n"
+        + "sudo sed -i -- 's/ospfd=no/ospfd=yes/g' /etc/quagga/daemons\n"
+        + "sudo bash -c 'echo \"1\" > /proc/sys/net/ipv4/ip_forward'\n"
+        + "sudo /etc/init.d/neuca stop\n";
     return nodePostBootScript;
   }
 
   public static String getSafeScript(String riakip) {
     String script =
       "sudo docker pull yaoyj11/safeserver\n"
-      + "sudo docker run -i -t -d -p 7777:7777 -h safe --name safe " +
+        + "sudo docker run -i -t -d -p 7777:7777 -h safe --name safe " +
         "yaoyj11/safeserver\n"
-      + "sudo docker exec -d safe /bin/bash -c  \"cd /root/safe;export " +
+        + "sudo docker exec -d safe /bin/bash -c  \"cd /root/safe;export " +
         "SBT_HOME=/opt/sbt-0.13.12;"
-      + "export SCALA_HOME=/opt/scala-2.11.8;"
-      + "sed -i 's/http:\\/\\/.*:8098/http:\\/\\/" + riakip + ":8098/g' "
-      + "safe-server/src/main/resources/application.conf;"
-      + "./sdx.sh\"\n";
+        + "export SCALA_HOME=/opt/scala-2.11.8;"
+        + "sed -i 's/http:\\/\\/.*:8098/http:\\/\\/" + riakip + ":8098/g' "
+        + "safe-server/src/main/resources/application.conf;"
+        + "./sdx.sh\"\n";
     return script;
   }
 
@@ -55,23 +55,23 @@ public class Scripts {
     safeServerScript) {
     String script = String.format(
       "sudo docker pull yaoyj11/%s\n"
-      + "sudo docker run -i -t -d -p 7777:7777 -h safe --name safe yaoyj11/%s\n"
-      + "sudo docker exed -d safe /usr/bin/git clone -b multisdx " +
-      "https://github" +
+        + "sudo docker run -i -t -d -p 7777:7777 -h safe --name safe yaoyj11/%s\n"
+        + "sudo docker exed -d safe /usr/bin/git clone -b multisdx " +
+        "https://github" +
         ".com/yaoyj11/safe-multisdx.git\n"
-      + "sudo docker exec -d safe /bin/bash -c  \"cd /root/safe;"
-      + "sed -i 's/http:\\/\\/.*:8098/http:\\/\\/" + riakip + ":8098/g' "
-      + "safe-server/src/main/resources/application.conf;"
-      + "cd /root; ./safe-multisdx/%s\"\n", safeDockerImg, safeDockerImg, safeServerScript);
+        + "sudo docker exec -d safe /bin/bash -c  \"cd /root/safe;"
+        + "sed -i 's/http:\\/\\/.*:8098/http:\\/\\/" + riakip + ":8098/g' "
+        + "safe-server/src/main/resources/application.conf;"
+        + "cd /root; ./safe-multisdx/%s\"\n", safeDockerImg, safeDockerImg, safeServerScript);
     return script;
   }
 
   public static String restartSafe_v1(String safeServerScript) {
     return String.format(
       "sudo docker exec -d safe /bin/bash -c  \"cd /root;" +
-      "pkill java;" +
-      "/usr/bin/git clone -b multisdx https://github.com/yaoyj11/safe-multisdx.git;"
-      + "cd /root;./safe-multisdx/%s\"\n",
+        "pkill java;" +
+        "/usr/bin/git clone -b multisdx https://github.com/yaoyj11/safe-multisdx.git;"
+        + "cd /root;./safe-multisdx/%s\"\n",
       safeServerScript);
   }
 
@@ -118,7 +118,7 @@ public class Scripts {
       "done\n";
   }
 
-  public static String installDocker(){
+  public static String installDocker() {
     return "sudo apt-get install -y -qq docker.io;";
   }
 

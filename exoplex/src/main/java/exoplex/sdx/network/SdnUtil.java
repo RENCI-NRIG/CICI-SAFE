@@ -14,16 +14,13 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class SdnUtil {
-  static final Logger logger = LogManager.getLogger(SdnUtil.class);
-
-  static AtomicInteger cookie = new AtomicInteger(1026);
-
   public static final String DEFAULT_ROUTE = "0.0.0.0/0";
-
   public static final String IP_PATTERN =
     "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})";
   public static final String PREFIX_PATTERN =
     "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1," + "3})\\.(\\d{1,3})/(\\d{1,3})";
+  static final Logger logger = LogManager.getLogger(SdnUtil.class);
+  static AtomicInteger cookie = new AtomicInteger(1026);
 
   static String queueURL(String controller, String dpid) {
     return "http://" + controller + "/qos/queue/" + dpid;
@@ -153,8 +150,12 @@ public class SdnUtil {
       .split(",");
     ArrayList<String> retVal = new ArrayList<>();
     for (String dpid : dpids) {
-      String sdpid = Long.toHexString(Long.valueOf(dpid));
-      retVal.add(StringUtils.leftPad(sdpid, 16, '0'));
+      try {
+        String sdpid = Long.toHexString(Long.valueOf(dpid));
+        retVal.add(StringUtils.leftPad(sdpid, 16, '0'));
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
     }
     return retVal;
   }

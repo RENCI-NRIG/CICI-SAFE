@@ -40,7 +40,7 @@ public class SingleSdxTest extends AbstractTest {
     deleteSliceAfterTest = true;
     initTests();
     //deleteSlices();
-    //super.before();
+    super.before();
   }
 
   @After

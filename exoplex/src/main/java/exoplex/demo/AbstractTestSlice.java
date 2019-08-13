@@ -95,14 +95,14 @@ public abstract class AbstractTestSlice {
     }
   }
 
-  public void runThreads(){
-    for(Thread t: threadList){
+  public void runThreads() {
+    for (Thread t : threadList) {
       t.start();
     }
-    for(Thread t: threadList){
-      try{
+    for (Thread t : threadList) {
+      try {
         t.join();
-      } catch (Exception e){
+      } catch (Exception e) {
         logger.warn(e.getMessage());
       }
     }
