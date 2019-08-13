@@ -1486,7 +1486,7 @@ public class SdxManager extends SliceHelper {
   }
 
   protected void configRouter(String nodeName) {
-    logger.info(String.format("Configuring router %s", nodeName));
+    logger.debug(String.format("Configuring router %s", nodeName));
     String mip = serverSlice.getManagementIP(nodeName);
     checkOVS(serverSlice, nodeName);
     checkScripts(serverSlice, nodeName);
