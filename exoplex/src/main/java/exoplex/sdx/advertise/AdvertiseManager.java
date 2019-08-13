@@ -8,10 +8,7 @@ import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class AdvertiseManager {
@@ -66,7 +63,7 @@ public class AdvertiseManager {
       //Do nothing for now
     } else {
       Collection<Rectangle> matchedKeys = routeIndex.query(key);
-      for (Rectangle matchedKey : matchedKeys) {
+      for(Rectangle matchedKey: matchedKeys){
         ArrayList<RouteAdvertise> matchedRoutes = routeTable.get(matchedKey);
         ArrayList<ImmutablePair<PolicyAdvertise, RouteAdvertise>> cpairs = new ArrayList<>();
         for (RouteAdvertise matchedAdvertise : matchedRoutes) {
@@ -76,7 +73,7 @@ public class AdvertiseManager {
           newAd.route.remove(newAd.route.size() - 1);
           String path = newAd.getFormattedPath();
           if (safeManager.verifyCompliantPath(policyAdvertise.ownerPID, policyAdvertise
-            .getSrcPrefix(), policyAdvertise.getDestPrefix(), token1, token2, path)) {
+              .getSrcPrefix(), policyAdvertise.getDestPrefix(), token1, token2, path)) {
             cpairs.add(new ImmutablePair<>(policyAdvertise, matchedAdvertise));
           }
         }
@@ -88,7 +85,7 @@ public class AdvertiseManager {
           boolean compliant = false;
           for (ImmutablePair<PolicyAdvertise, RouteAdvertise> pair : cpairs) {
             ImmutablePair<String, String> k = new ImmutablePair<>(destPrefix, pair.getRight()
-              .srcPrefix);
+                .srcPrefix);
             RouteAdvertise otherRoute = advertisedRoutes.getOrDefault(key, null);
             if (pair.getRight().equals(otherRoute)) {
               compliant = true;
@@ -142,7 +139,7 @@ public class AdvertiseManager {
       //Do nothing for now
     } else {
       ArrayList<Rectangle> matchedKeys = new ArrayList<>(policyIndex.query(key));
-      if (matchedKeys.size() > 0) {
+      if(matchedKeys.size() > 0) {
         Collections.sort(matchedKeys, new Comparator<Rectangle>() {
           @Override
           public int compare(Rectangle o1, Rectangle o2) {
@@ -171,7 +168,7 @@ public class AdvertiseManager {
             newAdvertises.add(propagateAdvertise);
           }
         }
-      } else {
+      }else{
         if (!advertisedRoutes.containsKey(key) || advertisedRoutes.get(key).route.size() > routeAdvertise.route.size()) {
           advertisedRoutes.put(key, routeAdvertise);
           RouteAdvertise propagateAdvertise = new RouteAdvertise(routeAdvertise, myPID);
@@ -200,7 +197,7 @@ public class AdvertiseManager {
       routeTable.put(key, advertises);
     }
     ArrayList<RouteAdvertise> routes = routeTable.get(key);
-    synchronized (routes) {
+    synchronized(routes) {
       routes.add(routeAdvertise);
     }
   }
@@ -240,7 +237,7 @@ public class AdvertiseManager {
       return routeTable.get(key).get(0);
     }
     Rectangle key1 = PrefixUtil.prefixPairToRectangle(destPrefix,
-      DEFAULT_PREFIX);
+        DEFAULT_PREFIX);
     if (routeTable.containsKey(key1)) {
       return routeTable.get(key1).get(0);
     } else {

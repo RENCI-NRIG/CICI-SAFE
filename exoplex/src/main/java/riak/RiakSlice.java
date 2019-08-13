@@ -4,18 +4,16 @@ import com.google.inject.Guice;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
 import exoplex.common.utils.ServerOptions;
-import exoplex.sdx.core.CoreProperties;
 import exoplex.sdx.slice.Scripts;
 import exoplex.sdx.slice.SliceManager;
 import exoplex.sdx.slice.SliceManagerFactory;
+import exoplex.sdx.slice.exogeni.SliceCommon;
 import exoplex.sdx.slice.exogeni.ExoGeniSliceModule;
 import org.apache.commons.cli.CommandLine;
 
-public class RiakSlice {
+public class RiakSlice extends SliceCommon {
   @Inject
   private SliceManagerFactory sliceManagerFactory;
-
-  private CoreProperties coreProperties;
 
   public static void main(String[] args) throws Exception {
     if (args.length < 1) {
@@ -31,7 +29,7 @@ public class RiakSlice {
       args = new String[]{"-c", "config/riak.conf"};
     }
     CommandLine cmd = ServerOptions.parseCmd(args);
-    coreProperties = new CoreProperties(cmd.getOptionValue("config"));
+    readConfig(cmd.getOptionValue("config"));
     //SSH context
     if (cmd.hasOption('d')) {
       return deleteRiakSlice();
@@ -40,15 +38,10 @@ public class RiakSlice {
   }
 
   public String createRiakSlice() throws Exception {
-    SliceManager s = sliceManagerFactory.create(
-      coreProperties.getSliceName(),
-      coreProperties.getExogeniKey(),
-      coreProperties.getExogeniKey(),
-      coreProperties.getExogeniSm(),
-      coreProperties.getSshKey()
-    );
+    SliceManager s = sliceManagerFactory.create(sliceName, pemLocation, keyLocation, controllerUrl,
+      sshKey);
     s.createSlice();
-    s.addRiakServer(coreProperties.getServerSite(), "riak");
+    s.addRiakServer(serverSite, "riak");
     s.commitAndWait();
     s.loadSlice();
     s.runCmdNode(String.format("echo 'sudo docker rm -f riakserver\n %s' >> " +
@@ -61,13 +54,8 @@ public class RiakSlice {
   }
 
   private String deleteRiakSlice() throws Exception {
-    SliceManager s = sliceManagerFactory.create(
-      coreProperties.getSliceName(),
-      coreProperties.getExogeniKey(),
-      coreProperties.getExogeniKey(),
-      coreProperties.getExogeniSm(),
-      coreProperties.getSshKey()
-    );
+    SliceManager s = sliceManagerFactory.create(sliceName, pemLocation, keyLocation, controllerUrl,
+      sshKey);
     s.delete();
     return "true";
   }

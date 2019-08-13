@@ -1,14 +1,14 @@
 package exoplex.experiment.flow;
 
 import exoplex.experiment.task.AsyncTask;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class FlowManager extends AsyncTask {
   final static Logger logger = LogManager.getLogger(FlowManager.class);
@@ -52,7 +52,7 @@ public class FlowManager extends AsyncTask {
 
   public boolean addTcpFlow(String clientIP, String server, String serverDpIP, String bw,
                             int threads) {
-    return addTcpFlow(clientIP, server, serverDpIP, bw, threads, DEFAULT_PORT);
+      return addTcpFlow(clientIP, server, serverDpIP, bw, threads, DEFAULT_PORT);
   }
 
   public boolean addTcpFlow(String clientIP, String server, String serverDpIP, String bw,
@@ -66,7 +66,7 @@ public class FlowManager extends AsyncTask {
     }
     iperfServers.put(iperfServer.toString(), iperfServer);
     IperfFlow flow = new IperfFlow(clientIP, serverDpIP, sshKey, port,
-      DEFAULT_TIME, bw, IperfServer.TCP, threads, iperfServer.toString());
+        DEFAULT_TIME, bw, IperfServer.TCP, threads, iperfServer.toString());
     flows.add(flow);
     return true;
   }

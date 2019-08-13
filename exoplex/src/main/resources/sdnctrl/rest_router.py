@@ -14,25 +14,27 @@
 # limitations under the License.
 
 
-import json
 import logging
 import numbers
 import socket
 import struct
+
+import json
+
 from ryu.app.wsgi import ControllerBase
 from ryu.app.wsgi import Response
 from ryu.app.wsgi import WSGIApplication
 from ryu.base import app_manager
 from ryu.controller import dpset
 from ryu.controller import ofp_event
-from ryu.controller.handler import MAIN_DISPATCHER
 from ryu.controller.handler import set_ev_cls
+from ryu.controller.handler import MAIN_DISPATCHER
 from ryu.exception import OFPUnknownVersion
 from ryu.exception import RyuException
-from ryu.lib import addrconv
 from ryu.lib import dpid as dpid_lib
 from ryu.lib import hub
 from ryu.lib import mac as mac_lib
+from ryu.lib import addrconv
 from ryu.lib.packet import arp
 from ryu.lib.packet import ethernet
 from ryu.lib.packet import icmp
@@ -47,6 +49,7 @@ from ryu.ofproto import inet
 from ryu.ofproto import ofproto_v1_0
 from ryu.ofproto import ofproto_v1_2
 from ryu.ofproto import ofproto_v1_3
+
 
 # =============================
 #          REST API
@@ -204,6 +207,7 @@ class CommandFailure(RyuException):
 
 
 class RestRouterAPI(app_manager.RyuApp):
+
     OFP_VERSIONS = [ofproto_v1_0.OFP_VERSION,
                     ofproto_v1_2.OFP_VERSION,
                     ofproto_v1_3.OFP_VERSION]
@@ -271,7 +275,7 @@ class RestRouterAPI(app_manager.RyuApp):
         dp = msg.datapath
 
         if (dp.id not in self.waiters
-            or msg.xid not in self.waiters[dp.id]):
+                or msg.xid not in self.waiters[dp.id]):
             return
         event, msgs = self.waiters[dp.id][msg.xid]
         msgs.append(msg)
@@ -295,7 +299,7 @@ class RestRouterAPI(app_manager.RyuApp):
     def stats_reply_handler_v1_2(self, ev):
         self._stats_reply_handler(ev)
 
-        # TODO: Update routing table when port status is changed.
+    # TODO: Update routing table when port status is changed.
 
 
 # REST command template
@@ -325,6 +329,7 @@ def rest_command(func):
 
 
 class RouterController(ControllerBase):
+
     _ROUTER_LIST = {}
     _LOGGER = None
 
@@ -508,7 +513,7 @@ class Router(dict):
 
         vlan_router = self[vlan_id]
         if (len(vlan_router.address_data) == 0
-            and len(vlan_router.routing_tbl) == 0):
+                and len(vlan_router.routing_tbl) == 0):
             vlan_router.delete(waiters)
             del self[vlan_id]
 
@@ -760,8 +765,8 @@ class VlanRouter(object):
             msg = 'Gateway=%s\'s address is not registered.' % gateway
             raise CommandFailure(msg=msg)
         elif dst_ip == address.default_gw:
-            msg = 'Gateway=%s is used as default gateway of address_id=%d' \
-                  % (gateway, address.address_id)
+            msg = 'Gateway=%s is used as default gateway of address_id=%d'\
+                % (gateway, address.address_id)
             raise CommandFailure(msg=msg)
         else:
             src_ip = address.default_gw
@@ -858,8 +863,8 @@ class VlanRouter(object):
 
         if skip_ids:
             skip_ids = ','.join(str(addr_id) for addr_id in skip_ids)
-            details = 'Skip delete (related route exist) [address_id=%s]' \
-                      % skip_ids
+            details = 'Skip delete (related route exist) [address_id=%s]'\
+                % skip_ids
             if msg:
                 msg[REST_DETAILS] += ', %s' % details
             else:
@@ -924,7 +929,7 @@ class VlanRouter(object):
             address = self.address_data.get_data(ip=gateway)
             if address is not None:
                 if (address_id == REST_ALL
-                    and address.address_id not in relate_list):
+                        and address.address_id not in relate_list):
                     relate_list.append(address.address_id)
                 elif address.address_id == address_id:
                     relate_list = [address_id]
@@ -935,7 +940,7 @@ class VlanRouter(object):
         # Check invalid TTL (for OpenFlow V1.2/1.3)
         ofproto = self.dp.ofproto
         if ofproto.OFP_VERSION == ofproto_v1_2.OFP_VERSION or \
-                        ofproto.OFP_VERSION == ofproto_v1_3.OFP_VERSION:
+                ofproto.OFP_VERSION == ofproto_v1_3.OFP_VERSION:
             if msg.reason == ofproto.OFPR_INVALID_TTL:
                 self._packetin_invalid_ttl(msg, header_list)
                 return
@@ -994,7 +999,7 @@ class VlanRouter(object):
         elif dst_ip not in rt_ports:
             dst_addr = self.address_data.get_data(ip=dst_ip)
             if (dst_addr is not None and
-                        src_addr.address_id == dst_addr.address_id):
+                    src_addr.address_id == dst_addr.address_id):
                 # ARP from internal host -> packet forward (normal)
                 output = self.ofctl.dp.ofproto.OFPP_NORMAL
                 self.ofctl.send_packet_out(in_port, output, msg.data)
@@ -1262,8 +1267,8 @@ class AddressData(dict):
             other_mask = mask_ntob(other.netmask)
             add_mask = mask_ntob(mask, err_msg=err_msg)
             if (other.nw_addr == ipv4_apply_mask(default_gw, other.netmask) or
-                        nw_addr == ipv4_apply_mask(other.default_gw, mask,
-                                                   err_msg)):
+                    nw_addr == ipv4_apply_mask(other.default_gw, mask,
+                                               err_msg)):
                 msg = 'Address overlaps [address_id=%d]' % other.address_id
                 raise CommandFailure(msg=msg)
 
@@ -1447,7 +1452,6 @@ class OfCtl(object):
         def _register_of_version(cls):
             OfCtl._OF_VERSIONS.setdefault(version, cls)
             return cls
-
         return _register_of_version
 
     @staticmethod
@@ -1620,6 +1624,7 @@ class OfCtl(object):
 
 @OfCtl.register_of_version(ofproto_v1_0.OFP_VERSION)
 class OfCtl_v1_0(OfCtl):
+
     def __init__(self, dp, logger):
         super(OfCtl_v1_0, self).__init__(dp, logger)
 
@@ -1685,10 +1690,10 @@ class OfCtl_v1_0(OfCtl):
         actions = []
         if src_mac:
             actions.append(ofp_parser.OFPActionSetDlSrc(
-                mac_lib.haddr_to_bin(src_mac)))
+                           mac_lib.haddr_to_bin(src_mac)))
         if dst_mac:
             actions.append(ofp_parser.OFPActionSetDlDst(
-                mac_lib.haddr_to_bin(dst_mac)))
+                           mac_lib.haddr_to_bin(dst_mac)))
         if outport is not None:
             actions.append(ofp_parser.OFPActionOutput(outport))
 
@@ -1711,6 +1716,7 @@ class OfCtl_v1_0(OfCtl):
 
 
 class OfCtl_after_v1_2(OfCtl):
+
     def __init__(self, dp, logger):
         super(OfCtl_after_v1_2, self).__init__(dp, logger)
 
@@ -1807,6 +1813,7 @@ class OfCtl_after_v1_2(OfCtl):
 
 @OfCtl.register_of_version(ofproto_v1_2.OFP_VERSION)
 class OfCtl_v1_2(OfCtl_after_v1_2):
+
     def __init__(self, dp, logger):
         super(OfCtl_v1_2, self).__init__(dp, logger)
 
@@ -1831,6 +1838,7 @@ class OfCtl_v1_2(OfCtl_after_v1_2):
 
 @OfCtl.register_of_version(ofproto_v1_3.OFP_VERSION)
 class OfCtl_v1_3(OfCtl_after_v1_2):
+
     def __init__(self, dp, logger):
         super(OfCtl_v1_3, self).__init__(dp, logger)
 
@@ -1884,6 +1892,8 @@ def mask_ntob(mask, err_msg=None):
 
 
 def ipv4_apply_mask(address, prefix_len, err_msg=None):
+    import itertools
+
     assert isinstance(address, str)
     address_int = ipv4_text_to_int(address)
     return ipv4_int_to_text(address_int & mask_ntob(prefix_len, err_msg))

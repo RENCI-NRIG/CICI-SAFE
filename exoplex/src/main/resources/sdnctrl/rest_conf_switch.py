@@ -22,12 +22,14 @@ Used by OpenStack Ryu agent.
 """
 
 import json
+
+from six.moves import http_client
+
 from ryu.app.wsgi import ControllerBase
 from ryu.app.wsgi import Response
 from ryu.base import app_manager
 from ryu.controller import conf_switch
 from ryu.lib import dpid as dpid_lib
-from six.moves import http_client
 
 
 # REST API for switch configuration
@@ -72,7 +74,7 @@ class ConfSwitchController(ControllerBase):
         except KeyError:
             return Response(status=http_client.NOT_FOUND,
                             body='no dpid is found %s' %
-                                 dpid_lib.dpid_to_str(dpid))
+                            dpid_lib.dpid_to_str(dpid))
 
         return ret_func(ret)
 
@@ -104,7 +106,7 @@ class ConfSwitchController(ControllerBase):
         except KeyError:
             return Response(status=http_client.NOT_FOUND,
                             body='no dpid/key is found %s %s' %
-                                 (dpid_lib.dpid_to_str(dpid), key))
+                            (dpid_lib.dpid_to_str(dpid), key))
         return ret_func(ret)
 
     def set_key(self, req, dpid, key, **_kwargs):

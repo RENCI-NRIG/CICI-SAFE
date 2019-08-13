@@ -62,7 +62,7 @@ public class SafeUtils {
     principal, Object[] othervalues) {
     String res = postSafeStatements(safeserver, requestName, principal, emptyEnvs, othervalues);
     if (res == null || res.contains("Query failed") || res.contains("Unsatisfied Query")) {
-      logger.warn(String.format("%s %s", safeserver, res));
+      logger.warn(String.format("%s %s", safeserver,res));
     }
     return res;
   }
@@ -94,7 +94,7 @@ public class SafeUtils {
       params = params.replace("PRINCIPAL", principal);
       String[] others = new String[othervalues.length];
       String[] othersLogFormat = new String[othervalues.length];
-      for (int i = 0; i < othervalues.length; i++) {
+      for(int i = 0; i< othervalues.length; i++){
         others[i] = String.format("\"%s\"", othervalues[i]);
       }
       String othersString = String.join(",", others);

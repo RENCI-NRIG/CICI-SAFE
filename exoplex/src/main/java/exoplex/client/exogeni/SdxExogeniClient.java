@@ -9,15 +9,15 @@ import com.google.inject.Injector;
 import exoplex.common.utils.HttpUtil;
 import exoplex.common.utils.SafeUtils;
 import exoplex.common.utils.ServerOptions;
-import exoplex.demo.singlesdx.SingleSdxModule;
 import exoplex.sdx.advertise.PolicyAdvertise;
 import exoplex.sdx.advertise.RouteAdvertise;
-import exoplex.sdx.core.CoreProperties;
 import exoplex.sdx.safe.SafeManager;
 import exoplex.sdx.slice.Scripts;
+import exoplex.sdx.slice.SliceProperties;
 import exoplex.sdx.slice.SliceManager;
 import exoplex.sdx.slice.SliceManagerFactory;
-import exoplex.sdx.slice.SliceProperties;
+import exoplex.sdx.slice.exogeni.SliceCommon;
+import exoplex.demo.singlesdx.SingleSdxModule;
 import org.apache.commons.cli.CommandLine;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -31,14 +31,14 @@ import java.util.List;
 /**
  * @author geni-orca
  */
-public class SdxExogeniClient {
+public class SdxExogeniClient extends SliceCommon {
   final Logger logger = LogManager.getLogger(SdxExogeniClient.class);
   protected SafeManager safeManager = null;
   private String logPrefix = "";
+  private String ipIprefix;
   private SliceManager serverSlice = null;
   private boolean safeChecked = false;
   private CommandLine cmd;
-  private CoreProperties coreProperties;
 
   @Inject
   private SliceManagerFactory sliceManagerFactory;
@@ -46,13 +46,25 @@ public class SdxExogeniClient {
   public SdxExogeniClient() {
   }
 
+  public String getManagementIP(String nodeName){
+    if (serverSlice == null) {
+      try {
+        loadSlice();
+      } catch (Exception e) {
+        logger.error(e.getMessage());
+      }
+    }
+      return serverSlice.getManagementIP(nodeName);
+  }
+
   public SdxExogeniClient(String sliceName, String IPPrefix, String safeKeyFile, String[] args) {
     cmd = ServerOptions.parseCmd(args);
     String configFilePath = cmd.getOptionValue("config");
-    coreProperties = new CoreProperties(configFilePath);
-    coreProperties.setIpPrefix(IPPrefix);
-    coreProperties.setSafeKeyFile(safeKeyFile);
-    logPrefix = "[" + coreProperties.getSliceName() + "] ";
+    readConfig(configFilePath);
+    this.ipIprefix = IPPrefix;
+    this.safeKeyFile = safeKeyFile;
+    this.sliceName = sliceName;
+    logPrefix = "[" + sliceName + "] ";
     logger.info(logPrefix + "Client start");
   }
 
@@ -67,9 +79,9 @@ public class SdxExogeniClient {
 
     cmd = ServerOptions.parseCmd(args);
     String configFilePath = cmd.getOptionValue("config");
-    coreProperties = new CoreProperties(configFilePath);
+    readConfig(configFilePath);
 
-    logPrefix = "[" + coreProperties.getSliceName() + "] ";
+    logPrefix = "[" + sliceName + "] ";
 
     logger.info(logPrefix + "Client start");
   }
@@ -82,54 +94,36 @@ public class SdxExogeniClient {
     sdxExogeniClient.run(args);
   }
 
-  public String getManagementIP(String nodeName) {
-    if (serverSlice == null) {
-      try {
-        loadSlice();
-      } catch (Exception e) {
-        logger.error(e.getMessage());
-      }
-    }
-    return serverSlice.getManagementIP(nodeName);
-  }
-
-  public void parseArgs(String[] args) {
+  public void parseArgs(String[] args){
     cmd = ServerOptions.parseCmd(args);
     String configFilePath = cmd.getOptionValue("config");
-    coreProperties = new CoreProperties(configFilePath);
-    logPrefix = "[" + coreProperties.getSliceName() + "] ";
+    readConfig(configFilePath);
+    logPrefix = "[" + sliceName + "] ";
   }
 
   public void config(String sliceName, String IPPrefix, String safeKeyFile, String[] args) {
     cmd = ServerOptions.parseCmd(args);
     String configFilePath = cmd.getOptionValue("config");
-    coreProperties = new CoreProperties(configFilePath);
-    coreProperties.setIpPrefix(IPPrefix);
-    coreProperties.setSafeKeyFile(safeKeyFile);
-    coreProperties.setSliceName(sliceName);
-    logPrefix = "[" + coreProperties.getSliceName() + "] ";
+    readConfig(configFilePath);
+    this.ipIprefix = IPPrefix;
+    this.safeKeyFile = safeKeyFile;
+    this.sliceName = sliceName;
+    logPrefix = "[" + sliceName + "] ";
     logger.info(logPrefix + "Client start");
   }
 
   public void setSafeServer(String safeIP) {
-    coreProperties.setSafeServerIp(safeIP);
+    setSafeServerIp(safeIP);
     if (safeManager == null) {
-      safeManager = new SafeManager(coreProperties.getSafeServerIp(),
-        coreProperties.getSafeKeyFile(), coreProperties.getSshKey());
+      safeManager = new SafeManager(safeServerIp, safeKeyFile, sshKey);
     } else {
-      safeManager.setSafeServerIp(coreProperties.getSafeServerIp());
+      safeManager.setSafeServerIp(safeServerIp);
     }
     safeChecked = true;
   }
 
   private void loadSlice() throws Exception {
-    serverSlice = sliceManagerFactory.create(
-      coreProperties.getSliceName(),
-      coreProperties.getExogeniKey(),
-      coreProperties.getExogeniKey(),
-      coreProperties.getExogeniSm(),
-      coreProperties.getSshKey()
-    );
+    serverSlice = sliceManagerFactory.create(sliceName, pemLocation, keyLocation, controllerUrl, sshKey);
     serverSlice.loadSlice();
   }
 
@@ -145,8 +139,8 @@ public class SdxExogeniClient {
       processCmd(command);
       return;
     }
-    String input;
-    String cmdprefix = coreProperties.getSliceName() + "$>";
+    String input = new String();
+    String cmdprefix = sliceName + "$>";
     try {
 //	 			logger.info(logPrefix + obj.sayHello());
       BufferedReader stdin = new BufferedReader(new InputStreamReader(System.in));
@@ -199,10 +193,10 @@ public class SdxExogeniClient {
   /*
   Be cafeful when using async methods
    */
-  public void processCmdAsync(String command) {
-    Thread thread = new Thread() {
+  public void processCmdAsync(String command){
+    Thread thread = new Thread(){
       @Override
-      public void run() {
+      public void run(){
         processCmd(command);
       }
     };
@@ -285,7 +279,7 @@ public class SdxExogeniClient {
       } catch (Exception e) {
         jsonparams.put("bandwidth", 0l);
       }
-      String res = HttpUtil.postJSON(coreProperties.getServerUrl() + "sdx/connectionrequest", jsonparams);
+      String res = HttpUtil.postJSON(serverurl + "sdx/connectionrequest", jsonparams);
       logger.info(logPrefix + "get connection result from server:\n" + res);
       logger.debug(res);
     } catch (Exception e) {
@@ -302,9 +296,9 @@ public class SdxExogeniClient {
   }
 
   private void advertiseBgpAsync(String peerUrl, RouteAdvertise advertise) {
-    Thread thread = new Thread() {
+    Thread thread = new Thread(){
       @Override
-      public void run() {
+      public void run(){
         HttpUtil.postJSON(peerUrl + "sdx/bgp", advertise.toJsonObject());
       }
     };
@@ -322,7 +316,7 @@ public class SdxExogeniClient {
   }
 
   private void processPolicyCmd(String[] params) {
-    String tagAuthorityPid = SafeUtils.getPrincipalId(coreProperties.getSafeServer(), "tagauthority");
+    String tagAuthorityPid = SafeUtils.getPrincipalId(safeServer, "tagauthority");
     String destPrefix = params[1];
     String srcPrefix = params[2];
     String astag = params[3];
@@ -333,36 +327,36 @@ public class SdxExogeniClient {
     policyAdvertise.destPrefix = destPrefix;
     checkSafe();
     String sdToken = safeManager.postASTagAclEntrySD(tag, policyAdvertise.getSrcPrefix(),
-      policyAdvertise.getDestPrefix());
+        policyAdvertise.getDestPrefix());
     String sdSetToken = safeManager.postSdPolicySet(policyAdvertise.getSrcPrefix(),
       policyAdvertise.getDestPrefix());
     policyAdvertise.ownerPID = safeManager.getSafeKeyHash();
     policyAdvertise.safeToken = sdSetToken;
-    advertisePolicyAsync(coreProperties.getServerUrl(), policyAdvertise);
+    advertisePolicyAsync(serverurl, policyAdvertise);
     logger.debug("client posted SD policy set and made policy advertisement");
   }
 
   private void processAclCmd(String[] params) {
-    if (coreProperties.isSafeEnabled()) {
+    if (safeEnabled) {
       String token = null;
       checkSafe();
       RouteAdvertise advertise = new RouteAdvertise();
       advertise.destPrefix = params[1];
       advertise.srcPrefix = params[2];
-      advertise.advertiserPID = safeManager.getSafeKeyHash();
-      advertise.ownerPID = safeManager.getSafeKeyHash();
-      advertise.route.add(safeManager.getSafeKeyHash());
+      advertise.advertiserPID = safeKeyHash;
+      advertise.ownerPID = safeKeyHash;
+      advertise.route.add(safeKeyHash);
       if (params.length > 3) {
         //need special tag acl
         // postASTagAclEntrySD
         String[] vars = new String[3];
-        String tagAuth = SafeUtils.getPrincipalId(coreProperties.getSafeServer(), "tagauthority");
+        String tagAuth = SafeUtils.getPrincipalId(safeServer, "tagauthority");
         String tag = String.format("%s:%s", tagAuth, params[3]);
         String res = safeManager.postASTagAclEntrySD(tag, advertise.getSrcPrefix(), advertise
           .getDestPrefix());
         logger.debug(res);
         res = safeManager.postSdPolicySet(advertise.getSrcPrefix(), advertise
-          .getDestPrefix());
+            .getDestPrefix());
         logger.debug(res);
       }
       //Post SAFE sets
@@ -371,26 +365,26 @@ public class SdxExogeniClient {
   }
 
   private void processBgpCmd(String[] params) {
-    if (coreProperties.isSafeEnabled()) {
+    if (safeEnabled) {
       String token = null;
       checkSafe();
       RouteAdvertise advertise = new RouteAdvertise();
       advertise.destPrefix = params[1];
       advertise.srcPrefix = params[2];
-      advertise.advertiserPID = safeManager.getSafeKeyHash();
-      advertise.ownerPID = safeManager.getSafeKeyHash();
-      advertise.route.add(safeManager.getSafeKeyHash());
+      advertise.advertiserPID = safeKeyHash;
+      advertise.ownerPID = safeKeyHash;
+      advertise.route.add(safeKeyHash);
       if (params.length > 3) {
         //need special tag acl
         // postASTagAclEntrySD
         String[] vars = new String[3];
-        String tagAuth = SafeUtils.getPrincipalId(coreProperties.getSafeServer(), "tagauthority");
+        String tagAuth = SafeUtils.getPrincipalId(safeServer, "tagauthority");
         String tag = String.format("%s:%s", tagAuth, params[3]);
         String res = safeManager.postASTagAclEntrySD(tag, advertise.getSrcPrefix(), advertise
           .getDestPrefix());
         logger.debug(res);
         res = safeManager.postSdPolicySet(advertise.getSrcPrefix(), advertise
-          .getDestPrefix());
+            .getDestPrefix());
         logger.debug(res);
       }
       //Post SAFE sets
@@ -400,28 +394,33 @@ public class SdxExogeniClient {
       safeparams[0] = advertise.getSrcPrefix();
       safeparams[1] = advertise.getDestPrefix();
       safeparams[2] = advertise.getFormattedPath();
-      String sdxPid = HttpUtil.get(coreProperties.getServerUrl() + "sdx/getpid");
+      String sdxPid = HttpUtil.get(serverurl + "sdx/getpid");
       safeparams[3] = sdxPid;
       safeparams[4] = String.valueOf(1);
       logger.debug(String.format("Safe principal Id of sdx server is %s", sdxPid));
-      String routeToken = safeManager.post(SdxRoutingSlang.postInitRouteSD, safeparams);
+      String routeToken = SafeUtils.getToken(SafeUtils.postSafeStatements(safeServer,
+        SdxRoutingSlang.postInitRouteSD, safeKeyHash, safeparams));
       advertise.safeToken = routeToken;
       //pass the token when making bgpAdvertise
-      advertiseBgpAsync(coreProperties.getServerUrl(), advertise);
+      advertiseBgpAsync(serverurl, advertise);
       logger.debug(String.format("posted initRouteSD statement for dst %s src %s pair", advertise
         .destPrefix, advertise.srcPrefix));
     }
   }
 
   private void checkSafe() {
-    if (coreProperties.isSafeEnabled() && !safeChecked) {
-      if (coreProperties.isSafeInSlice()
-        && serverSlice.getResourceByName(SliceProperties.SAFESERVER) != null) {
-        coreProperties.setSafeServerIp(serverSlice.getManagementIP(SliceProperties.SAFESERVER));
+    if (safeEnabled && !safeChecked) {
+      safeManager = new SafeManager(safeServerIp, safeKeyFile, sshKey);
+      if (safeInSlice && serverSlice.getResourceByName(SliceProperties.SAFESERVER) != null) {
+        setSafeServerIp(serverSlice.getManagementIP(SliceProperties.SAFESERVER));
+      } else {
+        setSafeServerIp(conf.getString("config.safeserver"));
       }
-      safeManager = new SafeManager(coreProperties.getSafeServerIp(), coreProperties.getSafeKeyFile(),
-        coreProperties.getSshKey());
+      safeManager.setSafeServerIp(safeServerIp);
       safeChecked = true;
+    }
+    if (safeKeyHash == null) {
+      safeKeyHash = SafeUtils.getPrincipalId(safeServer, safeKeyFile);
     }
   }
 
@@ -429,38 +428,39 @@ public class SdxExogeniClient {
     JSONObject paramsobj = new JSONObject();
     paramsobj.put("dest", params[1]);
     paramsobj.put("gateway", params[2]);
-    if (coreProperties.isSafeEnabled()) {
+    if (safeEnabled) {
       checkSafe();
-      paramsobj.put("customer", safeManager.getSafeKeyHash());
+      paramsobj.put("customer", safeKeyHash);
     } else {
-      paramsobj.put("customer", coreProperties.getSliceName());
+      paramsobj.put("customer", sliceName);
     }
-    String res = HttpUtil.postJSON(coreProperties.getServerUrl() + "sdx/notifyprefix", paramsobj);
+    String res = HttpUtil.postJSON(serverurl + "sdx/notifyprefix", paramsobj);
     JSONObject jsonRes = new JSONObject(res);
     if (!jsonRes.getBoolean("result")) {
       logger.warn(logPrefix + "Prefix not accepted (authorization failed)");
     } else {
-      if (coreProperties.isSafeEnabled()) {
+      if (safeEnabled) {
         //Make initRoute advertisement
         //dstip, path, targeas, length
         String[] safeparams = new String[4];
         safeparams[0] = String.format("ipv4\\\"%s\\\"", params[1]);
-        safeparams[1] = String.format("[%s]", safeManager.getSafeKeyHash());
+        safeparams[1] = String.format("[%s]", safeKeyHash);
         String sdxSafeKeyHash = jsonRes.getString("safeKeyHash");
         if (sdxSafeKeyHash.equals("")) {
           logger.warn("SDX safekeyhash empty");
         }
         safeparams[2] = sdxSafeKeyHash;
         safeparams[3] = String.valueOf(1);
-        String token = safeManager.post(SdxRoutingSlang.postInitRoute, safeparams);
+        String token = SafeUtils.getToken(SafeUtils.postSafeStatements(safeServer, SdxRoutingSlang
+          .postInitRoute, safeKeyHash, safeparams));
         RouteAdvertise advertise = new RouteAdvertise();
         advertise.safeToken = token;
-        advertise.advertiserPID = safeManager.getSafeKeyHash();
-        advertise.route.add(safeManager.getSafeKeyHash());
-        advertise.ownerPID = safeManager.getSafeKeyHash();
+        advertise.advertiserPID = safeKeyHash;
+        advertise.route.add(safeKeyHash);
+        advertise.ownerPID = safeKeyHash;
         advertise.destPrefix = params[1];
         //pass the token when making bgpAdvertise
-        advertiseBgp(coreProperties.getServerUrl(), advertise);
+        advertiseBgp(serverurl, advertise);
         logger.debug("posted initRoute statement");
       }
       logger.info(logPrefix + res);
@@ -468,7 +468,7 @@ public class SdxExogeniClient {
   }
 
   public void setServerUrl(String url) {
-    coreProperties.setServerUrl(url);
+    this.serverurl = url;
   }
 
   private String processStitchCmd(String[] params) {
@@ -488,7 +488,7 @@ public class SdxExogeniClient {
       //post stitch request to SAFE
       JSONObject jsonparams = new JSONObject();
       jsonparams.put("sdxsite", sdxsite);
-      jsonparams.put("cslice", coreProperties.getSliceName());
+      jsonparams.put("cslice", sliceName);
       jsonparams.put("creservid", nodeStitchingGUID);
       jsonparams.put("secret", secret);
       jsonparams.put("gateway", params[2]);
@@ -496,17 +496,17 @@ public class SdxExogeniClient {
       if (params.length > 4) {
         jsonparams.put("sdxnode", params[4]);
       }
-      if (coreProperties.isSafeEnabled()) {
+      if (safeEnabled) {
         checkSafe();
         jsonparams.put("ckeyhash", safeManager.getSafeKeyHash());
       } else {
-        jsonparams.put("ckeyhash", coreProperties.getSliceName());
+        jsonparams.put("ckeyhash", sliceName);
       }
       int interfaceNum = serverSlice.getPhysicalInterfaces(nodeName).size();
       logger.debug(String.format(logPrefix + "Number of dataplane interfaces before " +
         "stitching: %s", interfaceNum));
-      logger.debug(logPrefix + "Sending stitch request to Sdx server");
-      String r = HttpUtil.postJSON(coreProperties.getServerUrl() + "sdx/stitchrequest", jsonparams);
+      logger.debug(logPrefix  + "Sending stitch request to Sdx server");
+      String r = HttpUtil.postJSON(serverurl + "sdx/stitchrequest", jsonparams);
       logger.debug(r);
       JSONObject res = new JSONObject(r);
       logger.info(logPrefix + "Got Stitch Information From Server:\n " + res.toString());
@@ -516,7 +516,7 @@ public class SdxExogeniClient {
         String ip = params[2] + "/" + params[3].split("/")[1];
         logger.info(logPrefix + "set IP address of the stitch interface to " + ip);
         List<String> interfaces = serverSlice.getPhysicalInterfaces(nodeName);
-        while (interfaces.size() <= interfaceNum) {
+        while(interfaces.size() <= interfaceNum){
           sleep(5);
           interfaces = serverSlice.getPhysicalInterfaces(nodeName);
           logger.debug(String.format(logPrefix + "Number of dataplane " +
@@ -547,14 +547,6 @@ public class SdxExogeniClient {
     return null;
   }
 
-  void sleep(int sec) {
-    try {
-      Thread.sleep(sec * 1000);
-    } catch (Exception e) {
-
-    }
-  }
-
   private String processUnStitchCmd(String[] params) {
     if (serverSlice == null) {
       try {
@@ -568,16 +560,16 @@ public class SdxExogeniClient {
       String node0_s2_stitching_GUID = serverSlice.getStitchingGUID(node0_s2);
       logger.debug("node0_s2_stitching_GUID: " + node0_s2_stitching_GUID);
       JSONObject jsonparams = new JSONObject();
-      jsonparams.put("cslice", coreProperties.getSliceName());
+      jsonparams.put("cslice", sliceName);
       jsonparams.put("creservid", node0_s2_stitching_GUID);
-      if (coreProperties.isSafeEnabled()) {
+      if (safeEnabled) {
         checkSafe();
         jsonparams.put("ckeyhash", safeManager.getSafeKeyHash());
       } else {
-        jsonparams.put("ckeyhash", coreProperties.getSliceName());
+        jsonparams.put("ckeyhash", sliceName);
       }
       logger.debug("Sending unstitch request to Sdx server");
-      String r = HttpUtil.postJSON(coreProperties.getServerUrl() + "sdx/undostitch", jsonparams);
+      String r = HttpUtil.postJSON(serverurl + "sdx/undostitch", jsonparams);
       logger.debug(r);
       logger.info(logPrefix + "Unstitch result:\n " + r);
     } catch (Exception e) {

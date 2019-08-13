@@ -49,7 +49,7 @@ public class ExperimentBase {
   }
 
   public void addClient(String name, String managementIP, String dataplaneIP) {
-    if (!clients.containsKey(name)) {
+    if(!clients.containsKey(name)) {
       clients.put(name, new String[]{managementIP, dataplaneIP});
       Exec.sshExec(SliceProperties.userName, managementIP, Scripts.installIperf() +
           " pkill iperf",
@@ -173,7 +173,7 @@ public class ExperimentBase {
 
       tlist.add(new Thread(() -> ftpClientOut.add(Exec.sshExec(SliceProperties.userName, mip1,
         fetchFileCMD
-          (ftpuser, ftppw, dip2, file[2], times), sshkey))));
+        (ftpuser, ftppw, dip2, file[2], times), sshkey))));
 
       tlist.get(tlist.size() - 1).start();
     }

@@ -9,19 +9,21 @@ import exoplex.common.utils.ScpTo;
 import exoplex.sdx.slice.SliceManager;
 import exoplex.sdx.slice.SliceManagerFactory;
 import exoplex.sdx.slice.SliceProperties;
-import exoplex.sdx.core.CoreProperties;
+import exoplex.sdx.slice.exogeni.SliceCommon;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.renci.ahab.libndl.Slice;
 import org.renci.ahab.libndl.resources.request.ComputeNode;
 
 import java.io.BufferedReader;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Properties;
 
-public abstract class SliceBase extends CoreProperties {
+public abstract class SliceBase extends SliceCommon {
   private final static Logger logger = LogManager.getLogger(SliceBase.class);
 
 
@@ -34,9 +36,9 @@ public abstract class SliceBase extends CoreProperties {
   private Map<String, Session> sessions = new HashMap<>();
 
   public SliceBase(String configPath) throws SampleSlice.SliceBaseException {
-    super(configPath);
     try {
-      System.out.println("Reading coreProperties...");
+      System.out.println("Reading properties...");
+      readConfig(configPath);
       System.out.println("Making proxy...");
       System.out.println("Setting access context...");
     } catch (Exception e) {
@@ -45,17 +47,13 @@ public abstract class SliceBase extends CoreProperties {
   }
 
   public SliceBase(String configPath, String sliceName) throws SampleSlice.SliceBaseException {
-    super(configPath);
-    super.setSliceName(sliceName);
     try {
-      System.out.println("Reading coreProperties...");
+      System.out.println("Reading properties...");
+      readConfig(configPath);
       System.out.println("Making proxy...");
       System.out.println("Setting access context...");
-      thisSlice = sliceManagerFactory.create(sliceName, super.getExogeniKey(),
-        super.getExogeniKey(),
-        super.getExogeniSm(),
-        super.getSshKey()
-      );
+      thisSlice = sliceManagerFactory.create(sliceName, pemLocation, keyLocation, controllerUrl,
+        sshKey);
       thisSlice.loadSlice();
       for (String c : thisSlice.getComputeNodes()) {
         if (thisSlice.getManagementIP(c) == null) {
@@ -71,13 +69,7 @@ public abstract class SliceBase extends CoreProperties {
   public void createSlice() throws SampleSlice.SliceBaseException {
     try {
       System.out.println("Creating slice!!...");
-      thisSlice = sliceManagerFactory.create(
-        super.getSliceName(),
-        super.getExogeniKey(),
-        super.getExogeniKey(),
-        super.getExogeniSm(),
-        super.getSshKey()
-      );
+      thisSlice = sliceManagerFactory.create(sliceName, pemLocation, keyLocation, controllerUrl, sshKey);
       thisSlice.createSlice();
       // TODO Add the option to ignore this? idk
       try {
@@ -171,7 +163,7 @@ public abstract class SliceBase extends CoreProperties {
   public void sftpToNode(ComputeNode c, String path) throws SampleSlice.SliceBaseException {
     String[] pathParts = path.split("/");
     String dstPath = SliceProperties.homeDir + pathParts[pathParts.length - 1];
-    ScpTo.Scp(path, SliceProperties.userName, c.getManagementIP(), dstPath, super.getSshKey());
+    ScpTo.Scp(path, SliceProperties.userName, c.getManagementIP(), dstPath, sshKey);
   }
 
   public void releaseSshChannels() {
@@ -184,7 +176,44 @@ public abstract class SliceBase extends CoreProperties {
 
   protected abstract String sliceName();
 
+  private void readProperties(String configPath) throws IOException {
+    Properties prop = new Properties();
+    prop.load(new FileInputStream(configPath));
+    pemLocation = prop.getProperty("pemLocation");
+    sshKey = prop.getProperty("sshKey");
+    controllerUrl = prop.getProperty("controllerUrl");
+  }
 
+  private void waitTillActive() {
+    boolean sliceActive = false;
+
+    while (!sliceActive) {
+      thisSlice.refresh();
+      sliceActive = true;
+
+      System.out.println("Slice: " + thisSlice.getAllResources());
+      for (String c : thisSlice.getComputeNodes()) {
+        System.out.println("Resource: " + c + ", state: " + thisSlice.getState(c));
+        if (thisSlice.getState(c) != "Active" || thisSlice.getManagementIP(c) == null)
+          sliceActive = false;
+      }
+
+      for (String l : thisSlice.getBroadcastLinks()) {
+        System.out.println("Resource: " + l + ", state: " + thisSlice.getState(l));
+        if (thisSlice.getState(l) != "Active")
+          sliceActive = false;
+      }
+
+      System.out.println("");
+      sleep(10);
+    }
+
+    System.out.println("Done");
+    for (String n : thisSlice.getComputeNodes()) {
+      System.out.println("ComputeNode: " + n + ", Managment IP =  " + thisSlice.getManagementIP(n));
+      resourceIPs.put(n, thisSlice.getManagementIP(n));
+    }
+  }
 
   private Session makeSshSession(ComputeNode c) throws JSchException {
     String name = c.getName();
@@ -194,10 +223,10 @@ public abstract class SliceBase extends CoreProperties {
       System.out.println("Creating session for " + name + ": " + cnodeIp);
 
       JSch jsch = new JSch();
-      jsch.addIdentity(super.getSshKey());
+      jsch.addIdentity(sshKey);
       Session session = jsch.getSession(SliceProperties.userName, cnodeIp, 22);
 
-      java.util.Properties config = new java.util.Properties();
+      Properties config = new Properties();
       config.put("StrictHostKeyChecking", "no");
       session.setConfig(config);
 

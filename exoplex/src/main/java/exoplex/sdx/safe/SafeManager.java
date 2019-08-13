@@ -8,7 +8,6 @@ import exoplex.sdx.slice.SliceProperties;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import safe.SdxRoutingSlang;
-
 import java.util.List;
 
 public class SafeManager {
@@ -109,16 +108,8 @@ public class SafeManager {
   }
 
   public String post(String operation, String[] params) {
-    String res = null;
-    try {
-      res = SafeUtils.postSafeStatements(safeServer, operation, getSafeKeyHash(), params);
-      return SafeUtils.getToken(res);
-    } catch (Exception e) {
-      e.printStackTrace();
-      logger.warn(String.format("safeserver: %s method: %s principal: %s", safeServer,
-        operation, getSafeKeyHash()));
-      return res;
-    }
+    String res = SafeUtils.postSafeStatements(safeServer, operation, getSafeKeyHash(), params);
+    return SafeUtils.getToken(res);
   }
 
   public boolean authorizeBgpAdvertise(RouteAdvertise routeAdvertise) {
@@ -163,7 +154,7 @@ public class SafeManager {
     params[0] = srcIP;
     params[1] = destIP;
     String res = SafeUtils.postSafeStatements(safeServer, SdxRoutingSlang.postSdPolicySet,
-      getSafeKeyHash(), params);
+        getSafeKeyHash(), params);
     List<String> tokens = SafeUtils.getTokens(res);
     if (tokens.size() == 1) {
       return tokens.get(0);

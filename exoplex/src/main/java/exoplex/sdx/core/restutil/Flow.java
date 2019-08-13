@@ -7,7 +7,7 @@ public class Flow {
   public Flow() {
   }
 
-  public String toString() {
+  public String toString(){
     return String.format("src: %s dest: %s", src, dest);
   }
 }

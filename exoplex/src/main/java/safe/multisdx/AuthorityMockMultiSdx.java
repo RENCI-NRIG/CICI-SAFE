@@ -38,11 +38,12 @@ public class AuthorityMockMultiSdx extends Authority implements SdxRoutingSlang 
   public ArrayList<String> slices = new ArrayList<>();
 
   public AbstractTestSetting testSetting;
-  private ReentrantLock lock = new ReentrantLock();
 
   public AuthorityMockMultiSdx(String safeServer) {
     super(safeServer);
   }
+
+  private ReentrantLock lock = new ReentrantLock();
 
   @Inject
   public AuthorityMockMultiSdx(AbstractTestSetting testSetting) {

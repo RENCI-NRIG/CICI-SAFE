@@ -59,13 +59,13 @@ public abstract class AbstractTest {
     RestService.shutDownAllHttpServers();
   }
 
-  public void startClients() {
+  public void startClients(){
     for (String clientSlice : testSetting.clientSlices) {
       SdxExogeniClient sdxExogeniClient = injector.getProvider(SdxExogeniClient.class).get();
       sdxExogeniClient.config(clientSlice,
-        testSetting.clientIpMap.get(clientSlice),
-        testSetting.clientKeyMap.get(clientSlice),
-        testSetting.clientArgs
+          testSetting.clientIpMap.get(clientSlice),
+          testSetting.clientKeyMap.get(clientSlice),
+          testSetting.clientArgs
       );
       exogeniClients.put(clientSlice, sdxExogeniClient);
     }
@@ -161,7 +161,7 @@ public abstract class AbstractTest {
   }
 
   public void connectCustomerNetwork() {
-    if (!testSetting.explicitConnectionRequest) {
+    if(! testSetting.explicitConnectionRequest){
       return;
     }
     for (Integer[] pair : testSetting.clientConnectionPairs) {
@@ -276,10 +276,10 @@ public abstract class AbstractTest {
     logger.info("replay done");
   }
 
-  public void sleep(int seconds) {
-    try {
+  public void sleep(int seconds){
+    try{
       Thread.sleep(seconds * 1000);
-    } catch (Exception e) {
+    }catch (Exception e){
 
     }
   }

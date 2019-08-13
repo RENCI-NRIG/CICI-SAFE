@@ -33,64 +33,67 @@ public class CnertTestSlice extends SliceHelper {
 
 
   public void testBroSliceTwoPairs() {
-    IPPrefix = coreProperties.getIpPrefix();
-    String scriptsdir = coreProperties.getScriptsDir();
+    IPPrefix = conf.getString("config.ipprefix");
+    BRO = conf.getBoolean("config.bro");
+    String scriptsdir = conf.getString("config.scriptsdir");
     computeIP(IPPrefix);
     try {
-      String carrierName = coreProperties.getSliceName();
-      int routernum = coreProperties.getClientSites().size();
+      String carrierName = sliceName;
+      int routernum = conf.getInt("config.routernum");
       long bw = 1500000000;
+      if (conf.hasPath("config.bw")) {
+        bw = conf.getLong("config.bw");
+      }
       SliceManager carrier = createTestSliceWithTwoPairs(carrierName, routernum, bw);
-      String resource_dir = coreProperties.getResourceDir();
+      String resource_dir = conf.getString("config.resourcedir");
       //Slice carrier = createCarrierSliceWithCustomerNodes(carrierName, 4, 10, 1000000, 1);
       carrier.commitAndWait();
       carrier.refresh();
-      carrier.copyFile2Slice(PathUtil.joinFilePath(scriptsdir, "dpid.sh"), "~/dpid.sh", coreProperties.getSshKey());
+      carrier.copyFile2Slice(PathUtil.joinFilePath(scriptsdir, "dpid.sh"), "~/dpid.sh", sshKey);
       carrier.copyFile2Slice(PathUtil.joinFilePath(scriptsdir, "ovsbridge.sh"), "~/ovsbridge.sh",
-        coreProperties.getSshKey());
+        sshKey);
       //Make sure that plexus container is running
       //SDNControllerIP = "152.3.136.36";
-      if (!checkPlexus(carrier, coreProperties.getSdnControllerIp(), RoutingManager.plexusImage)) {
+      SDNControllerIP = carrier.getManagementIP("plexuscontroller");
+      if (!checkPlexus(carrier, SDNControllerIP, RoutingManager.plexusImage)) {
         System.exit(-1);
       }
-      System.out.println("Plexus Controler IP: " + coreProperties.getSdnControllerIp());
-      carrier.runCmdSlice("/bin/bash ~/ovsbridge.sh " + coreProperties.getSdnControllerIp() + ":6633",
-        coreProperties.getSshKey(),
-        "(^c\\d+)", true);
-      carrier.runCmdSlice(Scripts.installQuagga(), "(node\\d+)", coreProperties.getSshKey(), true);
-      carrier.runCmdSlice("sed -i -- 's/zebra=no/zebra=yes/g' /etc/quagga/daemons", coreProperties.getSshKey(), "(node\\d+)", true);
-      //carrier.runCmdSlice("sed -i -- 's/ospfd=no/ospfd=yes/g' /etc/quagga/daemons", coreProperties.getSshKey(),
+      System.out.println("Plexus Controler IP: " + SDNControllerIP);
+      carrier.runCmdSlice("/bin/bash ~/ovsbridge.sh " + SDNControllerIP + ":6633", sshKey, "(^c\\d+)", true);
+      carrier.runCmdSlice(Scripts.installQuagga(), "(node\\d+)", sshKey, true);
+      carrier.runCmdSlice("sed -i -- 's/zebra=no/zebra=yes/g' /etc/quagga/daemons", sshKey, "(node\\d+)", true);
+      //carrier.runCmdSlice("sed -i -- 's/ospfd=no/ospfd=yes/g' /etc/quagga/daemons", sshKey,
       // "(node\\d+)", true);
-      carrier.runCmdSlice("echo \"1\" > /proc/sys/net/ipv4/ip_forward", coreProperties.getSshKey(), "(node\\d+)", true);
+      carrier.runCmdSlice("echo \"1\" > /proc/sys/net/ipv4/ip_forward", sshKey, "(node\\d+)", true);
       try {
-        carrier.runCmdSlice("ifconfig eth1 192.168.10.2/24 up", coreProperties.getSshKey(), "(node0)", true);
-        carrier.runCmdSlice("ifconfig eth1 192.168.20.2/24 up", coreProperties.getSshKey(), "(node1)", true);
-        carrier.runCmdSlice("ifconfig eth1 192.168.30.2/24 up", coreProperties.getSshKey(), "(node2)", true);
-        carrier.runCmdSlice("ifconfig eth1 192.168.40.2/24 up", coreProperties.getSshKey(), "(node3)", true);
+        carrier.runCmdSlice("ifconfig eth1 192.168.10.2/24 up", sshKey, "(node0)", true);
+        carrier.runCmdSlice("ifconfig eth1 192.168.20.2/24 up", sshKey, "(node1)", true);
+        carrier.runCmdSlice("ifconfig eth1 192.168.30.2/24 up", sshKey, "(node2)", true);
+        carrier.runCmdSlice("ifconfig eth1 192.168.40.2/24 up", sshKey, "(node3)", true);
       } catch (Exception e) {
         e.printStackTrace();
       }
       carrier.runCmdSlice("echo \"ip route 192.168.1.1/16 192.168.10.1\" >>/etc/quagga/zebra" +
-        ".conf", coreProperties.getSshKey(), "(node0)", true);
+        ".conf", sshKey, "(node0)", true);
       carrier.runCmdSlice("echo \"ip route 192.168.1.1/16 192.168.20.1\" >>/etc/quagga/zebra" +
-        ".conf", coreProperties.getSshKey(), "(node1)", true);
+        ".conf", sshKey, "(node1)", true);
       carrier.runCmdSlice("echo \"ip route 192.168.1.1/16 192.168.30.1\" >>/etc/quagga/zebra" +
-        ".conf", coreProperties.getSshKey(), "(node2)", true);
+        ".conf", sshKey, "(node2)", true);
       carrier.runCmdSlice("echo \"ip route 192.168.1.1/16 192.168.40.1\" >>/etc/quagga/zebra" +
-        ".conf", coreProperties.getSshKey(), "(node3)", true);
-      carrier.runCmdSlice("/etc/init.d/quagga restart", coreProperties.getSshKey(), "(node\\d+)", true);
+        ".conf", sshKey, "(node3)", true);
+      carrier.runCmdSlice("/etc/init.d/quagga restart", sshKey, "(node\\d+)", true);
 
-      if (coreProperties.isBroEnabled()) {
+      if (BRO) {
         configBroNodes(carrier, "(bro\\d+_c\\d+)");
       }
 
       configFTPService(carrier, "(node\\d+)", "ftpuser", "ftp");
       carrier.copyFile2Slice(PathUtil.joinFilePath(resource_dir, "bro/evil.txt"),
-        "/home/ftpuser/evil.txt", coreProperties.getSshKey(), "(node\\d+)");
+        "/home/ftpuser/evil.txt", sshKey, "(node\\d+)");
       carrier.copyFile2Slice(PathUtil.joinFilePath(resource_dir, "scripts/getnfiles.sh"),
-        "~/getnfiles.sh", coreProperties.getSshKey(), "(node\\d+)");
+        "~/getnfiles.sh", sshKey, "(node\\d+)");
       carrier.copyFile2Slice(PathUtil.joinFilePath(resource_dir, "scripts/getfiles.sh"),
-        "~/getfiles.sh", coreProperties.getSshKey(), "(node\\d+)");
+        "~/getfiles.sh", sshKey, "(node\\d+)");
       //}
     } catch (Exception e) {
       e.printStackTrace();
@@ -98,108 +101,114 @@ public class CnertTestSlice extends SliceHelper {
   }
 
   public void testBroSliceExoGENI() {
-    IPPrefix = coreProperties.getIpPrefix();
+    IPPrefix = conf.getString("config.ipprefix");
+    BRO = conf.getBoolean("config.bro");
+    String scriptsdir = conf.getString("config.scriptsdir");
     computeIP(IPPrefix);
     try {
-      String carrierName = coreProperties.getSliceName();
-      int routernum = coreProperties.getClientSites().size();
-      String resource_dir = coreProperties.getResourceDir();
+      String carrierName = sliceName;
+      int routernum = conf.getInt("config.routernum");
+      long bw = 10000000;
+      if (conf.hasPath("config.bw")) {
+        bw = conf.getLong("config.bw");
+      }
+      String resource_dir = conf.getString("config.resourcedir");
       ////Slice carrier = createCarrierSliceWithCustomerNodes(carrierName, 4, 10, 1000000, 1);
       //commitAndWait(carrier);
       //carrier.refresh();
-      //carrier.copyFile2Slice(scriptsdir + "dpid.sh", "~/dpid.sh", coreProperties.getSshKey());
-      //carrier.copyFile2Slice(scriptsdir + "ovsbridge.sh", "~/ovsbridge.sh", coreProperties.getSshKey());
+      //carrier.copyFile2Slice(scriptsdir + "dpid.sh", "~/dpid.sh", sshKey);
+      //carrier.copyFile2Slice(scriptsdir + "ovsbridge.sh", "~/ovsbridge.sh", sshKey);
       ////Make sure that plexus container is running
       ////SDNControllerIP = "152.3.136.36";
       ////if (!checkPlexus(SDNControllerIP)) {
       ////  System.exit(-1);
       ////}
-      SliceManager carrier = sliceManagerFactory.create(coreProperties.getSliceName(),
-        coreProperties.getExogeniKey(),
-        coreProperties.getExogeniKey(),
-        coreProperties.getExogeniSm(),
-        coreProperties.getSshKey());
+      SliceManager carrier = sliceManagerFactory.create(sliceName, pemLocation, keyLocation,
+        controllerUrl,
+        sshKey);
       carrier.loadSlice();
-      System.out.println("Plexus Controler IP: " + coreProperties.getSdnControllerIp());
-      carrier.runCmdSlice("/bin/bash ~/ovsbridge.sh " + coreProperties.getSdnControllerIp() + ":6633",
-        coreProperties.getSshKey(),
-        "(^c\\d+)",
+      SDNControllerIP = carrier.getManagementIP("plexuscontroller");
+      System.out.println("Plexus Controler IP: " + SDNControllerIP);
+      carrier.runCmdSlice("/bin/bash ~/ovsbridge.sh " + SDNControllerIP + ":6633", sshKey, "(^c\\d+)",
         true);
-      carrier.runCmdSlice(Scripts.installQuagga(), coreProperties.getSshKey(), "(node\\d+)", true);
-      carrier.runCmdSlice("sed -i -- 's/zebra=no/zebra=yes/g' /etc/quagga/daemons", coreProperties.getSshKey(), "(node\\d+)", true);
-      //carrier.runCmdSlice("sed -i -- 's/ospfd=no/ospfd=yes/g' /etc/quagga/daemons", coreProperties.getSshKey(),
+      carrier.runCmdSlice(Scripts.installQuagga(), sshKey, "(node\\d+)", true);
+      carrier.runCmdSlice("sed -i -- 's/zebra=no/zebra=yes/g' /etc/quagga/daemons", sshKey, "(node\\d+)", true);
+      //carrier.runCmdSlice("sed -i -- 's/ospfd=no/ospfd=yes/g' /etc/quagga/daemons", sshKey,
       // "(node\\d+)", true);
-      carrier.runCmdSlice("echo \"1\" > /proc/sys/net/ipv4/ip_forward", coreProperties.getSshKey(), "(node\\d+)",
+      carrier.runCmdSlice("echo \"1\" > /proc/sys/net/ipv4/ip_forward", sshKey, "(node\\d+)",
         true);
       try {
-        carrier.runCmdSlice("ifconfig eth1 192.168.10.2/24 up", coreProperties.getSshKey(), "(node0)", true);
-        carrier.runCmdSlice("ifconfig eth1 192.168.20.2/24 up", coreProperties.getSshKey(), "(node" + (routernum - 1)
+        carrier.runCmdSlice("ifconfig eth1 192.168.10.2/24 up", sshKey, "(node0)", true);
+        carrier.runCmdSlice("ifconfig eth1 192.168.20.2/24 up", sshKey, "(node" + (routernum - 1)
           + ")", true);
       } catch (Exception e) {
         e.printStackTrace();
       }
-      carrier.runCmdSlice("echo \"ip route 192.168.1.1/16 192.168.10.1\" >>/etc/quagga/zebra.conf", coreProperties.getSshKey(), "(node0)", true);
-      carrier.runCmdSlice("echo \"ip route 192.168.1.1/16 192.168.20.1\" >>/etc/quagga/zebra.conf", coreProperties.getSshKey(), "(node1)", true);
-      carrier.runCmdSlice("/etc/init.d/quagga restart", coreProperties.getSshKey(), "(node\\d+)", true);
+      carrier.runCmdSlice("echo \"ip route 192.168.1.1/16 192.168.10.1\" >>/etc/quagga/zebra.conf", sshKey, "(node0)", true);
+      carrier.runCmdSlice("echo \"ip route 192.168.1.1/16 192.168.20.1\" >>/etc/quagga/zebra.conf", sshKey, "(node1)", true);
+      carrier.runCmdSlice("/etc/init.d/quagga restart", sshKey, "(node\\d+)", true);
 
-      if (coreProperties.isBroEnabled()) {
+      if (BRO) {
         configBroNodes(carrier, "(bro\\d+_c\\d+)");
       }
 
-      carrier.runCmdSlice("mkdir /home/ftp", coreProperties.getSshKey(), "(node\\d+)", true);
+      carrier.runCmdSlice("mkdir /home/ftp", sshKey, "(node\\d+)", true);
       carrier.copyFile2Slice(PathUtil.joinFilePath(resource_dir, "bro/evil.txt"),
-        "/home/ftp/evil.txt", coreProperties.getSshKey(), "(node\\d+)");
+        "/home/ftp/evil.txt", sshKey, "(node\\d+)");
       carrier.copyFile2Slice(PathUtil.joinFilePath(resource_dir, "scripts/getonefile.sh"),
-        "~/getonefile.sh", coreProperties.getSshKey(), "(node\\d+)");
+        "~/getonefile.sh", sshKey, "(node\\d+)");
       carrier.copyFile2Slice(PathUtil.joinFilePath(resource_dir, "scripts/getfiles.sh"),
-        "~/getfiles.sh", coreProperties.getSshKey(), "(node\\d+)");
+        "~/getfiles.sh", sshKey, "(node\\d+)");
     } catch (Exception e) {
       e.printStackTrace();
     }
   }
 
   public void testSliceDynamicLinks() {
-    IPPrefix = coreProperties.getIpPrefix();
-    String scriptsdir = coreProperties.getScriptsDir();
+    IPPrefix = conf.getString("config.ipprefix");
+    BRO = conf.getBoolean("config.bro");
+    String scriptsdir = conf.getString("config.scriptsdir");
     computeIP(IPPrefix);
     try {
-      String carrierName = coreProperties.getSliceName();
-      int routernum = coreProperties.getClientSites().size();
+      String carrierName = sliceName;
+      int routernum = conf.getInt("config.routernum");
       long bw = 10000000;
+      if (conf.hasPath("config.bw")) {
+        bw = conf.getLong("config.bw");
+      }
       SliceManager carrier = createTestSliceWithDynamicLinks(carrierName, routernum, bw);
+      String resource_dir = conf.getString("config.resourcedir");
       //Slice carrier = createCarrierSliceWithCustomerNodes(carrierName, 4, 10, 1000000, 1);
       carrier.commitAndWait();
       carrier.refresh();
-      carrier.copyFile2Slice(PathUtil.joinFilePath(scriptsdir, "dpid.sh"), "~/dpid.sh", coreProperties.getSshKey());
+      carrier.copyFile2Slice(PathUtil.joinFilePath(scriptsdir, "dpid.sh"), "~/dpid.sh", sshKey);
       carrier.copyFile2Slice(PathUtil.joinFilePath(scriptsdir, "ovsbridge.sh"), "~/ovsbridge.sh",
-        coreProperties.getSshKey());
+        sshKey);
       //Make sure that plexus container is running
-      coreProperties.setSdnControllerIp(carrier.getManagementIP("plexuscontroller"));
+      SDNControllerIP = carrier.getManagementIP("plexuscontroller");
       //SDNControllerIP = "152.3.136.36";
       //if (!checkPlexus(SDNControllerIP)) {
       //  System.exit(-1);
       //}
-      System.out.println("Plexus Controler IP: " + coreProperties.getSdnControllerIp());
-      carrier.runCmdSlice("/bin/bash ~/ovsbridge.sh " + coreProperties.getSdnControllerIp() + ":6633",
-        coreProperties.getSshKey(),
-        "(c\\d+)", true);
-      carrier.runCmdSlice(Scripts.installQuagga(), coreProperties.getSshKey(), "(node\\d+)", true);
-      carrier.runCmdSlice("sed -i -- 's/zebra=no/zebra=yes/g' /etc/quagga/daemons", coreProperties.getSshKey(), "(node\\d+)", true);
-      //carrier.runCmdSlice("sed -i -- 's/ospfd=no/ospfd=yes/g' /etc/quagga/daemons", coreProperties.getSshKey(),
+      System.out.println("Plexus Controler IP: " + SDNControllerIP);
+      carrier.runCmdSlice("/bin/bash ~/ovsbridge.sh " + SDNControllerIP + ":6633", sshKey, "(c\\d+)", true);
+      carrier.runCmdSlice(Scripts.installQuagga(), sshKey, "(node\\d+)", true);
+      carrier.runCmdSlice("sed -i -- 's/zebra=no/zebra=yes/g' /etc/quagga/daemons", sshKey, "(node\\d+)", true);
+      //carrier.runCmdSlice("sed -i -- 's/ospfd=no/ospfd=yes/g' /etc/quagga/daemons", sshKey,
       // "(node\\d+)", true);
-      carrier.runCmdSlice("echo \"1\" > /proc/sys/net/ipv4/ip_forward", coreProperties.getSshKey(), "(node\\d+)", true);
+      carrier.runCmdSlice("echo \"1\" > /proc/sys/net/ipv4/ip_forward", sshKey, "(node\\d+)", true);
       try {
-        carrier.runCmdSlice("ifconfig eth1 192.168.10.2/24 up", coreProperties.getSshKey(), "(node0)", true);
+        carrier.runCmdSlice("ifconfig eth1 192.168.10.2/24 up", sshKey, "(node0)", true);
         carrier.runCmdSlice("echo \"ip route 192.168.1.1/16 192.168.10.1\" >>/etc/quagga/zebra" +
-          ".conf", coreProperties.getSshKey(), "(node0)", true);
+          ".conf", sshKey, "(node0)", true);
         carrier.runCmdSlice("echo \"ip route 192.168.1.1/16 192.168.20.1\" >>/etc/quagga/zebra" +
-          ".conf", coreProperties.getSshKey(), "(node1)", true);
+          ".conf", sshKey, "(node1)", true);
         carrier.runCmdSlice("echo \"ip route 192.168.1.1/16 192.168.30.1\" >>/etc/quagga/zebra" +
-          ".conf", coreProperties.getSshKey(), "(node2)", true);
+          ".conf", sshKey, "(node2)", true);
       } catch (Exception e) {
         e.printStackTrace();
       }
-      carrier.runCmdSlice("/etc/init.d/quagga restart", coreProperties.getSshKey(), "(node\\d+)", true);
+      carrier.runCmdSlice("/etc/init.d/quagga restart", sshKey, "(node\\d+)", true);
 
     } catch (Exception e) {
       e.printStackTrace();
@@ -207,54 +216,56 @@ public class CnertTestSlice extends SliceHelper {
   }
 
   public void testBroSliceChameleon() {
-    IPPrefix = coreProperties.getIpPrefix();
-    String scriptsdir = coreProperties.getScriptsDir();
+    IPPrefix = conf.getString("config.ipprefix");
+    BRO = conf.getBoolean("config.bro");
+    String scriptsdir = conf.getString("config.scriptsdir");
     computeIP(IPPrefix);
     try {
-      String carrierName = coreProperties.getSliceName();
-      int routernum = coreProperties.getClientSites().size();
+      String carrierName = sliceName;
+      int routernum = conf.getInt("config.routernum");
       long bw = 10000000;
+      if (conf.hasPath("config.bw")) {
+        bw = conf.getLong("config.bw");
+      }
       SliceManager carrier = createTestSliceWithBroAndChameleon(carrierName, routernum, bw);
-      String resource_dir = coreProperties.getResourceDir();
+      String resource_dir = conf.getString("config.resourcedir");
       //Slice carrier = createCarrierSliceWithCustomerNodes(carrierName, 4, 10, 1000000, 1);
       carrier.commitAndWait(1);
       carrier.refresh();
-      carrier.copyFile2Slice(PathUtil.joinFilePath(scriptsdir, "dpid.sh"), "~/dpid.sh", coreProperties.getSshKey());
+      carrier.copyFile2Slice(PathUtil.joinFilePath(scriptsdir, "dpid.sh"), "~/dpid.sh", sshKey);
       carrier.copyFile2Slice(PathUtil.joinFilePath(scriptsdir, "ovsbridge.sh"), "~/ovsbridge.sh",
-        coreProperties.getSshKey());
-      carrier.runCmdSlice("mkdir /home/ftp", coreProperties.getSshKey(), "(node\\d+)", true);
+        sshKey);
+      carrier.runCmdSlice("mkdir /home/ftp", sshKey, "(node\\d+)", true);
       carrier.copyFile2Slice(PathUtil.joinFilePath(resource_dir, "bro/evil.txt"),
-        "/home/ftp/evil.txt", coreProperties.getSshKey(), "(node\\d+)");
+        "/home/ftp/evil.txt", sshKey, "(node\\d+)");
       carrier.copyFile2Slice(PathUtil.joinFilePath(resource_dir, "scripts/getonefile.sh"),
-        "~/getonefile.sh", coreProperties.getSshKey(), "(node\\d+)");
+        "~/getonefile.sh", sshKey, "(node\\d+)");
       carrier.copyFile2Slice(PathUtil.joinFilePath(resource_dir, "scripts/getfiles.sh"),
-        "~/getfiles.sh", coreProperties.getSshKey(), "(node\\d+)");
+        "~/getfiles.sh", sshKey, "(node\\d+)");
       //Make sure that plexus container is running
-      coreProperties.setSdnControllerIp(carrier.getManagementIP("plexuscontroller"));
+      SDNControllerIP = carrier.getManagementIP("plexuscontroller");
       //SDNControllerIP = "152.3.136.36";
       //if (!checkPlexus(SDNControllerIP)) {
       //  System.exit(-1);
       //}
-      System.out.println("Plexus Controler IP: " + coreProperties.getSdnControllerIp());
-      carrier.runCmdSlice("sudo /bin/bash ~/ovsbridge.sh " + coreProperties.getSdnControllerIp() + ":6633",
-        coreProperties
-          .getSshKey(),
+      System.out.println("Plexus Controler IP: " + SDNControllerIP);
+      carrier.runCmdSlice("sudo /bin/bash ~/ovsbridge.sh " + SDNControllerIP + ":6633", sshKey,
         "(c\\d+)", true);
-      carrier.runCmdSlice(Scripts.installQuagga(), coreProperties.getSshKey(), "(node\\d+)", true);
-      carrier.runCmdSlice("sed -i -- 's/zebra=no/zebra=yes/g' /etc/quagga/daemons", coreProperties.getSshKey(), "(node\\d+)", true);
-      //carrier.runCmdSlice("sed -i -- 's/ospfd=no/ospfd=yes/g' /etc/quagga/daemons", coreProperties.getSshKey(),
+      carrier.runCmdSlice(Scripts.installQuagga(), sshKey, "(node\\d+)", true);
+      carrier.runCmdSlice("sed -i -- 's/zebra=no/zebra=yes/g' /etc/quagga/daemons", sshKey, "(node\\d+)", true);
+      //carrier.runCmdSlice("sed -i -- 's/ospfd=no/ospfd=yes/g' /etc/quagga/daemons", sshKey,
       // "(node\\d+)", true);
-      carrier.runCmdSlice("echo \"1\" > /proc/sys/net/ipv4/ip_forward", coreProperties.getSshKey(), "(node\\d+)", true);
+      carrier.runCmdSlice("echo \"1\" > /proc/sys/net/ipv4/ip_forward", sshKey, "(node\\d+)", true);
       try {
-        carrier.runCmdSlice("ifconfig eth1 192.168.10.2/24 up", coreProperties.getSshKey(), "(node0)", true);
+        carrier.runCmdSlice("ifconfig eth1 192.168.10.2/24 up", sshKey, "(node0)", true);
         carrier.runCmdSlice("echo \"ip route 10.32.90.1/24 192.168.10.1\" >>/etc/quagga/zebra" +
-          ".conf", coreProperties.getSshKey(), "(node0)", true);
+          ".conf", sshKey, "(node0)", true);
       } catch (Exception e) {
         e.printStackTrace();
       }
-      carrier.runCmdSlice("/etc/init.d/quagga restart", coreProperties.getSshKey(), "(node\\d+)", true);
+      carrier.runCmdSlice("/etc/init.d/quagga restart", sshKey, "(node\\d+)", true);
 
-      if (coreProperties.isBroEnabled()) {
+      if (BRO) {
         System.out.println("config bro");
         configBroNodes(carrier, "(bro\\d+_c\\d+)");
       }
@@ -277,26 +288,26 @@ public class CnertTestSlice extends SliceHelper {
     String scripts = Scripts.installVsftpd() + Scripts.installIperf();
 
     String nodeName = s.addComputeNode("node0", nodeImageURL, nodeImageHash, nodeImageShortName,
-      nodeNodeType, coreProperties.getClientSites().get(0), scripts);
+      nodeNodeType, clientSites.get(0), scripts);
     String netName = s.addBroadcastLink("stitch_c0_10", cnodebw);
     String interfaceName = s.stitchNetToNode(netName, nodeName, "192.168.10.2", "255.255.255.0");
     s.stitchNetToNode(netName, "c0");
 
     String cnode1 = s.addComputeNode("node1", nodeImageURL, nodeImageHash, nodeImageShortName,
-      nodeNodeType, coreProperties.getClientSites().get(0), scripts);
+      nodeNodeType, clientSites.get(0), scripts);
     String net1 = s.addBroadcastLink("stitch_c0_20", cnodebw);
     s.stitchNetToNode(net1, cnode1, "192.168.20.2", "255.255.255.0");
     s.stitchNetToNode(net1, "c0");
 
 
     String cnode2 = s.addComputeNode("node2", nodeImageURL, nodeImageHash, nodeImageShortName,
-      nodeNodeType, coreProperties.getClientSites().get(1), scripts);
+      nodeNodeType, clientSites.get(1), scripts);
     String net2 = s.addBroadcastLink("stitch_c2_30", cnodebw);
     s.stitchNetToNode(net2, cnode2, "192.168.30.2", "255.255.255.0");
     s.stitchNetToNode(net2, "c" + (num - 1));
 
     String cnode3 = s.addComputeNode("node3", nodeImageURL, nodeImageHash, nodeImageShortName,
-      nodeNodeType, coreProperties.getClientSites().get(1), scripts);
+      nodeNodeType, clientSites.get(1), scripts);
     String net3 = s.addBroadcastLink("stitch_c2_40", cnodebw);
     s.stitchNetToNode(net3, cnode3, "192.168.40.2", "255.255.255.0");
     s.stitchNetToNode(net3, c3);
@@ -317,19 +328,19 @@ public class CnertTestSlice extends SliceHelper {
       Scripts.getCustomerScript() + Scripts.installVsftpd() + Scripts.installIperf();
 
     String nodeName = s.addComputeNode("node0", nodeImageURL, nodeImageHash, nodeImageShortName,
-      nodeNodeType, coreProperties.getClientSites().get(0), scripts);
+      nodeNodeType, clientSites.get(0), scripts);
     String netName = s.addBroadcastLink("stitch_c0_10", bw);
     String interfaceName = s.stitchNetToNode(netName, nodeName, "192.168.10.2", "255.255.255.0");
     s.stitchNetToNode(netName, c0);
 
     String cnode1 = s.addComputeNode("node1", nodeImageURL, nodeImageHash, nodeImageShortName,
-      nodeNodeType, coreProperties.getClientSites().get(1), scripts);
+      nodeNodeType, clientSites.get(1), scripts);
     String net1 = s.addBroadcastLink("stitch_c0_20", bw);
     s.stitchNetToNode(net1, cnode1, "192.168.20.2", "255.255.255.0");
     s.stitchNetToNode(net1, c1);
 
     String cnode2 = s.addComputeNode("node2", nodeImageURL, nodeImageHash, nodeImageShortName,
-      nodeNodeType, coreProperties.getClientSites().get(2), scripts);
+      nodeNodeType, clientSites.get(2), scripts);
     String net2 = s.addBroadcastLink("stitch_c2_30", bw);
     s.stitchNetToNode(net2, cnode2, "192.168.30.2", "255.255.255.0");
     s.stitchNetToNode(net2, c2);
@@ -355,7 +366,7 @@ public class CnertTestSlice extends SliceHelper {
     String c3 = "c" + (num - 1);
 
     String nodeName = s.addComputeNode("node0", nodeImageURL, nodeImageHash, nodeImageShortName,
-      nodeNodeType, coreProperties.getClientSites().get(0), scripts);
+      nodeNodeType, clientSites.get(0), scripts);
     String netName = s.addBroadcastLink("stitch_c0_10", bw);
     s.stitchNetToNode(netName, nodeName, "192.168.10.2", "255.255.255.0");
     s.stitchNetToNode(netName, c0);
@@ -376,8 +387,7 @@ public class CnertTestSlice extends SliceHelper {
 
     String nodeName1 = "node" + (num - 1);
     String stitchName = "stitch_c" + (num - 1) + "_20";
-    String site = coreProperties.getClientSites().get((num - 1) % coreProperties.getClientSites()
-      .size());
+    String site = clientSites.get((num - 1) % clientSites.size());
     s.addComputeNode(nodeName1, nodeImageURL, nodeImageHash, nodeImageShortName,
       nodeNodeType, site, scripts);
     s.addBroadcastLink(stitchName, bw);
@@ -397,7 +407,7 @@ public class CnertTestSlice extends SliceHelper {
     String c0 = "c0";
 
     String nodeName = s.addComputeNode("node0", nodeImageURL, nodeImageHash, nodeImageShortName,
-      nodeNodeType, coreProperties.getClientSites().get(0), scripts);
+      nodeNodeType, clientSites.get(0), scripts);
     String netName = s.addBroadcastLink("stitch_c0_10", bw);
     s.stitchNetToNode(netName, nodeName, "192.168.10.2", "255.255.255.0");
     s.stitchNetToNode(netName, c0);
@@ -424,11 +434,8 @@ public class CnertTestSlice extends SliceHelper {
                                                           long bw, int numstitches) {//,String stitchsubnet="", String slicesubnet="")
     System.out.println("ndllib TestDriver: START");
 
-    SliceManager s = sliceManagerFactory.create(sliceName,
-      coreProperties.getExogeniKey(),
-      coreProperties.getExogeniKey(),
-      coreProperties.getExogeniSm(),
-      coreProperties.getSshKey());
+    SliceManager s = sliceManagerFactory.create(sliceName, pemLocation, keyLocation, controllerUrl,
+      sshKey);
 
     String nodeImageShortName = "Ubuntu 14.04";
     String nodeImageURL = "http://geni-orca.renci.org/owl/9dfe179d-3736-41bf-8084-f0cd4a520c2f#Ubuntu+14.04";//http://geni-images.renci.org/images/standard/ubuntu/ub1304-ovs-opendaylight-v1.0.0.xml
@@ -445,8 +452,7 @@ public class CnertTestSlice extends SliceHelper {
 
       String node0 = s.addComputeNode(((i == 0 || i == (num - 1)) ? "node" : "c") + String
           .valueOf(i), nodeImageURL, nodeImageHash, nodeImageShortName,
-        nodeNodeType, coreProperties.getClientSites().get(i % coreProperties.getClientSites().size()),
-        nodePostBootScript);
+        nodeNodeType, clientSites.get(i % clientSites.size()), nodePostBootScript);
 
       nodelist.add(node0);
 
@@ -476,7 +482,7 @@ public class CnertTestSlice extends SliceHelper {
           "255.255.255.0");
       }
     }
-    s.addPlexusController(coreProperties.getSdnSite(), "plexuscontroller");
+    s.addPlexusController(controllerSite, "plexuscontroller");
     try {
       s.commit();
     } catch (XMLRPCTransportException e) {

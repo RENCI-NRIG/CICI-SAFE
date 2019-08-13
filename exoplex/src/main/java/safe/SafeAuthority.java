@@ -44,12 +44,12 @@ public class SafeAuthority implements SdxRoutingSlang, SafeLang {
   String[] slices;
 
   public SafeAuthority(
-    String safeServer,
-    String sdxSlice,
-    String sdxKey,
-    List<String> clientSlices,
-    HashMap<String, String> clientKeyMap,
-    HashMap<String, String> clientIpMap
+      String safeServer,
+      String sdxSlice,
+      String sdxKey,
+      List<String> clientSlices,
+      HashMap<String, String> clientKeyMap,
+      HashMap<String, String> clientIpMap
   ) {
     this.safeServer = safeServer;
     this.sdxSlice = sdxSlice;
@@ -89,10 +89,10 @@ public class SafeAuthority implements SdxRoutingSlang, SafeLang {
     String paMemberSetRef = safePost(postMemberSet, "key_p2");
     String projectId = principalMap.get("key_p2") + ":project1";
     String projectToken = safePost(postProjectSet, "key_p2",
-      new String[]{principalMap.get("key_p4"), projectId,
-        paMemberSetRef});
+        new String[]{principalMap.get("key_p4"), projectId,
+            paMemberSetRef});
     List<String> piProjectTokens = SafeUtils.getTokens(passDelegation("key_p4", projectToken,
-      projectId));
+        projectId));
 
     envs.clear();
     //Authorize that PI can create slice
@@ -107,9 +107,9 @@ public class SafeAuthority implements SdxRoutingSlang, SafeLang {
       String userKeyFile = sliceKeyMap.get(slice);
       String userKey = principalMap.get(sliceKeyMap.get(slice));
       String pmToken = safePost(postProjectMembership, "key_p4", new String[]{userKey,
-        projectId, "true"});
+          projectId, "true"});
       List<String> tokens = SafeUtils.getTokens(passDelegation(sliceKeyMap.get(slice), pmToken,
-        projectId));
+          projectId));
       envs.clear();
       envs.put(subject, userKey);
       envs.put(bearerRef, tokens.get(1));
@@ -138,7 +138,7 @@ public class SafeAuthority implements SdxRoutingSlang, SafeLang {
     //UserAcl
     for (String slice : clientSlices) {
       safePost(postUserAclEntry, "sdx",
-        new String[]{principalMap.get(sliceKeyMap.get(slice))});
+          new String[]{principalMap.get(sliceKeyMap.get(slice))});
     }
 
     //post authorize policy
@@ -147,7 +147,7 @@ public class SafeAuthority implements SdxRoutingSlang, SafeLang {
     //authorizeStitchByUid
     for (String slice : clientSlices) {
       authorize(authorizeStitchByUID, "sdx",
-        new String[]{principalMap.get(sliceKeyMap.get(slice)), sliceScid.get(slice)});
+          new String[]{principalMap.get(sliceKeyMap.get(slice)), sliceScid.get(slice)});
     }
 
     //MakeIp Delegation
@@ -157,7 +157,7 @@ public class SafeAuthority implements SdxRoutingSlang, SafeLang {
       String user = sliceKeyMap.get(slice);
       String userKey = principalMap.get(sliceKeyMap.get(slice));
       String ipToken = safePost(postIPAllocate, "rpkiroot", new String[]{userKey, ip,
-        "192.1.1.1/24"});
+          "192.1.1.1/24"});
       safePost(postDlgToken, user, new String[]{ipToken, ip});
       assert authorize(authorizeOwnPrefix, "sdx", new String[]{userKey, ip});
     }
@@ -240,14 +240,14 @@ public class SafeAuthority implements SdxRoutingSlang, SafeLang {
   private void initIdSetSubjectSet(String key) {
     SafeUtils.postSafeStatements(safeServer, postIdSet, key, new String[]{key});
     String token = SafeUtils.getToken(SafeUtils.postSafeStatements(safeServer, postSubjectSet, key, new
-      String[]{}));
+        String[]{}));
     subjectSet.put(key, token);
   }
 
   private void checkAuthorization() {
     for (int i = 1; i < 6; i++) {
       assert authorize(authorizeStitchByUID, "sdx",
-        new String[]{principalMap.get(sliceKeyMap.get(slices[i])), sliceScid.get(slices[i])});
+          new String[]{principalMap.get(sliceKeyMap.get(slices[i])), sliceScid.get(slices[i])});
     }
     for (int i = 1; i < 6; i++) {
       String slice = slices[i];
@@ -272,7 +272,7 @@ public class SafeAuthority implements SdxRoutingSlang, SafeLang {
   String safePost(String method, String principal, String[] others) {
     String p = principalMap.get(principal);
     return SafeUtils.getToken(
-      SafeUtils.postSafeStatements(safeServer, method, p, others)
+        SafeUtils.postSafeStatements(safeServer, method, p, others)
     );
   }
 
@@ -282,7 +282,7 @@ public class SafeAuthority implements SdxRoutingSlang, SafeLang {
   }
 
   boolean authorize(String method, String principal, String[] otherValues, HashMap<String,
-    String> envs) {
+      String> envs) {
     String p = principalMap.get(principal);
     return SafeUtils.authorize(safeServer, method, p, otherValues, envs);
   }
@@ -291,14 +291,14 @@ public class SafeAuthority implements SdxRoutingSlang, SafeLang {
     String fp = principalMap.get(from);
     String tp = principalMap.get(to);
     return SafeUtils.getToken(SafeUtils.postSafeStatements(safeServer, method, fp, new
-      String[]{tp}));
+        String[]{tp}));
   }
 
   String simpleEndorseMent(String method, String from, String to, String scid) {
     String fp = principalMap.get(from);
     String tp = principalMap.get(to);
     String token = SafeUtils.getToken(SafeUtils.postSafeStatements(safeServer, method, fp, new
-      String[]{tp}));
+        String[]{tp}));
     return SafeUtils.getToken(passDelegation(to, token, scid));
   }
 
