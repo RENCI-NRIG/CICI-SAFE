@@ -47,9 +47,8 @@ public class AuthorityMockSdx extends Authority implements SdxRoutingSlang {
       ctx.updateLoggers();
       AuthorityMockSdx authorityMock = new AuthorityMockSdx(defaultSafeServer);
       authorityMock.makeSafePreparation();
-    }
-    else if(args.length>=4) {
-      if(args[0].equals("auth")){
+    } else if (args.length >= 4) {
+      if (args[0].equals("auth")) {
         String userKey = args[1];
         String slice = args[2];
         String ip = args[3];
@@ -59,7 +58,7 @@ public class AuthorityMockSdx extends Authority implements SdxRoutingSlang {
           userKey, slice, ip, tag, ss));
         AuthorityMockSdx mock = new AuthorityMockSdx(ss);
         mock.authorityDelegation(userKey, slice, ip, tag);
-      }else if(args[0].equals("update")) {
+      } else if (args[0].equals("update")) {
         String userKey = args[1];
         String method = args[2];
         String token = args[3];
@@ -67,13 +66,13 @@ public class AuthorityMockSdx extends Authority implements SdxRoutingSlang {
         String ss = args[5] + ":7777";
         AuthorityMockSdx mock = new AuthorityMockSdx(ss);
         mock.updateTokens(userKey, method, token, name);
-      }else if(args[0].equals("init")){
+      } else if (args[0].equals("init")) {
         String userKey = args[1];
         String tagAcl = args[2];
         String ss = args[3] + ":7777";
         AuthorityMockSdx mock = new AuthorityMockSdx(ss);
         mock.initUser(userKey, tagAcl);
-      }else {
+      } else {
         String userKeyFile = args[0];
         String slice = args[1];
         String ip = args[2];
@@ -87,7 +86,7 @@ public class AuthorityMockSdx extends Authority implements SdxRoutingSlang {
         mock.addUserSlice(userKeyFile, slice, ip);
         //mock.checkAuthorization();
       }
-    }else {
+    } else {
       logger.info("Usage:\n userKeyFile sliceName IPPrefix safeServerIP  ---- default " +
         "delegations\n"
         + "init userKeyFile tag safeServerIP  ---- initialize user, allows connection from " +

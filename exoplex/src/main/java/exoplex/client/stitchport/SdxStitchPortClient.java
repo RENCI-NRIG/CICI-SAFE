@@ -4,9 +4,9 @@ import exoplex.common.utils.Exec;
 import exoplex.common.utils.HttpUtil;
 import exoplex.common.utils.SafeUtils;
 import exoplex.common.utils.ServerOptions;
+import exoplex.sdx.core.CoreProperties;
 import exoplex.sdx.slice.SliceProperties;
 import exoplex.sdx.slice.exogeni.SiteBase;
-import exoplex.sdx.slice.exogeni.SliceCommon;
 import org.apache.commons.cli.CommandLine;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -20,15 +20,16 @@ import org.renci.ahab.libndl.resources.request.Network;
 /**
  * @author geni-orca
  */
-public class SdxStitchPortClient extends SliceCommon {
+public class SdxStitchPortClient {
   final Logger logger = LogManager.getLogger(SdxStitchPortClient.class);
   CommandLine cmd;
-  private String type;
+
+  CoreProperties coreProperties;
 
   public SdxStitchPortClient(String[] args) {
     cmd = ServerOptions.parseCmd(args);
     String configFilePath = cmd.getOptionValue("config");
-    readConfig(configFilePath);
+    coreProperties = new CoreProperties(configFilePath);
     System.out.println("Client start");
   }
 
@@ -44,7 +45,7 @@ public class SdxStitchPortClient extends SliceCommon {
     //keyLocation = args[1];
     //controllerUrl = args[2]; //"https://geni.renci.org:11443/orca/xmlrpc";
     //sliceName = args[3];
-    //sshKey=args[6];
+    //coreProperties.getSshKey()=args[6];
     //keyhash=args[7];
 
     if (cmd.hasOption('e')) {
@@ -92,11 +93,12 @@ public class SdxStitchPortClient extends SliceCommon {
   private void processConnectionCmd(String[] params) {
     try {
       JSONObject jsonparams = new JSONObject();
-      if (safeEnabled) {
-        safeKeyHash = SafeUtils.getPrincipalId(safeServer, safeKeyFile);
-        jsonparams.put("ckeyhash", safeKeyHash);
+      if (coreProperties.isSafeEnabled()) {
+        coreProperties.setSafeKeyHash(SafeUtils.getPrincipalId(coreProperties.getSafeServer(),
+          coreProperties.getSafeKeyFile()));
+        jsonparams.put("ckeyhash", coreProperties.getSafeKeyHash());
       } else {
-        jsonparams.put("ckeyhash", sliceName);
+        jsonparams.put("ckeyhash", coreProperties.getSliceName());
       }
       jsonparams.put("self_prefix", params[1]);
       jsonparams.put("target_prefix", params[2]);
@@ -104,7 +106,7 @@ public class SdxStitchPortClient extends SliceCommon {
         jsonparams.put("bandwidth", Long.valueOf(params[3]));
       } catch (Exception e) {
       }
-      String res = HttpUtil.postJSON(serverurl + "sdx/connectionrequest", jsonparams);
+      String res = HttpUtil.postJSON(coreProperties.getServerUrl() + "sdx/connectionrequest", jsonparams);
       logger.info("get connection result from server:\n" + res);
       logger.debug(res);
     } catch (Exception e) {
@@ -117,10 +119,10 @@ public class SdxStitchPortClient extends SliceCommon {
     JSONObject paramsobj = new JSONObject();
     paramsobj.put("dest", params[1]);
     paramsobj.put("gateway", params[2]);
-    setSafeServerIp(conf.getString("config.safeserver"));
-    safeKeyHash = SafeUtils.getPrincipalId(safeServer, safeKeyFile);
-    paramsobj.put("customer", safeKeyHash);
-    String res = HttpUtil.postJSON(serverurl + "sdx/notifyprefix", paramsobj);
+    coreProperties.setSafeKeyHash(SafeUtils.getPrincipalId(coreProperties.getSafeServer(),
+      coreProperties.getSafeKeyFile()));
+    paramsobj.put("customer", coreProperties.getSafeKeyHash());
+    String res = HttpUtil.postJSON(coreProperties.getServerUrl() + "sdx/notifyprefix", paramsobj);
     if (res.equals("")) {
       logger.debug("Prefix notifcation failed");
       System.out.println("Prefix notifcation failed");
@@ -145,14 +147,16 @@ public class SdxStitchPortClient extends SliceCommon {
       } catch (Exception e) {
         jsonparams.put("sdxnode", (String) null);
       }
-      if (safeEnabled) {
-        setSafeServerIp(conf.getString("config.safeserver"));
-        safeKeyHash = SafeUtils.getPrincipalId(safeServer, safeKeyFile);
-        jsonparams.put("ckeyhash", safeKeyHash);
-        postSafeStitchRequest(safeKeyHash, jsonparams.getString("stitchport"), jsonparams.getString("vlan"));
+      if (coreProperties.isSafeEnabled()) {
+        coreProperties.setSafeKeyHash(SafeUtils.getPrincipalId(coreProperties.getSafeServer(),
+          coreProperties.getSafeKeyFile()));
+        jsonparams.put("ckeyhash", coreProperties.getSafeKeyHash());
+        postSafeStitchRequest(coreProperties.getSafeKeyHash(), jsonparams.getString("stitchport"), jsonparams
+          .getString
+            ("vlan"));
       }
       logger.debug("posted stitch request, requesting to Sdx server");
-      String res = HttpUtil.postJSON(serverurl + "sdx/stitchchameleon", jsonparams);
+      String res = HttpUtil.postJSON(coreProperties.getServerUrl() + "sdx/stitchchameleon", jsonparams);
       logger.debug(res);
       System.out.println(res);
     } catch (Exception e) {
@@ -192,7 +196,9 @@ public class SdxStitchPortClient extends SliceCommon {
     String[] othervalues = new String[5];
     othervalues[0] = stitchport;
     othervalues[1] = vlan;
-    String message = SafeUtils.postSafeStatements(safeServer, "postChameleonStitchRequest", keyhash, othervalues);
+    String message = SafeUtils.postSafeStatements(coreProperties.getSafeServer(),
+      "postChameleonStitchRequest", keyhash,
+      othervalues);
     if (message.contains("fail")) {
       return false;
     } else

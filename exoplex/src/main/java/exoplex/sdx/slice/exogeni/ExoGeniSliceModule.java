@@ -3,7 +3,6 @@ package exoplex.sdx.slice.exogeni;
 import com.google.inject.AbstractModule;
 import com.google.inject.assistedinject.FactoryProvider;
 import exoplex.sdx.slice.SliceManagerFactory;
-import exoplex.sdx.slice.exogeni.ExoSliceManager;
 
 public class ExoGeniSliceModule extends AbstractModule {
   @Override

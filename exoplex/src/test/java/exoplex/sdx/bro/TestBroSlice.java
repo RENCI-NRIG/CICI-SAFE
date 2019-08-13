@@ -23,12 +23,12 @@ public class TestBroSlice extends SliceBase {
 
   public TestBroSlice(String configPath) throws SampleSlice.SliceBaseException {
     super(configPath);
-    resource_dir = conf.getString("config.resource_dir");
+    resource_dir = getResourceDir();
   }
 
   public TestBroSlice(String configPath, String name) throws SampleSlice.SliceBaseException {
     super(configPath, name);
-    resource_dir = conf.getString("config.resource_dir");
+    resource_dir = getResourceDir();
   }
 
   public String sliceName() {

@@ -40,15 +40,20 @@ public class DockerServerSlice extends SliceHelper {
   }
 
   public void createSafeAndPlexusSlice() throws Exception {
-    SliceManager s = sliceManagerFactory.create(sliceName, pemLocation, keyLocation, controllerUrl,
-      sshKey);
+    SliceManager s = sliceManagerFactory.create(
+      coreProperties.getSliceName(),
+      coreProperties.getExogeniKey(),
+      coreProperties.getExogeniKey(),
+      coreProperties.getExogeniSm(),
+      coreProperties.getSshKey()
+      );
     s.createSlice();
-    s.addSafeServer(SiteBase.get("BBN"), conf.getString("config.riak"), SafeManager
+    s.addSafeServer(SiteBase.get("BBN"), coreProperties.getRiakIp(), SafeManager
       .getSafeDockerImage(), SafeManager.getSafeServerScript());
     s.addPlexusController(SiteBase.get("BBN"), "plexus");
     s.commitAndWait();
     s.loadSlice();
-    checkSafeServer(s.getManagementIP("safe-server"), riakIp);
+    checkSafeServer(s.getManagementIP("safe-server"), coreProperties.getRiakIp());
     checkPlexus(s, s.getManagementIP("plexus"), RoutingManager.plexusImage);
     System.out.println(String.format("Safe server IP %s", s.getManagementIP("safe-server")));
     System.out.println(String.format("plexus server IP %s", s.getManagementIP("plexus")));

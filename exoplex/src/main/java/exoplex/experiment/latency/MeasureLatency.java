@@ -68,12 +68,12 @@ public class MeasureLatency extends AsyncTask implements TaskInterface {
       //run until stopped
       String[] res = Exec.sshExec(SliceProperties.userName, managementIP,
         String.format("ping -i %s %s",
-        periodMilliSeconds / 1000.0, targetIP), sshKey);
+          periodMilliSeconds / 1000.0, targetIP), sshKey);
       parseResults(res[0], currentTime);
     } else {
       String[] res = Exec.sshExec(SliceProperties.userName, managementIP,
         String.format("ping -i %s -w %s %s",
-        periodMilliSeconds / 1000.0, totalTime, targetIP), sshKey);
+          periodMilliSeconds / 1000.0, totalTime, targetIP), sshKey);
       parseResults(res[0], currentTime);
     }
   }

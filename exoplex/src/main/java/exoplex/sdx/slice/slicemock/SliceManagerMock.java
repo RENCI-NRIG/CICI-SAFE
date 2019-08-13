@@ -5,8 +5,8 @@ import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
 import exoplex.sdx.network.RoutingManager;
 import exoplex.sdx.slice.Scripts;
-import exoplex.sdx.slice.SliceProperties;
 import exoplex.sdx.slice.SliceManager;
+import exoplex.sdx.slice.SliceProperties;
 import exoplex.sdx.slice.exogeni.NodeBase;
 import exoplex.sdx.slice.exogeni.NodeBaseInfo;
 import exoplex.sdx.slice.exogeni.SiteBase;
@@ -41,9 +41,9 @@ public class SliceManagerMock extends SliceManager implements Serializable {
   private static final long serialVersionUID = 1L;
   private static final int COMMIT_COUNT = 5;
   private static final int INTERVAL = 10;
-  public  HashMap<String, String> dpidMap = new HashMap<>();
-  public  HashMap<String, Integer> interfaceNumMap = new HashMap<>();
   static int dpidCount = 1;
+  public HashMap<String, String> dpidMap = new HashMap<>();
+  public HashMap<String, Integer> interfaceNumMap = new HashMap<>();
   private ReentrantLock lock = new ReentrantLock();
   private ISliceTransportAPIv1 sliceProxy;
   private SliceAccessContext<SSHAccessToken> sctx;
@@ -81,19 +81,19 @@ public class SliceManagerMock extends SliceManager implements Serializable {
     return sliceProxy;
   }
 
-  public void writeToFile(String fileName){
+  public void writeToFile(String fileName) {
     File f = new File(fileName);
     try {
       ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(f));
       oos.writeObject(this);
       oos.flush();
       oos.close();
-    }catch (Exception e){
+    } catch (Exception e) {
       e.printStackTrace();
     }
   }
 
-  public void loadFromFile(String fileName){
+  public void loadFromFile(String fileName) {
     File f = new File(fileName);
     try {
       ObjectInputStream oos = new ObjectInputStream(new FileInputStream(f));
@@ -102,7 +102,7 @@ public class SliceManagerMock extends SliceManager implements Serializable {
       this.dpidMap = sliceManagerMock.dpidMap;
       this.interfaceNumMap = sliceManagerMock.interfaceNumMap;
       oos.close();
-    }catch (Exception e){
+    } catch (Exception e) {
       e.printStackTrace();
     }
   }
@@ -556,9 +556,9 @@ public class SliceManagerMock extends SliceManager implements Serializable {
     } else {
       interfaceNumMap.put(key, 1);
     }
-    int num =  interfaceNumMap.get(key);
+    int num = interfaceNumMap.get(key);
     ArrayList<String> res = new ArrayList<>();
-    for(int i = 1; i <=num; i ++){
+    for (int i = 1; i <= num; i++) {
       res.add("eth" + i);
     }
     return res;
@@ -667,7 +667,7 @@ public class SliceManagerMock extends SliceManager implements Serializable {
     node0.setImage(dockerImageURL, dockerImageHash, dockerImageShortName);
     node0.setNodeType(dockerNodeType);
     node0.setDomain(siteName);
-    String dockerScript = Scripts.preBootScripts() + Scripts.installDocker() ;
+    String dockerScript = Scripts.preBootScripts() + Scripts.installDocker();
     node0.setPostBootScript(dockerScript + script);
   }
 
