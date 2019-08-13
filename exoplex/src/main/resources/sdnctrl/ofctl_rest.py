@@ -13,29 +13,28 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import logging
-import json
 import ast
-
+import json
+import logging
+from ryu.app.wsgi import ControllerBase
+from ryu.app.wsgi import Response
+from ryu.app.wsgi import WSGIApplication
 from ryu.base import app_manager
-from ryu.controller import ofp_event
 from ryu.controller import dpset
+from ryu.controller import ofp_event
 from ryu.controller.handler import MAIN_DISPATCHER
 from ryu.controller.handler import set_ev_cls
 from ryu.exception import RyuException
-from ryu.ofproto import ofproto_v1_0
-from ryu.ofproto import ofproto_v1_2
-from ryu.ofproto import ofproto_v1_3
-from ryu.ofproto import ofproto_v1_4
-from ryu.ofproto import ofproto_v1_5
 from ryu.lib import ofctl_v1_0
 from ryu.lib import ofctl_v1_2
 from ryu.lib import ofctl_v1_3
 from ryu.lib import ofctl_v1_4
 from ryu.lib import ofctl_v1_5
-from ryu.app.wsgi import ControllerBase
-from ryu.app.wsgi import Response
-from ryu.app.wsgi import WSGIApplication
+from ryu.ofproto import ofproto_v1_0
+from ryu.ofproto import ofproto_v1_2
+from ryu.ofproto import ofproto_v1_3
+from ryu.ofproto import ofproto_v1_4
+from ryu.ofproto import ofproto_v1_5
 
 LOG = logging.getLogger('ryu.app.ofctl_rest')
 
@@ -47,6 +46,7 @@ supported_ofctl = {
     ofproto_v1_4.OFP_VERSION: ofctl_v1_4,
     ofproto_v1_5.OFP_VERSION: ofctl_v1_5,
 }
+
 
 # REST API
 #

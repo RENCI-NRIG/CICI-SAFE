@@ -4,7 +4,6 @@ import exoplex.demo.AbstractTestSetting;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 
 import java.util.Arrays;
-import java.util.HashMap;
 
 public class MultiSdxSDLargeSetting extends AbstractTestSetting {
   public String sdxConfigDir = sdxSimpleDir + "config/multisdx/";
@@ -13,7 +12,7 @@ public class MultiSdxSDLargeSetting extends AbstractTestSetting {
     setting();
   }
 
-  public void setting(){
+  public void setting() {
     numSdx = 6;
     sliceNameSuffix = "tri";
     clientArgs = new String[]{"-c", sdxSimpleDir +

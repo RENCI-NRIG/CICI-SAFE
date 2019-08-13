@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-#start debugging
+# start debugging
 
 import logging
 import numbers
@@ -50,7 +50,6 @@ from ryu.ofproto import inet
 from ryu.ofproto import ofproto_v1_0
 from ryu.ofproto import ofproto_v1_2
 from ryu.ofproto import ofproto_v1_3
-
 
 # =============================
 #          REST API
@@ -108,8 +107,8 @@ from ryu.ofproto import ofproto_v1_3
 #
 #
 
-MIRROR_TABLE_ID=1
-ROUTING_TABLE_ID=2
+MIRROR_TABLE_ID = 1
+ROUTING_TABLE_ID = 2
 UINT16_MAX = 0xffff
 UINT32_MAX = 0xffffffff
 UINT64_MAX = 0xffffffffffffffff
@@ -156,11 +155,11 @@ REST_ADDRESSID = 'address_id'
 REST_ADDRESS = 'address'
 REST_ROUTEID = 'route_id'
 REST_ROUTE = 'route'
-REST_SOURCE='source'
-REST_SOURCE_VLAN='source_vlan'
+REST_SOURCE = 'source'
+REST_SOURCE_VLAN = 'source_vlan'
 REST_DESTINATION = 'destination'
 REST_GATEWAY = 'gateway'
-REST_MIRROR="mirror"
+REST_MIRROR = "mirror"
 
 PRIORITY_VLAN_SHIFT = 1000
 PRIORITY_NETMASK_SHIFT = 32
@@ -173,8 +172,8 @@ PRIORITY_STATIC_ROUTING = 2
 PRIORITY_IMPLICIT_ROUTING = 3
 PRIORITY_L2_SWITCHING = 4
 PRIORITY_IP_HANDLING = 5
-#DEBUG
-DEFAULT_FLOW_PRIORITY=0
+# DEBUG
+DEFAULT_FLOW_PRIORITY = 0
 ##DEBUG
 
 PRIORITY_TYPE_ROUTE = 'priority_route'
@@ -188,7 +187,7 @@ def get_priority(priority_type, vid=0, route=None):
         assert route is not None
         if route.dst_ip:
             priority_type = PRIORITY_STATIC_ROUTING
-#NOTE: the priority of the route is determined by dst netmask. Is this OK? Becareful
+            # NOTE: the priority of the route is determined by dst netmask. Is this OK? Becareful
             priority = priority_type + route.netmask
             log_msg = 'static routing'
         else:
@@ -223,7 +222,6 @@ class CommandFailure(RyuException):
 
 
 class RestRouterAPI(app_manager.RyuApp):
-
     OFP_VERSIONS = [ofproto_v1_0.OFP_VERSION,
                     ofproto_v1_2.OFP_VERSION,
                     ofproto_v1_3.OFP_VERSION]
@@ -291,7 +289,7 @@ class RestRouterAPI(app_manager.RyuApp):
         dp = msg.datapath
 
         if (dp.id not in self.waiters
-                or msg.xid not in self.waiters[dp.id]):
+            or msg.xid not in self.waiters[dp.id]):
             return
         event, msgs = self.waiters[dp.id][msg.xid]
         msgs.append(msg)
@@ -315,7 +313,7 @@ class RestRouterAPI(app_manager.RyuApp):
     def stats_reply_handler_v1_2(self, ev):
         self._stats_reply_handler(ev)
 
-    # TODO: Update routing table when port status is changed.
+        # TODO: Update routing table when port status is changed.
 
 
 # REST command template
@@ -345,7 +343,6 @@ def rest_command(func):
 
 
 class RouterController(ControllerBase):
-
     _ROUTER_LIST = {}
     _LOGGER = None
 
@@ -446,9 +443,9 @@ class RouterController(ControllerBase):
             routers = self._ROUTER_LIST
         else:
             sw_id = dpid_lib.str_to_dpid(switch_id)
-            #DEBUG
-            #print "RouterController._ROUTER_LIST",sw_id
-            #print self._ROUTER_LIST
+            # DEBUG
+            # print "RouterController._ROUTER_LIST",sw_id
+            # print self._ROUTER_LIST
             ##DEBUG
             if sw_id in self._ROUTER_LIST:
                 routers = {sw_id: self._ROUTER_LIST[sw_id]}
@@ -468,17 +465,17 @@ class Router(dict):
         self.logger = logger
 
         self.port_data = PortData(dp.ports)
-        #DEBUG
-        #We may be able to add port number here
+        # DEBUG
+        # We may be able to add port number here
         print self.port_data
         ##DEBUG
 
         ofctl = OfCtl.factory(dp, logger)
         cookie = COOKIE_DEFAULT_ID
 
-        #DEBUG: set default mirroring flow
-        ofctl.set_default_mirroring_flow(cookie,DEFAULT_FLOW_PRIORITY)
-        #DEBUG: set default mirroring flow
+        # DEBUG: set default mirroring flow
+        ofctl.set_default_mirroring_flow(cookie, DEFAULT_FLOW_PRIORITY)
+        # DEBUG: set default mirroring flow
         # Set SW config: TTL error packet in (for OFPv1.2/1.3)
         ofctl.set_sw_config_for_ttl()
 
@@ -540,7 +537,7 @@ class Router(dict):
 
         vlan_router = self[vlan_id]
         if (len(vlan_router.address_data) == 0
-                and len(vlan_router.routing_tbl) == 0):
+            and len(vlan_router.routing_tbl) == 0):
             vlan_router.delete(waiters)
             del self[vlan_id]
 
@@ -607,7 +604,7 @@ class Router(dict):
 
             # Event dispatch
             if vlan_id in self:
-                #DEBUG
+                # DEBUG
                 self.logger.debug("LogRouter packet_in_handler")
                 ##DEBUG
                 self[vlan_id].packet_in_handler(msg, header_list)
@@ -737,22 +734,22 @@ class VlanRouter(object):
                 else:
                     destination = DEFAULT_ROUTE
                 if REST_SOURCE in data:
-                  source=data[REST_SOURCE]
+                    source = data[REST_SOURCE]
                 else:
-                  source=DEFAULT_SOURCE
-                route_id = self._set_routing_data(destination, gateway,source)
+                    source = DEFAULT_SOURCE
+                route_id = self._set_routing_data(destination, gateway, source)
                 details = 'Add route [route_id=%d]' % route_id
             elif REST_MIRROR in data:
-                mirror=data[REST_MIRROR]
+                mirror = data[REST_MIRROR]
                 if REST_DESTINATION in data:
                     destination = data[REST_DESTINATION]
                 else:
                     destination = DEFAULT_ROUTE
                 if REST_SOURCE in data:
-                  source=data[REST_SOURCE]
+                    source = data[REST_SOURCE]
                 else:
-                  source=DEFAULT_SOURCE
-                route_id = self._set_mirroring_data(destination, mirror,source)
+                    source = DEFAULT_SOURCE
+                route_id = self._set_mirroring_data(destination, mirror, source)
                 details = 'Add mirror [route_id=%d]' % route_id
 
         except CommandFailure as err_msg:
@@ -804,7 +801,7 @@ class VlanRouter(object):
 
         return address.address_id
 
-    def _set_routing_data(self, destination, gateway,source=DEFAULT_ROUTE):
+    def _set_routing_data(self, destination, gateway, source=DEFAULT_ROUTE):
         err_msg = 'Invalid [%s] value.' % REST_GATEWAY
         dst_ip = ip_addr_aton(gateway, err_msg=err_msg)
         address = self.address_data.get_data(ip=dst_ip)
@@ -812,35 +809,38 @@ class VlanRouter(object):
             msg = 'Gateway=%s\'s address is not registered.' % gateway
             raise CommandFailure(msg=msg)
         elif dst_ip == address.default_gw:
-            msg = 'Gateway=%s is used as default gateway of address_id=%d'\
-                % (gateway, address.address_id)
+            msg = 'Gateway=%s is used as default gateway of address_id=%d' \
+                  % (gateway, address.address_id)
             raise CommandFailure(msg=msg)
         else:
             src_ip = address.default_gw
-            route = self.routing_tbl.add(destination, gateway,source)
+            route = self.routing_tbl.add(destination, gateway, source)
             self._set_route_packetin(route)
-            #DEBUG
-            self.logger.info("send_arp_requst after set routing packet in: src %s dst %s",src_ip,dst_ip,extra=self.sw_id)
+            # DEBUG
+            self.logger.info("send_arp_requst after set routing packet in: src %s dst %s", src_ip,
+                             dst_ip, extra=self.sw_id)
             self.send_arp_request(src_ip, dst_ip)
             return route.route_id
 
-    def _set_mirroring_data(self, destination, gateway,source=DEFAULT_ROUTE):
+    def _set_mirroring_data(self, destination, gateway, source=DEFAULT_ROUTE):
         err_msg = 'Invalid [%s] value.' % REST_MIRROR
         dst_ip = ip_addr_aton(gateway, err_msg=err_msg)
         address = self.address_data.get_data(ip=dst_ip)
-        self.logger.info("_set_mirror_data dst ip %s",dst_ip)
+        self.logger.info("_set_mirror_data dst ip %s", dst_ip)
         if address is None:
             msg = 'Mirroring Gateway=%s\'s address is not registered.' % gateway
             raise CommandFailure(msg=msg)
         elif dst_ip == address.default_gw:
-            msg = 'Mirroring Gateway=%s is used as default gateway of address_id=%d'\
-                % (gateway, address.address_id)
+            msg = 'Mirroring Gateway=%s is used as default gateway of address_id=%d' \
+                  % (gateway, address.address_id)
             raise CommandFailure(msg=msg)
         else:
             src_ip = address.default_gw
-            route = self.mirroring_tbl.add(destination, gateway,source)
+            route = self.mirroring_tbl.add(destination, gateway, source)
             self._set_mirror_route_packetin(route)
-            self.logger.info("_set_mirror_data send_arp_requst after set routing packet in: src %s dst %s",src_ip,dst_ip,extra=self.sw_id)
+            self.logger.info(
+                "_set_mirror_data send_arp_requst after set routing packet in: src %s dst %s",
+                src_ip, dst_ip, extra=self.sw_id)
             self.send_arp_request(src_ip, dst_ip)
             return route.route_id
 
@@ -857,11 +857,11 @@ class VlanRouter(object):
         cookie = self._id_to_cookie(REST_ROUTEID, route.route_id)
         priority, log_msg = self._get_priority(PRIORITY_TYPE_ROUTE,
                                                route=route)
-        #NOTE:yjyao add src ip and src mask to set_route_packet_in
+        # NOTE:yjyao add src ip and src mask to set_route_packet_in
         self.ofctl.set_packetin_flow(cookie, priority,
                                      dl_type=ether.ETH_TYPE_IP,
                                      dl_vlan=self.vlan_id,
-                                     #DEBUG
+                                     # DEBUG
                                      src_ip=route.src_ip,
                                      src_mask=route.src_netmask,
                                      ##DEBUG
@@ -874,16 +874,16 @@ class VlanRouter(object):
         cookie = self._id_to_cookie(REST_ROUTEID, route.route_id)
         priority, log_msg = self._get_priority(PRIORITY_TYPE_ROUTE,
                                                route=route)
-        #NOTE:yjyao add src ip and src mask to set_route_packet_in
+        # NOTE:yjyao add src ip and src mask to set_route_packet_in
         self.ofctl.set_mirror_packetin_flow(cookie, priority,
-                                     dl_type=ether.ETH_TYPE_IP,
-                                     dl_vlan=self.vlan_id,
-                                     #DEBUG
-                                     src_ip=route.src_ip,
-                                     src_mask=route.src_netmask,
-                                     ##DEBUG
-                                     dst_ip=route.dst_ip,
-                                     dst_mask=route.netmask)
+                                            dl_type=ether.ETH_TYPE_IP,
+                                            dl_vlan=self.vlan_id,
+                                            # DEBUG
+                                            src_ip=route.src_ip,
+                                            src_mask=route.src_netmask,
+                                            ##DEBUG
+                                            dst_ip=route.dst_ip,
+                                            dst_mask=route.netmask)
         self.logger.info('Set mirror %s (packet in) flow [cookie=0x%x]', log_msg,
                          cookie, extra=self.sw_id)
 
@@ -954,8 +954,8 @@ class VlanRouter(object):
 
         if skip_ids:
             skip_ids = ','.join(str(addr_id) for addr_id in skip_ids)
-            details = 'Skip delete (related route exist) [address_id=%s]'\
-                % skip_ids
+            details = 'Skip delete (related route exist) [address_id=%s]' \
+                      % skip_ids
             if msg:
                 msg[REST_DETAILS] += ', %s' % details
             else:
@@ -1020,7 +1020,7 @@ class VlanRouter(object):
             address = self.address_data.get_data(ip=gateway)
             if address is not None:
                 if (address_id == REST_ALL
-                        and address.address_id not in relate_list):
+                    and address.address_id not in relate_list):
                     relate_list.append(address.address_id)
                 elif address.address_id == address_id:
                     relate_list = [address_id]
@@ -1031,13 +1031,13 @@ class VlanRouter(object):
         # Check invalid TTL (for OpenFlow V1.2/1.3)
         ofproto = self.dp.ofproto
         if ofproto.OFP_VERSION == ofproto_v1_2.OFP_VERSION or \
-                ofproto.OFP_VERSION == ofproto_v1_3.OFP_VERSION:
+                        ofproto.OFP_VERSION == ofproto_v1_3.OFP_VERSION:
             if msg.reason == ofproto.OFPR_INVALID_TTL:
                 self._packetin_invalid_ttl(msg, header_list)
                 return
 
         # Analyze event type.
-        #DEBUG
+        # DEBUG
         self.logger.debug("LogRouter packet_in_handler")
         print header_list
         ##DEBUG
@@ -1071,7 +1071,7 @@ class VlanRouter(object):
         # case: Receive ARP from an internal host
         #  Learning host MAC.
         gw_flg = self._update_routing_tbl(msg, header_list)
-        gw_flg =gw_flg or self._update_mirroring_tbl(msg, header_list)
+        gw_flg = gw_flg or self._update_mirroring_tbl(msg, header_list)
         if gw_flg is False:
             self._learning_host_mac(msg, header_list)
 
@@ -1095,7 +1095,7 @@ class VlanRouter(object):
         elif dst_ip not in rt_ports:
             dst_addr = self.address_data.get_data(ip=dst_ip)
             if (dst_addr is not None and
-                    src_addr.address_id == dst_addr.address_id):
+                        src_addr.address_id == dst_addr.address_id):
                 # ARP from internal host -> packet forward (normal)
                 output = self.ofctl.dp.ofproto.OFPP_NORMAL
                 self.ofctl.send_packet_out(in_port, output, msg.data)
@@ -1127,9 +1127,9 @@ class VlanRouter(object):
                 self.logger.info(log_msg, srcip, dstip, extra=self.sw_id)
 
                 packet_list = self.packet_buffer.get_data(src_ip)
-                #DEBUG:
+                # DEBUG:
                 print packet_list
-                print 'Receive ARP reply from [%s] to router port [%s].'.format(srcip,dstip)
+                print 'Receive ARP reply from [%s] to router port [%s].'.format(srcip, dstip)
                 ##DEBUG:
                 if packet_list:
                     # stop ARP reply wait thread.
@@ -1283,7 +1283,7 @@ class VlanRouter(object):
                                             dl_vlan=self.vlan_id,
                                             src_mac=dst_mac,
                                             dst_mac=src_mac,
-                                            #DEBUG
+                                            # DEBUG
                                             nw_src=value.src_ip,
                                             src_mask=value.src_netmask,
                                             ##DEBUG
@@ -1313,17 +1313,18 @@ class VlanRouter(object):
                 priority, log_msg = self._get_priority(PRIORITY_TYPE_ROUTE,
                                                        route=value)
                 self.ofctl.set_mirroring_flow(cookie, priority, out_port,
-                                            dl_vlan=self.vlan_id,
-                                            src_mac=dst_mac,
-                                            dst_mac=src_mac,
-                                            #DEBUG
-                                            nw_src=value.src_ip,
-                                            src_mask=value.src_netmask,
-                                            ##DEBUG
-                                            nw_dst=value.dst_ip,
-                                            dst_mask=value.netmask,
-                                            dec_ttl=True)
-                self.logger.info('update_mirroring_flwo,Set mirror  %s flow [cookie=0x%x]', log_msg, cookie,
+                                              dl_vlan=self.vlan_id,
+                                              src_mac=dst_mac,
+                                              dst_mac=src_mac,
+                                              # DEBUG
+                                              nw_src=value.src_ip,
+                                              src_mask=value.src_netmask,
+                                              ##DEBUG
+                                              nw_dst=value.dst_ip,
+                                              dst_mask=value.netmask,
+                                              dec_ttl=True)
+                self.logger.info('update_mirroring_flwo,Set mirror  %s flow [cookie=0x%x]', log_msg,
+                                 cookie,
                                  extra=self.sw_id)
         return gateway_flg
 
@@ -1404,8 +1405,8 @@ class AddressData(dict):
             other_mask = mask_ntob(other.netmask)
             add_mask = mask_ntob(mask, err_msg=err_msg)
             if (other.nw_addr == ipv4_apply_mask(default_gw, other.netmask) or
-                    nw_addr == ipv4_apply_mask(other.default_gw, mask,
-                                               err_msg)):
+                        nw_addr == ipv4_apply_mask(other.default_gw, mask,
+                                                   err_msg)):
                 msg = 'Address overlaps [address_id=%d]' % other.address_id
                 raise CommandFailure(msg=msg)
 
@@ -1459,7 +1460,7 @@ class RoutingTable(dict):
         super(RoutingTable, self).__init__()
         self.route_id = 1
 
-    def add(self, dst_nw_addr, gateway_ip,src_nw_addr=DEFAULT_ROUTE):
+    def add(self, dst_nw_addr, gateway_ip, src_nw_addr=DEFAULT_ROUTE):
         err_msg = 'Invalid [%s] value.'
 
         if dst_nw_addr == DEFAULT_ROUTE:
@@ -1472,7 +1473,7 @@ class RoutingTable(dict):
             src_ip = 0
             src_netmask = 0
         else:
-            src_ip, src_netmask,src_dummy = nw_addr_aton(
+            src_ip, src_netmask, src_dummy = nw_addr_aton(
                 src_nw_addr, err_msg=err_msg % REST_SOURCE)
 
         gateway_ip = ip_addr_aton(gateway_ip, err_msg=err_msg % REST_GATEWAY)
@@ -1489,10 +1490,10 @@ class RoutingTable(dict):
             msg = 'Destination overlaps [route_id=%d]' % overlap_route
             raise CommandFailure(msg=msg)
 
-        routing_data = Route(self.route_id, dst_ip, netmask, gateway_ip,src_ip,src_netmask)
-        src_ip_str=ip_addr_ntoa(src_ip)
+        routing_data = Route(self.route_id, dst_ip, netmask, gateway_ip, src_ip, src_netmask)
+        src_ip_str = ip_addr_ntoa(src_ip)
         dst_ip_str = ip_addr_ntoa(dst_ip)
-        key = '%s/%d-%s/%d' % (dst_ip_str,netmask,src_ip_str, src_netmask)
+        key = '%s/%d-%s/%d' % (dst_ip_str, netmask, src_ip_str, src_netmask)
         self[key] = routing_data
 
         self.route_id += 1
@@ -1536,11 +1537,11 @@ class RoutingTable(dict):
 
 
 class Route(object):
-    def __init__(self, route_id, dst_ip, netmask, gateway_ip,sourceip=0,src_netmask=0):
+    def __init__(self, route_id, dst_ip, netmask, gateway_ip, sourceip=0, src_netmask=0):
         super(Route, self).__init__()
         self.route_id = route_id
         self.dst_ip = dst_ip
-        self.src_ip=sourceip
+        self.src_ip = sourceip
         self.netmask = netmask
         self.src_netmask = src_netmask
         self.gateway_ip = gateway_ip
@@ -1570,9 +1571,9 @@ class SuspendPacketList(list):
             pkt.wait_thread.wait()
 
     def get_data(self, dst_ip):
-        #DEBUG
+        # DEBUG
         for pkt in self:
-          print pkt.header_list
+            print pkt.header_list
         return [pkt for pkt in self if pkt.dst_ip == dst_ip]
         ##DEBUG
 
@@ -1602,6 +1603,7 @@ class OfCtl(object):
         def _register_of_version(cls):
             OfCtl._OF_VERSIONS.setdefault(version, cls)
             return cls
+
         return _register_of_version
 
     @staticmethod
@@ -1746,8 +1748,8 @@ class OfCtl(object):
         print "set default mirroring flow"
         ofp = self.dp.ofproto
         ofp_parser = self.dp.ofproto_parser
-        table_id=ROUTING_TABLE_ID
-        inst=[ofp_parser.OFPInstructionGotoTable(table_id)]
+        table_id = ROUTING_TABLE_ID
+        inst = [ofp_parser.OFPInstructionGotoTable(table_id)]
         cmd = ofp.OFPFC_ADD
         # Match
         match = ofp_parser.OFPMatch()
@@ -1760,28 +1762,31 @@ class OfCtl(object):
     def set_normal_flow(self, cookie, priority):
         out_port = self.dp.ofproto.OFPP_NORMAL
         actions = [self.dp.ofproto_parser.OFPActionOutput(out_port, 0)]
-        #DEBUG
-        print "set_normal_flow actiosn",actions
+        # DEBUG
+        print "set_normal_flow actiosn", actions
         ##DEBUG
         self.set_flow(cookie, priority, actions=actions)
 
     def set_packetin_flow(self, cookie, priority, dl_type=0, dl_dst=0,
-                          dl_vlan=0, src_ip=0,src_mask=32,dst_ip=0, dst_mask=32, nw_proto=0):
+                          dl_vlan=0, src_ip=0, src_mask=32, dst_ip=0, dst_mask=32, nw_proto=0):
         miss_send_len = UINT16_MAX
         actions = [self.dp.ofproto_parser.OFPActionOutput(
             self.dp.ofproto.OFPP_CONTROLLER, miss_send_len)]
         self.set_flow(cookie, priority, dl_type=dl_type, dl_dst=dl_dst,
-                      dl_vlan=dl_vlan, nw_src=src_ip,src_mask=src_mask,nw_dst=dst_ip, dst_mask=dst_mask,
+                      dl_vlan=dl_vlan, nw_src=src_ip, src_mask=src_mask, nw_dst=dst_ip,
+                      dst_mask=dst_mask,
                       nw_proto=nw_proto, actions=actions)
 
     def set_mirror_packetin_flow(self, cookie, priority, dl_type=0, dl_dst=0,
-                          dl_vlan=0, src_ip=0,src_mask=32,dst_ip=0, dst_mask=32, nw_proto=0):
+                                 dl_vlan=0, src_ip=0, src_mask=32, dst_ip=0, dst_mask=32,
+                                 nw_proto=0):
         miss_send_len = UINT16_MAX
         actions = [self.dp.ofproto_parser.OFPActionOutput(
             self.dp.ofproto.OFPP_CONTROLLER, miss_send_len)]
         self.set_flow(cookie, priority, dl_type=dl_type, dl_dst=dl_dst,
-                      dl_vlan=dl_vlan, nw_src=src_ip,src_mask=src_mask,nw_dst=dst_ip, dst_mask=dst_mask,
-                      nw_proto=nw_proto, actions=actions,table_id=MIRROR_TABLE_ID)
+                      dl_vlan=dl_vlan, nw_src=src_ip, src_mask=src_mask, nw_dst=dst_ip,
+                      dst_mask=dst_mask,
+                      nw_proto=nw_proto, actions=actions, table_id=MIRROR_TABLE_ID)
 
     def send_stats_request(self, stats, waiters):
         self.dp.set_xid(stats)
@@ -1801,7 +1806,6 @@ class OfCtl(object):
 
 @OfCtl.register_of_version(ofproto_v1_0.OFP_VERSION)
 class OfCtl_v1_0(OfCtl):
-
     def __init__(self, dp, logger):
         super(OfCtl_v1_0, self).__init__(dp, logger)
 
@@ -1856,7 +1860,6 @@ class OfCtl_v1_0(OfCtl):
                                   priority=priority, actions=actions)
         self.dp.send_msg(m)
 
-
     def set_routing_flow(self, cookie, priority, outport, dl_vlan=0,
                          nw_src=0, src_mask=32, nw_dst=0, dst_mask=32,
                          src_mac=0, dst_mac=0, idle_timeout=0, **dummy):
@@ -1868,10 +1871,10 @@ class OfCtl_v1_0(OfCtl):
         actions = []
         if src_mac:
             actions.append(ofp_parser.OFPActionSetDlSrc(
-                           mac_lib.haddr_to_bin(src_mac)))
+                mac_lib.haddr_to_bin(src_mac)))
         if dst_mac:
             actions.append(ofp_parser.OFPActionSetDlDst(
-                           mac_lib.haddr_to_bin(dst_mac)))
+                mac_lib.haddr_to_bin(dst_mac)))
         if outport is not None:
             actions.append(ofp_parser.OFPActionOutput(outport))
 
@@ -1894,7 +1897,6 @@ class OfCtl_v1_0(OfCtl):
 
 
 class OfCtl_after_v1_2(OfCtl):
-
     def __init__(self, dp, logger):
         super(OfCtl_after_v1_2, self).__init__(dp, logger)
 
@@ -1914,7 +1916,7 @@ class OfCtl_after_v1_2(OfCtl):
 
     def set_flow(self, cookie, priority, dl_type=0, dl_dst=0, dl_vlan=0,
                  nw_src=0, src_mask=32, nw_dst=0, dst_mask=32,
-                 nw_proto=0, idle_timeout=0, actions=None,table_id=ROUTING_TABLE_ID,insts=None):
+                 nw_proto=0, idle_timeout=0, actions=None, table_id=ROUTING_TABLE_ID, insts=None):
         ofp = self.dp.ofproto
         ofp_parser = self.dp.ofproto_parser
         cmd = ofp.OFPFC_ADD
@@ -1944,7 +1946,7 @@ class OfCtl_after_v1_2(OfCtl):
         inst = [ofp_parser.OFPInstructionActions(ofp.OFPIT_APPLY_ACTIONS,
                                                  actions)]
         if insts is not None:
-          inst =inst+insts
+            inst = inst + insts
 
         m = ofp_parser.OFPFlowMod(self.dp, cookie, 0, table_id, cmd, idle_timeout,
                                   0, priority, UINT32_MAX, ofp.OFPP_ANY,
@@ -1973,10 +1975,10 @@ class OfCtl_after_v1_2(OfCtl):
                       nw_src=nw_src, src_mask=src_mask,
                       nw_dst=nw_dst, dst_mask=dst_mask,
                       idle_timeout=idle_timeout, actions=actions)
-        
+
     def set_mirroring_flow(self, cookie, priority, outport, dl_vlan=0,
-                         nw_src=0, src_mask=32, nw_dst=0, dst_mask=32,
-                         src_mac=0, dst_mac=0, idle_timeout=0, dec_ttl=False):
+                           nw_src=0, src_mask=32, nw_dst=0, dst_mask=32,
+                           src_mac=0, dst_mac=0, idle_timeout=0, dec_ttl=False):
         ofp = self.dp.ofproto
         ofp_parser = self.dp.ofproto_parser
 
@@ -1991,13 +1993,14 @@ class OfCtl_after_v1_2(OfCtl):
             actions.append(ofp_parser.OFPActionSetField(eth_dst=dst_mac))
         if outport is not None:
             actions.append(ofp_parser.OFPActionOutput(outport, 0))
-        inst=[]
+        inst = []
         inst.append(ofp_parser.OFPInstructionGotoTable(ROUTING_TABLE_ID))
 
         self.set_flow(cookie, priority, dl_type=dl_type, dl_vlan=dl_vlan,
                       nw_src=nw_src, src_mask=src_mask,
                       nw_dst=nw_dst, dst_mask=dst_mask,
-                      idle_timeout=idle_timeout, actions=actions,table_id=MIRROR_TABLE_ID,insts=inst)
+                      idle_timeout=idle_timeout, actions=actions, table_id=MIRROR_TABLE_ID,
+                      insts=inst)
 
     def delete_flow(self, flow_stats):
         ofp = self.dp.ofproto
@@ -2018,7 +2021,6 @@ class OfCtl_after_v1_2(OfCtl):
 
 @OfCtl.register_of_version(ofproto_v1_2.OFP_VERSION)
 class OfCtl_v1_2(OfCtl_after_v1_2):
-
     def __init__(self, dp, logger):
         super(OfCtl_v1_2, self).__init__(dp, logger)
 
@@ -2043,7 +2045,6 @@ class OfCtl_v1_2(OfCtl_after_v1_2):
 
 @OfCtl.register_of_version(ofproto_v1_3.OFP_VERSION)
 class OfCtl_v1_3(OfCtl_after_v1_2):
-
     def __init__(self, dp, logger):
         super(OfCtl_v1_3, self).__init__(dp, logger)
 

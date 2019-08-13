@@ -2,16 +2,15 @@ package exoplex.experiment.flow;
 
 import exoplex.common.utils.Exec;
 import exoplex.experiment.task.AsyncTask;
+import exoplex.sdx.slice.SliceProperties;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
-
-import exoplex.sdx.slice.SliceProperties;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 public class IperfFlow extends AsyncTask {
   final static Logger logger = LogManager.getLogger(IperfFlow.class);

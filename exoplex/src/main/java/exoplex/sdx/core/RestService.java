@@ -27,14 +27,14 @@ import java.util.HashSet;
 public class RestService {
   final static Logger logger = LogManager.getLogger(RestService.class);
   private static HashMap<Integer, SdxManager> sdxManagerMap = new HashMap<>();
-  private  static HashSet<HttpServer> httpServers = new HashSet<>();
+  private static HashSet<HttpServer> httpServers = new HashSet<>();
 
-  public static void registerHttpServer(HttpServer server){
+  public static void registerHttpServer(HttpServer server) {
     httpServers.add(server);
   }
 
-  public static void shutDownAllHttpServers(){
-    for(HttpServer server: httpServers){
+  public static void shutDownAllHttpServers() {
+    for (HttpServer server : httpServers) {
       server.shutdownNow();
     }
   }
@@ -83,7 +83,7 @@ public class RestService {
     logger.debug(uriInfo.getBaseUri());
     SdxManager sdxManager = sdxManagerMap.get(uriInfo.getBaseUri().getPort());
     logger.debug(String.format("%s got packet in %s", sdxManager.getSliceName(),
-        packetin));
+      packetin));
     try {
       return sdxManager.processPacketIn(packetin.src, packetin.dest);
     } catch (Exception e) {
@@ -246,9 +246,9 @@ public class RestService {
     SdxManager sdxManager = sdxManagerMap.get(uriInfo.getBaseUri().getPort());
     try {
       String res = sdxManager.stitchChameleon(sr.sdxsite, sr.sdxnode,
-          sr.ckeyhash, sr.stitchport, sr.vlan, sr.gateway, sr.ip);
+        sr.ckeyhash, sr.stitchport, sr.vlan, sr.gateway, sr.ip);
       return res;
-    } catch (Exception e){
+    } catch (Exception e) {
       e.printStackTrace();
       sdxManager.unlockSlice();
       return e.getMessage();

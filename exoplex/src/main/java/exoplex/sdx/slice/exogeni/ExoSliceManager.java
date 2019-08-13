@@ -8,8 +8,8 @@ import exoplex.common.utils.PathUtil;
 import exoplex.common.utils.ScpTo;
 import exoplex.sdx.network.RoutingManager;
 import exoplex.sdx.slice.Scripts;
-import exoplex.sdx.slice.SliceProperties;
 import exoplex.sdx.slice.SliceManager;
+import exoplex.sdx.slice.SliceProperties;
 import net.jcip.annotations.ThreadSafe;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.logging.log4j.LogManager;
@@ -30,7 +30,6 @@ import java.util.*;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 @ThreadSafe
 public class ExoSliceManager extends SliceManager {
@@ -164,7 +163,7 @@ public class ExoSliceManager extends SliceManager {
     try {
       logger.debug("unlock slice");
       lock.unlock();
-    }catch (Exception e){
+    } catch (Exception e) {
       logger.warn("unLockSlice redundant");
     }
   }
@@ -606,7 +605,7 @@ public class ExoSliceManager extends SliceManager {
     }
     for (String n : getComputeNodes()) {
       logger.debug("ComputeNode: " + n + ", Managment IP =  " + getManagementIP(n));
-      if(postBootScriptsMap.containsKey(n)){
+      if (postBootScriptsMap.containsKey(n)) {
         runCmdNodeAsync(postBootScriptsMap.remove(n), n, false);
       }
     }
@@ -647,7 +646,7 @@ public class ExoSliceManager extends SliceManager {
   }
 
   synchronized public void copyFile2Slice(String lfile, String rfile, String privkey,
-                             String patn) {
+                                          String patn) {
     Pattern pattern = Pattern.compile(patn);
     ArrayList<Thread> tlist = new ArrayList<Thread>();
     for (String c : getComputeNodes()) {
@@ -684,10 +683,10 @@ public class ExoSliceManager extends SliceManager {
   }
 
   synchronized public String getManagementIP(String nodeName) {
-    ComputeNode node = (ComputeNode)slice.getResourceByName(nodeName);
-    if(node != null) {
+    ComputeNode node = (ComputeNode) slice.getResourceByName(nodeName);
+    if (node != null) {
       return ((ComputeNode) slice.getResourceByName(nodeName)).getManagementIP();
-    }else{
+    } else {
       return null;
     }
   }
@@ -712,8 +711,8 @@ public class ExoSliceManager extends SliceManager {
         @Override
         synchronized public void run() {
           try {
-            logger.debug(String.format("[%s-%s-%s] run commands: %s", sliceName, c.getName(),mip,
-             cmd ));
+            logger.debug(String.format("[%s-%s-%s] run commands: %s", sliceName, c.getName(), mip,
+              cmd));
             runCmdByIP(cmd, mip, repeat);
           } catch (Exception e) {
             logger.warn("exception when running command");
@@ -739,7 +738,7 @@ public class ExoSliceManager extends SliceManager {
    * @return true is there is uninstalled software
    */
   private boolean processCmdRes(String mip, String res) {
-    if(res == null) {
+    if (res == null) {
       return true;
     }
     logger.debug(String.format("%s processing result from %s: %s", sliceName, mip, res));
@@ -761,19 +760,19 @@ public class ExoSliceManager extends SliceManager {
         return false;
       }
     }
-    if(res.contains("Unable to lock")){
+    if (res.contains("Unable to lock")) {
       Exec.sshExec(SliceProperties.userName, mip, "sudo rm /var/lib/dpkg/lock;dpkg --configure -a",
         sshKey);
     }
-    if(res.contains("dpkg was interrupted")){
+    if (res.contains("dpkg was interrupted")) {
       Exec.sshExec(SliceProperties.userName, mip, "sudo dpkg --configure -a",
-          sshKey);
+        sshKey);
     }
-    if(res.contains("traceroute: command not found")){
+    if (res.contains("traceroute: command not found")) {
       Exec.sshExec(SliceProperties.userName, mip, Scripts.installTraceRoute()
         , sshKey);
     }
-    if(res.contains("can't read /etc/quagga/daemons: No such file or directory")){
+    if (res.contains("can't read /etc/quagga/daemons: No such file or directory")) {
       Exec.sshExec(SliceProperties.userName, mip, Scripts.enableZebra()
         , sshKey);
     }
@@ -807,10 +806,10 @@ public class ExoSliceManager extends SliceManager {
   }
 
   public void joinAllThreads() {
-    for(Thread t: threadList){
+    for (Thread t : threadList) {
       try {
         t.join();
-      } catch (Exception e){
+      } catch (Exception e) {
 
       }
     }
@@ -822,11 +821,11 @@ public class ExoSliceManager extends SliceManager {
       nodeName);
     logger.debug(String.format("%s %s Interfaces: %s", sliceName, nodeName, res).replace("\n",
       " "));
-    String[] ifaces= res.replace(" ","").split("\n");
+    String[] ifaces = res.replace(" ", "").split("\n");
     ArrayList<String> interfaces = new ArrayList<>();
-    for(String s: ifaces){
-      String ss = s.replace(" ","").replace("\n", "");
-      if(ss.length() > 1) {
+    for (String s : ifaces) {
+      String ss = s.replace(" ", "").replace("\n", "");
+      if (ss.length() > 1) {
         interfaces.add(ss);
       }
     }
@@ -896,8 +895,8 @@ public class ExoSliceManager extends SliceManager {
   }
 
   synchronized public void addLink(String linkName, String ip, String netmask,
-                       String nodeName, long
-    bw) {
+                                   String nodeName, long
+                                     bw) {
     logger.info(String.format("addLink %s %s %s %s %s", linkName, ip, netmask, nodeName, bw));
     ComputeNode node = (ComputeNode) slice.getResourceByName(nodeName);
     Network net = slice.addBroadcastLink(linkName, bw);
@@ -907,8 +906,8 @@ public class ExoSliceManager extends SliceManager {
   }
 
   synchronized public void addLink(String linkName, String ip1, String ip2,
-                       String netmask, String
-    node1, String node2, long bw) {
+                                   String netmask, String
+                                     node1, String node2, long bw) {
     logger.info(String.format("addLink %s %s %s %s %s %s %s", linkName, ip1, ip2, netmask, node1, node2, bw));
     ComputeNode node_1 = (ComputeNode) slice.getResourceByName(node1);
     ComputeNode node_2 = (ComputeNode) slice.getResourceByName(node2);
@@ -937,7 +936,7 @@ public class ExoSliceManager extends SliceManager {
   }
 
   synchronized public void addCoreEdgeRouterPair(String site, String router1,
-                                     String router2, String linkname, long bw) {
+                                                 String router2, String linkname, long bw) {
     NodeBaseInfo ninfo = NodeBase.getImageInfo(SliceProperties.OVSVersion);
     String nodeImageShortName = ninfo.imageName;
     String nodeImageURL = ninfo.imageUrl;
@@ -968,7 +967,7 @@ public class ExoSliceManager extends SliceManager {
   }
 
   synchronized public void addDocker(String siteName, String nodeName, String script,
-                         String type) {
+                                     String type) {
     NodeBaseInfo ninfo = NodeBase.getImageInfo(SliceProperties.DockerVersion);
     String dockerImageShortName = ninfo.imageName;
     String dockerImageURL = ninfo.imageUrl;
@@ -990,8 +989,8 @@ public class ExoSliceManager extends SliceManager {
   }
 
   synchronized public void addSafeServer(String siteName, String riakIp,
-                             String safeDockerImage, String
-    safeServerScript) {
+                                         String safeDockerImage, String
+                                           safeServerScript) {
     addDocker(siteName, "safe-server", Scripts.getSafeScript_v1(riakIp, safeDockerImage,
       safeServerScript), NodeBase.xoLarge);
   }
@@ -1018,8 +1017,8 @@ public class ExoSliceManager extends SliceManager {
   }
 
   synchronized public void stitch(String RID, String customerName, String CID,
-                      String secret,
-                     String newip) {
+                                  String secret,
+                                  String newip) {
     //Main Example Code
     Long t1 = System.currentTimeMillis();
     try {
@@ -1037,8 +1036,8 @@ public class ExoSliceManager extends SliceManager {
   }
 
   public void configBroNode(String nodeName, String edgeRouter,
-                             String resourceDir, String
-    SDNControllerIP, String serverurl, String sshkey) {
+                            String resourceDir, String
+                              SDNControllerIP, String serverurl, String sshkey) {
     // Bro uses 'eth1"
     Exec.sshExec(SliceProperties.userName, getManagementIP(nodeName), "sudo sed -i " +
       "'s/eth0/eth1/' " +
@@ -1073,12 +1072,12 @@ public class ExoSliceManager extends SliceManager {
     String url = serverurl.replace("/", "\\/");
     Exec.sshExec(SliceProperties.userName, getManagementIP(nodeName),
       "sudo sed -i 's/bogus_addr/" +
-      url + "/g' reporter.py", sshkey);
+        url + "/g' reporter.py", sshkey);
 
     String dpid = getDpid(edgeRouter, sshkey);
     Exec.sshExec(SliceProperties.userName, getManagementIP(nodeName),
       "sudo sed -i 's/bogus_dpid/" +
-      Long.parseLong(dpid, 16) + "/' *.bro", sshkey);
+        Long.parseLong(dpid, 16) + "/' *.bro", sshkey);
     Exec.sshExec(SliceProperties.userName, getManagementIP(nodeName),
       "sudo broctl deploy&", sshkey);
     Exec.sshExec(SliceProperties.userName, getManagementIP(nodeName),

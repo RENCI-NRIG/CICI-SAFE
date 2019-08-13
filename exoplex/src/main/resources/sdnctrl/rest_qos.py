@@ -14,21 +14,20 @@
 # limitations under the License.
 
 
-import logging
 import json
+import logging
 import re
-
 from ryu.app import conf_switch_key as cs_key
 from ryu.app.wsgi import ControllerBase
 from ryu.app.wsgi import Response
-from ryu.app.wsgi import route
 from ryu.app.wsgi import WSGIApplication
+from ryu.app.wsgi import route
 from ryu.base import app_manager
 from ryu.controller import conf_switch
-from ryu.controller import ofp_event
 from ryu.controller import dpset
-from ryu.controller.handler import set_ev_cls
+from ryu.controller import ofp_event
 from ryu.controller.handler import MAIN_DISPATCHER
+from ryu.controller.handler import set_ev_cls
 from ryu.exception import OFPUnknownVersion
 from ryu.lib import dpid as dpid_lib
 from ryu.lib import mac
@@ -36,13 +35,12 @@ from ryu.lib import ofctl_v1_0
 from ryu.lib import ofctl_v1_2
 from ryu.lib import ofctl_v1_3
 from ryu.lib.ovs import bridge
+from ryu.ofproto import ether
+from ryu.ofproto import inet
 from ryu.ofproto import ofproto_v1_0
 from ryu.ofproto import ofproto_v1_2
 from ryu.ofproto import ofproto_v1_3
 from ryu.ofproto import ofproto_v1_3_parser
-from ryu.ofproto import ether
-from ryu.ofproto import inet
-
 
 # =============================
 #          REST API
@@ -255,7 +253,6 @@ LOG = logging.getLogger(__name__)
 
 
 class RestQoSAPI(app_manager.RyuApp):
-
     OFP_VERSIONS = [ofproto_v1_0.OFP_VERSION,
                     ofproto_v1_2.OFP_VERSION,
                     ofproto_v1_3.OFP_VERSION]
@@ -293,7 +290,7 @@ class RestQoSAPI(app_manager.RyuApp):
 
         flags = 0
         if dp.ofproto.OFP_VERSION == ofproto_v1_0.OFP_VERSION or \
-                dp.ofproto.OFP_VERSION == ofproto_v1_2.OFP_VERSION:
+                        dp.ofproto.OFP_VERSION == ofproto_v1_2.OFP_VERSION:
             flags = dp.ofproto.OFPSF_REPLY_MORE
         elif dp.ofproto.OFP_VERSION == ofproto_v1_3.OFP_VERSION:
             flags = dp.ofproto.OFPMPF_REPLY_MORE
@@ -346,7 +343,6 @@ class RestQoSAPI(app_manager.RyuApp):
 
 
 class QoSOfsList(dict):
-
     def __init__(self):
         super(QoSOfsList, self).__init__()
 
@@ -373,7 +369,6 @@ class QoSOfsList(dict):
 
 
 class QoSController(ControllerBase):
-
     _OFS_LIST = QoSOfsList()
     _LOGGER = None
 
@@ -547,7 +542,6 @@ class QoSController(ControllerBase):
 
 
 class QoS(object):
-
     _OFCTL = {ofproto_v1_0.OFP_VERSION: ofctl_v1_0,
               ofproto_v1_2.OFP_VERSION: ofctl_v1_2,
               ofproto_v1_3.OFP_VERSION: ofctl_v1_3}
@@ -635,7 +629,7 @@ class QoS(object):
             self.vlan_list[vlan_id] += 1
             self.vlan_list[vlan_id] &= ofproto_v1_3_parser.UINT32_MAX
             cookie = (vlan_id << COOKIE_SHIFT_VLANID) + \
-                self.vlan_list[vlan_id]
+                     self.vlan_list[vlan_id]
             cookie_list.append([cookie, vlan_id])
 
         return cookie_list
@@ -651,6 +645,7 @@ class QoS(object):
             switch_id = dpid_lib.dpid_to_str(args[0].dp.id)
             return {REST_SWITCHID: switch_id,
                     key: value}
+
         return _rest_command
 
     @rest_command
@@ -908,13 +903,13 @@ class QoS(object):
 
         msg = {'result': 'success',
                'details': 'Meter added. : Meter ID=%s' %
-               rest[REST_METER_ID]}
+                          rest[REST_METER_ID]}
         return msg
 
     @rest_command
     def get_meter(self, rest, vlan_id, waiters):
         if (self.version == ofproto_v1_0.OFP_VERSION or
-                self.version == ofproto_v1_2.OFP_VERSION):
+                    self.version == ofproto_v1_2.OFP_VERSION):
             raise ValueError('get_meter operation is not supported')
 
         msgs = self.ofctl.get_meter_stats(self.dp, waiters)
@@ -923,7 +918,7 @@ class QoS(object):
     @rest_command
     def delete_meter(self, rest, vlan_id, waiters):
         if (self.version == ofproto_v1_0.OFP_VERSION or
-                self.version == ofproto_v1_2.OFP_VERSION):
+                    self.version == ofproto_v1_2.OFP_VERSION):
             raise ValueError('delete_meter operation is not supported')
 
         cmd = self.dp.ofproto.OFPMC_DELETE
@@ -934,7 +929,7 @@ class QoS(object):
 
         msg = {'result': 'success',
                'details': 'Meter deleted. : Meter ID=%s' %
-               rest[REST_METER_ID]}
+                          rest[REST_METER_ID]}
         return REST_COMMAND_RESULT, msg
 
     def _to_of_flow(self, cookie, priority, match, actions):
@@ -957,16 +952,15 @@ class QoS(object):
 
 
 class Match(object):
-
     _CONVERT = {REST_DL_TYPE:
-                {REST_DL_TYPE_ARP: ether.ETH_TYPE_ARP,
-                 REST_DL_TYPE_IPV4: ether.ETH_TYPE_IP,
-                 REST_DL_TYPE_IPV6: ether.ETH_TYPE_IPV6},
+                    {REST_DL_TYPE_ARP: ether.ETH_TYPE_ARP,
+                     REST_DL_TYPE_IPV4: ether.ETH_TYPE_IP,
+                     REST_DL_TYPE_IPV6: ether.ETH_TYPE_IPV6},
                 REST_NW_PROTO:
-                {REST_NW_PROTO_TCP: inet.IPPROTO_TCP,
-                 REST_NW_PROTO_UDP: inet.IPPROTO_UDP,
-                 REST_NW_PROTO_ICMP: inet.IPPROTO_ICMP,
-                 REST_NW_PROTO_ICMPV6: inet.IPPROTO_ICMPV6}}
+                    {REST_NW_PROTO_TCP: inet.IPPROTO_TCP,
+                     REST_NW_PROTO_UDP: inet.IPPROTO_UDP,
+                     REST_NW_PROTO_ICMP: inet.IPPROTO_ICMP,
+                     REST_NW_PROTO_ICMPV6: inet.IPPROTO_ICMPV6}}
 
     @staticmethod
     def to_openflow(rest):
@@ -1068,7 +1062,7 @@ class Match(object):
                 elif nw_proto == REST_NW_PROTO_ICMPV6:
                     rest[REST_DL_TYPE] = REST_DL_TYPE_IPV6
                 elif nw_proto == REST_NW_PROTO_TCP or \
-                        nw_proto == REST_NW_PROTO_UDP:
+                                nw_proto == REST_NW_PROTO_UDP:
                     raise ValueError('no dl_type was specified')
                 else:
                     raise ValueError('Unknown nw_proto: %s' % nw_proto)
@@ -1141,7 +1135,6 @@ class Match(object):
 
 
 class Action(object):
-
     @staticmethod
     def to_rest(flow):
         if REST_ACTION in flow:

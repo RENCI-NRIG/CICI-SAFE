@@ -149,8 +149,8 @@ public class RoutingManager {
   }
 
   private void monitor(String dstIP, String srcIP, String routerName,
-                      String controller) {
-    logger.info(String.format("monitor %s %s %s", dstIP, routerName, controller));
+                       String controller) {
+    logger.info(String.format("monitor %s %s %s %s", dstIP, srcIP, routerName, controller));
     String[] cmd = SdnUtil.controllerFlowCmd(controller, getDPID(routerName),
       dstIP, srcIP, 3);
     addEntry_HashList(sdncmds, getDPID(routerName), cmd);
@@ -159,7 +159,7 @@ public class RoutingManager {
     if (res.contains("success")) {
       logger.debug(String.format("Add monitor flow dstIP %s success", dstIP));
     } else {
-      logger.warn("failed to install monitor flow");
+      logger.debug("Verification of monitor flow not suported");
     }
   }
 
@@ -256,8 +256,8 @@ public class RoutingManager {
    * @return
    */
   public synchronized boolean configurePath(String dstIP, String dstNode, String srcIP,
-                                String
-    srcNode, String gateway, String controller, long bw) {
+                                            String
+                                              srcNode, String gateway, String controller, long bw) {
     logger.info(String.format("configurePath %s %s %s %s %s %s %s", dstIP, dstNode, srcIP,
       srcNode, gateway, controller, bw));
     logger.debug("Network Manager: Configuring path for " + dstIP + " " + dstNode + " " +
