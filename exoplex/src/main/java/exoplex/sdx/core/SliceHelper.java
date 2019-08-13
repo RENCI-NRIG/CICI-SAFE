@@ -115,7 +115,6 @@ public class SliceHelper {
   }
 
   protected void computeIP(String prefix) {
-    logger.debug(prefix);
     String[] ip_mask = prefix.split("/");
     String[] ip_segs = ip_mask[0].split("\\.");
     IPPrefix = ip_segs[0] + "." + ip_segs[1] + ".";

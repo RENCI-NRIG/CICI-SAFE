@@ -24,7 +24,6 @@ import java.util.ArrayList;
  */
 public class ExogeniClientSlice extends SliceHelper {
   final Logger logger = LogManager.getLogger(ExogeniClientSlice.class);
-  private String routerSite = "";
 
   @Inject
   public ExogeniClientSlice(Authority authority) {
@@ -133,7 +132,7 @@ public class ExogeniClientSlice extends SliceHelper {
     //Example usage:   ./target/appassembler/bin/SafeSdxExample  ~/.ssl/geni-pruth1.pem ~/.ssl/geni-pruth1.pem "https://geni.renci.org:11443/orca/xmlrpc" pruth.1 stitch
     //Example usage:   ./target/appassembler/bin/SafeSdxExample  ~/.ssl/geni-pruth1.pem ~/.ssl/geni-pruth1.pem "https://geni.renci.org:11443/orca/xmlrpc" name fournodes
     if (coreProperties.getType().equals("client")) {
-      routerSite = site;
+      coreProperties.setRouterSite(site);
       coreProperties.setIpPrefix(ipPrefix);
       coreProperties.setRiakIp(riakIp);
       computeIP(coreProperties.getIpPrefix());
@@ -185,7 +184,7 @@ public class ExogeniClientSlice extends SliceHelper {
 
     ArrayList<String> nodelist = new ArrayList<>();
     for (int i = 0; i < num; i++) {
-      String node0 = s.addComputeNode(routerSite, "CNode" + String.valueOf(i + 1));
+      String node0 = s.addComputeNode(coreProperties.getRouterSite(), "CNode" + String.valueOf(i + 1));
       nodelist.add(node0);
     }
     if (network) {

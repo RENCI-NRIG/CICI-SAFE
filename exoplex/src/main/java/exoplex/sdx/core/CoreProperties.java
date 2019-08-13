@@ -3,6 +3,7 @@ package exoplex.sdx.core;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import exoplex.sdx.slice.exogeni.SiteBase;
+import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.json.JSONObject;
@@ -147,6 +148,7 @@ public class CoreProperties {
     if (conf.hasPath("config.routersite")) {
       setRouterSite(conf.getString("config.routersite"));
     }
+    logger.debug(this.toString());
   }
 
   public void setControllerUrl(String controllerUrl) {
@@ -373,6 +375,12 @@ public class CoreProperties {
 
   public void setRouterSite(String routerSite) {
     this.routerSite = SiteBase.get(routerSite);
+  }
+
+  @Override
+  public String toString()
+  {
+    return ToStringBuilder.reflectionToString(this);
   }
 }
 
