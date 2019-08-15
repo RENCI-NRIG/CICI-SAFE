@@ -3,6 +3,7 @@ package exoplex;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import exoplex.common.utils.ServerOptions;
+import exoplex.sdx.core.CoreProperties;
 import exoplex.sdx.core.SliceHelper;
 import exoplex.sdx.network.RoutingManager;
 import exoplex.sdx.safe.SafeManager;
@@ -48,13 +49,13 @@ public class DockerServerSlice extends SliceHelper {
       coreProperties.getSshKey()
       );
     s.createSlice();
-    s.addSafeServer(SiteBase.get("BBN"), coreProperties.getRiakIp(), SafeManager
-      .getSafeDockerImage(), SafeManager.getSafeServerScript());
+    s.addSafeServer(SiteBase.get("BBN"), coreProperties.getRiakIp(),
+      CoreProperties.getSafeDockerImage(), CoreProperties.getSafeServerScript());
     s.addPlexusController(SiteBase.get("BBN"), "plexus");
     s.commitAndWait();
     s.loadSlice();
     checkSafeServer(s.getManagementIP("safe-server"), coreProperties.getRiakIp());
-    checkPlexus(s, s.getManagementIP("plexus"), RoutingManager.plexusImage);
+    checkPlexus(s, s.getManagementIP("plexus"), CoreProperties.getPlexusImage());
     System.out.println(String.format("Safe server IP %s", s.getManagementIP("safe-server")));
     System.out.println(String.format("plexus server IP %s", s.getManagementIP("plexus")));
   }

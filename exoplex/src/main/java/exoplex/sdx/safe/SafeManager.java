@@ -3,20 +3,18 @@ package exoplex.sdx.safe;
 import exoplex.common.utils.Exec;
 import exoplex.common.utils.SafeUtils;
 import exoplex.sdx.advertise.RouteAdvertise;
+import exoplex.sdx.core.CoreProperties;
 import exoplex.sdx.slice.Scripts;
 import exoplex.sdx.slice.SliceProperties;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.core.Core;
 import safe.SdxRoutingSlang;
 
 import java.util.List;
 
 public class SafeManager {
   final static Logger logger = LogManager.getLogger(SafeManager.class);
-  //was v4
-  private static String safeDockerImage = "safeserver-v8";
-  //was prdn.sh
-  private static String safeServerScript = "sdx-routing.sh";
   private String safeServerIp;
   private String safeServer;
   private String safeKeyFile;
@@ -36,22 +34,6 @@ public class SafeManager {
       } catch (Exception e) {
       }
     }
-  }
-
-  public static String getSafeDockerImage() {
-    return safeDockerImage;
-  }
-
-  public static void setSafeDockerImage(String name) {
-    safeDockerImage = name;
-  }
-
-  public static String getSafeServerScript() {
-    return safeServerScript;
-  }
-
-  public static void setSafeServerScript(String name) {
-    safeServerScript = name;
   }
 
   public void setSafeServerIp(String safeServerIp) {
@@ -264,7 +246,8 @@ public class SafeManager {
   }
 
   public void restartSafeServer() {
-    Exec.sshExec(SliceProperties.userName, safeServerIp, Scripts.restartSafe_v1(safeServerScript), sshKey);
+    Exec.sshExec(SliceProperties.userName, safeServerIp, Scripts.restartSafe_v1(CoreProperties
+        .getSafeServerScript()), sshKey);
   }
 
   public void deploySafeScripts() {
@@ -278,11 +261,12 @@ public class SafeManager {
     while (true) {
       String result = Exec.sshExec(SliceProperties.userName, safeServerIp,
         Scripts.dockerImages(), sshKey)[0];
-      if (result.contains(safeDockerImage)) {
+      if (result.contains(CoreProperties.getSafeDockerImage())) {
         break;
       } else {
-        Exec.sshExec(SliceProperties.userName, safeServerIp, Scripts.getSafeScript_v1(riakIp, safeDockerImage,
-          safeServerScript), sshKey);
+        Exec.sshExec(SliceProperties.userName, safeServerIp, Scripts.getSafeScript_v1(riakIp,
+          CoreProperties.getSafeDockerImage(),
+          CoreProperties.getSafeServerScript()), sshKey);
       }
     }
     while (true) {
@@ -291,12 +275,14 @@ public class SafeManager {
       if (result.contains("safe")) {
         break;
       } else {
-        Exec.sshExec(SliceProperties.userName, safeServerIp, Scripts.getSafeScript_v1(riakIp, safeDockerImage,
-          safeServerScript),
+        Exec.sshExec(SliceProperties.userName, safeServerIp, Scripts.getSafeScript_v1(riakIp,
+          CoreProperties.getSafeDockerImage(),
+          CoreProperties.getSafeServerScript()),
           sshKey);
       }
     }
-    Exec.sshExec(SliceProperties.userName, safeServerIp, Scripts.restartSafe_v1(safeServerScript), sshKey);
+    Exec.sshExec(SliceProperties.userName, safeServerIp,
+      Scripts.restartSafe_v1(CoreProperties.getSafeServerScript()), sshKey);
     while (true) {
       if (safeServerAlive()) {
         break;

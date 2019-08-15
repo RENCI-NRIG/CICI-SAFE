@@ -2,6 +2,7 @@ package exoplex.sdx.routing;
 
 import exoplex.common.utils.ServerOptions;
 import exoplex.experiment.ExperimentBase;
+import exoplex.sdx.core.CoreProperties;
 import exoplex.sdx.core.SdxManager;
 import exoplex.sdx.network.RoutingManager;
 import exoplex.sdx.network.SdnUtil;
@@ -11,6 +12,7 @@ import exoplex.sdx.slice.exogeni.SiteBase;
 import org.apache.commons.cli.CommandLine;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.core.Core;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
@@ -94,7 +96,7 @@ public class TestMpRouting extends SdxManager {
     serverSlice.commitAndWait();
     configTestSlice(serverSlice);
     if (coreProperties.isPlexusInSlice()) {
-      checkPlexus(serverSlice, serverSlice.getManagementIP(plexusName), RoutingManager.plexusImage);
+      checkPlexus(serverSlice, serverSlice.getManagementIP(plexusName), CoreProperties.getPlexusImage());
     }
     if (coreProperties.isSafeInSlice()) {
       configSdnControllerAddr(serverSlice.getManagementIP(plexusName));

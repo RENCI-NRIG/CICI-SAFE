@@ -1,6 +1,7 @@
 package exoplex.sdx.routing;
 
 import exoplex.common.utils.ServerOptions;
+import exoplex.sdx.core.CoreProperties;
 import exoplex.sdx.core.SdxManager;
 import exoplex.sdx.network.RoutingManager;
 import exoplex.sdx.slice.Scripts;
@@ -92,7 +93,8 @@ public class TestVlan extends SdxManager {
     serverSlice.commitAndWait();
     configTestSlice(serverSlice);
     if (coreProperties.isPlexusInSlice()) {
-      checkPlexus(serverSlice, serverSlice.getManagementIP(plexusName), RoutingManager.plexusImage);
+      checkPlexus(serverSlice, serverSlice.getManagementIP(plexusName),
+        CoreProperties.getPlexusImage());
     }
     if (coreProperties.isSafeInSlice()) {
       configSdnControllerAddr(serverSlice.getManagementIP(plexusName));

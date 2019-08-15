@@ -17,6 +17,10 @@ import java.util.List;
 public class CoreProperties {
   static Logger logger = LogManager.getLogger(CoreProperties.class);
 
+  private static String plexusImage = "yaoyj11/plexus-v3";
+  private static String safeDockerImage = "safeserver-v8";
+  private static String safeServerScript = "sdx-routing.sh";
+
   private boolean broEnabled = false;
 
   private String controllerUrl;
@@ -381,6 +385,26 @@ public class CoreProperties {
   public String toString()
   {
     return ToStringBuilder.reflectionToString(this);
+  }
+
+  public static String getSafeDockerImage() {
+    return safeDockerImage;
+  }
+
+  public static void setSafeDockerImage(String name) {
+    safeDockerImage = name;
+  }
+
+  public static String getSafeServerScript() {
+    return safeServerScript;
+  }
+
+  public static void setSafeServerScript(String name) {
+    safeServerScript = name;
+  }
+
+  public static String getPlexusImage() {
+    return plexusImage;
   }
 }
 

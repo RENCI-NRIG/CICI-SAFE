@@ -2,6 +2,7 @@ package exoplex.demo;
 
 import com.google.inject.Injector;
 import exoplex.client.exogeni.SdxExogeniClient;
+import exoplex.sdx.core.CoreProperties;
 import exoplex.sdx.core.RestService;
 import exoplex.sdx.core.SdxManager;
 import exoplex.sdx.core.SdxServer;
@@ -9,6 +10,7 @@ import exoplex.sdx.network.SdnReplay;
 import exoplex.sdx.safe.SafeManager;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.core.Core;
 import riak.RiakSlice;
 
 import java.lang.reflect.InvocationTargetException;
@@ -30,8 +32,8 @@ public abstract class AbstractTest {
 
   public void before() throws Exception {
     initTests();
-    SafeManager.setSafeDockerImage(testSetting.dockerImage);
-    SafeManager.setSafeServerScript(testSetting.safeServerScript);
+    CoreProperties.setSafeDockerImage(testSetting.dockerImage);
+    CoreProperties.setSafeServerScript(testSetting.safeServerScript);
     createSlices();
   }
 

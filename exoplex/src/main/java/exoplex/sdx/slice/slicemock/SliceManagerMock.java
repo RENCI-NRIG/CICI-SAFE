@@ -3,6 +3,7 @@ package exoplex.sdx.slice.slicemock;
 
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
+import exoplex.sdx.core.CoreProperties;
 import exoplex.sdx.network.RoutingManager;
 import exoplex.sdx.slice.Scripts;
 import exoplex.sdx.slice.SliceManager;
@@ -683,7 +684,7 @@ public class SliceManagerMock extends SliceManager implements Serializable {
   }
 
   public void addPlexusController(String controllerSite, String name) {
-    addDocker(controllerSite, name, Scripts.getPlexusScript(RoutingManager.plexusImage), NodeBase.xoMedium);
+    addDocker(controllerSite, name, Scripts.getPlexusScript(CoreProperties.getPlexusImage()), NodeBase.xoMedium);
   }
 
   //We always add the bro when we add the edge router

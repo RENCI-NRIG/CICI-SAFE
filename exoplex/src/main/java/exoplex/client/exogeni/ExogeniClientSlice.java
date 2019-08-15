@@ -6,6 +6,7 @@ import com.google.inject.Injector;
 import exoplex.common.utils.Exec;
 import exoplex.common.utils.ServerOptions;
 import exoplex.demo.singlesdx.SingleSdxModule;
+import exoplex.sdx.core.CoreProperties;
 import exoplex.sdx.core.SliceHelper;
 import exoplex.sdx.safe.SafeManager;
 import exoplex.sdx.slice.Scripts;
@@ -201,10 +202,9 @@ public class ExogeniClientSlice extends SliceHelper {
     }
     if (coreProperties.isSafeEnabled()) {
       if (coreProperties.isSafeInSlice()) {
-        s.addSafeServer(coreProperties.getServerSite(), coreProperties.getRiakIp(), SafeManager
-            .getSafeDockerImage(),
-          SafeManager
-            .getSafeServerScript());
+        s.addSafeServer(coreProperties.getServerSite(), coreProperties.getRiakIp(),
+            CoreProperties.getSafeDockerImage(),
+            CoreProperties.getSafeServerScript());
       }
     }
     return s;

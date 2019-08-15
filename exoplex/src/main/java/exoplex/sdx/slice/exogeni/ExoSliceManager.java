@@ -6,6 +6,7 @@ import exoplex.common.utils.Exec;
 import exoplex.common.utils.NetworkUtil;
 import exoplex.common.utils.PathUtil;
 import exoplex.common.utils.ScpTo;
+import exoplex.sdx.core.CoreProperties;
 import exoplex.sdx.network.RoutingManager;
 import exoplex.sdx.slice.Scripts;
 import exoplex.sdx.slice.SliceManager;
@@ -996,7 +997,7 @@ public class ExoSliceManager extends SliceManager {
   }
 
   synchronized public void addPlexusController(String controllerSite, String name) {
-    addDocker(controllerSite, name, Scripts.getPlexusScript(RoutingManager.plexusImage), NodeBase.xoMedium);
+    addDocker(controllerSite, name, Scripts.getPlexusScript(CoreProperties.getPlexusImage()), NodeBase.xoMedium);
   }
 
   //We always add the bro when we add the edge router
