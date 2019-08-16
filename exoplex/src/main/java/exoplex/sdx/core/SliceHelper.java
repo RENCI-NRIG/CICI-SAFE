@@ -176,7 +176,7 @@ public class SliceHelper {
     int routerNum = coreProperties.getClientSites().size();
 
     String scriptsdir = coreProperties.getScriptsDir();
-    computeIP(IPPrefix);
+    computeIP(coreProperties.getIpPrefix());
     try {
       SliceManager carrier = createCarrierSlice(coreProperties.getSliceName(), routerNum, bw);
       carrier.commitAndWait();

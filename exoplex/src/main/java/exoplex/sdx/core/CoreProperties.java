@@ -23,8 +23,6 @@ public class CoreProperties {
 
   private boolean broEnabled = false;
 
-  private String controllerUrl;
-
   //site of sdn controller
   private String sdnSite = null;
 
@@ -74,9 +72,6 @@ public class CoreProperties {
     File myConfigFile = new File(configFilePath);
     Config fileConfig = ConfigFactory.parseFile(myConfigFile);
     Config conf = ConfigFactory.load(fileConfig);
-    if (conf.hasPath("config.exogenism")) {
-      setControllerUrl(conf.getString("config.exogenism"));
-    }
     if (conf.hasPath("config.bro")) {
       setBroEnabled(conf.getBoolean("config.bro"));
     }
@@ -123,6 +118,11 @@ public class CoreProperties {
     if (conf.hasPath("config.plexusinslice")) {
       setPlexusInSlice(conf.getBoolean("config.plexusinslice"));
     }
+    if (!isPlexusInSlice()) {
+      if (conf.hasPath("config.plexusserver")) {
+        setSdnControllerIp(conf.getString("config.plexusserver"));
+      }
+    }
     if (conf.hasPath("config.safeinslice")) {
       setSafeInSlice(conf.getBoolean("config.safeinslice"));
     }
@@ -153,11 +153,6 @@ public class CoreProperties {
       setRouterSite(conf.getString("config.routersite"));
     }
     logger.debug(this.toString());
-  }
-
-  public void setControllerUrl(String controllerUrl) {
-    this.controllerUrl = controllerUrl;
-    logger.debug(String.format("%s: %s", "config.exogenism", controllerUrl));
   }
 
   public boolean isPlexusInSlice() {
