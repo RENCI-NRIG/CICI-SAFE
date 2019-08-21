@@ -281,7 +281,7 @@ public class SdxManager extends SliceHelper {
             newNum2 = serverSlice.getPhysicalInterfaces(node2).size();
           }
           if (times > 1) {
-            logger.warn(String.format("Tried %s times to add a stitchlink", times));
+            logger.warn(String.format("Tried %s times to add a link", times));
           }
           break;
         }
@@ -1004,6 +1004,7 @@ public class SdxManager extends SliceHelper {
       String param = "";
       updateOvsInterface(n1);
       updateOvsInterface(n2);
+      sleep(5);
 
       //TODO: why nodeb dpid could be null
       res = routingmanager.newInternalLink(l1.getLinkName(),
