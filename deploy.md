@@ -1,12 +1,12 @@
 # Deploy SDX
 
-  sudo apt install -y maven openjdk-8-jdk docker.io
-
-  ssh-keygen -t rsa -m PEM
-
-  SAFEIMG="yaoyj11/safeserver-v8"
-  PLEXUSIMG="yaoyj11/plexus-v3"
-  SAFE_SCRIPT="sdx-routing.sh"
+        sudo apt install -y maven openjdk-8-jdk docker.io
+        
+        ssh-keygen -t rsa -m PEM
+        
+        SAFEIMG="yaoyj11/safeserver-v8"
+        PLEXUSIMG="yaoyj11/plexus-v3"
+        SAFE_SCRIPT="sdx-routing.sh"
 
 ##1. deploy riak server on VM1
 ### a) 
