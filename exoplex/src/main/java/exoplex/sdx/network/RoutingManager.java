@@ -622,12 +622,12 @@ public class RoutingManager {
   }
 
   public String getDPID(String routerName) {
-    logger.info(String.format("getDPID %s", routerName));
+    logger.debug(String.format("getDPID %s", routerName));
     return networkManager.getRouter(routerName).getDPID();
   }
 
   public String getEdgeRouterByGateway(String gw) {
-    logger.info(String.format("getEdgeRouterByGateway %s", gw));
+    logger.debug(String.format("getEdgeRouterByGateway %s", gw));
     return networkManager.getRouterByGateway(gw);
   }
 
