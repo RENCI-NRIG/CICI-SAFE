@@ -127,6 +127,10 @@
         <Logger name="SdnCmds" level="info" additivity="false">
             <AppenderRef ref="SdnRollingFile"/>
         </Logger>
+        <Logger name="exoplex.common.utils.Exec" level="warn" additivity="false">
+            <AppenderRef ref="RollingFile"/>
+            <AppenderRef ref="Console"/>
+        </Logger>
         <Logger name="exoplex.sdx.network.NetworkManager" level="warn" additivity="false">
             <AppenderRef ref="Console"/>
         </Logger>

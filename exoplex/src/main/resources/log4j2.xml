@@ -139,6 +139,10 @@
             <AppenderRef ref="AuthRollingFile"/>
             <AppenderRef ref="RollingFile"/>
         </Logger>
+        <Logger name="exoplex.common.utils.Exec" level="warn" additivity="false">
+            <AppenderRef ref="RollingFile"/>
+            <AppenderRef ref="Console"/>
+        </Logger>
         <Logger name="exoplex.common.utils.SafeUtils" level="debug" additivity="false">
             <AppenderRef ref="RollingFile"/>
         </Logger>

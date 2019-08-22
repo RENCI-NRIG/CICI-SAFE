@@ -837,7 +837,10 @@ class VlanRouter(object):
             src_ip = address.default_gw
             #NOTE: yjyao
             route = self.routing_tbl.add(destination, gateway,source)
-            self.packet_buffer.add_route_data(route)
+            try:
+                self.packet_buffer.add_route_data(route)
+            except:
+                self.logger.info("Exception when adding route data", extra=self.sw_id)
             #==========
             self._set_route_packetin(route)
             self.send_arp_request(src_ip, dst_ip)
