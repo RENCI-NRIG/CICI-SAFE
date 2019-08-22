@@ -21,8 +21,8 @@
         sudo docker exec -itd riakserver sudo riak-admin bucket-type activate  safesets
         sudo docker exec -itd riakserver sudo riak-admin bucket-type update safesets '{"props":{"allow_mult":false}}'
 
-##2. deploy safe server and plexus server on VM2
-####For security, plexus controller and safe server should only listen on localhost so that only the SDX controller can calls them.
+## 2. deploy safe server and plexus server on VM2
+#### For security, plexus controller and safe server should only listen on localhost so that only the SDX controller can calls them.
 ###  a) deploy safe server
 
         riak_ip="IP address of VM1"
@@ -138,7 +138,7 @@
 
         ${BIN_DIR}/SafeSdxClientSliceServer -c client-config/c0.conf
 
-##7. stitch to sdx
+## 7. stitch to sdx
 
         sudo ${BIN_DIR}/SafeSdxExogeniClient -c client-config/c0.conf -e 'stitch CNode1 192.168.10.2 192.168.10.1/24'
 
