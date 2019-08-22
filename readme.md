@@ -128,11 +128,12 @@ The first IP address without netmask is the address of the interface in customer
 The second IP address with netmask is the address of the interface in SDX slice, the netmask is required.
     
 [3] The following commands are equivalent:
-    ./scripts/sdx_exogeni_client.sh -c client-config/bob.conf -e "stitch CNode0 192.168.10.2 192.168.10.1/24"
+
+        ./scripts/sdx_exogeni_client.sh -c client-config/bob.conf -e "stitch CNode0 192.168.10.2 192.168.10.1/24"
 
 [4] With safe authorization enabled, to enable stitch to a customer slice. First we need to set up delegations to the user and slice with AuthorityMock:
 
-    ./scripts/auth.sh customerkeyfile customerslice customerIPPrefix safeServerIp
+        ./scripts/auth.sh customerkeyfile customerslice customerIPPrefix safeServerIp
 
 The customer key file is the name of the customer's safe key (which should be put in the safe server container). For the demo, available keys are "key_p5, key_p6, key_p7,....."
 The customerslice is the name of the customer slice
@@ -172,13 +173,13 @@ Another way to do this is using Quagga with zebra enabled, and add routing entri
 [11]. Delete a slice
  We can delete a slice with command: ./scripts/createslice.sh -c configFile -d
 
-    ./scripts/createslice.sh -c client-config/alice.conf -d
+        ./scripts/createslice.sh -c client-config/alice.conf -d
 
 
 ### 4. Stitching External Sites (Chameleon, Duke, ESNet...) to Exogeni
 1. Run sdx server controller, configure the address and port number that sdx server will listen on ("config.serverurl").
 
-     ./scripts/sdxserver.sh -c config/sdx.conf
+        ./scripts/sdxserver.sh -c config/sdx.conf
 
 2.  Stitching Chameleon Node to  SDX slice
 1) First, create a Chameleon node, using vlan tag "3298"
