@@ -28,7 +28,7 @@ Set the version and safe docker image, plexus sdn controller docker image and sa
         sudo docker exec -itd riakserver sudo riak-admin bucket-type update safesets '{"props":{"allow_mult":false}}'
 
 ## 2. deploy safe server and plexus server on VM2
-#### For security, plexus controller and safe server should only listen on localhost so that only the SDX controller can calls them.
+For security, plexus controller and safe server should only listen on localhost so that only the SDX controller can calls them.
 ###  a) deploy safe server
 
         riak_ip="IP address of VM1"
@@ -82,7 +82,7 @@ Modify ${WORKING_DIR}/CICI-SAFE/SDX-Simple/config/sdx.conf.
 
 
 # Deploy authorities on VM3
-#### Authorities makes delegations to the client Key
+Authorities makes delegations to the client Key
 
 ## 1. runs a safeserver for authroties on VM 3
 
