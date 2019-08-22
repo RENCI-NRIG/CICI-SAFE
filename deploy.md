@@ -4,7 +4,7 @@ Install prerequisites
 
         sudo apt install -y maven openjdk-8-jdk docker.io
 
-Generate ssh key, (the key pair created by ssh-keygen command doesn't work on latest Ubuntu)
+Generate ssh key (the default key pair created by ssh-keygen command  without options doesn't work on latest Ubuntu)
 
         ssh-keygen -t rsa -m PEM
 
