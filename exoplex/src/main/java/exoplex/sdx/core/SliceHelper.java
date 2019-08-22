@@ -15,6 +15,7 @@ import exoplex.sdx.slice.SliceManagerFactory;
 import org.apache.commons.cli.CommandLine;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.core.Core;
 import safe.Authority;
 
 import java.io.FileOutputStream;
@@ -115,7 +116,6 @@ public class SliceHelper {
   }
 
   protected void computeIP(String prefix) {
-    logger.debug(prefix);
     String[] ip_mask = prefix.split("/");
     String[] ip_segs = ip_mask[0].split("\\.");
     IPPrefix = ip_segs[0] + "." + ip_segs[1] + ".";
@@ -176,7 +176,7 @@ public class SliceHelper {
     int routerNum = coreProperties.getClientSites().size();
 
     String scriptsdir = coreProperties.getScriptsDir();
-    computeIP(IPPrefix);
+    computeIP(coreProperties.getIpPrefix());
     try {
       SliceManager carrier = createCarrierSlice(coreProperties.getSliceName(), routerNum, bw);
       carrier.commitAndWait();
@@ -275,7 +275,7 @@ public class SliceHelper {
         if (coreProperties.isPlexusInSlice()) {
           coreProperties.setSdnControllerIp(serverSlice.getManagementIP(plexusName));
         }
-        checkPlexus(serverSlice, coreProperties.getSdnControllerIp(), RoutingManager.plexusImage);
+        checkPlexus(serverSlice, coreProperties.getSdnControllerIp(), CoreProperties.getPlexusImage());
       }
     });
     if (coreProperties.isSafeEnabled()) {
@@ -354,7 +354,7 @@ public class SliceHelper {
   }
 
   protected boolean checkSafeServer(String safeIP, String riakIp) {
-    logger.info(String.format("checking safe server with image %s", SafeManager.getSafeDockerImage()));
+    logger.info(String.format("checking safe server with image %s", coreProperties.getSafeDockerImage()));
     if (coreProperties.isSafeInSlice()) {
       SafeManager sm = new SafeManager(safeIP, coreProperties.getSafeKeyFile(), coreProperties.getSshKey());
       sm.verifySafeInstallation(riakIp);
@@ -477,9 +477,9 @@ public class SliceHelper {
       links.put(linkname, logLink);
     }
     if (coreProperties.isSafeEnabled() && coreProperties.isSafeInSlice()) {
-      s.addSafeServer(coreProperties.getServerSite(), coreProperties.getRiakIp(), SafeManager.getSafeDockerImage(),
-        SafeManager
-          .getSafeServerScript());
+      s.addSafeServer(coreProperties.getServerSite(), coreProperties.getRiakIp(), coreProperties
+          .getSafeDockerImage(),
+       coreProperties.getSafeServerScript());
     }
     if (coreProperties.isPlexusInSlice()) {
       s.addPlexusController(coreProperties.getSdnSite(), plexusName);

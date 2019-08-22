@@ -3,6 +3,7 @@ package exoplex.demo.cnert;
 import com.google.inject.Inject;
 import exoplex.common.utils.Exec;
 import exoplex.common.utils.PathUtil;
+import exoplex.sdx.core.CoreProperties;
 import exoplex.sdx.core.SliceHelper;
 import exoplex.sdx.network.RoutingManager;
 import exoplex.sdx.slice.Scripts;
@@ -50,7 +51,7 @@ public class CnertTestSlice extends SliceHelper {
         coreProperties.getSshKey());
       //Make sure that plexus container is running
       //SDNControllerIP = "152.3.136.36";
-      if (!checkPlexus(carrier, coreProperties.getSdnControllerIp(), RoutingManager.plexusImage)) {
+      if (!checkPlexus(carrier, coreProperties.getSdnControllerIp(), CoreProperties.getPlexusImage())) {
         System.exit(-1);
       }
       System.out.println("Plexus Controler IP: " + coreProperties.getSdnControllerIp());

@@ -222,7 +222,7 @@ public class SdxExogeniClient {
       }
     }
     String node = serverSlice.getComputeNode(nodeName);
-    String res = serverSlice.runCmdNode("ping  -c 1 -W 5 " + ip, node, false);
+    String res = serverSlice.runCmdNode("ping  -c 1 -W 2 " + ip, node, false);
     logger.debug(res);
     return res.contains("1 received");
   }

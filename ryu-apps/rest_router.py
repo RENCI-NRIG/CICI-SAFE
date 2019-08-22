@@ -837,7 +837,10 @@ class VlanRouter(object):
             src_ip = address.default_gw
             #NOTE: yjyao
             route = self.routing_tbl.add(destination, gateway,source)
-            self.packet_buffer.add_route_data(route)
+            try:
+                self.packet_buffer.add_route_data(route)
+            except:
+                self.logger.info("Exception when adding route data", extra=self.sw_id)
             #==========
             self._set_route_packetin(route)
             self.send_arp_request(src_ip, dst_ip)
@@ -1189,9 +1192,10 @@ class VlanRouter(object):
                     req = urllib2.Request(get_sdx_url())
                     req.add_header('Content-Type', 'application/json')
                     response = urllib2.urlopen(req, json.dumps(data))
-                    self.logger.debug(response.read())
+                    self.logger.debug("send request to sdx", extra = self.sw_id)
                 except:
-                    self.logger.debug("An exception when sending request to sdx")
+                    self.logger.info("An exception when sending request to sdx {}\n src {} dst {}"
+                                    .format(get_sdx_url(), srcip, dstip), extra=self.sw_id)
 
         if src_ip is not None:
             self.packet_buffer.add(in_port, header_list, msg.data)

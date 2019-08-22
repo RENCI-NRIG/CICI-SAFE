@@ -3,6 +3,7 @@ package exoplex.sdx.core;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import exoplex.sdx.slice.exogeni.SiteBase;
+import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.json.JSONObject;
@@ -16,9 +17,11 @@ import java.util.List;
 public class CoreProperties {
   static Logger logger = LogManager.getLogger(CoreProperties.class);
 
-  private boolean broEnabled = false;
+  private static String plexusImage = "yaoyj11/plexus-v3";
+  private static String safeDockerImage = "safeserver-v8";
+  private static String safeServerScript = "sdx-routing.sh";
 
-  private String controllerUrl;
+  private boolean broEnabled = false;
 
   //site of sdn controller
   private String sdnSite = null;
@@ -69,9 +72,6 @@ public class CoreProperties {
     File myConfigFile = new File(configFilePath);
     Config fileConfig = ConfigFactory.parseFile(myConfigFile);
     Config conf = ConfigFactory.load(fileConfig);
-    if (conf.hasPath("config.exogenism")) {
-      setControllerUrl(conf.getString("config.exogenism"));
-    }
     if (conf.hasPath("config.bro")) {
       setBroEnabled(conf.getBoolean("config.bro"));
     }
@@ -118,6 +118,11 @@ public class CoreProperties {
     if (conf.hasPath("config.plexusinslice")) {
       setPlexusInSlice(conf.getBoolean("config.plexusinslice"));
     }
+    if (!isPlexusInSlice()) {
+      if (conf.hasPath("config.plexusserver")) {
+        setSdnControllerIp(conf.getString("config.plexusserver"));
+      }
+    }
     if (conf.hasPath("config.safeinslice")) {
       setSafeInSlice(conf.getBoolean("config.safeinslice"));
     }
@@ -147,11 +152,7 @@ public class CoreProperties {
     if (conf.hasPath("config.routersite")) {
       setRouterSite(conf.getString("config.routersite"));
     }
-  }
-
-  public void setControllerUrl(String controllerUrl) {
-    this.controllerUrl = controllerUrl;
-    logger.debug(String.format("%s: %s", "config.exogenism", controllerUrl));
+    logger.debug(this.toString());
   }
 
   public boolean isPlexusInSlice() {
@@ -373,6 +374,32 @@ public class CoreProperties {
 
   public void setRouterSite(String routerSite) {
     this.routerSite = SiteBase.get(routerSite);
+  }
+
+  @Override
+  public String toString()
+  {
+    return ToStringBuilder.reflectionToString(this);
+  }
+
+  public static String getSafeDockerImage() {
+    return safeDockerImage;
+  }
+
+  public static void setSafeDockerImage(String name) {
+    safeDockerImage = name;
+  }
+
+  public static String getSafeServerScript() {
+    return safeServerScript;
+  }
+
+  public static void setSafeServerScript(String name) {
+    safeServerScript = name;
+  }
+
+  public static String getPlexusImage() {
+    return plexusImage;
   }
 }
 

@@ -7,6 +7,7 @@ import exoplex.demo.AbstractTest;
 import exoplex.demo.AbstractTestSetting;
 import exoplex.demo.AbstractTestSlice;
 import exoplex.experiment.ExperimentBase;
+import exoplex.sdx.core.CoreProperties;
 import exoplex.sdx.core.SdxManager;
 import exoplex.sdx.safe.SafeManager;
 import org.apache.commons.lang3.tuple.ImmutablePair;
@@ -34,7 +35,7 @@ public class MultiSdxTestSD extends AbstractTest {
     multiSdxTestSD.injector = injector;
     multiSdxTestSD.testSlice = injector.getInstance(AbstractTestSlice.class);
     multiSdxTestSD.testSetting = injector.getInstance(AbstractTestSetting.class);
-    SafeManager.setSafeDockerImage(multiSdxTestSD.testSetting.dockerImage);
+    CoreProperties.setSafeDockerImage(multiSdxTestSD.testSetting.dockerImage);
     try {
       multiSdxTestSD.testMultiSdxSD();
       //multiSdxTestSD.replaySdnConfiguration("/home/yaoyj11/CICI-SAFE/exoplex/log/sdn.log");

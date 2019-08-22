@@ -29,7 +29,6 @@ public class SdxServer {
   }
 
   public static void main(String[] args) throws IOException, TransportException, Exception {
-    System.out.println("starting exoplex.sdx server");
     Injector injector = Guice.createInjector(new SingleSdxModule());
     SdxServer sdxServer = injector.getProvider(SdxServer.class).get();
     sdxServer.run(args);

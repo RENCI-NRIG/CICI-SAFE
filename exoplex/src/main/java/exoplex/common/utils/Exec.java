@@ -127,7 +127,12 @@ public class Exec {
     StringBuilder errResult = new StringBuilder();
     logger.debug(host + ":" + command);
     try {
-      Session session = getSession(user, host, privkey);
+      Session session = null;
+      session = getSession(user, host, privkey);
+      while(session == null) {
+        session = getSession(user, host, privkey);
+        logger.warn(String.format("Returned session is null: %s %s %s", user, host, privkey));
+      }
       Channel channel = session.openChannel("exec");
       ((ChannelExec) channel).setCommand(command);
       channel.setInputStream(null);
