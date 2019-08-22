@@ -24,7 +24,8 @@ The java code is compiled with JDK8.
 
 ### 2. Update configuration files
 
-#####   About configuration files in SDX-Simple/config and SDX-Simple/client-config:.
+About configuration files in SDX-Simple/config and SDX-Simple/client-config:.
+
         slicename:    Name of the slice
         safekey:         Principal ID (safe key hash) or the file name of safe key 
         sshkey:          the location of your sshkey, used for logging onto ExoGENI node
@@ -35,7 +36,9 @@ The java code is compiled with JDK8.
         safeserver:      Ip address of safe server
         serverinslice:   Whether safe server and plexus controller is in the exogeni slice
         plexusserver:    IP address of plexus server
-##### Generally, you need to change the above configuration fields, and leave the rest alone.
+
+Generally, you need to change the above configuration fields, and leave the rest alone.
+
         clientsites:     the expected sites of clients where we need to launch some routers when we create the slice
         routernum:       The number of routers to be launched when creating the slice
         controllersite:  The site of plexus sdn controller
@@ -196,7 +199,8 @@ OR
 [6] When stitching a chameleon node to exogeni node, we know the ip address of the chameleon node, say "10.32.98.204". 
 In the stitching request, we tell the sdx controller what IP address it should use for the new interface on c3 to the stitchport, we can specify any address in the same subnet as the chameleon node, say "10.32.98.200"
 Note that in sdx server, we use SDN controller to configure the ip address. The ip address is not configured for the physical interface, so we can't ping from exogeni node to chameleon node. But we can ping from the Chameleon node to the exogeni node.
-a) Chameleon slice advertises its ip prefixes in the same way as ExoGENI slice does [not tested]
+
+a) Chameleon slice advertises its ip prefixes in the same way as ExoGENI slice does
 
         ./scripts/sdx_stitchport_client.sh -c config/carol.conf -e "route 10.32.98.1/24 10.32.98.204 [SDX_SLICE_NAME, e.g., sdx] [STITCH_POINT, e.g., c3]"
 
