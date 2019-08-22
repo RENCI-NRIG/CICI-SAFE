@@ -8,7 +8,7 @@
         PLEXUSIMG="yaoyj11/plexus-v3"
         SAFE_SCRIPT="sdx-routing.sh"
 
-##1. deploy riak server on VM1
+## 1. deploy riak server on VM1
 ### a) 
 
         sudo apt install -y docker.io
