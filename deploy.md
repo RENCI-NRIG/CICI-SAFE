@@ -1,9 +1,15 @@
 # Deploy SDX
 
+Install prerequisites
+
         sudo apt install -y maven openjdk-8-jdk docker.io
-        
+
+Generate ssh key, (the key pair created by ssh-keygen command doesn't work on latest Ubuntu)
+
         ssh-keygen -t rsa -m PEM
-        
+
+Set the version and safe docker image, plexus sdn controller docker image and safe server script as environment variable
+
         SAFEIMG="yaoyj11/safeserver-v8"
         PLEXUSIMG="yaoyj11/plexus-v3"
         SAFE_SCRIPT="sdx-routing.sh"
@@ -62,7 +68,9 @@
         cd ${WORKING_DIR}/CICI-SAFE/SDX-Simple/SAFE_SDX
         mvn  clean package appassembler:assemble
 
-## 4. create an Exogeni slice for SDX. Modify ${WORKING_DIR}/CICI-SAFE/SDX-Simple/config/sdx.conf.
+## 4. create an Exogeni slice for SDX.
+      
+Modify ${WORKING_DIR}/CICI-SAFE/SDX-Simple/config/sdx.conf.
 
         cd ${WORKING_DIR}/CICI-SAFE/SDX-Simple
         ./scripts/createslice.sh -c config/sdx.conf
