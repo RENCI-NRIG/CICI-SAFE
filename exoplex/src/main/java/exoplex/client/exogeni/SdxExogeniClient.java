@@ -7,7 +7,6 @@ import com.google.inject.Guice;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
 import exoplex.common.utils.HttpUtil;
-import exoplex.common.utils.SafeUtils;
 import exoplex.common.utils.ServerOptions;
 import exoplex.demo.singlesdx.SingleSdxModule;
 import exoplex.sdx.advertise.PolicyAdvertise;
@@ -78,8 +77,7 @@ public class SdxExogeniClient {
 
     Injector injector = Guice.createInjector(new SingleSdxModule());
     SdxExogeniClient sdxExogeniClient = injector.getInstance(SdxExogeniClient.class);
-    sdxExogeniClient.parseArgs(args);
-    sdxExogeniClient.run(args);
+    sdxExogeniClient.run(new CoreProperties(args));
   }
 
   public String getManagementIP(String nodeName) {
@@ -93,20 +91,8 @@ public class SdxExogeniClient {
     return serverSlice.getManagementIP(nodeName);
   }
 
-  public void parseArgs(String[] args) {
-    cmd = ServerOptions.parseCmd(args);
-    String configFilePath = cmd.getOptionValue("config");
-    coreProperties = new CoreProperties(configFilePath);
-    logPrefix = "[" + coreProperties.getSliceName() + "] ";
-  }
-
-  public void config(String sliceName, String IPPrefix, String safeKeyFile, String[] args) {
-    cmd = ServerOptions.parseCmd(args);
-    String configFilePath = cmd.getOptionValue("config");
-    coreProperties = new CoreProperties(configFilePath);
-    coreProperties.setIpPrefix(IPPrefix);
-    coreProperties.setSafeKeyFile(safeKeyFile);
-    coreProperties.setSliceName(sliceName);
+  public void config(CoreProperties coreProperties) {
+    this.coreProperties = coreProperties;
     logPrefix = "[" + coreProperties.getSliceName() + "] ";
     logger.info(logPrefix + "Client start");
   }
@@ -115,7 +101,7 @@ public class SdxExogeniClient {
     coreProperties.setSafeServerIp(safeIP);
     if (safeManager == null) {
       safeManager = new SafeManager(coreProperties.getSafeServerIp(),
-        coreProperties.getSafeKeyFile(), coreProperties.getSshKey());
+        coreProperties.getSafeKeyFile(), coreProperties.getSshKey(), true);
     } else {
       safeManager.setSafeServerIp(coreProperties.getSafeServerIp());
     }
@@ -133,7 +119,9 @@ public class SdxExogeniClient {
     serverSlice.loadSlice();
   }
 
-  public void run(String[] args) {
+  public void run(CoreProperties coreProperties) {
+    this.coreProperties = coreProperties;
+    logPrefix = String.format("[%s]", this.coreProperties.getSliceName());
     try {
       loadSlice();
       checkSafe();
@@ -173,6 +161,7 @@ public class SdxExogeniClient {
   }
 
   public String processCmd(String command) {
+    checkSafe();
     try {
       String[] params = command.split(" ");
       if (params[0].equals("stitch")) {
@@ -322,7 +311,7 @@ public class SdxExogeniClient {
   }
 
   private void processPolicyCmd(String[] params) {
-    String tagAuthorityPid = SafeUtils.getPrincipalId(coreProperties.getSafeServer(), "tagauthority");
+    String tagAuthorityPid = safeManager.getPrincipalId("tagauthority");
     String destPrefix = params[1];
     String srcPrefix = params[2];
     String astag = params[3];
@@ -331,7 +320,6 @@ public class SdxExogeniClient {
     PolicyAdvertise policyAdvertise = new PolicyAdvertise();
     policyAdvertise.srcPrefix = srcPrefix;
     policyAdvertise.destPrefix = destPrefix;
-    checkSafe();
     String sdToken = safeManager.postASTagAclEntrySD(tag, policyAdvertise.getSrcPrefix(),
       policyAdvertise.getDestPrefix());
     String sdSetToken = safeManager.postSdPolicySet(policyAdvertise.getSrcPrefix(),
@@ -343,74 +331,67 @@ public class SdxExogeniClient {
   }
 
   private void processAclCmd(String[] params) {
-    if (coreProperties.isSafeEnabled()) {
-      String token = null;
-      checkSafe();
-      RouteAdvertise advertise = new RouteAdvertise();
-      advertise.destPrefix = params[1];
-      advertise.srcPrefix = params[2];
-      advertise.advertiserPID = safeManager.getSafeKeyHash();
-      advertise.ownerPID = safeManager.getSafeKeyHash();
-      advertise.route.add(safeManager.getSafeKeyHash());
-      if (params.length > 3) {
-        //need special tag acl
-        // postASTagAclEntrySD
-        String[] vars = new String[3];
-        String tagAuth = SafeUtils.getPrincipalId(coreProperties.getSafeServer(), "tagauthority");
-        String tag = String.format("%s:%s", tagAuth, params[3]);
-        String res = safeManager.postASTagAclEntrySD(tag, advertise.getSrcPrefix(), advertise
-          .getDestPrefix());
-        logger.debug(res);
-        res = safeManager.postSdPolicySet(advertise.getSrcPrefix(), advertise
-          .getDestPrefix());
-        logger.debug(res);
-      }
-      //Post SAFE sets
-      //postInitRouteSD
+    String token = null;
+    RouteAdvertise advertise = new RouteAdvertise();
+    advertise.destPrefix = params[1];
+    advertise.srcPrefix = params[2];
+    advertise.advertiserPID = safeManager.getSafeKeyHash();
+    advertise.ownerPID = safeManager.getSafeKeyHash();
+    advertise.route.add(safeManager.getSafeKeyHash());
+    if (params.length > 3) {
+      //need special tag acl
+      // postASTagAclEntrySD
+      String[] vars = new String[3];
+      String tagAuth = safeManager.getPrincipalId("tagauthority");
+      String tag = String.format("%s:%s", tagAuth, params[3]);
+      String res = safeManager.postASTagAclEntrySD(tag, advertise.getSrcPrefix(), advertise
+        .getDestPrefix());
+      logger.debug(res);
+      res = safeManager.postSdPolicySet(advertise.getSrcPrefix(), advertise
+        .getDestPrefix());
+      logger.debug(res);
     }
+    //Post SAFE sets
+    //postInitRouteSD
   }
 
   private void processBgpCmd(String[] params) {
-    if (coreProperties.isSafeEnabled()) {
-      String token = null;
-      checkSafe();
-      RouteAdvertise advertise = new RouteAdvertise();
-      advertise.destPrefix = params[1];
-      advertise.srcPrefix = params[2];
-      advertise.advertiserPID = safeManager.getSafeKeyHash();
-      advertise.ownerPID = safeManager.getSafeKeyHash();
-      advertise.route.add(safeManager.getSafeKeyHash());
-      if (params.length > 3) {
-        //need special tag acl
-        // postASTagAclEntrySD
-        String[] vars = new String[3];
-        String tagAuth = SafeUtils.getPrincipalId(coreProperties.getSafeServer(), "tagauthority");
-        String tag = String.format("%s:%s", tagAuth, params[3]);
-        String res = safeManager.postASTagAclEntrySD(tag, advertise.getSrcPrefix(), advertise
-          .getDestPrefix());
-        logger.debug(res);
-        res = safeManager.postSdPolicySet(advertise.getSrcPrefix(), advertise
-          .getDestPrefix());
-        logger.debug(res);
-      }
-      //Post SAFE sets
-      //postInitRouteSD
-
-      String[] safeparams = new String[5];
-      safeparams[0] = advertise.getSrcPrefix();
-      safeparams[1] = advertise.getDestPrefix();
-      safeparams[2] = advertise.getFormattedPath();
-      String sdxPid = HttpUtil.get(coreProperties.getServerUrl() + "sdx/getpid");
-      safeparams[3] = sdxPid;
-      safeparams[4] = String.valueOf(1);
-      logger.debug(String.format("Safe principal Id of sdx server is %s", sdxPid));
-      String routeToken = safeManager.post(SdxRoutingSlang.postInitRouteSD, safeparams);
-      advertise.safeToken = routeToken;
-      //pass the token when making bgpAdvertise
-      advertiseBgpAsync(coreProperties.getServerUrl(), advertise);
-      logger.debug(String.format("posted initRouteSD statement for dst %s src %s pair", advertise
-        .destPrefix, advertise.srcPrefix));
+    RouteAdvertise advertise = new RouteAdvertise();
+    advertise.destPrefix = params[1];
+    advertise.srcPrefix = params[2];
+    advertise.advertiserPID = safeManager.getSafeKeyHash();
+    advertise.ownerPID = safeManager.getSafeKeyHash();
+    advertise.route.add(safeManager.getSafeKeyHash());
+    if (params.length > 3) {
+      //need special tag acl
+      // postASTagAclEntrySD
+      String[] vars = new String[3];
+      String tagAuth = safeManager.getPrincipalId("tagauthority");
+      String tag = String.format("%s:%s", tagAuth, params[3]);
+      String res = safeManager.postASTagAclEntrySD(tag, advertise.getSrcPrefix(), advertise
+        .getDestPrefix());
+      logger.debug(res);
+      res = safeManager.postSdPolicySet(advertise.getSrcPrefix(), advertise
+        .getDestPrefix());
+      logger.debug(res);
     }
+    //Post SAFE sets
+    //postInitRouteSD
+
+    String[] safeparams = new String[5];
+    safeparams[0] = advertise.getSrcPrefix();
+    safeparams[1] = advertise.getDestPrefix();
+    safeparams[2] = advertise.getFormattedPath();
+    String sdxPid = HttpUtil.get(coreProperties.getServerUrl() + "sdx/getpid");
+    safeparams[3] = sdxPid;
+    safeparams[4] = String.valueOf(1);
+    logger.debug(String.format("Safe principal Id of sdx server is %s", sdxPid));
+    String routeToken = safeManager.post(SdxRoutingSlang.postInitRouteSD, safeparams);
+    advertise.safeToken = routeToken;
+    //pass the token when making bgpAdvertise
+    advertiseBgpAsync(coreProperties.getServerUrl(), advertise);
+    logger.debug(String.format("posted initRouteSD statement for dst %s src %s pair", advertise
+      .destPrefix, advertise.srcPrefix));
   }
 
   private void checkSafe() {
@@ -420,8 +401,11 @@ public class SdxExogeniClient {
         coreProperties.setSafeServerIp(serverSlice.getManagementIP(SliceProperties.SAFESERVER));
       }
       safeManager = new SafeManager(coreProperties.getSafeServerIp(), coreProperties.getSafeKeyFile(),
-        coreProperties.getSshKey());
+        coreProperties.getSshKey(), true);
       safeChecked = true;
+    } else if(!coreProperties.isSafeEnabled()) {
+      safeManager = new SafeManager(coreProperties.getSafeServerIp(), coreProperties.getSafeKeyFile(),
+        coreProperties.getSshKey(), false);
     }
   }
 

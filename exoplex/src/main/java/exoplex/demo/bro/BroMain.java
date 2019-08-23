@@ -3,6 +3,7 @@ package exoplex.demo.bro;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import exoplex.demo.multisdx.MultiSdxModule;
+import exoplex.sdx.core.CoreProperties;
 import exoplex.sdx.core.SdxManager;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -42,7 +43,7 @@ public class BroMain {
 
     String[] arg1 = {"-c", "config/cnert-renci-sl.conf"};
     sdxManager = injector.getInstance(SdxManager.class);
-    sdxManager.startSdxServer(arg1);
+    sdxManager.startSdxServer(new CoreProperties(args));
     sdxManager.notifyPrefix("192.168.10.1/24", "192.168.10.2", "notused");
     sdxManager.notifyPrefix("192.168.20.1/24", "192.168.20.2", "notused");
     sdxManager.notifyPrefix("192.168.30.1/24", "192.168.30.2", "notused");

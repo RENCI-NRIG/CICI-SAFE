@@ -39,25 +39,12 @@ public class ExogeniClientSlice extends SliceHelper {
   public static void main(String[] args) throws Exception {
     Injector injector = Guice.createInjector(new SingleSdxModule());
     ExogeniClientSlice cs = injector.getProvider(ExogeniClientSlice.class).get();
-    cs.processArgs(args);
-    cs.run();
+    CoreProperties coreProperties = new CoreProperties(args);
+    cs.run(coreProperties);
   }
 
-  public void processArgs(String[] args) {
-
-    logger.debug("exoplex " + args[0]);
-
-    CommandLine cmd = ServerOptions.parseCmd(args);
-    String configFilePath = cmd.getOptionValue("config");
-
-    this.readConfig(configFilePath);
-
-    if (cmd.hasOption('d')) {
-      coreProperties.setType("delete");
-    }
-  }
-
-  public void run() throws Exception {
+  public void run(CoreProperties coreProperties) throws Exception {
+    this.coreProperties = coreProperties;
     if (coreProperties.getType().equals("client")) {
       computeIP(coreProperties.getIpPrefix());
       logger.info("Client start");

@@ -65,7 +65,6 @@ public class MultiSdxSetting extends AbstractTestSetting {
       String[] sdxNRArg = new String[]{"-c", sdxConfs.get(sdxSliceName)};
       sdxSliceNames.add(sdxSliceName);
       sdxArgs.put(sdxSliceName, sdxArg);
-      sdxNoResetArgs.put(sdxSliceName, sdxNRArg);
       sdxKeyMap.put(sdxSliceName, String.format("key_p%s", sdxKeyBase + i));
       sdxUrls.put(sdxSliceName, String.format("http://0.0.0.0:888%s/", i));
       sdxIpMap.put(sdxSliceName, String.format("192.168.%s.1/24", sdxIpBase));

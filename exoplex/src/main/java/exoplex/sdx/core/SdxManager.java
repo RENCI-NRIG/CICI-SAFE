@@ -22,6 +22,7 @@ import exoplex.sdx.slice.exogeni.SiteBase;
 import org.apache.commons.cli.CommandLine;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.core.Core;
 import org.json.JSONObject;
 import org.renci.ahab.libndl.resources.request.InterfaceNode2Net;
 import org.renci.ahab.libtransport.util.TransportException;
@@ -167,34 +168,24 @@ public class SdxManager extends SliceHelper {
         coreProperties.setSafeServerIp(serverSlice.getManagementIP("safe-server"));
       }
       safeManager = new SafeManager(coreProperties.getSafeServerIp(), coreProperties.getSafeKeyFile(),
-        coreProperties.getSshKey());
-      advertiseManager = new AdvertiseManager(safeManager.getSafeKeyHash(), safeManager);
+        coreProperties.getSshKey(), true);
+    } else {
+      safeManager = new SafeManager(coreProperties.getSafeServerIp(),
+        coreProperties.getSafeKeyFile(), coreProperties.getSshKey(), false);
     }
+    advertiseManager = new AdvertiseManager(safeManager.getSafeKeyHash(), safeManager);
     //configRouting(serverslice,OVSController,SDNController,"(c\\d+)","(sp-c\\d+.*)");
     loadSdxNetwork(routerPattern, stitchPortPattern, broPattern);
   }
 
 
-  public void startSdxServer(String[] args) throws TransportException, Exception {
-    CommandLine cmd = ServerOptions.parseCmd(args);
-    this.readConfig(cmd.getOptionValue("config"));
+  public void startSdxServer(CoreProperties coreProperties) throws TransportException, Exception {
+    this.coreProperties = coreProperties;
     if (coreProperties.getIpPrefix() != null) {
       computeIP(coreProperties.getIpPrefix());
     }
 
-    if (cmd.hasOption('r')) {
-      clearSdx();
-    }
-    initializeSdx();
-    configRouting();
-    startBro();
-  }
-
-  void startSdxServer(String[] args, String sliceName) throws TransportException, Exception {
-    CommandLine cmd = ServerOptions.parseCmd(args);
-    this.readConfig(cmd.getOptionValue("config"));
-    coreProperties.setSliceName(sliceName);
-    if (cmd.hasOption('r')) {
+    if (this.coreProperties.getReset()) {
       clearSdx();
     }
     initializeSdx();
@@ -920,47 +911,47 @@ public class SdxManager extends SliceHelper {
     logger.info(String.format("Connection request between %s and %s", self_prefix, target_prefix));
     //String n1=computenodes.get(site1).get(0);
     //String n2=computenodes.get(site2).get(0);
+    String targetHash = null;
+    String cKeyHash = null;
+    Range selfRange, targetRange;
+    if (self_prefix.matches(SdnUtil.IP_PATTERN)) {
+      selfRange = PrefixUtil.addressToRange(self_prefix);
+    } else {
+      selfRange = PrefixUtil.prefixToRange(self_prefix);
+    }
+    if (target_prefix.matches(SdnUtil.IP_PATTERN)) {
+      targetRange = PrefixUtil.addressToRange(target_prefix);
+    } else {
+      targetRange = PrefixUtil.prefixToRange(target_prefix);
+    }
+    for (String prefix : prefixKeyHash.keySet()) {
+      if (PrefixUtil.prefixToRange(prefix).covers(selfRange)) {
+        cKeyHash = prefixKeyHash.get(prefix);
+        self_prefix = prefix;
+      }
+      if (PrefixUtil.prefixToRange(prefix).covers(targetRange)) {
+        targetHash = prefixKeyHash.get(prefix);
+        target_prefix = prefix;
+      }
+    }
+    if (cKeyHash == null) {
+      RouteAdvertise advertise = advertiseManager.getAdvertise(self_prefix,
+        target_prefix);
+      if (advertise == null) {
+        return String.format("prefix %s unrecognized.", self_prefix);
+      } else {
+        targetHash = advertise.ownerPID;
+      }
+    }
+    if (targetHash == null) {
+      RouteAdvertise advertise = advertiseManager.getAdvertise(target_prefix, self_prefix);
+      if (advertise == null) {
+        return String.format("prefix %s unrecognized.", target_prefix);
+      } else {
+        targetHash = advertise.ownerPID;
+      }
+    }
     if (coreProperties.isSafeEnabled()) {
-      String targetHash = null;
-      String cKeyHash = null;
-      Range selfRange, targetRange;
-      if (self_prefix.matches(SdnUtil.IP_PATTERN)) {
-        selfRange = PrefixUtil.addressToRange(self_prefix);
-      } else {
-        selfRange = PrefixUtil.prefixToRange(self_prefix);
-      }
-      if (target_prefix.matches(SdnUtil.IP_PATTERN)) {
-        targetRange = PrefixUtil.addressToRange(target_prefix);
-      } else {
-        targetRange = PrefixUtil.prefixToRange(target_prefix);
-      }
-      for (String prefix : prefixKeyHash.keySet()) {
-        if (PrefixUtil.prefixToRange(prefix).covers(selfRange)) {
-          cKeyHash = prefixKeyHash.get(prefix);
-          self_prefix = prefix;
-        }
-        if (PrefixUtil.prefixToRange(prefix).covers(targetRange)) {
-          targetHash = prefixKeyHash.get(prefix);
-          target_prefix = prefix;
-        }
-      }
-      if (cKeyHash == null) {
-        RouteAdvertise advertise = advertiseManager.getAdvertise(self_prefix,
-          target_prefix);
-        if (advertise == null) {
-          return String.format("prefix %s unrecognized.", self_prefix);
-        } else {
-          targetHash = advertise.ownerPID;
-        }
-      }
-      if (targetHash == null) {
-        RouteAdvertise advertise = advertiseManager.getAdvertise(target_prefix, self_prefix);
-        if (advertise == null) {
-          return String.format("prefix %s unrecognized.", target_prefix);
-        } else {
-          targetHash = advertise.ownerPID;
-        }
-      }
       if (!safeManager.authorizeConnectivity(cKeyHash, self_prefix, targetHash,
         target_prefix)) {
         logger.info("Unauthorized connection request");
@@ -1348,7 +1339,7 @@ public class SdxManager extends SliceHelper {
       logger.info(logPrefix + "Restarting Plexus Controller: " + plexusip);
       delFlows();
       String script = "sudo docker exec -d plexus /bin/bash -c  \"cd /root;pkill ryu-manager; "
-        + "ryu-manager --log-file ~/log --default-log-level 1 "
+        + "ryu-manager --log-file ~/log --default-log-level 10 --verbose "
         + "ryu/ryu/app/rest_conf_switch.py ryu/ryu/app/rest_router.py "
         + "ryu/ryu/app/ofctl_rest.py %s\"\n";
       String sdxMonitorUrl = coreProperties.getPublicUrl() + "sdx/flow/packetin";
@@ -1749,6 +1740,10 @@ public class SdxManager extends SliceHelper {
 
   String getEchoTimeCMD() {
     return "echo currentMillis:$(/bin/date \"+%s%3N\");";
+  }
+
+  public void collectSupportBundle() {
+
   }
 }
 

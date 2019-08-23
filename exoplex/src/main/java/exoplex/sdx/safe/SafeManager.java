@@ -20,12 +20,14 @@ public class SafeManager {
   private String safeKeyFile;
   private String sshKey = null;
   private String safeKeyHash = null;
+  private final boolean safeEnabled;
 
-  public SafeManager(String ip, String safeKeyFile, String sshKey) {
+  public SafeManager(String ip, String safeKeyFile, String sshKey, boolean safeEnabled) {
     safeServerIp = ip;
     safeServer = safeServerIp + ":7777";
     this.safeKeyFile = safeKeyFile;
     this.sshKey = sshKey;
+    this.safeEnabled = safeEnabled;
     if (safeKeyFile == null) {
       logger.warn("safe key file is null");
     } else {
@@ -34,6 +36,9 @@ public class SafeManager {
       } catch (Exception e) {
       }
     }
+    if(!safeEnabled) {
+      logger.info("Safe authorization disabled");
+    }
   }
 
   public void setSafeServerIp(String safeServerIp) {
@@ -41,13 +46,24 @@ public class SafeManager {
   }
 
   public String getSafeKeyHash() {
+    if(!safeEnabled){
+      return safeKeyFile;
+    }
     if (safeKeyHash == null) {
       safeKeyHash = SafeUtils.getPrincipalId(safeServer, safeKeyFile);
     }
     return safeKeyHash;
   }
 
+  public String getPrincipalId(String safeKeyFile) {
+    if(!safeEnabled){
+      return safeKeyFile;
+    }
+    return  SafeUtils.getPrincipalId(safeServer, safeKeyFile);
+  }
+
   public boolean authorizeOwnPrefix(String cushash, String cusip) {
+    if(!safeEnabled) return true;
     String[] othervalues = new String[2];
     othervalues[0] = cushash;
     othervalues[1] = cusip;
@@ -62,6 +78,7 @@ public class SafeManager {
 
 
   public boolean authorizeConnectivity(String srchash, String srcip, String dsthash, String dstip) {
+    if(!safeEnabled) return true;
     String[] othervalues = new String[4];
     othervalues[0] = srchash;
     othervalues[1] = String.format("ipv4\\\"%s\\\"", srcip);
@@ -72,6 +89,7 @@ public class SafeManager {
   }
 
   public void postPathToken(RouteAdvertise advertise) {
+    if(!safeEnabled) return;
     if (advertise.srcPrefix == null) {
       String[] params = new String[4];
       params[0] = advertise.safeToken;
@@ -91,6 +109,7 @@ public class SafeManager {
   }
 
   public String post(String operation, String[] params) {
+    if(!safeEnabled) return "safe_disabled";
     String res = null;
     try {
       res = SafeUtils.postSafeStatements(safeServer, operation, getSafeKeyHash(), params);
@@ -104,6 +123,7 @@ public class SafeManager {
   }
 
   public boolean authorizeBgpAdvertise(RouteAdvertise routeAdvertise) {
+    if(!safeEnabled) return true;
     boolean res = false;
     if (routeAdvertise.srcPrefix == null) {
       String[] othervalues = new String[4];
@@ -127,6 +147,7 @@ public class SafeManager {
   }
 
   public String postASTagAclEntrySD(String tag, String srcIP, String destIP) {
+    if(!safeEnabled) return "safeDisabled";
     String[] params = new String[3];
     params[0] = tag;
     params[1] = srcIP;
@@ -141,6 +162,7 @@ public class SafeManager {
   }
 
   public String postSdPolicySet(String srcIP, String destIP) {
+    if(!safeEnabled) return "safeDisabled";
     String[] params = new String[2];
     params[0] = srcIP;
     params[1] = destIP;
@@ -155,6 +177,7 @@ public class SafeManager {
 
   public boolean verifyCompliantPath(String srcPid, String srcIP, String destIP, String
     policyToken, String routeToken, String path) {
+    if(!safeEnabled) return true;
     String[] params = new String[6];
     params[0] = srcPid;
     params[1] = srcIP;
@@ -197,6 +220,7 @@ public class SafeManager {
                                         String customerSlice
   ) {
     /** Post to remote safesets using apache httpclient */
+    if(!safeEnabled) return true;
     String[] othervalues = new String[2];
     othervalues[0] = customerSafeKeyHash;
     String saHash = SafeUtils.getPrincipalId(safeServer, "key_p3");
@@ -211,6 +235,7 @@ public class SafeManager {
 
   public boolean verifyAS(String owner, String dstIP, String as, String token) {
     /** Post to remote safesets using apache httpclient */
+    if(!safeEnabled) return true;
     String[] othervalues = new String[4];
     othervalues[0] = owner;
     othervalues[1] = dstIP;
@@ -222,6 +247,7 @@ public class SafeManager {
 
   public boolean verifyAS(String owner, String srcIP, String dstIP, String as, String token) {
     /** Post to remote safesets using apache httpclient */
+    if(!safeEnabled) return true;
     String[] othervalues = new String[5];
     othervalues[0] = owner;
     othervalues[1] = srcIP;
@@ -237,6 +263,7 @@ public class SafeManager {
                                                  String vlan
   ) {
     /** Post to remote safesets using apache httpclient */
+    if(!safeEnabled) return true;
     String[] othervalues = new String[3];
     othervalues[0] = customerSafeKeyHash;
     othervalues[1] = stitchPort;
@@ -250,11 +277,8 @@ public class SafeManager {
         .getSafeServerScript()), sshKey);
   }
 
-  public void deploySafeScripts() {
-
-  }
-
   public boolean verifySafeInstallation(String riakIp) {
+    if(!safeEnabled) return true;
     if (safeServerAlive()) {
       return true;
     }
@@ -298,6 +322,7 @@ public class SafeManager {
   }
 
   private boolean safeServerAlive() {
+    if(!safeEnabled) return true;
     try {
       SafeUtils.getPrincipalId(safeServer, "sdx");
     } catch (Exception e) {

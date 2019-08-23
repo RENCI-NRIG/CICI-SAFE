@@ -23,17 +23,13 @@ public class RiakSlice {
     }
     Injector injector = Guice.createInjector(new ExoGeniSliceModule());
     RiakSlice slice = injector.getInstance(RiakSlice.class);
-    slice.run(args);
+    slice.run(new CoreProperties(args));
   }
 
-  public String run(String[] args) throws Exception {
-    if (args.length < 1) {
-      args = new String[]{"-c", "config/riak.conf"};
-    }
-    CommandLine cmd = ServerOptions.parseCmd(args);
-    coreProperties = new CoreProperties(cmd.getOptionValue("config"));
+  public String run(CoreProperties coreProperties) throws Exception {
+    this.coreProperties = coreProperties;
     //SSH context
-    if (cmd.hasOption('d')) {
+    if (coreProperties.getType() == "delete") {
       return deleteRiakSlice();
     }
     return createRiakSlice();

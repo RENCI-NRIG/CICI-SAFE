@@ -8,6 +8,7 @@ import exoplex.client.exogeni.ExogeniClientSlice;
 import exoplex.client.exogeni.SdxExogeniClient;
 import exoplex.client.stitchport.SdxStitchPortClient;
 import exoplex.demo.multisdx.MultiSdxModule;
+import exoplex.sdx.core.CoreProperties;
 import exoplex.sdx.core.SdxManager;
 import exoplex.sdx.core.SdxServer;
 import org.apache.commons.cli.*;
@@ -127,10 +128,10 @@ public class CnertTestMain {
     //./scripts/sdxserver.sh -c config/sdx.conf
     if (reset) {
       SdxServer sdxServer = sdxServerProvider.get();
-      sdxManager = sdxServer.run(arg2);
+      sdxManager = sdxServer.run(new CoreProperties(arg2));
     } else {
       SdxServer sdxServer = sdxServerProvider.get();
-      sdxManager = sdxServer.run(arg1);
+      sdxManager = sdxServer.run(new CoreProperties(arg1));
     }
     sdx = sdxManager.getSliceName();
     SdxExogeniClient client1 = new SdxExogeniClient(clientarg1);
@@ -208,7 +209,7 @@ public class CnertTestMain {
 
   public void testChameleon() throws TransportException, Exception {
     SdxServer sdxServer = sdxServerProvider.get();
-    sdxServer.run(arg1);
+    sdxServer.run(new CoreProperties(arg1));
     SdxExogeniClient client1 = new SdxExogeniClient(clientarg1);
     SdxExogeniClient client2 = new SdxExogeniClient(clientarg2);
     SdxExogeniClient client3 = new SdxExogeniClient(clientarg3);
@@ -239,23 +240,29 @@ public class CnertTestMain {
 
   public void deleteSlice() {
     CnertTestSlice ts = cnertTestSliceProvider.get();
-    ts.processArgs(arg1);
-    ExogeniClientSlice s1 = exogeniClientSliceProvider.get();
-    s1.processArgs(clientarg1);
-    ExogeniClientSlice s2 = exogeniClientSliceProvider.get();
-    s1.processArgs(clientarg2);
-    ExogeniClientSlice s3 = exogeniClientSliceProvider.get();
-    s1.processArgs(clientarg3);
-    ExogeniClientSlice s4 = exogeniClientSliceProvider.get();
-    s1.processArgs(clientarg4);
-    ExogeniClientSlice s6 = exogeniClientSliceProvider.get();
-    s1.processArgs(clientarg6);
-    ts.deleteSlice();
-    s1.deleteSlice();
-    s2.deleteSlice();
-    s3.deleteSlice();
-    s4.deleteSlice();
-    s6.deleteSlice();
+    CoreProperties coreProperties1 = new CoreProperties(arg1);
+    coreProperties1.setType("delete");
+    try {
+      ts.run(coreProperties1);
+      ExogeniClientSlice s1 = exogeniClientSliceProvider.get();
+      CoreProperties client1 = new CoreProperties(clientarg1);
+      client1.setType("delete");
+      s1.run(client1);
+      CoreProperties client2 = new CoreProperties(clientarg2);
+      client2.setType("delete");
+      s1.run(client2);
+      CoreProperties client3 = new CoreProperties(clientarg3);
+      client3.setType("delete");
+      s1.run(client3);
+      CoreProperties client4 = new CoreProperties(clientarg4);
+      client4.setType("delete");
+      s1.run(client4);
+      CoreProperties client6 = new CoreProperties(clientarg6);
+      client6.setType("delete");
+      s1.run(client6);
+    } catch (Exception e) {
+
+    }
   }
 
   public void createTestSliceParrallel() throws Exception {
@@ -264,8 +271,11 @@ public class CnertTestMain {
       @Override
       public void run() {
         CnertTestSlice ts = cnertTestSliceProvider.get();
-        ts.processArgs(arg1);
-        ts.run(arg1);
+        try {
+          ts.run(new CoreProperties(arg1));
+        }catch (Exception e) {
+
+        }
       }
     };
     thread1.start();
@@ -279,9 +289,8 @@ public class CnertTestMain {
         @Override
         public void run() {
           ExogeniClientSlice s1 = exogeniClientSliceProvider.get();
-          s1.processArgs(arg);
           try {
-            s1.run();
+            s1.run(new CoreProperties(arg));
           } catch (Exception e) {
             e.printStackTrace();
             return;
@@ -314,7 +323,7 @@ public class CnertTestMain {
       emulationSlice();
     }
     SdxServer sdxServer = sdxServerProvider.get();
-    sdxServer.run(arg1);
+    sdxServer.run(new CoreProperties(arg1));
     SdxExogeniClient client = new SdxExogeniClient(clientarg4);
     client.processCmd("route 192.168.10.1/24 192.168.10.2");
     client.processCmd("route 192.168.20.1/24 192.168.20.2");
@@ -342,8 +351,13 @@ public class CnertTestMain {
 
   public void emulationSlice() {
     CnertTestSlice ts = cnertTestSliceProvider.get();
-    ts.processArgs(arg1);
-    ts.deleteSlice();
-    ts.testBroSliceTwoPairs();
+    CoreProperties coreProperties = new CoreProperties(arg1);
+    coreProperties.setType("delete");
+    try {
+      ts.run(coreProperties);
+      ts.testBroSliceTwoPairs();
+    }catch (Exception e) {
+
+    }
   }
 }

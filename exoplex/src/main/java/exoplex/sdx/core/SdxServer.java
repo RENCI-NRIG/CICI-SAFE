@@ -31,7 +31,7 @@ public class SdxServer {
   public static void main(String[] args) throws IOException, TransportException, Exception {
     Injector injector = Guice.createInjector(new SingleSdxModule());
     SdxServer sdxServer = injector.getProvider(SdxServer.class).get();
-    sdxServer.run(args);
+    sdxServer.run(new CoreProperties(args));
   }
 
   public HttpServer startServer(URI uri) {
@@ -43,32 +43,18 @@ public class SdxServer {
     return GrizzlyHttpServerFactory.createHttpServer(uri, rc);
   }
 
-  public SdxManager run(String[] args) throws TransportException, Exception {
-    System.out.println("starting exoplex.sdx server");
-    SdxManager sdxManager = sdxManagerProvider.get();
-    sdxManager.startSdxServer(args);
-    URI uri = URI.create(sdxManager.getServerUrl());
-    RestService.registerSdxManager(uri.getPort(), sdxManager);
-    logger.debug("Starting on " + sdxManager.getServerUrl());
-    final HttpServer server = startServer(uri);
-    logger.debug("Sdx server has started, listening on " + sdxManager.getServerUrl());
-    System.out.println("Sdx server has started, listening on " + sdxManager.getServerUrl());
-    return sdxManager;
-  }
-
-  public SdxManager run(String[] args, String url, String sliceName) throws
+  public SdxManager run(CoreProperties coreProperties) throws
     TransportException, Exception {
     System.out.println("starting exoplex.sdx server");
     SdxManager sdxManager = sdxManagerProvider.get();
-    sdxManager.startSdxServer(args, sliceName);
-    sdxManager.setServerUrl(url);
-    URI uri = URI.create(url);
+    sdxManager.startSdxServer(coreProperties);
+    URI uri = URI.create(coreProperties.getServerUrl());
     RestService.registerSdxManager(uri.getPort(), sdxManager);
-    logger.debug("Starting on " + url);
+    logger.debug("Starting on " + coreProperties.getServerUrl());
     final HttpServer server = startServer(uri);
     RestService.registerHttpServer(server);
-    logger.debug("Sdx server has started, listening on " + url);
-    System.out.println("Sdx server has started, listening on " + url);
+    logger.debug("Sdx server has started, listening on " + coreProperties.getServerUrl());
+    System.out.println("Sdx server has started, listening on " + coreProperties.getServerUrl());
     return sdxManager;
   }
 }
