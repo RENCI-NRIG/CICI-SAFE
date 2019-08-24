@@ -107,7 +107,7 @@ public class CnertTestMain {
   }
 
   public void testDymanicNetwork() {
-    SdxExogeniClient client6 = new SdxExogeniClient(clientarg6);
+    SdxExogeniClient client6 = new SdxExogeniClient(new CoreProperties(clientarg6));
 
     // Client request for connection between prefixes
     if (stitch) {
@@ -134,11 +134,11 @@ public class CnertTestMain {
       sdxManager = sdxServer.run(new CoreProperties(arg1));
     }
     sdx = sdxManager.getSliceName();
-    SdxExogeniClient client1 = new SdxExogeniClient(clientarg1);
-    SdxExogeniClient client2 = new SdxExogeniClient(clientarg2);
-    SdxExogeniClient client3 = new SdxExogeniClient(clientarg3);
-    SdxExogeniClient client4 = new SdxExogeniClient(clientarg4);
-    SdxExogeniClient client6 = new SdxExogeniClient(clientarg6);
+    SdxExogeniClient client1 = new SdxExogeniClient(new CoreProperties(clientarg1));
+    SdxExogeniClient client2 = new SdxExogeniClient(new CoreProperties(clientarg2));
+    SdxExogeniClient client3 = new SdxExogeniClient(new CoreProperties(clientarg3));
+    SdxExogeniClient client4 = new SdxExogeniClient(new CoreProperties(clientarg4));
+    SdxExogeniClient client6 = new SdxExogeniClient(new CoreProperties(clientarg6));
 
     String[] gateways = new String[]{
       "192.168.132.2",
@@ -210,11 +210,11 @@ public class CnertTestMain {
   public void testChameleon() throws TransportException, Exception {
     SdxServer sdxServer = sdxServerProvider.get();
     sdxServer.run(new CoreProperties(arg1));
-    SdxExogeniClient client1 = new SdxExogeniClient(clientarg1);
-    SdxExogeniClient client2 = new SdxExogeniClient(clientarg2);
-    SdxExogeniClient client3 = new SdxExogeniClient(clientarg3);
-    SdxExogeniClient client4 = new SdxExogeniClient(clientarg4);
-    SdxStitchPortClient cc = new SdxStitchPortClient(clientarg5);
+    SdxExogeniClient client1 = new SdxExogeniClient(new CoreProperties(clientarg1));
+    SdxExogeniClient client2 = new SdxExogeniClient(new CoreProperties(clientarg2));
+    SdxExogeniClient client3 = new SdxExogeniClient(new CoreProperties(clientarg3));
+    SdxExogeniClient client4 = new SdxExogeniClient(new CoreProperties(clientarg4));
+    SdxStitchPortClient cc = new SdxStitchPortClient(new CoreProperties(clientarg5));
     if (stitch) {
       //client1.processCmd("stitch CNode0 " + sdx + " c0");
       client2.processCmd("stitch CNode0 " + sdx + " c1");
@@ -324,7 +324,7 @@ public class CnertTestMain {
     }
     SdxServer sdxServer = sdxServerProvider.get();
     sdxServer.run(new CoreProperties(arg1));
-    SdxExogeniClient client = new SdxExogeniClient(clientarg4);
+    SdxExogeniClient client = new SdxExogeniClient(new CoreProperties(clientarg4));
     client.processCmd("route 192.168.10.1/24 192.168.10.2");
     client.processCmd("route 192.168.20.1/24 192.168.20.2");
     client.processCmd("route 192.168.30.1/24 192.168.30.2");

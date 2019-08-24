@@ -410,7 +410,7 @@ public class CoreProperties {
     this.command = cmd;
   }
 
-  public String getCommand(String cmd) {
+  public String getCommand() {
     return this.command;
   }
 

@@ -26,15 +26,13 @@ public class SdxStitchPortClient {
 
   CoreProperties coreProperties;
 
-  public SdxStitchPortClient(String[] args) {
-    cmd = ServerOptions.parseCmd(args);
-    String configFilePath = cmd.getOptionValue("config");
-    coreProperties = new CoreProperties(configFilePath);
+  public SdxStitchPortClient(CoreProperties coreProperties) {
+    this.coreProperties = coreProperties;
     System.out.println("Client start");
   }
 
   public static void main(String[] args) {
-    SdxStitchPortClient client = new SdxStitchPortClient(args);
+    SdxStitchPortClient client = new SdxStitchPortClient(new CoreProperties(args));
     client.run();
   }
 

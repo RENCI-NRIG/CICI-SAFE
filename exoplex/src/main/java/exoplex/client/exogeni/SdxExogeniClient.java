@@ -36,40 +36,14 @@ public class SdxExogeniClient {
   private String logPrefix = "";
   private SliceManager serverSlice = null;
   private boolean safeChecked = false;
-  private CommandLine cmd;
   private CoreProperties coreProperties;
 
   @Inject
   private SliceManagerFactory sliceManagerFactory;
 
-  public SdxExogeniClient() {
-  }
-
-  public SdxExogeniClient(String sliceName, String IPPrefix, String safeKeyFile, String[] args) {
-    cmd = ServerOptions.parseCmd(args);
-    String configFilePath = cmd.getOptionValue("config");
-    coreProperties = new CoreProperties(configFilePath);
-    coreProperties.setIpPrefix(IPPrefix);
-    coreProperties.setSafeKeyFile(safeKeyFile);
+  public SdxExogeniClient(CoreProperties coreProperties) {
+    this.coreProperties = coreProperties;
     logPrefix = "[" + coreProperties.getSliceName() + "] ";
-    logger.info(logPrefix + "Client start");
-  }
-
-  public SdxExogeniClient(String[] args) {
-    //Example usage: ./target/appassembler/bin/SafeSdxClient -f alice.conf
-    //pemLocation = args[0];
-    //keyLocation = args[1];
-    //controllerUrl = args[2]; //"https://geni.renci.org:11443/orca/xmlrpc";
-    //sliceName = args[3];
-    //sshKey=args[6];
-    //keyhash=args[7];
-
-    cmd = ServerOptions.parseCmd(args);
-    String configFilePath = cmd.getOptionValue("config");
-    coreProperties = new CoreProperties(configFilePath);
-
-    logPrefix = "[" + coreProperties.getSliceName() + "] ";
-
     logger.info(logPrefix + "Client start");
   }
 
@@ -128,11 +102,14 @@ public class SdxExogeniClient {
     } catch (Exception e) {
       e.printStackTrace();
     }
-    if (cmd.hasOption('e')) {
-      String command = cmd.getOptionValue('e');
-      processCmd(command);
-      return;
+    if (coreProperties.getCommand()!= null) {
+      processCmd(coreProperties.getCommand());
+    } else {
+      commandLine();
     }
+  }
+
+  private void commandLine() {
     String input;
     String cmdprefix = coreProperties.getSliceName() + "$>";
     try {
