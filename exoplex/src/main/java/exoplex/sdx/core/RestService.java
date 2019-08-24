@@ -48,9 +48,7 @@ public class RestService {
   }
 
   public static void removeSdxManager(Integer port) {
-    if (sdxManagerMap.containsKey(port)) {
-      sdxManagerMap.remove(port);
-    }
+    sdxManagerMap.remove(port);
   }
 
   public static Iterable<SdxManager> getAllSdxManagers() {

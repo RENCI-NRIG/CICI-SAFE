@@ -89,6 +89,26 @@ public class CoreProperties {
     }
   }
 
+  public static String getSafeDockerImage() {
+    return safeDockerImage;
+  }
+
+  public static void setSafeDockerImage(String name) {
+    safeDockerImage = name;
+  }
+
+  public static String getSafeServerScript() {
+    return safeServerScript;
+  }
+
+  public static void setSafeServerScript(String name) {
+    safeServerScript = name;
+  }
+
+  public static String getPlexusImage() {
+    return plexusImage;
+  }
+
   private void readConfig(String configFilePath) {
     logger.info(String.format("Loading configuration from %s", configFilePath));
     File myConfigFile = new File(configFilePath);
@@ -398,46 +418,25 @@ public class CoreProperties {
     this.routerSite = SiteBase.get(routerSite);
   }
 
-  public void setReset(boolean reset) {
-    this.reset = reset;
-  }
-
   public boolean getReset() {
     return this.reset;
   }
 
-  public void setCommand(String cmd) {
-    this.command = cmd;
+  public void setReset(boolean reset) {
+    this.reset = reset;
   }
 
   public String getCommand() {
     return this.command;
   }
 
+  public void setCommand(String cmd) {
+    this.command = cmd;
+  }
+
   @Override
-  public String toString()
-  {
+  public String toString() {
     return ToStringBuilder.reflectionToString(this);
-  }
-
-  public static String getSafeDockerImage() {
-    return safeDockerImage;
-  }
-
-  public static void setSafeDockerImage(String name) {
-    safeDockerImage = name;
-  }
-
-  public static String getSafeServerScript() {
-    return safeServerScript;
-  }
-
-  public static void setSafeServerScript(String name) {
-    safeServerScript = name;
-  }
-
-  public static String getPlexusImage() {
-    return plexusImage;
   }
 }
 

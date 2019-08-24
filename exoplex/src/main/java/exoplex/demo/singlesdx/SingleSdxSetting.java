@@ -84,8 +84,8 @@ public class SingleSdxSetting extends AbstractTestSetting {
   }
 
   public void setUserConnectionTagAcls() {
-    clientTags.put(clientSlices.get(0), Arrays.asList(new String[]{"tag0"}));
-    clientTags.put(clientSlices.get(1), Arrays.asList(new String[]{"tag0"}));
+    clientTags.put(clientSlices.get(0), Arrays.asList("tag0"));
+    clientTags.put(clientSlices.get(1), Arrays.asList("tag0"));
     //clientTags.put(clientSlices.get(2), Arrays.asList(new String[]{"tag0"}));
   }
 }

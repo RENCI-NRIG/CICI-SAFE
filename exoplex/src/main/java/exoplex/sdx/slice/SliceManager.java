@@ -95,11 +95,11 @@ public abstract class SliceManager {
 
   abstract public void commitSlice() throws TransportException;
 
-  abstract public void commitAndWait() throws TransportException, Exception;
+  abstract public void commitAndWait() throws Exception;
 
-  abstract public boolean commitAndWait(int interval) throws TransportException, Exception;
+  abstract public boolean commitAndWait(int interval) throws Exception;
 
-  abstract public boolean commitAndWait(int interval, List<String> resources) throws TransportException, Exception;
+  abstract public boolean commitAndWait(int interval, List<String> resources) throws Exception;
 
   abstract public void waitTillActive() throws Exception;
 

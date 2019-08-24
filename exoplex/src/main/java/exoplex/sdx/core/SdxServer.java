@@ -28,7 +28,7 @@ public class SdxServer {
     this.sdxManagerProvider = sdxManagerProvider;
   }
 
-  public static void main(String[] args) throws IOException, TransportException, Exception {
+  public static void main(String[] args) throws Exception {
     Injector injector = Guice.createInjector(new SingleSdxModule());
     SdxServer sdxServer = injector.getProvider(SdxServer.class).get();
     sdxServer.run(new CoreProperties(args));
@@ -44,7 +44,7 @@ public class SdxServer {
   }
 
   public SdxManager run(CoreProperties coreProperties) throws
-    TransportException, Exception {
+    Exception {
     System.out.println("starting exoplex.sdx server");
     SdxManager sdxManager = sdxManagerProvider.get();
     sdxManager.startSdxServer(coreProperties);

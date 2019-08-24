@@ -37,9 +37,9 @@ public abstract class AbstractTestSetting {
   public String[] clientArgs;
   public String dockerImage = "safeserver-v8";
   public String safeServerScript = "sdx-routing.sh";
-  String[] riakArgs = new String[]{"-c", sdxSimpleDir + "config/riak.conf"};
   public boolean explicitConnectionRequest = true;
   public boolean safeEnabled = false;
+  String[] riakArgs = new String[]{"-c", sdxSimpleDir + "config/riak.conf"};
 
   public AbstractTestSetting() {
   }

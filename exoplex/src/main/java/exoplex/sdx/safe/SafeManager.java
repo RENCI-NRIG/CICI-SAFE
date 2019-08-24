@@ -8,19 +8,18 @@ import exoplex.sdx.slice.Scripts;
 import exoplex.sdx.slice.SliceProperties;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.logging.log4j.core.Core;
 import safe.SdxRoutingSlang;
 
 import java.util.List;
 
 public class SafeManager {
   final static Logger logger = LogManager.getLogger(SafeManager.class);
+  private final boolean safeEnabled;
   private String safeServerIp;
   private String safeServer;
   private String safeKeyFile;
   private String sshKey = null;
   private String safeKeyHash = null;
-  private final boolean safeEnabled;
 
   public SafeManager(String ip, String safeKeyFile, String sshKey, boolean safeEnabled) {
     safeServerIp = ip;
@@ -36,7 +35,7 @@ public class SafeManager {
       } catch (Exception e) {
       }
     }
-    if(!safeEnabled) {
+    if (!safeEnabled) {
       logger.info("Safe authorization disabled");
     }
   }
@@ -46,7 +45,7 @@ public class SafeManager {
   }
 
   public String getSafeKeyHash() {
-    if(!safeEnabled){
+    if (!safeEnabled) {
       return safeKeyFile;
     }
     if (safeKeyHash == null) {
@@ -56,29 +55,26 @@ public class SafeManager {
   }
 
   public String getPrincipalId(String safeKeyFile) {
-    if(!safeEnabled){
+    if (!safeEnabled) {
       return safeKeyFile;
     }
-    return  SafeUtils.getPrincipalId(safeServer, safeKeyFile);
+    return SafeUtils.getPrincipalId(safeServer, safeKeyFile);
   }
 
   public boolean authorizeOwnPrefix(String cushash, String cusip) {
-    if(!safeEnabled) return true;
+    if (!safeEnabled) return true;
     String[] othervalues = new String[2];
     othervalues[0] = cushash;
     othervalues[1] = cusip;
     String message = SafeUtils.postSafeStatements(safeServer, SdxRoutingSlang.authorizeOwnPrefix,
       getSafeKeyHash(),
       othervalues);
-    if (message != null && message.contains("Unsatisfied")) {
-      return false;
-    } else
-      return true;
+    return message == null || !message.contains("Unsatisfied");
   }
 
 
   public boolean authorizeConnectivity(String srchash, String srcip, String dsthash, String dstip) {
-    if(!safeEnabled) return true;
+    if (!safeEnabled) return true;
     String[] othervalues = new String[4];
     othervalues[0] = srchash;
     othervalues[1] = String.format("ipv4\\\"%s\\\"", srcip);
@@ -89,7 +85,7 @@ public class SafeManager {
   }
 
   public void postPathToken(RouteAdvertise advertise) {
-    if(!safeEnabled) return;
+    if (!safeEnabled) return;
     if (advertise.srcPrefix == null) {
       String[] params = new String[4];
       params[0] = advertise.safeToken;
@@ -109,7 +105,7 @@ public class SafeManager {
   }
 
   public String post(String operation, String[] params) {
-    if(!safeEnabled) return "safe_disabled";
+    if (!safeEnabled) return "safe_disabled";
     String res = null;
     try {
       res = SafeUtils.postSafeStatements(safeServer, operation, getSafeKeyHash(), params);
@@ -123,7 +119,7 @@ public class SafeManager {
   }
 
   public boolean authorizeBgpAdvertise(RouteAdvertise routeAdvertise) {
-    if(!safeEnabled) return true;
+    if (!safeEnabled) return true;
     boolean res = false;
     if (routeAdvertise.srcPrefix == null) {
       String[] othervalues = new String[4];
@@ -147,7 +143,7 @@ public class SafeManager {
   }
 
   public String postASTagAclEntrySD(String tag, String srcIP, String destIP) {
-    if(!safeEnabled) return "safeDisabled";
+    if (!safeEnabled) return "safeDisabled";
     String[] params = new String[3];
     params[0] = tag;
     params[1] = srcIP;
@@ -162,7 +158,7 @@ public class SafeManager {
   }
 
   public String postSdPolicySet(String srcIP, String destIP) {
-    if(!safeEnabled) return "safeDisabled";
+    if (!safeEnabled) return "safeDisabled";
     String[] params = new String[2];
     params[0] = srcIP;
     params[1] = destIP;
@@ -177,7 +173,7 @@ public class SafeManager {
 
   public boolean verifyCompliantPath(String srcPid, String srcIP, String destIP, String
     policyToken, String routeToken, String path) {
-    if(!safeEnabled) return true;
+    if (!safeEnabled) return true;
     String[] params = new String[6];
     params[0] = srcPid;
     params[1] = srcIP;
@@ -220,7 +216,7 @@ public class SafeManager {
                                         String customerSlice
   ) {
     /** Post to remote safesets using apache httpclient */
-    if(!safeEnabled) return true;
+    if (!safeEnabled) return true;
     String[] othervalues = new String[2];
     othervalues[0] = customerSafeKeyHash;
     String saHash = SafeUtils.getPrincipalId(safeServer, "key_p3");
@@ -235,7 +231,7 @@ public class SafeManager {
 
   public boolean verifyAS(String owner, String dstIP, String as, String token) {
     /** Post to remote safesets using apache httpclient */
-    if(!safeEnabled) return true;
+    if (!safeEnabled) return true;
     String[] othervalues = new String[4];
     othervalues[0] = owner;
     othervalues[1] = dstIP;
@@ -247,7 +243,7 @@ public class SafeManager {
 
   public boolean verifyAS(String owner, String srcIP, String dstIP, String as, String token) {
     /** Post to remote safesets using apache httpclient */
-    if(!safeEnabled) return true;
+    if (!safeEnabled) return true;
     String[] othervalues = new String[5];
     othervalues[0] = owner;
     othervalues[1] = srcIP;
@@ -263,7 +259,7 @@ public class SafeManager {
                                                  String vlan
   ) {
     /** Post to remote safesets using apache httpclient */
-    if(!safeEnabled) return true;
+    if (!safeEnabled) return true;
     String[] othervalues = new String[3];
     othervalues[0] = customerSafeKeyHash;
     othervalues[1] = stitchPort;
@@ -274,11 +270,11 @@ public class SafeManager {
 
   public void restartSafeServer() {
     Exec.sshExec(SliceProperties.userName, safeServerIp, Scripts.restartSafe_v1(CoreProperties
-        .getSafeServerScript()), sshKey);
+      .getSafeServerScript()), sshKey);
   }
 
   public boolean verifySafeInstallation(String riakIp) {
-    if(!safeEnabled) return true;
+    if (!safeEnabled) return true;
     if (safeServerAlive()) {
       return true;
     }
@@ -322,7 +318,7 @@ public class SafeManager {
   }
 
   private boolean safeServerAlive() {
-    if(!safeEnabled) return true;
+    if (!safeEnabled) return true;
     try {
       SafeUtils.getPrincipalId(safeServer, "sdx");
     } catch (Exception e) {

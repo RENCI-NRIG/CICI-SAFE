@@ -7,7 +7,6 @@ import com.google.inject.Guice;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
 import exoplex.common.utils.HttpUtil;
-import exoplex.common.utils.ServerOptions;
 import exoplex.demo.singlesdx.SingleSdxModule;
 import exoplex.sdx.advertise.PolicyAdvertise;
 import exoplex.sdx.advertise.RouteAdvertise;
@@ -17,7 +16,6 @@ import exoplex.sdx.slice.Scripts;
 import exoplex.sdx.slice.SliceManager;
 import exoplex.sdx.slice.SliceManagerFactory;
 import exoplex.sdx.slice.SliceProperties;
-import org.apache.commons.cli.CommandLine;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.json.JSONObject;
@@ -102,7 +100,7 @@ public class SdxExogeniClient {
     } catch (Exception e) {
       e.printStackTrace();
     }
-    if (coreProperties.getCommand()!= null) {
+    if (coreProperties.getCommand() != null) {
       processCmd(coreProperties.getCommand());
     } else {
       commandLine();
@@ -380,7 +378,7 @@ public class SdxExogeniClient {
       safeManager = new SafeManager(coreProperties.getSafeServerIp(), coreProperties.getSafeKeyFile(),
         coreProperties.getSshKey(), true);
       safeChecked = true;
-    } else if(!coreProperties.isSafeEnabled()) {
+    } else if (!coreProperties.isSafeEnabled()) {
       safeManager = new SafeManager(coreProperties.getSafeServerIp(), coreProperties.getSafeKeyFile(),
         coreProperties.getSshKey(), false);
     }

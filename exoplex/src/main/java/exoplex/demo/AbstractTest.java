@@ -37,7 +37,7 @@ public abstract class AbstractTest {
 
   public void createSlices() throws Exception {
     String riakIP = null;
-    if(testSetting.safeEnabled) {
+    if (testSetting.safeEnabled) {
       RiakSlice riakSlice = injector.getInstance(RiakSlice.class);
       riakIP = riakSlice.run(new CoreProperties(testSetting.riakArgs));
     }
@@ -190,7 +190,7 @@ public abstract class AbstractTest {
       String client = testSetting.clientSlices.get(i);
       String peer = testSetting.clientSlices.get(j);
       String peerIp = testSetting.clientIpMap.get(peer);
-      for(int t = 0; t < times; t ++) {
+      for (int t = 0; t < times; t++) {
         if (!exogeniClients.get(client).checkConnectivity("CNode1",
           peerIp.replace(".1/24", ".2"), 1)) {
           flag = false;

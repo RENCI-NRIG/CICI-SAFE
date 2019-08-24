@@ -392,7 +392,7 @@ public class CnertTestSlice extends SliceHelper {
     return s;
   }
 
-  public SliceManager createTestSliceWithBroAndChameleon(String sliceName, int num, long bw) throws TransportException, Exception {
+  public SliceManager createTestSliceWithBroAndChameleon(String sliceName, int num, long bw) throws Exception {
     String nodeImageShortName = "Ubuntu 14.04";
     String nodeImageURL = "http://geni-orca.renci.org/owl/9dfe179d-3736-41bf-8084-f0cd4a520c2f#Ubuntu+14.04";
     String nodeImageHash = "9394ca154aa35eb55e604503ae7943ddaecc6ca5";
@@ -451,8 +451,7 @@ public class CnertTestSlice extends SliceHelper {
     ArrayList<String> stitchlist = new ArrayList<>();
     for (int i = 0; i < num; i++) {
 
-      String node0 = s.addComputeNode(((i == 0 || i == (num - 1)) ? "node" : "c") + String
-          .valueOf(i), nodeImageURL, nodeImageHash, nodeImageShortName,
+      String node0 = s.addComputeNode(((i == 0 || i == (num - 1)) ? "node" : "c") + i, nodeImageURL, nodeImageHash, nodeImageShortName,
         nodeNodeType, coreProperties.getClientSites().get(i % coreProperties.getClientSites().size()),
         nodePostBootScript);
 
@@ -466,7 +465,7 @@ public class CnertTestSlice extends SliceHelper {
       //  stitchlist.add(net1);
       //}
       if (i != num - 1) {
-        String linkname = "clink" + String.valueOf(i);
+        String linkname = "clink" + i;
         if (i == 0) {
           linkname = "stitch_c1_10";
         } else if (i == 2) {
@@ -474,13 +473,13 @@ public class CnertTestSlice extends SliceHelper {
         }
 
         String net2 = s.addBroadcastLink(linkname, bw);
-        s.stitchNetToNode(linkname, node0, "192.168." + String.valueOf(start + i) + ".1",
+        s.stitchNetToNode(linkname, node0, "192.168." + (start + i) + ".1",
           "255.255.255.0");
         netlist.add(net2);
       }
       if (i != 0) {
         String net = netlist.get(i - 1);
-        s.stitchNetToNode(net, node0, "192.168." + String.valueOf(start + i - 1) + ".2",
+        s.stitchNetToNode(net, node0, "192.168." + (start + i - 1) + ".2",
           "255.255.255.0");
       }
     }

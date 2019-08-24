@@ -62,14 +62,10 @@ public class Rectangle extends Object {
   }
 
   public boolean contains(Rectangle rectangle) {
-    if (rectangle.getX() < this.getX()
-      || rectangle.getY() < this.getY()
-      || rectangle.getX() + rectangle.getW() > this.getX() + this.getW()
-      || rectangle.getY() + rectangle.getH() > this.getY() + this.getH()
-      ) {
-      return false;
-    }
-    return true;
+    return rectangle.getX() >= this.getX()
+      && rectangle.getY() >= this.getY()
+      && rectangle.getX() + rectangle.getW() <= this.getX() + this.getW()
+      && rectangle.getY() + rectangle.getH() <= this.getY() + this.getH();
   }
 
   @Override
@@ -78,12 +74,8 @@ public class Rectangle extends Object {
       return false;
     }
     Rectangle r = (Rectangle) rectangle;
-    if (this.x.getStart() == r.getX() && this.y.getStart() == r.getY()
-      && this.x.getLength() == r.getW() && this.y.getLength() == r.getH()) {
-      return true;
-    } else {
-      return false;
-    }
+    return this.x.getStart() == r.getX() && this.y.getStart() == r.getY()
+      && this.x.getLength() == r.getW() && this.y.getLength() == r.getH();
   }
 
   @Override

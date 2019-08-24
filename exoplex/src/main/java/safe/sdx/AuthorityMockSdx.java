@@ -174,8 +174,8 @@ public class AuthorityMockSdx extends Authority implements SdxRoutingSlang {
   }
 
   private void customSetting() {
-    slices.addAll(Arrays.asList(new String[]{"c0-tri", "c1-tri", "c2-tri",
-      "c3-tri", "c4-tri"}));
+    slices.addAll(Arrays.asList("c0-tri", "c1-tri", "c2-tri",
+      "c3-tri", "c4-tri"));
     sliceKeyMap.put(slices.get(0), "key_p5");
     sliceKeyMap.put(slices.get(1), "key_p6");
     sliceKeyMap.put(slices.get(2), "key_p7");

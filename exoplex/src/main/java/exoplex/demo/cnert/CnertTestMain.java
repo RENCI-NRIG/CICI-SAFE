@@ -118,7 +118,7 @@ public class CnertTestMain {
     //client6.processCmd("link 192.168.60.1/24 192.168.40.1/24");
   }
 
-  public void test(boolean reset) throws TransportException, Exception {
+  public void test(boolean reset) throws Exception {
     /*
     In this function, we create ahab controller for Sdx slice and Client slices.
     We execute command in Client controller to request network stitching to Sdx slice,
@@ -207,7 +207,7 @@ public class CnertTestMain {
     // Stop Sdx server and exit
   }
 
-  public void testChameleon() throws TransportException, Exception {
+  public void testChameleon() throws Exception {
     SdxServer sdxServer = sdxServerProvider.get();
     sdxServer.run(new CoreProperties(arg1));
     SdxExogeniClient client1 = new SdxExogeniClient(new CoreProperties(clientarg1));
@@ -273,7 +273,7 @@ public class CnertTestMain {
         CnertTestSlice ts = cnertTestSliceProvider.get();
         try {
           ts.run(new CoreProperties(arg1));
-        }catch (Exception e) {
+        } catch (Exception e) {
 
         }
       }
@@ -356,7 +356,7 @@ public class CnertTestMain {
     try {
       ts.run(coreProperties);
       ts.testBroSliceTwoPairs();
-    }catch (Exception e) {
+    } catch (Exception e) {
 
     }
   }

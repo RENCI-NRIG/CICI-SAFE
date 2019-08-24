@@ -4,15 +4,12 @@ import com.google.inject.Guice;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
 import exoplex.common.utils.Exec;
-import exoplex.common.utils.ServerOptions;
 import exoplex.demo.singlesdx.SingleSdxModule;
 import exoplex.sdx.core.CoreProperties;
 import exoplex.sdx.core.SliceHelper;
-import exoplex.sdx.safe.SafeManager;
 import exoplex.sdx.slice.Scripts;
 import exoplex.sdx.slice.SliceManager;
 import exoplex.sdx.slice.SliceProperties;
-import org.apache.commons.cli.CommandLine;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.renci.ahab.libtransport.util.TransportException;
@@ -103,7 +100,7 @@ public class ExogeniClientSlice extends SliceHelper {
       "sudo bash -c \"echo \"ip route 192.168.1.1/16 " + Prefix +
         "\" >>/etc/quagga/zebra.conf\"", coreProperties.getSshKey());
     Exec.sshExec(SliceProperties.userName, mip, Scripts.enableZebra(), coreProperties.getSshKey());
-    String res[] = Exec.sshExec(SliceProperties.userName, mip, "sudo ls " +
+    String[] res = Exec.sshExec(SliceProperties.userName, mip, "sudo ls " +
         "/etc/quagga",
       coreProperties.getSshKey());
     if (!res[0].contains("zebra.conf")) {
@@ -172,7 +169,7 @@ public class ExogeniClientSlice extends SliceHelper {
 
     ArrayList<String> nodelist = new ArrayList<>();
     for (int i = 0; i < num; i++) {
-      String node0 = s.addComputeNode(coreProperties.getRouterSite(), "CNode" + String.valueOf(i + 1));
+      String node0 = s.addComputeNode(coreProperties.getRouterSite(), "CNode" + (i + 1));
       nodelist.add(node0);
     }
     if (network) {
@@ -190,8 +187,8 @@ public class ExogeniClientSlice extends SliceHelper {
     if (coreProperties.isSafeEnabled()) {
       if (coreProperties.isSafeInSlice()) {
         s.addSafeServer(coreProperties.getServerSite(), coreProperties.getRiakIp(),
-            CoreProperties.getSafeDockerImage(),
-            CoreProperties.getSafeServerScript());
+          CoreProperties.getSafeDockerImage(),
+          CoreProperties.getSafeServerScript());
       }
     }
     return s;

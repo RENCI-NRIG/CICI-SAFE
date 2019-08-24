@@ -3,13 +3,11 @@ package riak;
 import com.google.inject.Guice;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
-import exoplex.common.utils.ServerOptions;
 import exoplex.sdx.core.CoreProperties;
 import exoplex.sdx.slice.Scripts;
 import exoplex.sdx.slice.SliceManager;
 import exoplex.sdx.slice.SliceManagerFactory;
 import exoplex.sdx.slice.exogeni.ExoGeniSliceModule;
-import org.apache.commons.cli.CommandLine;
 
 public class RiakSlice {
   @Inject
