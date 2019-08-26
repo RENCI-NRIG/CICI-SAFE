@@ -2,7 +2,7 @@ package exoplex.sdx.slice;
 
 public class Scripts {
   public static String getOVSScript() {
-    String script = aptUpdate() + installOVS() + "/etc/init.d/neuca-guest-tools stop\n";
+    String script = aptUpdate() + installOVS() + "/etc/init.d/neucad stop\n";
     return script;
   }
 
@@ -33,7 +33,7 @@ public class Scripts {
         + "sudo sed -i -- 's/zebra=no/zebra=yes/g' /etc/quagga/daemons\n"
         + "sudo sed -i -- 's/ospfd=no/ospfd=yes/g' /etc/quagga/daemons\n"
         + "sudo bash -c 'echo \"1\" > /proc/sys/net/ipv4/ip_forward'\n"
-        + "sudo /etc/init.d/neuca stop\n";
+        + "sudo /etc/init.d/neucad stop\n";
     return nodePostBootScript;
   }
 

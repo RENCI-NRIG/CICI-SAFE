@@ -20,27 +20,24 @@ public class NodeBase {
   static {
     images.put(
       CENTOS_7_6,
-      new NodeBaseInfo("CentOS 6.10 QCOW2",
-        "http://geni-images.renci.org/images/standard/centos-comet/centos6" +
-          ".10-comet/centos6.10-comet.xml",
-        "c21cce26d89e336695c64f94c3ccfebac88e856c")
+      new NodeBaseInfo("CentOS 6.10 QCOW2 v1.0.2",
+        "http://geni-images.renci.org/images/standard/centos-comet/centos6.10/centos6.10.xml",
+        "94489b9e78d9c20ffe1c2b5b4b7d64d3c284345f")
     );
     images.put(
       UBUNTU16,
       new NodeBaseInfo(
-        "Ubuntu 16.04 QCOW2",
-        "http://geni-images.renci.org/images/standard/ubuntu-comet/ubuntu-16" +
-          ".04-comet/ubuntu-16.04-comet.xml",
-        "cd51e0f0399b54b3c6b48917ec819ffe75d8c200"
+        "Ubuntu 16.04 QCOW2 v1.0.2",
+        "http://geni-images.renci.org/images/standard/ubuntu-comet/ubuntu-16.04/ubuntu-16.04.xml",
+        "564ae072fb3500fa6721c2f976f24fc407e41b5e"
       )
     );
     images.put(
       UBUNTU19,
       new NodeBaseInfo(
-        "Ubuntu 19.10 QCOW2",
-        "http://geni-images.renci.org/images/standard/ubuntu-comet/ubuntu-19" +
-          ".10-comet/ubuntu-19.10-comet.xml",
-        "d9d95a052b0827f581843e1ba985712fbe8cfd06"
+        "Ubuntu 19.04 QCOW2 v1.0.2",
+        "http://geni-images.renci.org/images/standard/ubuntu-comet/ubuntu-19.04/ubuntu-19.04.xml",
+        "c8a7245c67451824643f11f545e21c656ee536ad"
       )
     );
 

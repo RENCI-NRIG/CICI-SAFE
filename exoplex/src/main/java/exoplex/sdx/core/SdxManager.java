@@ -1351,6 +1351,11 @@ public class SdxManager extends SliceHelper {
         + "ryu-manager --log-file ~/log --default-log-level 1 "
         + "ryu/ryu/app/rest_conf_switch.py ryu/ryu/app/rest_router.py "
         + "ryu/ryu/app/ofctl_rest.py %s\"\n";
+      // Set public url to plexus server
+      if(coreProperties.isPlexusInSlice()) {
+          String publicUrl = "http://" + plexusip + ":8888";
+          coreProperties.setPublicUrl(publicUrl);
+      }      
       String sdxMonitorUrl = coreProperties.getPublicUrl() + "sdx/flow/packetin";
       //reuse ryu-manager option for sdx url
       script = String.format(script, String.format("--zapi-db-url %s", sdxMonitorUrl));

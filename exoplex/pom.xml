@@ -16,6 +16,10 @@
         </orca.rel.repository.url>
         <jersey.version>2.26-b09</jersey.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <dockerfile-maven-version>1.4.10</dockerfile-maven-version>
+        <docker.image.prefix>rencinrig</docker.image.prefix>
+        <docker.image.name.sdx>sdxserver</docker.image.name.sdx>
+        <docker.image.name.sdx.sdxSlice>sdxserverslice</docker.image.name.sdx.sdxSlice>
     </properties>
 
     <organization>
@@ -33,17 +37,67 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-assembly-plugin</artifactId>
-                <version>1.10</version>
-                <configuration>
-                    <archive>
-                        <manifest>
-                            <mainClass>orca.stitchport_mapper.StitchPortMapper</mainClass>
-                        </manifest>
-                    </archive>
-                    <descriptorRefs>
-                        <descriptorRef>jar-with-dependencies</descriptorRef>
-                    </descriptorRefs>
-                </configuration>
+                <executions>
+                <execution>
+                    <id>SafeSdxServer</id>
+                    <configuration>
+                        <archive>
+                            <manifest>
+                                <mainClass>exoplex.sdx.core.SdxServer</mainClass>
+                            </manifest>
+                        </archive>
+                        <descriptorRefs>
+                            <descriptorRef>jar-with-dependencies</descriptorRef>
+                        </descriptorRefs>
+                        <finalName>SafeSdxServer.jar</finalName>
+                    </configuration>
+                    <phase>package</phase>
+                    <goals>
+                        <goal>single</goal>
+                    </goals>
+                </execution>
+                <execution>
+                    <id>SafeSdxSliceServer</id>
+                    <configuration>
+                        <archive>
+                            <manifest>
+                                <mainClass>exoplex.sdx.core.SliceHelper</mainClass>
+                            </manifest>
+                        </archive>
+                        <descriptorRefs>
+                            <descriptorRef>jar-with-dependencies</descriptorRef>
+                        </descriptorRefs>
+                        <finalName>SafeSdxSliceServer.jar</finalName>
+                    </configuration>
+                    <phase>package</phase>
+                    <goals>
+                        <goal>single</goal>
+                    </goals>
+                </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>com.spotify</groupId>
+                <artifactId>dockerfile-maven-plugin</artifactId>
+                <version>${dockerfile-maven-version}</version>
+                <executions>
+                    <execution>
+                        <id>SafeSdxServer</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>build</goal>
+                        </goals>
+                        <configuration>
+                            <dockerfile>Dockerfile</dockerfile>
+                            <repository>${docker.image.prefix}/${docker.image.name.sdx}</repository>
+                            <tag>${project.version}</tag>
+                            <buildArgs>
+                                <JAR_FILE_SERVER>SafeSdxServer.jar-jar-with-dependencies.jar</JAR_FILE_SERVER>
+                                <JAR_FILE_SLICE>SafeSdxSliceServer.jar-jar-with-dependencies.jar</JAR_FILE_SLICE>
+                            </buildArgs>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
@@ -154,13 +208,6 @@
         <dependency>
             <groupId>org.glassfish.jersey.media</groupId>
             <artifactId>jersey-media-json-jackson</artifactId>
-            <!--	<exclusions>
-                    <exclusion>
-                        <artifactId>jackson-core</artifactId>
-                        <groupId>com.fasterxml.jackson.core</groupId>
-                    </exclusion>
-                </exclusions>
-`			-->
         </dependency>
         <dependency>
             <groupId>junit</groupId>
@@ -171,9 +218,7 @@
         <dependency>
             <groupId>org.renci.ahab</groupId>
             <artifactId>ahab</artifactId>
-            <!---<version>0.1.7-SNAPSHOT</version>  -->
             <version>0.1.7-SNAPSHOT</version>
-            <!-- <version>0.1.1-SNAPSHOT</version> -->
             <type>pom</type>
         </dependency>
         <dependency>
@@ -191,15 +236,12 @@
             <groupId>org.renci.ahab</groupId>
             <artifactId>libtransport</artifactId>
             <version>0.1.7-SNAPSHOT</version>
-            <!--			<version>0.1.1-SNAPSHOT</version> -->
         </dependency>
-        <!-- https://mvnrepository.com/artifact/com.jcraft/jsch -->
         <dependency>
             <groupId>com.jcraft</groupId>
             <artifactId>jsch</artifactId>
             <version>0.1.53</version>
         </dependency>
-
         <dependency>
             <groupId>org.apache.logging.log4j</groupId>
             <artifactId>log4j-api</artifactId>
@@ -220,8 +262,6 @@
             <artifactId>jtar</artifactId>
             <version>2.2</version>
         </dependency>
-
-        <!-- https://mvnrepository.com/artifact/org.apache.httpcomponents/httpclient -->
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>
             <artifactId>httpclient</artifactId>
@@ -242,13 +282,11 @@
             <artifactId>commons-cli</artifactId>
             <version>1.4</version>
         </dependency>
-        <!-- https://mvnrepository.com/artifact/com.google.inject/guice -->
         <dependency>
             <groupId>com.google.inject</groupId>
             <artifactId>guice</artifactId>
             <version>4.0</version>
         </dependency>
-        <!-- https://mvnrepository.com/artifact/com.google.inject.extensions/guice-assistedinject -->
         <dependency>
             <groupId>com.google.inject.extensions</groupId>
             <artifactId>guice-assistedinject</artifactId>
@@ -259,8 +297,10 @@
             <artifactId>jcip-annotations</artifactId>
             <version>1.0</version>
         </dependency>
-
-
+        <dependency>
+            <groupId>org.glassfish.jersey.media</groupId>
+            <artifactId>jersey-media-moxy</artifactId>
+        </dependency>
     </dependencies>
 
 

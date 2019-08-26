@@ -62,6 +62,7 @@ public class SliceHelper {
     Injector injector = Guice.createInjector(new SingleSdxModule());
     SliceHelper sliceHelper = injector.getInstance(SliceHelper.class);
     sliceHelper.run(args);
+    System.out.println("Done - complete");
   }
 
   public String getServerUrl() {
