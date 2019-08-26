@@ -4,6 +4,7 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import exoplex.client.exogeni.ExogeniClientSlice;
 import exoplex.common.utils.Exec;
+import exoplex.sdx.core.CoreProperties;
 import exoplex.sdx.core.SliceHelper;
 import exoplex.sdx.slice.SliceManager;
 import exoplex.sdx.slice.exogeni.SiteBase;
@@ -46,12 +47,16 @@ public abstract class AbstractTestSlice {
 
   private boolean createClientSlice(String clientSlice, String riakIP) {
     ExogeniClientSlice cs = exogeniClientSliceProvider.get();
-    cs.processArgs(testSetting.clientArgs);
+    CoreProperties coreProperties = new CoreProperties(testSetting.clientArgs);
+    coreProperties.setIpPrefix(testSetting.clientIpMap.get(clientSlice));
+    coreProperties.setRouterSite(SiteBase.get(testSetting.clientSiteMap.get(clientSlice)));
+    coreProperties.setRiakIp(riakIP);
+    coreProperties.setSliceName(clientSlice);
+    coreProperties.setSafeEnabled(testSetting.safeEnabled);
     int times = 0;
     while (true) {
       try {
-        cs.run(clientSlice, testSetting.clientIpMap.get(clientSlice),
-          SiteBase.get(testSetting.clientSiteMap.get(clientSlice)), riakIP);
+        cs.run(coreProperties);
         break;
       } catch (Exception e) {
         logger.warn("%s failed" + clientSlice);
@@ -67,10 +72,15 @@ public abstract class AbstractTestSlice {
 
   public void deleteClientSlices() {
     ExogeniClientSlice cs = exogeniClientSliceProvider.get();
-    cs.processArgs(testSetting.clientArgs);
+    CoreProperties coreProperties = new CoreProperties(testSetting.clientArgs);
+    coreProperties.setType("delete");
     for (String clientSlice : testSetting.clientSlices) {
-      cs.setSliceName(clientSlice);
-      cs.deleteSlice();
+      coreProperties.setSliceName(clientSlice);
+      try {
+        cs.run(coreProperties);
+      } catch (Exception e) {
+
+      }
     }
   }
 
@@ -80,12 +90,17 @@ public abstract class AbstractTestSlice {
       final String configFile = testSetting.sdxConfs.get(sliceName);
       //Set SDX sites here
       final List<String> clientSites = Arrays.asList(testSetting.sdxSites.get(sliceName));
+      CoreProperties coreProperties = new CoreProperties(configFile);
+      coreProperties.setSliceName(sliceName);
+      coreProperties.setRiakIp(riakIP);
+      coreProperties.setClientSites(clientSites);
+      coreProperties.setSafeEnabled(testSetting.safeEnabled);
 
       Thread t = new Thread() {
         @Override
         public void run() {
           try {
-            createAndConfigSdxSlice(sliceName, configFile, riakIP, clientSites);
+            createAndConfigSdxSlice(coreProperties);
           } catch (Exception e) {
             e.printStackTrace();
           }
@@ -114,28 +129,20 @@ public abstract class AbstractTestSlice {
       final String configFile = testSetting.sdxConfs.get(sliceName);
       //Set SDX sites here
       SliceHelper sliceHelper = sliceHelperProvider.get();
-      sliceHelper.readConfig(configFile);
-      sliceHelper.setSliceName(sliceName);
-      sliceHelper.deleteSlice();
+      CoreProperties coreProperties = new CoreProperties(configFile);
+      coreProperties.setSliceName(sliceName);
+      coreProperties.setType("delete");
+      try {
+        sliceHelper.run(coreProperties);
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
     }
   }
 
-  private void createAndConfigSdxSlice(String sliceName, String configFile, String riakIP,
-                                       List<String>
-                                         clientSites) throws Exception {
+  private void createAndConfigSdxSlice(CoreProperties coreProperties) throws Exception {
     SliceHelper sliceHelper = sliceHelperProvider.get();
-    sliceHelper.readConfig(configFile);
-    if (riakIP != null) {
-      sliceHelper.setRiakIP(riakIP);
-    }
-    if (sliceName != null) {
-      sliceHelper.setSliceName(sliceName);
-    }
-    if (clientSites != null) {
-      sliceHelper.setClientSites(clientSites);
-    }
-    SliceManager slice = sliceHelper.createCarrierSlice(sliceHelper.getSliceName(), clientSites
-      .size(), bandwidth);
+    SliceManager slice = sliceHelper.createCarrierSlice(coreProperties);
     slice.commitAndWait();
     sliceHelper.resetHostNames(slice);
     sliceHelper.checkSdxPrerequisites(slice);

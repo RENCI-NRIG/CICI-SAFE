@@ -31,11 +31,7 @@ public class StitchResult {
     } else {
       this.reservID = "";
     }
-    if (!gateway.equals("") && !ip.equals("")) {
-      this.result = true;
-    } else {
-      this.result = false;
-    }
+    this.result = !gateway.equals("") && !ip.equals("");
     this.message = res.getString("message");
   }
 }

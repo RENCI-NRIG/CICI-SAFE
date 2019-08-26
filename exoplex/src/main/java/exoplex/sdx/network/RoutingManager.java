@@ -76,12 +76,12 @@ public class RoutingManager {
     logger.debug("RoutingManager: new stitchpoint " + routerA + " " + ipa);
     networkManager.addLink(linkName, ipa, routerA, gw);
     String dpid = networkManager.getRouter(routerA).getDPID();
-    String cmd[] = SdnUtil.addrCMD(ipa, dpid, controller);
+    String[] cmd = SdnUtil.addrCMD(ipa, dpid, controller);
     boolean result = true;
     String res = postSdnCmd(cmd[0], new JSONObject(cmd[1]));
     logger.debug(res);
     cmd[cmd.length - 1] = res;
-    if (res.toString().contains("success")) {
+    if (res.contains("success")) {
       int id = Integer.valueOf(res.split("address_id=")[1].split("]")[0]);
       address_id.put(linkName, id);
       linkGateway.put(linkName, gw);
@@ -95,7 +95,7 @@ public class RoutingManager {
   public void removeExternalLink(String linkName, String routerName, String controller) {
     String gw = linkGateway.remove(linkName);
     networkManager.delLink(linkName, routerName, gw);
-    String cmd[] = SdnUtil.delAddrCMD(String.valueOf(address_id.get(linkName)), getDPID
+    String[] cmd = SdnUtil.delAddrCMD(String.valueOf(address_id.get(linkName)), getDPID
       (routerName), controller);
     String res = HttpUtil.delete(cmd[0], cmd[1]);
     if (res.contains("success")) {
@@ -129,7 +129,7 @@ public class RoutingManager {
     String res = postSdnCmd(cmd[0], new JSONObject(cmd[1]));
     logger.debug(res);
     cmd[cmd.length - 1] = res;
-    if (res.toString().contains("success")) {
+    if (res.contains("success")) {
       addEntry_HashList(sdncmds, dpid, cmd);
     } else {
       result = false;
@@ -137,7 +137,7 @@ public class RoutingManager {
     dpid = getDPID(routerB);
     cmd = SdnUtil.addrCMD(ipb, dpid, controller);
     res = postSdnCmd(cmd[0], new JSONObject(cmd[1]));
-    if (res.toString().contains("success")) {
+    if (res.contains("success")) {
       addEntry_HashList(sdncmds, dpid, cmd);
       logger.debug(res);
     } else {
@@ -530,7 +530,6 @@ public class RoutingManager {
         try {
           Thread.sleep(5000);
         } catch (Exception e) {
-          ;
         }
       }
     }

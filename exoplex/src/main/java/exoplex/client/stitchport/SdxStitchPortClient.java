@@ -3,7 +3,6 @@ package exoplex.client.stitchport;
 import exoplex.common.utils.Exec;
 import exoplex.common.utils.HttpUtil;
 import exoplex.common.utils.SafeUtils;
-import exoplex.common.utils.ServerOptions;
 import exoplex.sdx.core.CoreProperties;
 import exoplex.sdx.slice.SliceProperties;
 import exoplex.sdx.slice.exogeni.SiteBase;
@@ -26,15 +25,13 @@ public class SdxStitchPortClient {
 
   CoreProperties coreProperties;
 
-  public SdxStitchPortClient(String[] args) {
-    cmd = ServerOptions.parseCmd(args);
-    String configFilePath = cmd.getOptionValue("config");
-    coreProperties = new CoreProperties(configFilePath);
+  public SdxStitchPortClient(CoreProperties coreProperties) {
+    this.coreProperties = coreProperties;
     System.out.println("Client start");
   }
 
   public static void main(String[] args) {
-    SdxStitchPortClient client = new SdxStitchPortClient(args);
+    SdxStitchPortClient client = new SdxStitchPortClient(new CoreProperties(args));
     client.run();
   }
 
@@ -53,7 +50,7 @@ public class SdxStitchPortClient {
       processCmd(command);
       return;
     }
-    String input = new String();
+    String input = "";
     try {
       java.io.BufferedReader stdin = new java.io.BufferedReader(new java.io.InputStreamReader(System.in));
       while (true) {
@@ -199,10 +196,7 @@ public class SdxStitchPortClient {
     String message = SafeUtils.postSafeStatements(coreProperties.getSafeServer(),
       "postChameleonStitchRequest", keyhash,
       othervalues);
-    if (message.contains("fail")) {
-      return false;
-    } else
-      return true;
+    return !message.contains("fail");
   }
 
   public void undoStitch(String carrierName, String customerName, String netName, String nodeName) {

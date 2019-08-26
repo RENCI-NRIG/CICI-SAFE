@@ -102,7 +102,7 @@ public class Exec {
           //get status returns int;
           logger.debug("exit-status: " + channel.getExitStatus());
           if (channel.getExitStatus() != 0) {
-            result = "error:" + String.valueOf(channel.getExitStatus()) + "\n" + errResult;
+            result = "error:" + channel.getExitStatus() + "\n" + errResult;
           }
           break;
         }
@@ -127,7 +127,12 @@ public class Exec {
     StringBuilder errResult = new StringBuilder();
     logger.debug(host + ":" + command);
     try {
-      Session session = getSession(user, host, privkey);
+      Session session = null;
+      session = getSession(user, host, privkey);
+      while (session == null) {
+        session = getSession(user, host, privkey);
+        logger.warn(String.format("Returned session is null: %s %s %s", user, host, privkey));
+      }
       Channel channel = session.openChannel("exec");
       ((ChannelExec) channel).setCommand(command);
       channel.setInputStream(null);
@@ -155,7 +160,7 @@ public class Exec {
           //get status returns int;
           logger.debug("exit-status: " + channel.getExitStatus());
           if (channel.getExitStatus() != 0) {
-            result.append("error:" + String.valueOf(channel.getExitStatus()) + "\n");
+            result.append("error:" + channel.getExitStatus() + "\n");
             result.append(errResult.toString());
           }
           break;
@@ -183,7 +188,7 @@ public class Exec {
         GridBagConstraints.NONE,
         new Insets(0, 0, 0, 0), 0, 0);
     String passwd;
-    JTextField passwordField = (JTextField) new JPasswordField(20);
+    JTextField passwordField = new JPasswordField(20);
     private Container panel;
 
     public String getPassword() {

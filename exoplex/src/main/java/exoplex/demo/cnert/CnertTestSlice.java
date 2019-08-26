@@ -5,7 +5,6 @@ import exoplex.common.utils.Exec;
 import exoplex.common.utils.PathUtil;
 import exoplex.sdx.core.CoreProperties;
 import exoplex.sdx.core.SliceHelper;
-import exoplex.sdx.network.RoutingManager;
 import exoplex.sdx.slice.Scripts;
 import exoplex.sdx.slice.SliceManager;
 import exoplex.sdx.slice.SliceManagerFactory;
@@ -270,7 +269,9 @@ public class CnertTestSlice extends SliceHelper {
     String nodeImageURL = "http://geni-orca.renci.org/owl/9dfe179d-3736-41bf-8084-f0cd4a520c2f#Ubuntu+14.04";//http://geni-images.renci.org/images/standard/ubuntu/ub1304-ovs-opendaylight-v1.0.0.xml
     String nodeImageHash = "9394ca154aa35eb55e604503ae7943ddaecc6ca5";
     String nodeNodeType = "XO Extra large";
-    SliceManager s = createCarrierSlice(sliceName, num, bw);
+    this.coreProperties.setBw(bw);
+    this.coreProperties.setSliceName(sliceName);
+    SliceManager s = createCarrierSlice(this.coreProperties);
     long cnodebw = 1000000000;
     //Now add two customer node to c0 and c3
     String c3 = "c" + (num - 1);
@@ -309,7 +310,9 @@ public class CnertTestSlice extends SliceHelper {
     String nodeImageURL = "http://geni-orca.renci.org/owl/9dfe179d-3736-41bf-8084-f0cd4a520c2f#Ubuntu+14.04";//http://geni-images.renci.org/images/standard/ubuntu/ub1304-ovs-opendaylight-v1.0.0.xml
     String nodeImageHash = "9394ca154aa35eb55e604503ae7943ddaecc6ca5";
     String nodeNodeType = "XO Extra large";
-    SliceManager s = createCarrierSlice(sliceName, num, bw);
+    this.coreProperties.setSliceName(sliceName);
+    this.coreProperties.setBw(bw);
+    SliceManager s = createCarrierSlice(this.coreProperties);
     //Now add two customer node to c0 and c3
     String c0 = "c0";
     String c1 = "c1";
@@ -347,7 +350,9 @@ public class CnertTestSlice extends SliceHelper {
     String nodeImageURL = "http://geni-orca.renci.org/owl/9dfe179d-3736-41bf-8084-f0cd4a520c2f#Ubuntu+14.04";//http://geni-images.renci.org/images/standard/ubuntu/ub1304-ovs-opendaylight-v1.0.0.xml
     String nodeImageHash = "9394ca154aa35eb55e604503ae7943ddaecc6ca5";
     String nodeNodeType = "XO Extra large";
-    SliceManager s = createCarrierSlice(sliceName, num, bw);
+    this.coreProperties.setSliceName(sliceName);
+    this.coreProperties.setBw(bw);
+    SliceManager s = createCarrierSlice(this.coreProperties);
     //Now add two customer node to c0 and c3
     String scripts = Scripts.getCustomerScript()
       + Scripts.installVsftpd() + Scripts.installIperf();
@@ -387,12 +392,14 @@ public class CnertTestSlice extends SliceHelper {
     return s;
   }
 
-  public SliceManager createTestSliceWithBroAndChameleon(String sliceName, int num, long bw) throws TransportException, Exception {
+  public SliceManager createTestSliceWithBroAndChameleon(String sliceName, int num, long bw) throws Exception {
     String nodeImageShortName = "Ubuntu 14.04";
-    String nodeImageURL = "http://geni-orca.renci.org/owl/9dfe179d-3736-41bf-8084-f0cd4a520c2f#Ubuntu+14.04";//http://geni-images.renci.org/images/standard/ubuntu/ub1304-ovs-opendaylight-v1.0.0.xml
+    String nodeImageURL = "http://geni-orca.renci.org/owl/9dfe179d-3736-41bf-8084-f0cd4a520c2f#Ubuntu+14.04";
     String nodeImageHash = "9394ca154aa35eb55e604503ae7943ddaecc6ca5";
     String nodeNodeType = "XO Extra large";
-    SliceManager s = createCarrierSlice(sliceName, num, bw);
+    this.coreProperties.setSliceName(sliceName);
+    this.coreProperties.setBw(bw);
+    SliceManager s = createCarrierSlice(this.coreProperties);
     String scripts = Scripts.installVsftpd() + Scripts.installIperf();
     //Now add two customer node to c0 and c3
     String c0 = "c0";
@@ -444,8 +451,7 @@ public class CnertTestSlice extends SliceHelper {
     ArrayList<String> stitchlist = new ArrayList<>();
     for (int i = 0; i < num; i++) {
 
-      String node0 = s.addComputeNode(((i == 0 || i == (num - 1)) ? "node" : "c") + String
-          .valueOf(i), nodeImageURL, nodeImageHash, nodeImageShortName,
+      String node0 = s.addComputeNode(((i == 0 || i == (num - 1)) ? "node" : "c") + i, nodeImageURL, nodeImageHash, nodeImageShortName,
         nodeNodeType, coreProperties.getClientSites().get(i % coreProperties.getClientSites().size()),
         nodePostBootScript);
 
@@ -459,7 +465,7 @@ public class CnertTestSlice extends SliceHelper {
       //  stitchlist.add(net1);
       //}
       if (i != num - 1) {
-        String linkname = "clink" + String.valueOf(i);
+        String linkname = "clink" + i;
         if (i == 0) {
           linkname = "stitch_c1_10";
         } else if (i == 2) {
@@ -467,13 +473,13 @@ public class CnertTestSlice extends SliceHelper {
         }
 
         String net2 = s.addBroadcastLink(linkname, bw);
-        s.stitchNetToNode(linkname, node0, "192.168." + String.valueOf(start + i) + ".1",
+        s.stitchNetToNode(linkname, node0, "192.168." + (start + i) + ".1",
           "255.255.255.0");
         netlist.add(net2);
       }
       if (i != 0) {
         String net = netlist.get(i - 1);
-        s.stitchNetToNode(net, node0, "192.168." + String.valueOf(start + i - 1) + ".2",
+        s.stitchNetToNode(net, node0, "192.168." + (start + i - 1) + ".2",
           "255.255.255.0");
       }
     }

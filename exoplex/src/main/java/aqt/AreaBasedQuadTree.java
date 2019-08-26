@@ -151,14 +151,10 @@ public class AreaBasedQuadTree {
   }
 
   public boolean contains(Rectangle rectangle) {
-    if (rectangle.getX() >= this.area.getX()
+    return rectangle.getX() >= this.area.getX()
       && rectangle.getY() >= this.area.getY()
       && (rectangle.getX() + rectangle.getW()) <= (this.area.getX() + this.area.getW())
-      && (rectangle.getY() + rectangle.getH()) <= (this.area.getY() + this.area.getH())) {
-      return true;
-    } else {
-      return false;
-    }
+      && (rectangle.getY() + rectangle.getH()) <= (this.area.getY() + this.area.getH());
   }
 
   public synchronized void splitNode() {

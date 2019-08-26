@@ -140,7 +140,7 @@ public class ScpTo {
         GridBagConstraints.NONE,
         new Insets(0, 0, 0, 0), 0, 0);
     String passwd;
-    JTextField passwordField = (JTextField) new JPasswordField(20);
+    JTextField passwordField = new JPasswordField(20);
     private Container panel;
 
     public String getPassword() {

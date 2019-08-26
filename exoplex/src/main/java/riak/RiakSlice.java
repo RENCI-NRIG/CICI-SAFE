@@ -3,13 +3,11 @@ package riak;
 import com.google.inject.Guice;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
-import exoplex.common.utils.ServerOptions;
 import exoplex.sdx.core.CoreProperties;
 import exoplex.sdx.slice.Scripts;
 import exoplex.sdx.slice.SliceManager;
 import exoplex.sdx.slice.SliceManagerFactory;
 import exoplex.sdx.slice.exogeni.ExoGeniSliceModule;
-import org.apache.commons.cli.CommandLine;
 
 public class RiakSlice {
   @Inject
@@ -23,17 +21,13 @@ public class RiakSlice {
     }
     Injector injector = Guice.createInjector(new ExoGeniSliceModule());
     RiakSlice slice = injector.getInstance(RiakSlice.class);
-    slice.run(args);
+    slice.run(new CoreProperties(args));
   }
 
-  public String run(String[] args) throws Exception {
-    if (args.length < 1) {
-      args = new String[]{"-c", "config/riak.conf"};
-    }
-    CommandLine cmd = ServerOptions.parseCmd(args);
-    coreProperties = new CoreProperties(cmd.getOptionValue("config"));
+  public String run(CoreProperties coreProperties) throws Exception {
+    this.coreProperties = coreProperties;
     //SSH context
-    if (cmd.hasOption('d')) {
+    if (coreProperties.getType() == "delete") {
       return deleteRiakSlice();
     }
     return createRiakSlice();

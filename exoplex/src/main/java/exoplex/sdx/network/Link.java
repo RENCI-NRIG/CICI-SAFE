@@ -112,7 +112,7 @@ public class Link {
   }
 
   public String getIP(int i) {
-    return ipPrefix + "." + String.valueOf(i) + mask;
+    return ipPrefix + "." + i + mask;
   }
 
   public boolean match(String a, String b) {

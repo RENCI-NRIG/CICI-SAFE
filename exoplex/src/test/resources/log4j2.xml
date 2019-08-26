@@ -3,7 +3,7 @@
     <Appenders>
         <Console name="Console" target="SYSTEM_OUT">
             <PatternLayout
-                    pattern="%highlight{%d{HH:mm:ss} [%t] %-5level %logger{36} - %msg%n}{FATAL=red, ERROR=red, WARN=yellow, INFO=green, DEBUG=cyan, TRACE=blue}"/>
+                    pattern="%highlight{%d{HH:mm:ss} [%t] %-5level %logger{1.} - %msg%n}{FATAL=red, ERROR=red, WARN=yellow, INFO=green, DEBUG=cyan, TRACE=blue}"/>
         </Console>
         <RollingFile name="RollingFile" fileName="log/demo.log"
                      filePattern="log/$${date:yyyy-MM}/app-%d{MM-dd-yyyy}-%i.log.gz" append="false">
@@ -126,6 +126,10 @@
         </Logger>
         <Logger name="SdnCmds" level="info" additivity="false">
             <AppenderRef ref="SdnRollingFile"/>
+        </Logger>
+        <Logger name="exoplex.common.utils.Exec" level="warn" additivity="false">
+            <AppenderRef ref="RollingFile"/>
+            <AppenderRef ref="Console"/>
         </Logger>
         <Logger name="exoplex.sdx.network.NetworkManager" level="warn" additivity="false">
             <AppenderRef ref="Console"/>

@@ -15,8 +15,6 @@ public class SafeAuthority implements SdxRoutingSlang, SafeLang {
   static Logger logger = LogManager.getLogger(SafeAuthority.class);
   static String exampleSafeServer = "128.194.6.138:7777";
 
-  ;
-
   String safeServer = "128.194.6.138:7777";
 
   String sdxSlice;

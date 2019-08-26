@@ -4,7 +4,7 @@ import exoplex.sdx.safe.SafeManager;
 
 public class SafeManagerMock extends SafeManager {
     public SafeManagerMock(){
-        super("", "", "");
+        super("", "", "", true);
     }
 
     @Override

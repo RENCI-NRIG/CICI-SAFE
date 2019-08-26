@@ -57,7 +57,7 @@ public class TarAndGzip {
           BufferedInputStream origin = new BufferedInputStream(
             new FileInputStream(f));
           int count;
-          byte data[] = new byte[2048];
+          byte[] data = new byte[2048];
 
           while ((count = origin.read(data)) != -1) {
             pOut.write(data, 0, count);

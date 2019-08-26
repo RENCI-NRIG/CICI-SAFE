@@ -25,10 +25,7 @@ public class NetworkManager {
   public Router getRouter(String routerName) {
     logger.info(String.format("getDPID %s", routerName));
     Router logRouter = nameRouterMap.get(routerName);
-    if (logRouter != null)
-      return logRouter;
-    else
-      return null;
+    return logRouter;
   }
 
   public Collection<String> getAllRouters() {
@@ -41,10 +38,7 @@ public class NetworkManager {
 
   public Router getRouterByDPID(String dpid) {
     Router router = dpidRouterMap.get(dpid);
-    if (router != null) {
-      return router;
-    }
-    return null;
+    return router;
   }
 
   public String getRouterByGateway(String gw) {
@@ -66,9 +60,7 @@ public class NetworkManager {
   }
 
   private void removeLink(String linkName) {
-    if (linkMap.containsKey(linkName)) {
-      linkMap.remove(linkName);
-    }
+    linkMap.remove(linkName);
   }
 
   private void putInterface(Interface intf) {
@@ -80,9 +72,7 @@ public class NetworkManager {
 
   private void removeInterface(String linkName, String routerName) {
     String intfName = NetworkUtil.computeInterfaceName(routerName, linkName);
-    if (interfaceMap.containsKey(intfName)) {
-      interfaceMap.remove(intfName);
-    }
+    interfaceMap.remove(intfName);
   }
 
   public void updateInterface(String name, String port, String mac) {
