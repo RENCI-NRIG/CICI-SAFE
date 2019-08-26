@@ -1089,10 +1089,14 @@ public class ExoSliceManager extends SliceManager {
   }
 
   public String getDpid(String routerName, String sshkey) {
-    String[] res =
-      runCmdNode("sudo /bin/bash ~/dpid.sh", routerName, true).split(" ");
-    res[1] = res[1].replace("\n", "");
-    return res[1];
+      String cmdOutput = runCmdNode("sudo /bin/bash ~/dpid.sh", routerName, true);
+      System.out.println("cmdPutput='" + cmdOutput + "'");
+      String[] res = cmdOutput.split(" ");
+      if(res.length > 1) {
+          res[1] = res[1].replace("\n", "");
+          return res[1];
+      }
+      return null;
   }
 
   synchronized public String addOVSRouter(String site, String name) {

@@ -1,0 +1,18 @@
+version: '3.6'
+
+services:
+    sdxserver:
+        container_name: sdxserver 
+        hostname: sdxserver 
+        image: rencinrig/sdxserver:0.1-SNAPSHOT
+        restart: always
+        ports:
+        - "8888:8888"
+        # point to user specific keys below
+        volumes:
+        - "./sdxlog:/code/log"
+        - "./config/sdx.conf:/code/config/sdx.conf"
+        - "~/.ssh/geni-kthare10.pem:/code/ssh/geni-kthare10.pem"
+        - "~/.ssh/id_rsa.pub:/code/ssh/id_rsa.pub"
+        - "~/.ssh/id_rsa:/code/ssh/id_rsa"
+        - "./resources:/code/resources"
