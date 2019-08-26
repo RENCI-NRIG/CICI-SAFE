@@ -28,9 +28,9 @@ Once images are ready, update configuration in docker as indicated below:
 ```
         # point to user specific keys below
          volumes:
-         - "./ssh/geni-kthare10.pem:/code/ssh/geni-kthare10.pem"
-         - "./ssh/id_rsa.pub:/code/ssh/id_rsa.pub"
-         - "./ssh/id_rsa:/code/ssh/id_rsa"
+         - "~/.ssh/geni-kthare10.pem:/code/ssh/geni-kthare10.pem"
+         - "~/.ssh/id_rsa.pub:/code/ssh/id_rsa.pub"
+         - "~/.ssh/id_rsa:/code/ssh/id_rsa"
 ```
 ### <a name="run3"></a>Run Docker
 Run docker-compose up -d from CICI-SAFE/docker directory

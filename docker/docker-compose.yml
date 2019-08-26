@@ -12,7 +12,7 @@ services:
         volumes:
         - "./sdxlog:/code/log"
         - "./config/sdx.conf:/code/config/sdx.conf"
-        - "./ssh/geni-kthare10.pem:/code/ssh/geni-kthare10.pem"
-        - "./ssh/id_rsa.pub:/code/ssh/id_rsa.pub"
-        - "./ssh/id_rsa:/code/ssh/id_rsa"
+        - "~/.ssh/geni-kthare10.pem:/code/ssh/geni-kthare10.pem"
+        - "~/.ssh/id_rsa.pub:/code/ssh/id_rsa.pub"
+        - "~/.ssh/id_rsa:/code/ssh/id_rsa"
         - "./resources:/code/resources"
