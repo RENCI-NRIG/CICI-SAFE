@@ -39,6 +39,7 @@ public class SdxExogeniClient {
   @Inject
   private SliceManagerFactory sliceManagerFactory;
 
+  @Inject
   public SdxExogeniClient(CoreProperties coreProperties) {
     this.coreProperties = coreProperties;
     logPrefix = "[" + coreProperties.getSliceName() + "] ";
