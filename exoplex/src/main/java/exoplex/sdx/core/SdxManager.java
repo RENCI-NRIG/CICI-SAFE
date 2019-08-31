@@ -989,10 +989,15 @@ public class SdxManager extends SliceHelper {
       int ip_to_use = getAvailableIP();
       l1.setIP(IPPrefix + ip_to_use);
       String param = "";
+      int numPort1 = routingmanager.getPortCount(SDNController, n1);
+      int numPort2 = routingmanager.getPortCount(SDNController, n2);
       updateOvsInterface(n1);
       updateOvsInterface(n2);
-      sleep(5);
-
+      while ( routingmanager.getPortCount(SDNController, n1) == numPort1
+        || routingmanager.getPortCount(SDNController, n2) == numPort2) {
+        sleep(5);
+        logger.debug("Wait for new port to be reported to sdn controller");
+      }
       //TODO: why nodeb dpid could be null
       res = routingmanager.newInternalLink(l1.getLinkName(),
         l1.getIP(1),
@@ -1001,10 +1006,11 @@ public class SdxManager extends SliceHelper {
         l1.getNodeB(),
         SDNController,
         linkbw);
+      logger.debug("Link added successfully");
     }
     //configure routing
     if (res) {
-      logger.debug("Link added successfully, configuring routes");
+      logger.debug("Available path found, configuring routes");
       if (routingmanager.configurePath(self_prefix, n1, target_prefix, n2, findGatewayForPrefix
         (self_prefix), SDNController, bandwidth)
         //&&
@@ -1043,6 +1049,9 @@ public class SdxManager extends SliceHelper {
   }
 
   public String processPolicyAdvertise(PolicyAdvertise policyAdvertise) {
+    if(!coreProperties.doRouteAdvertise()) {
+      return "Safe routing disabled, no processing this request";
+    }
     /*
     if(safeEnabled && !safeManager.authorizeOwnPrefix(policyAdvertise.ownerPID, policyAdvertise.srcPrefix)){
       logger.debug(String.format("%s doesn't own the source prefix %s", policyAdvertise.ownerPID,
@@ -1096,6 +1105,9 @@ public class SdxManager extends SliceHelper {
   }
 
   public String processBgpAdvertise(RouteAdvertise routeAdvertise) {
+    if(!coreProperties.doRouteAdvertise()) {
+      return "Safe routing disabled, not processing this request";
+    }
     if (coreProperties.isSafeEnabled() && !safeManager.authorizeBgpAdvertise(routeAdvertise)) {
       logger.warn(String.format("Unauthorized routeAdvertise :%s", routeAdvertise));
       return "";

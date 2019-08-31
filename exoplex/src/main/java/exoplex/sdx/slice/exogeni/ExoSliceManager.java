@@ -1090,7 +1090,6 @@ public class ExoSliceManager extends SliceManager {
 
   public String getDpid(String routerName, String sshkey) {
       String cmdOutput = runCmdNode("sudo /bin/bash ~/dpid.sh", routerName, true);
-      System.out.println("cmdPutput='" + cmdOutput + "'");
       String[] res = cmdOutput.split(" ");
       if(res.length > 1) {
           res[1] = res[1].replace("\n", "");

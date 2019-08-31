@@ -5,6 +5,7 @@ import com.google.inject.Injector;
 import exoplex.demo.AbstractTest;
 import exoplex.demo.AbstractTestSetting;
 import exoplex.demo.AbstractTestSlice;
+import exoplex.sdx.core.CoreProperties;
 import exoplex.sdx.core.SdxManager;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -37,6 +38,7 @@ public class MultiSdxTest extends AbstractTest {
     injector = Guice.createInjector(new MultiSdxModule());
     testSlice = injector.getInstance(AbstractTestSlice.class);
     testSetting = injector.getInstance(AbstractTestSetting.class);
+    CoreProperties.setRouteAdvertise(true);
   }
 
   @Before
