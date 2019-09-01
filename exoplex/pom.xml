@@ -95,6 +95,7 @@
                                 <JAR_FILE_SERVER>SafeSdxServer.jar-jar-with-dependencies.jar</JAR_FILE_SERVER>
                                 <JAR_FILE_SLICE>SafeSdxSliceServer.jar-jar-with-dependencies.jar</JAR_FILE_SLICE>
                             </buildArgs>
+                            <skip>true</skip>
                         </configuration>
                     </execution>
                 </executions>

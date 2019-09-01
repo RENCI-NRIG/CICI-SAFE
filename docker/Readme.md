@@ -37,9 +37,6 @@ Run docker-compose up -d from CICI-SAFE/docker directory
 
 ```
 $ docker-compose up -d
-Creating database ... done
-Creating rabbitmq ... done
-Creating mobius   ... done
-Creating notification ... done
+Creating sdxserver ... done
 ```
 After a few moments the docker containers will have stood up and configured themselves. User can now trigger requests to Sdxserver. 

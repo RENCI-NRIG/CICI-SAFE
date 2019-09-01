@@ -39,6 +39,10 @@ public class SdxExogeniClient {
   @Inject
   private SliceManagerFactory sliceManagerFactory;
 
+  @Inject
+  public SdxExogeniClient() {
+  }
+
   public SdxExogeniClient(CoreProperties coreProperties) {
     this.coreProperties = coreProperties;
     logPrefix = "[" + coreProperties.getSliceName() + "] ";
@@ -399,7 +403,7 @@ public class SdxExogeniClient {
     if (!jsonRes.getBoolean("result")) {
       logger.warn(logPrefix + "Prefix not accepted (authorization failed)");
     } else {
-      if (coreProperties.isSafeEnabled()) {
+      if (coreProperties.isSafeEnabled() && coreProperties.doRouteAdvertise()) {
         //Make initRoute advertisement
         //dstip, path, targeas, length
         String[] safeparams = new String[4];

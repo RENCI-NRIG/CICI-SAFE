@@ -63,6 +63,7 @@ public class CoreProperties {
   private String routerSite = null;
   private boolean reset = false;
   private String command = null;
+  static private boolean routeAdvertise = false;
 
   public CoreProperties() {
   }
@@ -71,9 +72,7 @@ public class CoreProperties {
     this.readConfig(configFilePath);
   }
 
-  public CoreProperties(JSONObject jsonObject) {
-
-  }
+  public CoreProperties(JSONObject jsonObject) {}
 
   public CoreProperties(String[] args) {
     CommandLine cmd = ServerOptions.parseCmd(args);
@@ -193,6 +192,9 @@ public class CoreProperties {
     }
     if (conf.hasPath("config.routersite")) {
       setRouterSite(conf.getString("config.routersite"));
+    }
+    if (conf.hasPath("config.routeadvertise")) {
+      setRouteAdvertise(conf.getBoolean("config.routeadvertise"));
     }
     logger.debug(this.toString());
   }
@@ -432,6 +434,14 @@ public class CoreProperties {
 
   public void setCommand(String cmd) {
     this.command = cmd;
+  }
+
+  static public void setRouteAdvertise(boolean advertiseRoute) {
+    CoreProperties.routeAdvertise = routeAdvertise;
+  }
+
+  static public boolean doRouteAdvertise() {
+    return CoreProperties.routeAdvertise;
   }
 
   @Override

@@ -50,6 +50,7 @@ public class MultiSdxTestSD extends AbstractTest {
     injector = Guice.createInjector(module);
     testSlice = injector.getInstance(AbstractTestSlice.class);
     testSetting = injector.getInstance(AbstractTestSetting.class);
+    CoreProperties.setRouteAdvertise(true);
   }
 
   @Before
