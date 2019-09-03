@@ -91,6 +91,7 @@ public class SdxManager extends SliceHelper {
   private ConcurrentHashMap<String, String> peerUrls = new ConcurrentHashMap<>();
 
   //The name of the link in SDX slice stitched to customer node
+  // gateway -> net
   private ConcurrentHashMap<String, String> stitchNet = new ConcurrentHashMap<>();
 
 
@@ -151,6 +152,7 @@ public class SdxManager extends SliceHelper {
 
   public void initializeSdx() throws TransportException {
     loadSlice();
+    delFlows();
     broManager = new BroManager(serverSlice, routingmanager, this);
     logPrefix += "[" + coreProperties.getSliceName() + "]";
     checkSdxPrerequisites(serverSlice);
@@ -257,26 +259,17 @@ public class SdxManager extends SliceHelper {
     int numInterfaces2 = serverSlice.getPhysicalInterfaces(node2).size();
     serverSlice.lockSlice();
     try {
-      int times = 1;
-      while (true) {
-        serverSlice.addLink(linkName, node1, node2, bw);
-        if (serverSlice.commitAndWait(10, Arrays.asList(linkName))) {
-          int newNum1 = serverSlice.getPhysicalInterfaces(node1).size();
-          int newNum2 = serverSlice.getPhysicalInterfaces(node2).size();
-          while (newNum1 <= numInterfaces1 || newNum2 <= numInterfaces2) {
-            serverSlice.sleep(5);
-            newNum1 = serverSlice.getPhysicalInterfaces(node1).size();
-            newNum2 = serverSlice.getPhysicalInterfaces(node2).size();
-          }
-          if (times > 1) {
-            logger.warn(String.format("Tried %s times to add a link", times));
-          }
-          break;
+      List<String> interfaces = serverSlice.addLink(linkName, node1, node2, bw);
+      if (serverSlice.commitAndWait(10, Arrays.asList(linkName))) {
+        int newNum1 = serverSlice.getPhysicalInterfaces(node1).size();
+        int newNum2 = serverSlice.getPhysicalInterfaces(node2).size();
+        while (newNum1 <= numInterfaces1 || newNum2 <= numInterfaces2) {
+          serverSlice.sleep(5);
+          newNum1 = serverSlice.getPhysicalInterfaces(node1).size();
+          newNum2 = serverSlice.getPhysicalInterfaces(node2).size();
         }
-        serverSlice.deleteResource(linkName);
-        serverSlice.commitAndWait();
-        serverSlice.refresh();
-        times++;
+        routingmanager.updateInterfaceMac(node1, linkName, interfaces.get(0));
+        routingmanager.updateInterfaceMac(node2, linkName, interfaces.get(1));
       }
     } catch (Exception e) {
       e.printStackTrace();
@@ -284,7 +277,6 @@ public class SdxManager extends SliceHelper {
     } finally {
       serverSlice.unLockSlice();
     }
-    updateMacAddr();
     return true;
   }
 
@@ -298,24 +290,16 @@ public class SdxManager extends SliceHelper {
     serverSlice.lockSlice();
     serverSlice.refresh();
     try {
-      int times = 1;
-      while (true) {
-        serverSlice.addLink(stitchName, nodeName, bw);
-        if (serverSlice.commitAndWait(10, Arrays.asList(stitchName))) {
-          int newNum;
-          do {
-            serverSlice.sleep(10);
-            newNum = serverSlice.getPhysicalInterfaces(nodeName).size();
-          } while (newNum <= numInterfaces);
-          if (times > 1) {
-            logger.warn(String.format("Tried %s times to add a stitchlink", times));
-          }
-          break;
-        } else {
-          serverSlice.deleteResource(stitchName);
-          serverSlice.commitAndWait();
-          serverSlice.refresh();
-          times++;
+      List<String> interfaces = serverSlice.addLink(stitchName, nodeName, bw);
+      if (serverSlice.commitAndWait(10, Arrays.asList(stitchName))) {
+        int newNum;
+        do {
+          serverSlice.sleep(10);
+          newNum = serverSlice.getPhysicalInterfaces(nodeName).size();
+        } while (newNum <= numInterfaces);
+        for(String iface: interfaces) {
+          routingmanager.updateInterfaceMac(nodeName, stitchName,
+            serverSlice.getMacAddressOfInterface(iface));
         }
       }
     } catch (Exception e) {
@@ -324,7 +308,6 @@ public class SdxManager extends SliceHelper {
     } finally {
       serverSlice.unLockSlice();
     }
-    updateMacAddr();
     return true;
   }
 
@@ -471,7 +454,7 @@ public class SdxManager extends SliceHelper {
         String remoteGUID = res.getString("reservID");
         String remoteSafeKeyHash = res.getString("safeKeyHash");
         //Todo: be careful when we want to unstitch from the link side. as the net is virtual
-        stitchNet.put(remoteGUID, l1.getLinkName());
+        stitchNet.put(gateway, l1.getLinkName());
         if (!customerNodes.containsKey(remoteSafeKeyHash)) {
           customerNodes.put(remoteSafeKeyHash, new HashSet<>());
         }
@@ -617,14 +600,13 @@ public class SdxManager extends SliceHelper {
         serverSlice.lockSlice();
         serverSlice.addOVSRouter(site, node);
         stitchname = allocateStitchLinkName(ip, node);
-
-        net = serverSlice.addBroadcastLink(stitchname, coreProperties.getBw());
-        serverSlice.stitchNetToNode(net, node);
-
+        List<String> ifaces = serverSlice.addLink(stitchname, node, coreProperties.getBw());
         serverSlice.commitAndWait(10, Arrays.asList(stitchname, node));
         serverSlice.unLockSlice();
         copyRouterScript(serverSlice, node);
         configRouter(node);
+        routingmanager.updateInterfaceMac(node, stitchname,
+          serverSlice.getMacAddressOfInterface(ifaces.get(0)));
         logger.debug("Configured the new router in RoutingManager");
       }
 
@@ -634,6 +616,7 @@ public class SdxManager extends SliceHelper {
       logLink.setName(stitchname);
       logLink.addNode(node);
       links.put(stitchname, logLink);
+      updateOvsInterface(node);
       serverSlice.stitch(net1_stitching_GUID, customerSlice, reserveId, secret, gateway + "/" + ip
         .split("/")[1]);
       res.put("ip", ip);
@@ -642,7 +625,7 @@ public class SdxManager extends SliceHelper {
       if (coreProperties.isSafeEnabled()) {
         res.put("safeKeyHash", safeManager.getSafeKeyHash());
       }
-      updateOvsInterface(node);
+      routingmanager.updatePortMac(SDNController, routingmanager.getDPID(node));
       routingmanager.newExternalLink(logLink.getLinkName(),
         ip,
         logLink.getNodeA(),
@@ -653,7 +636,7 @@ public class SdxManager extends SliceHelper {
         .currentTimeMillis() - start) / 1000);
 
       //update states
-      stitchNet.put(reserveId, stitchname);
+      stitchNet.put(gateway, stitchname);
       if (!customerNodes.containsKey(customerSafeKeyHash)) {
         customerNodes.put(customerSafeKeyHash, new HashSet<>());
       }
@@ -668,8 +651,7 @@ public class SdxManager extends SliceHelper {
   }
 
   synchronized public String undoStitch(String customerSafeKeyHash, String customerSlice,
-                                        String
-                                          customerReserveId) throws Exception {
+    String customerReserveId) throws Exception {
     logger.debug("ndllib TestDriver: START");
     logger.info(String.format("Undostitch request from %s for (%s, %s)", customerSafeKeyHash,
       customerSlice, customerReserveId));
@@ -684,15 +666,15 @@ public class SdxManager extends SliceHelper {
     Long t1 = System.currentTimeMillis();
 
     serverSlice.loadSlice();
-    String stitchLinkName = stitchNet.get(customerReserveId);
+    String gateway = customerGateway.get(customerReserveId);
+    String stitchLinkName = stitchNet.get(gateway);
     String stitchNodeName = stitchLinkName.split("_")[1];
 
     serverSlice.unstitch(stitchLinkName, customerSlice, customerReserveId);
 
     //clean status after undo stitching
     customerNodes.get(customerSafeKeyHash).remove(customerReserveId);
-    String stitchName = stitchNet.remove(customerReserveId);
-    String gateway = customerGateway.get(customerReserveId);
+    String stitchName = stitchNet.remove(gateway);
     if (gatewayPrefixes.containsKey(gateway)) {
       for (String prefix : gatewayPrefixes.get(gateway)) {
         revokePrefix(customerSafeKeyHash, prefix);
@@ -989,13 +971,17 @@ public class SdxManager extends SliceHelper {
       int ip_to_use = getAvailableIP();
       l1.setIP(IPPrefix + ip_to_use);
       String param = "";
-      int numPort1 = routingmanager.getPortCount(SDNController, n1);
-      int numPort2 = routingmanager.getPortCount(SDNController, n2);
+      int numPort1 = routingmanager.getPortCount(n1);
+      int numPort2 = routingmanager.getPortCount(n2);
       updateOvsInterface(n1);
       updateOvsInterface(n2);
-      while ( routingmanager.getPortCount(SDNController, n1) == numPort1
-        || routingmanager.getPortCount(SDNController, n2) == numPort2) {
+      routingmanager.updatePortMac(SDNController, routingmanager.getDPID(n1));
+      routingmanager.updatePortMac(SDNController, routingmanager.getDPID(n2));
+      while ( routingmanager.getPortCount(n1) == numPort1
+        || routingmanager.getPortCount(n2) == numPort2) {
         sleep(5);
+        routingmanager.updatePortMac(SDNController, routingmanager.getDPID(n1));
+        routingmanager.updatePortMac(SDNController, routingmanager.getDPID(n2));
         logger.debug("Wait for new port to be reported to sdn controller");
       }
       //TODO: why nodeb dpid could be null
@@ -1195,6 +1181,8 @@ public class SdxManager extends SliceHelper {
         notifyResult.safeKeyHash = safeManager.getSafeKeyHash();
       }
       //monitor the frist package
+      routingmanager.allowIngress(SdnUtil.DEFAULT_ROUTE, dest, router,
+       stitchNet.get(gateway), 20, SDNController);
       routingmanager.monitorOnAllRouter(dest, SdnUtil.DEFAULT_ROUTE,
         SDNController);
       routingmanager.monitorOnAllRouter(SdnUtil.DEFAULT_ROUTE, dest,
@@ -1360,12 +1348,31 @@ public class SdxManager extends SliceHelper {
       //String script = "docker exec -d plexus /bin/bash -c  \"cd /root;pkill ryu-manager;
       // ryu-manager ryu/ryu/app/rest_router.py|tee log\"\n";
       serverSlice.runCmdByIP(script, plexusip, false);
+    } else if (type.equals("ingress_router")) {
+      logger.debug("Restarting Plexus Controller");
+      logger.info(logPrefix + "Restarting Plexus Controller: " + plexusip);
+      delFlows();
+      String script = "sudo docker exec -d plexus /bin/bash -c  \"cd /root;pkill ryu-manager; "
+        + "ryu-manager --log-file ~/log --default-log-level 10 --verbose "
+        + "ryu/ryu/app/rest_conf_switch.py ryu/ryu/app/ingress_router.py "
+        + "ryu/ryu/app/ofctl_rest.py %s\"\n";
+      // Set public url to plexus server
+      if(coreProperties.isPlexusInSlice()) {
+        String publicUrl = "http://" + plexusip + ":8888";
+        coreProperties.setPublicUrl(publicUrl);
+      }
+      String sdxMonitorUrl = coreProperties.getPublicUrl() + "sdx/flow/packetin";
+      //reuse ryu-manager option for sdx url
+      script = String.format(script, String.format("--zapi-db-url %s", sdxMonitorUrl));
+      //String script = "docker exec -d plexus /bin/bash -c  \"cd /root;pkill ryu-manager;
+      // ryu-manager ryu/ryu/app/rest_router.py|tee log\"\n";
+      serverSlice.runCmdByIP(script, plexusip, false);
     }
   }
 
   public void restartPlexus() {
     coreProperties.setSdnControllerIp(serverSlice.getManagementIP(plexusName));
-    restartPlexus(coreProperties.getSdnControllerIp(), "rest_router");
+    restartPlexus(coreProperties.getSdnControllerIp(), "ingress_router");
   }
 
   private void putComputeNode(String node) {
@@ -1427,10 +1434,6 @@ public class SdxManager extends SliceHelper {
       HashSet<String> ifs = new HashSet<String>();
       // get all links, and then
       for (String i : serverSlice.getInterfaces()) {
-        routingmanager.updateInterfaceMac(serverSlice.getNodeOfInterface(i),
-          serverSlice.getLinkOfInterface(i),
-          serverSlice.getMacAddressOfInterface(i)
-        );
         if (i.contains("node") || i.contains("bro")) {
           continue;
         }
@@ -1562,9 +1565,9 @@ public class SdxManager extends SliceHelper {
     // FIXME: maybe this is not the best way to do.
     //add all interfaces other than eth0 to ovs bridge br0
     configRouters(serverSlice);
-
     routingmanager.waitTillAllOvsConnected(SDNController, serverSlice.mocked);
-
+    updateMacAddr();
+    routingmanager.updateAllPorts(SDNController);
     logger.debug("setting up sttichports");
     HashSet<Integer> usedip = new HashSet<Integer>();
     HashSet<String> ifs = new HashSet<String>();
@@ -1615,7 +1618,6 @@ public class SdxManager extends SliceHelper {
       }
     }
     //set ovsdb address
-    routingmanager.updateAllPorts(SDNController);
     routingmanager.setOvsdbAddr(SDNController);
   }
 

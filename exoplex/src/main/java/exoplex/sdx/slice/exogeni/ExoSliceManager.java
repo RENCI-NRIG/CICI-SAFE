@@ -878,12 +878,15 @@ public class ExoSliceManager extends SliceManager {
     }
   }
 
-  synchronized public void addLink(String linkName, String nodeName, long
+  synchronized public List<String> addLink(String linkName, String nodeName, long
     bw) {
+    List<String> ifaces = new ArrayList<>();
     logger.info(String.format("addLink %s %s %s", linkName, nodeName, bw));
     ComputeNode node = (ComputeNode) slice.getResourceByName(nodeName);
     Network net = slice.addBroadcastLink(linkName, bw);
-    net.stitch(node);
+    InterfaceNode2Net ifaceNode0 = (InterfaceNode2Net) net.stitch(node);
+    ifaces.add(ifaceNode0.getName());
+    return ifaces;
   }
 
   synchronized public void removeLink(String linkName) {
@@ -891,22 +894,26 @@ public class ExoSliceManager extends SliceManager {
     net.delete();
   }
 
-  synchronized public void addLink(String linkName, String ip, String netmask,
+  synchronized public List<String> addLink(String linkName, String ip, String netmask,
                                    String nodeName, long
                                      bw) {
     logger.info(String.format("addLink %s %s %s %s %s", linkName, ip, netmask, nodeName, bw));
+    List<String> ifaces = new ArrayList<>();
     ComputeNode node = (ComputeNode) slice.getResourceByName(nodeName);
     Network net = slice.addBroadcastLink(linkName, bw);
     InterfaceNode2Net ifaceNode0 = (InterfaceNode2Net) net.stitch(node);
     ifaceNode0.setIpAddress(ip);
     ifaceNode0.setNetmask(netmask);
+    ifaces.add(ifaceNode0.getName());
+    return ifaces;
   }
 
-  synchronized public void addLink(String linkName, String ip1, String ip2,
+  synchronized public List<String> addLink(String linkName, String ip1, String ip2,
                                    String netmask, String
                                      node1, String node2, long bw) {
     logger.info(String.format("addLink %s %s %s %s %s %s %s", linkName, ip1, ip2, netmask, node1,
       node2, bw));
+    List<String> ifaces = new ArrayList<>();
     ComputeNode node_1 = (ComputeNode) slice.getResourceByName(node1);
     ComputeNode node_2 = (ComputeNode) slice.getResourceByName(node2);
     Network net = slice.addBroadcastLink(linkName, bw);
@@ -916,16 +923,23 @@ public class ExoSliceManager extends SliceManager {
     InterfaceNode2Net ifaceNode1 = (InterfaceNode2Net) net.stitch(node_2);
     ifaceNode1.setIpAddress(ip2);
     ifaceNode1.setNetmask(netmask);
+    ifaces.add(ifaceNode0.getName());
+    ifaces.add(ifaceNode1.getName());
+    return ifaces;
   }
 
-  synchronized public void addLink(String linkName, String
+  synchronized public List<String> addLink(String linkName, String
     node1, String node2, long bw) {
     logger.info(String.format("addLink %s %s %s %s", linkName, node1, node2, bw));
+    List<String> ifaces = new ArrayList<>();
     ComputeNode node_1 = (ComputeNode) slice.getResourceByName(node1);
     ComputeNode node_2 = (ComputeNode) slice.getResourceByName(node2);
     Network net = slice.addBroadcastLink(linkName, bw);
-    net.stitch(node_1);
-    net.stitch(node_2);
+    InterfaceNode2Net ifaceNode0 = (InterfaceNode2Net) net.stitch(node_1);
+    InterfaceNode2Net ifaceNode1 = (InterfaceNode2Net) net.stitch(node_2);
+    ifaces.add(ifaceNode0.getName());
+    ifaces.add(ifaceNode1.getName());
+    return ifaces;
   }
 
   synchronized public String getNodeDomain(String nodeName) {

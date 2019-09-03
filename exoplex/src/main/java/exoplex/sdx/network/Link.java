@@ -59,6 +59,13 @@ public class Link {
     return interfaceA;
   }
 
+  public String getInterface(String nodeName) {
+    if(interfaceA != null && interfaceA.contains(nodeName)) {
+      return interfaceA;
+    }
+    return interfaceB;
+  }
+
   public String getInterfaceB() {
     return interfaceB;
   }
@@ -72,7 +79,7 @@ public class Link {
     return null;
   }
 
-  public String getPairNodeame(String nodeName) {
+  public String getPairNodeName(String nodeName) {
     if (nodeName.equals(nodeA)) {
       return nodeB;
     } else if (nodeName.equals(interfaceB)) {

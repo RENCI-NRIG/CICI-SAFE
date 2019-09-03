@@ -6,9 +6,13 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 
-public class SdnReplay {
-  public static void replay(String fileName) {
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
+public class SdnReplay {
+  final static Logger logger = LogManager.getLogger(SdnReplay.class);
+
+  public static void replay(String fileName) {
     try (BufferedReader br = new BufferedReader(new FileReader(fileName))) {
       String line;
       while ((line = br.readLine()) != null) {
@@ -16,7 +20,9 @@ public class SdnReplay {
         String params = br.readLine();
         params = params.replace("\n", "");
         JSONObject obj = new JSONObject(params);
-        RoutingManager.postSdnCmd(url, obj, false);
+        logger.debug(url);
+        logger.debug(obj.toString());
+        logger.info(RoutingManager.postSdnCmd(url, obj, false));
         try {
           Thread.sleep(500);
         } catch (Exception e) {

@@ -8,8 +8,9 @@ class Interface {
   String port;
   String ip;
 
-  public Interface(String nodeName, String linkName, String macAddr, String port, String ip) {
-    this.name = NetworkUtil.computeInterfaceName(nodeName, linkName);
+  public Interface(String ifaceName, String nodeName, String linkName, String macAddr, String port,
+                   String ip) {
+    this.name = ifaceName;
     this.nodeName = nodeName;
     this.linkName = linkName;
     this.macAddr = macAddr;

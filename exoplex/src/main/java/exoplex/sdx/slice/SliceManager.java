@@ -125,17 +125,19 @@ public abstract class SliceManager {
   abstract public void runCmdSlice(final String cmd, final String sshkey, final String pattern,
                                    final boolean repeat);
 
-  abstract public void addLink(String linkName, String nodeName, long bw);
+  abstract public List<String> addLink(String linkName, String nodeName, long bw);
 
   abstract public void removeLink(String linkName);
 
-  abstract public void addLink(String linkName, String ip, String netmask, String nodeName, long
+  abstract public List<String> addLink(String linkName, String ip, String netmask, String nodeName,
+                                    long
     bw);
 
-  abstract public void addLink(String linkName, String ip1, String ip2, String netmask, String
+  abstract public List<String> addLink(String linkName, String ip1, String ip2, String netmask,
+                                      String
     node1, String node2, long bw);
 
-  abstract public void addLink(String linkName, String
+  abstract public List<String> addLink(String linkName, String
     node1, String node2, long bw);
 
   abstract public String getNodeDomain(String nodeName);

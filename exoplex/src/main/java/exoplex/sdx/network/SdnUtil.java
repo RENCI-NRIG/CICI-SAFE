@@ -279,19 +279,63 @@ public class SdnUtil {
     return HttpUtil.postJSON(url, entity);
   }
 
-  public static String[] controllerFlowCmd(
+  public static String[] ingressFlowCmd(
     String controller,
     String dpid,
     String destIP,
     String srcIP,
-    int priority) {
+    String inPort,
+    String dl_type,
+    int priority,
+    int table_id) {
     String url = "http://" + controller + "/stats/flowentry/add";
 
     JSONObject entity = new JSONObject();
     entity.put("dpid", Long.parseLong(dpid, 16));
     entity.put("cookie", cookie.incrementAndGet());
-    entity.put("cookie_mask", 1);
+    entity.put("cookie_mask", 0);
     entity.put("table_id", 0);
+    //entity.put("idle_timeout", 300);
+    //entity.put("hard_timeout", 300);
+    entity.put("priority", priority);
+    entity.put("flags", 1);
+    JSONObject match = new JSONObject();
+    if (!destIP.equals(DEFAULT_ROUTE)) {
+      match.put("nw_dst", destIP);
+    }
+    if (!srcIP.equals(DEFAULT_ROUTE)) {
+      match.put("nw_src", srcIP);
+    }
+    if(inPort != null && !inPort.equals("")) {
+      match.put("in_port", Integer.valueOf(inPort));
+    }
+    if(dl_type != null && dl_type.equals("ip")) {
+      match.put("dl_type", 2048);
+    }
+    entity.put("match", match);
+    JSONObject action = new JSONObject();
+    action.put("type", "GOTO_TABLE");
+    action.put("table_id", table_id);
+    JSONArray actions = new JSONArray();
+    actions.put(action);
+    entity.put("actions", actions);
+    return new String[]{url, entity.toString()};
+  }
+
+  public static String[] controllerFlowCmd(
+    String controller,
+    String dpid,
+    String destIP,
+    String srcIP,
+    int priority,
+    int table_id) {
+    String url = "http://" + controller + "/stats/flowentry/add";
+
+    JSONObject entity = new JSONObject();
+    entity.put("dpid", Long.parseLong(dpid, 16));
+    entity.put("cookie", cookie.incrementAndGet());
+    entity.put("cookie_mask", 0);
+    entity.put("table_id", table_id);
     //entity.put("idle_timeout", 300);
     //entity.put("hard_timeout", 300);
     entity.put("priority", priority);

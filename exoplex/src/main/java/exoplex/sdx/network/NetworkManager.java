@@ -2,11 +2,9 @@ package exoplex.sdx.network;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import sun.nio.ch.Net;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 
 public class NetworkManager {
   final static Logger logger = LogManager.getLogger(NetworkManager.class);
@@ -17,6 +15,10 @@ public class NetworkManager {
   private HashMap<String, Link> linkMap = new HashMap<>();
   private HashMap<String, Interface> interfaceMap = new HashMap<>();
   private HashMap<String, Interface> ipInterfaceMap = new HashMap<>();
+  private HashMap<String, String> macInterfaceMap = new HashMap<>();
+  private HashMap<String, String> interfaceMacMap = new HashMap<>();
+  private HashMap<String, String> macPortMap = new HashMap<>();
+  private HashMap<String, HashSet<String>> dpidMacsMap = new HashMap<>();
 
   public NetworkManager() {
     logger.debug("initialize network manager");
@@ -96,7 +98,7 @@ public class NetworkManager {
   public String getPairRouter(String ip) {
     Interface intf = ipInterfaceMap.get(ip);
     if (intf != null) {
-      return linkMap.get(intf.getLinkName()).getPairNodeame(intf.getNodeName());
+      return linkMap.get(intf.getLinkName()).getPairNodeName(intf.getNodeName());
     }
     return null;
   }
@@ -104,7 +106,8 @@ public class NetworkManager {
   public void addLink(String linkName, String ipa, String ra, String gw) {
     //TODO gw
     Link link = new Link(linkName, ra);
-    Interface intf = new Interface(ra, linkName, null, null, ipa);
+    String iface = NetworkUtil.computeInterfaceName(ra, linkName);
+    Interface intf = new Interface(iface, ra, linkName, null, null, ipa);
     putLink(link);
     putInterface(intf);
     Router logRouter = getRouter(ra);
@@ -132,11 +135,14 @@ public class NetworkManager {
     //logger.debug(ipa+" "+ipb);
     Link link = new Link(linkName, ra, rb, cap);
     putLink(link);
-    Interface intf1 = new Interface(ra, linkName, null, null, ipa);
+    String ifaceA = NetworkUtil.computeInterfaceName(ra, linkName);
+    String ifaceB = NetworkUtil.computeInterfaceName(rb, linkName);
+    Interface intf1 = new Interface(ifaceA, ra, linkName, interfaceMacMap.getOrDefault(ifaceA,
+      null), getPort(ra, linkName), ipa);
     putInterface(intf1);
-    Interface intf2 = new Interface(rb, linkName, null, null, ipb);
+    Interface intf2 = new Interface(ifaceB, rb, linkName, interfaceMacMap.getOrDefault(ifaceB,
+      null), getPort(rb, linkName), ipb);
     putInterface(intf2);
-
     Router logRouter = getRouter(ra);
     if (logRouter != null) {
       logRouter.addInterface(intf1.getName());
@@ -175,6 +181,48 @@ public class NetworkManager {
   public String getPairInterface(String iface) {
     Link link = linkMap.get(interfaceMap.get(iface).getLinkName());
     return iface.equals(link.getInterfaceA()) ? link.getInterfaceB() : link.getInterfaceA();
+  }
+
+  public void updateInterfaceMac(String node, String link, String mac) {
+    if (mac != null) {
+      String iface = NetworkUtil.computeInterfaceName(node, link);
+      String oldValue = macInterfaceMap.put(mac, iface);
+      interfaceMacMap.put(iface, mac);
+      if (!mac.equals(oldValue) && interfaceMap.containsKey(iface)) {
+        logger.debug(String.format("Mac address for %s updated from %s to %s", iface, oldValue,
+          mac));
+        updateInterface(iface, getPort(node, link), mac);
+      }
+    }
+  }
+
+  public void updatePortMac(String dpid, String portNum, String hwAddr) {
+    HashSet<String> macSet = dpidMacsMap.computeIfAbsent(dpid, k -> new HashSet<>());
+    String oldVal = macPortMap.put(hwAddr, portNum);
+    macSet.add(hwAddr);
+    if (!portNum.equals(oldVal)) {
+      logger.debug(String.format("Port number for hw: %s on dpid: %s updated from %s to " +
+        "%s", hwAddr, dpid, oldVal, portNum));
+      if (macInterfaceMap.containsKey(hwAddr)) {
+        updateInterface(macInterfaceMap.get(hwAddr), portNum, hwAddr);
+      }
+    }
+  }
+
+  public int getPortCount(String dpid) {
+    return dpidMacsMap.getOrDefault(dpid, new HashSet<>()).size();
+  }
+
+  public String getPort(String routerName, String linkName) {
+    try {
+      String iface = NetworkUtil.computeInterfaceName(routerName, linkName);
+      String dpid = getRouter(routerName).getDPID();
+      String mac = interfaceMacMap.get(iface);
+      return macPortMap.getOrDefault(mac, null);
+    } catch (Exception e) {
+      e.printStackTrace();
+      return null;
+    }
   }
 
   public Link getLink(String linkName) {

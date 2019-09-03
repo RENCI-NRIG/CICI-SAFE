@@ -23,8 +23,6 @@ public class RoutingManager {
   private HashMap<String, Integer> mirror_id = new HashMap<>();
   private HashMap<String, ArrayList<String[]>> pairPath = new HashMap<>();
   private HashMap<String, ArrayList<String>> routes = new HashMap<>();
-  private HashMap<String, String> macInterfaceMap = new HashMap<>();
-  private HashMap<String, String> macPortMap = new HashMap<>();
   private HashMap<String, String> linkGateway = new HashMap<>();
 
   //pathIds of paths configured for the ip prefix
@@ -89,6 +87,8 @@ public class RoutingManager {
     } else {
       result = false;
     }
+    allowIngress(SdnUtil.DEFAULT_ROUTE, ipa, networkManager.getPort(routerA, linkName), 1, "ip",
+      20, routerA, controller);
     return result;
   }
 
@@ -145,12 +145,40 @@ public class RoutingManager {
       logger.warn(res);
       result = false;
     }
+    allowIngress(SdnUtil.DEFAULT_ROUTE, SdnUtil.DEFAULT_ROUTE,
+      networkManager.getPort(routerA, linkName), 2, null, 60000,
+      routerA, controller);
+    allowIngress(SdnUtil.DEFAULT_ROUTE, SdnUtil.DEFAULT_ROUTE,
+      networkManager.getPort(routerB, linkName), 2, null, 60000,
+      routerB, controller);
     return result;
+  }
+
+  public void allowIngress(String dstIP, String srcIP, String routerName, String linkName,
+    int priority, String controller) {
+    allowIngress(dstIP, srcIP, networkManager.getPort(routerName, linkName), 1, "ip", priority,
+      routerName, controller);
+  }
+
+  private void allowIngress(String dstIP, String srcIP, String inPort, int toTable, String dl_type,
+    int priority, String routerName, String controller) {
+    logger.info(String.format("allowIngress %s %s %s %s %s", dstIP, srcIP, inPort, routerName,
+      controller));
+    String[] cmd = SdnUtil.ingressFlowCmd(controller, getDPID(routerName), dstIP, srcIP, inPort,
+      dl_type, priority, toTable);
+    addEntry_HashList(sdncmds, getDPID(routerName), cmd);
+    String res = postSdnCmd(cmd[0], new JSONObject(cmd[1]));
+    logger.debug(res);
+    if (res.contains("success")) {
+      logger.debug(String.format("Add ingress flow %s %s %s success", dstIP, srcIP, inPort));
+    } else {
+      logger.debug("Verification of ingress flow not suported");
+    }
   }
 
   private void monitor(String dstIP, String srcIP, String routerName, String controller) {
     logger.info(String.format("monitor %s %s %s %s", dstIP, srcIP, routerName, controller));
-    String[] cmd = SdnUtil.controllerFlowCmd(controller, getDPID(routerName), dstIP, srcIP, 3);
+    String[] cmd = SdnUtil.controllerFlowCmd(controller, getDPID(routerName), dstIP, srcIP, 3, 2);
     addEntry_HashList(sdncmds, getDPID(routerName), cmd);
     String res = postSdnCmd(cmd[0], new JSONObject(cmd[1]));
     logger.debug(res);
@@ -467,17 +495,12 @@ public class RoutingManager {
   }
 
   synchronized public void updateInterfaceMac(String node, String link, String mac) {
-    if (mac != null) {
-      String oldValue = macInterfaceMap.put(mac, NetworkUtil.computeInterfaceName(node, link));
-      if (!mac.equals(oldValue)) {
-        logger.debug(String.format("Mac address for %s updated from %s to %s",
-          NetworkUtil.computeInterfaceName(node, link), oldValue, mac));
-        if (macPortMap.containsKey(mac)) {
-          networkManager.updateInterface(NetworkUtil.computeInterfaceName(node, link),
-            macPortMap.get(mac), mac);
-        }
-      }
-    }
+    networkManager.updateInterfaceMac(node, link, mac);
+  }
+
+  synchronized public int getPortCount(String nodeName) {
+    String dpid = getDPID(nodeName);
+    return networkManager.getPortCount(dpid);
   }
 
   synchronized public void updatePortMac(String controller, String dpid) {
@@ -490,14 +513,7 @@ public class RoutingManager {
             JSONObject port = ports.getJSONObject(i);
             String hwAddr = port.getString("hw_addr");
             String portNum = String.valueOf(port.getInt("port_no"));
-            String oldVal = macPortMap.put(hwAddr, portNum);
-            if (!portNum.equals(oldVal)) {
-              logger.debug(String.format("Port number for hw: %s on dpid: %s updated from %s to " +
-                "%s", hwAddr, dpid, oldVal, portNum));
-              if (macInterfaceMap.containsKey(hwAddr)) {
-                networkManager.updateInterface(macInterfaceMap.get(hwAddr), portNum, hwAddr);
-              }
-            }
+            networkManager.updatePortMac(dpid, portNum, hwAddr);
           } catch (Exception e) {
             logger.trace(e.getMessage());
           }
@@ -536,21 +552,6 @@ public class RoutingManager {
       }
     }
     return true;
-  }
-
-  public int getPortCount(String controller, String nodeName) {
-    String dpid = getDPID(nodeName);
-    JSONObject obj = SdnUtil.getPortDesc(controller, dpid);
-    if (obj.keySet().isEmpty()) {
-      return 0;
-    }
-    try {
-      logger.debug("port count of ovs on  " + nodeName + ":"
-        + obj.getJSONArray((String) obj.keys().next()).length());
-      return obj.getJSONArray((String) obj.keys().next()).length();
-    } catch (Exception e) {
-      return 0;
-    }
   }
 
   public boolean setNextHops(String nodeName, String controller, int groupId, String destIP,
