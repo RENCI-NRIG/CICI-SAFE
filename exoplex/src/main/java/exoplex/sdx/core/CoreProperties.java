@@ -2,7 +2,9 @@ package exoplex.sdx.core;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import exoplex.common.utils.ServerOptions;
 import exoplex.sdx.slice.exogeni.SiteBase;
+import org.apache.commons.cli.CommandLine;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -59,15 +61,54 @@ public class CoreProperties {
   private long bw = 100000000;
   private long broBw = 100000000;
   private String routerSite = null;
+  private boolean reset = false;
+  private String command = null;
+  static private boolean routeAdvertise = false;
 
   public CoreProperties() {
   }
 
-  public CoreProperties(JSONObject jsonObject) {
-
+  public CoreProperties(String configFilePath) {
+    this.readConfig(configFilePath);
   }
 
-  public CoreProperties(String configFilePath) {
+  public CoreProperties(JSONObject jsonObject) {}
+
+  public CoreProperties(String[] args) {
+    CommandLine cmd = ServerOptions.parseCmd(args);
+    this.readConfig(cmd.getOptionValue("config"));
+    if (cmd.hasOption('r')) {
+      this.setReset(true);
+    }
+    if (cmd.hasOption('d')) {
+      this.setType("delete");
+    }
+    if (cmd.hasOption('e')) {
+      this.setCommand(cmd.getOptionValue('e'));
+    }
+  }
+
+  public static String getSafeDockerImage() {
+    return safeDockerImage;
+  }
+
+  public static void setSafeDockerImage(String name) {
+    safeDockerImage = name;
+  }
+
+  public static String getSafeServerScript() {
+    return safeServerScript;
+  }
+
+  public static void setSafeServerScript(String name) {
+    safeServerScript = name;
+  }
+
+  public static String getPlexusImage() {
+    return plexusImage;
+  }
+
+  private void readConfig(String configFilePath) {
     logger.info(String.format("Loading configuration from %s", configFilePath));
     File myConfigFile = new File(configFilePath);
     Config fileConfig = ConfigFactory.parseFile(myConfigFile);
@@ -151,6 +192,9 @@ public class CoreProperties {
     }
     if (conf.hasPath("config.routersite")) {
       setRouterSite(conf.getString("config.routersite"));
+    }
+    if (conf.hasPath("config.routeadvertise")) {
+      setRouteAdvertise(conf.getBoolean("config.routeadvertise"));
     }
     logger.debug(this.toString());
   }
@@ -376,30 +420,33 @@ public class CoreProperties {
     this.routerSite = SiteBase.get(routerSite);
   }
 
+  public boolean getReset() {
+    return this.reset;
+  }
+
+  public void setReset(boolean reset) {
+    this.reset = reset;
+  }
+
+  public String getCommand() {
+    return this.command;
+  }
+
+  public void setCommand(String cmd) {
+    this.command = cmd;
+  }
+
+  static public void setRouteAdvertise(boolean advertiseRoute) {
+    CoreProperties.routeAdvertise = routeAdvertise;
+  }
+
+  static public boolean doRouteAdvertise() {
+    return CoreProperties.routeAdvertise;
+  }
+
   @Override
-  public String toString()
-  {
+  public String toString() {
     return ToStringBuilder.reflectionToString(this);
-  }
-
-  public static String getSafeDockerImage() {
-    return safeDockerImage;
-  }
-
-  public static void setSafeDockerImage(String name) {
-    safeDockerImage = name;
-  }
-
-  public static String getSafeServerScript() {
-    return safeServerScript;
-  }
-
-  public static void setSafeServerScript(String name) {
-    safeServerScript = name;
-  }
-
-  public static String getPlexusImage() {
-    return plexusImage;
   }
 }
 

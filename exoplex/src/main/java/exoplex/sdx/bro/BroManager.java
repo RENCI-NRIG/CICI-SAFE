@@ -184,11 +184,7 @@ public class BroManager {
       sum += bro.capacity;
     }
     double ratio = (double) requiredbw.getOrDefault(routerName, 0l) / (double) sum;
-    if (ratio > 0.6) {
-      return true;
-    } else {
-      return false;
-    }
+    return ratio > 0.6;
   }
 
   public void setMirrorAsync(String routerName, String source, String dst, long bw) throws Exception {

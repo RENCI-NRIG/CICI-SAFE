@@ -151,7 +151,7 @@ public class BroExperiment extends ExperimentBase {
           System.err.println(s[1]);
         }
       }
-      System.out.println("");
+      System.out.println();
     }
 
     System.out.println("iperf Client report");
@@ -286,7 +286,7 @@ public class BroExperiment extends ExperimentBase {
           System.err.println(s[1]);
         }
       }
-      System.out.println("");
+      System.out.println();
     }
 
     System.out.println("iperf Client report");

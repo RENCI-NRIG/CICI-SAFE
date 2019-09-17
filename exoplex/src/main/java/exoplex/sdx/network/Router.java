@@ -39,9 +39,7 @@ public class Router {
   }
 
   public void delInterface(String interfaceName) {
-    if (interfaces.contains(interfaceName)) {
-      interfaces.remove(interfaceName);
-    }
+    interfaces.remove(interfaceName);
   }
 
   public void addGateway(String gw) {
@@ -50,9 +48,7 @@ public class Router {
   }
 
   public void delGateway(String gw) {
-    if (customergateways.contains(gw)) {
-      customergateways.remove(gw);
-    }
+    customergateways.remove(gw);
   }
 
   public boolean hasGateway(String gw) {

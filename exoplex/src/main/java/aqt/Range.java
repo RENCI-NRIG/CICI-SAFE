@@ -28,11 +28,7 @@ public class Range {
       return false;
     }
     Range seg = (Range) segment;
-    if (seg.getStart() == this.start && seg.getLength() == this.length) {
-      return true;
-    } else {
-      return false;
-    }
+    return seg.getStart() == this.start && seg.getLength() == this.length;
   }
 
   @Override
@@ -46,10 +42,7 @@ public class Range {
   }
 
   public boolean covers(Range range) {
-    if (this.start <= range.getStart()
-      && this.start + this.length >= range.getStart() + range.getLength()) {
-      return true;
-    }
-    return false;
+    return this.start <= range.getStart()
+      && this.start + this.length >= range.getStart() + range.getLength();
   }
 }

@@ -174,7 +174,7 @@ public class SafeAuthorizationTest extends AuthorityMockMultiSdx {
   void initManagers() {
     for (String slice : slices) {
       safeManagerHashMap.put(slice, new SafeManager(safeServerIP, sliceKeyMap.get(slice), "~/" +
-        ".ssh/id_rsa"));
+        ".ssh/id_rsa", true));
       bgpManagerHashMap.put(slice, new AdvertiseManager(getPrincipalId(sliceKeyMap.get(slice)),
         safeManagerHashMap.get(slice)));
     }

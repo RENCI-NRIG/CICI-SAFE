@@ -120,7 +120,7 @@ public class ExoSliceManager extends SliceManager {
           throw e;
         }
         try {
-          Thread.sleep((long) (INTERVAL * 1000));
+          Thread.sleep(INTERVAL * 1000);
         } catch (InterruptedException var6) {
           Thread.currentThread().interrupt();
         }
@@ -145,7 +145,7 @@ public class ExoSliceManager extends SliceManager {
           throw e;
         }
         try {
-          Thread.sleep((long) (INTERVAL * 1000));
+          Thread.sleep(INTERVAL * 1000);
         } catch (InterruptedException var6) {
           Thread.currentThread().interrupt();
         }
@@ -195,7 +195,7 @@ public class ExoSliceManager extends SliceManager {
       } catch (Exception e) {
         logger.warn(e.getMessage());
         try {
-          Thread.sleep((long) (INTERVAL * 1000 * (i + 1)));
+          Thread.sleep(INTERVAL * 1000 * (i + 1));
         } catch (InterruptedException var6) {
           Thread.currentThread().interrupt();
         }
@@ -224,14 +224,16 @@ public class ExoSliceManager extends SliceManager {
 
   synchronized public String stitchNetToNode(String netName, String nodeName) {
     Network net0 = (Network) slice.getResourceByName(netName);
-    InterfaceNode2Net ifaceNode0 = (InterfaceNode2Net) net0.stitch(slice.getResourceByName(nodeName));
+    InterfaceNode2Net ifaceNode0 =
+      (InterfaceNode2Net) net0.stitch(slice.getResourceByName(nodeName));
     return ifaceNode0.getName();
   }
 
   synchronized public String stitchNetToNode(String netName, String nodeName, String ip, String
     netmask) {
     Network net0 = (Network) slice.getResourceByName(netName);
-    InterfaceNode2Net ifaceNode0 = (InterfaceNode2Net) net0.stitch(slice.getResourceByName(nodeName));
+    InterfaceNode2Net ifaceNode0 =
+      (InterfaceNode2Net) net0.stitch(slice.getResourceByName(nodeName));
     ifaceNode0.setIpAddress(ip);
     ifaceNode0.setNetmask(netmask);
     return ifaceNode0.getName();
@@ -365,7 +367,8 @@ public class ExoSliceManager extends SliceManager {
     return slice.stitch(r1, r2);
   }
 
-  synchronized public void unstitch(String stitchLinkName, String customerSlice, String customerGUID) {
+  synchronized public void unstitch(String stitchLinkName, String customerSlice,
+    String customerGUID) {
     BroadcastNetwork net = (BroadcastNetwork) slice.getResourceByName(stitchLinkName);
     String stitchNetReserveId = net.getStitchingGUID();
     try {
@@ -417,7 +420,7 @@ public class ExoSliceManager extends SliceManager {
       }
 
       try {
-        Thread.sleep((long) (INTERVAL * 1000));
+        Thread.sleep(INTERVAL * 1000);
       } catch (InterruptedException var6) {
         Thread.currentThread().interrupt();
       }
@@ -439,7 +442,7 @@ public class ExoSliceManager extends SliceManager {
           break;
         }
         try {
-          Thread.sleep((long) (INTERVAL * 1000));
+          Thread.sleep(INTERVAL * 1000);
         } catch (InterruptedException var6) {
           Thread.currentThread().interrupt();
         }
@@ -447,7 +450,7 @@ public class ExoSliceManager extends SliceManager {
       } catch (TransportException ex) {
         logger.warn(ex.getMessage());
         try {
-          Thread.sleep((long) (INTERVAL * 1000));
+          Thread.sleep(INTERVAL * 1000);
         } catch (InterruptedException var6) {
           Thread.currentThread().interrupt();
         }
@@ -512,7 +515,7 @@ public class ExoSliceManager extends SliceManager {
     commit();
   }
 
-  synchronized public void commitAndWait() throws TransportException, Exception {
+  synchronized public void commitAndWait() throws Exception {
     commit();
     reloadSlice();
     if (slice == null) {
@@ -521,7 +524,7 @@ public class ExoSliceManager extends SliceManager {
     waitTillActive();
   }
 
-  synchronized public boolean commitAndWait(int interval) throws TransportException, Exception {
+  synchronized public boolean commitAndWait(int interval) throws Exception {
     commit();
     String timeStamp1 = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(new Date());
     waitTillActive(interval);
@@ -530,7 +533,7 @@ public class ExoSliceManager extends SliceManager {
     return true;
   }
 
-  synchronized public boolean commitAndWait(int interval, List<String> resources) throws TransportException, Exception {
+  synchronized public boolean commitAndWait(int interval, List<String> resources) throws Exception {
     commit();
     String timeStamp1 = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(new Date());
     boolean res = waitTillActive(interval, resources);
@@ -562,8 +565,8 @@ public class ExoSliceManager extends SliceManager {
       refresh();
       logger.debug("ExoSliceManager: " + getAllResources());
       for (String c : getComputeNodes()) {
-        logger.debug(String.format("[%s] Resource: %s , state: %s  site: %s", sliceName, c, getState
-          (c), getNodeDomain(c)));
+        logger.debug(String.format("[%s] Resource: %s , state: %s  site: %s", sliceName, c,
+          getState(c), getNodeDomain(c)));
         if (resources.contains(c)) {
           if (getState(c).contains("Closed")) {
             throw new Exception(String.format("Slice %s closed", sliceName));
@@ -691,7 +694,8 @@ public class ExoSliceManager extends SliceManager {
     }
   }
 
-  synchronized public void copyFile2Node(String lfile, String rfile, String privkey, String nodeName) {
+  synchronized public void copyFile2Node(String lfile, String rfile, String privkey,
+    String nodeName) {
     String ip = getManagementIP(nodeName);
     try {
       logger.debug(String.format("scp file %s to %s", lfile, ip));
@@ -742,23 +746,16 @@ public class ExoSliceManager extends SliceManager {
       return true;
     }
     logger.debug(String.format("%s processing result from %s: %s", sliceName, mip, res));
-    if (res.contains("ovs-vsctl: command not found") || res.contains("ovs-ofctl: command not found")) {
+    if (res.contains("ovs-vsctl: command not found")
+      || res.contains("ovs-ofctl: command not found")) {
       String[] result = Exec.sshExec(SliceProperties.userName, mip,
         Scripts.installOVS(), sshKey);
-      if (result[0].startsWith("error")) {
-        return true;
-      } else {
-        return false;
-      }
+      return result[0].startsWith("error");
     }
     if (res.contains("docker: command not found")) {
       String[] result = Exec.sshExec(SliceProperties.userName, mip,
         Scripts.installDocker(), sshKey);
-      if (result[0].startsWith("error")) {
-        return true;
-      } else {
-        return false;
-      }
+      return result[0].startsWith("error");
     }
     if (res.contains("Unable to lock")) {
       Exec.sshExec(SliceProperties.userName, mip, "sudo rm /var/lib/dpkg/lock;dpkg --configure -a",
@@ -834,7 +831,7 @@ public class ExoSliceManager extends SliceManager {
 
   public String runCmdByIP(final String cmd, String mip, boolean repeat) {
     logger.debug(String.format("[%s-%s] run commands: %s", sliceName, mip, cmd));
-    String res[] = Exec.sshExec(SliceProperties.userName, mip, cmd, sshKey);
+    String[] res = Exec.sshExec(SliceProperties.userName, mip, cmd, sshKey);
     if (repeat && (res[0] == null
       || res[0].startsWith("error")
       || res[0].contains("Could not get lock")
@@ -908,7 +905,8 @@ public class ExoSliceManager extends SliceManager {
   synchronized public void addLink(String linkName, String ip1, String ip2,
                                    String netmask, String
                                      node1, String node2, long bw) {
-    logger.info(String.format("addLink %s %s %s %s %s %s %s", linkName, ip1, ip2, netmask, node1, node2, bw));
+    logger.info(String.format("addLink %s %s %s %s %s %s %s", linkName, ip1, ip2, netmask, node1,
+      node2, bw));
     ComputeNode node_1 = (ComputeNode) slice.getResourceByName(node1);
     ComputeNode node_2 = (ComputeNode) slice.getResourceByName(node2);
     Network net = slice.addBroadcastLink(linkName, bw);
@@ -996,7 +994,8 @@ public class ExoSliceManager extends SliceManager {
   }
 
   synchronized public void addPlexusController(String controllerSite, String name) {
-    addDocker(controllerSite, name, Scripts.getPlexusScript(CoreProperties.getPlexusImage()), NodeBase.xoMedium);
+    addDocker(controllerSite, name, Scripts.getPlexusScript(CoreProperties.getPlexusImage()),
+      NodeBase.xoMedium);
   }
 
   //We always add the bro when we add the edge router
@@ -1017,8 +1016,8 @@ public class ExoSliceManager extends SliceManager {
   }
 
   synchronized public void stitch(String RID, String customerName, String CID,
-                                  String secret,
-                                  String newip) {
+    String secret,
+    String newip) {
     //Main Example Code
     Long t1 = System.currentTimeMillis();
     try {
@@ -1031,8 +1030,9 @@ public class ExoSliceManager extends SliceManager {
       e.printStackTrace();
     }
     Long t2 = System.currentTimeMillis();
-    logger.debug("Finished Stitching, set ip address of the new interface to " + newip + "  time elapsed: "
-      + String.valueOf(t2 - t1) + "\n");
+    logger.debug("Finished Stitching, set ip address of the new interface to "
+      + newip + "  time elapsed: "
+      + (t2 - t1) + "\n");
   }
 
   public void configBroNode(String nodeName, String edgeRouter,
@@ -1089,10 +1089,13 @@ public class ExoSliceManager extends SliceManager {
   }
 
   public String getDpid(String routerName, String sshkey) {
-    String[] res =
-      runCmdNode("sudo /bin/bash ~/dpid.sh", routerName, true).split(" ");
-    res[1] = res[1].replace("\n", "");
-    return res[1];
+      String cmdOutput = runCmdNode("sudo /bin/bash ~/dpid.sh", routerName, true);
+      String[] res = cmdOutput.split(" ");
+      if(res.length > 1) {
+          res[1] = res[1].replace("\n", "");
+          return res[1];
+      }
+      return null;
   }
 
   synchronized public String addOVSRouter(String site, String name) {
@@ -1167,7 +1170,7 @@ public class ExoSliceManager extends SliceManager {
 
   public Collection<String> getNodeInterfaces(String nodeName) {
     ArrayList<String> res = new ArrayList<>();
-    for (Interface ifname : ((ComputeNode) slice.getResourceByName(nodeName)).getInterfaces()) {
+    for (Interface ifname : slice.getResourceByName(nodeName).getInterfaces()) {
       res.add(ifname.getName());
     }
     return res;

@@ -70,18 +70,18 @@ public class RoutingManager {
    * @param controller 192.168.1.1:80080
    * @return
    */
-  public boolean newExternalLink(String linkName, String ipa, String routerA, String gw, String
-    controller) {
+  public boolean newExternalLink(String linkName, String ipa, String routerA, String gw,
+                                 String controller) {
     logger.info(String.format("newLink %s %s %s %s %s", linkName, ipa, routerA, gw, controller));
     logger.debug("RoutingManager: new stitchpoint " + routerA + " " + ipa);
     networkManager.addLink(linkName, ipa, routerA, gw);
     String dpid = networkManager.getRouter(routerA).getDPID();
-    String cmd[] = SdnUtil.addrCMD(ipa, dpid, controller);
+    String[] cmd = SdnUtil.addrCMD(ipa, dpid, controller);
     boolean result = true;
     String res = postSdnCmd(cmd[0], new JSONObject(cmd[1]));
     logger.debug(res);
     cmd[cmd.length - 1] = res;
-    if (res.toString().contains("success")) {
+    if (res.contains("success")) {
       int id = Integer.valueOf(res.split("address_id=")[1].split("]")[0]);
       address_id.put(linkName, id);
       linkGateway.put(linkName, gw);
@@ -95,8 +95,8 @@ public class RoutingManager {
   public void removeExternalLink(String linkName, String routerName, String controller) {
     String gw = linkGateway.remove(linkName);
     networkManager.delLink(linkName, routerName, gw);
-    String cmd[] = SdnUtil.delAddrCMD(String.valueOf(address_id.get(linkName)), getDPID
-      (routerName), controller);
+    String[] cmd = SdnUtil.delAddrCMD(String.valueOf(address_id.get(linkName)),
+      getDPID(routerName), controller);
     String res = HttpUtil.delete(cmd[0], cmd[1]);
     if (res.contains("success")) {
       logger.debug(res);
@@ -112,15 +112,16 @@ public class RoutingManager {
    * @param controller: SDN controller: 192.168.1.1:6633
    * @return
    */
-  public boolean newInternalLink(String linkName, String ipa, String routerA, String ipb, String routerB,
-                                 String controller, String cap) {
+  public boolean newInternalLink(String linkName, String ipa, String routerA, String ipb,
+                                 String routerB, String controller, String cap) {
     long capacity = Long.valueOf(cap);
     return newInternalLink(linkName, ipa, routerA, ipb, routerB, controller, capacity);
   }
 
-  public boolean newInternalLink(String linkName, String ipa, String routerA, String ipb, String routerB,
-                                 String controller, long capacity) {
-    logger.info(String.format("newLink %s %s %s %s %s %s %s", linkName, ipa, routerA, ipb, routerB, controller, capacity));
+  public boolean newInternalLink(String linkName, String ipa, String routerA, String ipb,
+                                 String routerB, String controller, long capacity) {
+    logger.info(String.format("newLink %s %s %s %s %s %s %s", linkName, ipa, routerA, ipb,
+      routerB, controller, capacity));
     logger.debug("RoutingManager: new link " + routerA + " " + ipa + " " + routerB + " " + ipb);
     networkManager.addLink(linkName, ipa, routerA, ipb, routerB, capacity);
     String dpid = getDPID(routerA);
@@ -129,7 +130,7 @@ public class RoutingManager {
     String res = postSdnCmd(cmd[0], new JSONObject(cmd[1]));
     logger.debug(res);
     cmd[cmd.length - 1] = res;
-    if (res.toString().contains("success")) {
+    if (res.contains("success")) {
       addEntry_HashList(sdncmds, dpid, cmd);
     } else {
       result = false;
@@ -137,7 +138,7 @@ public class RoutingManager {
     dpid = getDPID(routerB);
     cmd = SdnUtil.addrCMD(ipb, dpid, controller);
     res = postSdnCmd(cmd[0], new JSONObject(cmd[1]));
-    if (res.toString().contains("success")) {
+    if (res.contains("success")) {
       addEntry_HashList(sdncmds, dpid, cmd);
       logger.debug(res);
     } else {
@@ -147,11 +148,9 @@ public class RoutingManager {
     return result;
   }
 
-  private void monitor(String dstIP, String srcIP, String routerName,
-                       String controller) {
+  private void monitor(String dstIP, String srcIP, String routerName, String controller) {
     logger.info(String.format("monitor %s %s %s %s", dstIP, srcIP, routerName, controller));
-    String[] cmd = SdnUtil.controllerFlowCmd(controller, getDPID(routerName),
-      dstIP, srcIP, 3);
+    String[] cmd = SdnUtil.controllerFlowCmd(controller, getDPID(routerName), dstIP, srcIP, 3);
     addEntry_HashList(sdncmds, getDPID(routerName), cmd);
     String res = postSdnCmd(cmd[0], new JSONObject(cmd[1]));
     logger.debug(res);
@@ -206,8 +205,8 @@ public class RoutingManager {
     }
   }
 
-  public void configurePath(String destIP, String srcIP, String nodename, String gateway, String
-    controller) {
+  public void configurePath(String destIP, String srcIP, String nodename, String gateway,
+                            String controller) {
     logger.info(String.format("configurePath %s %s %s %s %s", destIP, srcIP, nodename, gateway,
       controller));
     String gwdpid = networkManager.getRouter(nodename).getDPID();
@@ -236,8 +235,8 @@ public class RoutingManager {
   }
 
   //gateway is the gateway for nodename
-  public boolean configurePath(String dstIP, String dstNode, String srcIP, String
-    srcNode, String gateway, String controller, String bandWitdth) {
+  public boolean configurePath(String dstIP, String dstNode, String srcIP, String srcNode,
+                               String gateway, String controller, String bandWitdth) {
     long bw = Long.valueOf(bandWitdth);
     return configurePath(dstIP, dstNode, srcIP, srcNode, gateway, controller, bw);
   }
@@ -255,12 +254,11 @@ public class RoutingManager {
    * @return
    */
   public synchronized boolean configurePath(String dstIP, String dstNode, String srcIP,
-                                            String
-                                              srcNode, String gateway, String controller, long bw) {
+                                            String srcNode, String gateway, String controller,
+                                            long bw) {
     logger.info(String.format("configurePath %s %s %s %s %s %s %s", dstIP, dstNode, srcIP,
       srcNode, gateway, controller, bw));
-    logger.debug("Network Manager: Configuring path for " + dstIP + " " + dstNode + " " +
-      srcIP + " " + srcNode + " " + gateway);
+    logger.debug("Network Manager: Configuring path for " + dstIP + " " + dstNode + " " + srcIP + " " + srcNode + " " + gateway);
     String gwdpid = networkManager.getRouter(dstNode).getDPID();
     String targetdpid = networkManager.getRouter(srcNode).getDPID();
     if (gwdpid == null || targetdpid == null) {
@@ -284,7 +282,8 @@ public class RoutingManager {
       Router logRouter = networkManager.getRouterByDPID(path[0]);
       if (path[2] != null) {
         for (String interfaceName : logRouter.getInterfaces()) {
-          Link link = networkManager.getLink(networkManager.getInterface(interfaceName).getLinkName());
+          Link link =
+            networkManager.getLink(networkManager.getInterface(interfaceName).getLinkName());
           if (link.hasNode(path[2])) {
             link.useBW(bw);
             networkManager.putLink(link);
@@ -383,8 +382,8 @@ public class RoutingManager {
     return res;
   }
 
-  public String singleStepRouting(String dest, String src, String gateway, String dpid, String
-    controller) {
+  public String singleStepRouting(String dest, String src, String gateway, String dpid,
+                                  String controller) {
     String[] cmd = SdnUtil.routingCMD(dest, src, gateway, dpid, controller);
     String res = postSdnCmd(cmd[0], new JSONObject(cmd[1]));
     if (res.contains("success")) {
@@ -397,7 +396,8 @@ public class RoutingManager {
     return res;
   }
 
-  public void checkFLowTableForPair(String srcIp, String destIp, String p1, String p2, String sshKey, Logger logger) {
+  public void checkFLowTableForPair(String srcIp, String destIp, String p1, String p2,
+                                    String sshKey, Logger logger) {
     ArrayList<String[]> paths = pairPath.getOrDefault(getPathID(srcIp, destIp), new ArrayList<>());
     if (paths.isEmpty()) {
       logger.warn(String.format("No path configured from %s to %s", srcIp, destIp));
@@ -409,7 +409,8 @@ public class RoutingManager {
       if (i < paths.size() - 1) {
         dst = networkManager.getRouterByDPID(paths.get(i + 1)[0]).getRouterName();
       }
-      String flow = getFlowOnRouter(networkManager.getRouterByDPID(hop[0]).getManagementIP(), p1, p2, sshKey);
+      String flow = getFlowOnRouter(networkManager.getRouterByDPID(hop[0]).getManagementIP(), p1,
+        p2, sshKey);
       if (flow.contains("actions=CONTROLLER")) {
         logger.warn(String.format("%s %s -> %s: Failure\n %s", hop[0], src, dst, flow));
       } else if (flow.contains("output:")) {
@@ -469,10 +470,11 @@ public class RoutingManager {
     if (mac != null) {
       String oldValue = macInterfaceMap.put(mac, NetworkUtil.computeInterfaceName(node, link));
       if (!mac.equals(oldValue)) {
-        logger.debug(String.format("Mac address for %s updated from %s to %s", NetworkUtil.computeInterfaceName(node
-          , link), oldValue, mac));
+        logger.debug(String.format("Mac address for %s updated from %s to %s",
+          NetworkUtil.computeInterfaceName(node, link), oldValue, mac));
         if (macPortMap.containsKey(mac)) {
-          networkManager.updateInterface(NetworkUtil.computeInterfaceName(node, link), macPortMap.get(mac), mac);
+          networkManager.updateInterface(NetworkUtil.computeInterfaceName(node, link),
+            macPortMap.get(mac), mac);
         }
       }
     }
@@ -490,8 +492,8 @@ public class RoutingManager {
             String portNum = String.valueOf(port.getInt("port_no"));
             String oldVal = macPortMap.put(hwAddr, portNum);
             if (!portNum.equals(oldVal)) {
-              logger.debug(String.format("Port number for hw: %s on dpid: %s updated from %s to %s",
-                hwAddr, dpid, oldVal, portNum));
+              logger.debug(String.format("Port number for hw: %s on dpid: %s updated from %s to " +
+                "%s", hwAddr, dpid, oldVal, portNum));
               if (macInterfaceMap.containsKey(hwAddr)) {
                 networkManager.updateInterface(macInterfaceMap.get(hwAddr), portNum, hwAddr);
               }
@@ -530,15 +532,29 @@ public class RoutingManager {
         try {
           Thread.sleep(5000);
         } catch (Exception e) {
-          ;
         }
       }
     }
     return true;
   }
 
-  public boolean setNextHops(String nodeName, String controller, int groupId,
-                             String destIP, HashMap<String, Integer> nbs) {
+  public int getPortCount(String controller, String nodeName) {
+    String dpid = getDPID(nodeName);
+    JSONObject obj = SdnUtil.getPortDesc(controller, dpid);
+    if (obj.keySet().isEmpty()) {
+      return 0;
+    }
+    try {
+      logger.debug("port count of ovs on  " + nodeName + ":"
+        + obj.getJSONArray((String) obj.keys().next()).length());
+      return obj.getJSONArray((String) obj.keys().next()).length();
+    } catch (Exception e) {
+      return 0;
+    }
+  }
+
+  public boolean setNextHops(String nodeName, String controller, int groupId, String destIP,
+                             HashMap<String, Integer> nbs) {
     String dpid = getDPID(nodeName);
     HashMap<Integer, Integer> ports = new HashMap<>();
     for (String ifaceName : networkManager.getRouter(nodeName).getInterfaces()) {
@@ -546,7 +562,8 @@ public class RoutingManager {
       if (pairIface != null) {
         String neighborNode = networkManager.getInterface(pairIface).getNodeName();
         if (nbs.containsKey(neighborNode)) {
-          ports.put(Integer.valueOf(networkManager.getInterface(ifaceName).getPort()), nbs.get(neighborNode));
+          ports.put(Integer.valueOf(networkManager.getInterface(ifaceName).getPort()),
+            nbs.get(neighborNode));
         }
       }
     }
@@ -635,8 +652,8 @@ public class RoutingManager {
   }
 
   public String getFlowOnRouter(String ip, String srcIp, String destIp, String sshKey) {
-    String result = Exec.sshExec(SliceProperties.userName, ip,
-      "sudo ovs-ofctl dump-flows br0", sshKey)[0];
+    String result = Exec.sshExec(SliceProperties.userName, ip, "sudo ovs-ofctl dump-flows br0",
+      sshKey)[0];
     String[] parts = result.split("\n");
     String res = "";
     for (String s : parts) {
@@ -648,8 +665,8 @@ public class RoutingManager {
   }
 
   public List<String> getFlowsOnRouter(Map<String, String> fieldMap, String ip, String sshKey) {
-    String result = Exec.sshExec(SliceProperties.userName, ip,
-      "sudo ovs-ofctl dump-flows br0", sshKey)[0];
+    String result = Exec.sshExec(SliceProperties.userName, ip, "sudo ovs-ofctl dump-flows br0",
+      sshKey)[0];
     String[] parts = result.split("\n");
     ArrayList<String> res = new ArrayList<>();
     for (String s : parts) {
@@ -681,8 +698,8 @@ public class RoutingManager {
     }
   }
 
-  private boolean addRoute(String destIp, String gateWay, String dpid, String
-    pathId, String controller) {
+  private boolean addRoute(String destIp, String gateWay, String dpid, String pathId,
+                           String controller) {
     String[] cmd = SdnUtil.routingCMD(destIp, gateWay, dpid, controller);
     String res = postSdnCmd(cmd[0], new JSONObject(cmd[1]));
     logger.debug(String.join("\n" + cmd));
@@ -698,8 +715,8 @@ public class RoutingManager {
     }
   }
 
-  private boolean addRoute(String destIp, String srcIp, String gateWay, String dpid, String
-    pathId, String controller) {
+  private boolean addRoute(String destIp, String srcIp, String gateWay, String dpid,
+                           String pathId, String controller) {
     String[] cmd = SdnUtil.routingCMD(destIp, srcIp, gateWay, dpid, controller);
     String res = postSdnCmd(cmd[0], new JSONObject(cmd[1]));
     logger.debug(String.join("\n" + cmd));
@@ -756,7 +773,8 @@ public class RoutingManager {
     return pathId + dpid;
   }
 
-  private void addEntry_HashList(HashMap<String, ArrayList<String[]>> map, String key, String[] entry) {
+  private void addEntry_HashList(HashMap<String, ArrayList<String[]>> map, String key,
+                                 String[] entry) {
     if (map.containsKey(key)) {
       ArrayList<String[]> l = map.get(key);
       l.add(entry);
@@ -768,7 +786,8 @@ public class RoutingManager {
   }
 
   //TODO: get shortest path for two pairs
-  private ArrayList<String[]> getPairRoutes(String srcdpid, String dstdpid, String gateway, long bw) {
+  private ArrayList<String[]> getPairRoutes(String srcdpid, String dstdpid, String gateway,
+                                            long bw) {
     HashSet<String> knownrouters = new HashSet<String>();
     //path queue: [dpid, path]
     //format of path:Arraylist([router_id,gateway, IP prefix of the gateway])
@@ -797,7 +816,8 @@ public class RoutingManager {
       start += 1;
       Router logRouter = networkManager.getRouterByDPID(rid);
       if (logRouter != null) {
-        for (Interface neighborInterface : networkManager.getNeighborInterfaces(logRouter.getRouterName())) {
+        for (Interface neighborInterface :
+          networkManager.getNeighborInterfaces(logRouter.getRouterName())) {
           //ip the ip of hte neighbor interface
           Link link = networkManager.getLink(neighborInterface.getLinkName());
           String pairip = neighborInterface.getIp();
@@ -812,7 +832,8 @@ public class RoutingManager {
             String[] path = new String[3];
             path[0] = pairrouter;
             logger.debug(pairip);
-            String ip = networkManager.getInterface(link.getPairInterfaceName(neighborInterface.getName())).getIp();
+            String ip =
+              networkManager.getInterface(link.getPairInterfaceName(neighborInterface.getName())).getIp();
             path[1] = ip.split("/")[0];
             path[2] = logRouter.getRouterName();
             logger.debug(path[1]);
@@ -865,7 +886,8 @@ public class RoutingManager {
       start += 1;
       Router logRouter = networkManager.getRouterByDPID(rid);
       if (logRouter != null) {
-        for (Interface neighborInterface : networkManager.getNeighborInterfaces(logRouter.getRouterName())) {
+        for (Interface neighborInterface :
+          networkManager.getNeighborInterfaces(logRouter.getRouterName())) {
           //ip the ip of hte neighbor interface
           Link link = networkManager.getLink(neighborInterface.getLinkName());
           String pairIp = neighborInterface.getIp();
@@ -876,7 +898,8 @@ public class RoutingManager {
             queue.add(pairrouter);
             end += 1;
             String[] path = new String[2];
-            String ip = networkManager.getInterface(link.getPairInterfaceName(neighborInterface.getName())).getIp();
+            String ip =
+              networkManager.getInterface(link.getPairInterfaceName(neighborInterface.getName())).getIp();
             path[0] = pairrouter;
             path[1] = ip.split("/")[0];
             knownpaths.add(path);

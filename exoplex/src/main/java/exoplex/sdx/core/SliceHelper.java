@@ -4,22 +4,16 @@ import com.google.inject.Guice;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
 import exoplex.common.utils.PathUtil;
-import exoplex.common.utils.ServerOptions;
 import exoplex.demo.singlesdx.SingleSdxModule;
 import exoplex.sdx.network.Link;
-import exoplex.sdx.network.RoutingManager;
 import exoplex.sdx.safe.SafeManager;
 import exoplex.sdx.slice.Scripts;
 import exoplex.sdx.slice.SliceManager;
 import exoplex.sdx.slice.SliceManagerFactory;
-import org.apache.commons.cli.CommandLine;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.logging.log4j.core.Core;
 import safe.Authority;
 
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -47,7 +41,8 @@ public class SliceHelper {
   protected CoreProperties coreProperties;
 
   protected HashMap<String, Link> links = new HashMap<String, Link>();
-  protected HashMap<String, ArrayList<String>> computenodes = new HashMap<String, ArrayList<String>>();
+  protected HashMap<String, ArrayList<String>> computenodes = new HashMap<String,
+    ArrayList<String>>();
   protected ArrayList<String> stitchports = new ArrayList<>();
 
   @Inject
@@ -61,19 +56,7 @@ public class SliceHelper {
   public static void main(String[] args) throws Exception {
     Injector injector = Guice.createInjector(new SingleSdxModule());
     SliceHelper sliceHelper = injector.getInstance(SliceHelper.class);
-    sliceHelper.run(args);
-  }
-
-  public String getServerUrl() {
-    return coreProperties.getServerUrl();
-  }
-
-  public void setServerUrl(String serverUrl) {
-    coreProperties.setServerUrl(serverUrl);
-  }
-
-  public void setRiakIP(String riakIP) {
-    coreProperties.setRiakIp(riakIP);
+    sliceHelper.run(new CoreProperties(args));
   }
 
   public void resetHostNames(SliceManager slice) {
@@ -88,23 +71,10 @@ public class SliceHelper {
     coreProperties.setBw(bw);
   }
 
-  public void processArgs(String[] args) {
-    CommandLine cmd = ServerOptions.parseCmd(args);
-    String configFilePath = cmd.getOptionValue("config");
-    this.readConfig(configFilePath);
-
-    if (cmd.hasOption('d')) {
-      coreProperties.setType("delete");
-    }
-  }
-
   protected boolean isValidLink(String key) {
     Link logLink = links.get(key);
-    if (!key.contains("stitch") && !key.contains("blink") && logLink != null && logLink.getInterfaceB() != null) {
-      return true;
-    } else {
-      return false;
-    }
+    return !key.contains("stitch") && !key.contains("blink")
+      && logLink != null && logLink.getInterfaceB() != null;
   }
 
   public void sleep(int sec) {
@@ -132,15 +102,10 @@ public class SliceHelper {
     computeIP(coreProperties.getIpPrefix());
   }
 
-  public void run(String[] args) {
-    CommandLine cmd = ServerOptions.parseCmd(args);
-    String configFilePath = cmd.getOptionValue("config");
-    this.readConfig(configFilePath);
+  public void run(CoreProperties coreProperties) throws Exception {
+    this.coreProperties = coreProperties;
+    computeIP(coreProperties.getIpPrefix());
     //type=conf.getString("config.type");
-    if (cmd.hasOption('d')) {
-      coreProperties.setType("delete");
-    }
-
     if (coreProperties.getType().equals("server")) {
       createAndConfigCarrierSlice(coreProperties.getBw());
     } else if (coreProperties.getType().equals("delete")) {
@@ -161,24 +126,12 @@ public class SliceHelper {
     s.delete();
   }
 
-  public void deleteSlice(String sliceName) {
-    SliceManager s = sliceManagerFactory.create(
-      sliceName,
-      coreProperties.getExogeniKey(),
-      coreProperties.getExogeniKey(),
-      coreProperties.getExogeniSm(),
-      coreProperties.getSshKey());
-    s.delete();
-  }
-
-
   public void createAndConfigCarrierSlice(long bw) {
-    int routerNum = coreProperties.getClientSites().size();
-
+    coreProperties.setBw(bw);
     String scriptsdir = coreProperties.getScriptsDir();
     computeIP(coreProperties.getIpPrefix());
     try {
-      SliceManager carrier = createCarrierSlice(coreProperties.getSliceName(), routerNum, bw);
+      SliceManager carrier = createCarrierSlice(coreProperties);
       carrier.commitAndWait();
       logger.info(String.format("Slice %s active now, making configurations", coreProperties
         .getSliceName()));
@@ -207,7 +160,8 @@ public class SliceHelper {
 
   }
 
-  public void configFTPService(SliceManager carrier, String nodePattern, String username, String passwd) {
+  public void configFTPService(SliceManager carrier, String nodePattern, String username,
+    String passwd) {
     carrier.runCmdSlice(Scripts.installVsftpd(), coreProperties.getSshKey(), nodePattern, true);
     carrier.runCmdSlice("sudo /usr/sbin/useradd " + username + "; echo -e \"" + passwd + "\\n" +
       passwd + "\\n\" | passwd " + username, coreProperties.getSshKey(), nodePattern, true);
@@ -275,7 +229,8 @@ public class SliceHelper {
         if (coreProperties.isPlexusInSlice()) {
           coreProperties.setSdnControllerIp(serverSlice.getManagementIP(plexusName));
         }
-        checkPlexus(serverSlice, coreProperties.getSdnControllerIp(), CoreProperties.getPlexusImage());
+        checkPlexus(serverSlice, coreProperties.getSdnControllerIp(),
+          CoreProperties.getPlexusImage());
       }
     });
     if (coreProperties.isSafeEnabled()) {
@@ -301,17 +256,6 @@ public class SliceHelper {
     logger.debug("Finished checking prerequisites");
   }
 
-  /*
-  protected  void configSdnControllerIp(SliceManager serverSlice, String plexusName){
-    SDNControllerIP = serverSlice.getComputeNode(plexusName).getManagementIP();
-  }
-
-  protected void configSafeServerIp(SliceManager serverSlice){
-    safeServerIp = serverSlice.getComputeNode("safe-server").getManagementIP();
-    safeServer = safeServerIp + ":7777";
-  }
-  */
-
   public void checkOVS(SliceManager serverSlice, String nodeName) {
     String res = serverSlice.runCmdNode("sudo ovs-vsctl show", nodeName, false);
     if (res.contains("ovs-vsctl: command not found")) {
@@ -333,30 +277,34 @@ public class SliceHelper {
 
   public void copyRouterScript(SliceManager s, String node) {
     String scriptsdir = coreProperties.getScriptsDir();
-    s.copyFile2Node(PathUtil.joinFilePath(scriptsdir, "dpid.sh"), "~/dpid.sh", coreProperties.getSshKey(), node);
-    s.copyFile2Node(PathUtil.joinFilePath(scriptsdir, "ifaces.sh"), "~/ifaces.sh", coreProperties.getSshKey(), node);
-    s.copyFile2Node(PathUtil.joinFilePath(scriptsdir, "ovsbridge.sh"), "~/ovsbridge.sh", coreProperties.getSshKey(),
-      node);
+    s.copyFile2Node(PathUtil.joinFilePath(scriptsdir, "dpid.sh"), "~/dpid.sh",
+      coreProperties.getSshKey(), node);
+    s.copyFile2Node(PathUtil.joinFilePath(scriptsdir, "ifaces.sh"), "~/ifaces.sh",
+      coreProperties.getSshKey(), node);
+    s.copyFile2Node(PathUtil.joinFilePath(scriptsdir, "ovsbridge.sh"), "~/ovsbridge.sh",
+      coreProperties.getSshKey(), node);
     //Make sure that plexus container is running
     logger.debug("Finished copying ovs scripts");
   }
 
   public void copyRouterScript(SliceManager s) {
     String scriptsdir = coreProperties.getScriptsDir();
-    s.copyFile2Slice(PathUtil.joinFilePath(scriptsdir, "dpid.sh"), "~/dpid.sh", coreProperties.getSshKey(),
-      routerPattern);
-    s.copyFile2Slice(PathUtil.joinFilePath(scriptsdir, "ifaces.sh"), "~/ifaces.sh", coreProperties.getSshKey(),
-      routerPattern);
-    s.copyFile2Slice(PathUtil.joinFilePath(scriptsdir, "ovsbridge.sh"), "~/ovsbridge.sh", coreProperties.getSshKey(),
-      routerPattern);
+    s.copyFile2Slice(PathUtil.joinFilePath(scriptsdir, "dpid.sh"), "~/dpid.sh",
+      coreProperties.getSshKey(), routerPattern);
+    s.copyFile2Slice(PathUtil.joinFilePath(scriptsdir, "ifaces.sh"), "~/ifaces.sh",
+      coreProperties.getSshKey(), routerPattern);
+    s.copyFile2Slice(PathUtil.joinFilePath(scriptsdir, "ovsbridge.sh"), "~/ovsbridge.sh",
+      coreProperties.getSshKey(), routerPattern);
     //Make sure that plexus container is running
     logger.debug("Finished copying ovs scripts");
   }
 
   protected boolean checkSafeServer(String safeIP, String riakIp) {
-    logger.info(String.format("checking safe server with image %s", coreProperties.getSafeDockerImage()));
+    logger.info(String.format("checking safe server with image %s",
+      CoreProperties.getSafeDockerImage()));
     if (coreProperties.isSafeInSlice()) {
-      SafeManager sm = new SafeManager(safeIP, coreProperties.getSafeKeyFile(), coreProperties.getSshKey());
+      SafeManager sm = new SafeManager(safeIP, coreProperties.getSafeKeyFile(),
+        coreProperties.getSshKey(), true);
       sm.verifySafeInstallation(riakIp);
     }
     return true;
@@ -402,16 +350,6 @@ public class SliceHelper {
     return "blink_" + broName + "_" + ip;
   }
 
-  private void clearLinks(String file) {
-    try {
-      FileOutputStream writer = new FileOutputStream(file);
-      writer.write(("").getBytes());
-      writer.close();
-    } catch (IOException e) {
-      e.printStackTrace();
-    }
-  }
-
   public void setClientSites(List<String> clientSites) {
     coreProperties.setClientSites(clientSites);
   }
@@ -424,9 +362,10 @@ public class SliceHelper {
     coreProperties.setSliceName(sliceName);
   }
 
-  public SliceManager createCarrierSlice(String sliceName, int num, long bw) {
+  public SliceManager createCarrierSlice(CoreProperties coreProperties) {
+    this.coreProperties = coreProperties;
     //,String stitchsubnet="", String slicesubnet="")
-    SliceManager s = sliceManagerFactory.create(sliceName,
+    SliceManager s = sliceManagerFactory.create(this.coreProperties.getSliceName(),
       coreProperties.getExogeniKey(),
       coreProperties.getExogeniKey(),
       coreProperties.getExogeniSm(),
@@ -438,8 +377,8 @@ public class SliceHelper {
     ArrayList<String> nodelist = new ArrayList<>();
     ArrayList<String> netlist = new ArrayList<>();
     ArrayList<String> stitchlist = new ArrayList<>();
-    for (int i = 0; i < num; i++) {
-      s.addOVSRouter(coreProperties.getClientSites().get(i % coreProperties.getClientSites().size()), "e" + i);
+    for (int i = 0; i < coreProperties.getClientSites().size(); i++) {
+      s.addOVSRouter(coreProperties.getClientSites().get(i), "e" + i);
       nodelist.add("e" + i);
       if (coreProperties.isBroEnabled() && i == 0) {
         long brobw = coreProperties.getBroBw();
@@ -461,25 +400,25 @@ public class SliceHelper {
 
         String bronet = s.addBroadcastLink(getBroLinkName(broNode,
           ip_to_use),
-          bw);
-        s.stitchNetToNode(bronet, node1, "192.168." + String.valueOf(ip_to_use) + ".1",
+          coreProperties.getBw());
+        s.stitchNetToNode(bronet, node1, "192.168." + ip_to_use + ".1",
           "255.255.255.0");
-        s.stitchNetToNode(bronet, broNode, "192.168." + String.valueOf(ip_to_use) + ".2",
+        s.stitchNetToNode(bronet, broNode, "192.168." + ip_to_use + ".2",
           "255.255.255.0");
       }
     }
     //add Links
-    for (int i = 0; i < num - 1; i++) {
+    for (int i = 0; i < this.coreProperties.getClientSites().size() - 1; i++) {
       String node0 = nodelist.get(i);
       String node1 = nodelist.get(i + 1);
       String linkname = "clink" + i;
-      Link logLink = addLink(s, linkname, node0, node1, bw);
+      Link logLink = addLink(s, linkname, node0, node1, coreProperties.getBw());
       links.put(linkname, logLink);
     }
     if (coreProperties.isSafeEnabled() && coreProperties.isSafeInSlice()) {
-      s.addSafeServer(coreProperties.getServerSite(), coreProperties.getRiakIp(), coreProperties
+      s.addSafeServer(coreProperties.getServerSite(), coreProperties.getRiakIp(), CoreProperties
           .getSafeDockerImage(),
-       coreProperties.getSafeServerScript());
+        CoreProperties.getSafeServerScript());
     }
     if (coreProperties.isPlexusInSlice()) {
       s.addPlexusController(coreProperties.getSdnSite(), plexusName);

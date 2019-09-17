@@ -4,7 +4,6 @@ package exoplex.sdx.slice.slicemock;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
 import exoplex.sdx.core.CoreProperties;
-import exoplex.sdx.network.RoutingManager;
 import exoplex.sdx.slice.Scripts;
 import exoplex.sdx.slice.SliceManager;
 import exoplex.sdx.slice.SliceProperties;
@@ -152,7 +151,7 @@ public class SliceManagerMock extends SliceManager implements Serializable {
           throw e;
         }
         try {
-          Thread.sleep((long) (INTERVAL * 1000));
+          Thread.sleep(INTERVAL * 1000);
         } catch (InterruptedException var6) {
           Thread.currentThread().interrupt();
         }
@@ -205,7 +204,7 @@ public class SliceManagerMock extends SliceManager implements Serializable {
       } catch (XMLRPCTransportException e) {
         logger.warn(e.getMessage());
         try {
-          Thread.sleep((long) (INTERVAL * 1000 * (i + 1)));
+          Thread.sleep(INTERVAL * 1000 * (i + 1));
         } catch (InterruptedException var6) {
           Thread.currentThread().interrupt();
         }
@@ -213,7 +212,7 @@ public class SliceManagerMock extends SliceManager implements Serializable {
       } catch (TransportException ex) {
         logger.warn(ex.getMessage());
         try {
-          Thread.sleep((long) (INTERVAL * 1000 * (i + 1)));
+          Thread.sleep(INTERVAL * 1000 * (i + 1));
         } catch (InterruptedException var6) {
           Thread.currentThread().interrupt();
         }
@@ -470,16 +469,16 @@ public class SliceManagerMock extends SliceManager implements Serializable {
     commit();
   }
 
-  public void commitAndWait() throws TransportException, Exception {
+  public void commitAndWait() throws Exception {
     logger.debug("mocked commit and wait");
   }
 
-  public boolean commitAndWait(int interval) throws TransportException, Exception {
+  public boolean commitAndWait(int interval) throws Exception {
     logger.debug("mocked commit and wait");
     return true;
   }
 
-  public boolean commitAndWait(int interval, List<String> resources) throws TransportException, Exception {
+  public boolean commitAndWait(int interval, List<String> resources) throws Exception {
     logger.debug("mocked commit and wait");
     return true;
   }
@@ -791,7 +790,7 @@ public class SliceManagerMock extends SliceManager implements Serializable {
 
   public Collection<String> getNodeInterfaces(String nodeName) {
     ArrayList<String> res = new ArrayList<>();
-    for (Interface ifname : ((ComputeNode) slice.getResourceByName(nodeName)).getInterfaces()) {
+    for (Interface ifname : slice.getResourceByName(nodeName).getInterfaces()) {
       res.add(ifname.getName());
     }
     return res;
