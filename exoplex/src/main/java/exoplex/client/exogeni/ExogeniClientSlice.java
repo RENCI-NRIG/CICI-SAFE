@@ -86,10 +86,6 @@ public class ExogeniClientSlice extends SliceHelper {
       coreProperties.getSshKey(),
       "CNode\\d+",
       true);
-    for (String node : c1.getComputeNodes()) {
-      Exec.sshExec(SliceProperties.userName, c1.getManagementIP(node),
-        Scripts.installQuagga(), coreProperties.getSshKey());
-    }
     c1.runCmdSlice(Scripts.enableZebra(),
       coreProperties.getSshKey(),
       "CNode\\d+",
@@ -100,15 +96,6 @@ public class ExogeniClientSlice extends SliceHelper {
       "sudo bash -c \"echo \"ip route 192.168.1.1/16 " + Prefix +
         "\" >>/etc/quagga/zebra.conf\"", coreProperties.getSshKey());
     Exec.sshExec(SliceProperties.userName, mip, Scripts.enableZebra(), coreProperties.getSshKey());
-    String[] res = Exec.sshExec(SliceProperties.userName, mip, "sudo ls " +
-        "/etc/quagga",
-      coreProperties.getSshKey());
-    if (!res[0].contains("zebra.conf")) {
-      Exec.sshExec(SliceProperties.userName, mip,
-        "sudo bash -c \"echo \"ip route 192.168.1.1/16 " + Prefix + "\"" +
-          " >>/etc/quagga/zebra.conf\" ", coreProperties.getSshKey());
-      Exec.sshExec(SliceProperties.userName, mip, Scripts.enableZebra(), coreProperties.getSshKey());
-    }
     Exec.sshExec(SliceProperties.userName, mip, Scripts.restartQuagga(), coreProperties.getSshKey());
   }
 

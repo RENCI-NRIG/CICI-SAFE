@@ -492,10 +492,7 @@ public class SdxExogeniClient {
             "%s %s", newInterface, ip),
           nodeName, false);
         String gateway = params[3].split("/")[0];
-        serverSlice.runCmdNode("sudo bash -c 'echo \"ip route 192.168.1.1/16 " + gateway +
-          "\" >>/etc/quagga/zebra.conf'", nodeName, false);
-        serverSlice.runCmdNode(Scripts.restartQuagga(), nodeName,
-          false);
+        setUpQuaggaRouting("192.168.1.1/16", gateway, nodeName);
         if (ping(nodeName, gateway)) {
           logger.info(String.format("Ping to %s works", gateway));
           logger.info(logPrefix + "stitch completed.");
@@ -508,6 +505,13 @@ public class SdxExogeniClient {
       e.printStackTrace();
     }
     return null;
+  }
+
+  void setUpQuaggaRouting(String destination, String gateway, String nodeName) {
+    serverSlice.runCmdNode("sudo bash -c 'echo \"ip route 192.168.1.1/16 " + gateway +
+      "\" >>/etc/quagga/zebra.conf'", nodeName, false);
+    serverSlice.runCmdNode(Scripts.restartQuagga(), nodeName,
+      false);
   }
 
   void sleep(int sec) {
