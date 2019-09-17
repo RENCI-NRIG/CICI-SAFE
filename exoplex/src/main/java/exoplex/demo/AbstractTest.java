@@ -277,6 +277,7 @@ public abstract class AbstractTest {
   public void replaySdnConfiguration(String logFile) {
     //startSdxServersAndClients(false);
     SdnReplay.replay(logFile);
+    startClients();
     checkConnection();
     logger.info("replay done");
   }

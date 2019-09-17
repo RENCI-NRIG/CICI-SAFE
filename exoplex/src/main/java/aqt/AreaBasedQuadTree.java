@@ -7,6 +7,10 @@ import org.apache.logging.log4j.Logger;
 import java.util.*;
 
 /**
+ * Buddhikot, Milind M., Subhash Suri, and Marcel Waldvogel. "Space decomposition techniques for
+ * fast layer-4 switching." International Workshop on Protocols for High Speed Networks.
+ * Springer, Boston, MA, 1999.
+ *
  * https://link.springer.com/content/pdf/10.1007/978-0-387-35580-1_4.pdf
  */
 @ThreadSafe

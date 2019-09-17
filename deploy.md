@@ -8,11 +8,15 @@ Generate ssh key (the default key pair created by ssh-keygen command  without op
 
         ssh-keygen -t rsa -m PEM
 
-Set the version and safe docker image, plexus sdn controller docker image and safe server script as environment variable
+Set the version and safe docker image, plexus sdn controller docker image and safe server script as environment variable. Set the public ip addresses of riak server and SDX controller. Run this in all nodes.
 
         SAFEIMG="yaoyj11/safeserver-v8"
         PLEXUSIMG="yaoyj11/plexus-v3"
         SAFE_SCRIPT="sdx-routing.sh"
+        riak_ip="IP address of VM1"
+        sdx_ip="IP address of sdx"
+        riak_ip="128.194.6.194"
+        sdx_ip="128.194.6.144"
 
 ## 1. deploy riak server on VM1
 ### a) 
@@ -31,22 +35,19 @@ Set the version and safe docker image, plexus sdn controller docker image and sa
 For security, plexus controller and safe server should only listen on localhost so that only the SDX controller can calls them.
 ###  a) deploy safe server
 
-        riak_ip="IP address of VM1"
         sudo docker pull ${SAFEIMG}
         sudo docker run -i -t -d -p 7777:7777 -h safe --name safe ${SAFEIMG}
         sudo docker exec -itd safe /bin/bash -c  "cd /root/safe;sed -i 's/RIAKSERVER/$riak_ip/g' safe-server/src/main/resources/application.conf;./${SAFE_SCRIPT}"
 
 ###  b) deploy SDN controller
 
-        public_ip="public ip of SDX controller"
-        publicurl="http://${public_ip}:8888"
+        publicurl="http://${sdx_ip}:8888"
         sudo docker pull ${PLEXUSIMG}
         sudo docker run -i -t -d -p 8080:8080 -p 6633:6633 -p 3000:3000 -h plexus --name plexus ${PLEXUSIMG}
         sudo docker exec -itd plexus /bin/bash -c  "cd /root;pkill ryu-manager; ryu-manager --log-file ~/ryu.log --default-log-level 1 ryu/ryu/app/rest_conf_switch.py ryu/ryu/app/rest_router.py ryu/ryu/app/ofctl_rest.py --zapi-db-url ${publicurl}/sdx/flow/packetin"
 
 ## 3. deploy SDX controller on VM2
 
-        sudo apt install -y maven openjdk-8-jdk
         export WORKING_DIR=~
         cd $WORKING_DIR
         git clone https://github.com/RENCI-NRIG/orca5.git
@@ -62,17 +63,17 @@ For security, plexus controller and safe server should only listen on localhost 
         
         echo Git SDX
         cd $WORKING_DIR
-        git clone --single-branch -b tridentcom https://github.com/RENCI-NRIG/CICI-SAFE.git
+        git clone --single-branch -b master https://github.com/RENCI-NRIG/CICI-SAFE.git
         
         echo Build SDX
-        cd ${WORKING_DIR}/CICI-SAFE/SDX-Simple/SAFE_SDX
-        mvn  clean package appassembler:assemble
+        cd ${WORKING_DIR}/CICI-SAFE/exoplex
+        mvn  clean package appassembler:assemble -DskipTests
 
 ## 4. create an Exogeni slice for SDX.
       
 Modify ${WORKING_DIR}/CICI-SAFE/SDX-Simple/config/sdx.conf.
 
-        cd ${WORKING_DIR}/CICI-SAFE/SDX-Simple
+        cd ${WORKING_DIR}/CICI-SAFE/exoplex
         ./scripts/createslice.sh -c config/sdx.conf
 
 ## 5. start SDX server
@@ -86,7 +87,6 @@ Authorities makes delegations to the client Key
 
 ## 1. runs a safeserver for authroties on VM 3
 
-        riak_ip="IP address of VM1"
         sudo docker pull yaoyj11/safeserver-v7
         sudo docker run -i -t -d -p 7777:7777 -h safe --name safe ${SAFEIMG}
         sudo docker exec -itd safe /bin/bash -c  "cd /root/safe;sed -i 's/RIAKSERVER/$riak_ip/g' safe-server/src/main/resources/application.conf;./${SAFE_SCRIPT}"
@@ -94,12 +94,11 @@ Authorities makes delegations to the client Key
 ## 2. make delegations to a client: exogeni slice authorization, ip allocation, tag delegation
 
         SAFE_SERVER=localhost
-        USERKEYHASH="82fCYt8XXlNAJnDuZZABTcURxz2ZpOwT9IXq6rbSHv0="
-        USERSLICE=client1
-        USERIP="192.168.10.1/24"
+        USERKEYHASH="QMgHfVKlXfen-tw3JIPAI3eNO_m6bio6IyYep9zM3QE="
+        USERSLICE=client2
+        USERIP="192.168.20.1/24"
         USERTAG="tag0"
-        
-        BIN_DIR=~/CICI-SAFE/SDX-Simple/SAFE_SDX/target/appassembler/bin
+        BIN_DIR=~/CICI-SAFE/exoplex/target/appassembler/bin
         ${BIN_DIR}/AuthorityMock auth ${USERKEYHASH} ${USERSLICE} ${USERIP} ${USERTAG} ${SAFE_SERVER}
 
 # Deploy SDX client on VM4
@@ -108,7 +107,6 @@ Authorities makes delegations to the client Key
 
 ## 2. run safe-server on VM4
 
-        export riak_ip="IP address of VM1"
         sudo docker pull yaoyj11/safeserver-v7
         sudo docker run -i -t -d -p 7777:7777 -h safe --name safe ${SAFEIMG}
         sudo docker exec -itd safe /bin/bash -c  "cd /root/safe;sed -i 's/RIAKSERVER/$riak_ip/g' safe-server/src/main/resources/application.conf;./${SAFE_SCRIPT}"
@@ -124,9 +122,7 @@ Authorities makes delegations to the client Key
           )
         
         echo $res
-        
         principalId=$(echo $res | cut -d"'" -f 2)
-        
         echo principalId for ${SAFE_KEYPAIR} is $principalId
 
 ## 4. init safe sets for the new keypair, post policies
@@ -134,7 +130,7 @@ Authorities makes delegations to the client Key
         echo ${principalId}
         WORKING_DIR=~
         TAGACL='tag0'
-        BIN_DIR=${WORKING_DIR}/CICI-SAFE/SDX-Simple/SAFE_SDX/target/appassembler/bin
+        BIN_DIR=${WORKING_DIR}/CICI-SAFE/exoplex/target/appassembler/bin
         ${BIN_DIR}/AuthorityMock init ${principalId} $TAGACL ${SAFE_SERVER}
 
 ## 5. Ask the authorities to make delegations to the client. After that, copy and paste each line from the output of authority to Params
@@ -150,4 +146,10 @@ Authorities makes delegations to the client Key
 
         sudo ${BIN_DIR}/SafeSdxExogeniClient -c client-config/c0.conf -e 'stitch CNode1 192.168.10.2 192.168.10.1/24'
 
+## 8. client advertise prefix
 
+        sudo ${BIN_DIR}/SafeSdxExogeniClient -c client-config/c0.conf -e 'route 192.168.10.1/24 192.168.10.2'
+
+## 9. both client request for connection [optional]
+
+        sudo ${BIN_DIR}/SafeSdxExogeniClient -c client-config/c0.conf -e 'link 192.168.10.1/24 192.168.20.1/24'
