@@ -103,17 +103,16 @@ public class AuthorityMockSdx extends Authority implements SdxRoutingSlang {
     //User membership
     String token = SafeUtils.getToken(SafeUtils.postSafeStatements(safeServer,
       postUserEndorsement, "key_p1", new String[]{userKey}));
-    System.out.println(String.format("#passDelegation %s %s", token, "User"));
-    System.out.println(String.format("${BIN_DIR}/AuthorityMock update ${principalId} " +
-      "passDelegation %s %s ${SAFE_SERVER}", token, "User"));
+    String CMD = "${BIN_DIR}/AuthorityMock update ${principalId} %s ${SAFE_SERVER}";
+    String params = String.format("passDelegation %s %s", token, "User");
+    System.out.println(String.format(CMD, params));
     //PI delegate to users
     HashMap<String, String> envs = new HashMap<>();
     String projectId = getPrincipalId("key_p2") + ":project1";
     String pmToken = safePost(postProjectMembership, "key_p4", new String[]{userKey,
       projectId, "true"});
-    System.out.println(String.format("#passDelegation %s %s", pmToken, projectId));
-    System.out.println(String.format("${BIN_DIR}/AuthorityMock update ${principalId} " +
-      "passDelegation %s %s ${SAFE_SERVER}", pmToken, projectId));
+    params = String.format("passDelegation %s %s", pmToken, projectId);
+    System.out.println(String.format(CMD, params));
     envs.clear();
 
     /*
@@ -130,8 +129,9 @@ public class AuthorityMockSdx extends Authority implements SdxRoutingSlang {
       new String[]{userKey, sliceId, projectId,
         sliceControlRef,
         slicePrivRef}));
-    System.out.println(String.format("passDelegation %s %s", sliceToken.get(slice),
-      sliceId));
+    params = String.format("passDelegation %s %s", sliceToken.get(slice),
+      sliceId);
+    System.out.println(String.format(CMD, params));
 
     //UserAcl
     safePost(postUserAclEntry, "sdx", new String[]{userKey});
@@ -141,13 +141,15 @@ public class AuthorityMockSdx extends Authority implements SdxRoutingSlang {
     String uip = String.format("ipv4\\\"%s\\\"", userIP);
     String ipToken = safePost(postIPAllocate, "rpkiroot", new String[]{userKey, uip,
       parentPrefix});
-    System.out.println(String.format("postDlgToken %s %s", ipToken, uip.replace("\\", "\\\\\\")));
+    params = String.format("postDlgToken %s %s", ipToken, uip.replace("\\", "\\\\\\"));
+    System.out.println(String.format(CMD, params));
 
     //Tag delegation
     String tag = getPrincipalId("tagauthority") + ":" + tag1;
     safePost(postTagSet, "tagauthority", new String[]{tag});
     String tagToken = safePost(postGrantTagPriv, "tagauthority", new Object[]{userKey, tag, true});
-    System.out.println(String.format("updateTagSet %s %s", tagToken, tag));
+    params = String.format("updateTagSet %s %s", tagToken, tag);
+    System.out.println(String.format(CMD, params));
   }
 
   public void updateTokens(String userKey, String method, String token, String name) {
