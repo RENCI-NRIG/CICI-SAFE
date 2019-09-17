@@ -103,13 +103,17 @@ public class AuthorityMockSdx extends Authority implements SdxRoutingSlang {
     //User membership
     String token = SafeUtils.getToken(SafeUtils.postSafeStatements(safeServer,
       postUserEndorsement, "key_p1", new String[]{userKey}));
-    System.out.println(String.format("passDelegation %s %s", token, "User"));
+    System.out.println(String.format("#passDelegation %s %s", token, "User"));
+    System.out.println(String.format("${BIN_DIR}/AuthorityMock update ${principalId} " +
+      "passDelegation %s %s ${SAFE_SERVER}", token, "User"));
     //PI delegate to users
     HashMap<String, String> envs = new HashMap<>();
     String projectId = getPrincipalId("key_p2") + ":project1";
     String pmToken = safePost(postProjectMembership, "key_p4", new String[]{userKey,
       projectId, "true"});
-    System.out.println(String.format("passDelegation %s %s", pmToken, projectId));
+    System.out.println(String.format("#passDelegation %s %s", pmToken, projectId));
+    System.out.println(String.format("${BIN_DIR}/AuthorityMock update ${principalId} " +
+      "passDelegation %s %s ${SAFE_SERVER}", pmToken, projectId));
     envs.clear();
 
     /*
