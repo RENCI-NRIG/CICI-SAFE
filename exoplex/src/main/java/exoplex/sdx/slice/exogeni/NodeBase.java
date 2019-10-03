@@ -35,7 +35,7 @@ public class NodeBase {
     images.put(
       UBUNTU19,
       new NodeBaseInfo(
-        "Ubuntu 19.04 QCOW2 v1.0.3",
+        "Ubuntu 19.04 QCOW2 v1.0.4",
         "http://geni-images.renci.org/images/standard/ubuntu-comet/ubuntu-19.04.v4/ubuntu-19.04.v4.xml",
         "c7baea709ee9c4b354a175a315c6cf74a1c1a1f5"
       )
