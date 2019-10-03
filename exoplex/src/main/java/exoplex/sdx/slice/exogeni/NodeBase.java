@@ -36,7 +36,7 @@ public class NodeBase {
       UBUNTU19,
       new NodeBaseInfo(
         "Ubuntu 19.04 QCOW2 v1.0.3",
-        "http://geni-images.renci.org/images/standard/ubuntu-comet/ubuntu-19.04.v3/ubuntu-19.04.v3.xml",
+        "http://geni-images.renci.org/images/standard/ubuntu-comet/ubuntu-19.04.v4/ubuntu-19.04.v4.xml",
         "67bb8a08554bfaaca5605ede25806dc8ec9643c1"
       )
     );
