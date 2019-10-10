@@ -154,15 +154,18 @@ Authorities makes delegations to the client Key
 
 # Stitch and Connect to Chameleon
 
-## 1. create a network and launch a VM in Chameleon cloud. Follow the steps in this video till step 1c, (https://www.youtube.com/watch?v=1fvEEG1iFEI). After creating the network, we will get a directStitch vlan tag (for example, 3298).
+## 1. create a network and launch a VM in Chameleon cloud. 
+   Follow the steps in this video till step 1c, (https://www.youtube.com/watch?v=1fvEEG1iFEI). After creating the network, we will get a directStitch vlan tag (for example, 3298).
 
-## 2. make safe authorization preparations for Chameleon network. The steps are the same as those for ExoGENI client slices, except that we can choose a fake slice name.
+## 2. make safe authorization preparations for Chameleon network. 
+   The steps are the same as those for ExoGENI client slices, except that we can choose a fake slice name.
 
 ### 2a. create safe keypair for chameleon user
 ### 2b. init safe sets for the new keypair, post policies
 ### 2c. Ask the authorities to make delegations to the client. After that, save the delegation tokens in the user's safe sets
 
-## 3. run SDX stitchport client to request for stitching to SDX slice. List of stitchports for ExoGENI is available here, (https://wiki.exogeni.net/doku.php?id=public:experimenters:resource_types:start#stitch_port_identifiers). The parameters in the command are "stitch stitchportURL VLAN IP_Chameleon_VM IP_SDX SDX_SITE_NAME OPTIONAL_SDX_NODE"
+## 3. run SDX stitchport client to request for stitching to SDX slice. 
+   List of stitchports for ExoGENI is available here, (https://wiki.exogeni.net/doku.php?id=public:experimenters:resource_types:start#stitch_port_identifiers). The parameters in the command are "stitch stitchportURL VLAN IP_Chameleon_VM IP_SDX SDX_SITE_NAME OPTIONAL_SDX_NODE"
 
         ./scripts/sdx_stitchport_client.sh -c chameleon-config/c1.conf -e "stitch http://geni-orca.renci.org/owl/ion.rdf#AL2S/Chameleon/Cisco/6509/GigabitEthernet/1/1 3298 192.168.100.11 192.168.100.1/24 [SDX_SITE_NAME] [STITCH_POINT, e.g., c3]"
 
