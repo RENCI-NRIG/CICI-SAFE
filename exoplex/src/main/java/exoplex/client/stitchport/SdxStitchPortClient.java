@@ -1,5 +1,6 @@
 package exoplex.client.stitchport;
 
+import exoplex.client.ClientHelper;
 import exoplex.common.utils.Exec;
 import exoplex.common.utils.HttpUtil;
 import exoplex.common.utils.SafeUtils;
@@ -21,8 +22,6 @@ import org.renci.ahab.libndl.resources.request.Network;
  */
 public class SdxStitchPortClient {
   final Logger logger = LogManager.getLogger(SdxStitchPortClient.class);
-  CommandLine cmd;
-
   CoreProperties coreProperties;
 
   public SdxStitchPortClient(CoreProperties coreProperties) {
@@ -45,9 +44,8 @@ public class SdxStitchPortClient {
     //coreProperties.getSshKey()=args[6];
     //keyhash=args[7];
 
-    if (cmd.hasOption('e')) {
-      String command = cmd.getOptionValue('e');
-      processCmd(command);
+    if (coreProperties.getCommand() != null) {
+      processCmd(coreProperties.getCommand());
       return;
     }
     String input = "";
@@ -73,7 +71,7 @@ public class SdxStitchPortClient {
   public void processCmd(String command) {
     try {
       logger.debug(command);
-      String[] params = command.split(" ");
+      String[] params = ClientHelper.parseCommands(command);
       if (params[0].equals("stitch")) {
         logger.debug(params.length);
         processStitchCmd(params);
@@ -190,7 +188,7 @@ public class SdxStitchPortClient {
 
   private boolean postSafeStitchRequest(String keyhash, String stitchport, String vlan) {
     /** Post to remote safesets using apache httpclient */
-    String[] othervalues = new String[5];
+    String[] othervalues = new String[2];
     othervalues[0] = stitchport;
     othervalues[1] = vlan;
     String message = SafeUtils.postSafeStatements(coreProperties.getSafeServer(),

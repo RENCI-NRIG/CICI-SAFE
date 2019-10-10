@@ -6,6 +6,7 @@ package exoplex.client.exogeni;
 import com.google.inject.Guice;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
+import exoplex.client.ClientHelper;
 import exoplex.common.utils.HttpUtil;
 import exoplex.demo.singlesdx.SingleSdxModule;
 import exoplex.sdx.advertise.PolicyAdvertise;
@@ -142,7 +143,7 @@ public class SdxExogeniClient {
   public String processCmd(String command) {
     checkSafe();
     try {
-      String[] params = command.split(" ");
+      String[] params = ClientHelper.parseCommands(command);
       if (params[0].equals("stitch")) {
         return processStitchCmd(params);
       } else if (params[0].equals("link")) {

@@ -64,7 +64,6 @@ For security, plexus controller and safe server should only listen on localhost 
         echo Git SDX
         cd $WORKING_DIR
         git clone --single-branch -b master https://github.com/RENCI-NRIG/CICI-SAFE.git
-        
         echo Build SDX
         cd ${WORKING_DIR}/CICI-SAFE/exoplex
         mvn  clean package appassembler:assemble -DskipTests
@@ -113,7 +112,7 @@ Authorities makes delegations to the client Key
 
 ## 3. generate safe key-pair for client
 
-        SAFE_KEYPAIR="alice"
+        SAFE_KEYPAIR="bob"
         SAFE_SERVER=localhost
         sudo docker exec -itd safe /bin/bash /root/safe_keygen.sh ${SAFE_KEYPAIR} /root/safe/safe-server/src/main/resources/prdnsmall
         res=$(curl http://localhost:7777/whoami \
@@ -133,10 +132,9 @@ Authorities makes delegations to the client Key
         BIN_DIR=${WORKING_DIR}/CICI-SAFE/exoplex/target/appassembler/bin
         ${BIN_DIR}/AuthorityMock init ${principalId} $TAGACL ${SAFE_SERVER}
 
-## 5. Ask the authorities to make delegations to the client. After that, copy and paste each line from the output of authority to Params
+## 5. Ask the authorities to make delegations to the client. After that, save the delegation tokens in the user's safe sets. (Copy and run the output commands from the authority delegation, 5 commands in total)
 
-        PARAMS='updateTagSet c0WrmnifdojXcYv5zS1dCSSHHKY9rbAfHbjllwZxj14= 0_ah37_Nyt8Xgqq1JFHfAD3TA9Mrx0WpLgrRx2w7Dgc=:tag0'
-        sudo ${BIN_DIR}/AuthorityMock update ${principalId} ${PARAMS} ${SAFE_SERVER}
+        ${BIN_DIR}/AuthorityMock update ${principalId} passDelegation P00xfQR3bdW649Ti6dCIrFboDKaZz4uDEzjXL_nsngQ= SF5x9ObjJWzzTBIn0aachXlIEbcOq7hkJdjbJuyoLfA=:project1 ${SAFE_SERVER}
 
 ## 6. Create client slice
 
@@ -153,3 +151,26 @@ Authorities makes delegations to the client Key
 ## 9. both client request for connection [optional]
 
         sudo ${BIN_DIR}/SafeSdxExogeniClient -c client-config/c0.conf -e 'link 192.168.10.1/24 192.168.20.1/24'
+
+# Stitch and Connect to Chameleon
+
+## 1. create a network and launch a VM in Chameleon cloud. Follow the steps in this video till step 1c, (https://www.youtube.com/watch?v=1fvEEG1iFEI). After creating the network, we will get a directStitch vlan tag (for example, 3298).
+
+## 2. make safe authorization preparations for Chameleon network. The steps are the same as those for ExoGENI client slices, except that we can choose a fake slice name.
+
+### 2a. create safe keypair for chameleon user
+### 2b. init safe sets for the new keypair, post policies
+### 2c. Ask the authorities to make delegations to the client. After that, save the delegation tokens in the user's safe sets
+
+## 3. run SDX stitchport client to request for stitching to SDX slice. List of stitchports for ExoGENI is available here, (https://wiki.exogeni.net/doku.php?id=public:experimenters:resource_types:start#stitch_port_identifiers). The parameters in the command are "stitch stitchportURL VLAN IP_Chameleon_VM IP_SDX SDX_SITE_NAME OPTIONAL_SDX_NODE"
+
+        ./scripts/sdx_stitchport_client.sh -c chameleon-config/c1.conf -e "stitch http://geni-orca.renci.org/owl/ion.rdf#AL2S/Chameleon/Cisco/6509/GigabitEthernet/1/1 3298 192.168.100.11 192.168.100.1/24 [SDX_SITE_NAME] [STITCH_POINT, e.g., c3]"
+
+## 4. run SDX stitchport client to advertise prefix to SDX
+
+        ./scripts/sdx_stitchport_client.sh -c chameleon-config/c1.conf -e "route 192.168.100.1/24 192.168.100.11"
+
+## 5. run SDX stitchport client to request for connection to another network, (request from the peer is also necessary)
+
+        ./scripts/sdx_stitchport_client.sh -c chameleon-config/c1.conf -e "link 192.168.100.1/24 192.168.10.1/24"
+

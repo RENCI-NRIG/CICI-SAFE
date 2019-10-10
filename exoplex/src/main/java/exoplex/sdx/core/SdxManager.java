@@ -1274,18 +1274,17 @@ public class SdxManager extends SliceHelper {
       vlan)) {
       //FIX ME: do stitching
       logger.info("Chameleon Stitch Request from " + customer_keyhash + " Authorized");
-      serverSlice.lockSlice();
       try {
         //FIX ME: do stitching
         logger.info(logPrefix + "Chameleon Stitch Request from " + customer_keyhash + " Authorized");
         serverSlice.refresh();
         String node = null;
         if (nodeName != null) {
-          node = serverSlice.getComputeNode(nodeName);
+          nodeName = serverSlice.getComputeNode(nodeName);
         } else if (nodeName == null && edgeRouters.containsKey(sdxsite) && edgeRouters.get(sdxsite)
           .size() >
           0) {
-          node = serverSlice.getComputeNode(edgeRouters.get(sdxsite).get(0));
+          nodeName = serverSlice.getComputeNode(edgeRouters.get(sdxsite).get(0));
         } else {
           //if node not exists, add another node to the slice
           //add a node and configure it as a router.
@@ -1315,9 +1314,9 @@ public class SdxManager extends SliceHelper {
       } catch (Exception e) {
         res = "Stitch request failed.\n SdxServer exception in commiting stitching opoeration";
         e.printStackTrace();
-      } finally {
-        serverSlice.unLockSlice();
       }
+    } else {
+      logger.info("Chameleon Stitch Request from " + customer_keyhash + " unauthorized");
     }
     return res;
   }

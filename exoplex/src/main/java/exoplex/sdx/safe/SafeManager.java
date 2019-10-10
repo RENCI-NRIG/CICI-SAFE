@@ -264,8 +264,8 @@ public class SafeManager {
     othervalues[0] = customerSafeKeyHash;
     othervalues[1] = stitchPort;
     othervalues[2] = vlan;
-    String sdxHash = SafeUtils.getPrincipalId(safeServer, "sdx");
-    return SafeUtils.authorize(safeServer, "authorizeChameleonStitchByUID", sdxHash, othervalues);
+    return SafeUtils.authorize(safeServer, "authorizeChameleonStitchByUID", getSafeKeyHash(),
+      othervalues);
   }
 
   public void restartSafeServer() {
