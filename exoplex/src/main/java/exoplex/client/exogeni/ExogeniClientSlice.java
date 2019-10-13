@@ -6,7 +6,7 @@ import com.google.inject.Injector;
 import exoplex.common.utils.Exec;
 import exoplex.demo.singlesdx.SingleSdxModule;
 import exoplex.sdx.core.CoreProperties;
-import exoplex.sdx.core.SliceHelper;
+import exoplex.sdx.core.exogeni.SliceHelper;
 import exoplex.sdx.slice.Scripts;
 import exoplex.sdx.slice.SliceManager;
 import exoplex.sdx.slice.SliceProperties;

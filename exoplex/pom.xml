@@ -43,7 +43,7 @@
                     <configuration>
                         <archive>
                             <manifest>
-                                <mainClass>exoplex.sdx.core.SdxServer</mainClass>
+                                <mainClass>exoplex.sdx.core.exogeni.ExoSdxServer</mainClass>
                             </manifest>
                         </archive>
                         <descriptorRefs>
@@ -61,7 +61,7 @@
                     <configuration>
                         <archive>
                             <manifest>
-                                <mainClass>exoplex.sdx.core.SliceHelper</mainClass>
+                                <mainClass>exoplex.sdx.core.exogeni.SliceHelper</mainClass>
                             </manifest>
                         </archive>
                         <descriptorRefs>
@@ -107,11 +107,11 @@
                 <configuration>
                     <programs>
                         <program>
-                            <mainClass>exoplex.sdx.core.SdxServer</mainClass>
+                            <mainClass>exoplex.sdx.core.exogeni.ExoSdxServer</mainClass>
                             <name>SafeSdxServer</name>
                         </program>
                         <program>
-                            <mainClass>exoplex.sdx.core.SliceHelper</mainClass>
+                            <mainClass>exoplex.sdx.core.exogeni.SliceHelper</mainClass>
                             <name>SafeSdxSliceServer</name>
                         </program>
                         <program>

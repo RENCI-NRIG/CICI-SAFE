@@ -8,7 +8,7 @@ import exoplex.client.exogeni.ExogeniClientSlice;
 import exoplex.common.utils.Exec;
 import exoplex.demo.AbstractTestSetting;
 import exoplex.demo.AbstractTestSlice;
-import exoplex.sdx.core.SliceHelper;
+import exoplex.sdx.core.exogeni.SliceHelper;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 

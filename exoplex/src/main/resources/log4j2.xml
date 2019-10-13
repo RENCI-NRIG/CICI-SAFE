@@ -131,7 +131,7 @@
         <Root level="debug">
             <AppenderRef ref="RollingFile"/>
         </Root>
-        <Logger name="exoplex.sdx.core.SdxManager" level="info" additivity="false">
+        <Logger name="exoplex.sdx.core.exogeni.ExoSdxManager" level="info" additivity="false">
             <AppenderRef ref="Console"/>
             <AppenderRef ref="ServerRollingFile"/>
         </Logger>
@@ -150,11 +150,11 @@
             <AppenderRef ref="SafeRollingFile"/>
             <AppenderRef ref="RollingFile"/>
         </Logger>
-        <Logger name="exoplex.sdx.core.SliceHelper" level="info" additivity="false">
+        <Logger name="exoplex.sdx.core.exogeni.SliceHelper" level="info" additivity="false">
             <AppenderRef ref="Console"/>
             <AppenderRef ref="RollingFile"/>
         </Logger>
-        <Logger name="exoplex.sdx.core.SliceHelper" level="debug" additivity="false">
+        <Logger name="exoplex.sdx.core.exogeni.SliceHelper" level="debug" additivity="false">
             <AppenderRef ref="RollingFile"/>
         </Logger>
         <Logger name="exoplex.sdx.network.NetworkManager" level="warn" additivity="false">

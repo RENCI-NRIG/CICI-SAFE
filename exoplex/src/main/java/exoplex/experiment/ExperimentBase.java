@@ -3,7 +3,7 @@ package exoplex.experiment;
 import exoplex.common.utils.Exec;
 import exoplex.experiment.flow.FlowManager;
 import exoplex.experiment.latency.MeasureLatency;
-import exoplex.sdx.core.SdxManager;
+import exoplex.sdx.core.exogeni.ExoSdxManager;
 import exoplex.sdx.slice.Scripts;
 import exoplex.sdx.slice.SliceProperties;
 import org.apache.logging.log4j.LogManager;
@@ -29,11 +29,11 @@ public class ExperimentBase {
   protected MeasureLatency latencyTask;
   protected HashMap<String, String[]> clients;
   protected ArrayList<Thread> tlist;
-  protected SdxManager sdxManager;
+  protected ExoSdxManager exoSdxManager;
 
-  public ExperimentBase(SdxManager sm) {
-    sdxManager = sm;
-    flowManager = new FlowManager(sdxManager.getSshKey());
+  public ExperimentBase(ExoSdxManager sm) {
+    exoSdxManager = sm;
+    flowManager = new FlowManager(exoSdxManager.getSshKey());
     clients = new HashMap<String, String[]>();
     flows = new ArrayList<String[]>();
     files = new ArrayList<String[]>();
@@ -129,12 +129,12 @@ public class ExperimentBase {
   }
 
   public void resetNetwork() {
-    sdxManager.reset();
+    exoSdxManager.reset();
     try {
-      Method configRouting = sdxManager.getClass().getDeclaredMethod("configRouting");
+      Method configRouting = exoSdxManager.getClass().getDeclaredMethod("configRouting");
       configRouting.setAccessible(true);
       try {
-        configRouting.invoke(sdxManager);
+        configRouting.invoke(exoSdxManager);
       } catch (IllegalAccessException e) {
         e.printStackTrace();
       } catch (InvocationTargetException e) {

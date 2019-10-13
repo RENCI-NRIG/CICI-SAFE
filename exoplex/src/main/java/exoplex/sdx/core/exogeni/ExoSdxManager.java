@@ -1,4 +1,4 @@
-package exoplex.sdx.core;
+package exoplex.sdx.core.exogeni;
 
 import aqt.PrefixUtil;
 import aqt.Range;
@@ -9,6 +9,8 @@ import exoplex.sdx.advertise.AdvertiseManager;
 import exoplex.sdx.advertise.PolicyAdvertise;
 import exoplex.sdx.advertise.RouteAdvertise;
 import exoplex.sdx.bro.BroManager;
+import exoplex.sdx.core.CoreProperties;
+import exoplex.sdx.core.SdxManagerBase;
 import exoplex.sdx.core.restutil.NotifyResult;
 import exoplex.sdx.core.restutil.PeerRequest;
 import exoplex.sdx.network.Link;
@@ -22,7 +24,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.json.JSONObject;
 import org.renci.ahab.libndl.resources.request.InterfaceNode2Net;
-import org.renci.ahab.libtransport.util.TransportException;
 import safe.Authority;
 import safe.SdxRoutingSlang;
 
@@ -55,47 +56,12 @@ import java.util.stream.Collectors;
  * 6. Call SDN controller to install the rules
  */
 
-public class SdxManager extends SliceHelper {
+public class ExoSdxManager extends SdxManagerBase {
   private static final String dpidPattern = "^[a-f0-9]{16}";
-  final Logger logger = LogManager.getLogger(SdxManager.class);
-  private final ReentrantLock iplock = new ReentrantLock();
-  private final ReentrantLock linklock = new ReentrantLock();
-  private final ReentrantLock nodelock = new ReentrantLock();
-  private final ReentrantLock brolock = new ReentrantLock();
-  protected HashMap<String, ArrayList<String>> edgeRouters = new HashMap<String, ArrayList<String>>();
-  protected RoutingManager routingmanager = new RoutingManager();
-  protected AdvertiseManager advertiseManager;
-  protected SafeManager safeManager = null;
-  protected SliceManager serverSlice = null;
-  private BroManager broManager = null;
-  private String SDNController;
-  private String OVSController;
-  private int groupID = 0;
-  private String logPrefix = "";
-  private boolean safeChecked = false;
-  private HashSet<Integer> usedip = new HashSet<Integer>();
-
-  private ConcurrentHashMap<String, String> prefixGateway = new ConcurrentHashMap<String, String>();
-  private ConcurrentHashMap<String, HashSet<String>> gatewayPrefixes = new ConcurrentHashMap();
-  private ConcurrentHashMap<String, String> customerGateway = new ConcurrentHashMap<String,
-    String>();
-
-  private ConcurrentHashMap<String, String> prefixKeyHash = new ConcurrentHashMap<String, String>();
-
-  //the ip prefixes that a customer has advertised
-  private ConcurrentHashMap<String, HashSet<String>> customerPrefixes = new ConcurrentHashMap();
-
-  //The node reservation IDs that a customer has stitched to SDX
-  private ConcurrentHashMap<String, HashSet<String>> customerNodes = new ConcurrentHashMap<>();
-
-  private ConcurrentHashMap<String, String> peerUrls = new ConcurrentHashMap<>();
-
-  //The name of the link in SDX slice stitched to customer node
-  private ConcurrentHashMap<String, String> stitchNet = new ConcurrentHashMap<>();
-
+  final Logger logger = LogManager.getLogger(ExoSdxManager.class);
 
   @Inject
-  public SdxManager(Authority authority) {
+  public ExoSdxManager(Authority authority) {
     super(authority);
   }
 
@@ -119,10 +85,6 @@ public class SdxManager extends SliceHelper {
     return coreProperties.getSafeServerIp();
   }
 
-  String getPid() {
-    return safeManager.getSafeKeyHash();
-  }
-
   public String getDPID(String rname) {
     return routingmanager.getDPID(rname);
   }
@@ -135,7 +97,8 @@ public class SdxManager extends SliceHelper {
     OVSController = coreProperties.getSdnControllerIp() + ":6633";
   }
 
-  public void loadSlice() throws TransportException {
+  @Override
+  public void loadSlice() throws Exception {
     serverSlice = sliceManagerFactory.create(
       coreProperties.getSliceName(),
       coreProperties.getExogeniKey(),
@@ -149,7 +112,8 @@ public class SdxManager extends SliceHelper {
     }
   }
 
-  public void initializeSdx() throws TransportException {
+  @Override
+  public void initializeSdx() throws Exception {
     loadSlice();
     broManager = new BroManager(serverSlice, routingmanager, this);
     logPrefix += "[" + coreProperties.getSliceName() + "]";
@@ -175,13 +139,15 @@ public class SdxManager extends SliceHelper {
     loadSdxNetwork(routerPattern, stitchPortPattern, broPattern);
   }
 
-
+  @Override
   public void startSdxServer(CoreProperties coreProperties) throws Exception {
     this.coreProperties = coreProperties;
     if (coreProperties.getIpPrefix() != null) {
       computeIP(coreProperties.getIpPrefix());
     }
-
+    if (serverSlice == null) {
+      loadSlice();
+    }
     if (this.coreProperties.getReset()) {
       clearSdx();
     }
@@ -190,43 +156,8 @@ public class SdxManager extends SliceHelper {
     startBro();
   }
 
-  private void startBro() {
-    for (String node : serverSlice.getComputeNodes()) {
-      if (node.matches(broPattern)) {
-        serverSlice.runCmdNode(
-          "/usr/bin/rm *.log; pkill bro;" +
-            "/usr/bin/screen -d -m /opt/bro/bin/bro -i eth1 test-all-policy.bro", node
-        );
-      }
-    }
-  }
-
-
-  public void delFlows() {
-    //routingmanager.deleteAllFlows(getSDNController());
-    serverSlice.runCmdSlice(String.format("sudo ovs-ofctl %s del-flows br0", SliceProperties.OFP),
-      coreProperties.getSshKey(),
-      routerPattern,
-      false);
-  }
-
-  public void delBridges() {
-    routingmanager = new RoutingManager();
-    serverSlice.runCmdSlice(String.format("sudo ovs-vsctl %s del-br br0", SliceProperties.OFP),
-      coreProperties.getSshKey(),
-      routerPattern,
-      false);
-  }
-
-  public void initBridges() {
-    configRouters(serverSlice);
-  }
-
-  private void clearSdx() throws Exception {
+  void clearSdx() throws Exception {
     boolean flag = false;
-    if (serverSlice == null) {
-      loadSlice();
-    }
     for (String node : serverSlice.getComputeNodes()) {
       if (node.matches(broPattern)) {
         serverSlice.deleteResource(node);
@@ -250,6 +181,39 @@ public class SdxManager extends SliceHelper {
     delFlows();
   }
 
+
+  private void startBro() {
+    for (String node : serverSlice.getComputeNodes()) {
+      if (node.matches(broPattern)) {
+        serverSlice.runCmdNode(
+          "/usr/bin/rm *.log; pkill bro;" +
+            "/usr/bin/screen -d -m /opt/bro/bin/bro -i eth1 test-all-policy.bro", node
+        );
+      }
+    }
+  }
+
+
+  @Override
+  public void delFlows() {
+    //routingmanager.deleteAllFlows(getSDNController());
+    serverSlice.runCmdSlice(String.format("sudo ovs-ofctl %s del-flows br0", SliceProperties.OFP),
+      coreProperties.getSshKey(),
+      routerPattern,
+      false);
+  }
+
+  public void delBridges() {
+    routingmanager = new RoutingManager();
+    serverSlice.runCmdSlice(String.format("sudo ovs-vsctl %s del-br br0", SliceProperties.OFP),
+      coreProperties.getSshKey(),
+      routerPattern,
+      false);
+  }
+
+  public void initBridges() {
+    configRouters(serverSlice);
+  }
 
   private boolean addLink(String linkName, String
     node1, String node2, long bw) {
@@ -366,6 +330,7 @@ public class SdxManager extends SliceHelper {
     return true;
   }
 
+  @Override
   public String adminCmd(String operation, String[] params) {
     String[] supportedOperations = new String[]{"stitch"};
     if (operation.equals("stitch")) {
@@ -570,6 +535,7 @@ public class SdxManager extends SliceHelper {
     serverSlice.unLockSlice();
   }
 
+  @Override
   synchronized public JSONObject stitchRequest(
     String site,
     String customerSafeKeyHash,
@@ -902,8 +868,9 @@ public class SdxManager extends SliceHelper {
     }
   }
 
+  @Override
   synchronized public String connectionRequest(String self_prefix,
-                                               String target_prefix, long bandwidth) throws Exception {
+    String target_prefix, long bandwidth) throws Exception {
     logger.info(String.format("Connection request between %s and %s", self_prefix, target_prefix));
     //String n1=computenodes.get(site1).get(0);
     //String n2=computenodes.get(site2).get(0);
@@ -1265,6 +1232,7 @@ public class SdxManager extends SliceHelper {
     routingmanager.retriveRouteOfPrefix(prefix, SDNController);
   }
 
+  @Override
   synchronized public String stitchChameleon(String site, String nodeName, String customer_keyhash, String
     stitchport,
                                              String vlan, String gateway, String ip) {
@@ -1649,6 +1617,7 @@ public class SdxManager extends SliceHelper {
   }
 
 
+  @Override
   public String getFlowInstallationTime(String routername, String flowPattern) {
     logger.debug("Get flow installation time on " + routername + " for " + flowPattern);
     try {
@@ -1675,10 +1644,12 @@ public class SdxManager extends SliceHelper {
     }
   }
 
+  @Override
   public void checkFlowTableForPair(String src, String dst, String p1, String p2) {
     routingmanager.checkFLowTableForPair(p1, p2, src, dst, coreProperties.getSshKey(), logger);
   }
 
+  @Override
   public int getNumRouteEntries(String routerName, String flowPattern) {
     String result = serverSlice.runCmdNode(
       getEchoTimeCMD() + "sudo ovs-ofctl dump-flows br0",
@@ -1695,6 +1666,7 @@ public class SdxManager extends SliceHelper {
     return num;
   }
 
+  @Override
   public String logFlowTables(List<String> patterns, List<String> unwantedPatterns) {
     String res = "";
     for (String node : serverSlice.getComputeNodes()) {

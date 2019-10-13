@@ -3,8 +3,7 @@ package exoplex.sdx.routing;
 import exoplex.common.utils.ServerOptions;
 import exoplex.experiment.ExperimentBase;
 import exoplex.sdx.core.CoreProperties;
-import exoplex.sdx.core.SdxManager;
-import exoplex.sdx.network.RoutingManager;
+import exoplex.sdx.core.exogeni.ExoSdxManager;
 import exoplex.sdx.network.SdnUtil;
 import exoplex.sdx.slice.Scripts;
 import exoplex.sdx.slice.SliceManager;
@@ -12,7 +11,6 @@ import exoplex.sdx.slice.exogeni.SiteBase;
 import org.apache.commons.cli.CommandLine;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.logging.log4j.core.Core;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
@@ -22,7 +20,7 @@ import java.lang.reflect.Method;
 import java.util.HashMap;
 
 @Ignore
-public class TestMpRouting extends SdxManager {
+public class TestMpRouting extends ExoSdxManager {
   static Logger logger = LogManager.getLogger(TestMpRouting.class);
   static String site = SiteBase.get("TAMU");
   static String userDir = System.getProperty("user.dir");

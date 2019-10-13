@@ -56,10 +56,9 @@ public class Scripts {
     String script = String.format(
       "sudo docker pull yaoyj11/%s\n"
         + "sudo docker run -i -t -d -p 7777:7777 -h safe --name safe yaoyj11/%s\n"
-        + "sudo docker exed -d safe /usr/bin/git clone -b multisdx " +
-        "https://github" +
-        ".com/yaoyj11/safe-multisdx.git\n"
-        + "sudo docker exec -d safe /bin/bash -c  \"cd /root/safe;"
+        + "sudo docker exec -itd safe /usr/bin/git clone -b multisdx " +
+        "https://github.com/yaoyj11/safe-multisdx.git\n"
+        + "sudo docker exec -itd safe /bin/bash -c  \"cd /root/safe;"
         + "sed -i 's/http:\\/\\/.*:8098/http:\\/\\/" + riakip + ":8098/g' "
         + "safe-server/src/main/resources/application.conf;"
         + "cd /root; ./safe-multisdx/%s\"\n", safeDockerImg, safeDockerImg, safeServerScript);

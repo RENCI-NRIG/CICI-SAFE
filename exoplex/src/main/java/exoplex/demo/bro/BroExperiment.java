@@ -2,7 +2,7 @@ package exoplex.demo.bro;
 
 import exoplex.common.utils.Exec;
 import exoplex.experiment.ExperimentBase;
-import exoplex.sdx.core.SdxManager;
+import exoplex.sdx.core.exogeni.ExoSdxManager;
 import exoplex.sdx.slice.SliceProperties;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -20,7 +20,7 @@ public class BroExperiment extends ExperimentBase {
   String routerName = "c0";
   String flowPattern = ".*table=0.*nw_src=.*actions=drop.*";
 
-  public BroExperiment(SdxManager sm) {
+  public BroExperiment(ExoSdxManager sm) {
     super(sm);
     result = new HashMap<String, BroResult>();
   }
@@ -80,7 +80,7 @@ public class BroExperiment extends ExperimentBase {
 
   public double measureCPU(int times) {
     //start Bro
-    broIP = sdxManager.getManagementIP("bro0_c0");
+    broIP = exoSdxManager.getManagementIP("bro0_c0");
     routerName = "c0";
     tlist.add(new Thread() {
       @Override
@@ -199,7 +199,7 @@ public class BroExperiment extends ExperimentBase {
      */
     broName = bro;
     routerName = router;
-    broIP = sdxManager.getManagementIP(broName);
+    broIP = exoSdxManager.getManagementIP(broName);
     tlist.add(new Thread() {
       @Override
       public void run() {
@@ -335,7 +335,7 @@ public class BroExperiment extends ExperimentBase {
   public double measureResponseTime(int saturateTime, int fileTimes, int sleepTime, String
     bro, String router) {
     broName = bro;
-    broIP = sdxManager.getManagementIP(broName);
+    broIP = exoSdxManager.getManagementIP(broName);
     routerName = router;
     tlist.add(new Thread() {
       @Override
@@ -357,7 +357,7 @@ public class BroExperiment extends ExperimentBase {
     getFileAndEchoTime(fileTimes);
     long flowTime = 0;
     for (int second = 0; second < sleepTime; second += 5) {
-      String flowInstallationTime = sdxManager.getFlowInstallationTime(routerName, flowPattern);
+      String flowInstallationTime = exoSdxManager.getFlowInstallationTime(routerName, flowPattern);
       if (flowInstallationTime == null) {
         sleep(5);
       } else {

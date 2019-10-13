@@ -1,7 +1,8 @@
-package exoplex.sdx.core;
+package exoplex.sdx.core.exogeni;
 
 import exoplex.sdx.advertise.PolicyAdvertise;
 import exoplex.sdx.advertise.RouteAdvertise;
+import exoplex.sdx.core.SdxManagerBase;
 import exoplex.sdx.core.restutil.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -26,7 +27,7 @@ import java.util.HashSet;
 @Path("sdx")
 public class RestService {
   final static Logger logger = LogManager.getLogger(RestService.class);
-  private static HashMap<Integer, SdxManager> sdxManagerMap = new HashMap<>();
+  private static HashMap<Integer, SdxManagerBase> sdxManagerMap = new HashMap<>();
   private static HashSet<HttpServer> httpServers = new HashSet<>();
 
   public static void registerHttpServer(HttpServer server) {
@@ -39,11 +40,11 @@ public class RestService {
     }
   }
 
-  public static void registerSdxManager(Integer port, SdxManager sdxManager) {
-    sdxManagerMap.put(port, sdxManager);
+  public static void registerSdxManager(Integer port, SdxManagerBase exoSdxManager) {
+    sdxManagerMap.put(port, exoSdxManager);
   }
 
-  public static SdxManager getSdxManager(Integer port) {
+  public static SdxManagerBase getSdxManager(Integer port) {
     return sdxManagerMap.getOrDefault(port, null);
   }
 
@@ -51,7 +52,7 @@ public class RestService {
     sdxManagerMap.remove(port);
   }
 
-  public static Iterable<SdxManager> getAllSdxManagers() {
+  public static Iterable<SdxManagerBase> getAllSdxManagers() {
     return sdxManagerMap.values();
   }
 
@@ -61,11 +62,11 @@ public class RestService {
   @Produces(MediaType.TEXT_PLAIN)
   public String processAdminCmd(@Context UriInfo uriInfo, AdminCmd cmd) {
     logger.debug(uriInfo.getBaseUri());
-    SdxManager sdxManager = sdxManagerMap.get(uriInfo.getBaseUri().getPort());
+    SdxManagerBase exoSdxManager = sdxManagerMap.get(uriInfo.getBaseUri().getPort());
     logger.debug(String.format("%s got stitch request %s",
-      sdxManager.getSliceName(), cmd));
+      exoSdxManager.getSliceName(), cmd));
     try {
-      return sdxManager.adminCmd(cmd.operation, cmd.params);
+      return exoSdxManager.adminCmd(cmd.operation, cmd.params);
     } catch (Exception e) {
       e.printStackTrace();
       return e.getMessage();
@@ -79,11 +80,11 @@ public class RestService {
   public String processFlowPacketIn(@Context UriInfo uriInfo,
                                     Flow packetin) {
     logger.debug(uriInfo.getBaseUri());
-    SdxManager sdxManager = sdxManagerMap.get(uriInfo.getBaseUri().getPort());
-    logger.debug(String.format("%s got packet in %s", sdxManager.getSliceName(),
+    SdxManagerBase exoSdxManager = sdxManagerMap.get(uriInfo.getBaseUri().getPort());
+    logger.debug(String.format("%s got packet in %s", exoSdxManager.getSliceName(),
       packetin));
     try {
-      return sdxManager.processPacketIn(packetin.src, packetin.dest);
+      return exoSdxManager.processPacketIn(packetin.src, packetin.dest);
     } catch (Exception e) {
       e.printStackTrace();
       return e.getMessage();
@@ -96,11 +97,11 @@ public class RestService {
   @Produces(MediaType.TEXT_PLAIN)
   public String receiveBgpAdvertise(@Context UriInfo uriInfo, RouteAdvertise routeAdvertise) {
     logger.debug(uriInfo.getBaseUri());
-    SdxManager sdxManager = sdxManagerMap.get(uriInfo.getBaseUri().getPort());
-    logger.info(translatePids(String.format("%s got bgp advertisement %s", sdxManager
+    SdxManagerBase exoSdxManager = sdxManagerMap.get(uriInfo.getBaseUri().getPort());
+    logger.info(translatePids(String.format("%s got bgp advertisement %s", exoSdxManager
       .getSliceName(), routeAdvertise)));
     try {
-      return sdxManager.processBgpAdvertise(routeAdvertise);
+      return exoSdxManager.processBgpAdvertise(routeAdvertise);
     } catch (Exception e) {
       e.printStackTrace();
       return e.getMessage();
@@ -112,10 +113,10 @@ public class RestService {
   @Produces(MediaType.TEXT_PLAIN)
   public String getPid(@Context UriInfo uriInfo) {
     logger.debug(uriInfo.getBaseUri());
-    SdxManager sdxManager = sdxManagerMap.get(uriInfo.getBaseUri().getPort());
-    logger.debug(String.format(" %s got bgp pid request", sdxManager.getSliceName()));
+    SdxManagerBase exoSdxManager = sdxManagerMap.get(uriInfo.getBaseUri().getPort());
+    logger.debug(String.format(" %s got bgp pid request", exoSdxManager.getSliceName()));
     try {
-      return sdxManager.getPid();
+      return exoSdxManager.getPid();
     } catch (Exception e) {
       e.printStackTrace();
       return e.getMessage();
@@ -127,8 +128,8 @@ public class RestService {
   @Produces(MediaType.TEXT_PLAIN)
   public String getFLow(@Context UriInfo uriInfo, Flow flow) {
     logger.debug(uriInfo.getBaseUri());
-    SdxManager sdxManager = sdxManagerMap.get(uriInfo.getBaseUri().getPort());
-    logger.debug(String.format(" %s got flow request", sdxManager.getSliceName()));
+    SdxManagerBase exoSdxManager = sdxManagerMap.get(uriInfo.getBaseUri().getPort());
+    logger.debug(String.format(" %s got flow request", exoSdxManager.getSliceName()));
     ArrayList<String> patterns = new ArrayList<>();
     String pattern = ".*";
     if (flow.src != null) {
@@ -139,7 +140,7 @@ public class RestService {
     }
     patterns.add(pattern);
     try {
-      return sdxManager.logFlowTables(patterns, new ArrayList<>());
+      return exoSdxManager.logFlowTables(patterns, new ArrayList<>());
     } catch (Exception e) {
       e.printStackTrace();
       return e.getMessage();
@@ -152,11 +153,11 @@ public class RestService {
   @Produces(MediaType.TEXT_PLAIN)
   public String receivePolicyAdvertise(@Context UriInfo uriInfo, PolicyAdvertise policyAdvertise) {
     logger.debug(uriInfo.getBaseUri());
-    SdxManager sdxManager = sdxManagerMap.get(uriInfo.getBaseUri().getPort());
-    logger.info(translatePids(String.format("%s got policy advertisement %s", sdxManager
+    SdxManagerBase exoSdxManager = sdxManagerMap.get(uriInfo.getBaseUri().getPort());
+    logger.info(translatePids(String.format("%s got policy advertisement %s", exoSdxManager
       .getSliceName(), policyAdvertise)));
     try {
-      return sdxManager.processPolicyAdvertise(policyAdvertise);
+      return exoSdxManager.processPolicyAdvertise(policyAdvertise);
     } catch (Exception e) {
       e.printStackTrace();
       return e.getMessage();
@@ -169,10 +170,10 @@ public class RestService {
   @Produces(MediaType.APPLICATION_JSON)
   public PeerRequest peer(@Context UriInfo uriInfo, PeerRequest peerRequest) {
     logger.debug(uriInfo.getBaseUri());
-    SdxManager sdxManager = sdxManagerMap.get(uriInfo.getBaseUri().getPort());
-    logger.debug(String.format("%s got peer request %s", sdxManager.getSliceName(), peerRequest));
+    SdxManagerBase exoSdxManager = sdxManagerMap.get(uriInfo.getBaseUri().getPort());
+    logger.debug(String.format("%s got peer request %s", exoSdxManager.getSliceName(), peerRequest));
     try {
-      return sdxManager.processPeerRequest(peerRequest);
+      return exoSdxManager.processPeerRequest(peerRequest);
     } catch (Exception e) {
       e.printStackTrace();
       return new PeerRequest();
@@ -184,15 +185,15 @@ public class RestService {
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.APPLICATION_JSON)
   public StitchResult stitchRequest(@Context UriInfo uriInfo, StitchRequest sr) {
-    SdxManager sdxManager = sdxManagerMap.get(uriInfo.getBaseUri().getPort());
-    logger.debug(String.format("%s got sittch request %s", sdxManager.getSliceName(), sr));
+    SdxManagerBase exoSdxManager = sdxManagerMap.get(uriInfo.getBaseUri().getPort());
+    logger.debug(String.format("%s got sittch request %s", exoSdxManager.getSliceName(), sr));
     try {
-      JSONObject res = sdxManager.stitchRequest(sr.sdxsite, sr.ckeyhash, sr.cslice,
+      JSONObject res = exoSdxManager.stitchRequest(sr.sdxsite, sr.ckeyhash, sr.cslice,
         sr.creservid, sr.secret, sr.sdxnode, sr.gateway, sr.ip);
       return new StitchResult(res);
     } catch (Exception e) {
       e.printStackTrace();
-      sdxManager.unlockSlice();
+      exoSdxManager.unlockSlice();
       return new StitchResult();
     }
   }
@@ -202,16 +203,16 @@ public class RestService {
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.TEXT_PLAIN)
   public String undoStitch(@Context UriInfo uriInfo, UndoStitchRequest sr) {
-    SdxManager sdxManager = sdxManagerMap.get(uriInfo.getBaseUri().getPort());
-    logger.debug(String.format("%s got undoStitch request %s ", sdxManager.getSliceName(), sr
+    SdxManagerBase exoSdxManager = sdxManagerMap.get(uriInfo.getBaseUri().getPort());
+    logger.debug(String.format("%s got undoStitch request %s ", exoSdxManager.getSliceName(), sr
       .toString()));
     try {
-      String res = sdxManager.undoStitch(sr.ckeyhash, sr.cslice,
+      String res = exoSdxManager.undoStitch(sr.ckeyhash, sr.cslice,
         sr.creservid);
       return res;
     } catch (Exception e) {
       e.printStackTrace();
-      sdxManager.unlockSlice();
+      exoSdxManager.unlockSlice();
       return String.format("UndoStitch Failed: %s", e.getMessage());
     }
   }
@@ -221,16 +222,16 @@ public class RestService {
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.TEXT_PLAIN)
   public String connectionRequest(@Context UriInfo uriInfo, ConnectionRequest sr) {
-    SdxManager sdxManager = sdxManagerMap.get(uriInfo.getBaseUri().getPort());
-    logger.debug(String.format("%s got link request between %s and %s", sdxManager.getSliceName()
+    SdxManagerBase exoSdxManager = sdxManagerMap.get(uriInfo.getBaseUri().getPort());
+    logger.debug(String.format("%s got link request between %s and %s", exoSdxManager.getSliceName()
       , sr.self_prefix, sr.target_prefix));
     try {
-      String res = sdxManager.connectionRequest(sr.self_prefix,
+      String res = exoSdxManager.connectionRequest(sr.self_prefix,
         sr.target_prefix, sr.bandwidth);
       return res;
     } catch (Exception e) {
       e.printStackTrace();
-      sdxManager.unlockSlice();
+      exoSdxManager.unlockSlice();
       return e.getMessage();
     }
   }
@@ -241,14 +242,14 @@ public class RestService {
   @Produces(MediaType.TEXT_PLAIN)
   public String stitchChameleon(@Context UriInfo uriInfo, StitchChameleon sr) {
     logger.debug("got chameleon stitch request: \n" + sr.toString());
-    SdxManager sdxManager = sdxManagerMap.get(uriInfo.getBaseUri().getPort());
+    SdxManagerBase exoSdxManager = sdxManagerMap.get(uriInfo.getBaseUri().getPort());
     try {
-      String res = sdxManager.stitchChameleon(sr.sdxsite, sr.sdxnode,
+      String res = exoSdxManager.stitchChameleon(sr.sdxsite, sr.sdxnode,
         sr.ckeyhash, sr.stitchport, sr.vlan, sr.gateway, sr.ip);
       return res;
     } catch (Exception e) {
       e.printStackTrace();
-      sdxManager.unlockSlice();
+      exoSdxManager.unlockSlice();
       return e.getMessage();
     }
   }
@@ -258,9 +259,9 @@ public class RestService {
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.APPLICATION_JSON)
   public NotifyResult notifyPrefix(@Context UriInfo uriInfo, PrefixNotification pn) {
-    SdxManager sdxManager = sdxManagerMap.get(uriInfo.getBaseUri().getPort());
-    logger.debug(String.format("%s got notifyprefix %s", sdxManager.getSliceName(), pn.toString()));
-    NotifyResult res = sdxManager.notifyPrefix(pn.dest, pn.gateway, pn.customer);
+    SdxManagerBase exoSdxManager = sdxManagerMap.get(uriInfo.getBaseUri().getPort());
+    logger.debug(String.format("%s got notifyprefix %s", exoSdxManager.getSliceName(), pn.toString()));
+    NotifyResult res = exoSdxManager.notifyPrefix(pn.dest, pn.gateway, pn.customer);
     return res;
   }
 
@@ -270,24 +271,24 @@ public class RestService {
   @Produces(MediaType.TEXT_PLAIN)
   public String broload(@Context UriInfo uriInfo, BroLoad bl) {
     logger.debug("got broload");
-    SdxManager sdxManager = sdxManagerMap.get(uriInfo.getBaseUri().getPort());
+    ExoSdxManager exoSdxManager = (ExoSdxManager) sdxManagerMap.get(uriInfo.getBaseUri().getPort());
     double load = Double.parseDouble(bl.usage);
     String res = null;
     try {
-      res = sdxManager.broload(bl.broip, load);
+      res = exoSdxManager.broload(bl.broip, load);
     } catch (Exception e) {
       e.printStackTrace();
       res = "Failed to get Bro Load";
       logger.warn(res);
     } finally {
-      sdxManager.unlockSlice();
+      exoSdxManager.unlockSlice();
     }
     return res;
   }
 
   private String translatePids(String s) {
-    for (SdxManager sdxManager : sdxManagerMap.values()) {
-      s = s.replace(sdxManager.getPid(), sdxManager.getSliceName());
+    for (SdxManagerBase exoSdxManager : sdxManagerMap.values()) {
+      s = s.replace(exoSdxManager.getPid(), exoSdxManager.getSliceName());
     }
     return s;
   }
