@@ -3,10 +3,7 @@ package exoplex.sdx.network;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 
 public class NetworkManager {
   final static Logger logger = LogManager.getLogger(NetworkManager.class);
@@ -109,7 +106,7 @@ public class NetworkManager {
     putInterface(intf);
     Router logRouter = getRouter(ra);
     if (logRouter != null) {
-      logRouter.addGateway(gw);
+      logRouter.addGateway(linkName, gw);
       logRouter.addInterface(intf.getName());
       putRouter(logRouter);
       //logRouters.put(ra,logRouter);
@@ -185,6 +182,14 @@ public class NetworkManager {
     return interfaceMap.get(interfaceName);
   }
 
+  public String getInterfaceIP(String interfaceName) {
+    return interfaceMap.get(interfaceName).getIp();
+  }
+
+  public String getGateWayOfExternalLink(String linkName) {
+    return getRouter(getLink(linkName).getNodeA()).getGateWay(linkName);
+  }
+
   public Collection<Router> getRouters() {
     return nameRouterMap.values();
   }
@@ -193,7 +198,7 @@ public class NetworkManager {
     return linkMap.values();
   }
 
-  public Collection<Interface> getInterfaces() {
-    return interfaceMap.values();
+  public Collection<String> getInterfaces() {
+    return interfaceMap.keySet();
   }
 }

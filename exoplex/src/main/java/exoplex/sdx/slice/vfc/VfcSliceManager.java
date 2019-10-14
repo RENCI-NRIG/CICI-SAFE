@@ -2,9 +2,12 @@ package exoplex.sdx.slice.vfc;
 
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
+import exoplex.sdx.network.NetworkManager;
+import exoplex.sdx.network.Router;
 import exoplex.sdx.slice.SliceManager;
 import org.renci.ahab.libtransport.util.TransportException;
 import org.renci.ahab.libtransport.xmlrpc.XMLRPCTransportException;
+import sun.nio.ch.Net;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -12,6 +15,7 @@ import java.util.Date;
 import java.util.List;
 
 public class VfcSliceManager extends SliceManager {
+  NetworkManager networkManager;
 
   @Inject
   public VfcSliceManager(@Assisted("sliceName") String sliceName,
@@ -21,6 +25,7 @@ public class VfcSliceManager extends SliceManager {
                          @Assisted("ssh") String sshKey) {
     super(sliceName, pemLocation, keyLocation, controllerUrl, sshKey);
     this.mocked = false;
+    networkManager = new NetworkManager();
   }
 
    public void createSlice() {}
@@ -31,7 +36,23 @@ public class VfcSliceManager extends SliceManager {
     return null;
    }
 
-   public void loadSlice() throws Exception {}
+   public void loadSlice() throws Exception {
+     networkManager.putRouter(new Router("net-physnet1", "0000fe754c80b54d", null));
+     networkManager.addLink("stitch_net-physnet1_192_168_200_1_24", "192.168.200.1/24",
+       "net-physnet1", "192.168.200.15");
+     networkManager.addLink("stitch_net-physnet1_192_168_201_1_24", "192.168.201.1/24",
+       "net-physnet1", "192.168.201.10");
+     networkManager.addLink("stitch_net-physnet1_192_168_202_1_24", "192.168.202.1/24",
+       "net-physnet1", "192.168.202.10");
+   }
+
+   public String getIPOfExternalLink(String linkName) {
+     return networkManager.getInterfaceIP(networkManager.getLink(linkName).getInterfaceA());
+   }
+
+  public String getGatewayOfExternalLink(String linkName) {
+    return networkManager.getGateWayOfExternalLink(linkName);
+  }
 
    public void resetHostNames() {}
 
@@ -86,7 +107,7 @@ public class VfcSliceManager extends SliceManager {
    }
 
    public String getComputeNode(String nm) {
-     return null;
+     return nm;
    }
 
    public void unstitch(String stitchLinkName, String customerSlice, String customerGUID) {}
@@ -109,7 +130,7 @@ public class VfcSliceManager extends SliceManager {
    }
 
    public Collection<String> getInterfaces() {
-     return new ArrayList<>();
+     return networkManager.getInterfaces();
    }
 
    public Collection<String> getLinks() {
@@ -121,7 +142,9 @@ public class VfcSliceManager extends SliceManager {
    }
 
    public Collection<String> getComputeNodes() {
-     return new ArrayList<>();
+     Collection<String> nodes = new ArrayList<>();
+     networkManager.getRouters().forEach(router -> nodes.add(router.getRouterName()));
+     return nodes;
    }
 
    public Collection<String> getStitchPorts() {
@@ -158,11 +181,11 @@ public class VfcSliceManager extends SliceManager {
    public void copyFile2Node(String lfile, String rfile, String privkey, String nodeName) {}
 
    public String runCmdNode(final String cmd, String nodeName, boolean repeat) {
-     return null;
+     return "";
    }
 
    public String runCmdNode(final String cmd, String nodeName) {
-     return null;
+     return "";
    }
 
    public List<String> getPhysicalInterfaces(String nodeName) {
@@ -170,7 +193,7 @@ public class VfcSliceManager extends SliceManager {
    }
 
    public String runCmdByIP(final String cmd, String mip, boolean repeat) {
-     return null;
+     return "";
    }
 
    public void runCmdSlice(final String cmd, final String sshkey, final String pattern,
@@ -219,7 +242,7 @@ public class VfcSliceManager extends SliceManager {
     SDNControllerIP, String serverurl, String sshkey) {}
 
    public String getDpid(String routerName, String sshkey) {
-     return null;
+     return networkManager.getRouter(routerName).getDPID();
    }
 
    public String addOVSRouter(String site, String name) {
@@ -253,11 +276,11 @@ public class VfcSliceManager extends SliceManager {
    }
 
    public String getNodeOfInterface(String ifName) {
-     return null;
+     return ifName.split(":")[0];
    }
 
    public String getLinkOfInterface(String ifName) {
-     return null;
+     return ifName.split(":")[1];
    }
 
    public String getMacAddressOfInterface(String ifName) {

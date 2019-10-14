@@ -38,8 +38,10 @@ public class RoutingManager {
 
   public static String postSdnCmd(String cmd, JSONObject params) {
     sdnLogger.info(String.format("%s\n%s", cmd, params.toString()));
-    String res = HttpUtil.postJSON(cmd, params);
-    return res;
+    logger.debug(String.format("curl -X POST -d '%s' %s", params.toString(), cmd));
+    //String res = HttpUtil.postJSON(cmd, params);
+    //return res;
+    return "";
   }
 
   public static String postSdnCmd(String cmd, JSONObject params, boolean logging) {

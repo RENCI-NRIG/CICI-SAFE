@@ -729,7 +729,7 @@ public class SdxManagerBase extends SliceHelper implements SdxManagerInterface {
     return res;
   }
 
-  private void putComputeNode(String node) {
+  protected void putComputeNode(String node) {
     if (computenodes.containsKey(serverSlice.getNodeDomain(node))) {
       computenodes.get(serverSlice.getNodeDomain(node)).add(node);
       Collections.sort(computenodes.get(serverSlice.getNodeDomain(node)));
@@ -740,7 +740,7 @@ public class SdxManagerBase extends SliceHelper implements SdxManagerInterface {
     }
   }
 
-  private void putEdgeRouter(String node) {
+  protected void putEdgeRouter(String node) {
     if (edgeRouters.containsKey(serverSlice.getNodeDomain(node))) {
       edgeRouters.get(serverSlice.getNodeDomain(node)).add(node);
       Collections.sort(edgeRouters.get(serverSlice.getNodeDomain(node)));

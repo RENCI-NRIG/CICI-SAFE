@@ -203,6 +203,9 @@
             <AppenderRef ref="RoutingRollingFile"/>
             <AppenderRef ref="RollingFile"/>
         </Logger>
+        <Logger name="exoplex.sdx.network.RoutingManager" level="debug" additivity="false">
+            <AppenderRef ref="RollingFile"/>
+        </Logger>
         <Logger name="org.apache.commons.httpclient.HttpClient" level="debug" additivity="false">
             <AppenderRef ref="RollingFile"/>
         </Logger>

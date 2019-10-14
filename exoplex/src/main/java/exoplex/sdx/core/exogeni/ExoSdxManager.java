@@ -1335,27 +1335,6 @@ public class ExoSdxManager extends SdxManagerBase {
     restartPlexus(coreProperties.getSdnControllerIp(), "rest_router");
   }
 
-  private void putComputeNode(String node) {
-    if (computenodes.containsKey(serverSlice.getNodeDomain(node))) {
-      computenodes.get(serverSlice.getNodeDomain(node)).add(node);
-      Collections.sort(computenodes.get(serverSlice.getNodeDomain(node)));
-    } else {
-      ArrayList<String> l = new ArrayList<>();
-      l.add(node);
-      computenodes.put(serverSlice.getNodeDomain(node), l);
-    }
-  }
-
-  private void putEdgeRouter(String node) {
-    if (edgeRouters.containsKey(serverSlice.getNodeDomain(node))) {
-      edgeRouters.get(serverSlice.getNodeDomain(node)).add(node);
-      Collections.sort(edgeRouters.get(serverSlice.getNodeDomain(node)));
-    } else {
-      ArrayList<String> l = new ArrayList<>();
-      l.add(node);
-      edgeRouters.put(serverSlice.getNodeDomain(node), l);
-    }
-  }
   /*
    * Load the topology information from exogeni with ahab, put the links, stitch_ports, and
    * normal stitches connecting nodes in other slices.
