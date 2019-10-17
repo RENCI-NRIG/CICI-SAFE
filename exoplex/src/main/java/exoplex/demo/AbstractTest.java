@@ -3,7 +3,7 @@ package exoplex.demo;
 import com.google.inject.Injector;
 import exoplex.client.exogeni.SdxExogeniClient;
 import exoplex.sdx.core.CoreProperties;
-import exoplex.sdx.core.exogeni.RestService;
+import exoplex.sdx.core.exogeni.ExoRestService;
 import exoplex.sdx.core.exogeni.ExoSdxManager;
 import exoplex.sdx.core.exogeni.ExoSdxServer;
 import exoplex.sdx.network.SdnReplay;
@@ -61,7 +61,7 @@ public abstract class AbstractTest {
       deleteSlices();
     }
     logger.info("shuttin down all http servers");
-    RestService.shutDownAllHttpServers();
+    ExoRestService.shutDownAllHttpServers();
   }
 
   public void startClients() {

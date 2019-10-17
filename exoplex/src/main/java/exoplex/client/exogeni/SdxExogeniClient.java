@@ -346,6 +346,13 @@ public class SdxExogeniClient {
    * ["stitchvfc", "CNode1", site, vlan, 192.168.200.1/24, 192.168.200.2]
    */
   private void processStitchVfcCmd(String[] params) {
+    if (serverSlice == null) {
+      try {
+        loadSlice();
+      } catch (Exception e) {
+        logger.error(e.getMessage());
+      }
+    }
     String nodeName = params[1];
     String site = params[2];
     String vlan = params[3];
@@ -367,6 +374,24 @@ public class SdxExogeniClient {
       nodeName, false);
     String vfcGateway = params[3].split("/")[0];
     setUpQuaggaRouting("192.168.1.1/16", vfcGateway, nodeName);
+    //send stitch request to vfc server
+    //post stitch request to SAFE
+    JSONObject jsonparams = new JSONObject();
+    jsonparams.put("vfcsite", site);
+    jsonparams.put("vlan", vlan);
+    jsonparams.put("gateway", gateway);
+    jsonparams.put("ip", ip);
+    jsonparams.put("cslice", coreProperties.getSliceName());
+    if (coreProperties.isSafeEnabled()) {
+      checkSafe();
+      jsonparams.put("ckeyhash", safeManager.getSafeKeyHash());
+    } else {
+      jsonparams.put("ckeyhash", coreProperties.getSliceName());
+    }
+    logger.debug(logPrefix + "Sending stitch request to Vfc Sdx server");
+    String r = HttpUtil.postJSON(coreProperties.getServerUrl() + "sdx/stitchrequest", jsonparams);
+    logger.debug(r);
+
     if (ping(nodeName, gateway)) {
       logger.info(String.format("Ping to %s works", gateway));
       logger.info(logPrefix + "stitch completed.");

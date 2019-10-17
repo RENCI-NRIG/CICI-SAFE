@@ -18,8 +18,8 @@ import java.util.HashSet;
 @Path("sdx")
 public class RestServiceBase {
   final static Logger logger = LogManager.getLogger(RestServiceBase.class);
-  private static HashMap<Integer, SdxManagerBase> sdxManagerMap = new HashMap<>();
-  private static HashSet<HttpServer> httpServers = new HashSet<>();
+  protected static HashMap<Integer, SdxManagerBase> sdxManagerMap = new HashMap<>();
+  protected static HashSet<HttpServer> httpServers = new HashSet<>();
 
   public static void registerHttpServer(HttpServer server) {
     httpServers.add(server);

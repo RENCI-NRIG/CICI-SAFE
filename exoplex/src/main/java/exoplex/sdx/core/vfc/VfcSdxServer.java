@@ -3,10 +3,9 @@ package exoplex.sdx.core.vfc;
 import com.google.inject.Guice;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
-import exoplex.demo.singlesdx.SingleSdxModule;
 import exoplex.sdx.core.CoreProperties;
 import exoplex.sdx.core.SdxManagerBase;
-import exoplex.sdx.core.exogeni.RestService;
+import exoplex.sdx.core.exogeni.ExoRestService;
 import exoplex.sdx.slice.vfc.VfcModule;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -58,10 +57,10 @@ public class VfcSdxServer {
     System.out.println("starting exoplex.sdx server");
     vfcSdxManager.startSdxServer(coreProperties);
     URI uri = URI.create(coreProperties.getServerUrl());
-    RestService.registerSdxManager(uri.getPort(), vfcSdxManager);
+    ExoRestService.registerSdxManager(uri.getPort(), vfcSdxManager);
     logger.debug("Starting on " + coreProperties.getServerUrl());
     final HttpServer server = startServer(uri);
-    RestService.registerHttpServer(server);
+    ExoRestService.registerHttpServer(server);
     logger.debug("Sdx server has started, listening on " + coreProperties.getServerUrl());
     System.out.println("Sdx server has started, listening on " + coreProperties.getServerUrl());
   }

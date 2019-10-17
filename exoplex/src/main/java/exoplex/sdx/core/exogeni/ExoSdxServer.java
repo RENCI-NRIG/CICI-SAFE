@@ -56,10 +56,10 @@ public class ExoSdxServer {
     ExoSdxManager exoSdxManager = sdxManagerProvider.get();
     exoSdxManager.startSdxServer(coreProperties);
     URI uri = URI.create(coreProperties.getServerUrl());
-    RestService.registerSdxManager(uri.getPort(), exoSdxManager);
+    ExoRestService.registerSdxManager(uri.getPort(), exoSdxManager);
     logger.debug("Starting on " + coreProperties.getServerUrl());
     final HttpServer server = startServer(uri);
-    RestService.registerHttpServer(server);
+    ExoRestService.registerHttpServer(server);
     logger.debug("Sdx server has started, listening on " + coreProperties.getServerUrl());
     System.out.println("Sdx server has started, listening on " + coreProperties.getServerUrl());
     return exoSdxManager;
