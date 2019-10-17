@@ -855,19 +855,6 @@ public class ExoSdxManager extends SdxManagerBase {
     return routingmanager.getNeighbors(edgeRouterName).get(0);
   }
 
-  private String findGatewayForPrefix(String prefix) {
-    if (prefixGateway.containsKey(prefix)) {
-      return prefixGateway.get(prefix);
-    } else {
-      RouteAdvertise advertise = advertiseManager.getAdvertise(prefix);
-      if (advertise != null) {
-        return customerGateway.getOrDefault(advertise.advertiserPID, null);
-      } else {
-        return null;
-      }
-    }
-  }
-
   @Override
   synchronized public String connectionRequest(String self_prefix,
     String target_prefix, long bandwidth) throws Exception {
@@ -1133,41 +1120,6 @@ public class ExoSdxManager extends SdxManagerBase {
     reply.peerUrl = coreProperties.getServerUrl();
     reply.peerPID = safeManager.getSafeKeyHash();
     return reply;
-  }
-
-  synchronized public NotifyResult notifyPrefix(String dest, String gateway,
-                                                String customer_keyhash) {
-    logger.info(logPrefix + "received notification for ip prefix " + dest);
-    NotifyResult notifyResult = new NotifyResult();
-    notifyResult.message = "received notification for " + dest;
-    boolean flag = false;
-    String router = routingmanager.getEdgeRouterByGateway(gateway);
-    if (router == null) {
-      logger.warn(logPrefix + "Cannot find a router with cusotmer gateway" + gateway);
-      notifyResult.message = notifyResult.message + " Cannot find a router with customer gateway " +
-        gateway;
-    } else {
-      prefixGateway.put(dest, gateway);
-      prefixKeyHash.put(dest, customer_keyhash);
-      if (!customerPrefixes.containsKey(customer_keyhash)) {
-        customerPrefixes.put(customer_keyhash, new HashSet<>());
-      }
-      customerPrefixes.get(customer_keyhash).add(dest);
-      if (!gatewayPrefixes.containsKey(gateway)) {
-        gatewayPrefixes.put(gateway, new HashSet());
-      }
-      gatewayPrefixes.get(gateway).add(dest);
-      notifyResult.result = true;
-      if (coreProperties.isSafeEnabled()) {
-        notifyResult.safeKeyHash = safeManager.getSafeKeyHash();
-      }
-      //monitor the frist package
-      routingmanager.monitorOnAllRouter(dest, SdnUtil.DEFAULT_ROUTE,
-        SDNController);
-      routingmanager.monitorOnAllRouter(SdnUtil.DEFAULT_ROUTE, dest,
-        SDNController);
-    }
-    return notifyResult;
   }
 
   private void propagatePolicyAdvertise(PolicyAdvertise advertise) {

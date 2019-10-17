@@ -24,6 +24,7 @@ import safe.SdxRoutingSlang;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -36,6 +37,10 @@ public class SdxExogeniClient {
   private SliceManager serverSlice = null;
   private boolean safeChecked = false;
   private CoreProperties coreProperties;
+  static final String STITCHPORT_UC = "http://geni-orca.renci.org/owl/ion" +
+    ".rdf#AL2S/TACC/Cisco/6509/TenGigabitEthernet/1/1";
+  static final String STITCHPORT_TACC = "http://geni-orca.renci.org/owl/ion" +
+    ".rdf#AL2S/Chameleon/Cisco/6509/GigabitEthernet/1/1";
 
   @Inject
   private SliceManagerFactory sliceManagerFactory;
@@ -158,6 +163,8 @@ public class SdxExogeniClient {
         processPolicyCmd(params);
       } else if (params[0].equals("acl")) {
         processAclCmd(params);
+      } else if (params[0].equals("stitchvfc")) {
+        processStitchVfcCmd(params);
       }
     } catch (Exception e) {
       e.printStackTrace();
@@ -333,6 +340,73 @@ public class SdxExogeniClient {
     }
     //Post SAFE sets
     //postInitRouteSD
+  }
+
+  /**
+   * ["stitchvfc", "CNode1", site, vlan, 192.168.200.1/24, 192.168.200.2]
+   */
+  private void processStitchVfcCmd(String[] params) {
+    String nodeName = params[1];
+    String site = params[2];
+    String vlan = params[3];
+    String ip = params[4];
+    String gateway = params[5];
+    String stitchname =
+      "sp-" + nodeName + "-" + gateway.replace(".", "_") + "__" + ip.split("/")[1];
+    logger.info(logPrefix + "Stitching to Chameleon {" + "stitchname: " + stitchname + " vlan:" +
+      vlan + " site: " + site + "}");
+    String stitchport = site.toLowerCase().equals("tacc") ? STITCHPORT_TACC: STITCHPORT_UC;
+    addStitchPort(stitchname, nodeName, stitchport, vlan, coreProperties.getBw());
+    //configure ip address on the client node
+    String localIp = gateway + "/" + ip.split("/")[1];
+    logger.info(logPrefix + "set IP address of the stitch interface to " + ip);
+    List<String> interfaces = serverSlice.getPhysicalInterfaces(nodeName);
+    String newInterface = interfaces.get(interfaces.size() - 1);
+    String result = serverSlice.runCmdNode(String.format("sudo ifconfig " +
+        "%s %s", newInterface, localIp),
+      nodeName, false);
+    String vfcGateway = params[3].split("/")[0];
+    setUpQuaggaRouting("192.168.1.1/16", vfcGateway, nodeName);
+    if (ping(nodeName, gateway)) {
+      logger.info(String.format("Ping to %s works", gateway));
+      logger.info(logPrefix + "stitch completed.");
+    } else {
+      logger.warn(String.format("Ping to %s doesn't work", gateway));
+    }
+  }
+
+  private boolean addStitchPort(String spName, String nodeName, String stitchUrl, String vlan, long
+    bw) {
+    int numInterfaces = serverSlice.getPhysicalInterfaces(nodeName).size();
+    serverSlice.refresh();
+    try {
+      int times = 1;
+      String node = serverSlice.getComputeNode(nodeName);
+      while (true) {
+        String mysp = serverSlice.addStitchPort(spName, vlan, stitchUrl, bw);
+        serverSlice.stitchSptoNode(mysp, node);
+        int newNum;
+        if (serverSlice.commitAndWait(10, Arrays.asList(spName + "-net"))) {
+          do {
+            serverSlice.sleep(5);
+            newNum = serverSlice.getPhysicalInterfaces(nodeName).size();
+          } while (newNum <= numInterfaces);
+          if (times > 1) {
+            logger.warn(String.format("Tried %s times to add a stitchlink", times));
+          }
+          break;
+        } else {
+          serverSlice.deleteResource(spName);
+          serverSlice.commitAndWait();
+          serverSlice.refresh();
+          times++;
+        }
+      }
+    } catch (Exception e) {
+      e.printStackTrace();
+      return false;
+    }
+    return true;
   }
 
   private void processBgpCmd(String[] params) {

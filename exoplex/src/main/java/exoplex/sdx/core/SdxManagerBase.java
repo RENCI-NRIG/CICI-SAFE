@@ -479,7 +479,7 @@ public class SdxManagerBase extends SliceHelper implements SdxManagerInterface {
     return routingmanager.getNeighbors(edgeRouterName).get(0);
   }
 
-  private String findGatewayForPrefix(String prefix) {
+  protected  String findGatewayForPrefix(String prefix) {
     if (prefixGateway.containsKey(prefix)) {
       return prefixGateway.get(prefix);
     } else {

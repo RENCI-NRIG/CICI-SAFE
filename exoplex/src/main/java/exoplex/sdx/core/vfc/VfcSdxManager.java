@@ -1,14 +1,19 @@
 package exoplex.sdx.core.vfc;
 
+import aqt.PrefixUtil;
+import aqt.Range;
 import com.google.inject.Inject;
+import exoplex.sdx.advertise.RouteAdvertise;
 import exoplex.sdx.core.CoreProperties;
 import exoplex.sdx.core.SdxManagerBase;
 import exoplex.sdx.core.restutil.NotifyResult;
 import exoplex.sdx.network.Link;
+import exoplex.sdx.network.SdnUtil;
 import exoplex.sdx.slice.SliceManager;
 import exoplex.sdx.slice.vfc.VfcSliceManager;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.json.JSONObject;
 import safe.Authority;
 
 import java.util.ArrayList;
@@ -53,6 +58,7 @@ public class VfcSdxManager extends SdxManagerBase {
     loadSlice();
     initializeSdx();
     configRouting();
+    //delFlows();
   }
 
   private void loadSdxNetwork(String routerpattern, String stitchportpattern, String
@@ -97,8 +103,7 @@ public class VfcSdxManager extends SdxManagerBase {
           logLink = new Link();
           logLink.setName(serverSlice.getLinkOfInterface(i));
           logLink.addNode(serverSlice.getNodeOfInterface(i));
-          if (logLink.getLinkName().matches(stosVlanPattern) || logLink.getLinkName().matches(
-            broLinkPattern)) {
+          if (logLink.getLinkName().matches(stosVlanPattern)){
             String[] parts = logLink.getLinkName().split("_");
             String ip = parts[parts.length - 3];
             usedip.add(Integer.valueOf(ip));
@@ -194,7 +199,6 @@ public class VfcSdxManager extends SdxManagerBase {
       }
     }
 
-    //To Emulate dynamic allocation of links, we don't use links whose name does't contain "link"
     for (String k : keyset) {
       Link logLink = links.get(k);
       logger.debug("Setting up logLink " + logLink.getLinkName());
@@ -215,9 +219,6 @@ public class VfcSdxManager extends SdxManagerBase {
           logLink.getCapacity());
       }
     }
-    //set ovsdb address
-    routingmanager.updateAllPorts(SDNController);
-    routingmanager.setOvsdbAddr(SDNController);
   }
 
   private int getAvailableIP() {
@@ -241,15 +242,148 @@ public class VfcSdxManager extends SdxManagerBase {
     routingmanager.deleteAllFlows(getSDNController());
   }
 
-  @Override
-  public String connectionRequest(String self_prefix, String target_prefix,
-    long bandwidth) throws Exception {
-    return null;
+  synchronized public JSONObject stitchRequest(
+    String customerSafeKeyHash,
+    String customerSlice,
+    String site,
+    String vlanTag,
+    String gateway,
+    String ip) throws Exception {
+    long start = System.currentTimeMillis();
+    JSONObject res = new JSONObject();
+    res.put("ip", "");
+    res.put("gateway", "");
+    res.put("message", "");
+
+    logger.info(logPrefix + "new stitch request from " + customerSafeKeyHash + " for " + coreProperties.getSliceName() + " at " +
+     site);
+    if (!coreProperties.isSafeEnabled() || safeManager.authorizeStitchRequest(customerSafeKeyHash, customerSlice)) {
+      if (coreProperties.isSafeEnabled()) {
+        logger.info("Authorized: stitch request for " + coreProperties.getSliceName());
+      }
+      String stitchName = ((VfcSliceManager)serverSlice).getStitchName(site, vlanTag);
+      String node = ((VfcSliceManager)serverSlice).getNodeBySite(site);
+      Link logLink = new Link();
+      logLink.setName(stitchName);
+      logLink.addNode(node);
+      links.put(stitchName, logLink);
+      res.put("ip", ip);
+      res.put("gateway", gateway);
+      res.put("reservID", stitchName);
+      if (coreProperties.isSafeEnabled()) {
+        res.put("safeKeyHash", safeManager.getSafeKeyHash());
+      }
+      routingmanager.newExternalLink(logLink.getLinkName(),
+        ip,
+        logLink.getNodeA(),
+        gateway,
+        SDNController);
+      //routingmanager.configurePath(ip,node.getName(),ip.split("/")[0],SDNController);
+      logger.info(logPrefix + "stitching operation  completed, time elapsed(s): " + (System
+        .currentTimeMillis() - start) / 1000);
+
+      //update states
+      String reserveId = site + vlanTag;
+      stitchNet.put(reserveId, stitchName);
+      if (!customerNodes.containsKey(customerSafeKeyHash)) {
+        customerNodes.put(customerSafeKeyHash, new HashSet<>());
+      }
+      customerNodes.get(customerSafeKeyHash).add(reserveId);
+      customerGateway.put(reserveId, gateway);
+    } else {
+      logger.info("Unauthorized: stitch request for " + coreProperties.getSliceName());
+      res.put("message", String.format("Unauthorized stitch request from (%s, %s)",
+        customerSafeKeyHash, customerSlice));
+    }
+    return res;
   }
 
   @Override
-  public NotifyResult notifyPrefix(String dest, String gateway,
-                                   String customer_keyhash) {
-    return null;
+  synchronized public String connectionRequest(String self_prefix,
+                                               String target_prefix, long bandwidth) throws Exception {
+    logger.info(String.format("Connection request between %s and %s", self_prefix, target_prefix));
+    String targetHash = null;
+    String cKeyHash = null;
+    Range selfRange, targetRange;
+    if (self_prefix.matches(SdnUtil.IP_PATTERN)) {
+      selfRange = PrefixUtil.addressToRange(self_prefix);
+    } else {
+      selfRange = PrefixUtil.prefixToRange(self_prefix);
+    }
+    if (target_prefix.matches(SdnUtil.IP_PATTERN)) {
+      targetRange = PrefixUtil.addressToRange(target_prefix);
+    } else {
+      targetRange = PrefixUtil.prefixToRange(target_prefix);
+    }
+    for (String prefix : prefixKeyHash.keySet()) {
+      if (PrefixUtil.prefixToRange(prefix).covers(selfRange)) {
+        cKeyHash = prefixKeyHash.get(prefix);
+        self_prefix = prefix;
+      }
+      if (PrefixUtil.prefixToRange(prefix).covers(targetRange)) {
+        targetHash = prefixKeyHash.get(prefix);
+        target_prefix = prefix;
+      }
+    }
+    if (cKeyHash == null) {
+      RouteAdvertise advertise = advertiseManager.getAdvertise(self_prefix,
+        target_prefix);
+      if (advertise == null) {
+        return String.format("prefix %s unrecognized.", self_prefix);
+      } else {
+        targetHash = advertise.ownerPID;
+      }
+    }
+    if (targetHash == null) {
+      RouteAdvertise advertise = advertiseManager.getAdvertise(target_prefix, self_prefix);
+      if (advertise == null) {
+        return String.format("prefix %s unrecognized.", target_prefix);
+      } else {
+        targetHash = advertise.ownerPID;
+      }
+    }
+    if (coreProperties.isSafeEnabled()) {
+      if (!safeManager.authorizeConnectivity(cKeyHash, self_prefix, targetHash,
+        target_prefix)) {
+        logger.info("Unauthorized connection request");
+        return "Unauthorized connection request";
+      } else {
+        logger.info(String.format("Authorized connection request <%s, %s>",
+          self_prefix, target_prefix));
+      }
+    }
+    String n1 = routingmanager.getEdgeRouterByGateway(prefixGateway.get(self_prefix));
+    String n2 = null;
+    if (prefixGateway.containsKey(target_prefix)) {
+      n2 = routingmanager.getEdgeRouterByGateway(prefixGateway.get(target_prefix));
+    } else {
+      RouteAdvertise advertise = advertiseManager.getAdvertise(target_prefix, self_prefix);
+      if (advertise != null) {
+        String peerNode = customerNodes.get(advertise.advertiserPID).iterator().next();
+        n2 = routingmanager.getEdgeRouterByGateway(customerGateway.get(peerNode));
+      }
+    }
+    if (n1 == null || n2 == null) {
+      return "Prefix unrecognized.";
+    }
+    if (!routingmanager.findPath(n1, n2, bandwidth)) {
+      return "Cannot find a path";
+    } else {
+      logger.debug("Available path found, configuring routes");
+      if (routingmanager.configurePath(self_prefix, n1, target_prefix, n2, findGatewayForPrefix
+        (self_prefix), SDNController, bandwidth)
+      ) {
+        logger.info(logPrefix + "Routing set up for " + self_prefix + " and " + target_prefix);
+        logger.debug(logPrefix + "Routing set up for " + self_prefix + " and " + target_prefix);
+        return "route configured";
+      } else {
+        logger.info(logPrefix + "Route for " + self_prefix + " and " + target_prefix +
+          "Failed");
+        logger.debug(logPrefix + "Route for " + self_prefix + " and " + target_prefix +
+          "Failed");
+        return "route not successfully configured";
+      }
+    }
   }
+
 }
