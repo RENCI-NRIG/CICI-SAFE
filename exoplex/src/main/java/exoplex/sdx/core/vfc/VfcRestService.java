@@ -1,8 +1,8 @@
 package exoplex.sdx.core.vfc;
 
 import exoplex.sdx.core.RestServiceBase;
-import exoplex.sdx.core.restutil.StitchRequest;
 import exoplex.sdx.core.restutil.StitchResult;
+import exoplex.sdx.core.restutil.StitchVfcRequest;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.json.JSONObject;
@@ -23,12 +23,12 @@ public class VfcRestService extends RestServiceBase {
   @Path("/stitchvfc")
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.APPLICATION_JSON)
-  public StitchResult stitchVfc(@Context UriInfo uriInfo, StitchRequest sr) {
+  public StitchResult stitchVfc(@Context UriInfo uriInfo, StitchVfcRequest sr) {
     VfcSdxManager vfcSdxManager = (VfcSdxManager) sdxManagerMap.get(uriInfo.getBaseUri().getPort());
     logger.debug(String.format("%s got sittch request %s", vfcSdxManager.getSliceName(), sr));
     try {
-      JSONObject res = vfcSdxManager.stitchRequest(sr.sdxsite, sr.ckeyhash, sr.cslice,
-        sr.creservid, sr.secret, sr.sdxnode, sr.gateway, sr.ip);
+      JSONObject res = vfcSdxManager.stitchVfc(sr.ckeyhash, sr.cslice, sr.vfcsite,
+        sr.vlan, sr.gateway, sr.ip);
       return new StitchResult(res);
     } catch (Exception e) {
       e.printStackTrace();

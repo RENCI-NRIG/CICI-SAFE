@@ -37,9 +37,9 @@ public class SdxExogeniClient {
   private SliceManager serverSlice = null;
   private boolean safeChecked = false;
   private CoreProperties coreProperties;
-  static final String STITCHPORT_UC = "http://geni-orca.renci.org/owl/ion" +
-    ".rdf#AL2S/TACC/Cisco/6509/TenGigabitEthernet/1/1";
   static final String STITCHPORT_TACC = "http://geni-orca.renci.org/owl/ion" +
+    ".rdf#AL2S/TACC/Cisco/6509/TenGigabitEthernet/1/1";
+  static final String STITCHPORT_UC = "http://geni-orca.renci.org/owl/ion" +
     ".rdf#AL2S/Chameleon/Cisco/6509/GigabitEthernet/1/1";
 
   @Inject
@@ -372,7 +372,7 @@ public class SdxExogeniClient {
     String result = serverSlice.runCmdNode(String.format("sudo ifconfig " +
         "%s %s", newInterface, localIp),
       nodeName, false);
-    String vfcGateway = params[3].split("/")[0];
+    String vfcGateway = params[4].split("/")[0];
     setUpQuaggaRouting("192.168.1.1/16", vfcGateway, nodeName);
     //send stitch request to vfc server
     //post stitch request to SAFE
@@ -389,10 +389,10 @@ public class SdxExogeniClient {
       jsonparams.put("ckeyhash", coreProperties.getSliceName());
     }
     logger.debug(logPrefix + "Sending stitch request to Vfc Sdx server");
-    String r = HttpUtil.postJSON(coreProperties.getServerUrl() + "sdx/stitchrequest", jsonparams);
+    String r = HttpUtil.postJSON(coreProperties.getServerUrl() + "sdx/stitchvfc", jsonparams);
     logger.debug(r);
 
-    if (ping(nodeName, gateway)) {
+    if (ping(nodeName, ip.split(":")[0])) {
       logger.info(String.format("Ping to %s works", gateway));
       logger.info(logPrefix + "stitch completed.");
     } else {

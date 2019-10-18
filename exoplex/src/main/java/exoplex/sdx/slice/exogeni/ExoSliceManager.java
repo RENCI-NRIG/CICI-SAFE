@@ -561,7 +561,8 @@ public class ExoSliceManager extends SliceManager {
     logger.info("Wait until following resources are active: " + String.join(",", resources));
     reloadSlice();
     int times = 0;
-    while (times < 500) {
+    int TOTALTIME = 3600;
+    while (times * interval < TOTALTIME) {
       times ++;
       ArrayList<String> activeResources = new ArrayList<>();
       refresh();
@@ -609,7 +610,7 @@ public class ExoSliceManager extends SliceManager {
         e.printStackTrace();
       }
     }
-    if(times == 500) {
+    if(times * interval >= TOTALTIME) {
       logger.warn(String.format("Slice not active after %s seconds", 500 * interval));
       return false;
     }

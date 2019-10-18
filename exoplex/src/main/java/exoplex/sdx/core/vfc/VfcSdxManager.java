@@ -242,7 +242,7 @@ public class VfcSdxManager extends SdxManagerBase {
     routingmanager.deleteAllFlows(getSDNController());
   }
 
-  synchronized public JSONObject stitchRequest(
+  synchronized public JSONObject stitchVfc(
     String customerSafeKeyHash,
     String customerSlice,
     String site,

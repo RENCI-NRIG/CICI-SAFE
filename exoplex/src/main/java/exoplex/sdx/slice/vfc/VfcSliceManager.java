@@ -40,8 +40,8 @@ public class VfcSliceManager extends SliceManager {
     networkManager.putRouter(new Router("net-physnet1", "0000fe754c80b54d", null));
     networkManager.addLink("stitch_net-physnet1_192_168_200_1_24", "192.168.200.1/24", "net" +
       "-physnet1", "192.168.200.15");
-    networkManager.addLink("stitch_net-physnet1_192_168_201_1_24", "192.168.201.1/24", "net" +
-      "-physnet1", "192.168.201.10");
+    //networkManager.addLink("stitch_net-physnet1_192_168_201_1_24", "192.168.201.1/24", "net" +
+    //  "-physnet1", "192.168.201.10");
     //networkManager.addLink("stitch_net-physnet1_192_168_202_1_24", "192.168.202.1/24", "net" +
     //  "-physnet1", "192.168.202.10");
   }
@@ -51,7 +51,7 @@ public class VfcSliceManager extends SliceManager {
   }
 
   public String getStitchName(String site, String vlan) {
-    throw new NotImplementedException();
+    return String.format("net-exogeni-%s-%s", site, vlan);
   }
 
   public String getNodeBySite(String site) {
