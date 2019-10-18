@@ -42,7 +42,7 @@ public class ExoSdxServer {
 
     // create a resource config that scans for JAX-RS resources and providers
     // in com.example package
-    final ResourceConfig rc = new ResourceConfig().packages("exoplex.sdx.core")
+    final ResourceConfig rc = new ResourceConfig().packages("exoplex.sdx.core.exogeni")
             .register(MoxyJsonFeature.class)
             .register(jsonConfigResolver);
     // create and start a new instance of grizzly http server

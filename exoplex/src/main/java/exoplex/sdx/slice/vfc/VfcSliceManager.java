@@ -42,8 +42,8 @@ public class VfcSliceManager extends SliceManager {
       "-physnet1", "192.168.200.15");
     networkManager.addLink("stitch_net-physnet1_192_168_201_1_24", "192.168.201.1/24", "net" +
       "-physnet1", "192.168.201.10");
-    networkManager.addLink("stitch_net-physnet1_192_168_202_1_24", "192.168.202.1/24", "net" +
-      "-physnet1", "192.168.202.10");
+    //networkManager.addLink("stitch_net-physnet1_192_168_202_1_24", "192.168.202.1/24", "net" +
+    //  "-physnet1", "192.168.202.10");
   }
 
   public String getIPOfExternalLink(String linkName) {

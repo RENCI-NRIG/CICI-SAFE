@@ -405,27 +405,15 @@ public class SdxExogeniClient {
     int numInterfaces = serverSlice.getPhysicalInterfaces(nodeName).size();
     serverSlice.refresh();
     try {
-      int times = 1;
       String node = serverSlice.getComputeNode(nodeName);
-      while (true) {
-        String mysp = serverSlice.addStitchPort(spName, vlan, stitchUrl, bw);
-        serverSlice.stitchSptoNode(mysp, node);
-        int newNum;
-        if (serverSlice.commitAndWait(10, Arrays.asList(spName + "-net"))) {
-          do {
-            serverSlice.sleep(5);
-            newNum = serverSlice.getPhysicalInterfaces(nodeName).size();
-          } while (newNum <= numInterfaces);
-          if (times > 1) {
-            logger.warn(String.format("Tried %s times to add a stitchlink", times));
-          }
-          break;
-        } else {
-          serverSlice.deleteResource(spName);
-          serverSlice.commitAndWait();
-          serverSlice.refresh();
-          times++;
-        }
+      String mysp = serverSlice.addStitchPort(spName, vlan, stitchUrl, bw);
+      serverSlice.stitchSptoNode(mysp, node);
+      int newNum;
+      if (serverSlice.commitAndWait(10, Arrays.asList(spName + "-net"))) {
+        do {
+          serverSlice.sleep(5);
+          newNum = serverSlice.getPhysicalInterfaces(nodeName).size();
+        } while (newNum <= numInterfaces);
       }
     } catch (Exception e) {
       e.printStackTrace();

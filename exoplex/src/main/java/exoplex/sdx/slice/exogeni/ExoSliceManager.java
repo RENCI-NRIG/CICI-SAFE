@@ -560,7 +560,9 @@ public class ExoSliceManager extends SliceManager {
   synchronized public boolean waitTillActive(int interval, List<String> resources) throws Exception {
     logger.info("Wait until following resources are active: " + String.join(",", resources));
     reloadSlice();
-    while (true) {
+    int times = 0;
+    while (times < 500) {
+      times ++;
       ArrayList<String> activeResources = new ArrayList<>();
       refresh();
       logger.debug("ExoSliceManager: " + getAllResources());
@@ -568,8 +570,9 @@ public class ExoSliceManager extends SliceManager {
         logger.debug(String.format("[%s] Resource: %s , state: %s  site: %s", sliceName, c,
           getState(c), getNodeDomain(c)));
         if (resources.contains(c)) {
-          if (getState(c).contains("Closed")) {
-            throw new Exception(String.format("Slice %s closed", sliceName));
+          if (getState(c).contains("Closed") || getState(c).contains("Failed")) {
+            logger.warn(String.format("Slice %s closed", sliceName));
+            return false;
           }
           if (!getState(c).equals("Active") || getManagementIP(c) == null) {
           } else {
@@ -605,6 +608,10 @@ public class ExoSliceManager extends SliceManager {
       } catch (Exception e) {
         e.printStackTrace();
       }
+    }
+    if(times == 500) {
+      logger.warn(String.format("Slice not active after %s seconds", 500 * interval));
+      return false;
     }
     for (String n : getComputeNodes()) {
       logger.debug("ComputeNode: " + n + ", Managment IP =  " + getManagementIP(n));
