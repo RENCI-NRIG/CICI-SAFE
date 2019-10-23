@@ -6,11 +6,11 @@ import java.util.Arrays;
 
 public class MultiSdxSetting extends AbstractTestSetting {
 
-  public String sdxConfigDir = sdxSimpleDir + "config/multisdx/";
+  public String sdxConfigDir = exoplexDir + "config/multisdx/";
 
   public MultiSdxSetting() {
     numSdx = 4;
-    clientArgs = new String[]{"-c", sdxSimpleDir +
+    clientArgs = new String[]{"-c", exoplexDir +
       "client-config/multisdx/client" + ".conf"};
 
     addSdxNeighbors();

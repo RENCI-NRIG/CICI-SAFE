@@ -2,20 +2,33 @@ package exoplex.sdx.slice.vfc;
 
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
+import com.hp.hpl.jena.tdb.store.Hash;
 import exoplex.sdx.network.NetworkManager;
 import exoplex.sdx.network.Router;
 import exoplex.sdx.slice.SliceManager;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 import org.renci.ahab.libtransport.util.TransportException;
 import org.renci.ahab.libtransport.xmlrpc.XMLRPCTransportException;
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
-import java.util.List;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.*;
 
 public class VfcSliceManager extends SliceManager {
+
+  final static Logger logger = LogManager.getLogger(VfcSliceManager.class);
+
   NetworkManager networkManager;
+
+  private Map<String, Set<String>> routersMap = new HashMap<>();
+  private Map<String, String> linksMap = new HashMap<>();
 
   @Inject
   public VfcSliceManager(@Assisted("sliceName") String sliceName,
@@ -37,13 +50,73 @@ public class VfcSliceManager extends SliceManager {
   }
 
   public void loadSlice() throws Exception {
-    networkManager.putRouter(new Router("net-physnet1", "0000fe754c80b54d", null));
-    networkManager.addLink("stitch_net-physnet1_192_168_200_1_24", "192.168.200.1/24", "net" +
-      "-physnet1", "192.168.200.15");
+    networkManager.putRouter(new Router("vfc-1", "0000fe754c80b54d", null));
+    networkManager.addLink("stitch_vfc0-1_192_168_200_1_24",
+      "192.168.200.1/24",
+      "vfc-1",
+      "192.168.200.15");
     //networkManager.addLink("stitch_net-physnet1_192_168_201_1_24", "192.168.201.1/24", "net" +
     //  "-physnet1", "192.168.201.10");
     //networkManager.addLink("stitch_net-physnet1_192_168_202_1_24", "192.168.202.1/24", "net" +
     //  "-physnet1", "192.168.202.10");
+  }
+
+  public void loadSlice(String topofile) throws Exception {
+    JSONParser jsonParser = new JSONParser();
+    topofile = topofile.replace("~", System.getProperty("user.home"));
+    try (FileReader reader = new FileReader(topofile)) {
+      //Read JSON file
+      Object vfc = jsonParser.parse(reader);
+
+      JSONArray vfcList = (JSONArray) vfc;
+
+      //Iterate over employee array
+      vfcList.forEach( obj -> parseVfcObject( (JSONObject) obj ) );
+
+    } catch (FileNotFoundException e) {
+      e.printStackTrace();
+    } catch (IOException e) {
+      e.printStackTrace();
+    } catch (ParseException e) {
+      e.printStackTrace();
+    }
+  }
+
+  private void parseVfcObject(JSONObject obj) {
+    if (obj.containsKey("router")) {
+      obj = (JSONObject) obj.get("router");
+      try{
+        networkManager.putRouter(
+          new Router((String)obj.get("name"),
+            (String) obj.get("dpid"),
+          null));
+        Set<String> routerSet = routersMap.computeIfAbsent((String)obj.get("site"),
+          k -> new HashSet<>());
+        routerSet.add((String) obj.get("name"));
+      } catch (Exception e) {
+        logger.warn(String.format("unknow router format:\n%s", obj.toString()));
+      }
+    } else if(obj.containsKey("stitch")) {
+      obj = (JSONObject) obj.get("stitch");
+      try{
+        networkManager.addLink(
+          (String) obj.get("name"),
+          null,
+          (String) obj.get("router"),
+          null
+        );
+        String vlan = (String) obj.get("vlan");
+        String site = (String) obj.get("site");
+        linksMap.put(site + vlan, (String) obj.get("name"));
+      } catch (Exception e) {
+        logger.warn(String.format("unknow router format:\n%s", obj.toString()));
+      }
+
+    } else if(obj.containsKey("link")) {
+      throw new NotImplementedException();
+    } else {
+      throw new NotImplementedException();
+    }
   }
 
   public String getIPOfExternalLink(String linkName) {
@@ -51,11 +124,11 @@ public class VfcSliceManager extends SliceManager {
   }
 
   public String getStitchName(String site, String vlan) {
-    return String.format("net-exogeni-%s-%s", site, vlan);
+    return linksMap.getOrDefault(site + vlan, null);
   }
 
   public String getNodeBySite(String site) {
-    return "net-physnet1";
+    return routersMap.get(site).iterator().next();
   }
 
   public String getGatewayOfExternalLink(String linkName) {
@@ -237,6 +310,11 @@ public class VfcSliceManager extends SliceManager {
   }
 
   public String getNodeDomain(String nodeName) {
+    for(String site: routersMap.keySet()) {
+      if(routersMap.get(site).contains(nodeName)) {
+        return site;
+      }
+    }
     return null;
   }
 

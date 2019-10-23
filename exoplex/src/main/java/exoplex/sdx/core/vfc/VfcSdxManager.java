@@ -25,9 +25,9 @@ import java.util.regex.Pattern;
 public class VfcSdxManager extends SdxManagerBase {
   final Logger logger = LogManager.getLogger(VfcSdxManager.class);
 
-  static String eRouterPattern = "(net.*)";
-  static String stosVlanPattern = "(^stitch_net.*_\\d+.*)";
-  static String routerPattern = "(net.*)";
+  static String eRouterPattern = "(vfc.*)";
+  static String stosVlanPattern = "(^stitch_vfc.*_\\d+.*)";
+  static String routerPattern = "(vfc.*)";
 
   @Inject
   public VfcSdxManager(Authority authority) {
@@ -42,7 +42,7 @@ public class VfcSdxManager extends SdxManagerBase {
       coreProperties.getExogeniKey(),
       coreProperties.getExogeniSm(),
       coreProperties.getSshKey());
-    serverSlice.loadSlice();
+    ((VfcSliceManager)serverSlice).loadSlice(coreProperties.getTopologyFile());
   }
 
   @Override
@@ -65,12 +65,9 @@ public class VfcSdxManager extends SdxManagerBase {
     bropattern) {
     logger.debug("Loading Sdx Network Topology");
     try {
-      Pattern pattern = Pattern.compile(routerpattern);
-      Pattern stitchpattern = Pattern.compile(stitchportpattern);
-      Pattern bropatn = Pattern.compile(bropattern);
       //Nodes: Get all router information
       for (String node : serverSlice.getComputeNodes()) {
-        if (pattern.matcher(node).find()) {
+        if (node.matches(routerpattern)) {
           putComputeNode(node);
           if (node.matches(eRouterPattern)) {
             putEdgeRouter(node);
@@ -86,13 +83,10 @@ public class VfcSdxManager extends SdxManagerBase {
           serverSlice.getLinkOfInterface(i),
           serverSlice.getMacAddressOfInterface(i)
         );
-        if (i.contains("node") || i.contains("bro")) {
-          continue;
-        }
         logger.debug(i);
         logger.debug("linkname: " + serverSlice.getLinkOfInterface(i) + " bandwidth: " +
           serverSlice.getBandwidthOfLink(serverSlice.getLinkOfInterface(i)));
-        if (ifs.contains(i) || !pattern.matcher(serverSlice.getNodeOfInterface(i)).find()) {
+        if (ifs.contains(i) || serverSlice.getNodeOfInterface(i).matches(routerpattern)) {
           logger.debug("continue");
           continue;
         }
@@ -121,8 +115,7 @@ public class VfcSdxManager extends SdxManagerBase {
       logger.debug("setting up sttichports");
       for (String sp : serverSlice.getStitchPorts()) {
         logger.debug(sp);
-        Matcher matcher = stitchpattern.matcher(sp);
-        if (!matcher.find()) {
+        if (!sp.matches(stitchportpattern)) {
           continue;
         }
         stitchports.add(sp);
@@ -273,7 +266,8 @@ public class VfcSdxManager extends SdxManagerBase {
       if (coreProperties.isSafeEnabled()) {
         res.put("safeKeyHash", safeManager.getSafeKeyHash());
       }
-      routingmanager.newExternalLink(logLink.getLinkName(),
+      routingmanager.newExternalLink(
+        logLink.getLinkName(),
         ip,
         logLink.getNodeA(),
         gateway,

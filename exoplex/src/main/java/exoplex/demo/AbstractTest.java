@@ -3,6 +3,7 @@ package exoplex.demo;
 import com.google.inject.Injector;
 import exoplex.client.exogeni.SdxExogeniClient;
 import exoplex.sdx.core.CoreProperties;
+import exoplex.sdx.core.SdxManagerBase;
 import exoplex.sdx.core.exogeni.ExoRestService;
 import exoplex.sdx.core.exogeni.ExoSdxManager;
 import exoplex.sdx.core.exogeni.ExoSdxServer;
@@ -18,7 +19,7 @@ import java.util.HashMap;
 
 public abstract class AbstractTest {
   final static Logger logger = LogManager.getLogger(AbstractTest.class);
-  public HashMap<String, ExoSdxManager> sdxManagerMap = new HashMap<>();
+  public HashMap<String, SdxManagerBase> sdxManagerMap = new HashMap<>();
   public HashMap<String, SdxExogeniClient> exogeniClients = new HashMap<>();
   public Injector injector;
   public boolean deleteSliceAfterTest = true;
@@ -94,8 +95,8 @@ public abstract class AbstractTest {
             if (reset) {
               coreProperties.setReset(true);
             }
-            ExoSdxManager exoSdxManager = exoSdxServer.run(coreProperties);
-            sdxManagerMap.put(slice, exoSdxManager);
+            SdxManagerBase sdxManager = exoSdxServer.run(coreProperties);
+            sdxManagerMap.put(slice, sdxManager);
           } catch (Exception e) {
             e.printStackTrace();
           }
@@ -117,7 +118,7 @@ public abstract class AbstractTest {
     startClients();
   }
 
-  public String getSafeServerIPfromSdxManager(ExoSdxManager exoSdxManager) {
+  public String getSafeServerIPfromSdxManager(SdxManagerBase exoSdxManager) {
     Method getSafeServerIP = null;
     try {
       getSafeServerIP = exoSdxManager.getClass().getDeclaredMethod("getSafeServerIP", null);
@@ -265,9 +266,9 @@ public abstract class AbstractTest {
         patterns.add(String.format(routeFlowPattern1, ip1));
       }
     }
-    for (ExoSdxManager exoSdxManager : sdxManagerMap.values()) {
+    for (SdxManagerBase sdxManager : sdxManagerMap.values()) {
       try {
-        exoSdxManager.logFlowTables(patterns, unWantedPatterns);
+        sdxManager.logFlowTables(patterns, unWantedPatterns);
       } catch (Exception e) {
         e.printStackTrace();
       }

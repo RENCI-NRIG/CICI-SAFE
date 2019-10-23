@@ -5,6 +5,7 @@ import com.google.inject.Inject;
 import com.google.inject.Injector;
 import exoplex.sdx.core.CoreProperties;
 import exoplex.sdx.core.SdxManagerBase;
+import exoplex.sdx.core.SdxServerBase;
 import exoplex.sdx.slice.vfc.VfcModule;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -21,7 +22,7 @@ import java.net.URI;
 /**
  * Main class.
  */
-public class VfcSdxServer {
+public class VfcSdxServer extends SdxServerBase {
   final static Logger logger = LogManager.getLogger(VfcSdxServer.class);
   VfcSdxManager vfcSdxManager;
 
@@ -37,6 +38,7 @@ public class VfcSdxServer {
     vfcSdxServer.run(new CoreProperties(args));
   }
 
+  @Override
   public HttpServer startServer(URI uri) {
     final MoxyJsonConfig moxyJsonConfig = new MoxyJsonConfig();
     final ContextResolver jsonConfigResolver = moxyJsonConfig.resolver();
@@ -51,7 +53,8 @@ public class VfcSdxServer {
     return GrizzlyHttpServerFactory.createHttpServer(uri, rc);
   }
 
-  public void run(CoreProperties coreProperties) throws
+  @Override
+  public SdxManagerBase run(CoreProperties coreProperties) throws
     Exception {
     System.out.println("starting exoplex.sdx server");
     vfcSdxManager.startSdxServer(coreProperties);
@@ -62,5 +65,6 @@ public class VfcSdxServer {
     VfcRestService.registerHttpServer(server);
     logger.debug("Sdx server has started, listening on " + coreProperties.getServerUrl());
     System.out.println("Sdx server has started, listening on " + coreProperties.getServerUrl());
+    return vfcSdxManager;
   }
 }

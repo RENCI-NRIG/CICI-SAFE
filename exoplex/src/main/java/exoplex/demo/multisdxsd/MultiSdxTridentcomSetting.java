@@ -13,7 +13,7 @@ public class MultiSdxTridentcomSetting extends MultiSdxSDLargeSetting {
   public void setting() {
     numSdx = 6;
     sliceNameSuffix = "tc";
-    clientArgs = new String[]{"-c", sdxSimpleDir +
+    clientArgs = new String[]{"-c", exoplexDir +
       "client-config/multisdx/client" + ".conf"};
 
     addSdxNeighbors();

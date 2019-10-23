@@ -128,10 +128,10 @@ public class CnertTestMain {
     //./scripts/sdxserver.sh -c config/sdx.conf
     if (reset) {
       ExoSdxServer exoSdxServer = sdxServerProvider.get();
-      exoSdxManager = exoSdxServer.run(new CoreProperties(arg2));
+      exoSdxManager = (ExoSdxManager) exoSdxServer.run(new CoreProperties(arg2));
     } else {
       ExoSdxServer exoSdxServer = sdxServerProvider.get();
-      exoSdxManager = exoSdxServer.run(new CoreProperties(arg1));
+      exoSdxManager = (ExoSdxManager) exoSdxServer.run(new CoreProperties(arg1));
     }
     sdx = exoSdxManager.getSliceName();
     SdxExogeniClient client1 = new SdxExogeniClient(new CoreProperties(clientarg1));

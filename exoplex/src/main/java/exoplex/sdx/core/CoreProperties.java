@@ -63,6 +63,7 @@ public class CoreProperties {
   private String routerSite = null;
   private boolean reset = false;
   private String command = null;
+  private String topologyFile = null;
   static private boolean routeAdvertise = false;
 
   public CoreProperties() {
@@ -196,6 +197,9 @@ public class CoreProperties {
     if (conf.hasPath("config.routeadvertise")) {
       setRouteAdvertise(conf.getBoolean("config.routeadvertise"));
     }
+    if (conf.hasPath("config.topofile")) {
+      setTopologyFile(conf.getString("config.topofile"));
+    }
     logger.debug(this.toString());
   }
 
@@ -248,6 +252,14 @@ public class CoreProperties {
   public void setRiakIp(String riakIp) {
     this.riakIp = riakIp;
     logger.debug(String.format("riakIp: %s", riakIp));
+  }
+
+  public String getTopologyFile() {
+    return this.topologyFile;
+  }
+
+  public void setTopologyFile(String file) {
+    this.topologyFile = file;
   }
 
   public boolean isSafeEnabled() {

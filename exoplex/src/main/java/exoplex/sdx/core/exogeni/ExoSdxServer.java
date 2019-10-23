@@ -6,6 +6,8 @@ import com.google.inject.Injector;
 import com.google.inject.Provider;
 import exoplex.demo.singlesdx.SingleSdxModule;
 import exoplex.sdx.core.CoreProperties;
+import exoplex.sdx.core.SdxManagerBase;
+import exoplex.sdx.core.SdxServerBase;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.glassfish.grizzly.http.server.HttpServer;
@@ -21,7 +23,7 @@ import java.net.URI;
 /**
  * Main class.
  */
-public class ExoSdxServer {
+public class ExoSdxServer extends SdxServerBase {
   final static Logger logger = LogManager.getLogger(ExoSdxServer.class);
   final Provider<ExoSdxManager> sdxManagerProvider;
 
@@ -36,6 +38,7 @@ public class ExoSdxServer {
     exoSdxServer.run(new CoreProperties(args));
   }
 
+  @Override
   public HttpServer startServer(URI uri) {
       final MoxyJsonConfig moxyJsonConfig = new MoxyJsonConfig();
       final ContextResolver jsonConfigResolver = moxyJsonConfig.resolver();
@@ -50,7 +53,8 @@ public class ExoSdxServer {
     return GrizzlyHttpServerFactory.createHttpServer(uri, rc);
   }
 
-  public ExoSdxManager run(CoreProperties coreProperties) throws
+  @Override
+  public SdxManagerBase run(CoreProperties coreProperties) throws
     Exception {
     System.out.println("starting exoplex.sdx server");
     ExoSdxManager exoSdxManager = sdxManagerProvider.get();

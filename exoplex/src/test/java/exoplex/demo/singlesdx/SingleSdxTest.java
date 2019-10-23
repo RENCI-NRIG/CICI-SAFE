@@ -70,7 +70,7 @@ public class SingleSdxTest extends AbstractTest {
   @Override
   public void startSdxServersAndClients(boolean reset) {
     super.startSdxServersAndClients(reset);
-    ExoSdxManager exoSdxManager = sdxManagerMap.values().iterator().next();
+    ExoSdxManager exoSdxManager = (ExoSdxManager) sdxManagerMap.values().iterator().next();
     String safeServerIp = getSafeServerIPfromSdxManager(exoSdxManager);
     setClientSafeServerIp(safeServerIp);
   }

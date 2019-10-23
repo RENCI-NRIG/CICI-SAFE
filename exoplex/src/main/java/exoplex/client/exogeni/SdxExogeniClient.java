@@ -343,7 +343,7 @@ public class SdxExogeniClient {
   }
 
   /**
-   * ["stitchvfc", "CNode1", site, vlan, 192.168.200.1/24, 192.168.200.2]
+   * ["stitchvfc", "CNode1", site, vlan, 192.168.200.2, 192.168.200.1/24]
    */
   private void processStitchVfcCmd(String[] params) {
     if (serverSlice == null) {
@@ -356,23 +356,23 @@ public class SdxExogeniClient {
     String nodeName = params[1];
     String site = params[2];
     String vlan = params[3];
-    String ip = params[4];
-    String gateway = params[5];
+    String gateway = params[4];
+    String vfcip = params[5];
     String stitchname =
-      "sp-" + nodeName + "-" + gateway.replace(".", "_") + "__" + ip.split("/")[1];
+      "sp-" + nodeName + "-" + gateway.replace(".", "_") + "__" + vfcip.split("/")[1];
     logger.info(logPrefix + "Stitching to Chameleon {" + "stitchname: " + stitchname + " vlan:" +
       vlan + " site: " + site + "}");
     String stitchport = site.toLowerCase().equals("tacc") ? STITCHPORT_TACC: STITCHPORT_UC;
     addStitchPort(stitchname, nodeName, stitchport, vlan, coreProperties.getBw());
     //configure ip address on the client node
-    String localIp = gateway + "/" + ip.split("/")[1];
-    logger.info(logPrefix + "set IP address of the stitch interface to " + ip);
+    String localIp = gateway + "/" + vfcip.split("/")[1];
+    logger.info(logPrefix + "set IP address of the stitch interface to " + vfcip);
     List<String> interfaces = serverSlice.getPhysicalInterfaces(nodeName);
     String newInterface = interfaces.get(interfaces.size() - 1);
     String result = serverSlice.runCmdNode(String.format("sudo ifconfig " +
         "%s %s", newInterface, localIp),
       nodeName, false);
-    String vfcGateway = params[4].split("/")[0];
+    String vfcGateway = vfcip.split("/")[0];
     setUpQuaggaRouting("192.168.1.1/16", vfcGateway, nodeName);
     //send stitch request to vfc server
     //post stitch request to SAFE
@@ -380,7 +380,7 @@ public class SdxExogeniClient {
     jsonparams.put("vfcsite", site);
     jsonparams.put("vlan", vlan);
     jsonparams.put("gateway", gateway);
-    jsonparams.put("ip", ip);
+    jsonparams.put("ip", vfcip);
     jsonparams.put("cslice", coreProperties.getSliceName());
     if (coreProperties.isSafeEnabled()) {
       checkSafe();
@@ -392,7 +392,7 @@ public class SdxExogeniClient {
     String r = HttpUtil.postJSON(coreProperties.getServerUrl() + "sdx/stitchvfc", jsonparams);
     logger.debug(r);
 
-    if (ping(nodeName, ip.split(":")[0])) {
+    if (ping(nodeName, vfcip.split(":")[0])) {
       logger.info(String.format("Ping to %s works", gateway));
       logger.info(logPrefix + "stitch completed.");
     } else {

@@ -1,23 +1,20 @@
-package exoplex.demo.singlesdx;
+package exoplex.demo.vfc;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.assistedinject.FactoryProvider;
 import exoplex.demo.AbstractTestSetting;
 import exoplex.demo.AbstractTestSlice;
-import exoplex.sdx.core.SdxServerBase;
-import exoplex.sdx.core.exogeni.ExoSdxServer;
 import exoplex.sdx.slice.SliceManagerFactory;
 import exoplex.sdx.slice.exogeni.ExoSliceManager;
 import safe.Authority;
 import safe.sdx.AuthorityMockSingleSdx;
 
-public class SingleSdxModule extends AbstractModule {
+public class VfcClientModule extends AbstractModule {
   @Override
   protected void configure() {
     bind(Authority.class).to(AuthorityMockSingleSdx.class);
-    bind(AbstractTestSetting.class).to(SingleSdxSetting.class);
-    bind(AbstractTestSlice.class).to(SingleSdxSlice.class);
-    bind(SdxServerBase.class).to(ExoSdxServer.class);
+    bind(AbstractTestSetting.class).to(VfcSdxSetting.class);
+    bind(AbstractTestSlice.class).to(VfcSdxSlice.class);
     bind(SliceManagerFactory.class).toProvider(FactoryProvider.newFactory(SliceManagerFactory
       .class, ExoSliceManager.class));
   }
