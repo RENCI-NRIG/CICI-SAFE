@@ -1,5 +1,6 @@
 This is the code repository for Exoplex. The SDN controller code we used are in ryu-apps. The SAFE enginer code is available at https://github.com/RENCI-NRIG/SAFE. The SAFE policy based routing scripts are available at https://github.com/yaoyj11/safe-multisdx
 # Exoplex
+Guide for running ExoPlex server based on VFC on Chameleon is available at https://github.com/RENCI-NRIG/CICI-SAFE/blob/vfc/vfc.md.
 ### 1. Compile code
 The java code is compiled with JDK8.
 1. Install Orca5 (https://github.com/RENCI-NRIG/orca5)
