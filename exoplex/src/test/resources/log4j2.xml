@@ -115,6 +115,9 @@
         <Logger name="exoplex.sdx.core.exogeni.ExoSdxManager" level="debug" additivity="false">
             <AppenderRef ref="Console"/>
         </Logger>
+        <Logger name="exoplex.sdx.core.exogeni.VfcSdxManager" level="debug" additivity="false">
+            <AppenderRef ref="Console"/>
+        </Logger>
         <Logger name="exoplex.sdx.core.exogeni.SliceHelper" level="info" additivity="false">
             <AppenderRef ref="Console"/>
         </Logger>
@@ -136,6 +139,7 @@
         </Logger>
         <Logger name="exoplex.sdx.core.CoreProperties" level="info" additivity="false">
             <AppenderRef ref="Console"/>
+            <AppenderRef ref="RollingFile"/>
         </Logger>
         <Logger name="exoplex.sdx.bro.BroManager" level="info" additivity="false">
             <AppenderRef ref="Console"/>
@@ -145,12 +149,6 @@
         </Logger>
         <Logger name="exoplex.client.exogeni.ExogeniClientSlice" level="info" additivity="false">
             <AppenderRef ref="Console"/>
-        </Logger>
-        <Logger name="exoplex.sdx.slice.exogeni.ExoSliceManager" level="warn" additivity="true">
-            <AppenderRef ref="Console"/>
-        </Logger>
-        <Logger name="exoplex.sdx.slice.exogeni.ExoSliceManager" level="debug" additivity="true">
-            <AppenderRef ref="RollingFile"/>
         </Logger>
         <Logger name="exoplex.sdx.network.RoutingManager" level="info" additivity="false">
             <AppenderRef ref="RoutingRollingFile"/>
@@ -169,6 +167,12 @@
             <AppenderRef ref="Console"/>
         </Logger>
         <Logger name="exoplex.sdx.slice.exogeni.ExoSliceManager" level="debug" additivity="true">
+            <AppenderRef ref="RollingFile"/>
+        </Logger>
+        <Logger name="exoplex.sdx.slice.exogeni.VfcSliceManager" level="warn" additivity="true">
+            <AppenderRef ref="Console"/>
+        </Logger>
+        <Logger name="exoplex.sdx.slice.exogeni.VfcSliceManager" level="debug" additivity="true">
             <AppenderRef ref="RollingFile"/>
         </Logger>
         <Logger name="exoplex.common.utils.Exec" level="debug" additivity="false">

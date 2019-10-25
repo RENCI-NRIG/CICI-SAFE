@@ -58,11 +58,11 @@ import java.util.stream.Collectors;
 
 public class ExoSdxManager extends SdxManagerBase {
   private static final String dpidPattern = "^[a-f0-9]{16}";
-  final Logger logger = LogManager.getLogger(ExoSdxManager.class);
 
   @Inject
   public ExoSdxManager(Authority authority) {
     super(authority);
+    logger = LogManager.getLogger(ExoSdxManager.class);
   }
 
   public String getSDNControllerIP() {
@@ -1270,7 +1270,7 @@ public class ExoSdxManager extends SdxManagerBase {
         + "ryu/ryu/app/ofctl_rest.py %s\"\n";
       // Set public url to plexus server
       if(coreProperties.isPlexusInSlice()) {
-          String publicUrl = "http://" + plexusip + ":8888";
+          String publicUrl = "http://" + plexusip + ":8888/";
           coreProperties.setPublicUrl(publicUrl);
       }      
       String sdxMonitorUrl = coreProperties.getPublicUrl() + "sdx/flow/packetin";

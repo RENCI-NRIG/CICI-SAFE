@@ -17,7 +17,7 @@ import java.util.List;
 
 
 public class CoreProperties {
-  static Logger logger = LogManager.getLogger(CoreProperties.class);
+  Logger logger = LogManager.getLogger(CoreProperties.class);
 
   private static String plexusImage = "yaoyj11/plexus-v3";
   private static String safeDockerImage = "safeserver-v8";
@@ -112,6 +112,10 @@ public class CoreProperties {
   private void readConfig(String configFilePath) {
     logger.info(String.format("Loading configuration from %s", configFilePath));
     File myConfigFile = new File(configFilePath);
+    if(! myConfigFile.exists()) {
+      logger.warn(String.format("Configuration file '%s' doesn't exists.", configFilePath));
+      System.exit(1);
+    }
     Config fileConfig = ConfigFactory.parseFile(myConfigFile);
     Config conf = ConfigFactory.load(fileConfig);
     if (conf.hasPath("config.bro")) {

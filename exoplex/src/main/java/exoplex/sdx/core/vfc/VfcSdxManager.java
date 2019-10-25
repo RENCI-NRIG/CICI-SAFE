@@ -23,7 +23,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class VfcSdxManager extends SdxManagerBase {
-  final Logger logger = LogManager.getLogger(VfcSdxManager.class);
 
   static String eRouterPattern = "(vfc.*)";
   static String stosVlanPattern = "(^stitch_vfc.*_\\d+.*)";
@@ -32,16 +31,17 @@ public class VfcSdxManager extends SdxManagerBase {
   @Inject
   public VfcSdxManager(Authority authority) {
     super(authority);
+    logger = LogManager.getLogger(VfcSdxManager.class);
   }
 
   @Override
   public void loadSlice() throws Exception {
     serverSlice = sliceManagerFactory.create(
       coreProperties.getSliceName(),
-      coreProperties.getExogeniKey(),
-      coreProperties.getExogeniKey(),
-      coreProperties.getExogeniSm(),
-      coreProperties.getSshKey());
+      "",
+      "",
+      "",
+      "");
     ((VfcSliceManager)serverSlice).loadSlice(coreProperties.getTopologyFile());
   }
 

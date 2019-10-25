@@ -2,7 +2,7 @@ package exoplex.sdx.slice.vfc;
 
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
-import com.hp.hpl.jena.tdb.store.Hash;
+
 import exoplex.sdx.network.NetworkManager;
 import exoplex.sdx.network.Router;
 import exoplex.sdx.slice.SliceManager;
@@ -32,8 +32,10 @@ public class VfcSliceManager extends SliceManager {
 
   @Inject
   public VfcSliceManager(@Assisted("sliceName") String sliceName,
-                         @Assisted("pem") String pemLocation, @Assisted("key") String keyLocation
-    , @Assisted("controller") String controllerUrl, @Assisted("ssh") String sshKey) {
+                         @Assisted("pem") String pemLocation,
+                         @Assisted("key") String keyLocation,
+                         @Assisted("controller") String controllerUrl,
+                         @Assisted("ssh") String sshKey) {
     super(sliceName, pemLocation, keyLocation, controllerUrl, sshKey);
     this.mocked = false;
     networkManager = new NetworkManager();

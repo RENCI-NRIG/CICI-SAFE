@@ -4,7 +4,9 @@ import com.google.inject.AbstractModule;
 import com.google.inject.assistedinject.FactoryProvider;
 import exoplex.demo.AbstractTestSetting;
 import exoplex.demo.AbstractTestSlice;
+import exoplex.sdx.core.SdxManagerBase;
 import exoplex.sdx.core.SdxServerBase;
+import exoplex.sdx.core.vfc.VfcSdxManager;
 import exoplex.sdx.core.vfc.VfcSdxServer;
 import exoplex.sdx.slice.SliceManagerFactory;
 import exoplex.sdx.slice.vfc.VfcSliceManager;
@@ -19,6 +21,7 @@ public class VfcSdxModule extends AbstractModule {
     bind(AbstractTestSetting.class).to(VfcSdxSetting.class);
     bind(AbstractTestSlice.class).to(VfcSdxSlice.class);
     bind(SdxServerBase.class).to(VfcSdxServer.class);
+    bind(SdxManagerBase.class).to(VfcSdxManager.class);
     bind(SliceManagerFactory.class).toProvider(FactoryProvider.newFactory(SliceManagerFactory
       .class, VfcSliceManager.class));
   }

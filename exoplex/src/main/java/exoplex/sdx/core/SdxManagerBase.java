@@ -51,7 +51,7 @@ import java.util.stream.Collectors;
 
 public class SdxManagerBase extends SliceHelper implements SdxManagerInterface {
   protected static final String dpidPattern = "^[a-f0-9]{16}";
-  final Logger logger = LogManager.getLogger(SdxManagerBase.class);
+  protected Logger logger = LogManager.getLogger(SdxManagerBase.class);
   protected final ReentrantLock iplock = new ReentrantLock();
   protected final ReentrantLock linklock = new ReentrantLock();
   protected final ReentrantLock nodelock = new ReentrantLock();

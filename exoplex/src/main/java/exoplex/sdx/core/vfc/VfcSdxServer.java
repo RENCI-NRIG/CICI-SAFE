@@ -1,12 +1,13 @@
 package exoplex.sdx.core.vfc;
 
+import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
+import exoplex.demo.vfc.VfcSdxModule;
 import exoplex.sdx.core.CoreProperties;
 import exoplex.sdx.core.SdxManagerBase;
 import exoplex.sdx.core.SdxServerBase;
-import exoplex.sdx.slice.vfc.VfcModule;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.glassfish.grizzly.http.server.HttpServer;
@@ -28,7 +29,7 @@ public class VfcSdxServer extends SdxServerBase {
 
   @Inject
   public VfcSdxServer() {
-    VfcModule vfcModule = new VfcModule();
+    AbstractModule vfcModule = new VfcSdxModule();
     Injector injector = Guice.createInjector(vfcModule);
     vfcSdxManager = (VfcSdxManager) injector.getInstance(SdxManagerBase.class);
   }
