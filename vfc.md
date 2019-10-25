@@ -41,7 +41,7 @@ Run SDN controller,
 
 ## 4. Start vfc server
 
-        ./scripts/vfcserver.sh -c vfcconfig/vfc.conf
+        ./scripts/vfcserver.sh -c vfc-config/vfc.conf
 
 ## 5. Stitch ExoGENI client slice to VFC
 
