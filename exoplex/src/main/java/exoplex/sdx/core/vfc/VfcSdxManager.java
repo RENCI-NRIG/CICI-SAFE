@@ -9,6 +9,7 @@ import exoplex.sdx.core.SdxManagerBase;
 import exoplex.sdx.core.restutil.NotifyResult;
 import exoplex.sdx.network.Link;
 import exoplex.sdx.network.SdnUtil;
+import exoplex.sdx.safe.SafeManager;
 import exoplex.sdx.slice.SliceManager;
 import exoplex.sdx.slice.vfc.VfcSliceManager;
 import org.apache.logging.log4j.LogManager;
@@ -49,7 +50,13 @@ public class VfcSdxManager extends SdxManagerBase {
   public void initializeSdx() throws Exception {
     SDNController = coreProperties.getSdnControllerIp() + ":8080";
     OVSController = coreProperties.getSdnControllerIp() + ":6653";
-    loadSdxNetwork(routerPattern, stitchPortPattern, broPattern);
+    if (coreProperties.isSafeEnabled()) {
+      if (coreProperties.isSafeInSlice()) {
+        coreProperties.setSafeServerIp(serverSlice.getManagementIP("safe-server"));
+      }
+      safeManager = new SafeManager(coreProperties.getSafeServerIp(), coreProperties.getSafeKeyFile(),
+        coreProperties.getSshKey(), true);
+    }
   }
 
   @Override
@@ -250,7 +257,8 @@ public class VfcSdxManager extends SdxManagerBase {
 
     logger.info(logPrefix + "new stitch request from " + customerSafeKeyHash + " for " + coreProperties.getSliceName() + " at " +
      site);
-    if (!coreProperties.isSafeEnabled() || safeManager.authorizeStitchRequest(customerSafeKeyHash, customerSlice)) {
+    if (!coreProperties.isSafeEnabled() || safeManager.authorizeChameleonStitchRequest(customerSafeKeyHash
+      , site, vlanTag)) {
       if (coreProperties.isSafeEnabled()) {
         logger.info("Authorized: stitch request for " + coreProperties.getSliceName());
       }

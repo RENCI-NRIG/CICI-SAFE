@@ -8,6 +8,7 @@ import com.google.inject.Inject;
 import com.google.inject.Injector;
 import exoplex.client.ClientHelper;
 import exoplex.common.utils.HttpUtil;
+import exoplex.common.utils.SafeUtils;
 import exoplex.demo.singlesdx.SingleSdxModule;
 import exoplex.sdx.advertise.PolicyAdvertise;
 import exoplex.sdx.advertise.RouteAdvertise;
@@ -385,6 +386,9 @@ public class SdxExogeniClient {
     if (coreProperties.isSafeEnabled()) {
       checkSafe();
       jsonparams.put("ckeyhash", safeManager.getSafeKeyHash());
+      postSafeStitchRequest(coreProperties.getSafeKeyHash(), jsonparams.getString("stitchport"), jsonparams
+        .getString
+          ("vlan"));
     } else {
       jsonparams.put("ckeyhash", coreProperties.getSliceName());
     }
@@ -398,6 +402,17 @@ public class SdxExogeniClient {
     } else {
       logger.warn(String.format("Ping to %s doesn't work", gateway));
     }
+  }
+
+  private boolean postSafeStitchRequest(String keyhash, String stitchport, String vlan) {
+    /** Post to remote safesets using apache httpclient */
+    String[] othervalues = new String[2];
+    othervalues[0] = stitchport;
+    othervalues[1] = vlan;
+    String message = SafeUtils.postSafeStatements(coreProperties.getSafeServer(),
+      "postChameleonStitchRequest", keyhash,
+      othervalues);
+    return !message.contains("fail");
   }
 
   private boolean addStitchPort(String spName, String nodeName, String stitchUrl, String vlan, long

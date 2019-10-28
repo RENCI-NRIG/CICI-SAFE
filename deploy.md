@@ -177,3 +177,4 @@ Authorities makes delegations to the client Key
 
         ./scripts/sdx_stitchport_client.sh -c chameleon-config/c1.conf -e "link 192.168.100.1/24 192.168.10.1/24"
 
+
