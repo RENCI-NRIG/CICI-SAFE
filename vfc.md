@@ -62,6 +62,7 @@ Run SDN controller,
 
 
 # Deploy SDX for VFC
+The process of deploying SDX for VFC is similar to the process of deploying ExoGENI-based SDX. The SAFE authorization related steps are exactly the same. 
 
 Install prerequisites
 
@@ -101,6 +102,7 @@ For security, plexus controller and safe server should only listen on localhost 
         sudo docker exec -itd safe /bin/bash -c  "cd /root/safe;sed -i 's/RIAKSERVER/$riak_ip/g' safe-server/src/main/resources/application.conf;./${SAFE_SCRIPT}"
 
 ###  b) deploy SDN controller
+The SDN controller of the switch on the VFC is fixed. 
 
         publicurl="http://${sdx_ip}:8888"
         sudo docker pull ${PLEXUSIMG}
@@ -144,7 +146,7 @@ For security, plexus controller and safe server should only listen on localhost 
                         "name": "net-exogeni-sc19-safe1",
                         "router": "vfc-1",
                         "site": "UC",
-                        "vlan": "3295"
+                        "vlan": "3297"
                 }
             },
             {
@@ -152,10 +154,12 @@ For security, plexus controller and safe server should only listen on localhost 
                         "name": "net-exogeni-sc19-safe2",
                         "router": "vfc-1",
                         "site": "UC",
-                        "vlan": "3293"
+                        "vlan": "3292"
                 }
             }
         ]
+
+The name of the router doesn't matter. The name of the stitch should start with "net".
 
 ## 5. start SDX server
 
@@ -177,7 +181,7 @@ Authorities makes delegations to the client Key
         SAFE_SERVER=localhost
         USERKEYHASH="MfIPn0qnsuGiJtb3xJyAUOB1dBmGw9IJm5-wKUgVOlU="
         USERSLICE=bob
-        USERIP="192.168.10.1/24"
+        USERIP="192.168.20.1/24"
         USERTAG="tag0"
         BIN_DIR=~/CICI-SAFE/exoplex/target/appassembler/bin
         ${BIN_DIR}/AuthorityMock auth ${USERKEYHASH} ${USERSLICE} ${USERIP} ${USERTAG} ${SAFE_SERVER}
@@ -224,14 +228,14 @@ Authorities makes delegations to the client Key
 
 ## 7. stitch to sdx
 
-        sudo ${BIN_DIR}/SafeSdxExogeniClient -c client-config/c0.conf -e "stitchvfc CNode0 UC 3293 192.168.10.2 192.168.10.1/24"
+        sudo ${BIN_DIR}/SafeSdxExogeniClient -c client-config/c0.conf -e "stitchvfc CNode1 UC 3297 192.168.10.2 192.168.10.1/24"
 
-        sudo ${BIN_DIR}/SafeSdxExogeniClient -c client-config/c1.conf -e "stitchvfc CNode0 UC 3295 192.168.20.2 192.168.20.1/24"
+        sudo ${BIN_DIR}/SafeSdxExogeniClient -c client-config/c1.conf -e "stitchvfc CNode1 UC 3292 192.168.20.2 192.168.20.1/24"
 
 ## 8. client advertise prefix
 
         sudo ${BIN_DIR}/SafeSdxExogeniClient -c client-config/c0.conf -e 'route 192.168.10.1/24 192.168.10.2'
-        sudo ${BIN_DIR}/SafeSdxExogeniClient -c client-config/c1.conf -e 'route 192.168.10.1/24 192.168.10.2'
+        sudo ${BIN_DIR}/SafeSdxExogeniClient -c client-config/c1.conf -e 'route 192.168.20.1/24 192.168.20.2'
 
 ## 9. both client request for connection [optional]
 
