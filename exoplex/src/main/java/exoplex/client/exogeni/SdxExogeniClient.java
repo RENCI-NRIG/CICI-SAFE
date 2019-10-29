@@ -386,10 +386,8 @@ public class SdxExogeniClient {
     if (coreProperties.isSafeEnabled()) {
       checkSafe();
       jsonparams.put("ckeyhash", safeManager.getSafeKeyHash());
-      postSafeStitchRequest(coreProperties.getSafeKeyHash(), jsonparams.getString("vfcsite"),
-        jsonparams
-        .getString
-          ("vlan"));
+      postSafeStitchRequest(jsonparams.getString("ckeyhash"), jsonparams.getString("vfcsite"),
+        jsonparams.getString("vlan"));
     } else {
       jsonparams.put("ckeyhash", coreProperties.getSliceName());
     }
@@ -405,10 +403,10 @@ public class SdxExogeniClient {
     }
   }
 
-  private boolean postSafeStitchRequest(String keyhash, String stitchport, String vlan) {
+  private boolean postSafeStitchRequest(String keyhash, String vfcSite, String vlan) {
     /** Post to remote safesets using apache httpclient */
     String[] othervalues = new String[2];
-    othervalues[0] = stitchport;
+    othervalues[0] = vfcSite;
     othervalues[1] = vlan;
     String message = SafeUtils.postSafeStatements(coreProperties.getSafeServer(),
       "postChameleonStitchRequest", keyhash,
