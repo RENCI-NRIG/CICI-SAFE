@@ -386,7 +386,8 @@ public class SdxExogeniClient {
     if (coreProperties.isSafeEnabled()) {
       checkSafe();
       jsonparams.put("ckeyhash", safeManager.getSafeKeyHash());
-      postSafeStitchRequest(coreProperties.getSafeKeyHash(), jsonparams.getString("stitchport"), jsonparams
+      postSafeStitchRequest(coreProperties.getSafeKeyHash(), jsonparams.getString("vfcsite"),
+        jsonparams
         .getString
           ("vlan"));
     } else {
