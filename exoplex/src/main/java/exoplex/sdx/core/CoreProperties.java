@@ -137,14 +137,14 @@ public class CoreProperties {
     if (conf.hasPath("config.slicename")) {
       setSliceName(conf.getString("config.slicename"));
     }
-    if (conf.hasPath("config.serversite")) {
-      setServerSite(SiteBase.get(conf.getString("config.serversite")));
+    if (conf.hasPath("config.safesite")) {
+      setServerSite(SiteBase.get(conf.getString("config.safesite")));
     }
     if (conf.hasPath("config.riak")) {
       setRiakIp(conf.getString("config.riak"));
     }
-    if (conf.hasPath("config.controllersite")) {
-      setSdnSite(SiteBase.get(conf.getString("config.controllersite")));
+    if (conf.hasPath("config.sdnsite")) {
+      setSdnSite(SiteBase.get(conf.getString("config.sdnsite")));
     }
     if (conf.hasPath("config.clientsites")) {
       String clientSitesStr = conf.getString("config.clientsites");
@@ -190,8 +190,8 @@ public class CoreProperties {
     if (conf.hasPath("config.resourcedir")) {
       setResourceDir(conf.getString("config.resourcedir"));
     }
-    if (conf.hasPath("config.routersite")) {
-      setRouterSite(conf.getString("config.routersite"));
+    if (conf.hasPath("config.clientsite")) {
+      setRouterSite(conf.getString("config.clientsite"));
     }
     if (conf.hasPath("config.routeadvertise")) {
       setRouteAdvertise(conf.getBoolean("config.routeadvertise"));
