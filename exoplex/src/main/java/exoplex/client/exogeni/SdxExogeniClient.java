@@ -395,11 +395,11 @@ public class SdxExogeniClient {
     String r = HttpUtil.postJSON(coreProperties.getServerUrl() + "sdx/stitchvfc", jsonparams);
     logger.debug(r);
 
-    if (ping(nodeName, vfcip.split(":")[0])) {
-      logger.info(String.format("Ping to %s works", gateway));
+    if (ping(nodeName, vfcGateway)) {
+      logger.info(String.format("Ping to %s works", vfcGateway));
       logger.info(logPrefix + "stitch completed.");
     } else {
-      logger.warn(String.format("Ping to %s doesn't work", gateway));
+      logger.warn(String.format("Ping to %s doesn't work", vfcGateway));
     }
   }
 

@@ -43,11 +43,11 @@ public class VfcSdxSetting extends AbstractTestSetting {
   public void addClientSites() {
     clientSites.add("UFL");
     sites.add("UC");
-    vlans.add("3293");
+    vlans.add("3297");
     //clientSites.add("UH");
     clientSites.add("UFL");
     sites.add("UC");
-    vlans.add("3295");
+    vlans.add("3294");
     //clientSites.add("UFL");
   }
 

@@ -7,11 +7,18 @@
         }
     },
     {
+        "router": {
+                "name": "vfc-1",
+                "dpid": "0000fe754c80b54d",
+                "site": "TACC"
+        }
+    },
+    {
         "stitch": {
                 "name": "net-exogeni-sc19-safe1",
                 "router": "vfc-1",
                 "site": "UC",
-                "vlan": "3295"
+                "vlan": "3297"
         }
     },
     {
@@ -19,7 +26,15 @@
                 "name": "net-exogeni-sc19-safe2",
                 "router": "vfc-1",
                 "site": "UC",
-                "vlan": "3293"
+                "vlan": "3294"
+        }
+    },
+    {
+        "stitch": {
+                "name": "net-exogeni-sc19-safe3",
+                "router": "vfc-1",
+                "site": "TACC",
+                "vlan": "3506"
         }
     }
 ]

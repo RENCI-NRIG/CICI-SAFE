@@ -154,6 +154,9 @@
             <AppenderRef ref="RoutingRollingFile"/>
             <AppenderRef ref="Console"/>
         </Logger>
+        <Logger name="exoplex.sdx.network.RoutingManager" level="debug" additivity="false">
+            <AppenderRef ref="RollingFile"/>
+        </Logger>
         <Logger name="exoplex.sdx.network.NetworkManager" level="info" additivity="false">
             <AppenderRef ref="NetworkRollingFile"/>
         </Logger>

@@ -133,6 +133,13 @@ public class VfcSdxManager extends SdxManagerBase {
   }
 
   @Override
+  protected void configRouter(String nodeName) {
+    logger.debug(String.format("Configuring router %s", nodeName));
+    String result = serverSlice.getDpid(nodeName, coreProperties.getSshKey());
+    routingmanager.newRouter(nodeName, result, null);
+  }
+
+  @Override
   protected void configRouters(SliceManager slice) {
     ArrayList<Thread> tlist = new ArrayList<>();
     for (String node : slice.getComputeNodes()) {
