@@ -297,6 +297,7 @@ class RestRouterAPI(app_manager.RyuApp):
 
     @set_ev_cls(ofp_event.EventOFPPacketIn, MAIN_DISPATCHER)
     def packet_in_handler(self, ev):
+        print("packet in handler")
         RouterController.packet_in_handler(ev.msg)
 
     #NOTE 0: yjyao
@@ -420,8 +421,10 @@ class RouterController(ControllerBase):
     @classmethod
     def packet_in_handler(cls, msg):
         dp_id = msg.datapath.id
+        print("RC packet in ")
         if dp_id in cls._ROUTER_LIST:
             router = cls._ROUTER_LIST[dp_id]
+            print("dispatch to router")
             router.packet_in_handler(msg)
 
     # GET /router/{switch_id}
@@ -627,7 +630,7 @@ class Router(dict):
     def packet_in_handler(self, msg):
         pkt = packet.Packet(msg.data)
         # TODO: Packet library convert to string
-        # self.logger.debug('Packet in = %s', str(pkt), self.sw_id)
+        self.logger.debug('Packet in', extra = self.sw_id)
         header_list = dict((p.protocol_name, p)
                            for p in pkt.protocols
                            if isinstance(p, packet_base.PacketBase))
@@ -1018,6 +1021,7 @@ class VlanRouter(object):
 
     def packet_in_handler(self, msg, header_list):
         # Check invalid TTL (for OpenFlow V1.2/1.3)
+        print("VR packet in")
         ofproto = self.dp.ofproto
         if ofproto.OFP_VERSION == ofproto_v1_2.OFP_VERSION or \
                 ofproto.OFP_VERSION == ofproto_v1_3.OFP_VERSION:
@@ -1027,6 +1031,7 @@ class VlanRouter(object):
 
         # Analyze event type.
         if ARP in header_list:
+            print("VR arp in")
             self._packetin_arp(msg, header_list)
             return
 
@@ -1047,16 +1052,25 @@ class VlanRouter(object):
                 return
 
     def get_mac(self, in_port):
-        src_mac = self.port_data[in_port].mac
-        if src_mac == "00:00:00:00:00:00" and in_port < 4000:
-            p1 = "{}".format(hex(in_port/100)).replace("0x", "")
-            p2 = "{}".format(hex(in_port%100)).replace("0x", "")
-            src_mac = "{}:{}:{}".format(MAC_PREFIX, p1, p2)
+        try:
+            src_mac = self.port_data[in_port].mac
+            if src_mac == "00:00:00:00:00:00":
+                p1 = "{}".format(hex((in_port%10000)/100)).replace("0x", "")
+                p2 = "{}".format(hex(in_port%100)).replace("0x", "")
+                src_mac = "{}:{}:{}".format(MAC_PREFIX, p1, p2)
+            print("mac for {} is {}".format(in_port, src_mac))
+        except:
+            print("exception when getting mac for inport {} ".format(in_port))
+            return "00:00:00:00:00:00"
         return src_mac
 
     def _packetin_arp(self, msg, header_list):
+        print("src_ip {}".format(header_list[ARP].src_ip))
         src_addr = self.address_data.get_data(ip=header_list[ARP].src_ip)
+        print("VR _packetin_arp {}".format(src_addr))
         if src_addr is None:
+            for key in self.address_data:
+                print("{} -> {}".format(key, self.address_data[key]))
             return
 
         # case: Receive ARP from the gateway
@@ -1074,6 +1088,7 @@ class VlanRouter(object):
         srcip = ip_addr_ntoa(src_ip)
         dstip = ip_addr_ntoa(dst_ip)
         rt_ports = self.address_data.get_default_gw()
+        self.logger.info("receive arp packet from inport {}".format(in_port), extra=self.sw_id)
 
         if src_ip == dst_ip:
             # GARP -> packet forward (normal)
@@ -1235,17 +1250,24 @@ class VlanRouter(object):
             self.send_arp_request(address.default_gw, gateway)
 
     def send_arp_request(self, src_ip, dst_ip, in_port=None):
+        self.logger.info("send arp request srcip {} dst_ip {} in_port {}".format(src_ip,
+                        dst_ip, in_port), extra = self.sw_id)
         # Send ARP request from all ports.
+#        self.port_data[3506] = Port(3506, "00:00:00:00:00:00")
         for send_port in self.port_data.values():
+            self.logger.info("port no {}".format(send_port.port_no), extra = self.sw_id)
+
+            if send_port.port_no == 4294967294:
+                self.logger.info("skip send arp request from port 4294967294", extra = self.sw_id)
+                continue
             if in_port is None or in_port != send_port.port_no:
-                if send_port.port_no > 4000:
-                    src_mac = send_port.mac
-                else:
-                    src_mac = self.get_mac(send_port.port_no)
+                src_mac = self.get_mac(send_port.port_no)
                 dst_mac = mac_lib.BROADCAST_STR
                 arp_target_mac = mac_lib.DONTCARE_STR
                 inport = self.ofctl.dp.ofproto.OFPP_CONTROLLER
                 output = send_port.port_no
+                self.logger.info("      send arp request srcip {} dst_ip {} in_port {}, src_mac {} dst_mac {}, inport {} outport {}".format(src_ip,
+                                dst_ip, in_port, src_mac, dst_mac, inport, output), extra = self.sw_id)
                 self.ofctl.send_arp(arp.ARP_REQUEST, self.vlan_id,
                                     src_mac, dst_mac, src_ip, dst_ip,
                                     arp_target_mac, inport, output)
@@ -1387,6 +1409,7 @@ class AddressData(dict):
         ip_str = ip_addr_ntoa(nw_addr)
         key = '%s/%d' % (ip_str, mask)
         self[key] = address
+        print("add address data {} {}".format(key, address))
 
         self.address_id += 1
         self.address_id &= UINT32_MAX

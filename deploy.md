@@ -178,3 +178,22 @@ Authorities makes delegations to the client Key
         ./scripts/sdx_stitchport_client.sh -c chameleon-config/c1.conf -e "link 192.168.100.1/24 192.168.10.1/24"
 
 
+# Configure routing with Quagga on client nodes
+   We can configure routin on client nodes with quagga/zebra.
+
+## Install Quagga
+
+        sudo apt install -y quagga
+
+## Enable zebra
+
+        sudo echo "zebra=yes" >> /etc/quagga/daemons
+
+## Set up routing with zebra
+
+        # Assume that the gateway IP address is 192.168.10.1
+        sudo echo "ip route 192.168.0.0/16 192.168.10.1"
+
+        # In old versions of Quaaga, this could be "service quagga restart"
+        sudo service zebra restart
+

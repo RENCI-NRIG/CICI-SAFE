@@ -579,7 +579,6 @@ public class SdxExogeniClient {
         logger.warn(logPrefix + "stitch request failed");
       } else {
         String ip = params[2] + "/" + params[3].split("/")[1];
-        logger.info(logPrefix + "set IP address of the stitch interface to " + ip);
         List<String> interfaces = serverSlice.getPhysicalInterfaces(nodeName);
         while (interfaces.size() <= interfaceNum) {
           sleep(5);
@@ -588,18 +587,19 @@ public class SdxExogeniClient {
             "interfaces: %s", interfaces.size()));
         }
         String newInterface = interfaces.get(interfaces.size() - 1);
-
-        String mip = serverSlice.getManagementIP(nodeName);
-        String result = serverSlice.runCmdNode(String.format("sudo ifconfig " +
-            "%s %s", newInterface, ip),
-          nodeName, false);
-        String gateway = params[3].split("/")[0];
-        setUpQuaggaRouting("192.168.1.1/16", gateway, nodeName);
-        if (ping(nodeName, gateway)) {
-          logger.info(String.format("Ping to %s works", gateway));
-          logger.info(logPrefix + "stitch completed.");
+        if(coreProperties.getQuaggaRoute()) {
+          logger.info(logPrefix + "set IP address of the stitch interface to " + ip);
+          String result = serverSlice.runCmdNode(String.format("sudo ifconfig " + "%s %s", newInterface, ip), nodeName, false);
+          String gateway = params[3].split("/")[0];
+          setUpQuaggaRouting("192.168.1.1/16", gateway, nodeName);
+          if (ping(nodeName, gateway)) {
+            logger.info(String.format("Ping to %s works", gateway));
+            logger.info(logPrefix + "stitch completed.");
+          } else {
+            logger.warn(String.format("Ping to %s doesn't work", gateway));
+          }
         } else {
-          logger.warn(String.format("Ping to %s doesn't work", gateway));
+          serverSlice.runCmdSlice("/bin/bash ~/ovsbridge.sh", coreProperties.getSshKey(), "CNode1", true);
         }
         return ip.split("/")[0];
       }

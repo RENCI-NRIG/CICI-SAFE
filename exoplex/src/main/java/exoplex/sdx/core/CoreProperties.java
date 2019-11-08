@@ -64,6 +64,8 @@ public class CoreProperties {
   private boolean reset = false;
   private String command = null;
   private String topologyFile = null;
+  private int numClientNode = 1;
+  private boolean quaggaRoute = true;
   static private boolean routeAdvertise = false;
 
   public CoreProperties() {
@@ -142,6 +144,9 @@ public class CoreProperties {
     if (conf.hasPath("config.slicename")) {
       setSliceName(conf.getString("config.slicename"));
     }
+    if (conf.hasPath("config.numclient")) {
+      setNumClientNode(conf.getInt("config.numclient"));
+    }
     if (conf.hasPath("config.safesite")) {
       setServerSite(SiteBase.get(conf.getString("config.safesite")));
     }
@@ -150,6 +155,9 @@ public class CoreProperties {
     }
     if (conf.hasPath("config.sdnsite")) {
       setSdnSite(SiteBase.get(conf.getString("config.sdnsite")));
+    }
+    if (conf.hasPath("config.quaggaroute")) {
+      setQuaggaRoute(conf.getBoolean("config.quaggaroute"));
     }
     if (conf.hasPath("config.clientsites")) {
       String clientSitesStr = conf.getString("config.clientsites");
@@ -258,6 +266,14 @@ public class CoreProperties {
     logger.debug(String.format("riakIp: %s", riakIp));
   }
 
+  public void setQuaggaRoute(boolean autoRoute) {
+    this.quaggaRoute = autoRoute;
+  }
+
+  public boolean getQuaggaRoute() {
+    return quaggaRoute;
+  }
+
   public String getTopologyFile() {
     return this.topologyFile;
   }
@@ -297,6 +313,14 @@ public class CoreProperties {
   public void setSliceName(String sliceName) {
     this.sliceName = sliceName;
     logger.debug(String.format("%s: %s", "config.slicename", sliceName));
+  }
+
+  public void setNumClientNode(int num) {
+    this.numClientNode = num;
+  }
+
+  public int getNumClientNode() {
+    return this.numClientNode;
   }
 
   public String getSdnControllerIp() {

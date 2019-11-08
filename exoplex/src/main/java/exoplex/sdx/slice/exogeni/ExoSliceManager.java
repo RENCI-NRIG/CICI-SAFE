@@ -919,11 +919,15 @@ public class ExoSliceManager extends SliceManager {
     ComputeNode node_2 = (ComputeNode) slice.getResourceByName(node2);
     Network net = slice.addBroadcastLink(linkName, bw);
     InterfaceNode2Net ifaceNode0 = (InterfaceNode2Net) net.stitch(node_1);
-    ifaceNode0.setIpAddress(ip1);
-    ifaceNode0.setNetmask(netmask);
+    if(ip1 != null) {
+      ifaceNode0.setIpAddress(ip1);
+      ifaceNode0.setNetmask(netmask);
+    }
     InterfaceNode2Net ifaceNode1 = (InterfaceNode2Net) net.stitch(node_2);
-    ifaceNode1.setIpAddress(ip2);
-    ifaceNode1.setNetmask(netmask);
+    if(ip2 != null) {
+      ifaceNode1.setIpAddress(ip2);
+      ifaceNode1.setNetmask(netmask);
+    }
   }
 
   synchronized public void addLink(String linkName, String
