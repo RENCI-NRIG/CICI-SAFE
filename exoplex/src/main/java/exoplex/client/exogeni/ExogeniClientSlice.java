@@ -62,6 +62,10 @@ public class ExogeniClientSlice extends SliceHelper {
         checkSafeServer(safeIp, coreProperties.getRiakIp());
       }
       checkScripts(c1, "CNode1");
+      for(int i = 2; i <= coreProperties.getNumClientNode(); i ++) {
+        c1.runCmdNode(String.format("sudo ifconfig ens6 %s",
+          IPPrefix + curip + "." + (9 + i) + "/24"), "CNode" + i);
+      }
       configRouting(c1);
       logger.info("Slice active now: " + coreProperties.getSliceName());
       c1.printNetworkInfo();
@@ -88,7 +92,7 @@ public class ExogeniClientSlice extends SliceHelper {
       c1.runCmdSlice(Scripts.enableZebra(), coreProperties.getSshKey(), "CNode\\d+", true);
       String Prefix = coreProperties.getIpPrefix().split("/")[0];
       String mip = c1.getManagementIP("CNode1");
-      Exec.sshExec(SliceProperties.userName, mip, "sudo bash -c \"echo \"ip route 192.168.1.1/16 " + Prefix + "\" >>/etc/quagga/zebra.conf\"", coreProperties.getSshKey());
+      Exec.sshExec(SliceProperties.userName, mip, "sudo bash -c \"echo 'ip route 192.168.1.1/16 " + Prefix + "' >>/etc/quagga/zebra.conf\"", coreProperties.getSshKey());
       Exec.sshExec(SliceProperties.userName, mip, Scripts.enableZebra(), coreProperties.getSshKey());
       Exec.sshExec(SliceProperties.userName, mip, Scripts.restartQuagga(), coreProperties.getSshKey());
     } else {
@@ -101,9 +105,8 @@ public class ExogeniClientSlice extends SliceHelper {
         coreProperties.getSshKey(), "CNode\\d+", true);
 
       String Prefix = coreProperties.getIpPrefix().split("/")[0];
-      String mip = c1.getManagementIP("CNode1");
       String workerPattern = "CNode[2-9]\\d*";
-      c1.runCmdSlice("sudo bash -c \"echo \"ip route 192.168.1.1/16 " + Prefix + "\" >>/etc/quagga/zebra" +
+      c1.runCmdSlice("sudo bash -c \"echo 'ip route 192.168.1.1/16 " + Prefix + "' >>/etc/quagga/zebra" +
       ".conf\"", coreProperties.getSshKey(), workerPattern, true);
       c1.runCmdSlice(Scripts.enableZebra(), coreProperties.getSshKey(), workerPattern, true);
       c1.runCmdSlice(Scripts.restartQuagga(), coreProperties.getSshKey(), workerPattern, true);
@@ -174,8 +177,8 @@ public class ExogeniClientSlice extends SliceHelper {
       for (int i = 1; i < nodelist.size(); i++) {
         s.addLink("clink" + (i + 1),
           null,
-          IPPrefix + start + "." + (i + 10),
-          "255.255.255.0",
+          null,
+          null,
           nodelist.get(0),
           nodelist.get(i),
           bw
