@@ -106,14 +106,13 @@ class SimpleSwitch13(app_manager.RyuApp):
             # verify if we have a valid buffer_id, if yes avoid to send both
             # flow_mod & packet_out
             if msg.buffer_id != ofproto.OFP_NO_BUFFER:
-                self.add_flow(datapath, 1, match, actions, msg.buffer_id)
-                return
+                self.add_flow(datapath, 2000, match, actions, msg.buffer_id)
             else:
-                self.add_flow(datapath, 1, match, actions)
-        data = None
-        if msg.buffer_id == ofproto.OFP_NO_BUFFER:
-            data = msg.data
+                self.add_flow(datapath, 2000, match, actions)
+        #data = None
+        #if msg.buffer_id == ofproto.OFP_NO_BUFFER:
+        data = msg.data
 
-        out = parser.OFPPacketOut(datapath=datapath, buffer_id=msg.buffer_id,
+        out = parser.OFPPacketOut(datapath=datapath, buffer_id=ofproto.OFP_NO_BUFFER,
                                   in_port=in_port, actions=actions, data=data)
         datapath.send_msg(out)
