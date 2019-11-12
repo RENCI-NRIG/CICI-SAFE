@@ -114,9 +114,12 @@ public class SdxStitchPortClient {
     JSONObject paramsobj = new JSONObject();
     paramsobj.put("dest", params[1]);
     paramsobj.put("gateway", params[2]);
-    coreProperties.setSafeKeyHash(SafeUtils.getPrincipalId(coreProperties.getSafeServer(),
-      coreProperties.getSafeKeyFile()));
-    paramsobj.put("customer", coreProperties.getSafeKeyHash());
+    if(coreProperties.isSafeEnabled()) {
+      coreProperties.setSafeKeyHash(SafeUtils.getPrincipalId(coreProperties.getSafeServer(), coreProperties.getSafeKeyFile()));
+      paramsobj.put("customer", coreProperties.getSafeKeyHash());
+    } else {
+      paramsobj.put("customer", coreProperties.getSafeKeyFile());
+    }
     String res = HttpUtil.postJSON(coreProperties.getServerUrl() + "sdx/notifyprefix", paramsobj);
     if (res.equals("")) {
       logger.debug("Prefix notifcation failed");

@@ -58,6 +58,10 @@ import java.util.stream.Collectors;
 
 public class ExoSdxManager extends SdxManagerBase {
   private static final String dpidPattern = "^[a-f0-9]{16}";
+  static final String STITCHPORT_TACC = "http://geni-orca.renci.org/owl/ion" +
+    ".rdf#AL2S/TACC/Cisco/6509/TenGigabitEthernet/1/1";
+  static final String STITCHPORT_UC = "http://geni-orca.renci.org/owl/ion" +
+    ".rdf#AL2S/Chameleon/Cisco/6509/GigabitEthernet/1/1";
 
   @Inject
   public ExoSdxManager(Authority authority) {
@@ -1185,11 +1189,15 @@ public class ExoSdxManager extends SdxManagerBase {
   }
 
   @Override
-  synchronized public String stitchChameleon(String site, String nodeName, String customer_keyhash, String
-    stitchport,
-                                             String vlan, String gateway, String ip) {
+  synchronized public String stitchChameleon(String site, String nodeName, String customer_keyhash,
+    String stitchport, String vlan, String gateway, String ip) {
     String res = "Stitch request unauthorized";
     String sdxsite = SiteBase.get(site);
+    if (stitchport.toLowerCase().equals("tacc")) {
+      stitchport = STITCHPORT_TACC;
+    } else if(stitchport.toLowerCase().equals("uc")) {
+      stitchport = STITCHPORT_UC;
+    }
     if (!coreProperties.isSafeEnabled() || safeManager.authorizeChameleonStitchRequest(customer_keyhash, stitchport,
       vlan)) {
       //FIX ME: do stitching
