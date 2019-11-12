@@ -1,10 +1,11 @@
-package exoplex.sdx.core;
+package exoplex.sdx.core.exogeni;
 
 import com.google.inject.Guice;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
 import exoplex.common.utils.PathUtil;
 import exoplex.demo.singlesdx.SingleSdxModule;
+import exoplex.sdx.core.CoreProperties;
 import exoplex.sdx.network.Link;
 import exoplex.sdx.safe.SafeManager;
 import exoplex.sdx.slice.Scripts;
@@ -39,7 +40,6 @@ public class SliceHelper {
   protected String mask = "/24";
   protected Authority authority;
   protected CoreProperties coreProperties;
-
   protected HashMap<String, Link> links = new HashMap<String, Link>();
   protected HashMap<String, ArrayList<String>> computenodes = new HashMap<String,
     ArrayList<String>>();

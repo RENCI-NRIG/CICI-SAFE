@@ -6,12 +6,12 @@ import org.apache.commons.lang3.tuple.ImmutablePair;
 import java.util.Arrays;
 
 public class MultiSdxSDSetting extends AbstractTestSetting {
-  public String sdxConfigDir = sdxSimpleDir + "config/multisdx/";
+  public String sdxConfigDir = exoplexDir + "config/multisdx/";
   public boolean explicitConnectionRequest = false;
 
   public MultiSdxSDSetting() {
     numSdx = 4;
-    clientArgs = new String[]{"-c", sdxSimpleDir +
+    clientArgs = new String[]{"-c", exoplexDir +
       "client-config/multisdx/client" + ".conf"};
     sliceNameSuffix = "tc";
 

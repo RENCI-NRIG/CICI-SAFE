@@ -560,7 +560,10 @@ public class ExoSliceManager extends SliceManager {
   synchronized public boolean waitTillActive(int interval, List<String> resources) throws Exception {
     logger.info("Wait until following resources are active: " + String.join(",", resources));
     reloadSlice();
-    while (true) {
+    int times = 0;
+    int TOTALTIME = 3600;
+    while (times * interval < TOTALTIME) {
+      times ++;
       ArrayList<String> activeResources = new ArrayList<>();
       refresh();
       logger.debug("ExoSliceManager: " + getAllResources());
@@ -568,8 +571,9 @@ public class ExoSliceManager extends SliceManager {
         logger.debug(String.format("[%s] Resource: %s , state: %s  site: %s", sliceName, c,
           getState(c), getNodeDomain(c)));
         if (resources.contains(c)) {
-          if (getState(c).contains("Closed")) {
-            throw new Exception(String.format("Slice %s closed", sliceName));
+          if (getState(c).contains("Closed") || getState(c).contains("Failed")) {
+            logger.warn(String.format("Slice %s closed", sliceName));
+            return false;
           }
           if (!getState(c).equals("Active") || getManagementIP(c) == null) {
           } else {
@@ -605,6 +609,10 @@ public class ExoSliceManager extends SliceManager {
       } catch (Exception e) {
         e.printStackTrace();
       }
+    }
+    if(times * interval >= TOTALTIME) {
+      logger.warn(String.format("Slice not active after %s seconds", 500 * interval));
+      return false;
     }
     for (String n : getComputeNodes()) {
       logger.debug("ComputeNode: " + n + ", Managment IP =  " + getManagementIP(n));
@@ -911,11 +919,15 @@ public class ExoSliceManager extends SliceManager {
     ComputeNode node_2 = (ComputeNode) slice.getResourceByName(node2);
     Network net = slice.addBroadcastLink(linkName, bw);
     InterfaceNode2Net ifaceNode0 = (InterfaceNode2Net) net.stitch(node_1);
-    ifaceNode0.setIpAddress(ip1);
-    ifaceNode0.setNetmask(netmask);
+    if(ip1 != null) {
+      ifaceNode0.setIpAddress(ip1);
+      ifaceNode0.setNetmask(netmask);
+    }
     InterfaceNode2Net ifaceNode1 = (InterfaceNode2Net) net.stitch(node_2);
-    ifaceNode1.setIpAddress(ip2);
-    ifaceNode1.setNetmask(netmask);
+    if(ip2 != null) {
+      ifaceNode1.setIpAddress(ip2);
+      ifaceNode1.setNetmask(netmask);
+    }
   }
 
   synchronized public void addLink(String linkName, String

@@ -1,6 +1,6 @@
 package exoplex.sdx.bro;
 
-import exoplex.sdx.core.SdxManager;
+import exoplex.sdx.core.exogeni.ExoSdxManager;
 import exoplex.sdx.network.RoutingManager;
 import exoplex.sdx.slice.SliceManager;
 import org.apache.logging.log4j.LogManager;
@@ -18,16 +18,16 @@ public class BroManager {
   private final ReentrantLock ticketLock = new ReentrantLock();
   SliceManager slice = null;
   RoutingManager networkManager = null;
-  SdxManager sdxManager = null;
+  ExoSdxManager exoSdxManager = null;
   private HashMap<String, Long> requiredbw = new HashMap<>();
   private HashMap<String, ArrayList<BroInstance>> routerBroMap = new HashMap<>();
   private LinkedList<BroFlow> jobQueue = new LinkedList<BroFlow>();
   private HashMap<String, Long> tickedBroCapacity = new HashMap<>();
 
-  public BroManager(SliceManager slice, RoutingManager networkManager, SdxManager sdxManager) {
+  public BroManager(SliceManager slice, RoutingManager networkManager, ExoSdxManager exoSdxManager) {
     this.slice = slice;
     this.networkManager = networkManager;
-    this.sdxManager = sdxManager;
+    this.exoSdxManager = exoSdxManager;
   }
 
   public void reset() {
@@ -61,7 +61,7 @@ public class BroManager {
         }
         String ip = null;
         try {
-          ip = sdxManager.deployBro(routerName);
+          ip = exoSdxManager.deployBro(routerName);
         } catch (Exception e) {
           e.printStackTrace();
           try {
@@ -100,11 +100,11 @@ public class BroManager {
       for (BroFlow f : jobQueue) {
         BroInstance bro = getBroInstance(f.bw, f.routerName);
         if (bro != null) {
-          String dpid = sdxManager.getDPID(f.routerName);
+          String dpid = exoSdxManager.getDPID(f.routerName);
           String gw = bro.getIP();
           bro.addBroFlow(f);
-          String res = networkManager.setMirror(sdxManager.getSDNController(), dpid, f.src, f.dst, gw);
-          res += networkManager.setMirror(sdxManager.getSDNController(), dpid, f.dst, f.src, gw);
+          String res = networkManager.setMirror(exoSdxManager.getSDNController(), dpid, f.src, f.dst, gw);
+          res += networkManager.setMirror(exoSdxManager.getSDNController(), dpid, f.dst, f.src, gw);
           logger.info("Excuting job: " + f.src + " " + f.dst + " " + f.bw + ": \n" + res);
           toRemove.add(f);
         }

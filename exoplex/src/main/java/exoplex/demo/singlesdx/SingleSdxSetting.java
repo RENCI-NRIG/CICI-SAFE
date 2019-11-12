@@ -5,11 +5,11 @@ import exoplex.demo.AbstractTestSetting;
 import java.util.Arrays;
 
 public class SingleSdxSetting extends AbstractTestSetting {
-  public final String sdxConfigDir = sdxSimpleDir + "config/singlesdx/";
+  public final String sdxConfigDir = exoplexDir + "config/singlesdx/";
   public String sliceNameSuffix = "test";
 
   public SingleSdxSetting() {
-    clientArgs = new String[]{"-c", sdxSimpleDir +
+    clientArgs = new String[]{"-c", exoplexDir +
       "client-config/singlesdx/client" + ".conf"};
     numSdx = 1;
 

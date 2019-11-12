@@ -4,6 +4,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 
 public class Router {
@@ -14,7 +15,7 @@ public class Router {
   String domain;
 
   HashSet<String> interfaces = new HashSet<String>();
-  HashSet<String> customergateways = new HashSet<>();
+  HashMap<String, String> customergateways = new HashMap<>();
 
   public Router(String rid, String switch_id, String ip) {
     routerName = rid;
@@ -42,9 +43,9 @@ public class Router {
     interfaces.remove(interfaceName);
   }
 
-  public void addGateway(String gw) {
+  public void addGateway(String linkName, String gw) {
     logger.debug("Gateway " + gw + " added to " + routerName);
-    customergateways.add(gw);
+    customergateways.put(linkName, gw);
   }
 
   public void delGateway(String gw) {
@@ -52,7 +53,12 @@ public class Router {
   }
 
   public boolean hasGateway(String gw) {
-    return customergateways.contains(gw);
+    return customergateways.containsValue(gw);
+  }
+
+
+  public String getGateWay(String linkName) {
+    return customergateways.getOrDefault(linkName, null);
   }
 
   public boolean hasIP(String ip) {

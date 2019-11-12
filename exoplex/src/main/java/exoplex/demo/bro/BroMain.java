@@ -4,7 +4,7 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import exoplex.demo.multisdx.MultiSdxModule;
 import exoplex.sdx.core.CoreProperties;
-import exoplex.sdx.core.SdxManager;
+import exoplex.sdx.core.exogeni.ExoSdxManager;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -16,7 +16,7 @@ import java.util.List;
 
 public class BroMain {
   final static Logger logger = LogManager.getLogger(BroMain.class);
-  static SdxManager sdxManager;
+  static ExoSdxManager exoSdxManager;
   static BroExperiment broExp;
   static int flowStart = 0;
   static int flowEnd = 1500;
@@ -42,18 +42,18 @@ public class BroMain {
     Injector injector = Guice.createInjector(new MultiSdxModule());
 
     String[] arg1 = {"-c", "config/cnert-renci-sl.conf"};
-    sdxManager = injector.getInstance(SdxManager.class);
-    sdxManager.startSdxServer(new CoreProperties(args));
-    sdxManager.notifyPrefix("192.168.10.1/24", "192.168.10.2", "notused");
-    sdxManager.notifyPrefix("192.168.20.1/24", "192.168.20.2", "notused");
-    sdxManager.notifyPrefix("192.168.30.1/24", "192.168.30.2", "notused");
-    sdxManager.notifyPrefix("192.168.40.1/24", "192.168.40.2", "notused");
-    reconfigureSdxNetwork(sdxManager);
-    broExp = new BroExperiment(sdxManager);
-    broExp.addClient("node0", sdxManager.getManagementIP("node0"), "192.168.10.2");
-    broExp.addClient("node1", sdxManager.getManagementIP("node1"), "192.168.20.2");
-    broExp.addClient("node2", sdxManager.getManagementIP("node2"), "192.168.30.2");
-    broExp.addClient("node3", sdxManager.getManagementIP("node3"), "192.168.40.2");
+    exoSdxManager = injector.getInstance(ExoSdxManager.class);
+    exoSdxManager.startSdxServer(new CoreProperties(args));
+    exoSdxManager.notifyPrefix("192.168.10.1/24", "192.168.10.2", "notused");
+    exoSdxManager.notifyPrefix("192.168.20.1/24", "192.168.20.2", "notused");
+    exoSdxManager.notifyPrefix("192.168.30.1/24", "192.168.30.2", "notused");
+    exoSdxManager.notifyPrefix("192.168.40.1/24", "192.168.40.2", "notused");
+    reconfigureSdxNetwork(exoSdxManager);
+    broExp = new BroExperiment(exoSdxManager);
+    broExp.addClient("node0", exoSdxManager.getManagementIP("node0"), "192.168.10.2");
+    broExp.addClient("node1", exoSdxManager.getManagementIP("node1"), "192.168.20.2");
+    broExp.addClient("node2", exoSdxManager.getManagementIP("node2"), "192.168.30.2");
+    broExp.addClient("node3", exoSdxManager.getManagementIP("node3"), "192.168.40.2");
     int TIMES = 10;
     for (int i = 0; i < TIMES; i++) {
       System.out.println("=============== " + i + " ==============");
@@ -86,27 +86,27 @@ public class BroMain {
     return;
   }
 
-  static void reconfigureSdxNetwork(SdxManager sdxManager) throws Exception {
-    sdxManager.delFlows();
-    Method configRouting = sdxManager.getClass().getDeclaredMethod("configRouting");
+  static void reconfigureSdxNetwork(ExoSdxManager exoSdxManager) throws Exception {
+    exoSdxManager.delFlows();
+    Method configRouting = exoSdxManager.getClass().getDeclaredMethod("configRouting");
     configRouting.setAccessible(true);
-    configRouting.invoke(sdxManager);
-    if (!configFlows(sdxManager)) {
+    configRouting.invoke(exoSdxManager);
+    if (!configFlows(exoSdxManager)) {
       System.out.println("Configure routing and mirror failed, retry");
       logger.debug("Configure routing and mirror failed, retry");
-      reconfigureSdxNetwork(sdxManager);
+      reconfigureSdxNetwork(exoSdxManager);
     }
   }
 
-  static boolean configFlows(SdxManager sdxManager) throws Exception {
-    sdxManager.connectionRequest("192.168.10.1/24", "192.168.30.1/24", 0);
-    sdxManager.connectionRequest("192.168.20.1/24", "192.168.40.1/24", 0);
-    sdxManager.setMirror(routerName, "192.168.10.1/24", "192.168.30.1/24");
-    sdxManager.setMirror(routerName, "192.168.20.1/24", "192.168.40.1/24");
+  static boolean configFlows(ExoSdxManager exoSdxManager) throws Exception {
+    exoSdxManager.connectionRequest("192.168.10.1/24", "192.168.30.1/24", 0);
+    exoSdxManager.connectionRequest("192.168.20.1/24", "192.168.40.1/24", 0);
+    exoSdxManager.setMirror(routerName, "192.168.10.1/24", "192.168.30.1/24");
+    exoSdxManager.setMirror(routerName, "192.168.20.1/24", "192.168.40.1/24");
     String routeFlowPattern = ".*nw_src.*nw_dst.*actions=dec_ttl.*load.*";
     boolean suc = false;
     for (int i = 0; i < 5; i++) {
-      if (sdxManager.getNumRouteEntries(routerName, routeFlowPattern) == 8 && sdxManager
+      if (exoSdxManager.getNumRouteEntries(routerName, routeFlowPattern) == 8 && exoSdxManager
         .getNumRouteEntries(routerNoBro, routeFlowPattern) == 4) {
         suc = true;
         break;
@@ -186,11 +186,11 @@ public class BroMain {
         }
         broExp.addFile("node0", "node2", "evil.txt");
         Double time = broExp.measureResponseTime(saturateTime, fileTimes, sleepTime, broName, routerName);
-        reconfigureSdxNetwork(sdxManager);
+        reconfigureSdxNetwork(exoSdxManager);
         while (time > MaxTime) {
           System.out.println("Bro failed to detect the file, retry");
           time = broExp.measureResponseTime(saturateTime, fileTimes, sleepTime, broName, routerName);
-          reconfigureSdxNetwork(sdxManager);
+          reconfigureSdxNetwork(exoSdxManager);
         }
         responseTime.add(time);
         broExp.clearFlows();
@@ -200,11 +200,11 @@ public class BroMain {
         broExp.addUdpFlow("node1", "node3", flow / 2 + "M");
         broExp.addFile("node0", "node2", "evil.txt");
         Double time = broExp.measureResponseTime(saturateTime, fileTimes, sleepTime, broName, routerName);
-        reconfigureSdxNetwork(sdxManager);
+        reconfigureSdxNetwork(exoSdxManager);
         while (time > MaxTime) {
           System.out.println("Bro failed to detect the file, retry");
           time = broExp.measureResponseTime(saturateTime, fileTimes, sleepTime, broName, routerName);
-          reconfigureSdxNetwork(sdxManager);
+          reconfigureSdxNetwork(exoSdxManager);
         }
         responseTime.add(time);
         broExp.clearFlows();

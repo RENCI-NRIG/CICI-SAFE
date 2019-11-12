@@ -17,7 +17,7 @@ import java.util.List;
 
 
 public class CoreProperties {
-  static Logger logger = LogManager.getLogger(CoreProperties.class);
+  Logger logger = LogManager.getLogger(CoreProperties.class);
 
   private static String plexusImage = "yaoyj11/plexus-v3";
   private static String safeDockerImage = "safeserver-v8";
@@ -63,6 +63,9 @@ public class CoreProperties {
   private String routerSite = null;
   private boolean reset = false;
   private String command = null;
+  private String topologyFile = null;
+  private int numClientNode = 1;
+  private boolean quaggaRoute = true;
   static private boolean routeAdvertise = false;
 
   public CoreProperties() {
@@ -111,6 +114,10 @@ public class CoreProperties {
   private void readConfig(String configFilePath) {
     logger.info(String.format("Loading configuration from %s", configFilePath));
     File myConfigFile = new File(configFilePath);
+    if(! myConfigFile.exists()) {
+      logger.warn(String.format("Configuration file '%s' doesn't exists.", configFilePath));
+      System.exit(1);
+    }
     Config fileConfig = ConfigFactory.parseFile(myConfigFile);
     Config conf = ConfigFactory.load(fileConfig);
     if (conf.hasPath("config.bro")) {
@@ -137,6 +144,9 @@ public class CoreProperties {
     if (conf.hasPath("config.slicename")) {
       setSliceName(conf.getString("config.slicename"));
     }
+    if (conf.hasPath("config.numclient")) {
+      setNumClientNode(conf.getInt("config.numclient"));
+    }
     if (conf.hasPath("config.safesite")) {
       setServerSite(SiteBase.get(conf.getString("config.safesite")));
     }
@@ -145,6 +155,9 @@ public class CoreProperties {
     }
     if (conf.hasPath("config.sdnsite")) {
       setSdnSite(SiteBase.get(conf.getString("config.sdnsite")));
+    }
+    if (conf.hasPath("config.quaggaroute")) {
+      setQuaggaRoute(conf.getBoolean("config.quaggaroute"));
     }
     if (conf.hasPath("config.clientsites")) {
       String clientSitesStr = conf.getString("config.clientsites");
@@ -195,6 +208,9 @@ public class CoreProperties {
     }
     if (conf.hasPath("config.routeadvertise")) {
       setRouteAdvertise(conf.getBoolean("config.routeadvertise"));
+    }
+    if (conf.hasPath("config.topofile")) {
+      setTopologyFile(conf.getString("config.topofile"));
     }
     logger.debug(this.toString());
   }
@@ -250,6 +266,22 @@ public class CoreProperties {
     logger.debug(String.format("riakIp: %s", riakIp));
   }
 
+  public void setQuaggaRoute(boolean autoRoute) {
+    this.quaggaRoute = autoRoute;
+  }
+
+  public boolean getQuaggaRoute() {
+    return quaggaRoute;
+  }
+
+  public String getTopologyFile() {
+    return this.topologyFile;
+  }
+
+  public void setTopologyFile(String file) {
+    this.topologyFile = file;
+  }
+
   public boolean isSafeEnabled() {
     return this.safeEnabled;
   }
@@ -281,6 +313,14 @@ public class CoreProperties {
   public void setSliceName(String sliceName) {
     this.sliceName = sliceName;
     logger.debug(String.format("%s: %s", "config.slicename", sliceName));
+  }
+
+  public void setNumClientNode(int num) {
+    this.numClientNode = num;
+  }
+
+  public int getNumClientNode() {
+    return this.numClientNode;
   }
 
   public String getSdnControllerIp() {
