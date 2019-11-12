@@ -1140,7 +1140,7 @@ class VlanRouter(object):
                         self.packet_buffer.delete(pkt=suspend_packet)
 
                     # send suspend packet.
-                    output = self.ofctl.dp.ofproto.OFPP_TABLE
+                    output = in_port
                     for suspend_packet in packet_list:
                         self.ofctl.send_packet_out(suspend_packet.in_port,
                                                    output,
