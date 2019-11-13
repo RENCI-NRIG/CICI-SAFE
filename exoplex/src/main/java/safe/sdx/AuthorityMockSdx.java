@@ -153,7 +153,9 @@ public class AuthorityMockSdx extends Authority implements SdxRoutingSlang {
   }
 
   public void updateTokens(String userKey, String method, String token, String name) {
-    System.out.println(safePost(method, userKey, new String[]{token, name}));
+    String setToken = safePost(method, userKey, new String[]{token, name});
+    logger.debug(setToken);
+    System.out.println("Done");
   }
 
   public void initUser(String userKey, String tagAcl) {
@@ -161,11 +163,13 @@ public class AuthorityMockSdx extends Authority implements SdxRoutingSlang {
     initIdSetSubjectSet(userKey);
     //User membership
     String tagAuth = getPrincipalId("tagauthority");
-    System.out.println(safePost(postUserTagAclEntry, userKey, new String[]{tagAuth + ":" +
-      tagAcl}));
-    System.out.println(safePost(postCustomerConnectionPolicy, userKey, new String[]{}));
-    System.out.println(safePost(postTagPrivilegePolicy, userKey, new String[]{}));
-    System.out.println(safePost(postCustomerPolicy, userKey, new String[]{}));
+    logger.debug(safePost(postUserTagAclEntry, userKey,
+      new String[]{tagAuth + ":" + tagAcl}));
+    logger.debug(safePost(postCustomerConnectionPolicy, userKey,
+      new String[]{}));
+    logger.debug(safePost(postTagPrivilegePolicy, userKey, new String[]{}));
+    logger.debug(safePost(postCustomerPolicy, userKey, new String[]{}));
+    System.out.println("Done initializing safe sets for customers");
   }
 
   public void makeSafePreparation() {
