@@ -1205,8 +1205,7 @@ public class ExoSdxManager extends SdxManagerBase {
       try {
         //FIX ME: do stitching
         logger.info(logPrefix + "Chameleon Stitch Request from " + customer_keyhash + " Authorized");
-        serverSlice.refresh();
-        String node = null;
+        serverSlice.loadSlice();
         if (nodeName != null) {
           nodeName = serverSlice.getComputeNode(nodeName);
         } else if (nodeName == null && edgeRouters.containsKey(sdxsite) && edgeRouters.get(sdxsite)
@@ -1219,15 +1218,12 @@ public class ExoSdxManager extends SdxManagerBase {
           //later when a customer requests connection between site a and site b, we add another logLink to meet
           // the requirments
           logger.debug("No existing router at requested site, adding new router");
-          String eRouterName = allcoateERouterName(sdxsite);
-          serverSlice.refresh();
-          serverSlice.addOVSRouter(sdxsite, eRouterName);
-          node = serverSlice.getComputeNode(eRouterName);
-          serverSlice.commitAndWait(10, Arrays.asList(eRouterName));
+          nodeName = allcoateERouterName(sdxsite);
+          serverSlice.addOVSRouter(sdxsite, nodeName);
+          serverSlice.commitAndWait(10, Arrays.asList(nodeName));
           serverSlice.unLockSlice();
-          copyRouterScript(serverSlice, eRouterName);
-          configRouter(eRouterName);
-          nodeName = node;
+          copyRouterScript(serverSlice, nodeName);
+          configRouter(nodeName);
           logger.debug("Configured the new router in RoutingManager");
         }
         String stitchname = "sp-" + nodeName + "-" + ip.replace("/", "__").replace(".", "_");
