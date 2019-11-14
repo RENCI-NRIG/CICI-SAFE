@@ -154,7 +154,7 @@ b). Configure routing with Quagga on every Chameleon client node
 ### Set up routing with zebra
 
         # Assume that the gateway IP address is 192.168.100.1
-        sudo echo "ip route 192.168.0.0/16 192.168.100.1"
+        sudo echo "ip route 192.168.0.0/16 192.168.100.1" >> /etc/quagga/zebra.conf
 
         # In old versions of Quaaga, this could be "service quagga restart"
         sudo service zebra restart
