@@ -1219,7 +1219,6 @@ public class ExoSdxManager extends SdxManagerBase {
         //FIX ME: do stitching
         logger.info(logPrefix + "Chameleon Stitch Request from " + customer_keyhash + " Authorized");
         serverSlice.loadSlice();
-        String node = null;
         if (nodeName != null) {
           logger.info(logPrefix + " nodename not null");
           nodeName = serverSlice.getComputeNode(nodeName);
@@ -1232,8 +1231,8 @@ public class ExoSdxManager extends SdxManagerBase {
           //later when a customer requests connection between site a and site b, we add another logLink to meet
           // the requirments
           logger.debug("No existing router at requested site, adding new router");
-          nodeName = allcoateERouterName(site);
-          serverSlice.addOVSRouter(site, nodeName);
+          nodeName = allcoateERouterName(sdxsite);
+          serverSlice.addOVSRouter(sdxsite, nodeName);
           serverSlice.commitAndWait(10, Arrays.asList(nodeName));
           serverSlice.unLockSlice();
           copyRouterScript(serverSlice, nodeName);
