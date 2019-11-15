@@ -25,7 +25,8 @@ To create ExoGENI client network
         
         ./scripts/createclientslice.sh -c client-config/alice.conf
 
-## 3. Save topology of the VFC in json file (exoplex/vfc-config/topo.json). Key words are "router", "link" and "stitch". "router" represents the OpenFlow-Enabled vfc, "link" represents the link between two VFCs (ExoGENI circuits), and "stitch" represents ExoGENI switchable network on the VFC.
+## 3. Save topology of the VFC in json file (exoplex/vfc-config/topo.json).
+Key words are "router", "link" and "stitch". "router" represents the OpenFlow-Enabled vfc, "link" represents the link between two VFCs (ExoGENI circuits), and "stitch" represents ExoGENI switchable network on the VFC.
 
 
 ## 4. Start vfc server
@@ -44,7 +45,7 @@ To create ExoGENI client network
         
         ./scripts/sdx_stitchport_client.sh -c chameleon-config/c1.conf -e "stitchvfc TACC 3506 192.168.100.17 192.168.100.1/24"
 
-        ./scripts/sdx_stitchport_client.sh -c chameleon-config/c2.conf -e "stitchvfc TACC 3296 192.168.200.17 192.168.200.1/24"
+        ./scripts/sdx_stitchport_client.sh -c chameleon-config/c2.conf -e "stitchvfc UC 3296 192.168.200.17 192.168.200.1/24"
 
 ## 6. Client networks advertise prefix
 
