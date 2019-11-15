@@ -25,7 +25,7 @@ public class VfcRestService extends RestServiceBase {
   @Produces(MediaType.APPLICATION_JSON)
   public StitchResult stitchVfc(@Context UriInfo uriInfo, StitchVfcRequest sr) {
     VfcSdxManager vfcSdxManager = (VfcSdxManager) sdxManagerMap.get(uriInfo.getBaseUri().getPort());
-    logger.debug(String.format("%s got sittch request %s", vfcSdxManager.getSliceName(), sr));
+    logger.debug(String.format("%s got stitch request %s", vfcSdxManager.getSliceName(), sr));
     try {
       JSONObject res = vfcSdxManager.stitchVfc(sr.ckeyhash, sr.cslice, sr.vfcsite,
         sr.vlan, sr.gateway, sr.ip);

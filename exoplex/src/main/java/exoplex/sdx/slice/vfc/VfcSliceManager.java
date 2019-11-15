@@ -3,6 +3,7 @@ package exoplex.sdx.slice.vfc;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
 
+import exoplex.sdx.network.Link;
 import exoplex.sdx.network.NetworkManager;
 import exoplex.sdx.network.Router;
 import exoplex.sdx.slice.SliceManager;
@@ -115,7 +116,17 @@ public class VfcSliceManager extends SliceManager {
       }
 
     } else if(obj.containsKey("link")) {
-      throw new NotImplementedException();
+      obj = (JSONObject) obj.get("link");
+      try {
+        networkManager.addLink((String) obj.get("name"),
+          null,
+          (String) obj.get("node1"),
+          null,
+          (String) obj.get("node2"),
+          10000000000l);
+      } catch (Exception e) {
+        logger.warn(String.format("unknown link format: \n %s", obj.toString()));
+      }
     } else {
       throw new NotImplementedException();
     }
@@ -222,7 +233,9 @@ public class VfcSliceManager extends SliceManager {
   }
 
   public Collection<String> getLinks() {
-    return new ArrayList<>();
+    List<String> linkNames = new ArrayList<>();
+    networkManager.getLinks().forEach(link -> linkNames.add(link.getLinkName()));
+    return linkNames;
   }
 
   public Collection<String> getBroadcastLinks() {
@@ -233,6 +246,10 @@ public class VfcSliceManager extends SliceManager {
     Collection<String> nodes = new ArrayList<>();
     networkManager.getRouters().forEach(router -> nodes.add(router.getRouterName()));
     return nodes;
+  }
+
+  public Link getLink(String linkName) {
+    return networkManager.getLink(linkName);
   }
 
   public Collection<String> getStitchPorts() {
