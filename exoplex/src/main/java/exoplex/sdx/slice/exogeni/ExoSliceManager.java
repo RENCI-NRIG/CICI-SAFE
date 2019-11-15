@@ -1117,7 +1117,6 @@ public class ExoSliceManager extends SliceManager {
       NodeBaseInfo ninfo = NodeBase.getImageInfo(SliceProperties.OVSVersion);
       String nodeImageShortName = ninfo.imageName;
       String nodeImageURL = ninfo.imageUrl;
-      //http://geni-images.renci.org/images/standard/ubuntu/ub1304-ovs-opendaylight-v1.0.0.xml
       String nodeImageHash = ninfo.imageHash;
       String nodeNodeType = "XO Medium";
       String nodePostBootScript = Scripts.getOVSScript();
