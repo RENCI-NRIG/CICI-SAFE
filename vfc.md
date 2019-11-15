@@ -99,6 +99,13 @@ Generate ssh key (the default key pair created by ssh-keygen command  without op
 
         ssh-keygen -t rsa -m PEM
 
+Set the version and safe docker image, plexus sdn controller docker image and safe server script as environment variable. Set the public ip addresses of riak server and SDX controller. Run this in all nodes.
+
+        SAFEIMG="yaoyj11/safeserver-v8"
+        PLEXUSIMG="yaoyj11/plexus-v3"
+        SAFE_SCRIPT="sdx-routing.sh"
+        riak_ip="128.194.6.235"
+        sdx_ip="128.194.6.161"
 
 ## 1. deploy riak server on VM1
 ### a) 
