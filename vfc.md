@@ -45,9 +45,9 @@ To create ExoGENI client network
         
 ### Stitch ExoGENI client slice to VFC
 
-        ./scripts/sdx_exogeni_client.sh -c client-config/vfc/c0.conf -e "stitchvfc CNode0 UC 3293 192.168.10.2 192.168.10.1/24"
+        ./scripts/sdx_exogeni_client.sh -c client-config/sc1.conf -e "stitchvfc CNode1 UC 3298 192.168.10.2 192.168.10.1/24"
 
-        ./scripts/sdx_exogeni_client.sh -c client-config/vfc/c1.conf -e "stitchvfc CNode0 UC 3295 192.168.20.2 192.168.20.1/24"
+        ./scripts/sdx_exogeni_client.sh -c client-config/sc2.conf -e "stitchvfc CNode1 TACC 3502 192.168.20.2 192.168.20.1/24"
 
 ### Stitch Chameleon network to VFC
         
@@ -59,9 +59,9 @@ To create ExoGENI client network
 
 ### ExoGENI client
 
-        ./scripts/sdx_exogeni_client.sh -c client-config/vfc/c0.conf -e "route 192.168.10.1/24 192.168.10.2"
+        ./scripts/sdx_exogeni_client.sh -c client-config/sc1.conf -e "route 192.168.10.1/24 192.168.10.2"
 
-        ./scripts/sdx_exogeni_client.sh -c client-config/vfc/c1.conf -e "route 192.168.20.1/24 192.168.20.2"
+        ./scripts/sdx_exogeni_client.sh -c client-config/sc2.conf -e "route 192.168.20.1/24 192.168.20.2"
 
 ### Chameleon client
 
@@ -73,15 +73,23 @@ To create ExoGENI client network
 
 ### ExoGENI client
 
-        ./scripts/sdx_exogeni_client.sh -c client-config/vfc/c0.conf -e "link 192.168.10.1/24 192.168.20.1/24"
+        ./scripts/sdx_exogeni_client.sh -c client-config/sc1.conf -e "link 192.168.10.1/24 192.168.20.1/24"
+        ./scripts/sdx_exogeni_client.sh -c client-config/sc1.conf -e "link 192.168.10.1/24 192.168.100.1/24"
+        ./scripts/sdx_exogeni_client.sh -c client-config/sc1.conf -e "link 192.168.10.1/24 192.168.200.1/24"
 
-        ./scripts/sdx_exogeni_client.sh -c client-config/vfc/c1.conf -e "link 192.168.20.1/24 192.168.10.1/24"
+        ./scripts/sdx_exogeni_client.sh -c client-config/sc2.conf -e "link 192.168.20.1/24 192.168.10.1/24"
+        ./scripts/sdx_exogeni_client.sh -c client-config/sc2.conf -e "link 192.168.20.1/24 192.168.100.1/24"
+        ./scripts/sdx_exogeni_client.sh -c client-config/sc2.conf -e "link 192.168.20.1/24 192.168.200.1/24"
 
 ### Chameleon client
 
         ./scripts/sdx_stitchport_client.sh -c chameleon-config/c2.conf -e "link  192.168.200.1/24 192.168.100.1/24"
+        ./scripts/sdx_stitchport_client.sh -c chameleon-config/c2.conf -e "link  192.168.200.1/24 192.168.10.1/24"
+        ./scripts/sdx_stitchport_client.sh -c chameleon-config/c2.conf -e "link  192.168.200.1/24 192.168.20.1/24"
 
         ./scripts/sdx_stitchport_client.sh -c chameleon-config/c1.conf -e "link  192.168.100.1/24 192.168.200.1/24"
+        ./scripts/sdx_stitchport_client.sh -c chameleon-config/c1.conf -e "link  192.168.100.1/24 192.168.20.1/24"
+        ./scripts/sdx_stitchport_client.sh -c chameleon-config/c1.conf -e "link  192.168.100.1/24 192.168.10.1/24"
 
 
 
