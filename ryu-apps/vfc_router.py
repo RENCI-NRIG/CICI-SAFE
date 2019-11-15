@@ -1205,22 +1205,6 @@ class VlanRouter(object):
                 if gw_address is not None:
                     src_ip = gw_address.default_gw
                     dst_ip = route.gateway_ip
-            else:
-            #note: yjyao
-                data={}
-                data['src'] = srcip
-                data['dest'] = dstip
-                self.packet_buffer.add_route_packet(in_port, header_list, msg.data)
-                try:
-                    self.logger.debug(data)
-                    self.logger.debug("sending request to sdx controller")
-                    req = urllib2.Request(get_sdx_url())
-                    req.add_header('Content-Type', 'application/json')
-                    response = urllib2.urlopen(req, json.dumps(data))
-                    self.logger.debug("send request to sdx", extra = self.sw_id)
-                except:
-                    self.logger.info("An exception when sending request to sdx {}\n src {} dst {}"
-                                    .format(get_sdx_url(), srcip, dstip), extra=self.sw_id)
 
         if src_ip is not None:
             self.packet_buffer.add(in_port, header_list, msg.data)

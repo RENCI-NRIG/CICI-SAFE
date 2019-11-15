@@ -21,6 +21,13 @@ Or run SDN controller in docker
         sudo docker exec -itd plexus /bin/bash -c  "cd /root;pkill ryu-manager; ryu-manager --ofp-tcp-listen-port 6653 --log-file ~/ryu.log --default-log-level 1 ryu/ryu/app/rest_conf_switch.py ryu/ryu/app/vfc_router.py ryu/ryu/app/ofctl_rest.py"
 
 
+If necessary, delete all flows on the VFC and restart SDN controller
+
+        curl -X DELETE http://198.129.50.26:8080/stats/flowentry/clear/196776737624907
+        curl -X DELETE http://198.129.50.26:8080/stats/flowentry/clear/279779748132173
+
+
+
 ## 2. Save topology of the VFC in json file (exoplex/vfc-config/topo.json).
 Key words are "router", "link" and "stitch". "router" represents the OpenFlow-Enabled vfc, "link" represents the link between two VFCs (ExoGENI circuits), and "stitch" represents ExoGENI switchable network on the VFC.
 
