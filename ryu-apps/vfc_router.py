@@ -1311,7 +1311,8 @@ class VlanRouter(object):
         # Set flow: routing to internal Host.
         out_port = self.ofctl.get_packetin_inport(msg)
         src_mac = header_list[ARP].src_mac
-        dst_mac = self.port_data[out_port].mac
+        #dst_mac = self.port_data[out_port].mac
+        dst_mac = self.get_mac(out_port)
         src_ip = header_list[ARP].src_ip
 
         gateways = self.routing_tbl.get_gateways()
