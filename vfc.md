@@ -20,18 +20,19 @@ Or run SDN controller in docker
         sudo docker run -i -t -d -p 8080:8080 -p 6653:6653 -p 3000:3000 -h plexus --name plexus ${PLEXUSIMG}
         sudo docker exec -itd plexus /bin/bash -c  "cd /root;pkill ryu-manager; ryu-manager --ofp-tcp-listen-port 6653 --log-file ~/ryu.log --default-log-level 1 ryu/ryu/app/rest_conf_switch.py ryu/ryu/app/vfc_router.py ryu/ryu/app/ofctl_rest.py"
 
-## 2. Create ExoGENI client networks or Chameleon client networks
-To create ExoGENI client network
-        
-        ./scripts/createclientslice.sh -c client-config/alice.conf
 
-## 3. Save topology of the VFC in json file (exoplex/vfc-config/topo.json).
+## 2. Save topology of the VFC in json file (exoplex/vfc-config/topo.json).
 Key words are "router", "link" and "stitch". "router" represents the OpenFlow-Enabled vfc, "link" represents the link between two VFCs (ExoGENI circuits), and "stitch" represents ExoGENI switchable network on the VFC.
 
 
-## 4. Start vfc server
+## 3. Start vfc server
 
         ./scripts/vfcserver.sh -c vfc-config/vfc.conf
+
+## 4. Create ExoGENI client networks or Chameleon client networks
+To create ExoGENI client network
+        
+        ./scripts/createclientslice.sh -c client-config/alice.conf
 
 ## 5. Stitch client network to VFC
         
@@ -140,9 +141,8 @@ The SDN controller of the switch on the VFC is fixed.
         cd ${WORKING_DIR}/CICI-SAFE/exoplex
         mvn  clean package appassembler:assemble -DskipTests
 
-## 4. create a VFC on Chameleon with a switch and two ExoGENI-stitchable networks. Save the topology in a Json file. For example,
-
-
+## 4. create a VFC on Chameleon with a switch and two ExoGENI-stitchable networks. Save the topology in a Json file (exoplex/vfc-config/topo.json). 
+Key words are "router", "link" and "stitch". "router" represents the OpenFlow-Enabled vfc, "link" represents the link between two VFCs (ExoGENI circuits), and "stitch" represents ExoGENI switchable network on the VFC.
 The name of the router doesn't matter. The name of the stitch should start with "net".
 
 ## 5. start SDX server
@@ -160,7 +160,7 @@ Authorities makes delegations to the client Key
         sudo docker run -i -t -d -p 7777:7777 -h safe --name safe ${SAFEIMG}
         sudo docker exec -itd safe /bin/bash -c  "cd /root/safe;sed -i 's/RIAKSERVER/$riak_ip/g' safe-server/src/main/resources/application.conf;./${SAFE_SCRIPT}"
 
-## 2. make delegations to a client: exogeni slice authorization, ip allocation, tag delegation
+## 2. make delegations to a client: client slice authorization, ip allocation, tag delegation
 
         SAFE_SERVER=localhost
         USERKEYHASH="MfIPn0qnsuGiJtb3xJyAUOB1dBmGw9IJm5-wKUgVOlU="
@@ -206,22 +206,5 @@ Authorities makes delegations to the client Key
 
         ${BIN_DIR}/AuthorityMock update ${principalId} passDelegation P00xfQR3bdW649Ti6dCIrFboDKaZz4uDEzjXL_nsngQ= SF5x9ObjJWzzTBIn0aachXlIEbcOq7hkJdjbJuyoLfA=:project1 ${SAFE_SERVER}
 
-## 6. Create client slice
+## 6. Create client slice, stitch client networks, advertise client IP prefix and request for connection are shown at the beginning of this guide. For client networks, we can do ExoGENI client networks only, Chameleon networks only or a mix of those two kinds of client networks.
 
-        ${BIN_DIR}/SafeSdxClientSliceServer -c client-config/c0.conf
-
-## 7. stitch to sdx
-
-        sudo ${BIN_DIR}/SafeSdxExogeniClient -c client-config/c0.conf -e "stitchvfc CNode1 UC 3297 192.168.10.2 192.168.10.1/24"
-
-        sudo ${BIN_DIR}/SafeSdxExogeniClient -c client-config/c1.conf -e "stitchvfc CNode1 UC 3292 192.168.20.2 192.168.20.1/24"
-
-## 8. client advertise prefix
-
-        sudo ${BIN_DIR}/SafeSdxExogeniClient -c client-config/c0.conf -e 'route 192.168.10.1/24 192.168.10.2'
-        sudo ${BIN_DIR}/SafeSdxExogeniClient -c client-config/c1.conf -e 'route 192.168.20.1/24 192.168.20.2'
-
-## 9. both client request for connection [optional]
-
-        sudo ${BIN_DIR}/SafeSdxExogeniClient -c client-config/c0.conf -e 'link 192.168.10.1/24 192.168.20.1/24'
-        sudo ${BIN_DIR}/SafeSdxExogeniClient -c client-config/c1.conf -e 'link 192.168.20.1/24 192.168.10.1/24'
