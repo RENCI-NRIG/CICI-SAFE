@@ -51,9 +51,9 @@ To create ExoGENI client network
 
 ### Stitch Chameleon network to VFC
         
-        ./scripts/sdx_stitchport_client.sh -c chameleon-config/c1.conf -e "stitchvfc TACC 3506 192.168.100.17 192.168.100.1/24"
+        ./scripts/sdx_stitchport_client.sh -c chameleon-config/c1.conf -e "stitchvfc TACC 2085 192.168.100.17 192.168.100.1/24"
 
-        ./scripts/sdx_stitchport_client.sh -c chameleon-config/c2.conf -e "stitchvfc UC 3296 192.168.200.17 192.168.200.1/24"
+        ./scripts/sdx_stitchport_client.sh -c chameleon-config/c2.conf -e "stitchvfc UC 3022 192.168.200.17 192.168.200.1/24"
 
 ## 6. Client networks advertise prefix
 

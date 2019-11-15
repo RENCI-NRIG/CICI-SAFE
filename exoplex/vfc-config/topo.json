@@ -22,7 +22,15 @@
     },
     {
         "stitch": {
-                "name": "net-exogeni-sc19-safe-1",
+                "name": "net-physnet1-sc19safe",
+                "router": "vfc-1",
+                "site": "UC",
+                "vlan": "3022"
+        }
+    },
+    {
+        "stitch": {
+                "name": "net-exogeni-sc19safe-1",
                 "router": "vfc-1",
                 "site": "UC",
                 "vlan": "3298"
@@ -34,6 +42,14 @@
                 "router": "vfc-1",
                 "site": "UC",
                 "vlan": "3296"
+        }
+    },
+    {
+        "stitch": {
+                "name": "net-physnet1-sc19yy",
+                "router": "vfc-2",
+                "site": "TACC",
+                "vlan": "2085"
         }
     },
     {
