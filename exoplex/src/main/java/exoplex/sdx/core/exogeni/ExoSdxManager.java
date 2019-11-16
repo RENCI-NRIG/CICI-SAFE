@@ -33,6 +33,8 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 
 /*
 
@@ -563,6 +565,7 @@ public class ExoSdxManager extends SdxManagerBase {
       if (coreProperties.isSafeEnabled()) {
         logger.info("Authorized: stitch request for " + coreProperties.getSliceName());
       }
+      boolean addComputeNodeandEdgeRouter = false;
       String stitchname = null;
       String net = null;
       String node = null;
@@ -571,8 +574,7 @@ public class ExoSdxManager extends SdxManagerBase {
         node = serverSlice.getComputeNode(sdxnode);
         stitchname = allocateStitchLinkName(ip, node);
         addLink(stitchname, node, coreProperties.getBw());
-      } else if (sdxnode == null && edgeRouters.containsKey(site) && edgeRouters.get(site).size() >
-        0) {
+      } else if (sdxnode == null && edgeRouters.containsKey(site) && edgeRouters.get(site).size() > 0) {
         node = serverSlice.getComputeNode(edgeRouters.get(site).get(0));
         stitchname = allocateStitchLinkName(ip, node);
         addLink(stitchname, node, coreProperties.getBw());
@@ -596,6 +598,7 @@ public class ExoSdxManager extends SdxManagerBase {
         copyRouterScript(serverSlice, node);
         configRouter(node);
         logger.debug("Configured the new router in RoutingManager");
+        addComputeNodeandEdgeRouter = true;
       }
 
       String net1_stitching_GUID = serverSlice.getStitchingGUID(stitchname);
@@ -629,6 +632,15 @@ public class ExoSdxManager extends SdxManagerBase {
       }
       customerNodes.get(customerSafeKeyHash).add(reserveId);
       customerGateway.put(reserveId, gateway);
+      if(addComputeNodeandEdgeRouter) {
+        Pattern pattern = Pattern.compile(routerPattern);
+        if (pattern.matcher(node).find()) {
+           putComputeNode(node);
+           if (node.matches(eRouterPattern)) {
+             putEdgeRouter(node);
+           }
+        }
+      }
     } else {
       logger.info("Unauthorized: stitch request for " + coreProperties.getSliceName());
       res.put("message", String.format("Unauthorized stitch request from (%s, %s)",
@@ -1203,15 +1215,16 @@ public class ExoSdxManager extends SdxManagerBase {
       //FIX ME: do stitching
       logger.info("Chameleon Stitch Request from " + customer_keyhash + " Authorized");
       try {
+        boolean addComputeNodeandEdgeRouter = false;
         //FIX ME: do stitching
         logger.info(logPrefix + "Chameleon Stitch Request from " + customer_keyhash + " Authorized");
-        serverSlice.refresh();
+        serverSlice.loadSlice();
         String node = null;
         if (nodeName != null) {
+          logger.info(logPrefix + " nodename not null");
           nodeName = serverSlice.getComputeNode(nodeName);
-        } else if (nodeName == null && edgeRouters.containsKey(sdxsite) && edgeRouters.get(sdxsite)
-          .size() >
-          0) {
+        } else if (nodeName == null && edgeRouters.containsKey(sdxsite) && edgeRouters.get(sdxsite).size() > 0) {
+          logger.info(logPrefix + " edge already exists");
           nodeName = serverSlice.getComputeNode(edgeRouters.get(sdxsite).get(0));
         } else {
           //if node not exists, add another node to the slice
@@ -1219,16 +1232,14 @@ public class ExoSdxManager extends SdxManagerBase {
           //later when a customer requests connection between site a and site b, we add another logLink to meet
           // the requirments
           logger.debug("No existing router at requested site, adding new router");
-          String eRouterName = allcoateERouterName(sdxsite);
-          serverSlice.refresh();
-          serverSlice.addOVSRouter(sdxsite, eRouterName);
-          node = serverSlice.getComputeNode(eRouterName);
-          serverSlice.commitAndWait(10, Arrays.asList(eRouterName));
+          nodeName = allcoateERouterName(site);
+          serverSlice.addOVSRouter(site, nodeName);
+          serverSlice.commitAndWait(10, Arrays.asList(nodeName));
           serverSlice.unLockSlice();
-          copyRouterScript(serverSlice, eRouterName);
-          configRouter(eRouterName);
-          nodeName = node;
+          copyRouterScript(serverSlice, nodeName);
+          configRouter(nodeName);
           logger.debug("Configured the new router in RoutingManager");
+          addComputeNodeandEdgeRouter = true;
         }
         String stitchname = "sp-" + nodeName + "-" + ip.replace("/", "__").replace(".", "_");
         logger.info(logPrefix + "Stitching to Chameleon {" + "stitchname: " + stitchname + " vlan:" +
@@ -1237,15 +1248,27 @@ public class ExoSdxManager extends SdxManagerBase {
         updateOvsInterface(nodeName);
         //routingmanager.replayCmds(routingmanager.getDPID(nodeName));
         routingmanager.newExternalLink(stitchname, ip, nodeName, gateway, SDNController);
+        if(addComputeNodeandEdgeRouter) {
+          Pattern pattern = Pattern.compile(routerPattern);
+          if (pattern.matcher(node).find()) {
+            putComputeNode(node);
+            if (node.matches(eRouterPattern)) {
+              putEdgeRouter(node);
+            }
+          }
+        }
         res = "Stitch operation Completed";
         logger.info(logPrefix + res);
       } catch (Exception e) {
+        StringWriter errors = new StringWriter();
+        e.printStackTrace(new PrintWriter(errors));
+        logger.error(errors.toString());
         res = "Stitch request failed.\n SdxServer exception in commiting stitching opoeration";
-        e.printStackTrace();
       }
     } else {
       logger.info("Chameleon Stitch Request from " + customer_keyhash + " unauthorized");
     }
+    logger.info(logPrefix + res);
     return res;
   }
 
