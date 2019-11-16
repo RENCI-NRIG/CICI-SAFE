@@ -761,9 +761,8 @@ public class ExoSliceManager extends SliceManager {
       return result[0].startsWith("error");
     }
     if (res.contains("docker: command not found")) {
-      String[] result = Exec.sshExec(SliceProperties.userName, mip,
-        Scripts.installDocker(), sshKey);
-      return result[0].startsWith("error");
+      this.runCmdByIP(Scripts.installDocker(),  mip, true);
+      return true;
     }
     if (res.contains("Unable to lock")) {
       Exec.sshExec(SliceProperties.userName, mip, "sudo rm /var/lib/dpkg/lock;dpkg --configure -a",
