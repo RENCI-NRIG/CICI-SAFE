@@ -1078,8 +1078,8 @@ class VlanRouter(object):
         # case: Receive ARP from an internal host
         #  Learning host MAC.
         gw_flg = self._update_routing_tbl(msg, header_list)
-        if gw_flg is False:
-            self._learning_host_mac(msg, header_list)
+        #if gw_flg is False:
+        #    self._learning_host_mac(msg, header_list)
 
         # ARP packet handling.
         in_port = self.ofctl.get_packetin_inport(msg)
