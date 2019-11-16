@@ -65,7 +65,7 @@ public class RestServiceBase {
       StringWriter errors = new StringWriter();
       e.printStackTrace(new PrintWriter(errors));
       logger.error(errors);
-      result = e.getMessage();
+      result = String.format("Failed: %s", e.getMessage());
     }
     logger.info("COMPLETED==============================");
     return result;
@@ -87,7 +87,7 @@ public class RestServiceBase {
       StringWriter errors = new StringWriter();
       e.printStackTrace(new PrintWriter(errors));
       logger.error(errors);
-      result = e.getMessage();
+      result = String.format("Failed: %s", e.getMessage());
     }
     logger.info("COMPLETED==============================");
     return result;
@@ -109,7 +109,7 @@ public class RestServiceBase {
       StringWriter errors = new StringWriter();
       e.printStackTrace(new PrintWriter(errors));
       logger.error(errors);
-      result = e.getMessage();
+      result = String.format("Failed: %s", e.getMessage());
     }
     logger.info("COMPLETED==============================");
     return result;
@@ -130,7 +130,7 @@ public class RestServiceBase {
       StringWriter errors = new StringWriter();
       e.printStackTrace(new PrintWriter(errors));
       logger.error(errors);
-      result = e.getMessage();
+      result = String.format("Failed: %s", e.getMessage());
     }
     logger.info("COMPLETED==============================");
     return result;
@@ -160,7 +160,7 @@ public class RestServiceBase {
       StringWriter errors = new StringWriter();
       e.printStackTrace(new PrintWriter(errors));
       logger.error(errors);
-      result = e.getMessage();
+      result = String.format("Failed: %s", e.getMessage());
     }
     logger.info("COMPLETED==============================");
     return result;
@@ -182,7 +182,7 @@ public class RestServiceBase {
       StringWriter errors = new StringWriter();
       e.printStackTrace(new PrintWriter(errors));
       logger.error(errors);
-      result = e.getMessage();
+      result = String.format("Failed: %s", e.getMessage());
     }
     logger.info("COMPLETED==============================");
     return result;
@@ -204,7 +204,7 @@ public class RestServiceBase {
       StringWriter errors = new StringWriter();
       e.printStackTrace(new PrintWriter(errors));
       logger.error(errors);
-      result = e.getMessage();
+      result = String.format("Failed: %s", e.getMessage());
     }
     logger.info("COMPLETED==============================");
     return result;
