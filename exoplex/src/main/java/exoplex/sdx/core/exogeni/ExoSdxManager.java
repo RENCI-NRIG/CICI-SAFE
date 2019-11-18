@@ -1248,11 +1248,10 @@ public class ExoSdxManager extends SdxManagerBase {
         //routingmanager.replayCmds(routingmanager.getDPID(nodeName));
         routingmanager.newExternalLink(stitchname, ip, nodeName, gateway, SDNController);
         if(addComputeNodeandEdgeRouter) {
-          Pattern pattern = Pattern.compile(routerPattern);
-          if (pattern.matcher(node).find()) {
-            putComputeNode(node);
-            if (node.matches(eRouterPattern)) {
-              putEdgeRouter(node);
+          if (nodeName.matches(routerPattern)) {
+            putComputeNode(nodeName);
+            if (nodeName.matches(eRouterPattern)) {
+              putEdgeRouter(nodeName);
             }
           }
         }
