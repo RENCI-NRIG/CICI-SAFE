@@ -8,9 +8,9 @@ public class StitchChameleon {
   public String vlan;
   public String gateway;
   public String ip;
-
+  public String creservid;
   public String toString() {
     return "{\"sdxsite\": " + sdxsite + ", \"sdxnode\": " + sdxnode + ", \"ckeyhash\":" + ckeyhash
-      + ", \"stitchport\":" + stitchport + ", \"vlan\":" + vlan + "\"gateway\":" + gateway + "}";
+      + ", \"stitchport\":" + stitchport + ", \"vlan\":" + vlan + ", \"gateway\":" + gateway + ", \"creservid\":" + creservid + "}";
   }
 }

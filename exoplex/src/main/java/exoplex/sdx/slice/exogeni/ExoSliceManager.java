@@ -24,6 +24,9 @@ import org.renci.ahab.libtransport.util.UtilTransportException;
 import org.renci.ahab.libtransport.xmlrpc.XMLRPCProxyFactory;
 import org.renci.ahab.libtransport.xmlrpc.XMLRPCTransportException;
 
+import javax.annotation.Resource;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -369,13 +372,19 @@ public class ExoSliceManager extends SliceManager {
 
   synchronized public void unstitch(String stitchLinkName, String customerSlice,
     String customerGUID) {
-    BroadcastNetwork net = (BroadcastNetwork) slice.getResourceByName(stitchLinkName);
-    String stitchNetReserveId = net.getStitchingGUID();
-    try {
-      sliceProxy.undoSliceStitch(sliceName, stitchNetReserveId, customerSlice,
-        customerGUID);
-    } catch (TransportException e) {
-      e.printStackTrace();
+      RequestResource resource =  slice.getResourceByName(stitchLinkName);
+    if( resource instanceof BroadcastNetwork) {
+        BroadcastNetwork net =  (BroadcastNetwork) slice.getResourceByName(stitchLinkName);
+        logger.info("Broadcast network");
+        String stitchNetReserveId = net.getStitchingGUID();
+        try {
+            sliceProxy.undoSliceStitch(sliceName, stitchNetReserveId, customerSlice,
+                    customerGUID);
+        } catch (TransportException e) {
+            StringWriter errors = new StringWriter();
+            e.printStackTrace(new PrintWriter(errors));
+            logger.error(errors);
+        }
     }
   }
 
@@ -894,8 +903,23 @@ public class ExoSliceManager extends SliceManager {
   }
 
   synchronized public void removeLink(String linkName) {
-    BroadcastNetwork net = (BroadcastNetwork) slice.getResourceByName(linkName);
-    net.delete();
+    RequestResource resource = slice.getResourceByName(linkName);
+    if(resource instanceof BroadcastNetwork) {
+        BroadcastNetwork net = (BroadcastNetwork) slice.getResourceByName(linkName);
+        logger.info("BroadcastNetwork=" + net);
+        net.delete();
+    }
+    else if( resource instanceof StitchPort) {
+        StitchPort stitchPort = (StitchPort) slice.getResourceByName(linkName);
+        logger.info("Stitchport=" + stitchPort);
+        if(stitchPort != null) {
+            logger.info("Deleting stitchport = " + stitchPort);
+            stitchPort.delete();
+        }
+    }
+    else {
+        logger.info("neither broadcast and stitchport resource=" + resource);
+    }
   }
 
   synchronized public void addLink(String linkName, String ip, String netmask,
