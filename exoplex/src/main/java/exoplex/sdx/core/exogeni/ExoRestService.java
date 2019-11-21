@@ -107,7 +107,7 @@ public class ExoRestService extends RestServiceBase {
     SdxManagerBase exoSdxManager = sdxManagerMap.get(uriInfo.getBaseUri().getPort());
     try {
       result = exoSdxManager.stitchChameleon(sr.sdxsite, sr.sdxnode,
-        sr.ckeyhash, sr.stitchport, sr.vlan, sr.gateway, sr.ip);
+        sr.ckeyhash, sr.stitchport, sr.vlan, sr.gateway, sr.ip, sr.creservid);
     } catch (Exception e) {
       StringWriter errors = new StringWriter();
       e.printStackTrace(new PrintWriter(errors));

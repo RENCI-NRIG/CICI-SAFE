@@ -654,12 +654,10 @@ public class ExoSdxManager extends SdxManagerBase {
     logger.debug("ndllib TestDriver: START");
     logger.info(String.format("Undostitch request from %s for (%s, %s)", customerSafeKeyHash,
       customerSlice, customerReserveId));
-    if (customerNodes.containsKey(customerSafeKeyHash) && customerNodes.get(customerSafeKeyHash)
-      .contains(customerReserveId)) {
+    if (customerNodes.containsKey(customerSafeKeyHash) && customerNodes.get(customerSafeKeyHash).contains(customerReserveId)) {
 
     } else {
-      return String.format("%s in slice %s is not stitched to SDX", customerReserveId,
-        customerSlice);
+      return String.format("%s in slice %s is not stitched to SDX", customerReserveId, customerSlice);
     }
 
     Long t1 = System.currentTimeMillis();
@@ -667,6 +665,9 @@ public class ExoSdxManager extends SdxManagerBase {
     serverSlice.loadSlice();
     String stitchLinkName = stitchNet.get(customerReserveId);
     String stitchNodeName = stitchLinkName.split("_")[1];
+
+    logger.info("stitchLinkName=" + stitchLinkName);
+    logger.info("stitchNodeName=" + stitchNodeName);
 
     serverSlice.unstitch(stitchLinkName, customerSlice, customerReserveId);
 
@@ -1197,7 +1198,7 @@ public class ExoSdxManager extends SdxManagerBase {
 
   @Override
   synchronized public String stitchChameleon(String site, String nodeName, String customer_keyhash,
-    String stitchport, String vlan, String gateway, String ip) {
+    String stitchport, String vlan, String gateway, String ip, String creservid) {
     String res = "Stitch request unauthorized";
     String sdxsite = SiteBase.get(site);
     if (stitchport.toLowerCase().equals("tacc")) {
@@ -1235,7 +1236,7 @@ public class ExoSdxManager extends SdxManagerBase {
           logger.debug("Configured the new router in RoutingManager");
           addComputeNodeandEdgeRouter = true;
         }
-        String stitchname = "sp-" + nodeName + "-" + ip.replace("/", "__").replace(".", "_");
+        String stitchname = "sp_" + nodeName + "_" + ip.replace("/", "_").replace(".", "_");
         logger.info(logPrefix + "Stitching to Chameleon {" + "stitchname: " + stitchname + " vlan:" +
           vlan + " stithport: " + stitchport + "}");
         addStitchPort(stitchname, nodeName, stitchport, vlan, coreProperties.getBw());
@@ -1250,6 +1251,15 @@ public class ExoSdxManager extends SdxManagerBase {
             }
           }
         }
+
+        //update states (Added on similar lines as for Exogeni Stitch)
+        stitchNet.put(creservid, stitchname);
+        if (!customerNodes.containsKey(customer_keyhash)) {
+          customerNodes.put(customer_keyhash, new HashSet<>());
+        }
+        customerNodes.get(customer_keyhash).add(creservid);
+        customerGateway.put(creservid, gateway);
+
         res = "Stitch operation Completed";
         logger.info(logPrefix + res);
       } catch (Exception e) {
