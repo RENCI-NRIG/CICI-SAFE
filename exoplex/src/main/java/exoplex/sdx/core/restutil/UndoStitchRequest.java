@@ -7,6 +7,6 @@ public class UndoStitchRequest {
 
   @Override
   public String toString() {
-    return String.format("%s%s %s", ckeyhash, cslice, creservid);
+    return String.format("%s %s %s", ckeyhash, cslice, creservid);
   }
 }

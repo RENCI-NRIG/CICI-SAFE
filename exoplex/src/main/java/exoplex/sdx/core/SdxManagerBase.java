@@ -258,17 +258,14 @@ public class SdxManagerBase extends SliceHelper implements SdxManagerInterface {
   }
 
   synchronized public String undoStitch(String customerSafeKeyHash, String customerSlice,
-                                        String
-                                          customerReserveId) throws Exception {
+                                        String customerReserveId) throws Exception {
     logger.debug("ndllib TestDriver: START");
     logger.info(String.format("Undostitch request from %s for (%s, %s)", customerSafeKeyHash,
       customerSlice, customerReserveId));
-    if (customerNodes.containsKey(customerSafeKeyHash) && customerNodes.get(customerSafeKeyHash)
-      .contains(customerReserveId)) {
+    if (customerNodes.containsKey(customerSafeKeyHash) && customerNodes.get(customerSafeKeyHash).contains(customerReserveId)) {
 
     } else {
-      return String.format("%s in slice %s is not stitched to SDX", customerReserveId,
-        customerSlice);
+      return String.format("%s in slice %s is not stitched to SDX", customerReserveId, customerSlice);
     }
 
     Long t1 = System.currentTimeMillis();
@@ -722,9 +719,8 @@ public class SdxManagerBase extends SliceHelper implements SdxManagerInterface {
     routingmanager.retriveRouteOfPrefix(prefix, SDNController);
   }
 
-  synchronized public String stitchChameleon(String site, String nodeName, String customer_keyhash, String
-    stitchport,
-                                             String vlan, String gateway, String ip) {
+  synchronized public String stitchChameleon(String site, String nodeName, String customer_keyhash, String stitchport,
+                                             String vlan, String gateway, String ip, String creservid) {
     String res = "Stitch request unauthorized";
     return res;
   }
