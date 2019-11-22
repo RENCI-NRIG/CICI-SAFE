@@ -272,8 +272,9 @@ public class ExoSdxManager extends SdxManagerBase {
       while (true) {
         serverSlice.addLink(stitchName, nodeName, bw);
         if (serverSlice.commitAndWait(10, Arrays.asList(stitchName))) {
-          int newNum;
+          int newNum = numInterfaces;
           do {
+            numInterfaces = newNum;
             serverSlice.sleep(10);
             newNum = serverSlice.getPhysicalInterfaces(nodeName).size();
           } while (newNum <= numInterfaces);
