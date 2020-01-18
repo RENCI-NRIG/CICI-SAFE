@@ -13,13 +13,15 @@ public class Router {
   String dpid = "";
   String managementIP = "";
   String domain;
+  String controller;
 
   HashSet<String> interfaces = new HashSet<String>();
   HashMap<String, String> customergateways = new HashMap<>();
 
-  public Router(String rid, String switch_id, String ip) {
+  public Router(String rid, String switch_id, String controller, String ip) {
     routerName = rid;
     dpid = switch_id;
+    this.controller = controller;
     this.managementIP = ip;
   }
 
@@ -46,6 +48,14 @@ public class Router {
   public void addGateway(String linkName, String gw) {
     logger.debug("Gateway " + gw + " added to " + routerName);
     customergateways.put(linkName, gw);
+  }
+
+  public String getController() {
+    return this.controller;
+  }
+
+  public void setController(String controller) {
+    this.controller = controller;
   }
 
   public void delGateway(String gw) {

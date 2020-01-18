@@ -52,7 +52,8 @@ public class VfcSliceManager extends SliceManager {
   }
 
   public void loadSlice() throws Exception {
-    networkManager.putRouter(new Router("vfc-1", "0000fe754c80b54d", null));
+    networkManager.putRouter(new Router("vfc-1", "0000fe754c80b54d", "152.3" +
+      ".137.55:8080", null));
     networkManager.addLink("stitch_vfc0-1_192_168_200_1_24",
       "192.168.200.1/24",
       "vfc-1",
@@ -91,6 +92,7 @@ public class VfcSliceManager extends SliceManager {
         networkManager.putRouter(
           new Router((String)obj.get("name"),
             (String) obj.get("dpid"),
+            (String) obj.get("controller"),
           null));
         Set<String> routerSet = routersMap.computeIfAbsent((String)obj.get("site"),
           k -> new HashSet<>());
@@ -354,6 +356,11 @@ public class VfcSliceManager extends SliceManager {
 
   public String getDpid(String routerName, String sshkey) {
     return networkManager.getRouter(routerName).getDPID();
+  }
+
+  @Override
+  public String getController(String routerName) {
+    return networkManager.getRouter(routerName).getController();
   }
 
   public String addOVSRouter(String site, String name) {

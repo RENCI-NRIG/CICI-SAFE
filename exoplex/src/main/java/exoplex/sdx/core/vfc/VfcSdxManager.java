@@ -136,7 +136,8 @@ public class VfcSdxManager extends SdxManagerBase {
   protected void configRouter(String nodeName) {
     logger.debug(String.format("Configuring router %s", nodeName));
     String result = serverSlice.getDpid(nodeName, coreProperties.getSshKey());
-    routingmanager.newRouter(nodeName, result, null);
+    routingmanager.newRouter(nodeName, result, serverSlice.getController(nodeName)
+      , null);
   }
 
   @Override
@@ -188,7 +189,7 @@ public class VfcSdxManager extends SdxManagerBase {
       String nodeName = parts[1];
       String[] ipseg = ip.split("\\.");
       String gw = ipseg[0] + "." + ipseg[1] + "." + ipseg[2] + "." + parts[3];
-      routingmanager.newExternalLink(sp, ip, nodeName, gw, SDNController);
+      routingmanager.newExternalLink(sp, ip, nodeName, gw);
     }
 
     Set<String> keyset = links.keySet();
@@ -201,8 +202,7 @@ public class VfcSdxManager extends SdxManagerBase {
         routingmanager.newExternalLink(logLink.getLinkName(),
           ((VfcSliceManager)serverSlice).getIPOfExternalLink(logLink.getLinkName()),
           logLink.getNodeA(),
-          ((VfcSliceManager)serverSlice).getGatewayOfExternalLink(logLink.getLinkName()),
-          SDNController);
+          ((VfcSliceManager)serverSlice).getGatewayOfExternalLink(logLink.getLinkName()));
       }
     }
 
@@ -222,7 +222,6 @@ public class VfcSdxManager extends SdxManagerBase {
           logLink.getNodeA(),
           logLink.getIP(2),
           logLink.getNodeB(),
-          SDNController,
           logLink.getCapacity());
       }
     }
@@ -285,8 +284,7 @@ public class VfcSdxManager extends SdxManagerBase {
         logLink.getLinkName(),
         ip,
         logLink.getNodeA(),
-        gateway,
-        SDNController);
+        gateway);
       //routingmanager.configurePath(ip,node.getName(),ip.split("/")[0],SDNController);
       logger.info(logPrefix + "stitching operation  completed, time elapsed(s): " + (System
         .currentTimeMillis() - start) / 1000);
@@ -380,7 +378,7 @@ public class VfcSdxManager extends SdxManagerBase {
     } else {
       logger.debug("Available path found, configuring routes");
       if (routingmanager.configurePath(self_prefix, n1, target_prefix, n2, findGatewayForPrefix
-        (self_prefix), SDNController, bandwidth)
+        (self_prefix), bandwidth)
       ) {
         logger.info(logPrefix + "Routing set up for " + self_prefix + " and " + target_prefix);
         logger.debug(logPrefix + "Routing set up for " + self_prefix + " and " + target_prefix);

@@ -288,7 +288,7 @@ public class SdxManagerBase extends SliceHelper implements SdxManagerInterface {
     Long t2 = System.currentTimeMillis();
     serverSlice.removeLink(stitchLinkName);
     serverSlice.commitAndWait();
-    routingmanager.removeExternalLink(stitchName, stitchName.split("_")[1], SDNController);
+    routingmanager.removeExternalLink(stitchName, stitchName.split("_")[1]);
     releaseIP(Integer.valueOf(stitchName.split("_")[2]));
     updateOvsInterface(stitchNodeName);
     logger.debug("Finished UnStitching, time elapsed: " + (t2 - t1) + "\n");
@@ -342,8 +342,7 @@ public class SdxManagerBase extends SliceHelper implements SdxManagerInterface {
     routingmanager.newExternalLink(logLink.getLinkName(),
       logLink.getIP(1),
       logLink.getNodeA(),
-      logLink.getIP(2).split("/")[0],
-      SDNController);
+      logLink.getIP(2).split("/")[0]);
     Long t2 = System.currentTimeMillis();
     logger.info(logPrefix + "Deployed new Bro node successfully, time elapsed: " + (t2 - t1) +
       "milliseconds");
@@ -536,9 +535,7 @@ public class SdxManagerBase extends SliceHelper implements SdxManagerInterface {
             routingmanager.removePath(newAdvertise.destPrefix, newAdvertise.srcPrefix,
               getSDNController());
             routingmanager.configurePath(newAdvertise.destPrefix, newAdvertise.srcPrefix,
-              edgeNode, gateway,
-              getSDNController
-                ());
+              edgeNode, gateway);
           } else {
             logger.debug(String.format("Debug Msg: configuring route for policy %s\n new " +
               "advertise: %s", policyAdvertise.toString(), newAdvertise.toString()));
@@ -605,7 +602,7 @@ public class SdxManagerBase extends SliceHelper implements SdxManagerInterface {
         routingmanager.removePath(routeAdvertise.destPrefix, routeAdvertise.srcPrefix,
           getSDNController());
         routingmanager.configurePath(routeAdvertise.destPrefix, routeAdvertise.srcPrefix, edgeNode,
-          gateway, getSDNController());
+          gateway);
       }
       for (RouteAdvertise newAdvertise : newAdvertises) {
         propagateBgpAdvertise(newAdvertise, routeAdvertise.advertiserPID);
@@ -649,10 +646,8 @@ public class SdxManagerBase extends SliceHelper implements SdxManagerInterface {
         notifyResult.safeKeyHash = safeManager.getSafeKeyHash();
       }
       //monitor the frist package
-      routingmanager.monitorOnAllRouter(dest, SdnUtil.DEFAULT_ROUTE,
-        SDNController);
-      routingmanager.monitorOnAllRouter(SdnUtil.DEFAULT_ROUTE, dest,
-        SDNController);
+      routingmanager.monitorOnAllRouter(dest, SdnUtil.DEFAULT_ROUTE);
+      routingmanager.monitorOnAllRouter(SdnUtil.DEFAULT_ROUTE, dest);
     }
     return notifyResult;
   }
@@ -770,7 +765,7 @@ public class SdxManagerBase extends SliceHelper implements SdxManagerInterface {
     }
     result = result.replace("\n", "");
     logger.debug(String.format("Get router info %s %s %s", nodeName, mip, result));
-    routingmanager.newRouter(nodeName, result, mip);
+    routingmanager.newRouter(nodeName, result, getSDNController(), mip);
   }
 
   protected void configRouters(SliceManager slice) {
