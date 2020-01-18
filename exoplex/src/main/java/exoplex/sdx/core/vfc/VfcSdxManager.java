@@ -98,7 +98,8 @@ public class VfcSdxManager extends SdxManagerBase {
   protected void configRouter(String nodeName) {
     logger.debug(String.format("Configuring router %s", nodeName));
     String result = serverSlice.getDpid(nodeName, coreProperties.getSshKey());
-    routingmanager.newRouter(nodeName, result, null);
+    routingmanager.newRouter(nodeName, result, serverSlice.getController(nodeName)
+      , null);
   }
 
   @Override
@@ -140,13 +141,8 @@ public class VfcSdxManager extends SdxManagerBase {
 
     //routingmanager.waitTillAllOvsConnected(SDNController, serverSlice.mocked);
 
-    logger.debug("setting up sttichports");
-    HashSet<Integer> usedip = new HashSet<Integer>();
-    HashSet<String> ifs = new HashSet<String>();
-
     Set<String> keyset = links.keySet();
     //logger.debug(keyset);
-
     for (String k : keyset) {
       Link logLink = links.get(k);
       logger.debug("Setting up logLink " + logLink.getLinkName());
@@ -157,7 +153,8 @@ public class VfcSdxManager extends SdxManagerBase {
         logLink.setMask(mask);
       }
       //logger.debug(logLink.nodea+":"+logLink.getIP(1)+" "+logLink.nodeb+":"+logLink.getIP(2));
-      routingmanager.newInternalLink(logLink.getLinkName(), logLink.getIP(1), logLink.getNodeA(), logLink.getIP(2), logLink.getNodeB(), SDNController, logLink.getCapacity());
+      routingmanager.newInternalLink(logLink.getLinkName(), logLink.getIP(1),
+        logLink.getNodeA(), logLink.getIP(2), logLink.getNodeB(), logLink.getCapacity());;
     }
   }
 
@@ -218,8 +215,7 @@ public class VfcSdxManager extends SdxManagerBase {
         logLink.getLinkName(),
         ip,
         logLink.getNodeA(),
-        gateway,
-        SDNController);
+        gateway);
       //routingmanager.configurePath(ip,node.getName(),ip.split("/")[0],SDNController);
       logger.info(logPrefix + "stitching operation  completed, time elapsed(s): " + (System
         .currentTimeMillis() - start) / 1000);
@@ -313,7 +309,7 @@ public class VfcSdxManager extends SdxManagerBase {
     } else {
       logger.debug("Available path found, configuring routes");
       if (routingmanager.configurePath(self_prefix, n1, target_prefix, n2, findGatewayForPrefix
-        (self_prefix), SDNController, bandwidth)
+        (self_prefix), bandwidth)
       ) {
         logger.info(logPrefix + "Routing set up for " + self_prefix + " and " + target_prefix);
         logger.debug(logPrefix + "Routing set up for " + self_prefix + " and " + target_prefix);

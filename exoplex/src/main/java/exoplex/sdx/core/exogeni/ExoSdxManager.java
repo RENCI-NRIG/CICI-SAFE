@@ -438,7 +438,7 @@ public class ExoSdxManager extends SdxManagerBase {
           ifNumAfter = serverSlice.getPhysicalInterfaces(myNode).size();
           updateOvsInterface(myNode);
         } while (ifNumAfter <= interfaceNum);
-        routingmanager.newExternalLink(l1.getLinkName(), ip, myNode, gateway, SDNController);
+        routingmanager.newExternalLink(l1.getLinkName(), ip, myNode, gateway);
         String remoteGUID = res.getString("reservID");
         String remoteSafeKeyHash = res.getString("safeKeyHash");
         //Todo: be careful when we want to unstitch from the link side. as the net is virtual
@@ -619,8 +619,7 @@ public class ExoSdxManager extends SdxManagerBase {
       routingmanager.newExternalLink(logLink.getLinkName(),
         ip,
         logLink.getNodeA(),
-        gateway,
-        SDNController);
+        gateway);
       //routingmanager.configurePath(ip,node.getName(),ip.split("/")[0],SDNController);
       logger.info(logPrefix + "stitching operation  completed, time elapsed(s): " + (System
         .currentTimeMillis() - start) / 1000);
@@ -683,7 +682,7 @@ public class ExoSdxManager extends SdxManagerBase {
     Long t2 = System.currentTimeMillis();
     serverSlice.removeLink(stitchLinkName);
     serverSlice.commitAndWait();
-    routingmanager.removeExternalLink(stitchName, stitchName.split("_")[1], SDNController);
+    routingmanager.removeExternalLink(stitchName, stitchName.split("_")[1]);
     releaseIP(Integer.valueOf(stitchName.split("_")[2]));
     updateOvsInterface(stitchNodeName);
     logger.debug("Finished UnStitching, time elapsed: " + (t2 - t1) + "\n");
@@ -737,8 +736,7 @@ public class ExoSdxManager extends SdxManagerBase {
     routingmanager.newExternalLink(logLink.getLinkName(),
       logLink.getIP(1),
       logLink.getNodeA(),
-      logLink.getIP(2).split("/")[0],
-      SDNController);
+      logLink.getIP(2).split("/")[0]);
     Long t2 = System.currentTimeMillis();
     logger.info(logPrefix + "Deployed new Bro node successfully, time elapsed: " + (t2 - t1) +
       "milliseconds");
@@ -974,7 +972,6 @@ public class ExoSdxManager extends SdxManagerBase {
         l1.getNodeA(),
         l1.getIP(2),
         l1.getNodeB(),
-        SDNController,
         linkbw);
       logger.debug("Link added successfully");
     }
@@ -982,7 +979,7 @@ public class ExoSdxManager extends SdxManagerBase {
     if (res) {
       logger.debug("Available path found, configuring routes");
       if (routingmanager.configurePath(self_prefix, n1, target_prefix, n2, findGatewayForPrefix
-        (self_prefix), SDNController, bandwidth)
+        (self_prefix), bandwidth)
         //&&
         //  routingmanager.configurePath(target_prefix, n2, self_prefix, n1, prefixGateway.get
         //      (target_prefix), SDNController, 0)){
@@ -1052,9 +1049,7 @@ public class ExoSdxManager extends SdxManagerBase {
             routingmanager.removePath(newAdvertise.destPrefix, newAdvertise.srcPrefix,
               getSDNController());
             routingmanager.configurePath(newAdvertise.destPrefix, newAdvertise.srcPrefix,
-              edgeNode, gateway,
-              getSDNController
-                ());
+              edgeNode, gateway);
           } else {
             logger.debug(String.format("Debug Msg: configuring route for policy %s\n new " +
               "advertise: %s", policyAdvertise.toString(), newAdvertise.toString()));
@@ -1121,7 +1116,7 @@ public class ExoSdxManager extends SdxManagerBase {
         routingmanager.removePath(routeAdvertise.destPrefix, routeAdvertise.srcPrefix,
           getSDNController());
         routingmanager.configurePath(routeAdvertise.destPrefix, routeAdvertise.srcPrefix, edgeNode,
-          gateway, getSDNController());
+          gateway);
       }
       for (RouteAdvertise newAdvertise : newAdvertises) {
         propagateBgpAdvertise(newAdvertise, routeAdvertise.advertiserPID);
@@ -1246,7 +1241,7 @@ public class ExoSdxManager extends SdxManagerBase {
         addStitchPort(stitchname, nodeName, stitchport, vlan, coreProperties.getBw());
         updateOvsInterface(nodeName);
         //routingmanager.replayCmds(routingmanager.getDPID(nodeName));
-        routingmanager.newExternalLink(stitchname, ip, nodeName, gateway, SDNController);
+        routingmanager.newExternalLink(stitchname, ip, nodeName, gateway);
         if(addComputeNodeandEdgeRouter) {
           if (nodeName.matches(routerPattern)) {
             putComputeNode(nodeName);
@@ -1428,7 +1423,7 @@ public class ExoSdxManager extends SdxManagerBase {
     }
     result = result.replace("\n", "");
     logger.debug(String.format("Get router info %s %s %s", nodeName, mip, result));
-    routingmanager.newRouter(nodeName, result, mip);
+    routingmanager.newRouter(nodeName, result, getSDNController(), mip);
   }
 
   protected void configRouters(SliceManager slice) {
@@ -1502,7 +1497,7 @@ public class ExoSdxManager extends SdxManagerBase {
       String nodeName = parts[1];
       String[] ipseg = ip.split("\\.");
       String gw = ipseg[0] + "." + ipseg[1] + "." + ipseg[2] + "." + parts[3];
-      routingmanager.newExternalLink(sp, ip, nodeName, gw, SDNController);
+      routingmanager.newExternalLink(sp, ip, nodeName, gw);
     }
 
     Set<String> keyset = links.keySet();
@@ -1515,8 +1510,7 @@ public class ExoSdxManager extends SdxManagerBase {
         routingmanager.newExternalLink(logLink.getLinkName(),
           logLink.getIP(1),
           logLink.getNodeA(),
-          logLink.getIP(2).split("/")[0],
-          SDNController);
+          logLink.getIP(2).split("/")[0]);
       }
     }
 
@@ -1537,7 +1531,6 @@ public class ExoSdxManager extends SdxManagerBase {
           logLink.getNodeA(),
           logLink.getIP(2),
           logLink.getNodeB(),
-          SDNController,
           logLink.getCapacity());
       }
     }

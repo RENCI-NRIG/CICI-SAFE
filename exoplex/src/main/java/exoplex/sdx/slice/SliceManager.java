@@ -165,6 +165,10 @@ public abstract class SliceManager {
 
   abstract public String getDpid(String routerName, String sshkey);
 
+  public String getController(String routerName) {
+    return null;
+  }
+
   abstract public String addOVSRouter(String site, String name);
 
   abstract public void printNetworkInfo();
