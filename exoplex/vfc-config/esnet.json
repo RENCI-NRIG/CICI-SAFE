@@ -1,0 +1,39 @@
+[
+    {
+        "router": {
+                "name": "vfc-esnet-tacc",
+                "dpid": "0000ce045cc7b141",
+                "site": "TACC"
+        }
+    },
+    {
+        "router": {
+                "name": "vfc-esnet-uc",
+                "dpid": "00009ae1eac32b45",
+                "site": "UC"
+        }
+    },
+    {
+        "link": {
+                "name": "link0",
+                "node1": "vfc-esnet-tacc",
+                "node2": "vfc-esnet-uc"
+        }
+    },
+    {
+        "stitch": {
+                "name": "net-exogenisc19yy1",
+                "router": "vfc-esnet-tacc",
+                "site": "TACC",
+                "vlan": "3506"
+        }
+    },
+    {
+        "stitch": {
+                "name": "netexogenivfcyy1",
+                "router": "vfc-esnet-uc",
+                "site": "UC",
+                "vlan": "3292"
+        }
+    }
+]
