@@ -3,14 +3,16 @@
         "router": {
                 "name": "vfc-esnet-tacc",
                 "dpid": "0000ce045cc7b141",
-                "site": "TACC"
+                "site": "TACC",
+                "controller":"192.168.120.122:8080"
         }
     },
     {
         "router": {
                 "name": "vfc-esnet-uc",
                 "dpid": "00009ae1eac32b45",
-                "site": "UC"
+                "site": "UC",
+                "controller":"192.168.120.15:8080"
         }
     },
     {
