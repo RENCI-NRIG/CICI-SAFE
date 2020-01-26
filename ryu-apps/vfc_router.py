@@ -1049,14 +1049,15 @@ class VlanRouter(object):
         try:
             src_mac = self.port_data[in_port].mac
             if src_mac == "00:00:00:00:00:00":
-                p1 = "{}".format(hex((in_port%10000)/100)).replace("0x", "")
-                if len(p1) == 1:
-                    p1 = "0{}".format(p1)
-                if len(p2) == 1:
-                    p2 = "0{}".format(p2)
-                p2 = "{}".format(hex(in_port%100)).replace("0x", "")
-                src_mac = "{}:{}:{}".format(MAC_PREFIX, p1, p2)
-            print("mac for {} is {}".format(in_port, src_mac))
+                mac = str(hex((self.dp.id*143+in_port)%100000000000001)).replace("0x","")
+                if len(mac) > 12:
+                    mac = mac[0:12]
+                while len(mac) < 12:
+                    mac = "0" + mac
+                src_mac = mac[0:2]
+                for i in range(2, 10, 2):
+                    src_mac = src_mac + ":" + mac[i, i + 2]
+                print("mac for {} is {}".format(in_port, src_mac))
         except:
             print("exception when getting mac for inport {} ".format(in_port))
             return "00:00:00:00:00:00"
