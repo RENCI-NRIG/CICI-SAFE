@@ -64,13 +64,15 @@ public class VfcSdxManager extends SdxManagerBase {
     if (coreProperties.getIpPrefix() != null) {
       computeIP(coreProperties.getIpPrefix());
     }
-    if(coreProperties.getReset()) {
-      delFlows();
-    }
     loadSlice();
     initializeSdx();
     loadSdxNetwork(routerPattern);
     configRouting();
+    if(coreProperties.getReset()) {
+      logger.info("delete flows");
+      delFlows();
+      return;
+    }
   }
 
   private void loadSdxNetwork(String routerpattern) {

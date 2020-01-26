@@ -314,9 +314,9 @@ public class SdnUtil {
     return new String[]{url, entity.toString()};
   }
 
-  public static void deleteAllFlows(String controller, String dpid) {
+  public static String deleteAllFlows(String controller, String dpid) {
     String url = "http://" + controller + "/stats/flowentry/clear/" + Long.parseLong(dpid, 16);
-    HttpUtil.delete(url);
+    return HttpUtil.delete(url);
   }
 
   public static String getAllFlowStats(String controller, String dpid) {

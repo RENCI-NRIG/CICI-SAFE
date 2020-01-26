@@ -10,7 +10,7 @@
     {
         "router": {
                 "name": "vfc-esnet-uc",
-                "dpid": "00009ae1eac32b45",
+                "dpid": "0000f2e345426c44",
                 "site": "UC",
                 "controller":"192.168.120.15:8080"
         }

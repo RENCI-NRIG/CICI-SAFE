@@ -646,8 +646,8 @@ public class SdxManagerBase extends SliceHelper implements SdxManagerInterface {
         notifyResult.safeKeyHash = safeManager.getSafeKeyHash();
       }
       //monitor the frist package
-      routingmanager.monitorOnAllRouter(dest, SdnUtil.DEFAULT_ROUTE);
-      routingmanager.monitorOnAllRouter(SdnUtil.DEFAULT_ROUTE, dest);
+      //routingmanager.monitorOnAllRouter(dest, SdnUtil.DEFAULT_ROUTE);
+      //routingmanager.monitorOnAllRouter(SdnUtil.DEFAULT_ROUTE, dest);
     }
     return notifyResult;
   }

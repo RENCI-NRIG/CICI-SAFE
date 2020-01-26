@@ -697,7 +697,7 @@ public class RoutingManager {
 
   public void deleteAllFlows() {
     for (String dpid : networkManager.getAllDpids()) {
-      SdnUtil.deleteAllFlows(networkManager.getRouterByDPID(dpid).getController(), dpid);
+      logger.info(SdnUtil.deleteAllFlows(networkManager.getRouterByDPID(dpid).getController(), dpid));
     }
   }
 
