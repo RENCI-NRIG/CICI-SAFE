@@ -1056,6 +1056,10 @@ class VlanRouter(object):
             src_mac = self.port_data[in_port].mac
             if src_mac == "00:00:00:00:00:00":
                 p1 = "{}".format(hex((in_port%10000)/100)).replace("0x", "")
+                if len(p1) == 1:
+                    p1 = "0{}".format(p1)
+                if len(p2) == 1:
+                    p2 = "0{}".format(p2)
                 p2 = "{}".format(hex(in_port%100)).replace("0x", "")
                 src_mac = "{}:{}:{}".format(MAC_PREFIX, p1, p2)
             print("mac for {} is {}".format(in_port, src_mac))
