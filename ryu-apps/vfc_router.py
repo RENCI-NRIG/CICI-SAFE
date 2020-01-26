@@ -531,7 +531,6 @@ class Router(dict):
     def update(self,dp,logger):
         self.port_data=PortData(dp.ports)
         self[VLANID_NONE].port_data=self.port_data
-        self.logger.info("Update port data.", extra=self.sw_id)
     #==========
 
     def delete(self):
