@@ -297,7 +297,6 @@ class RestRouterAPI(app_manager.RyuApp):
 
     @set_ev_cls(ofp_event.EventOFPPacketIn, MAIN_DISPATCHER)
     def packet_in_handler(self, ev):
-        print("packet in handler")
         RouterController.packet_in_handler(ev.msg)
 
     #NOTE 0: yjyao
@@ -421,10 +420,8 @@ class RouterController(ControllerBase):
     @classmethod
     def packet_in_handler(cls, msg):
         dp_id = msg.datapath.id
-        print("RC packet in ")
         if dp_id in cls._ROUTER_LIST:
             router = cls._ROUTER_LIST[dp_id]
-            print("dispatch to router")
             router.packet_in_handler(msg)
 
     # GET /router/{switch_id}
@@ -534,7 +531,6 @@ class Router(dict):
     def update(self,dp,logger):
         self.port_data=PortData(dp.ports)
         self[VLANID_NONE].port_data=self.port_data
-        print dp.ports
         self.logger.info("Update port data.", extra=self.sw_id)
     #==========
 
@@ -1021,7 +1017,6 @@ class VlanRouter(object):
 
     def packet_in_handler(self, msg, header_list):
         # Check invalid TTL (for OpenFlow V1.2/1.3)
-        print("VR packet in")
         ofproto = self.dp.ofproto
         if ofproto.OFP_VERSION == ofproto_v1_2.OFP_VERSION or \
                 ofproto.OFP_VERSION == ofproto_v1_3.OFP_VERSION:
@@ -1031,7 +1026,6 @@ class VlanRouter(object):
 
         # Analyze event type.
         if ARP in header_list:
-            print("VR arp in")
             self._packetin_arp(msg, header_list)
             return
 
@@ -1069,12 +1063,8 @@ class VlanRouter(object):
         return src_mac
 
     def _packetin_arp(self, msg, header_list):
-        print("src_ip {}".format(header_list[ARP].src_ip))
         src_addr = self.address_data.get_data(ip=header_list[ARP].src_ip)
-        print("VR _packetin_arp {}".format(src_addr))
         if src_addr is None:
-            for key in self.address_data:
-                print("{} -> {}".format(key, self.address_data[key]))
             return
 
         # case: Receive ARP from the gateway
@@ -1398,7 +1388,6 @@ class AddressData(dict):
         ip_str = ip_addr_ntoa(nw_addr)
         key = '%s/%d' % (ip_str, mask)
         self[key] = address
-        print("add address data {} {}".format(key, address))
 
         self.address_id += 1
         self.address_id &= UINT32_MAX
@@ -1915,7 +1904,6 @@ class OfCtl_after_v1_2(OfCtl):
     def set_icmp_reply_flow(self, cookie, priority, dl_type=0, dl_dst=0, dl_vlan=0,
                  nw_src=0, src_mask=32, nw_dst=0, dst_mask=32,
                  nw_proto=1, idle_timeout=0, actions=None):
-        print("1.2 set icmp flow===============")
         ofp = self.dp.ofproto
         ofp_parser = self.dp.ofproto_parser
         cmd = ofp.OFPFC_ADD

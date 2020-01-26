@@ -1536,7 +1536,7 @@ public class ExoSdxManager extends SdxManagerBase {
     }
     //set ovsdb address
     routingmanager.updateAllPorts(SDNController);
-    routingmanager.setOvsdbAddr(SDNController);
+    //routingmanager.setOvsdbAddr(SDNController);
   }
 
   private int getAvailableIP() {
