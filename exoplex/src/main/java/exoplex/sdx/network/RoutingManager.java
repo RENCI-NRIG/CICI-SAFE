@@ -54,7 +54,7 @@ public class RoutingManager {
   synchronized public void newRouter(String routerName, String dpid,
                                      String controller, String managementIP) {
     logger.debug("RoutingManager: new router " + routerName + " " + dpid);
-    logger.info(String.format("newRouter %s %s %s", routerName, dpid, managementIP));
+    logger.info(String.format("newRouter %s %s %s", routerName, dpid, controller));
     if (networkManager.getRouter(routerName) == null) {
       //      logger.debug(dpid+":my dpid");
       networkManager.putRouter(new Router(routerName, dpid, controller,
@@ -695,9 +695,9 @@ public class RoutingManager {
 
   }
 
-  public void deleteAllFlows(String controller) {
+  public void deleteAllFlows() {
     for (String dpid : networkManager.getAllDpids()) {
-      SdnUtil.deleteAllFlows(controller, dpid);
+      SdnUtil.deleteAllFlows(networkManager.getRouterByDPID(dpid).getController(), dpid);
     }
   }
 

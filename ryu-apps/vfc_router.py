@@ -1155,7 +1155,7 @@ class VlanRouter(object):
         dstip = ip_addr_ntoa(header_list[IPV4].dst)
         log_msg = 'Receive ICMP echo request from [%s] to router port [%s].'
         self.logger.info(log_msg, srcip, dstip, extra=self.sw_id)
-        self.logger.info('Send ICMP echo reply to [%s].', srcip,
+        self.logger.info('Send ICMP echo reply to [%s] [%s].', srcip, in_port,
                          extra=self.sw_id)
 
     def _packetin_tcp_udp(self, msg, header_list):

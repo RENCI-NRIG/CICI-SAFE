@@ -176,7 +176,7 @@ public class VfcSdxManager extends SdxManagerBase {
 
   @Override
   public void delFlows() {
-    routingmanager.deleteAllFlows(getSDNController());
+    routingmanager.deleteAllFlows();
   }
 
   synchronized public JSONObject stitchVfc(
