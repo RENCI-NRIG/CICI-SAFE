@@ -95,11 +95,11 @@ public abstract class SliceManager {
 
   abstract public void commitSlice() throws TransportException;
 
-  abstract public void commitAndWait() throws TransportException, Exception;
+  abstract public void commitAndWait() throws Exception;
 
-  abstract public boolean commitAndWait(int interval) throws TransportException, Exception;
+  abstract public boolean commitAndWait(int interval) throws Exception;
 
-  abstract public boolean commitAndWait(int interval, List<String> resources) throws TransportException, Exception;
+  abstract public boolean commitAndWait(int interval, List<String> resources) throws Exception;
 
   abstract public void waitTillActive() throws Exception;
 
@@ -118,7 +118,7 @@ public abstract class SliceManager {
 
   abstract public String runCmdNode(final String cmd, String nodeName);
 
-  abstract public int getInterfaceNum(String nodeName);
+  abstract public List<String> getPhysicalInterfaces(String nodeName);
 
   abstract public String runCmdByIP(final String cmd, String mip, boolean repeat);
 
@@ -164,6 +164,10 @@ public abstract class SliceManager {
     SDNControllerIP, String serverurl, String sshkey);
 
   abstract public String getDpid(String routerName, String sshkey);
+
+  public String getController(String routerName) {
+    return null;
+  }
 
   abstract public String addOVSRouter(String site, String name);
 

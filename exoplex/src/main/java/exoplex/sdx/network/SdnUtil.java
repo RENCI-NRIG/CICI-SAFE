@@ -11,11 +11,16 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class SdnUtil {
+  public static final String DEFAULT_ROUTE = "0.0.0.0/0";
+  public static final String IP_PATTERN =
+    "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})";
+  public static final String PREFIX_PATTERN =
+    "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1," + "3})\\.(\\d{1,3})/(\\d{1,3})";
   static final Logger logger = LogManager.getLogger(SdnUtil.class);
-
-  static int cookie = 1026;
+  static AtomicInteger cookie = new AtomicInteger(1026);
 
   static String queueURL(String controller, String dpid) {
     return "http://" + controller + "/qos/queue/" + dpid;
@@ -145,8 +150,11 @@ public class SdnUtil {
       .split(",");
     ArrayList<String> retVal = new ArrayList<>();
     for (String dpid : dpids) {
-      String sdpid = Long.toHexString(Long.valueOf(dpid));
-      retVal.add(StringUtils.leftPad(sdpid, 16, '0'));
+      try {
+        String sdpid = Long.toHexString(Long.valueOf(dpid));
+        retVal.add(StringUtils.leftPad(sdpid, 16, '0'));
+      } catch (Exception e) {
+      }
     }
     return retVal;
   }
@@ -226,7 +234,7 @@ public class SdnUtil {
 
     JSONObject entity = new JSONObject();
     entity.put("dpid", Long.parseLong(dpid, 16));
-    entity.put("cookie", cookie++);
+    entity.put("cookie", cookie.incrementAndGet());
     entity.put("cookie_mask", 1);
     entity.put("table_id", 0);
     //entity.put("idle_timeout", 30);
@@ -251,7 +259,7 @@ public class SdnUtil {
 
     JSONObject entity = new JSONObject();
     entity.put("dpid", Long.parseLong(dpid, 16));
-    entity.put("cookie", cookie++);
+    entity.put("cookie", cookie.incrementAndGet());
     entity.put("cookie_mask", 1);
     entity.put("table_id", 0);
     //entity.put("idle_timeout", 300);
@@ -271,9 +279,44 @@ public class SdnUtil {
     return HttpUtil.postJSON(url, entity);
   }
 
-  public static void deleteAllFlows(String controller, String dpid) {
+  public static String[] controllerFlowCmd(
+    String controller,
+    String dpid,
+    String destIP,
+    String srcIP,
+    int priority) {
+    String url = "http://" + controller + "/stats/flowentry/add";
+
+    JSONObject entity = new JSONObject();
+    entity.put("dpid", Long.parseLong(dpid, 16));
+    entity.put("cookie", cookie.incrementAndGet());
+    entity.put("cookie_mask", 1);
+    entity.put("table_id", 0);
+    //entity.put("idle_timeout", 300);
+    //entity.put("hard_timeout", 300);
+    entity.put("priority", priority);
+    entity.put("flags", 1);
+    JSONObject match = new JSONObject();
+    if (!destIP.equals(DEFAULT_ROUTE)) {
+      match.put("nw_dst", destIP);
+    }
+    if (!srcIP.equals(DEFAULT_ROUTE)) {
+      match.put("nw_src", srcIP);
+    }
+    match.put("dl_type", 2048);
+    entity.put("match", match);
+    JSONObject action = new JSONObject();
+    action.put("type", "OUTPUT");
+    action.put("port", "controller");
+    JSONArray actions = new JSONArray();
+    actions.put(action);
+    entity.put("actions", actions);
+    return new String[]{url, entity.toString()};
+  }
+
+  public static String deleteAllFlows(String controller, String dpid) {
     String url = "http://" + controller + "/stats/flowentry/clear/" + Long.parseLong(dpid, 16);
-    HttpUtil.delete(url);
+    return HttpUtil.delete(url);
   }
 
   public static String getAllFlowStats(String controller, String dpid) {

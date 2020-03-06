@@ -2,6 +2,9 @@ package exoplex.experiment.flow;
 
 import exoplex.common.utils.Exec;
 import exoplex.experiment.task.AsyncTask;
+import exoplex.sdx.slice.SliceProperties;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -9,9 +12,6 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 public class IperfServer extends AsyncTask {
   final static Logger logger = LogManager.getLogger(IperfServer.class);
@@ -50,7 +50,7 @@ public class IperfServer extends AsyncTask {
       cmd = cmd + " -u";
     }
     logger.info(cmd);
-    String[] res = Exec.sshExec("root", ip, cmd,
+    String[] res = Exec.sshExec(SliceProperties.userName, ip, cmd,
       sshKey);
     results.add(res);
     logger.info(res[0]);
@@ -60,7 +60,7 @@ public class IperfServer extends AsyncTask {
   public void stop() {
     lock.lock();
     if (started) {
-      Exec.sshExec("root", ip, "pkill iperf",
+      Exec.sshExec(SliceProperties.userName, ip, "sudo pkill iperf",
         sshKey);
       started = false;
     }

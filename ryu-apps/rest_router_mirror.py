@@ -1183,8 +1183,8 @@ class VlanRouter(object):
         #  Learning host MAC.
         gw_flg1 = self._update_routing_tbl(msg, header_list)
         gw_flg = self._update_mirroring_tbl(msg, header_list) or gw_flg1
-        if gw_flg is False:
-            self._learning_host_mac(msg, header_list)
+        #if gw_flg is False:
+        #    self._learning_host_mac(msg, header_list)
 
         # ARP packet handling.
         in_port = self.ofctl.get_packetin_inport(msg)

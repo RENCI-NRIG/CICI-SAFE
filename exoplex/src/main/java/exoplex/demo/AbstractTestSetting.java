@@ -11,7 +11,6 @@ public abstract class AbstractTestSetting {
   public String sliceNameSuffix = "test";
   public ArrayList<String> sdxSliceNames = new ArrayList<>();
   public HashMap<String, String[]> sdxArgs = new HashMap<>();
-  public HashMap<String, String[]> sdxNoResetArgs = new HashMap<>();
   public HashMap<String, String> sdxConfs = new HashMap<>();
   public HashMap<String, String> sdxKeyMap = new HashMap<>();
   public HashMap<String, String> sdxIpMap = new HashMap<>();
@@ -34,12 +33,13 @@ public abstract class AbstractTestSetting {
   public HashMap<String, List<String>> clientTags = new HashMap<>();
   public ArrayList<Integer[]> clientConnectionPairs = new ArrayList<>();
   public String userDir = System.getProperty("user.dir");
-  public String sdxSimpleDir = userDir.split("exoplex")[0] + "exoplex/";
+  public String exoplexDir = userDir.split("exoplex")[0] + "exoplex/";
   public String[] clientArgs;
   public String dockerImage = "safeserver-v8";
   public String safeServerScript = "sdx-routing.sh";
-  String[] riakArgs = new String[]{"-c", sdxSimpleDir + "config/riak.conf"};
-  String[] riakDelArgs = new String[]{"-c", sdxSimpleDir + "config/riak.conf", "-d"};
+  public boolean explicitConnectionRequest = true;
+  public boolean safeEnabled = false;
+  public String[] riakArgs = new String[]{"-c", exoplexDir + "config/riak.conf"};
 
   public AbstractTestSetting() {
   }

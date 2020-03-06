@@ -1,0 +1,193 @@
+# This describes what is deployed by this template.
+description: Ryu OpenFlow controller deployed with Heat on Chameleon
+
+# This defines the minimum Heat version required by this template.
+heat_template_version: ocata
+
+# The resources section defines what OpenStack resources are to be deployed and
+# how they should be configured.
+resources:
+  riak_floating_ip:
+   type: OS::Nova::FloatingIP
+   properties:
+     pool: public
+
+  riak_ip_association:
+    type: OS::Nova::FloatingIPAssociation
+    properties:
+      floating_ip: { get_resource: riak_floating_ip }
+      server_id: { get_resource: riak-server }
+
+  riak-server:
+   type: OS::Nova::Server
+   properties:
+     name: riak
+     flavor: baremetal
+     image: CC-CentOS7
+     key_name: { get_param: key_name }
+     networks:
+        - network: { get_param: network_name }
+     scheduler_hints: { reservation: { get_param: reservation_id } }
+     user_data:
+       str_replace:
+         template: |
+           #!/bin/bash
+
+           WORKING_DIR=/root
+           {
+           yum install -y docker vim mlocate
+           systemctl start docker
+
+           docker pull yaoyj11/riakimg
+           docker run -i -t  -d -p 2122:2122 -p 8098:8098 -p 8087:8087 -h riakserver --name riakserver yaoyj11/riakimg
+           docker exec -it riakserver sudo riak start
+           docker exec -it riakserver sudo riak-admin bucket-type activate  safesets
+           docker exec -it riakserver sudo riak-admin bucket-type update safesets '{"props":{"allow_mult":false}}'
+           } > ${WORKING_DIR}/boot.log 2>&1
+         params:
+           $riak_network: { get_param: network_name }
+
+
+  sdx_floating_ip:
+   type: OS::Nova::FloatingIP
+   properties:
+     pool: public
+
+  sdx_ip_association:
+    type: OS::Nova::FloatingIPAssociation
+    properties:
+      floating_ip: { get_resource: sdx_floating_ip }
+      server_id: { get_resource: sdx }
+
+
+
+  sdx:
+   type: OS::Nova::Server
+   properties:
+     name: sdx
+     flavor: baremetal
+     image: CC-CentOS7
+     key_name: { get_param: key_name }
+     networks:
+        - network: { get_param: network_name }
+     scheduler_hints: { reservation: { get_param: reservation_id } }
+     user_data:
+       str_replace:
+         template: |
+           #!/bin/bash
+
+           WORKING_DIR=/root
+           {
+           echo "PermitRootLogin yes" >>/etc/ssh/sshd_config
+           yum install -y docker vim mlocate git maven
+           systemctl start docker
+
+           echo Start Plexus Controller in Container
+           docker pull yaoyj11/plexus
+           docker run -i -t -d -p 8080:8080 -p 6633:6633 -p 3000:3000 -h plexus --name plexus yaoyj11/plexus
+           docker exec -d plexus /bin/bash -c  "cd /root;pkill ryu-manager; ryu-manager ryu/ryu/app/rest_conf_switch.py ryu/ryu/app/rest_qos.py ryu/ryu/app/rest_router_mirror.py ryu/ryu/app/ofctl_rest.py"
+
+           echo Start SAFE Server in Container
+           docker pull yaoyj11/safeserver-v4
+           docker run -i -t -d -p 7777:7777 -h safe --name safe yaoyj11/safeserver-v4
+           docker exec -d safe /bin/bash -c  "cd /root/safe;export SBT_HOME=/opt/sbt-0.13.12;export SCALA_HOME=/opt/scala-2.11.8;sed -i 's/RIAKSERVER/127.0.0.1/g' safe-server/src/main/resources/application.conf;./prdn.sh"
+
+           echo Git Ahab
+           cd $WORKING_DIR
+           cat .ssh/id_rsa.pub >>.ssh/authorized_keys
+           git clone https://github.com/RENCI-NRIG/ahab.git
+           cd ahab
+           mvn install
+
+           echo Git SDX
+           cd $WORKING_DIR
+           git clone --single-branch -b $branch https://github.com/RENCI-NRIG/CICI-SAFE.git
+
+           echo Build SDX
+           cd ${WORKING_DIR}/CICI-SAFE/SDX-Simple/SAFE_SDX
+           mvn  clean package appassembler:assemble
+
+           echo Wait for GENI pem file
+           PEM_FILE=/home/cc/geni.pem
+           while true
+           do
+             if [ -f $PEM_FILE ]; then
+               echo "Found pem file $PEM_FILE "
+               break
+             else
+               echo "File $PEM_FILE does not exist. Please copy your GENI pem file to $PEM_FILE"
+             fi
+             sleep 1
+           done
+
+           echo Create ssh key
+           ssh-keygen -t rsa -b 4096  -P "" -f "/root/.ssh/id_rsa"  -q
+           cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys2
+           chmod 600 ~/.ssh/authorized_keys2
+
+           SDX_CONFIG=${WORKING_DIR}/sdx.conf
+           cat << EOF > $SDX_CONFIG
+           config {
+           slicename="sdx"
+           type="server"
+           sshkey="/root/.ssh/id_rsa"
+           safekey="bphJZn3RJBnNqoCZk6k9SBD8mwSb054PXbwV7HpE80E"
+           exogenipem="${PEM_FILE}"
+           exogenism="https://geni.renci.org:11443/orca/xmlrpc"
+           ipprefix="192.168.30.1/20"
+           riakserver="$riak_ip"
+           serverinslice=false
+           safe=true
+           safeserver="$sdxserver_ip"
+           plexusserver="$plexus_ip"
+           serverurl="http://0.0.0.0:8888/"
+           scriptsdir="${WORKING_DIR}/CICI-SAFE/SDX-Simple/SAFE_SDX/src/main/resources/scripts/"
+           clientsites:"TAMU (College Station, TX, USA) XO Rack:UH (Houston, TX USA) XO Rack:SL (Chicago, IL USA) XO Rack:UFL (Gainesville, FL USA) XO Rack"
+           controllersite:"RENCI (Chapel Hill, NC USA) XO Rack"
+           serversite:"RENCI (Chapel Hill, NC USA) XO Rack"
+           }
+           EOF
+
+           echo Start SDX
+           cd ${WORKING_DIR}/CICI-SAFE/SDX-Simple
+           ./scripts/createslice.sh -c $SDX_CONFIG
+
+           echo Boot Script Done!
+           } > ${WORKING_DIR}/boot.log 2>&1
+         params:
+           $vsdx_network: { get_param: network_name }
+           $riak_ip: { get_attr: [riak_floating_ip, ip] }
+           $sdxserver_ip: { get_attr: [sdx_floating_ip, ip] }
+           $plexus_ip: { get_attr: [sdx_floating_ip, ip] }
+           $branch: { get_param: github_branch }
+
+
+
+# The parameters section gathers configuration from the user.
+parameters:
+  key_name:
+    type: string
+    description: Name of a KeyPair to enable SSH access to the instance
+    constraints:
+    - custom_constraint: nova.keypair
+  reservation_id:
+    type: string
+    description: ID of the Blazar reservation to use for launching instances.
+    constraints:
+    - custom_constraint: blazar.reservation
+  network_name:
+    type: string
+    description: Name of the network used by the controller. NOT the new OpenFlow netork.
+    default: sharednet1
+    constraints:
+    - custom_constraint: neutron.network
+  github_branch:
+    type: string
+    description: Github branch of code to use
+    default: master
+
+
+outputs:
+  controller_ip:
+    description: Public IP address of the NFS server
+    value: { get_attr: [riak_floating_ip, ip] }

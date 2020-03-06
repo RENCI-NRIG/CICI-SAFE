@@ -3,7 +3,7 @@ package exoplex.sdx.network;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import exoplex.common.utils.ServerOptions;
-import exoplex.sdx.core.SdxManager;
+import exoplex.sdx.core.exogeni.ExoSdxManager;
 import exoplex.demo.multisdx.MultiSdxModule;
 import org.apache.commons.cli.CommandLine;
 
@@ -20,16 +20,16 @@ public class RoutingManagerTest {
       Injector injector = Guice.createInjector(new MultiSdxModule());
       Class NetM = Class.forName("exoplex.sdx.network.RoutingManager");
       Object obj = NetM.newInstance();
-      SdxManager sdxManager = injector.getInstance(SdxManager.class);
+      ExoSdxManager exoSdxManager = injector.getInstance(ExoSdxManager.class);
       CommandLine cmd = ServerOptions.parseCmd(new String[]{"-c", "config/sdx.conf"});
-      sdxManager.readConfig(cmd.getOptionValue("config"));
-      sdxManager.loadSlice();
-      sdxManager.initializeSdx();
-      Method configRouting = sdxManager.getClass().getDeclaredMethod("configRouting");
+      exoSdxManager.readConfig(cmd.getOptionValue("config"));
+      exoSdxManager.loadSlice();
+      exoSdxManager.initializeSdx();
+      Method configRouting = exoSdxManager.getClass().getDeclaredMethod("configRouting");
       configRouting.setAccessible(true);
-      configRouting.invoke(sdxManager);
-      sdxManager.delFlows();
-      sdxManager.restartPlexus();
+      configRouting.invoke(exoSdxManager);
+      exoSdxManager.delFlows();
+      exoSdxManager.restartPlexus();
       try {
         Thread.sleep(10000);
       } catch (Exception e) {

@@ -52,7 +52,7 @@ public class UserAuthPubKey {
         GridBagConstraints.NONE,
         new Insets(0, 0, 0, 0), 0, 0);
     String passphrase;
-    JTextField passphraseField = (JTextField) new JPasswordField(20);
+    JTextField passphraseField = new JPasswordField(20);
     private Container panel;
 
     public String getPassword() {

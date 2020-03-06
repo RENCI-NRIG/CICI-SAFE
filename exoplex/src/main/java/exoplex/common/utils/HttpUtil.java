@@ -21,7 +21,7 @@ public class HttpUtil {
     logger.debug(paramsobj);
     JSONObject resobj = new JSONObject();
     resobj.put("result", false);
-    resobj.put("info", "Exception when make http request");
+    resobj.put("info", "Exception when making http request");
     HttpClient httpClient = HttpClientBuilder.create().build(); //Use this instead
 
     try {
@@ -43,6 +43,7 @@ public class HttpUtil {
 
     } catch (Exception ex) {
       logger.error(ex.getMessage());
+      resobj.put("info", ex.getMessage());
       return resobj.toString();
     } finally {
       //Deprecated

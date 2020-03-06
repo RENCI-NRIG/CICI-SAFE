@@ -5,7 +5,8 @@ import com.google.inject.Injector;
 import exoplex.demo.AbstractTest;
 import exoplex.demo.AbstractTestSetting;
 import exoplex.demo.AbstractTestSlice;
-import exoplex.sdx.core.SdxManager;
+import exoplex.sdx.core.CoreProperties;
+import exoplex.sdx.core.SdxManagerBase;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.After;
@@ -37,14 +38,15 @@ public class MultiSdxTest extends AbstractTest {
     injector = Guice.createInjector(new MultiSdxModule());
     testSlice = injector.getInstance(AbstractTestSlice.class);
     testSetting = injector.getInstance(AbstractTestSetting.class);
+    CoreProperties.setRouteAdvertise(true);
   }
 
   @Before
   @Override
   public void before() throws Exception {
-    deleteSliceAfterTest = false;
+    deleteSliceAfterTest = true;
     initTests();
-    //deleteSlices();
+    deleteSlices();
     super.before();
   }
 
@@ -78,8 +80,8 @@ public class MultiSdxTest extends AbstractTest {
   @Override
   public void startSdxServersAndClients(boolean reset) {
     super.startSdxServersAndClients(reset);
-    SdxManager sdxManager = sdxManagerMap.values().iterator().next();
-    String safeServerIp = getSafeServerIPfromSdxManager(sdxManager);
+    SdxManagerBase exoSdxManager = sdxManagerMap.values().iterator().next();
+    String safeServerIp = getSafeServerIPfromSdxManager(exoSdxManager);
     setClientSafeServerIp(safeServerIp);
   }
 

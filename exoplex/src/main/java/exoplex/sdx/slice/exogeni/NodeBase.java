@@ -8,11 +8,9 @@ import java.util.Map;
 
 public class NodeBase {
 
-  public static final String CENTOS_BRO = "Centos 7.4 Bro";
-  public static final String UBUNTU14 = "Ubuntu 14.04";
+  public static final String CENTOS_7_6 = "Centos 7.6";
   public static final String UBUNTU16 = "Ubuntu 16.04";
-  public static final String UBUNTU17 = "Ubuntu 17.10";
-  public static final String U14Docker = "Ubuntu 14.04 Docker";
+  public static final String UBUNTU19 = "Ubuntu 19.04";
   public static final String xoMedium = "XO Medium";
   public static final String xoLarge = "XO Large";
   public static final String xoExtraLarge = "XO Extra large";
@@ -21,39 +19,28 @@ public class NodeBase {
 
   static {
     images.put(
-      "Bro",
-      new NodeBaseInfo("Centos 7.4 Bro",
-        "http://geni-images.renci.org/images/standard/centos/centos7.4-bro-v1.0.4/centos7.4-bro-v1.0.4.xml",
-        "50c973571fc6da95c3f70d0f71c9aea1659ff780",
-        "XO Medium",
-        "BBN/GPO (Boston, MA USA) XO Rack"));
+      CENTOS_7_6,
+      new NodeBaseInfo("CentOS 6.10 QCOW2 v1.0.2",
+        "http://geni-images.renci.org/images/standard/centos-comet/centos6.10/centos6.10.xml",
+        "94489b9e78d9c20ffe1c2b5b4b7d64d3c284345f")
+    );
     images.put(
-      "Ubuntu 14.04",
-      new NodeBaseInfo("Ubuntu 14.04 v1.0.3",
-        "http://geni-images.renci.org/images/standard/ubuntu/ubuntu-14.04-v1.0.3/ubuntu-14.04-v1.0.3.xml",
-        "5196cbf03938af57a9a3f9034613c3882066bc91",
-        "XO Medium",
-        "BBN/GPO (Boston, MA USA) XO Rack"));
+      UBUNTU16,
+      new NodeBaseInfo(
+        "Ubuntu 16.04 QCOW2 v1.0.2",
+        "http://geni-images.renci.org/images/standard/ubuntu-comet/ubuntu-16.04/ubuntu-16.04.xml",
+        "564ae072fb3500fa6721c2f976f24fc407e41b5e"
+      )
+    );
     images.put(
-      "Ubuntu 16.04",
-      new NodeBaseInfo("Ubuntu 16.04",
-        "http://geni-images.renci.org/images/standard/ubuntu/ubuntu-16.04-v1.0.3/ubuntu-16.04-v1.0.3.xml",
-        "fe7dd9f25fab9bab890ce653319192875fa106a0",
-        "XO Medium",
-        "BBN/GPO (Boston, MA USA) XO Rack"));
-    images.put(
-      "Ubuntu 17.10",
-      new NodeBaseInfo("Ubuntu 17.10 v1.0.2",
-        "http://geni-images.renci.org/images/standard/ubuntu/ubuntu-17.10-v1.0.2/ubuntu-17.10-v1.0.2.xml",
-        "32c6a6ab0062ce8963a927925b43d8e962395fc6",
-        "XO Medium",
-        "SL (Chicago, IL USA) XO Rack"));
-    images.put("Ubuntu 14.04 Docker",
-      new NodeBaseInfo("Ubuntu 14.04 Docker",
-        "http://geni-images.renci.org/images/standard/docker/ubuntu-14.0.4/ubuntu-14.0.4-docker.xml",
-        "b4ef61dbd993c72c5ac10b84650b33301bbf6829",
-        "XO Large",
-        "SL (Chicago, IL USA) XO Rack"));
+      UBUNTU19,
+      new NodeBaseInfo(
+        "Ubuntu 19.04 QCOW2 v1.0.4",
+        "http://geni-images.renci.org/images/standard/ubuntu-comet/ubuntu-19.04.v4/ubuntu-19.04.v4.xml",
+        "c7baea709ee9c4b354a175a315c6cf74a1c1a1f5"
+      )
+    );
+
   }
 
   public static NodeBaseInfo getImageInfo(String key) {
@@ -64,9 +51,9 @@ public class NodeBase {
     NodeBaseInfo tbase = images.get(type);
     if (tbase != null) {
       ComputeNode node = s.addComputeNode(name);
-      node.setImage(tbase.niurl, tbase.nihash, tbase.nisn);
-      node.setNodeType(tbase.ntype);
-      node.setDomain(tbase.domain);
+      node.setImage(tbase.imageUrl, tbase.imageHash, tbase.imageName);
+      node.setNodeType(xoMedium);
+      node.setDomain(SiteBase.get("BBN"));
       return node;
     }
     return null;

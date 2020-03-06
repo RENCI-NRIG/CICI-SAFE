@@ -7,8 +7,8 @@ import exoplex.demo.AbstractTest;
 import exoplex.demo.AbstractTestSetting;
 import exoplex.demo.AbstractTestSlice;
 import exoplex.experiment.ExperimentBase;
-import exoplex.sdx.core.SdxManager;
-import exoplex.sdx.safe.SafeManager;
+import exoplex.sdx.core.CoreProperties;
+import exoplex.sdx.core.SdxManagerBase;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -34,7 +34,7 @@ public class MultiSdxTestSD extends AbstractTest {
     multiSdxTestSD.injector = injector;
     multiSdxTestSD.testSlice = injector.getInstance(AbstractTestSlice.class);
     multiSdxTestSD.testSetting = injector.getInstance(AbstractTestSetting.class);
-    SafeManager.setSafeDockerImage(multiSdxTestSD.testSetting.dockerImage);
+    CoreProperties.setSafeDockerImage(multiSdxTestSD.testSetting.dockerImage);
     try {
       multiSdxTestSD.testMultiSdxSD();
       //multiSdxTestSD.replaySdnConfiguration("/home/yaoyj11/CICI-SAFE/exoplex/log/sdn.log");
@@ -49,6 +49,7 @@ public class MultiSdxTestSD extends AbstractTest {
     injector = Guice.createInjector(module);
     testSlice = injector.getInstance(AbstractTestSlice.class);
     testSetting = injector.getInstance(AbstractTestSetting.class);
+    CoreProperties.setRouteAdvertise(true);
   }
 
   @Before
@@ -57,13 +58,13 @@ public class MultiSdxTestSD extends AbstractTest {
     deleteSliceAfterTest = true;
     initTests();
     //deleteSlices();
-    super.before();
+    //super.before();
   }
 
   @After
   @Override
   public void after() throws Exception {
-    super.after();
+    //super.after();
   }
 
   @Test
@@ -87,7 +88,7 @@ public class MultiSdxTestSD extends AbstractTest {
 
     }
 
-    connectCustomerNetwork();
+    //connectCustomerNetwork();
     Long t3 = System.currentTimeMillis();
 
 
@@ -106,8 +107,8 @@ public class MultiSdxTestSD extends AbstractTest {
   @Override
   public void startSdxServersAndClients(boolean reset) {
     super.startSdxServersAndClients(reset);
-    SdxManager sdxManager = sdxManagerMap.values().iterator().next();
-    String safeServerIp = getSafeServerIPfromSdxManager(sdxManager);
+    SdxManagerBase exoSdxManager = sdxManagerMap.values().iterator().next();
+    String safeServerIp = getSafeServerIPfromSdxManager(exoSdxManager);
     setClientSafeServerIp(safeServerIp);
   }
 

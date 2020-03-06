@@ -2,7 +2,8 @@ package exoplex.demo.bro;
 
 import exoplex.common.utils.Exec;
 import exoplex.experiment.ExperimentBase;
-import exoplex.sdx.core.SdxManager;
+import exoplex.sdx.core.exogeni.ExoSdxManager;
+import exoplex.sdx.slice.SliceProperties;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -19,7 +20,7 @@ public class BroExperiment extends ExperimentBase {
   String routerName = "c0";
   String flowPattern = ".*table=0.*nw_src=.*actions=drop.*";
 
-  public BroExperiment(SdxManager sm) {
+  public BroExperiment(ExoSdxManager sm) {
     super(sm);
     result = new HashMap<String, BroResult>();
   }
@@ -36,7 +37,7 @@ public class BroExperiment extends ExperimentBase {
 
   public void stopBro() {
     logger.debug("Stop Bro");
-    Exec.sshExec("root", broIP, "pkill bro", sshkey);
+    Exec.sshExec(SliceProperties.userName, broIP, "pkill bro", sshkey);
   }
 
   public void getFileAndEchoTime(int times) {
@@ -48,7 +49,7 @@ public class BroExperiment extends ExperimentBase {
       tlist.add(new Thread() {
         @Override
         public void run() {
-          ftpClientOut.add(Exec.sshExec("root", mip1, fetchFileCMD
+          ftpClientOut.add(Exec.sshExec(SliceProperties.userName, mip1, fetchFileCMD
             (ftpuser, ftppw, dip2, file[2], 1) + getEchoTimeCMD() + fetchFileCMD(ftpuser, ftppw,
             dip2, file[2], times - 1), sshkey));
           flowPattern = ".*table=0.*nw_src=" + dip1 + " actions=drop.*";
@@ -66,7 +67,7 @@ public class BroExperiment extends ExperimentBase {
       tlist.add(new Thread() {
         @Override
         public void run() {
-          pingClientOut.add(Exec.sshExec("root", mip1, fetchFileCMD
+          pingClientOut.add(Exec.sshExec(SliceProperties.userName, mip1, fetchFileCMD
             (ftpuser, ftppw, dip2, file[2], 1) + "ping -i 0.01 -c 3000 " + dip2, sshkey));
           stopFlows();
           stopBro();
@@ -79,13 +80,13 @@ public class BroExperiment extends ExperimentBase {
 
   public double measureCPU(int times) {
     //start Bro
-    broIP = sdxManager.getManagementIP("bro0_c0");
+    broIP = exoSdxManager.getManagementIP("bro0_c0");
     routerName = "c0";
     tlist.add(new Thread() {
       @Override
       public void run() {
-        Exec.sshExec("root", broIP, "pkill bro", sshkey);
-        broOut.add(Exec.sshExec("root", broIP, "/opt/bro/bin/bro -i eth1 " +
+        Exec.sshExec(SliceProperties.userName, broIP, "pkill bro", sshkey);
+        broOut.add(Exec.sshExec(SliceProperties.userName, broIP, "/opt/bro/bin/bro -i eth1 " +
           "detect-all-policy.bro", sshkey));
         stopFlows();
       }
@@ -102,10 +103,11 @@ public class BroExperiment extends ExperimentBase {
     tlist.add(new Thread() {
       @Override
       public void run() {
-        cpuOut.add(Exec.sshExec("root", broIP, "/bin/bash /root/cpu_percentage.sh " +
-            times,
+        cpuOut.add(Exec.sshExec(SliceProperties.userName, broIP,
+          String.format("sudo /bin/bash %scpu_percentage.sh %s",
+            SliceProperties.homeDir, times),
           sshkey));
-        Exec.sshExec("root", broIP, "pkill bro", sshkey);
+        Exec.sshExec(SliceProperties.userName, broIP, "sudo pkill bro", sshkey);
       }
     });
     tlist.get(tlist.size() - 1).start();
@@ -149,7 +151,7 @@ public class BroExperiment extends ExperimentBase {
           System.err.println(s[1]);
         }
       }
-      System.out.println("");
+      System.out.println();
     }
 
     System.out.println("iperf Client report");
@@ -197,12 +199,12 @@ public class BroExperiment extends ExperimentBase {
      */
     broName = bro;
     routerName = router;
-    broIP = sdxManager.getManagementIP(broName);
+    broIP = exoSdxManager.getManagementIP(broName);
     tlist.add(new Thread() {
       @Override
       public void run() {
-        Exec.sshExec("root", broIP, "pkill bro", sshkey);
-        broOut.add(Exec.sshExec("root", broIP, "/opt/bro/bin/bro -i eth1 " +
+        Exec.sshExec(SliceProperties.userName, broIP, "pkill bro", sshkey);
+        broOut.add(Exec.sshExec(SliceProperties.userName, broIP, "/opt/bro/bin/bro -i eth1 " +
           "detect-all-policy.bro", sshkey));
         stopFlows();
       }
@@ -222,8 +224,9 @@ public class BroExperiment extends ExperimentBase {
     tlist.add(new Thread() {
       @Override
       public void run() {
-        cpuOut.add(Exec.sshExec("root", broIP, "/bin/bash /root/cpu_percentage.sh " +
-            cpuTimes,
+        cpuOut.add(Exec.sshExec(SliceProperties.userName, broIP,
+          String.format("sudo /bin/bash %scpu_percentage.sh %s",
+            SliceProperties.homeDir, cpuTimes),
           sshkey));
       }
     });
@@ -283,7 +286,7 @@ public class BroExperiment extends ExperimentBase {
           System.err.println(s[1]);
         }
       }
-      System.out.println("");
+      System.out.println();
     }
 
     System.out.println("iperf Client report");
@@ -332,12 +335,12 @@ public class BroExperiment extends ExperimentBase {
   public double measureResponseTime(int saturateTime, int fileTimes, int sleepTime, String
     bro, String router) {
     broName = bro;
-    broIP = sdxManager.getManagementIP(broName);
+    broIP = exoSdxManager.getManagementIP(broName);
     routerName = router;
     tlist.add(new Thread() {
       @Override
       public void run() {
-        broOut.add(Exec.sshExec("root", broIP, "/usr/bin/rm *.log; pkill bro; /opt/bro/bin/bro " +
+        broOut.add(Exec.sshExec(SliceProperties.userName, broIP, "/usr/bin/rm *.log; pkill bro; /opt/bro/bin/bro " +
           "-i eth1 test-all-policy.bro", sshkey));
         stopFlows();
       }
@@ -354,7 +357,7 @@ public class BroExperiment extends ExperimentBase {
     getFileAndEchoTime(fileTimes);
     long flowTime = 0;
     for (int second = 0; second < sleepTime; second += 5) {
-      String flowInstallationTime = sdxManager.getFlowInstallationTime(routerName, flowPattern);
+      String flowInstallationTime = exoSdxManager.getFlowInstallationTime(routerName, flowPattern);
       if (flowInstallationTime == null) {
         sleep(5);
       } else {

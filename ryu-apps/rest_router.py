@@ -19,6 +19,9 @@ import logging
 import numbers
 import socket
 import struct
+import sys
+import json
+import urllib2
 
 import json
 
@@ -121,6 +124,7 @@ UDP = udp.udp.__name__
 MAX_SUSPENDPACKETS = 50  # Threshold of the packet suspends thread count.
 
 ARP_REPLY_TIMER = 2  # sec
+ROUTE_REPLY_TIMER = 5  # sec
 OFP_REPLY_TIMER = 1.0  # sec
 CHK_ROUTING_TBL_INTERVAL = 1800  # sec
 
@@ -210,6 +214,9 @@ def get_priority_type(priority, vid):
     if vid:
         priority -= PRIORITY_VLAN_SHIFT
     return priority
+
+def get_sdx_url():
+    return sys.argv[-1]
 
 
 class NotFoundError(RyuException):
@@ -830,6 +837,10 @@ class VlanRouter(object):
             src_ip = address.default_gw
             #NOTE: yjyao
             route = self.routing_tbl.add(destination, gateway,source)
+            try:
+                self.packet_buffer.add_route_data(route)
+            except:
+                self.logger.info("Exception when adding route data", extra=self.sw_id)
             #==========
             self._set_route_packetin(route)
             self.send_arp_request(src_ip, dst_ip)
@@ -968,6 +979,9 @@ class VlanRouter(object):
             route_id = VlanRouter._cookie_to_id(REST_ROUTEID,
                                                 flow_stats.cookie)
             self.routing_tbl.delete(route_id)
+            #note yjyao
+            self.packet_buffer.delete_route_data(route_id)
+            #---------
             if route_id not in delete_ids:
                 delete_ids.append(route_id)
 
@@ -1040,8 +1054,8 @@ class VlanRouter(object):
         # case: Receive ARP from an internal host
         #  Learning host MAC.
         gw_flg = self._update_routing_tbl(msg, header_list)
-        if gw_flg is False:
-            self._learning_host_mac(msg, header_list)
+        #if gw_flg is False:
+        #    self._learning_host_mac(msg, header_list)
 
         # ARP packet handling.
         in_port = self.ofctl.get_packetin_inport(msg)
@@ -1101,7 +1115,7 @@ class VlanRouter(object):
                         self.packet_buffer.delete(pkt=suspend_packet)
 
                     # send suspend packet.
-                    output = self.ofctl.dp.ofproto.OFPP_TABLE
+                    output = in_port
                     for suspend_packet in packet_list:
                         self.ofctl.send_packet_out(suspend_packet.in_port,
                                                    output,
@@ -1166,6 +1180,22 @@ class VlanRouter(object):
                 if gw_address is not None:
                     src_ip = gw_address.default_gw
                     dst_ip = route.gateway_ip
+            else:
+            #note: yjyao
+                data={}
+                data['src'] = srcip
+                data['dest'] = dstip
+                self.packet_buffer.add_route_packet(in_port, header_list, msg.data)
+                try:
+                    self.logger.debug(data)
+                    self.logger.debug("sending request to sdx controller")
+                    req = urllib2.Request(get_sdx_url())
+                    req.add_header('Content-Type', 'application/json')
+                    response = urllib2.urlopen(req, json.dumps(data))
+                    self.logger.debug("send request to sdx", extra = self.sw_id)
+                except:
+                    self.logger.info("An exception when sending request to sdx {}\n src {} dst {}"
+                                    .format(get_sdx_url(), srcip, dstip), extra=self.sw_id)
 
         if src_ip is not None:
             self.packet_buffer.add(in_port, header_list, msg.data)
@@ -1488,15 +1518,31 @@ class Route(object):
         self.gateway_ip = gateway_ip
         self.gateway_mac = None
 
-
+#NOTE: yjyao
+#add routes data in SuspendPacketList to process cached packet for routes
 class SuspendPacketList(list):
     def __init__(self, timeout_function):
         super(SuspendPacketList, self).__init__()
         self.timeout_function = timeout_function
+        self.routes = []
+
+    def add_route_data(self, route):
+        self.routes.append(route)
+        self.routes = sorted(self.routes, key=lambda route: - get_priority(PRIORITY_TYPE_ROUTE, 0, route)[0])
+
+    def delete_route_data(self, route_id):
+        for route in self.routes:
+            if route.route_id == route_id:
+                self.routes.remove(route)
 
     def add(self, in_port, header_list, data):
         suspend_pkt = SuspendPacket(in_port, header_list, data,
                                     self.wait_arp_reply_timer)
+        self.append(suspend_pkt)
+
+    def add_route_packet(self, in_port, header_list, data):
+        suspend_pkt = SuspendPacket(in_port, header_list, data,
+                                    self.wait_route_reply_timer)
         self.append(suspend_pkt)
 
     def delete(self, pkt=None, del_addr=None):
@@ -1512,10 +1558,28 @@ class SuspendPacketList(list):
             pkt.wait_thread.wait()
 
     def get_data(self, dst_ip):
-        return [pkt for pkt in self if pkt.dst_ip == dst_ip]
+        res = []
+        for pkt in self:
+            if pkt.dst_ip == dst_ip:
+                res.append(pkt)
+            else:
+                for route in self.routes:
+                    #if match
+                    if match_route_packet(route, pkt):
+                        if dst_ip == route.gateway_ip:
+                            res.append(pkt)
+                        else:
+                            break
+	return res
 
     def wait_arp_reply_timer(self, suspend_pkt):
         hub.sleep(ARP_REPLY_TIMER)
+        if suspend_pkt in self:
+            self.timeout_function(suspend_pkt)
+            self.delete(pkt=suspend_pkt)
+
+    def wait_route_reply_timer(self, suspend_pkt):
+        hub.sleep(ROUTE_REPLY_TIMER)
         if suspend_pkt in self:
             self.timeout_function(suspend_pkt)
             self.delete(pkt=suspend_pkt)
@@ -1526,6 +1590,7 @@ class SuspendPacket(object):
         super(SuspendPacket, self).__init__()
         self.in_port = in_port
         self.dst_ip = header_list[IPV4].dst
+        self.src_ip = header_list[IPV4].src
         self.header_list = header_list
         self.data = data
         # Start ARP reply wait timer.
@@ -2064,3 +2129,9 @@ def nw_addr_aton(nw_addr, err_msg=None):
         raise ValueError(msg)
     nw_addr = ipv4_apply_mask(default_route, netmask, err_msg)
     return nw_addr, netmask, default_route
+
+def match_route_packet(route, pkt):
+    if route.src_ip == ipv4_apply_mask(pkt.src_ip, route.src_netmask) and\
+            route.dst_ip == ipv4_apply_mask(pkt.dst_ip, route.netmask):
+        return True
+    return False

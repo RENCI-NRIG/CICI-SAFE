@@ -4,7 +4,8 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import exoplex.client.exogeni.ExogeniClientSlice;
 import exoplex.common.utils.Exec;
-import exoplex.sdx.core.SliceHelper;
+import exoplex.sdx.core.CoreProperties;
+import exoplex.sdx.core.exogeni.SliceHelper;
 import exoplex.sdx.slice.SliceManager;
 import exoplex.sdx.slice.exogeni.SiteBase;
 import org.apache.logging.log4j.LogManager;
@@ -21,6 +22,7 @@ public abstract class AbstractTestSlice {
   final Logger logger = LogManager.getLogger(Exec.class);
   public Long bandwidth = 100000000L;
   public long stitchBw = 400000000l;
+  private List<Thread> threadList = new ArrayList<>();
 
   @Inject
   public AbstractTestSlice(Provider<SliceHelper> sliceHelperProvider,
@@ -32,7 +34,6 @@ public abstract class AbstractTestSlice {
   }
 
   public void createClientSlices(String riakIp) {
-    ArrayList<Thread> tlist = new ArrayList<>();
     for (String clientSlice : testSetting.clientSlices) {
       Thread t = new Thread() {
         @Override
@@ -40,28 +41,22 @@ public abstract class AbstractTestSlice {
           createClientSlice(clientSlice, riakIp);
         }
       };
-      tlist.add(t);
-    }
-    for (Thread t : tlist) {
-      t.start();
-    }
-    try {
-      for (Thread t : tlist) {
-        t.join();
-      }
-    } catch (Exception e) {
-
+      threadList.add(t);
     }
   }
 
   private boolean createClientSlice(String clientSlice, String riakIP) {
     ExogeniClientSlice cs = exogeniClientSliceProvider.get();
-    cs.processArgs(testSetting.clientArgs);
+    CoreProperties coreProperties = new CoreProperties(testSetting.clientArgs);
+    coreProperties.setIpPrefix(testSetting.clientIpMap.get(clientSlice));
+    coreProperties.setRouterSite(SiteBase.get(testSetting.clientSiteMap.get(clientSlice)));
+    coreProperties.setRiakIp(riakIP);
+    coreProperties.setSliceName(clientSlice);
+    coreProperties.setSafeEnabled(testSetting.safeEnabled);
     int times = 0;
     while (true) {
       try {
-        cs.run(clientSlice, testSetting.clientIpMap.get(clientSlice),
-          SiteBase.get(testSetting.clientSiteMap.get(clientSlice)), riakIP);
+        cs.run(coreProperties);
         break;
       } catch (Exception e) {
         logger.warn("%s failed" + clientSlice);
@@ -77,43 +72,56 @@ public abstract class AbstractTestSlice {
 
   public void deleteClientSlices() {
     ExogeniClientSlice cs = exogeniClientSliceProvider.get();
-    cs.processArgs(testSetting.clientArgs);
+    CoreProperties coreProperties = new CoreProperties(testSetting.clientArgs);
+    coreProperties.setType("delete");
     for (String clientSlice : testSetting.clientSlices) {
-      cs.setSliceName(clientSlice);
-      cs.deleteSlice();
+      coreProperties.setSliceName(clientSlice);
+      try {
+        cs.run(coreProperties);
+      } catch (Exception e) {
+
+      }
     }
   }
 
   public void createSdxSlices(String riakIP) {
-    ArrayList<Thread> tlist = new ArrayList<>();
     for (int i = 0; i < testSetting.sdxSliceNames.size(); i++) {
       final String sliceName = testSetting.sdxSliceNames.get(i);
       final String configFile = testSetting.sdxConfs.get(sliceName);
       //Set SDX sites here
       final List<String> clientSites = Arrays.asList(testSetting.sdxSites.get(sliceName));
+      CoreProperties coreProperties = new CoreProperties(configFile);
+      coreProperties.setSliceName(sliceName);
+      coreProperties.setRiakIp(riakIP);
+      coreProperties.setClientSites(clientSites);
+      coreProperties.setSafeEnabled(testSetting.safeEnabled);
 
       Thread t = new Thread() {
         @Override
         public void run() {
           try {
-            createAndConfigSdxSlice(sliceName, configFile, riakIP, clientSites);
+            createAndConfigSdxSlice(coreProperties);
           } catch (Exception e) {
             e.printStackTrace();
           }
         }
       };
-      tlist.add(t);
+      threadList.add(t);
     }
-    for (Thread t : tlist) {
+  }
+
+  public void runThreads() {
+    for (Thread t : threadList) {
       t.start();
     }
-    try {
-      for (Thread t : tlist) {
+    for (Thread t : threadList) {
+      try {
         t.join();
+      } catch (Exception e) {
+        logger.warn(e.getMessage());
       }
-    } catch (Exception e) {
-      e.printStackTrace();
     }
+    threadList.clear();
   }
 
   public void deleteSdxSlices() {
@@ -121,28 +129,20 @@ public abstract class AbstractTestSlice {
       final String configFile = testSetting.sdxConfs.get(sliceName);
       //Set SDX sites here
       SliceHelper sliceHelper = sliceHelperProvider.get();
-      sliceHelper.readConfig(configFile);
-      sliceHelper.setSliceName(sliceName);
-      sliceHelper.deleteSlice();
+      CoreProperties coreProperties = new CoreProperties(configFile);
+      coreProperties.setSliceName(sliceName);
+      coreProperties.setType("delete");
+      try {
+        sliceHelper.run(coreProperties);
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
     }
   }
 
-  private void createAndConfigSdxSlice(String sliceName, String configFile, String riakIP,
-                                       List<String>
-                                         clientSites) throws Exception {
+  private void createAndConfigSdxSlice(CoreProperties coreProperties) throws Exception {
     SliceHelper sliceHelper = sliceHelperProvider.get();
-    sliceHelper.readConfig(configFile);
-    if (riakIP != null) {
-      sliceHelper.setRiakIP(riakIP);
-    }
-    if (sliceName != null) {
-      sliceHelper.setSliceName(sliceName);
-    }
-    if (clientSites != null) {
-      sliceHelper.setClientSites(clientSites);
-    }
-    SliceManager slice = sliceHelper.createCarrierSlice(sliceHelper.getSliceName(), clientSites
-      .size(), bandwidth);
+    SliceManager slice = sliceHelper.createCarrierSlice(coreProperties);
     slice.commitAndWait();
     sliceHelper.resetHostNames(slice);
     sliceHelper.checkSdxPrerequisites(slice);

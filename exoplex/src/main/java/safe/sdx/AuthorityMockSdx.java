@@ -47,20 +47,54 @@ public class AuthorityMockSdx extends Authority implements SdxRoutingSlang {
       ctx.updateLoggers();
       AuthorityMockSdx authorityMock = new AuthorityMockSdx(defaultSafeServer);
       authorityMock.makeSafePreparation();
-    } else if (args.length == 4) {
-      String userKeyFile = args[0];
-      String slice = args[1];
-      String ip = args[2];
-      String ss = args[3] + ":7777";
-      logger.info(String.format("UserKeyFile:%s sliceName:%s IpPrefix:%s SafeServer:%s",
-        userKeyFile, slice, ip, ss));
-      AuthorityMockSdx mock = new AuthorityMockSdx(ss);
-      mock.addPrincipals();
-      mock.initPrincipals();
-      mock.addUserSlice(userKeyFile, slice, ip);
-      //mock.checkAuthorization();
+    } else if (args.length >= 4) {
+      if (args[0].equals("auth")) {
+        String userKey = args[1];
+        String slice = args[2];
+        String ip = args[3];
+        String tag = args[4];
+        String ss = args[5] + ":7777";
+        logger.info(String.format("UserKey:%s sliceName:%s IpPrefix:%s Tag: %s SafeServerIP:%s",
+          userKey, slice, ip, tag, ss));
+        AuthorityMockSdx mock = new AuthorityMockSdx(ss);
+        mock.authorityDelegation(userKey, slice, ip, tag);
+      } else if (args[0].equals("update")) {
+        String userKey = args[1];
+        String method = args[2];
+        String token = args[3];
+        String name = args[4];
+        String ss = args[5] + ":7777";
+        AuthorityMockSdx mock = new AuthorityMockSdx(ss);
+        mock.updateTokens(userKey, method, token, name);
+      } else if (args[0].equals("init")) {
+        String userKey = args[1];
+        String tagAcl = args[2];
+        String ss = args[3] + ":7777";
+        AuthorityMockSdx mock = new AuthorityMockSdx(ss);
+        mock.initUser(userKey, tagAcl);
+      } else {
+        String userKeyFile = args[0];
+        String slice = args[1];
+        String ip = args[2];
+        String ss = args[3] + ":7777";
+        String tag = "tag0";
+        logger.info(String.format("UserKeyFile:%s sliceName:%s IpPrefix:%s SafeServerIP:%s Tag: %s",
+          userKeyFile, slice, ip, ss, tag));
+        AuthorityMockSdx mock = new AuthorityMockSdx(ss);
+        mock.addPrincipals();
+        mock.initPrincipals();
+        mock.addUserSlice(userKeyFile, slice, ip);
+        //mock.checkAuthorization();
+      }
     } else {
-      logger.info("Usage: userKeyFile sliceName IPPrefix safeServerIP\n");
+      logger.info("Usage:\n userKeyFile sliceName IPPrefix safeServerIP  ---- default " +
+        "delegations\n"
+        + "init userKeyFile tag safeServerIP  ---- initialize user, allows connection from " +
+        "peer with the tag\n"
+        + "auth userKeyHash slicename userIp userTag safeserverIP  ---- authorities make " +
+        "delegations to user, sdx allows stitching from user\n"
+        + "update userKeyFile method token name  ---- add delegation tokens to related safe sets\n"
+      );
     }
   }
 
@@ -69,13 +103,16 @@ public class AuthorityMockSdx extends Authority implements SdxRoutingSlang {
     //User membership
     String token = SafeUtils.getToken(SafeUtils.postSafeStatements(safeServer,
       postUserEndorsement, "key_p1", new String[]{userKey}));
-    System.out.println(String.format("passDelegation %s %s", token, "User"));
+    String CMD = "${BIN_DIR}/AuthorityMock update ${principalId} %s ${SAFE_SERVER}";
+    String params = String.format("passDelegation %s %s", token, "User");
+    System.out.println(String.format(CMD, params));
     //PI delegate to users
     HashMap<String, String> envs = new HashMap<>();
     String projectId = getPrincipalId("key_p2") + ":project1";
     String pmToken = safePost(postProjectMembership, "key_p4", new String[]{userKey,
       projectId, "true"});
-    System.out.println(String.format("passDelegation %s %s", pmToken, projectId));
+    params = String.format("passDelegation %s %s", pmToken, projectId);
+    System.out.println(String.format(CMD, params));
     envs.clear();
 
     /*
@@ -92,8 +129,9 @@ public class AuthorityMockSdx extends Authority implements SdxRoutingSlang {
       new String[]{userKey, sliceId, projectId,
         sliceControlRef,
         slicePrivRef}));
-    System.out.println(String.format("passDelegation %s %s", sliceToken.get(slice),
-      sliceId));
+    params = String.format("passDelegation %s %s", sliceToken.get(slice),
+      sliceId);
+    System.out.println(String.format(CMD, params));
 
     //UserAcl
     safePost(postUserAclEntry, "sdx", new String[]{userKey});
@@ -103,17 +141,21 @@ public class AuthorityMockSdx extends Authority implements SdxRoutingSlang {
     String uip = String.format("ipv4\\\"%s\\\"", userIP);
     String ipToken = safePost(postIPAllocate, "rpkiroot", new String[]{userKey, uip,
       parentPrefix});
-    System.out.println(String.format("postDlgToken %s %s", ipToken, uip.replace("\\", "\\\\\\")));
+    params = String.format("postDlgToken %s %s", ipToken, uip.replace("\\", "\\\\\\"));
+    System.out.println(String.format(CMD, params));
 
     //Tag delegation
     String tag = getPrincipalId("tagauthority") + ":" + tag1;
     safePost(postTagSet, "tagauthority", new String[]{tag});
     String tagToken = safePost(postGrantTagPriv, "tagauthority", new Object[]{userKey, tag, true});
-    System.out.println(String.format("updateTagSet %s %s", tagToken, tag));
+    params = String.format("updateTagSet %s %s", tagToken, tag);
+    System.out.println(String.format(CMD, params));
   }
 
   public void updateTokens(String userKey, String method, String token, String name) {
-    System.out.println(safePost(method, userKey, new String[]{token, name}));
+    String setToken = safePost(method, userKey, new String[]{token, name});
+    logger.debug(setToken);
+    System.out.println("Done");
   }
 
   public void initUser(String userKey, String tagAcl) {
@@ -121,11 +163,13 @@ public class AuthorityMockSdx extends Authority implements SdxRoutingSlang {
     initIdSetSubjectSet(userKey);
     //User membership
     String tagAuth = getPrincipalId("tagauthority");
-    System.out.println(safePost(postUserTagAclEntry, userKey, new String[]{tagAuth + ":" +
-      tagAcl}));
-    System.out.println(safePost(postCustomerConnectionPolicy, userKey, new String[]{}));
-    System.out.println(safePost(postTagPrivilegePolicy, userKey, new String[]{}));
-    System.out.println(safePost(postCustomerPolicy, userKey, new String[]{}));
+    logger.debug(safePost(postUserTagAclEntry, userKey,
+      new String[]{tagAuth + ":" + tagAcl}));
+    logger.debug(safePost(postCustomerConnectionPolicy, userKey,
+      new String[]{}));
+    logger.debug(safePost(postTagPrivilegePolicy, userKey, new String[]{}));
+    logger.debug(safePost(postCustomerPolicy, userKey, new String[]{}));
+    System.out.println("Done initializing safe sets for customers");
   }
 
   public void makeSafePreparation() {
@@ -140,8 +184,8 @@ public class AuthorityMockSdx extends Authority implements SdxRoutingSlang {
   }
 
   private void customSetting() {
-    slices.addAll(Arrays.asList(new String[]{"c0-tri", "c1-tri", "c2-tri",
-      "c3-tri", "c4-tri"}));
+    slices.addAll(Arrays.asList("c0-tri", "c1-tri", "c2-tri",
+      "c3-tri", "c4-tri"));
     sliceKeyMap.put(slices.get(0), "key_p5");
     sliceKeyMap.put(slices.get(1), "key_p6");
     sliceKeyMap.put(slices.get(2), "key_p7");
@@ -308,7 +352,7 @@ public class AuthorityMockSdx extends Authority implements SdxRoutingSlang {
 
   void verifyAuthZByUserAttr() throws Exception {
     //authZByUserAttr
-    for (int i = 1; i < slices.size(); i++) {
+    for (int i = 0; i < slices.size(); i++) {
       String slice = slices.get(i);
       String user = sliceKeyMap.get(slice);
       String userKey = getPrincipalId(user);

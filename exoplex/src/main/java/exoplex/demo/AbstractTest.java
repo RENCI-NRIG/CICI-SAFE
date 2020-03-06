@@ -2,11 +2,12 @@ package exoplex.demo;
 
 import com.google.inject.Injector;
 import exoplex.client.exogeni.SdxExogeniClient;
-import exoplex.sdx.core.RestService;
-import exoplex.sdx.core.SdxManager;
-import exoplex.sdx.core.SdxServer;
+import exoplex.sdx.core.CoreProperties;
+import exoplex.sdx.core.SdxManagerBase;
+import exoplex.sdx.core.exogeni.ExoRestService;
+import exoplex.sdx.core.exogeni.ExoSdxManager;
+import exoplex.sdx.core.exogeni.ExoSdxServer;
 import exoplex.sdx.network.SdnReplay;
-import exoplex.sdx.safe.SafeManager;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import riak.RiakSlice;
@@ -18,7 +19,7 @@ import java.util.HashMap;
 
 public abstract class AbstractTest {
   final static Logger logger = LogManager.getLogger(AbstractTest.class);
-  public HashMap<String, SdxManager> sdxManagerMap = new HashMap<>();
+  public HashMap<String, SdxManagerBase> sdxManagerMap = new HashMap<>();
   public HashMap<String, SdxExogeniClient> exogeniClients = new HashMap<>();
   public Injector injector;
   public boolean deleteSliceAfterTest = true;
@@ -30,21 +31,27 @@ public abstract class AbstractTest {
 
   public void before() throws Exception {
     initTests();
-    SafeManager.setSafeDockerImage(testSetting.dockerImage);
-    SafeManager.setSafeServerScript(testSetting.safeServerScript);
+    CoreProperties.setSafeDockerImage(testSetting.dockerImage);
+    CoreProperties.setSafeServerScript(testSetting.safeServerScript);
     createSlices();
   }
 
   public void createSlices() throws Exception {
-    RiakSlice riakSlice = injector.getInstance(RiakSlice.class);
-    String riakIP = riakSlice.run(testSetting.riakArgs);
+    String riakIP = null;
+    if (testSetting.safeEnabled) {
+      RiakSlice riakSlice = injector.getInstance(RiakSlice.class);
+      riakIP = riakSlice.run(new CoreProperties(testSetting.riakArgs));
+    }
     testSlice.createSdxSlices(riakIP);
     testSlice.createClientSlices(riakIP);
+    testSlice.runThreads();
   }
 
   public void deleteSlices() throws Exception {
     RiakSlice riakSlice = injector.getInstance(RiakSlice.class);
-    riakSlice.run(testSetting.riakDelArgs);
+    CoreProperties coreProperties = new CoreProperties(testSetting.riakArgs);
+    coreProperties.setType("delete");
+    riakSlice.run(coreProperties);
     testSlice.deleteSdxSlices();
     testSlice.deleteClientSlices();
   }
@@ -55,22 +62,20 @@ public abstract class AbstractTest {
       deleteSlices();
     }
     logger.info("shuttin down all http servers");
-    RestService.shutDownAllHttpServers();
+    ExoRestService.shutDownAllHttpServers();
   }
 
-  public void startClients(){
+  public void startClients() {
     for (String clientSlice : testSetting.clientSlices) {
       SdxExogeniClient sdxExogeniClient = injector.getProvider(SdxExogeniClient.class).get();
-      sdxExogeniClient.config(clientSlice,
-          testSetting.clientIpMap.get(clientSlice),
-          testSetting.clientKeyMap.get(clientSlice),
-          testSetting.clientArgs
-      );
+      CoreProperties coreProperties = new CoreProperties(testSetting.clientArgs);
+      coreProperties.setIpPrefix(testSetting.clientIpMap.get(clientSlice));
+      coreProperties.setSafeKeyFile(testSetting.clientKeyMap.get(clientSlice));
+      coreProperties.setSliceName(clientSlice);
+      coreProperties.setSafeEnabled(testSetting.safeEnabled);
+      coreProperties.setServerUrl(testSetting.sdxUrls.get(testSetting.clientSdxMap.get(clientSlice)));
+      sdxExogeniClient.config(coreProperties);
       exogeniClients.put(clientSlice, sdxExogeniClient);
-    }
-    for (String clientSlice : testSetting.clientSlices) {
-      SdxExogeniClient client = exogeniClients.get(clientSlice);
-      client.setServerUrl(testSetting.sdxUrls.get(testSetting.clientSdxMap.get(clientSlice)));
     }
   }
 
@@ -81,20 +86,17 @@ public abstract class AbstractTest {
         @Override
         public void run() {
           try {
+            ExoSdxServer exoSdxServer = injector.getProvider(ExoSdxServer.class).get();
+            CoreProperties coreProperties = new CoreProperties(testSetting.sdxArgs.get(slice));
+            coreProperties.setServerUrl(testSetting.sdxUrls.get(slice));
+            coreProperties.setSliceName(slice);
+            coreProperties.setBw(testSlice.stitchBw);
+            coreProperties.setSafeEnabled(testSetting.safeEnabled);
             if (reset) {
-              SdxServer sdxServer = injector.getProvider(SdxServer.class).get();
-              SdxManager sdxManager = sdxServer.run(testSetting.sdxArgs.get(slice),
-                testSetting.sdxUrls.get
-                  (slice), slice);
-              sdxManager.setBw(testSlice.stitchBw);
-              sdxManagerMap.put(slice, sdxManager);
-            } else {
-              SdxServer sdxServer = injector.getProvider(SdxServer.class).get();
-              SdxManager sdxManager = sdxServer.run(testSetting.sdxNoResetArgs.get(slice),
-                testSetting.sdxUrls.get
-                  (slice), slice);
-              sdxManagerMap.put(slice, sdxManager);
+              coreProperties.setReset(true);
             }
+            SdxManagerBase sdxManager = exoSdxServer.run(coreProperties);
+            sdxManagerMap.put(slice, sdxManager);
           } catch (Exception e) {
             e.printStackTrace();
           }
@@ -116,17 +118,17 @@ public abstract class AbstractTest {
     startClients();
   }
 
-  public String getSafeServerIPfromSdxManager(SdxManager sdxManager) {
+  public String getSafeServerIPfromSdxManager(SdxManagerBase exoSdxManager) {
     Method getSafeServerIP = null;
     try {
-      getSafeServerIP = sdxManager.getClass().getDeclaredMethod("getSafeServerIP", null);
+      getSafeServerIP = exoSdxManager.getClass().getDeclaredMethod("getSafeServerIP", null);
     } catch (NoSuchMethodException e) {
       e.printStackTrace();
     }
     getSafeServerIP.setAccessible(true);
     String safeServerIp = null;
     try {
-      safeServerIp = (String) getSafeServerIP.invoke(sdxManager);
+      safeServerIp = (String) getSafeServerIP.invoke(exoSdxManager);
     } catch (IllegalAccessException e) {
       e.printStackTrace();
     } catch (InvocationTargetException e) {
@@ -160,6 +162,9 @@ public abstract class AbstractTest {
   }
 
   public void connectCustomerNetwork() {
+    if (!testSetting.explicitConnectionRequest) {
+      return;
+    }
     for (Integer[] pair : testSetting.clientConnectionPairs) {
       int i = pair[0];
       int j = pair[1];
@@ -184,15 +189,20 @@ public abstract class AbstractTest {
       int i = pair[0];
       int j = pair[1];
       String client = testSetting.clientSlices.get(i);
-      String clientIp = testSetting.clientIpMap.get(client);
       String peer = testSetting.clientSlices.get(j);
       String peerIp = testSetting.clientIpMap.get(peer);
-      if (!exogeniClients.get(client).checkConnectivity("CNode1",
-        peerIp.replace(".1/24", ".2"), times)) {
-        flag = false;
+      for (int t = 0; t < times; t++) {
+        if (!exogeniClients.get(client).checkConnectivity("CNode1",
+          peerIp.replace(".1/24", ".2"), 1)) {
+          flag = false;
+          logFlowTables(true);
+        } else {
+          flag = true;
+          break;
+        }
       }
     }
-    if(!flag){
+    if(!flag) {
       deleteSliceAfterTest = false;
     }
     assert flag;
@@ -259,7 +269,7 @@ public abstract class AbstractTest {
         patterns.add(String.format(routeFlowPattern1, ip1));
       }
     }
-    for (SdxManager sdxManager : sdxManagerMap.values()) {
+    for (SdxManagerBase sdxManager : sdxManagerMap.values()) {
       try {
         sdxManager.logFlowTables(patterns, unWantedPatterns);
       } catch (Exception e) {
@@ -275,10 +285,10 @@ public abstract class AbstractTest {
     logger.info("replay done");
   }
 
-  public void sleep(int seconds){
-    try{
+  public void sleep(int seconds) {
+    try {
       Thread.sleep(seconds * 1000);
-    }catch (Exception e){
+    } catch (Exception e) {
 
     }
   }

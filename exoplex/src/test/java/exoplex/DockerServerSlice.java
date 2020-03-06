@@ -3,9 +3,8 @@ package exoplex;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import exoplex.common.utils.ServerOptions;
-import exoplex.sdx.core.SliceHelper;
-import exoplex.sdx.network.RoutingManager;
-import exoplex.sdx.safe.SafeManager;
+import exoplex.sdx.core.CoreProperties;
+import exoplex.sdx.core.exogeni.SliceHelper;
 import exoplex.sdx.slice.SliceManager;
 import exoplex.sdx.slice.exogeni.SiteBase;
 import exoplex.sdx.slice.exogeni.ExoGeniSliceModule;
@@ -40,16 +39,21 @@ public class DockerServerSlice extends SliceHelper {
   }
 
   public void createSafeAndPlexusSlice() throws Exception {
-    SliceManager s = sliceManagerFactory.create(sliceName, pemLocation, keyLocation, controllerUrl,
-      sshKey);
+    SliceManager s = sliceManagerFactory.create(
+      coreProperties.getSliceName(),
+      coreProperties.getExogeniKey(),
+      coreProperties.getExogeniKey(),
+      coreProperties.getExogeniSm(),
+      coreProperties.getSshKey()
+      );
     s.createSlice();
-    s.addSafeServer(SiteBase.get("BBN"), conf.getString("config.riak"), SafeManager
-      .getSafeDockerImage(), SafeManager.getSafeServerScript());
+    s.addSafeServer(SiteBase.get("BBN"), coreProperties.getRiakIp(),
+      CoreProperties.getSafeDockerImage(), CoreProperties.getSafeServerScript());
     s.addPlexusController(SiteBase.get("BBN"), "plexus");
     s.commitAndWait();
     s.loadSlice();
-    checkSafeServer(s.getManagementIP("safe-server"), riakIp);
-    checkPlexus(s, s.getManagementIP("plexus"), RoutingManager.plexusImage);
+    checkSafeServer(s.getManagementIP("safe-server"), coreProperties.getRiakIp());
+    checkPlexus(s, s.getManagementIP("plexus"), CoreProperties.getPlexusImage());
     System.out.println(String.format("Safe server IP %s", s.getManagementIP("safe-server")));
     System.out.println(String.format("plexus server IP %s", s.getManagementIP("plexus")));
   }

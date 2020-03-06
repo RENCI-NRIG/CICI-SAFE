@@ -20,6 +20,17 @@ public class PrefixUtilTest {
     }
 
     @Test
+    public void testPrefixContain() {
+      Range r = PrefixUtil.prefixToRange("192.168.10.2/28");
+      Range r1 = PrefixUtil.prefixToRange("192.168.10.2/32");
+      assert contains("192.168.10.1/24", "192.168.10.2/32");
+    }
+
+    public boolean contains(String prefix1, String prefix2) {
+      return PrefixUtil.prefixToRange(prefix1).covers(PrefixUtil.prefixToRange(prefix2));
+    }
+
+    @Test
     public void normalizePrefix(){
         normalizePrefix("192.168.1.1/16");
     }

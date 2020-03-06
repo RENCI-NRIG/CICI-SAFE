@@ -3,6 +3,7 @@ package exoplex.experiment.latency;
 import exoplex.common.utils.Exec;
 import exoplex.experiment.task.AsyncTask;
 import exoplex.experiment.task.TaskInterface;
+import exoplex.sdx.slice.SliceProperties;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -65,19 +66,21 @@ public class MeasureLatency extends AsyncTask implements TaskInterface {
     Long currentTime = System.currentTimeMillis();
     if (totalTime < 0) {
       //run until stopped
-      String[] res = Exec.sshExec("root", managementIP, String.format("ping -i %s %s",
-        periodMilliSeconds / 1000.0, targetIP), sshKey);
+      String[] res = Exec.sshExec(SliceProperties.userName, managementIP,
+        String.format("ping -i %s %s",
+          periodMilliSeconds / 1000.0, targetIP), sshKey);
       parseResults(res[0], currentTime);
     } else {
-      String[] res = Exec.sshExec("root", managementIP, String.format("ping -i %s -w %s %s",
-        periodMilliSeconds / 1000.0, totalTime, targetIP), sshKey);
+      String[] res = Exec.sshExec(SliceProperties.userName, managementIP,
+        String.format("ping -i %s -w %s %s",
+          periodMilliSeconds / 1000.0, totalTime, targetIP), sshKey);
       parseResults(res[0], currentTime);
     }
   }
 
   @Override
   public void stop() {
-    Exec.sshExec("root", managementIP, "pkill ping", sshKey);
+    Exec.sshExec(SliceProperties.userName, managementIP, "sudo pkill ping", sshKey);
   }
 
   private void parseResults(String result, Long currentTime) {

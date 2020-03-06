@@ -6,11 +6,11 @@ import java.util.Arrays;
 
 public class MultiSdxSetting extends AbstractTestSetting {
 
-  public String sdxConfigDir = sdxSimpleDir + "config/multisdx/";
+  public String sdxConfigDir = exoplexDir + "config/multisdx/";
 
   public MultiSdxSetting() {
     numSdx = 4;
-    clientArgs = new String[]{"-c", sdxSimpleDir +
+    clientArgs = new String[]{"-c", exoplexDir +
       "client-config/multisdx/client" + ".conf"};
 
     addSdxNeighbors();
@@ -65,9 +65,8 @@ public class MultiSdxSetting extends AbstractTestSetting {
       String[] sdxNRArg = new String[]{"-c", sdxConfs.get(sdxSliceName)};
       sdxSliceNames.add(sdxSliceName);
       sdxArgs.put(sdxSliceName, sdxArg);
-      sdxNoResetArgs.put(sdxSliceName, sdxNRArg);
       sdxKeyMap.put(sdxSliceName, String.format("key_p%s", sdxKeyBase + i));
-      sdxUrls.put(sdxSliceName, String.format("http://127.0.0.1:888%s/", i));
+      sdxUrls.put(sdxSliceName, String.format("http://0.0.0.0:888%s/", i));
       sdxIpMap.put(sdxSliceName, String.format("192.168.%s.1/24", sdxIpBase));
       sdxIpBase += 20;
     }
@@ -97,24 +96,24 @@ public class MultiSdxSetting extends AbstractTestSetting {
   }
 
   public void setSdxASTags() {
-    sdxASTags.put(sdxSliceNames.get(0), Arrays.asList(new String[]{"astag0", "astag1"}));
-    sdxASTags.put(sdxSliceNames.get(1), Arrays.asList(new String[]{"astag0"}));
-    sdxASTags.put(sdxSliceNames.get(2), Arrays.asList(new String[]{"astag1"}));
-    sdxASTags.put(sdxSliceNames.get(3), Arrays.asList(new String[]{"astag0", "astag1"}));
+    sdxASTags.put(sdxSliceNames.get(0), Arrays.asList("astag0", "astag1"));
+    sdxASTags.put(sdxSliceNames.get(1), Arrays.asList("astag0"));
+    sdxASTags.put(sdxSliceNames.get(2), Arrays.asList("astag1"));
+    sdxASTags.put(sdxSliceNames.get(3), Arrays.asList("astag0", "astag1"));
   }
 
   public void setClientASTagAcls() {
-    clientASTagAcls.put(clientSlices.get(0), Arrays.asList(new String[]{"astag0"}));
-    clientASTagAcls.put(clientSlices.get(2), Arrays.asList(new String[]{"astag0"}));
-    clientASTagAcls.put(clientSlices.get(1), Arrays.asList(new String[]{"astag1"}));
-    clientASTagAcls.put(clientSlices.get(3), Arrays.asList(new String[]{"astag1"}));
+    clientASTagAcls.put(clientSlices.get(0), Arrays.asList("astag0"));
+    clientASTagAcls.put(clientSlices.get(2), Arrays.asList("astag0"));
+    clientASTagAcls.put(clientSlices.get(1), Arrays.asList("astag1"));
+    clientASTagAcls.put(clientSlices.get(3), Arrays.asList("astag1"));
   }
 
   @Override
   public void setUserConnectionTagAcls() {
-    clientTags.put(clientSlices.get(0), Arrays.asList(new String[]{"tag0"}));
-    clientTags.put(clientSlices.get(2), Arrays.asList(new String[]{"tag0"}));
-    clientTags.put(clientSlices.get(1), Arrays.asList(new String[]{"tag1"}));
-    clientTags.put(clientSlices.get(3), Arrays.asList(new String[]{"tag1"}));
+    clientTags.put(clientSlices.get(0), Arrays.asList("tag0"));
+    clientTags.put(clientSlices.get(2), Arrays.asList("tag0"));
+    clientTags.put(clientSlices.get(1), Arrays.asList("tag1"));
+    clientTags.put(clientSlices.get(3), Arrays.asList("tag1"));
   }
 }

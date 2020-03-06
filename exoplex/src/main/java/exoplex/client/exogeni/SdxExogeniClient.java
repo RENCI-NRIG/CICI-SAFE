@@ -6,18 +6,18 @@ package exoplex.client.exogeni;
 import com.google.inject.Guice;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
+import exoplex.client.ClientHelper;
 import exoplex.common.utils.HttpUtil;
 import exoplex.common.utils.SafeUtils;
-import exoplex.common.utils.ServerOptions;
+import exoplex.demo.singlesdx.SingleSdxModule;
 import exoplex.sdx.advertise.PolicyAdvertise;
 import exoplex.sdx.advertise.RouteAdvertise;
+import exoplex.sdx.core.CoreProperties;
 import exoplex.sdx.safe.SafeManager;
-import exoplex.sdx.slice.SliceEnv;
+import exoplex.sdx.slice.Scripts;
 import exoplex.sdx.slice.SliceManager;
 import exoplex.sdx.slice.SliceManagerFactory;
-import exoplex.sdx.slice.exogeni.SliceCommon;
-import exoplex.demo.singlesdx.SingleSdxModule;
-import org.apache.commons.cli.CommandLine;
+import exoplex.sdx.slice.SliceProperties;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.json.JSONObject;
@@ -25,62 +25,34 @@ import safe.SdxRoutingSlang;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * @author geni-orca
  */
-public class SdxExogeniClient extends SliceCommon {
+public class SdxExogeniClient {
   final Logger logger = LogManager.getLogger(SdxExogeniClient.class);
   protected SafeManager safeManager = null;
   private String logPrefix = "";
-  private String ipIprefix;
   private SliceManager serverSlice = null;
   private boolean safeChecked = false;
-  private CommandLine cmd;
+  private CoreProperties coreProperties;
+  static final String STITCHPORT_TACC = "http://geni-orca.renci.org/owl/ion" +
+    ".rdf#AL2S/TACC/Cisco/6509/TenGigabitEthernet/1/1";
+  static final String STITCHPORT_UC = "http://geni-orca.renci.org/owl/ion" +
+    ".rdf#AL2S/Chameleon/Cisco/6509/GigabitEthernet/1/1";
 
   @Inject
   private SliceManagerFactory sliceManagerFactory;
 
+  @Inject
   public SdxExogeniClient() {
   }
 
-  public String getManagementIP(String nodeName){
-    if (serverSlice == null) {
-      try {
-        loadSlice();
-      } catch (Exception e) {
-        logger.error(e.getMessage());
-      }
-    }
-      return serverSlice.getManagementIP(nodeName);
-  }
-
-  public SdxExogeniClient(String sliceName, String IPPrefix, String safeKeyFile, String[] args) {
-    cmd = ServerOptions.parseCmd(args);
-    String configFilePath = cmd.getOptionValue("config");
-    readConfig(configFilePath);
-    this.ipIprefix = IPPrefix;
-    this.safeKeyFile = safeKeyFile;
-    this.sliceName = sliceName;
-    logPrefix = "[" + sliceName + "] ";
-    logger.info(logPrefix + "Client start");
-  }
-
-  public SdxExogeniClient(String[] args) {
-    //Example usage: ./target/appassembler/bin/SafeSdxClient -f alice.conf
-    //pemLocation = args[0];
-    //keyLocation = args[1];
-    //controllerUrl = args[2]; //"https://geni.renci.org:11443/orca/xmlrpc";
-    //sliceName = args[3];
-    //sshKey=args[6];
-    //keyhash=args[7];
-
-    cmd = ServerOptions.parseCmd(args);
-    String configFilePath = cmd.getOptionValue("config");
-    readConfig(configFilePath);
-
-    logPrefix = "[" + sliceName + "] ";
-
+  public SdxExogeniClient(CoreProperties coreProperties) {
+    this.coreProperties = coreProperties;
+    logPrefix = "[" + coreProperties.getSliceName() + "] ";
     logger.info(logPrefix + "Client start");
   }
 
@@ -88,57 +60,67 @@ public class SdxExogeniClient extends SliceCommon {
 
     Injector injector = Guice.createInjector(new SingleSdxModule());
     SdxExogeniClient sdxExogeniClient = injector.getInstance(SdxExogeniClient.class);
-    sdxExogeniClient.parseArgs(args);
-    sdxExogeniClient.run(args);
+    sdxExogeniClient.run(new CoreProperties(args));
   }
 
-  public void parseArgs(String[] args){
-    cmd = ServerOptions.parseCmd(args);
-    String configFilePath = cmd.getOptionValue("config");
-    readConfig(configFilePath);
-    logPrefix = "[" + sliceName + "] ";
+  public String getManagementIP(String nodeName) {
+    if (serverSlice == null) {
+      try {
+        loadSlice();
+      } catch (Exception e) {
+        logger.error(e.getMessage());
+      }
+    }
+    return serverSlice.getManagementIP(nodeName);
   }
 
-  public void config(String sliceName, String IPPrefix, String safeKeyFile, String[] args) {
-    cmd = ServerOptions.parseCmd(args);
-    String configFilePath = cmd.getOptionValue("config");
-    readConfig(configFilePath);
-    this.ipIprefix = IPPrefix;
-    this.safeKeyFile = safeKeyFile;
-    this.sliceName = sliceName;
-    logPrefix = "[" + sliceName + "] ";
+  public void config(CoreProperties coreProperties) {
+    this.coreProperties = coreProperties;
+    logPrefix = "[" + coreProperties.getSliceName() + "] ";
     logger.info(logPrefix + "Client start");
   }
 
   public void setSafeServer(String safeIP) {
-    setSafeServerIp(safeIP);
+    coreProperties.setSafeServerIp(safeIP);
     if (safeManager == null) {
-      safeManager = new SafeManager(safeServerIp, safeKeyFile, sshKey);
+      safeManager = new SafeManager(coreProperties.getSafeServerIp(),
+        coreProperties.getSafeKeyFile(), coreProperties.getSshKey(), true);
     } else {
-      safeManager.setSafeServerIp(safeServerIp);
+      safeManager.setSafeServerIp(coreProperties.getSafeServerIp());
     }
     safeChecked = true;
   }
 
   private void loadSlice() throws Exception {
-    serverSlice = sliceManagerFactory.create(sliceName, pemLocation, keyLocation, controllerUrl, sshKey);
+    serverSlice = sliceManagerFactory.create(
+      coreProperties.getSliceName(),
+      coreProperties.getExogeniKey(),
+      coreProperties.getExogeniKey(),
+      coreProperties.getExogeniSm(),
+      coreProperties.getSshKey()
+    );
     serverSlice.loadSlice();
   }
 
-  public void run(String[] args) {
+  public void run(CoreProperties coreProperties) {
+    this.coreProperties = coreProperties;
+    logPrefix = String.format("[%s]", this.coreProperties.getSliceName());
     try {
       loadSlice();
       checkSafe();
     } catch (Exception e) {
       e.printStackTrace();
     }
-    if (cmd.hasOption('e')) {
-      String command = cmd.getOptionValue('e');
-      processCmd(command);
-      return;
+    if (coreProperties.getCommand() != null) {
+      processCmd(coreProperties.getCommand());
+    } else {
+      commandLine();
     }
-    String input = new String();
-    String cmdprefix = sliceName + "$>";
+  }
+
+  private void commandLine() {
+    String input;
+    String cmdprefix = coreProperties.getSliceName() + "$>";
     try {
 //	 			logger.info(logPrefix + obj.sayHello());
       BufferedReader stdin = new BufferedReader(new InputStreamReader(System.in));
@@ -165,8 +147,9 @@ public class SdxExogeniClient extends SliceCommon {
   }
 
   public String processCmd(String command) {
+    checkSafe();
     try {
-      String[] params = command.split(" ");
+      String[] params = ClientHelper.parseCommands(command);
       if (params[0].equals("stitch")) {
         return processStitchCmd(params);
       } else if (params[0].equals("link")) {
@@ -181,6 +164,8 @@ public class SdxExogeniClient extends SliceCommon {
         processPolicyCmd(params);
       } else if (params[0].equals("acl")) {
         processAclCmd(params);
+      } else if (params[0].equals("stitchvfc")) {
+        processStitchVfcCmd(params);
       }
     } catch (Exception e) {
       e.printStackTrace();
@@ -191,10 +176,10 @@ public class SdxExogeniClient extends SliceCommon {
   /*
   Be cafeful when using async methods
    */
-  public void processCmdAsync(String command){
-    Thread thread = new Thread(){
+  public void processCmdAsync(String command) {
+    Thread thread = new Thread() {
       @Override
-      public void run(){
+      public void run() {
         processCmd(command);
       }
     };
@@ -214,7 +199,7 @@ public class SdxExogeniClient extends SliceCommon {
       }
     }
     String node = serverSlice.getComputeNode(nodeName);
-    String res = serverSlice.runCmdNode("ping  -c 1 " + ip, node, false);
+    String res = serverSlice.runCmdNode("ping  -c 1 -W 2 " + ip, node, false);
     logger.debug(res);
     return res.contains("1 received");
   }
@@ -270,12 +255,6 @@ public class SdxExogeniClient extends SliceCommon {
   private void processConnectionCmd(String[] params) {
     try {
       JSONObject jsonparams = new JSONObject();
-      if (safeEnabled) {
-        checkSafe();
-        jsonparams.put("ckeyhash", safeManager.getSafeKeyHash());
-      } else {
-        jsonparams.put("ckeyhash", sliceName);
-      }
       jsonparams.put("self_prefix", params[1]);
       jsonparams.put("target_prefix", params[2]);
       try {
@@ -283,7 +262,7 @@ public class SdxExogeniClient extends SliceCommon {
       } catch (Exception e) {
         jsonparams.put("bandwidth", 0l);
       }
-      String res = HttpUtil.postJSON(serverurl + "sdx/connectionrequest", jsonparams);
+      String res = HttpUtil.postJSON(coreProperties.getServerUrl() + "sdx/connectionrequest", jsonparams);
       logger.info(logPrefix + "get connection result from server:\n" + res);
       logger.debug(res);
     } catch (Exception e) {
@@ -300,9 +279,9 @@ public class SdxExogeniClient extends SliceCommon {
   }
 
   private void advertiseBgpAsync(String peerUrl, RouteAdvertise advertise) {
-    Thread thread = new Thread(){
+    Thread thread = new Thread() {
       @Override
-      public void run(){
+      public void run() {
         HttpUtil.postJSON(peerUrl + "sdx/bgp", advertise.toJsonObject());
       }
     };
@@ -320,7 +299,7 @@ public class SdxExogeniClient extends SliceCommon {
   }
 
   private void processPolicyCmd(String[] params) {
-    String tagAuthorityPid = SafeUtils.getPrincipalId(safeServer, "tagauthority");
+    String tagAuthorityPid = safeManager.getPrincipalId("tagauthority");
     String destPrefix = params[1];
     String srcPrefix = params[2];
     String astag = params[3];
@@ -329,102 +308,190 @@ public class SdxExogeniClient extends SliceCommon {
     PolicyAdvertise policyAdvertise = new PolicyAdvertise();
     policyAdvertise.srcPrefix = srcPrefix;
     policyAdvertise.destPrefix = destPrefix;
-    checkSafe();
     String sdToken = safeManager.postASTagAclEntrySD(tag, policyAdvertise.getSrcPrefix(),
-        policyAdvertise.getDestPrefix());
+      policyAdvertise.getDestPrefix());
     String sdSetToken = safeManager.postSdPolicySet(policyAdvertise.getSrcPrefix(),
       policyAdvertise.getDestPrefix());
     policyAdvertise.ownerPID = safeManager.getSafeKeyHash();
     policyAdvertise.safeToken = sdSetToken;
-    advertisePolicyAsync(serverurl, policyAdvertise);
+    advertisePolicyAsync(coreProperties.getServerUrl(), policyAdvertise);
     logger.debug("client posted SD policy set and made policy advertisement");
   }
 
   private void processAclCmd(String[] params) {
-    if (safeEnabled) {
-      String token = null;
-      checkSafe();
-      RouteAdvertise advertise = new RouteAdvertise();
-      advertise.destPrefix = params[1];
-      advertise.srcPrefix = params[2];
-      advertise.advertiserPID = safeKeyHash;
-      advertise.ownerPID = safeKeyHash;
-      advertise.route.add(safeKeyHash);
-      if (params.length > 3) {
-        //need special tag acl
-        // postASTagAclEntrySD
-        String[] vars = new String[3];
-        String tagAuth = SafeUtils.getPrincipalId(safeServer, "tagauthority");
-        String tag = String.format("%s:%s", tagAuth, params[3]);
-        String res = safeManager.postASTagAclEntrySD(tag, advertise.getSrcPrefix(), advertise
-          .getDestPrefix());
-        logger.debug(res);
-        res = safeManager.postSdPolicySet(advertise.getSrcPrefix(), advertise
-            .getDestPrefix());
-        logger.debug(res);
-      }
-      //Post SAFE sets
-      //postInitRouteSD
+    String token = null;
+    RouteAdvertise advertise = new RouteAdvertise();
+    advertise.destPrefix = params[1];
+    advertise.srcPrefix = params[2];
+    advertise.advertiserPID = safeManager.getSafeKeyHash();
+    advertise.ownerPID = safeManager.getSafeKeyHash();
+    advertise.route.add(safeManager.getSafeKeyHash());
+    if (params.length > 3) {
+      //need special tag acl
+      // postASTagAclEntrySD
+      String[] vars = new String[3];
+      String tagAuth = safeManager.getPrincipalId("tagauthority");
+      String tag = String.format("%s:%s", tagAuth, params[3]);
+      String res = safeManager.postASTagAclEntrySD(tag, advertise.getSrcPrefix(), advertise
+        .getDestPrefix());
+      logger.debug(res);
+      res = safeManager.postSdPolicySet(advertise.getSrcPrefix(), advertise
+        .getDestPrefix());
+      logger.debug(res);
     }
+    //Post SAFE sets
+    //postInitRouteSD
+  }
+
+  /**
+   * ["stitchvfc", "CNode1", site, vlan, 192.168.200.2, 192.168.200.1/24]
+   */
+  private void processStitchVfcCmd(String[] params) {
+    if (serverSlice == null) {
+      try {
+        loadSlice();
+      } catch (Exception e) {
+        logger.error(e.getMessage());
+      }
+    }
+    String nodeName = params[1];
+    String site = params[2];
+    String vlan = params[3];
+    String gateway = params[4];
+    String vfcip = params[5];
+    String stitchname =
+      "sp-" + nodeName + "-" + gateway.replace(".", "_") + "__" + vfcip.split("/")[1];
+    logger.info(logPrefix + "Stitching to Chameleon {" + "stitchname: " + stitchname + " vlan:" +
+      vlan + " site: " + site + "}");
+    String stitchport = site.toLowerCase().equals("tacc") ? STITCHPORT_TACC: STITCHPORT_UC;
+    addStitchPort(stitchname, nodeName, stitchport, vlan, coreProperties.getBw());
+    //configure ip address on the client node
+    String localIp = gateway + "/" + vfcip.split("/")[1];
+    logger.info(logPrefix + "set IP address of the stitch interface to " + vfcip);
+    String vfcGateway = vfcip.split("/")[0];
+    if(coreProperties.getQuaggaRoute()) {
+      List<String> interfaces = serverSlice.getPhysicalInterfaces(nodeName);
+      String newInterface = interfaces.get(interfaces.size() - 1);
+      String result = serverSlice.runCmdNode(String.format("sudo ifconfig " + "%s %s", newInterface, localIp), nodeName, false);
+      setUpQuaggaRouting("192.168.1.1/16", vfcGateway, nodeName);
+    }
+    //send stitch request to vfc server
+    //post stitch request to SAFE
+    JSONObject jsonparams = new JSONObject();
+    jsonparams.put("vfcsite", site);
+    jsonparams.put("vlan", vlan);
+    jsonparams.put("gateway", gateway);
+    jsonparams.put("ip", vfcip);
+    jsonparams.put("cslice", coreProperties.getSliceName());
+    if (coreProperties.isSafeEnabled()) {
+      checkSafe();
+      jsonparams.put("ckeyhash", safeManager.getSafeKeyHash());
+      postSafeStitchRequest(jsonparams.getString("ckeyhash"), jsonparams.getString("vfcsite"),
+        jsonparams.getString("vlan"));
+    } else {
+      jsonparams.put("ckeyhash", coreProperties.getSliceName());
+    }
+    logger.debug(logPrefix + "Sending stitch request to Vfc Sdx server");
+    String r = HttpUtil.postJSON(coreProperties.getServerUrl() + "sdx/stitchvfc", jsonparams);
+    logger.debug(r);
+
+    if(coreProperties.getQuaggaRoute()) {
+      if (ping(nodeName, vfcGateway)) {
+        logger.info(String.format("Ping to %s works", vfcGateway));
+        logger.info(logPrefix + "stitch completed.");
+      } else {
+        logger.warn(String.format("Ping to %s doesn't work", vfcGateway));
+      }
+    } else {
+      serverSlice.runCmdNode("/bin/bash ~/ovsbridge.sh", nodeName, false);
+      logger.info("Added the new interface to ovs bridge br0");
+    }
+  }
+
+  private boolean postSafeStitchRequest(String keyhash, String vfcSite, String vlan) {
+    /** Post to remote safesets using apache httpclient */
+    String[] othervalues = new String[2];
+    othervalues[0] = vfcSite;
+    othervalues[1] = vlan;
+    String message = SafeUtils.postSafeStatements(coreProperties.getSafeServer(),
+      "postChameleonStitchRequest", keyhash,
+      othervalues);
+    return !message.contains("fail");
+  }
+
+  private boolean addStitchPort(String spName, String nodeName, String stitchUrl, String vlan, long
+    bw) {
+    int numInterfaces = serverSlice.getPhysicalInterfaces(nodeName).size();
+    serverSlice.refresh();
+    try {
+      String node = serverSlice.getComputeNode(nodeName);
+      String mysp = serverSlice.addStitchPort(spName, vlan, stitchUrl, bw);
+      serverSlice.stitchSptoNode(mysp, node);
+      int newNum;
+      if (serverSlice.commitAndWait(10, Arrays.asList(spName + "-net"))) {
+        do {
+          serverSlice.sleep(5);
+          newNum = serverSlice.getPhysicalInterfaces(nodeName).size();
+        } while (newNum <= numInterfaces);
+      }
+    } catch (Exception e) {
+      e.printStackTrace();
+      return false;
+    }
+    return true;
   }
 
   private void processBgpCmd(String[] params) {
-    if (safeEnabled) {
-      String token = null;
-      checkSafe();
-      RouteAdvertise advertise = new RouteAdvertise();
-      advertise.destPrefix = params[1];
-      advertise.srcPrefix = params[2];
-      advertise.advertiserPID = safeKeyHash;
-      advertise.ownerPID = safeKeyHash;
-      advertise.route.add(safeKeyHash);
-      if (params.length > 3) {
-        //need special tag acl
-        // postASTagAclEntrySD
-        String[] vars = new String[3];
-        String tagAuth = SafeUtils.getPrincipalId(safeServer, "tagauthority");
-        String tag = String.format("%s:%s", tagAuth, params[3]);
-        String res = safeManager.postASTagAclEntrySD(tag, advertise.getSrcPrefix(), advertise
-          .getDestPrefix());
-        logger.debug(res);
-        res = safeManager.postSdPolicySet(advertise.getSrcPrefix(), advertise
-            .getDestPrefix());
-        logger.debug(res);
-      }
-      //Post SAFE sets
-      //postInitRouteSD
-
-      String[] safeparams = new String[5];
-      safeparams[0] = advertise.getSrcPrefix();
-      safeparams[1] = advertise.getDestPrefix();
-      safeparams[2] = advertise.getFormattedPath();
-      String sdxPid = HttpUtil.get(serverurl + "sdx/getpid");
-      safeparams[3] = sdxPid;
-      safeparams[4] = String.valueOf(1);
-      logger.debug(String.format("Safe principal Id of sdx server is %s", sdxPid));
-      String routeToken = SafeUtils.getToken(SafeUtils.postSafeStatements(safeServer,
-        SdxRoutingSlang.postInitRouteSD, safeKeyHash, safeparams));
-      advertise.safeToken = routeToken;
-      //pass the token when making bgpAdvertise
-      advertiseBgpAsync(serverurl, advertise);
-      logger.debug(String.format("posted initRouteSD statement for dst %s src %s pair", advertise
-        .destPrefix, advertise.srcPrefix));
+    RouteAdvertise advertise = new RouteAdvertise();
+    advertise.destPrefix = params[1];
+    advertise.srcPrefix = params[2];
+    advertise.advertiserPID = safeManager.getSafeKeyHash();
+    advertise.ownerPID = safeManager.getSafeKeyHash();
+    advertise.route.add(safeManager.getSafeKeyHash());
+    if (params.length > 3) {
+      //need special tag acl
+      // postASTagAclEntrySD
+      String[] vars = new String[3];
+      String tagAuth = safeManager.getPrincipalId("tagauthority");
+      String tag = String.format("%s:%s", tagAuth, params[3]);
+      String res = safeManager.postASTagAclEntrySD(tag, advertise.getSrcPrefix(), advertise
+        .getDestPrefix());
+      logger.debug(res);
+      res = safeManager.postSdPolicySet(advertise.getSrcPrefix(), advertise
+        .getDestPrefix());
+      logger.debug(res);
     }
+    //Post SAFE sets
+    //postInitRouteSD
+
+    String[] safeparams = new String[5];
+    safeparams[0] = advertise.getSrcPrefix();
+    safeparams[1] = advertise.getDestPrefix();
+    safeparams[2] = advertise.getFormattedPath();
+    String sdxPid = HttpUtil.get(coreProperties.getServerUrl() + "sdx/getpid");
+    safeparams[3] = sdxPid;
+    safeparams[4] = String.valueOf(1);
+    logger.debug(String.format("Safe principal Id of sdx server is %s", sdxPid));
+    String routeToken = safeManager.post(SdxRoutingSlang.postInitRouteSD, safeparams);
+    advertise.safeToken = routeToken;
+    //pass the token when making bgpAdvertise
+    advertiseBgpAsync(coreProperties.getServerUrl(), advertise);
+    logger.debug(String.format("posted initRouteSD statement for dst %s src %s pair", advertise
+      .destPrefix, advertise.srcPrefix));
   }
 
   private void checkSafe() {
-    if (safeEnabled && !safeChecked) {
-      safeManager = new SafeManager(safeServerIp, safeKeyFile, sshKey);
-      if (safeInSlice && serverSlice.getResourceByName(SliceEnv.SAFESERVER) != null) {
-        setSafeServerIp(serverSlice.getManagementIP(SliceEnv.SAFESERVER));
-      } else {
-        setSafeServerIp(conf.getString("config.safeserver"));
+    if (coreProperties.isSafeEnabled() && !safeChecked) {
+      if (coreProperties.isSafeInSlice()
+        && serverSlice.getResourceByName(SliceProperties.SAFESERVER) != null) {
+        coreProperties.setSafeServerIp(serverSlice.getManagementIP(SliceProperties.SAFESERVER));
       }
-      safeManager.setSafeServerIp(safeServerIp);
+      safeManager = new SafeManager(coreProperties.getSafeServerIp(), coreProperties.getSafeKeyFile(),
+        coreProperties.getSshKey(), true);
       safeChecked = true;
-    }
-    if (safeKeyHash == null) {
-      safeKeyHash = SafeUtils.getPrincipalId(safeServer, safeKeyFile);
+    } else if (!coreProperties.isSafeEnabled()) {
+      safeManager = new SafeManager(coreProperties.getSafeServerIp(), coreProperties.getSafeKeyFile(),
+        coreProperties.getSshKey(), false);
     }
   }
 
@@ -432,39 +499,38 @@ public class SdxExogeniClient extends SliceCommon {
     JSONObject paramsobj = new JSONObject();
     paramsobj.put("dest", params[1]);
     paramsobj.put("gateway", params[2]);
-    if (safeEnabled) {
+    if (coreProperties.isSafeEnabled()) {
       checkSafe();
-      paramsobj.put("customer", safeKeyHash);
+      paramsobj.put("customer", safeManager.getSafeKeyHash());
     } else {
-      paramsobj.put("customer", sliceName);
+      paramsobj.put("customer", coreProperties.getSliceName());
     }
-    String res = HttpUtil.postJSON(serverurl + "sdx/notifyprefix", paramsobj);
+    String res = HttpUtil.postJSON(coreProperties.getServerUrl() + "sdx/notifyprefix", paramsobj);
     JSONObject jsonRes = new JSONObject(res);
     if (!jsonRes.getBoolean("result")) {
       logger.warn(logPrefix + "Prefix not accepted (authorization failed)");
     } else {
-      if (safeEnabled) {
+      if (coreProperties.isSafeEnabled() && coreProperties.doRouteAdvertise()) {
         //Make initRoute advertisement
         //dstip, path, targeas, length
         String[] safeparams = new String[4];
         safeparams[0] = String.format("ipv4\\\"%s\\\"", params[1]);
-        safeparams[1] = String.format("[%s]", safeKeyHash);
+        safeparams[1] = String.format("[%s]", safeManager.getSafeKeyHash());
         String sdxSafeKeyHash = jsonRes.getString("safeKeyHash");
         if (sdxSafeKeyHash.equals("")) {
           logger.warn("SDX safekeyhash empty");
         }
         safeparams[2] = sdxSafeKeyHash;
         safeparams[3] = String.valueOf(1);
-        String token = SafeUtils.getToken(SafeUtils.postSafeStatements(safeServer, SdxRoutingSlang
-          .postInitRoute, safeKeyHash, safeparams));
+        String token = safeManager.post(SdxRoutingSlang.postInitRoute, safeparams);
         RouteAdvertise advertise = new RouteAdvertise();
         advertise.safeToken = token;
-        advertise.advertiserPID = safeKeyHash;
-        advertise.route.add(safeKeyHash);
-        advertise.ownerPID = safeKeyHash;
+        advertise.advertiserPID = safeManager.getSafeKeyHash();
+        advertise.route.add(safeManager.getSafeKeyHash());
+        advertise.ownerPID = safeManager.getSafeKeyHash();
         advertise.destPrefix = params[1];
         //pass the token when making bgpAdvertise
-        advertiseBgp(serverurl, advertise);
+        advertiseBgp(coreProperties.getServerUrl(), advertise);
         logger.debug("posted initRoute statement");
       }
       logger.info(logPrefix + res);
@@ -472,7 +538,7 @@ public class SdxExogeniClient extends SliceCommon {
   }
 
   public void setServerUrl(String url) {
-    this.serverurl = url;
+    coreProperties.setServerUrl(url);
   }
 
   private String processStitchCmd(String[] params) {
@@ -484,30 +550,33 @@ public class SdxExogeniClient extends SliceCommon {
       }
     }
     try {
-      String node0_s2 = serverSlice.getResourceByName(params[1]);
-      String node0_s2_stitching_GUID = serverSlice.getStitchingGUID(node0_s2);
-      String secret = serverSlice.permitStitch(node0_s2_stitching_GUID);
-      logger.debug("node0_s2_stitching_GUID: " + node0_s2_stitching_GUID);
-      String sdxsite = serverSlice.getNodeDomain(node0_s2);
+      String nodeName = serverSlice.getResourceByName(params[1]);
+      String nodeStitchingGUID = serverSlice.getStitchingGUID(nodeName);
+      String secret = serverSlice.permitStitch(nodeStitchingGUID);
+      logger.debug("nodeStitchingGUID: " + nodeStitchingGUID);
+      String sdxsite = serverSlice.getNodeDomain(nodeName);
       //post stitch request to SAFE
       JSONObject jsonparams = new JSONObject();
       jsonparams.put("sdxsite", sdxsite);
-      jsonparams.put("cslice", sliceName);
-      jsonparams.put("creservid", node0_s2_stitching_GUID);
+      jsonparams.put("cslice", coreProperties.getSliceName());
+      jsonparams.put("creservid", nodeStitchingGUID);
       jsonparams.put("secret", secret);
       jsonparams.put("gateway", params[2]);
       jsonparams.put("ip", params[3]);
       if (params.length > 4) {
         jsonparams.put("sdxnode", params[4]);
       }
-      if (safeEnabled) {
+      if (coreProperties.isSafeEnabled()) {
         checkSafe();
         jsonparams.put("ckeyhash", safeManager.getSafeKeyHash());
       } else {
-        jsonparams.put("ckeyhash", sliceName);
+        jsonparams.put("ckeyhash", coreProperties.getSliceName());
       }
-      logger.debug("Sending stitch request to Sdx server");
-      String r = HttpUtil.postJSON(serverurl + "sdx/stitchrequest", jsonparams);
+      int interfaceNum = serverSlice.getPhysicalInterfaces(nodeName).size();
+      logger.debug(String.format(logPrefix + "Number of dataplane interfaces before " +
+        "stitching: %s", interfaceNum));
+      logger.debug(logPrefix + "Sending stitch request to Sdx server");
+      String r = HttpUtil.postJSON(coreProperties.getServerUrl() + "sdx/stitchrequest", jsonparams);
       logger.debug(r);
       JSONObject res = new JSONObject(r);
       logger.info(logPrefix + "Got Stitch Information From Server:\n " + res.toString());
@@ -515,19 +584,27 @@ public class SdxExogeniClient extends SliceCommon {
         logger.warn(logPrefix + "stitch request failed");
       } else {
         String ip = params[2] + "/" + params[3].split("/")[1];
-        logger.info(logPrefix + "set IP address of the stitch interface to " + ip);
-        serverSlice.sleep(5);
-        String mip = serverSlice.getManagementIP(node0_s2);
-        String result = serverSlice.runCmdNode("ifconfig eth1 " + ip, node0_s2, false);
-        String gateway = params[3].split("/")[0];
-        serverSlice.runCmdNode("echo \"ip route 192.168.1.1/16 " + gateway +
-          "\" >>/etc/quagga/zebra.conf  ", node0_s2, false);
-        serverSlice.runCmdNode("/etc/init.d/quagga restart", node0_s2, false);
-        if (ping(node0_s2, gateway)) {
-          logger.info(String.format("Ping to %s works", gateway));
-          logger.info(logPrefix + "stitch completed.");
+        List<String> interfaces = serverSlice.getPhysicalInterfaces(nodeName);
+        while (interfaces.size() <= interfaceNum) {
+          sleep(5);
+          interfaces = serverSlice.getPhysicalInterfaces(nodeName);
+          logger.debug(String.format(logPrefix + "Number of dataplane " +
+            "interfaces: %s", interfaces.size()));
+        }
+        String newInterface = interfaces.get(interfaces.size() - 1);
+        if(coreProperties.getQuaggaRoute()) {
+          logger.info(logPrefix + "set IP address of the stitch interface to " + ip);
+          String result = serverSlice.runCmdNode(String.format("sudo ifconfig " + "%s %s", newInterface, ip), nodeName, false);
+          String gateway = params[3].split("/")[0];
+          setUpQuaggaRouting("192.168.1.1/16", gateway, nodeName);
+          if (ping(nodeName, gateway)) {
+            logger.info(String.format("Ping to %s works", gateway));
+            logger.info(logPrefix + "stitch completed.");
+          } else {
+            logger.warn(String.format("Ping to %s doesn't work", gateway));
+          }
         } else {
-          logger.warn(String.format("Ping to %s doesn't work", gateway));
+          serverSlice.runCmdSlice("/bin/bash ~/ovsbridge.sh", coreProperties.getSshKey(), "CNode1", true);
         }
         return ip.split("/")[0];
       }
@@ -535,6 +612,21 @@ public class SdxExogeniClient extends SliceCommon {
       e.printStackTrace();
     }
     return null;
+  }
+
+  void setUpQuaggaRouting(String destination, String gateway, String nodeName) {
+    serverSlice.runCmdNode("sudo bash -c 'echo \"ip route 192.168.1.1/16 " + gateway +
+      "\" >>/etc/quagga/zebra.conf'", nodeName, false);
+    serverSlice.runCmdNode(Scripts.restartQuagga(), nodeName,
+      false);
+  }
+
+  void sleep(int sec) {
+    try {
+      Thread.sleep(sec * 1000);
+    } catch (Exception e) {
+
+    }
   }
 
   private String processUnStitchCmd(String[] params) {
@@ -550,16 +642,16 @@ public class SdxExogeniClient extends SliceCommon {
       String node0_s2_stitching_GUID = serverSlice.getStitchingGUID(node0_s2);
       logger.debug("node0_s2_stitching_GUID: " + node0_s2_stitching_GUID);
       JSONObject jsonparams = new JSONObject();
-      jsonparams.put("cslice", sliceName);
+      jsonparams.put("cslice", coreProperties.getSliceName());
       jsonparams.put("creservid", node0_s2_stitching_GUID);
-      if (safeEnabled) {
+      if (coreProperties.isSafeEnabled()) {
         checkSafe();
         jsonparams.put("ckeyhash", safeManager.getSafeKeyHash());
       } else {
-        jsonparams.put("ckeyhash", sliceName);
+        jsonparams.put("ckeyhash", coreProperties.getSliceName());
       }
       logger.debug("Sending unstitch request to Sdx server");
-      String r = HttpUtil.postJSON(serverurl + "sdx/undostitch", jsonparams);
+      String r = HttpUtil.postJSON(coreProperties.getServerUrl() + "sdx/undostitch", jsonparams);
       logger.debug(r);
       logger.info(logPrefix + "Unstitch result:\n " + r);
     } catch (Exception e) {
@@ -569,7 +661,8 @@ public class SdxExogeniClient extends SliceCommon {
   }
 
   private void configOSPFForNewInterface(String c, String newip) {
-    serverSlice.runCmdNode("/bin/bash ~/configospfforif.sh " + newip, c, false);
+    serverSlice.runCmdNode("sudo /bin/bash ~/configospfforif.sh " + newip, c,
+      false);
   }
 }
 

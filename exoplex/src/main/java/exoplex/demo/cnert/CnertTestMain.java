@@ -7,9 +7,10 @@ import com.google.inject.Provider;
 import exoplex.client.exogeni.ExogeniClientSlice;
 import exoplex.client.exogeni.SdxExogeniClient;
 import exoplex.client.stitchport.SdxStitchPortClient;
-import exoplex.sdx.core.SdxManager;
-import exoplex.sdx.core.SdxServer;
 import exoplex.demo.multisdx.MultiSdxModule;
+import exoplex.sdx.core.CoreProperties;
+import exoplex.sdx.core.exogeni.ExoSdxManager;
+import exoplex.sdx.core.exogeni.ExoSdxServer;
 import org.apache.commons.cli.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -35,14 +36,14 @@ public class CnertTestMain {
   static String[] clientarg4 = {"-c", "client-config/c4.conf"};
   static String[] clientarg6 = {"-c", "client-config/c6.conf"};
   static String[] clientarg5 = {"-c", "chameleon-config/c1.conf"};
-  static SdxManager sdxManager;
+  static ExoSdxManager exoSdxManager;
   static boolean stitch = true;
-  final Provider<SdxServer> sdxServerProvider;
+  final Provider<ExoSdxServer> sdxServerProvider;
   final Provider<ExogeniClientSlice> exogeniClientSliceProvider;
   final Provider<CnertTestSlice> cnertTestSliceProvider;
 
   @Inject
-  public CnertTestMain(Provider<SdxServer> sdxServerProvider,
+  public CnertTestMain(Provider<ExoSdxServer> sdxServerProvider,
                        Provider<ExogeniClientSlice> exogeniClientSliceProvider,
                        Provider<CnertTestSlice> cnertTestSliceProvider) {
     this.sdxServerProvider = sdxServerProvider;
@@ -106,7 +107,7 @@ public class CnertTestMain {
   }
 
   public void testDymanicNetwork() {
-    SdxExogeniClient client6 = new SdxExogeniClient(clientarg6);
+    SdxExogeniClient client6 = new SdxExogeniClient(new CoreProperties(clientarg6));
 
     // Client request for connection between prefixes
     if (stitch) {
@@ -117,7 +118,7 @@ public class CnertTestMain {
     //client6.processCmd("link 192.168.60.1/24 192.168.40.1/24");
   }
 
-  public void test(boolean reset) throws TransportException, Exception {
+  public void test(boolean reset) throws Exception {
     /*
     In this function, we create ahab controller for Sdx slice and Client slices.
     We execute command in Client controller to request network stitching to Sdx slice,
@@ -126,18 +127,18 @@ public class CnertTestMain {
     // Start Sdx Server
     //./scripts/sdxserver.sh -c config/sdx.conf
     if (reset) {
-      SdxServer sdxServer = sdxServerProvider.get();
-      sdxManager = sdxServer.run(arg2);
+      ExoSdxServer exoSdxServer = sdxServerProvider.get();
+      exoSdxManager = (ExoSdxManager) exoSdxServer.run(new CoreProperties(arg2));
     } else {
-      SdxServer sdxServer = sdxServerProvider.get();
-      sdxManager = sdxServer.run(arg1);
+      ExoSdxServer exoSdxServer = sdxServerProvider.get();
+      exoSdxManager = (ExoSdxManager) exoSdxServer.run(new CoreProperties(arg1));
     }
-    sdx = sdxManager.getSliceName();
-    SdxExogeniClient client1 = new SdxExogeniClient(clientarg1);
-    SdxExogeniClient client2 = new SdxExogeniClient(clientarg2);
-    SdxExogeniClient client3 = new SdxExogeniClient(clientarg3);
-    SdxExogeniClient client4 = new SdxExogeniClient(clientarg4);
-    SdxExogeniClient client6 = new SdxExogeniClient(clientarg6);
+    sdx = exoSdxManager.getSliceName();
+    SdxExogeniClient client1 = new SdxExogeniClient(new CoreProperties(clientarg1));
+    SdxExogeniClient client2 = new SdxExogeniClient(new CoreProperties(clientarg2));
+    SdxExogeniClient client3 = new SdxExogeniClient(new CoreProperties(clientarg3));
+    SdxExogeniClient client4 = new SdxExogeniClient(new CoreProperties(clientarg4));
+    SdxExogeniClient client6 = new SdxExogeniClient(new CoreProperties(clientarg6));
 
     String[] gateways = new String[]{
       "192.168.132.2",
@@ -166,13 +167,13 @@ public class CnertTestMain {
     // Client request for connection between prefixes
     client1.processCmd("link 192.168.10.1/24 192.168.20.1/24");
     if (!client1.checkConnectivity("CNode1", "192.168.20.2", 3)) {
-      sdxManager.checkFlowTableForPair("192.168.10.0/24", "192.168.20.0/24",
+      exoSdxManager.checkFlowTableForPair("192.168.10.0/24", "192.168.20.0/24",
         "192.168.10.1/24", "192.168.20.1/24");
     }
     client3.processCmd("link 192.168.30.1/24 192.168.40.1/24");
 
     if (!client3.checkConnectivity("CNode1", "192.168.40.2", 3)) {
-      sdxManager.checkFlowTableForPair("192.168.30.0/24", "192.168.40.0/24",
+      exoSdxManager.checkFlowTableForPair("192.168.30.0/24", "192.168.40.0/24",
         "192.168.30.1/24", "192.168.40.1/24");
     }
 
@@ -181,12 +182,12 @@ public class CnertTestMain {
     client6.processCmd("route 192.168.60.1/24 " + gateways[4]);
     client6.processCmd("link 192.168.60.1/24 192.168.10.1/24");
     if (!client6.checkConnectivity("CNode1", "192.168.10.2", 3)) {
-      sdxManager.checkFlowTableForPair("192.168.10.0/24", "192.168.60.0/24",
+      exoSdxManager.checkFlowTableForPair("192.168.10.0/24", "192.168.60.0/24",
         "192.168.10.1/24", "192.168.60.1/24");
     }
     client6.processCmd("link 192.168.60.1/24 192.168.20.1/24");
     if (!client6.checkConnectivity("CNode1", "192.168.20.2", 3)) {
-      sdxManager.checkFlowTableForPair("192.168.20.0/24", "192.168.60.0/24",
+      exoSdxManager.checkFlowTableForPair("192.168.20.0/24", "192.168.60.0/24",
         "192.168.20.1/24", "192.168.60.1/24");
     }
     //SdxServer.sdxManager.logFlowTables();
@@ -206,14 +207,14 @@ public class CnertTestMain {
     // Stop Sdx server and exit
   }
 
-  public void testChameleon() throws TransportException, Exception {
-    SdxServer sdxServer = sdxServerProvider.get();
-    sdxServer.run(arg1);
-    SdxExogeniClient client1 = new SdxExogeniClient(clientarg1);
-    SdxExogeniClient client2 = new SdxExogeniClient(clientarg2);
-    SdxExogeniClient client3 = new SdxExogeniClient(clientarg3);
-    SdxExogeniClient client4 = new SdxExogeniClient(clientarg4);
-    SdxStitchPortClient cc = new SdxStitchPortClient(clientarg5);
+  public void testChameleon() throws Exception {
+    ExoSdxServer exoSdxServer = sdxServerProvider.get();
+    exoSdxServer.run(new CoreProperties(arg1));
+    SdxExogeniClient client1 = new SdxExogeniClient(new CoreProperties(clientarg1));
+    SdxExogeniClient client2 = new SdxExogeniClient(new CoreProperties(clientarg2));
+    SdxExogeniClient client3 = new SdxExogeniClient(new CoreProperties(clientarg3));
+    SdxExogeniClient client4 = new SdxExogeniClient(new CoreProperties(clientarg4));
+    SdxStitchPortClient cc = new SdxStitchPortClient(new CoreProperties(clientarg5));
     if (stitch) {
       //client1.processCmd("stitch CNode0 " + sdx + " c0");
       client2.processCmd("stitch CNode0 " + sdx + " c1");
@@ -239,23 +240,29 @@ public class CnertTestMain {
 
   public void deleteSlice() {
     CnertTestSlice ts = cnertTestSliceProvider.get();
-    ts.processArgs(arg1);
-    ExogeniClientSlice s1 = exogeniClientSliceProvider.get();
-    s1.processArgs(clientarg1);
-    ExogeniClientSlice s2 = exogeniClientSliceProvider.get();
-    s1.processArgs(clientarg2);
-    ExogeniClientSlice s3 = exogeniClientSliceProvider.get();
-    s1.processArgs(clientarg3);
-    ExogeniClientSlice s4 = exogeniClientSliceProvider.get();
-    s1.processArgs(clientarg4);
-    ExogeniClientSlice s6 = exogeniClientSliceProvider.get();
-    s1.processArgs(clientarg6);
-    ts.deleteSlice();
-    s1.deleteSlice();
-    s2.deleteSlice();
-    s3.deleteSlice();
-    s4.deleteSlice();
-    s6.deleteSlice();
+    CoreProperties coreProperties1 = new CoreProperties(arg1);
+    coreProperties1.setType("delete");
+    try {
+      ts.run(coreProperties1);
+      ExogeniClientSlice s1 = exogeniClientSliceProvider.get();
+      CoreProperties client1 = new CoreProperties(clientarg1);
+      client1.setType("delete");
+      s1.run(client1);
+      CoreProperties client2 = new CoreProperties(clientarg2);
+      client2.setType("delete");
+      s1.run(client2);
+      CoreProperties client3 = new CoreProperties(clientarg3);
+      client3.setType("delete");
+      s1.run(client3);
+      CoreProperties client4 = new CoreProperties(clientarg4);
+      client4.setType("delete");
+      s1.run(client4);
+      CoreProperties client6 = new CoreProperties(clientarg6);
+      client6.setType("delete");
+      s1.run(client6);
+    } catch (Exception e) {
+
+    }
   }
 
   public void createTestSliceParrallel() throws Exception {
@@ -264,13 +271,16 @@ public class CnertTestMain {
       @Override
       public void run() {
         CnertTestSlice ts = cnertTestSliceProvider.get();
-        ts.processArgs(arg1);
-        ts.run(arg1);
+        try {
+          ts.run(new CoreProperties(arg1));
+        } catch (Exception e) {
+
+        }
       }
     };
     thread1.start();
     tlist.add(thread1);
-    sdxManager.sleep(10);
+    exoSdxManager.sleep(10);
 
     String[][] args = {clientarg1, clientarg2, clientarg3, clientarg4, clientarg6};
     for (int i = 0; i < 5; i++) {
@@ -279,9 +289,8 @@ public class CnertTestMain {
         @Override
         public void run() {
           ExogeniClientSlice s1 = exogeniClientSliceProvider.get();
-          s1.processArgs(arg);
           try {
-            s1.run();
+            s1.run(new CoreProperties(arg));
           } catch (Exception e) {
             e.printStackTrace();
             return;
@@ -290,7 +299,7 @@ public class CnertTestMain {
       };
       thread2.start();
       tlist.add(thread2);
-      sdxManager.sleep(10);
+      exoSdxManager.sleep(10);
     }
 
     try {
@@ -313,9 +322,9 @@ public class CnertTestMain {
     if (!cmd.hasOption('s')) {
       emulationSlice();
     }
-    SdxServer sdxServer = sdxServerProvider.get();
-    sdxServer.run(arg1);
-    SdxExogeniClient client = new SdxExogeniClient(clientarg4);
+    ExoSdxServer exoSdxServer = sdxServerProvider.get();
+    exoSdxServer.run(new CoreProperties(arg1));
+    SdxExogeniClient client = new SdxExogeniClient(new CoreProperties(clientarg4));
     client.processCmd("route 192.168.10.1/24 192.168.10.2");
     client.processCmd("route 192.168.20.1/24 192.168.20.2");
     client.processCmd("route 192.168.30.1/24 192.168.30.2");
@@ -323,18 +332,18 @@ public class CnertTestMain {
     client.processCmd("link 192.168.10.1/24 192.168.30.1/24");
     client.processCmd("link 192.168.20.1/24 192.168.40.1/24");
 
-    sdxManager.setMirror("c0", "192.168.10.1/24",
+    exoSdxManager.setMirror("c0", "192.168.10.1/24",
       "192.168.30.1/24");
 
     if (!cmd.hasOption('s')) {
       try {
-        sdxManager.deployBro("c0");
+        exoSdxManager.deployBro("c0");
       } catch (TransportException e) {
         e.printStackTrace();
         return;
       }
     }
-    sdxManager.setMirror("c0", "192.168.20.1/24",
+    exoSdxManager.setMirror("c0", "192.168.20.1/24",
       "192.168.40.1/24");
 
     System.exit(0);
@@ -342,8 +351,13 @@ public class CnertTestMain {
 
   public void emulationSlice() {
     CnertTestSlice ts = cnertTestSliceProvider.get();
-    ts.processArgs(arg1);
-    ts.deleteSlice();
-    ts.testBroSliceTwoPairs();
+    CoreProperties coreProperties = new CoreProperties(arg1);
+    coreProperties.setType("delete");
+    try {
+      ts.run(coreProperties);
+      ts.testBroSliceTwoPairs();
+    } catch (Exception e) {
+
+    }
   }
 }

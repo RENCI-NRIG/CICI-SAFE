@@ -3,7 +3,7 @@
     <Appenders>
         <Console name="Console" target="SYSTEM_OUT">
             <PatternLayout
-                    pattern="%highlight{%d{HH:mm:ss} [%t] %-5level %logger{36} - %msg%n}{FATAL=red, ERROR=red, WARN=yellow, INFO=green, DEBUG=cyan, TRACE=blue}"/>
+                    pattern="%highlight{%d{HH:mm:ss} [%t] %-5level %logger{1.} - %msg%n}{FATAL=red, ERROR=red, WARN=yellow, INFO=green, DEBUG=cyan, TRACE=blue}"/>
         </Console>
         <RollingFile name="RollingFile" fileName="log/demo.log"
                      filePattern="log/$${date:yyyy-MM}/app-%d{MM-dd-yyyy}-%i.log.gz" append="false">
@@ -112,13 +112,16 @@
             <AppenderRef ref="RollingFile"/>
             <AppenderRef ref="Console"/>
         </Root>
-        <Logger name="exoplex.sdx.core.SdxManager" level="debug" additivity="false">
+        <Logger name="exoplex.sdx.core.exogeni.ExoSdxManager" level="debug" additivity="false">
             <AppenderRef ref="Console"/>
         </Logger>
-        <Logger name="exoplex.sdx.core.SliceHelper" level="info" additivity="false">
+        <Logger name="exoplex.sdx.core.exogeni.VfcSdxManager" level="debug" additivity="false">
             <AppenderRef ref="Console"/>
         </Logger>
-        <Logger name="exoplex.sdx.core.SliceHelper" level="debug" additivity="false">
+        <Logger name="exoplex.sdx.core.exogeni.SliceHelper" level="info" additivity="false">
+            <AppenderRef ref="Console"/>
+        </Logger>
+        <Logger name="exoplex.sdx.core.exogeni.SliceHelper" level="debug" additivity="false">
             <AppenderRef ref="RollingFile"/>
         </Logger>
         <Logger name="exoplex.sdx.network.RoutingManager" level="warn" additivity="false">
@@ -127,43 +130,55 @@
         <Logger name="SdnCmds" level="info" additivity="false">
             <AppenderRef ref="SdnRollingFile"/>
         </Logger>
+        <Logger name="exoplex.common.utils.Exec" level="warn" additivity="false">
+            <AppenderRef ref="RollingFile"/>
+            <AppenderRef ref="Console"/>
+        </Logger>
         <Logger name="exoplex.sdx.network.NetworkManager" level="warn" additivity="false">
             <AppenderRef ref="Console"/>
         </Logger>
-        <Logger name="exoplex.sdx.slice.exogeni.SliceCommon" level="info" additivity="false">
+        <Logger name="exoplex.sdx.core.CoreProperties" level="info" additivity="false">
             <AppenderRef ref="Console"/>
+            <AppenderRef ref="RollingFile"/>
         </Logger>
         <Logger name="exoplex.sdx.bro.BroManager" level="info" additivity="false">
             <AppenderRef ref="Console"/>
         </Logger>
         <Logger name="exoplex.client.exogeni.SdxExogeniClient" level="info" additivity="false">
             <AppenderRef ref="Console"/>
+            <AppenderRef ref="RollingFile"/>
         </Logger>
         <Logger name="exoplex.client.exogeni.ExogeniClientSlice" level="info" additivity="false">
             <AppenderRef ref="Console"/>
-        </Logger>
-        <Logger name="exoplex.sdx.slice.exogeni.SliceManager" level="warn" additivity="true">
-            <AppenderRef ref="Console"/>
-        </Logger>
-        <Logger name="exoplex.sdx.slice.exogeni.SliceManager" level="debug" additivity="true">
             <AppenderRef ref="RollingFile"/>
         </Logger>
         <Logger name="exoplex.sdx.network.RoutingManager" level="info" additivity="false">
             <AppenderRef ref="RoutingRollingFile"/>
+            <AppenderRef ref="Console"/>
+        </Logger>
+        <Logger name="exoplex.sdx.network.RoutingManager" level="debug" additivity="false">
+            <AppenderRef ref="RollingFile"/>
         </Logger>
         <Logger name="exoplex.sdx.network.NetworkManager" level="info" additivity="false">
             <AppenderRef ref="NetworkRollingFile"/>
         </Logger>
-        <Logger name="exoplex.sdx.slice.exogeni.SliceManager" level="info" additivity="true">
+        <Logger name="exoplex.sdx.slice.exogeni.ExoSliceManager" level="info" additivity="true">
             <AppenderRef ref="SliceRollingFile"/>
         </Logger>
-        <Logger name="exoplex.sdx.slice.exogeni.SliceManager" level="warn" additivity="true">
+        <Logger name="exoplex.sdx.slice.exogeni.ExoSliceManager" level="warn" additivity="true">
             <AppenderRef ref="Console"/>
         </Logger>
-        <Logger name="exoplex.sdx.slice.exogeni.SliceManager" level="error" additivity="true">
+        <Logger name="exoplex.sdx.slice.exogeni.ExoSliceManager" level="error" additivity="true">
             <AppenderRef ref="Console"/>
         </Logger>
-        <Logger name="exoplex.sdx.slice.exogeni.SliceManager" level="debug" additivity="true">
+        <Logger name="exoplex.sdx.slice.exogeni.ExoSliceManager" level="debug" additivity="true">
+            <AppenderRef ref="RollingFile"/>
+        </Logger>
+        <Logger name="exoplex.sdx.slice.exogeni.VfcSliceManager" level="warn" additivity="true">
+            <AppenderRef ref="Console"/>
+            <AppenderRef ref="RollingFile"/>
+        </Logger>
+        <Logger name="exoplex.sdx.slice.exogeni.VfcSliceManager" level="debug" additivity="true">
             <AppenderRef ref="RollingFile"/>
         </Logger>
         <Logger name="exoplex.common.utils.Exec" level="debug" additivity="false">

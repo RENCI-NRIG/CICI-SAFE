@@ -37,10 +37,17 @@ public abstract class Authority implements SafeLang {
   }
 
   public void initIdSetSubjectSet(String key) {
-    SafeUtils.postSafeStatements(safeServer, postIdSet, key, new String[]{key});
-    String token = SafeUtils.getToken(SafeUtils.postSafeStatements(safeServer, postSubjectSet, key, new
-      String[]{}));
-    subjectSet.put(key, token);
+    String message = null;
+    try {
+      SafeUtils.postSafeStatements(safeServer, postIdSet, key, new String[]{key});
+      message = SafeUtils.postSafeStatements(safeServer, postSubjectSet, key, new
+        String[]{});
+      String token = SafeUtils.getToken(message);
+      subjectSet.put(key, token);
+    } catch (Exception e) {
+      e.printStackTrace();
+      logger.warn(String.format("safeserver: %s method: postSubjectSet message: %s", safeServer, message));
+    }
   }
 
   public String getPrincipalId(String safeKey) {
@@ -60,7 +67,7 @@ public abstract class Authority implements SafeLang {
   }
 
   public String safePost(String method, String principal, Object[] others) {
-    String p = principalMap.get(principal);
+    String p = principalMap.getOrDefault(principal, principal);
     String msg = SafeUtils.postSafeStatements(safeServer, method, p, others);
     return SafeUtils.getToken(msg);
   }

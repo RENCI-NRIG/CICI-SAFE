@@ -3,7 +3,9 @@ package exoplex.experiment;
 import exoplex.common.utils.Exec;
 import exoplex.experiment.flow.FlowManager;
 import exoplex.experiment.latency.MeasureLatency;
-import exoplex.sdx.core.SdxManager;
+import exoplex.sdx.core.exogeni.ExoSdxManager;
+import exoplex.sdx.slice.Scripts;
+import exoplex.sdx.slice.SliceProperties;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -27,11 +29,11 @@ public class ExperimentBase {
   protected MeasureLatency latencyTask;
   protected HashMap<String, String[]> clients;
   protected ArrayList<Thread> tlist;
-  protected SdxManager sdxManager;
+  protected ExoSdxManager exoSdxManager;
 
-  public ExperimentBase(SdxManager sm) {
-    sdxManager = sm;
-    flowManager = new FlowManager(sdxManager.getSshKey());
+  public ExperimentBase(ExoSdxManager sm) {
+    exoSdxManager = sm;
+    flowManager = new FlowManager(exoSdxManager.getSshKey());
     clients = new HashMap<String, String[]>();
     flows = new ArrayList<String[]>();
     files = new ArrayList<String[]>();
@@ -47,9 +49,11 @@ public class ExperimentBase {
   }
 
   public void addClient(String name, String managementIP, String dataplaneIP) {
-    if(!clients.containsKey(name)) {
+    if (!clients.containsKey(name)) {
       clients.put(name, new String[]{managementIP, dataplaneIP});
-      Exec.sshExec("root", managementIP, "apt-get install -y iperf; pkill iperf", sshkey);
+      Exec.sshExec(SliceProperties.userName, managementIP, Scripts.installIperf() +
+          " pkill iperf",
+        sshkey);
     }
   }
 
@@ -125,12 +129,12 @@ public class ExperimentBase {
   }
 
   public void resetNetwork() {
-    sdxManager.reset();
+    exoSdxManager.reset();
     try {
-      Method configRouting = sdxManager.getClass().getDeclaredMethod("configRouting");
+      Method configRouting = exoSdxManager.getClass().getDeclaredMethod("configRouting");
       configRouting.setAccessible(true);
       try {
-        configRouting.invoke(sdxManager);
+        configRouting.invoke(exoSdxManager);
       } catch (IllegalAccessException e) {
         e.printStackTrace();
       } catch (InvocationTargetException e) {
@@ -167,8 +171,9 @@ public class ExperimentBase {
       final String mip2 = clients.get(file[1])[0];
       final String dip2 = clients.get(file[1])[1];
 
-      tlist.add(new Thread(() -> ftpClientOut.add(Exec.sshExec("root", mip1, fetchFileCMD
-        (ftpuser, ftppw, dip2, file[2], times), sshkey))));
+      tlist.add(new Thread(() -> ftpClientOut.add(Exec.sshExec(SliceProperties.userName, mip1,
+        fetchFileCMD
+          (ftpuser, ftppw, dip2, file[2], times), sshkey))));
 
       tlist.get(tlist.size() - 1).start();
     }
