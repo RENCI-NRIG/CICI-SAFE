@@ -34,7 +34,7 @@ public class MultiSdxTridentcomSetting extends MultiSdxSDLargeSetting {
   public void addSdxSlices() {
     int sdxKeyBase = 100;
     int sdxIpBase = 110;
-    String[] sliceNames = new String[]{"SDX-1", "NSP-1", "NSP-2", "NSP-3", "NSP-4", "SDX-2"};
+    String[] sliceNames = new String[]{"SDX1", "NSP1", "NSP2", "NSP3", "NSP4", "SDX2"};
     for (int i = 0; i < numSdx; i++) {
       String sdxSliceName = sliceNames[i];
       sdxConfs.put(sdxSliceName, String.format("%ssdx%s.conf", sdxConfigDir, i + 1));
@@ -51,15 +51,15 @@ public class MultiSdxTridentcomSetting extends MultiSdxSDLargeSetting {
 
   @Override
   public void addClientSites() {
-    clientSites.add("UFL");
-    clientSites.add("UFL");
+    clientSites.add("TAMU");
+    clientSites.add("TAMU");
     clientSites.add("UFL");
     clientSites.add("UFL");
   }
 
   @Override
   public void addSdxSites() {
-    String[] sites = new String[]{"UFL", "TAMU", "TAMU", "TAMU", "UFL"};
+    String[] sites = new String[]{"TAMU", "UH", "UH", "UH", "UFL"};
     sdxSites.put(sdxSliceNames.get(0), new String[]{sites[0], sites[1]});
     sdxSites.put(sdxSliceNames.get(1), new String[]{sites[1], sites[2]});
     sdxSites.put(sdxSliceNames.get(2), new String[]{sites[1], sites[2]});

@@ -477,7 +477,7 @@ public class CoreProperties {
   }
 
   static public void setRouteAdvertise(boolean advertiseRoute) {
-    CoreProperties.routeAdvertise = routeAdvertise;
+    CoreProperties.routeAdvertise = advertiseRoute;
   }
 
   static public boolean doRouteAdvertise() {

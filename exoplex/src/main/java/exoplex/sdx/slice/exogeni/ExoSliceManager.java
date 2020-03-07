@@ -630,7 +630,7 @@ public class ExoSliceManager extends SliceManager {
       }
     }
     joinAllThreads();
-    logger.info("Done, those  resources are active now: " + String.join(",", resources));
+    logger.info(sliceName + " active, those  resources are active now: " + String.join(",", resources));
     return true;
   }
 

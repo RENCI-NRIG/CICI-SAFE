@@ -1077,7 +1077,9 @@ public class ExoSdxManager extends SdxManagerBase {
       logger.warn(String.format("Unauthorized routeAdvertise :%s", routeAdvertise));
       return "";
     }
-    safeManager.postPathToken(routeAdvertise);
+    if(coreProperties.isSafeEnabled()) {
+      safeManager.postPathToken(routeAdvertise);
+    }
     if (!routeAdvertise.hasSrcPrefix()) {
       // routes with destination address only
       //TODO: find mathcing pairs and correct the routes

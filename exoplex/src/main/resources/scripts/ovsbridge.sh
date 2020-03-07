@@ -33,6 +33,7 @@ newport=0
 while read -r line; do
   sudo ifconfig $line up
   if [[ $brinterfaces == *"$line"* ]]; then
+  :
   else
     sudo ifconfig $line 0
     if [[ $vsinterfaces == *"$line"* ]]; then
