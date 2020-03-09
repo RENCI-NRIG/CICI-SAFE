@@ -84,26 +84,6 @@ public class SafeManager {
       othervalues);
   }
 
-  public void postPathToken(RouteAdvertise advertise) {
-    if (!safeEnabled) return;
-    if (advertise.srcPrefix == null) {
-      String[] params = new String[4];
-      params[0] = advertise.safeToken;
-      params[1] = advertise.getDestPrefix();
-      params[2] = advertise.advertiserPID;
-      params[3] = String.valueOf(advertise.route.size());
-      post(SdxRoutingSlang.postPathToken, params);
-    } else {
-      String[] params = new String[5];
-      params[0] = advertise.safeToken;
-      params[1] = advertise.getSrcPrefix();
-      params[2] = advertise.getDestPrefix();
-      params[3] = advertise.advertiserPID;
-      params[4] = String.valueOf(advertise.route.size());
-      post(SdxRoutingSlang.postPathTokenSD, params);
-    }
-  }
-
   public String post(String operation, String[] params) {
     if (!safeEnabled) return "safe_disabled";
     String res = null;
@@ -188,23 +168,21 @@ public class SafeManager {
   public RouteAdvertise forwardAdvertise(RouteAdvertise routeAdvertise, String targetPid, String
     srcPid) {
     if (routeAdvertise.srcPrefix == null) {
-      String[] params = new String[5];
+      String[] params = new String[4];
       params[0] = routeAdvertise.getDestPrefix();
       params[1] = routeAdvertise.getFormattedPath();
       params[2] = targetPid;
-      params[3] = srcPid;
-      params[4] = routeAdvertise.getLength(1);
+      params[3] = routeAdvertise.safeToken;
       String token1 = post(SdxRoutingSlang.postAdvertise, params);
       routeAdvertise.safeToken = token1;
       return routeAdvertise;
     } else {
-      String[] params = new String[6];
+      String[] params = new String[5];
       params[0] = routeAdvertise.getSrcPrefix();
       params[1] = routeAdvertise.getDestPrefix();
       params[2] = routeAdvertise.getFormattedPath();
       params[3] = targetPid;
-      params[4] = srcPid;
-      params[5] = routeAdvertise.getLength(1);
+      params[4] = routeAdvertise.safeToken;
       String token1 = post(SdxRoutingSlang.postAdvertiseSD, params);
       routeAdvertise.safeToken = token1;
       return routeAdvertise;

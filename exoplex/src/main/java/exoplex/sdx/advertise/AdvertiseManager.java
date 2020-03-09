@@ -225,6 +225,14 @@ public class AdvertiseManager {
     return advertises;
   }
 
+  public ArrayList<PolicyAdvertise> getAllPolicies() {
+    ArrayList<PolicyAdvertise> advertises = new ArrayList<>();
+    for (Rectangle key : policyTable.keySet()) {
+      advertises.add(policyTable.get(key));
+    }
+    return advertises;
+  }
+
   public RouteAdvertise getAdvertise(String destPrefix) {
     Rectangle key = PrefixUtil.prefixPairToRectangle(destPrefix, DEFAULT_PREFIX);
     if (routeTable.containsKey(key)) {
