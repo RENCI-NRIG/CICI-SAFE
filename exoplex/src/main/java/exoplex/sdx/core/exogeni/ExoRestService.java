@@ -52,7 +52,6 @@ public class ExoRestService extends RestServiceBase {
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.APPLICATION_JSON)
   public StitchResult stitchRequest(@Context UriInfo uriInfo, StitchRequest sr) {
-    logger.debug("STARTED");
     StitchResult result = null;
     SdxManagerBase exoSdxManager = sdxManagerMap.get(uriInfo.getBaseUri().getPort());
     logger.debug(String.format("%s got sittch request %s", exoSdxManager.getSliceName(), sr));
@@ -64,12 +63,10 @@ public class ExoRestService extends RestServiceBase {
       StringWriter errors = new StringWriter();
       e.printStackTrace(new PrintWriter(errors));
       logger.error(errors);
-      exoSdxManager.unlockSlice();
       result = new StitchResult();
       result.message = errors.toString();
       result.result = false;
     }
-    logger.debug("COMPLETED");
     return result;
   }
 
@@ -78,7 +75,6 @@ public class ExoRestService extends RestServiceBase {
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.TEXT_PLAIN)
   public String undoStitch(@Context UriInfo uriInfo, UndoStitchRequest sr) {
-    logger.debug("STARTED");
     String result = null;
     SdxManagerBase exoSdxManager = sdxManagerMap.get(uriInfo.getBaseUri().getPort());
     logger.debug(String.format("%s got undoStitch request %s ", exoSdxManager.getSliceName(), sr
@@ -92,7 +88,6 @@ public class ExoRestService extends RestServiceBase {
       exoSdxManager.unlockSlice();
       result = String.format("Failed: %s", e.getMessage());
     }
-    logger.debug("COMPLETED");
     return result;
   }
 
@@ -101,7 +96,6 @@ public class ExoRestService extends RestServiceBase {
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.TEXT_PLAIN)
   public String stitchChameleon(@Context UriInfo uriInfo, StitchChameleon sr) {
-    logger.debug("STARTED");
     String result = null;
     logger.debug("got chameleon stitch request: \n" + sr.toString());
     SdxManagerBase exoSdxManager = sdxManagerMap.get(uriInfo.getBaseUri().getPort());
@@ -115,7 +109,6 @@ public class ExoRestService extends RestServiceBase {
       exoSdxManager.unlockSlice();
       result = String.format("Failed: %s", e.getMessage());
     }
-    logger.debug("COMPLETED");
     return result;
   }
 
@@ -124,7 +117,6 @@ public class ExoRestService extends RestServiceBase {
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.TEXT_PLAIN)
   public String broload(@Context UriInfo uriInfo, BroLoad bl) {
-    logger.debug("STARTED");
     logger.debug("got broload");
     ExoSdxManager exoSdxManager = (ExoSdxManager) sdxManagerMap.get(uriInfo.getBaseUri().getPort());
     double load = Double.parseDouble(bl.usage);
@@ -139,7 +131,6 @@ public class ExoRestService extends RestServiceBase {
     } finally {
       exoSdxManager.unlockSlice();
     }
-    logger.debug("COMPLETED");
     return result;
   }
 

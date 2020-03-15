@@ -38,20 +38,22 @@ public abstract class AbstractTest {
 
   public void createSlices() throws Exception {
     String riakIP = null;
+    /*
     if (testSetting.safeEnabled) {
       RiakSlice riakSlice = injector.getInstance(RiakSlice.class);
       riakIP = riakSlice.run(new CoreProperties(testSetting.riakArgs));
     }
+    */
     testSlice.createSdxSlices(riakIP);
     testSlice.createClientSlices(riakIP);
     testSlice.runThreads();
   }
 
   public void deleteSlices() throws Exception {
-    RiakSlice riakSlice = injector.getInstance(RiakSlice.class);
+    //RiakSlice riakSlice = injector.getInstance(RiakSlice.class);
     CoreProperties coreProperties = new CoreProperties(testSetting.riakArgs);
     coreProperties.setType("delete");
-    riakSlice.run(coreProperties);
+    //riakSlice.run(coreProperties);
     testSlice.deleteSdxSlices();
     testSlice.deleteClientSlices();
   }
@@ -77,6 +79,18 @@ public abstract class AbstractTest {
       sdxExogeniClient.config(coreProperties);
       exogeniClients.put(clientSlice, sdxExogeniClient);
     }
+  }
+
+  public void startClient(String clientSlice) {
+    SdxExogeniClient sdxExogeniClient = injector.getProvider(SdxExogeniClient.class).get();
+    CoreProperties coreProperties = new CoreProperties(testSetting.clientArgs);
+    coreProperties.setIpPrefix(testSetting.clientIpMap.get(clientSlice));
+    coreProperties.setSafeKeyFile(testSetting.clientKeyMap.get(clientSlice));
+    coreProperties.setSliceName(clientSlice);
+    coreProperties.setSafeEnabled(testSetting.safeEnabled);
+    coreProperties.setServerUrl(testSetting.sdxUrls.get(testSetting.clientSdxMap.get(clientSlice)));
+    sdxExogeniClient.config(coreProperties);
+    exogeniClients.put(clientSlice, sdxExogeniClient);
   }
 
   public void startSdxServersAndClients(boolean reset) {
@@ -195,7 +209,6 @@ public abstract class AbstractTest {
         if (!exogeniClients.get(client).checkConnectivity("CNode1",
           peerIp.replace(".1/24", ".2"), 1)) {
           flag = false;
-          logFlowTables(true);
         } else {
           flag = true;
           break;
@@ -204,8 +217,9 @@ public abstract class AbstractTest {
     }
     if(!flag) {
       deleteSliceAfterTest = false;
+      logFlowTables(false);
     }
-    assert flag;
+    //assert flag;
     return flag;
   }
 

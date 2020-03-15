@@ -32,6 +32,8 @@ public abstract class SliceManager {
 
   abstract public String permitStitch(String GUID) throws TransportException;
 
+  abstract public boolean revokeStitch(String GUID) throws TransportException;
+
   abstract public void loadSlice() throws Exception;
 
   abstract public void resetHostNames();
@@ -126,6 +128,10 @@ public abstract class SliceManager {
                                    final boolean repeat);
 
   abstract public void addLink(String linkName, String nodeName, long bw);
+
+  abstract public void expectOneMoreInterface(String node);
+
+  abstract public void waitForNewInterfaces(String node);
 
   abstract public void removeLink(String linkName);
 

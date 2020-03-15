@@ -10,7 +10,7 @@ import org.json.JSONObject;
 
 import java.util.*;
 
-public class RoutingManager {
+public class RoutingManager extends AbstractRoutingManager {
   final static Logger logger = LogManager.getLogger(RoutingManager.class);
   final static Logger sdnLogger = LogManager.getLogger("SdnCmds");
   final static int MAX_RATE = 2000000;
@@ -26,6 +26,7 @@ public class RoutingManager {
   private HashMap<String, String> macInterfaceMap = new HashMap<>();
   private HashMap<String, String> macPortMap = new HashMap<>();
   private HashMap<String, String> linkGateway = new HashMap<>();
+  private HashMap<String, String> prefixGatewayMap = new HashMap<>();
 
   //pathIds of paths configured for the ip prefix
   private HashMap<String, HashSet<String>> prefixPaths = new HashMap<>();
@@ -36,7 +37,7 @@ public class RoutingManager {
     networkManager = new NetworkManager();
   }
 
-  public static String postSdnCmd(String cmd, JSONObject params) {
+  private static String postSdnCmd(String cmd, JSONObject params) {
     sdnLogger.info(String.format("%s\n%s", cmd, params.toString()));
     logger.debug(String.format("curl -X POST -d '%s' %s", params.toString(), cmd));
     String res = HttpUtil.postJSON(cmd, params);
@@ -195,7 +196,7 @@ public class RoutingManager {
     try {
       ArrayList<String[]> paths = getBroadcastRoutes(gwdpid, gateway);
       String pathId = getPathID(null, destIP);
-
+      prefixGatewayMap.put(pathId, gateway);
       pairPath.put(pathId, paths);
       if (!prefixPaths.containsKey(destIP)) {
         prefixPaths.put(destIP, new HashSet<>());
@@ -225,8 +226,8 @@ public class RoutingManager {
     }
     try {
       ArrayList<String[]> paths = getBroadcastRoutes(gwdpid, gateway);
-      String pathId = getPathID(null, destIP);
-
+      String pathId = getPathID(srcIP, destIP);
+      prefixGatewayMap.put(pathId, gateway);
       pairPath.put(pathId, paths);
       if (!prefixPaths.containsKey(destIP)) {
         prefixPaths.put(destIP, new HashSet<>());
@@ -243,6 +244,16 @@ public class RoutingManager {
     } catch (Exception e) {
       e.printStackTrace();
     }
+  }
+
+  public String getGateway(String dstIP) {
+    String pathId = getPathID(null, dstIP);
+    return prefixGatewayMap.get(pathId);
+  }
+
+  public String getGateway(String dstIP, String srcIP) {
+    String pathId = getPathID(srcIP, dstIP);
+    return prefixGatewayMap.get(pathId);
   }
 
   //gateway is the gateway for nodename
@@ -307,25 +318,25 @@ public class RoutingManager {
   }
 
 
-  public void removePath(String dstIP, String controller) {
-    logger.info(String.format("removePath %s %s", dstIP, controller));
+  public void removePath(String dstIP) {
+    logger.info(String.format("removePath %s", dstIP));
     try {
-      removePathId(getPathID(null, dstIP), controller);
+      removePathId(getPathID(null, dstIP));
     } catch (Exception e) {
-      logger.warn(String.format("Exception when removing path %s %s", dstIP, controller));
+      logger.warn(String.format("Exception when removing path %s", dstIP));
     }
   }
 
-  public void removePath(String dstIP, String srcIP, String controller) {
-    logger.info(String.format("removePath %s %s %s", dstIP, srcIP, controller));
+  public void removePath(String dstIP, String srcIP) {
+    logger.info(String.format("removePath %s %s", dstIP, srcIP));
     try {
-      removePathId(getPathID(dstIP, srcIP), controller);
+      removePathId(getPathID(dstIP, srcIP));
     } catch (Exception e) {
-      logger.warn(String.format("Exception when removing path %s %s %s", dstIP, srcIP, controller));
+      logger.warn(String.format("Exception when removing path %s %s", dstIP, srcIP));
     }
   }
 
-  private void removePathId(String pathId, String controller) {
+  private void removePathId(String pathId) {
     if (pairPath.containsKey(pathId)) {
       ArrayList<String[]> paths = pairPath.get(pathId);
       for (String[] path : paths) {
@@ -341,7 +352,7 @@ public class RoutingManager {
   public void retriveRouteOfPrefix(String prefix, String sdnController) {
     if (prefixPaths.containsKey(prefix)) {
       for (String pathId : prefixPaths.get(prefix)) {
-        removePathId(pathId, sdnController);
+        removePathId(pathId);
       }
     }
   }

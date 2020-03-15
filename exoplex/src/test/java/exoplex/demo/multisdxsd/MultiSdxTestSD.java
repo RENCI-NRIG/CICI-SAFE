@@ -15,6 +15,7 @@ import org.apache.logging.log4j.Logger;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import safe.Authority;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -22,7 +23,8 @@ import java.util.List;
 
 public class MultiSdxTestSD extends AbstractTest {
   final static Logger logger = LogManager.getLogger(MultiSdxTestSD.class);
-  final static AbstractModule module = new MultiSdxTridentcomModule();
+  final static AbstractModule module = new MultiSdxCnertModule();
+  //final static AbstractModule module = new MultiSdxTridentcomModule();
   //final static AbstractModule module = new MultiSdxSDLargeModule();
   //final static AbstractModule module = new MultiSdxSDModule();
   //final static AbstractModule module = new MultiSdxSDMockModule();
@@ -57,8 +59,9 @@ public class MultiSdxTestSD extends AbstractTest {
   public void before() throws Exception {
     deleteSliceAfterTest = true;
     initTests();
-    deleteSlices();
-    super.before();
+    Authority.authorizationMade = true;
+    //deleteSlices();
+    //super.before();
   }
 
   @After
@@ -69,6 +72,48 @@ public class MultiSdxTestSD extends AbstractTest {
 
   @Test
   public void testMultiSdxSD() throws Exception {
+    startSdxServersAndClients(reset);
+    //stitch sdx slices
+    Long t0 = System.currentTimeMillis();
+
+    stitchSdxSlices();
+    Long t1 = System.currentTimeMillis();
+
+    stitchCustomerSlices();
+
+    Long t2 = System.currentTimeMillis();
+
+    logger.info("Start advertiseing routes and policies");
+    advertiseSDRoutesAndPolicies();
+    //wait for route to be stablized
+    try{
+      Thread.sleep(60000);
+    }catch (Exception e){
+
+    }
+
+    //connectCustomerNetwork();
+    Long t3 = System.currentTimeMillis();
+
+
+    logger.info("Start checking connections");
+    checkConnection(3);
+    Long t4 = System.currentTimeMillis();
+    //traceRoute();
+    Long t5 = System.currentTimeMillis();
+    logFlowTables(false);
+
+    logger.info("test done");
+    logger.info(String.format("Time\n stitch sdx: %s s\n stitch customers: %s s\n check " +
+      "connection: %s s", (t1 - t0) / 1000.0, (t2 - t1) / 1000.0, (t4 - t3) / 1000.0));
+  }
+
+  @Test
+  /**
+   * Cnert 2019 demo
+   */
+  public void testMultiSdxWithEvents() {
+    Authority.authorizationMade = true;
     startSdxServersAndClients(reset);
     //stitch sdx slices
     Long t0 = System.currentTimeMillis();
@@ -99,6 +144,41 @@ public class MultiSdxTestSD extends AbstractTest {
     Long t5 = System.currentTimeMillis();
     logFlowTables(false);
 
+    //connect Client 4
+    ((MultiSdxCnertSetting)testSetting).joinLastClient();
+    startClient(testSetting.clientSlices.get(3));
+    SdxManagerBase exoSdxManager = sdxManagerMap.values().iterator().next();
+    String safeServerIp = getSafeServerIPfromSdxManager(exoSdxManager);
+    exogeniClients.get(testSetting.clientSlices.get(3)).setSafeServer(safeServerIp);
+    stitchCustomerSlice(testSetting.clientSlices.get(3));
+    //Advertise routes and policies SD for client 4
+    advertise(testSetting.clientSlices.get(3));
+    try{
+      Thread.sleep(60000);
+    }catch (Exception e){
+
+    }
+    checkConnection(3);
+    logFlowTables(false);
+
+    //connect SDX2 and NSP2
+    try {
+      String slice1 = testSetting.sdxSliceNames.get(2);
+      String slice2 = testSetting.sdxSliceNames.get(5);
+      //stitch my e1 to peer e0
+      sdxManagerMap.get(slice1).adminCmd("stitch", new String[]{testSetting.sdxUrls.get
+        (slice2), "e1", "e0"});
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+    try{
+      Thread.sleep(60000);
+    }catch (Exception e){
+
+    }
+    checkConnection(3);
+    logFlowTables(false);
+
     logger.info("test done");
     logger.info(String.format("Time\n stitch sdx: %s s\n stitch customers: %s s\n check " +
       "connection: %s s", (t1 - t0) / 1000.0, (t2 - t1) / 1000.0, (t4 - t3) / 1000.0));
@@ -112,6 +192,26 @@ public class MultiSdxTestSD extends AbstractTest {
     setClientSafeServerIp(safeServerIp);
   }
 
+  private void stitchCustomerSlice(String clientSlice) {
+    try {
+      String clientGateWay = testSetting.clientIpMap.get(clientSlice).replace(".1/24", ".2");
+      String sdxInterfaceIP = testSetting.clientIpMap.get(clientSlice).replace(".1/24", ".1/24");
+      String gw;
+      if(testSetting.clientSdxNode.containsKey(clientSlice)) {
+        gw = exogeniClients.get(clientSlice).processCmd(String.format("stitch CNode1 %s %s " +
+          "%s", clientGateWay, sdxInterfaceIP, testSetting.clientSdxNode.get(clientSlice)));
+      }else{
+        gw = exogeniClients.get(clientSlice).processCmd(String.format("stitch CNode1 %s %s",
+          clientGateWay, sdxInterfaceIP));
+      }
+      exogeniClients.get(clientSlice).processCmd(String.format("route %s %s",
+        testSetting.clientIpMap.get(clientSlice),
+        gw));
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+  }
+
   @Override
   public void stitchCustomerSlices() {
     ArrayList<Thread> tlist = new ArrayList<>();
@@ -119,23 +219,7 @@ public class MultiSdxTestSD extends AbstractTest {
       Thread t = new Thread() {
         @Override
         public void run() {
-          try {
-            String clientGateWay = testSetting.clientIpMap.get(clientSlice).replace(".1/24", ".2");
-            String sdxInterfaceIP = testSetting.clientIpMap.get(clientSlice).replace(".1/24", ".1/24");
-            String gw;
-            if(testSetting.clientSdxNode.containsKey(clientSlice)) {
-              gw = exogeniClients.get(clientSlice).processCmd(String.format("stitch CNode1 %s %s " +
-                  "%s", clientGateWay, sdxInterfaceIP, testSetting.clientSdxNode.get(clientSlice)));
-            }else{
-              gw = exogeniClients.get(clientSlice).processCmd(String.format("stitch CNode1 %s %s",
-                clientGateWay, sdxInterfaceIP));
-            }
-            exogeniClients.get(clientSlice).processCmd(String.format("route %s %s",
-              testSetting.clientIpMap.get(clientSlice),
-              gw));
-          } catch (Exception e) {
-            e.printStackTrace();
-          }
+          stitchCustomerSlice(clientSlice);
         }
       };
       tlist.add(t);
@@ -211,31 +295,35 @@ public class MultiSdxTestSD extends AbstractTest {
     }
   }
 
+  private void advertise(String client) {
+    String clientIp = testSetting.clientIpMap.get(client);
+    List<ImmutablePair<String, String>> pairRouteAcls = testSetting.clientRouteASTagAcls.getOrDefault
+      (client, new ArrayList<>());
+    for (ImmutablePair<String, String> pair : pairRouteAcls) {
+      exogeniClients.get(client).processCmd(String.format("acl %s %s %s", clientIp, pair
+        .getLeft(), pair.getRight()));
+    }
+    for (ImmutablePair<String, String> pair : pairRouteAcls) {
+      exogeniClients.get(client).processCmd(String.format("bgp %s %s %s", clientIp, pair
+        .getLeft(), pair.getRight()));
+    }
+    if (pairRouteAcls.size() > 0) {
+      logger.debug("\n\n");
+    }
+    List<ImmutablePair<String, String>> pairPolicyAcls = testSetting.clientPolicyASTagAcls
+      .getOrDefault(client, new ArrayList<>());
+    for (ImmutablePair<String, String> pair : pairPolicyAcls) {
+      exogeniClients.get(client).processCmd(String.format("policy %s %s %s", pair.getLeft(),
+        clientIp, pair.getRight()));
+    }
+    if (pairPolicyAcls.size() > 0) {
+      logger.debug("\n\n");
+    }
+  }
+
   private void advertiseSDRoutesAndPolicies() {
     for (String client : testSetting.clientSlices) {
-      String clientIp = testSetting.clientIpMap.get(client);
-      List<ImmutablePair<String, String>> pairRouteAcls = testSetting.clientRouteASTagAcls.getOrDefault
-        (client, new ArrayList<>());
-      for (ImmutablePair<String, String> pair : pairRouteAcls) {
-        exogeniClients.get(client).processCmd(String.format("acl %s %s %s", clientIp, pair
-          .getLeft(), pair.getRight()));
-      }
-      for (ImmutablePair<String, String> pair : pairRouteAcls) {
-        exogeniClients.get(client).processCmd(String.format("bgp %s %s %s", clientIp, pair
-          .getLeft(), pair.getRight()));
-      }
-      if (pairRouteAcls.size() > 0) {
-        logger.debug("\n\n");
-      }
-      List<ImmutablePair<String, String>> pairPolicyAcls = testSetting.clientPolicyASTagAcls
-        .getOrDefault(client, new ArrayList<>());
-      for (ImmutablePair<String, String> pair : pairPolicyAcls) {
-        exogeniClients.get(client).processCmd(String.format("policy %s %s %s", pair.getLeft(),
-          clientIp, pair.getRight()));
-      }
-      if (pairPolicyAcls.size() > 0) {
-        logger.debug("\n\n");
-      }
+      advertise(client);
     }
     logger.debug("SD routes made");
     deleteSliceAfterTest = true;

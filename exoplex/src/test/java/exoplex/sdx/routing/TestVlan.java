@@ -26,7 +26,7 @@ public class TestVlan extends ExoSdxManager {
   static TestVlan vlan;
 
   public TestVlan() {
-    super(null);
+    super(null, null);
   }
 
   @BeforeClass

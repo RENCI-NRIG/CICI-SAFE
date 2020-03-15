@@ -141,6 +141,10 @@
             <AppenderRef ref="Console"/>
             <AppenderRef ref="RollingFile"/>
         </Logger>
+        <Logger name="exoplex.sdx.core.CoreProperties" level="debug"
+                additivity="false">
+            <AppenderRef ref="RollingFile"/>
+        </Logger>
         <Logger name="exoplex.sdx.bro.BroManager" level="info" additivity="false">
             <AppenderRef ref="Console"/>
         </Logger>

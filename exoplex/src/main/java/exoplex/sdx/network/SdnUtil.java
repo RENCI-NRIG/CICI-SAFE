@@ -167,7 +167,7 @@ public class SdnUtil {
         JSONObject obj = new JSONObject(res);
         return obj;
       } catch (Exception e) {
-        logger.error(e.getMessage());
+        e.printStackTrace();
         logger.error(res);
       }
     } catch (Exception e) {

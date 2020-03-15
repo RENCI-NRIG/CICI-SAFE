@@ -12,7 +12,7 @@ public class MultiSdxTridentcomSetting extends MultiSdxSDLargeSetting {
   @Override
   public void setting() {
     numSdx = 6;
-    sliceNameSuffix = "tc";
+    sliceNameSuffix = "yy";
     clientArgs = new String[]{"-c", exoplexDir +
       "client-config/multisdx/client" + ".conf"};
 
@@ -31,10 +31,27 @@ public class MultiSdxTridentcomSetting extends MultiSdxSDLargeSetting {
   }
 
   @Override
+  public void addClientSlices() {
+    int keyBase = 10;
+    int ipBase = 10;
+    String[] clientNames = new String[]{"c0-cn", "c1-cn", "c2-cn", "c3-cn"};
+    for (int i = 0; i < clientSites.size(); i++) {
+      //String clientName = String.format("c%s-%s", i, sliceNameSuffix);
+      String clientName = clientNames[i];
+      clientSlices.add(clientName);
+      clientKeyMap.put(clientName, "key_p" + (keyBase + i));
+      clientSiteMap.put(clientName, clientSites.get(i));
+      clientIpMap.put(clientName, "192.168." + ipBase + ".1/24");
+      ipBase += 10;
+    }
+  }
+
+
+  @Override
   public void addSdxSlices() {
     int sdxKeyBase = 100;
     int sdxIpBase = 110;
-    String[] sliceNames = new String[]{"SDX1", "NSP1", "NSP2", "NSP3", "NSP4", "SDX2"};
+    String[] sliceNames = new String[]{"S1cn", "N1cn", "N2cn", "N3cn", "N4cn", "S2cn"};
     for (int i = 0; i < numSdx; i++) {
       String sdxSliceName = sliceNames[i];
       sdxConfs.put(sdxSliceName, String.format("%ssdx%s.conf", sdxConfigDir, i + 1));
@@ -51,15 +68,15 @@ public class MultiSdxTridentcomSetting extends MultiSdxSDLargeSetting {
 
   @Override
   public void addClientSites() {
-    clientSites.add("TAMU");
-    clientSites.add("TAMU");
+    clientSites.add("UFL");
+    clientSites.add("UFL");
     clientSites.add("UFL");
     clientSites.add("UFL");
   }
 
   @Override
   public void addSdxSites() {
-    String[] sites = new String[]{"TAMU", "UH", "UH", "UH", "UFL"};
+    String[] sites = new String[]{"UFL", "TAMU", "TAMU", "TAMU", "UFL"};
     sdxSites.put(sdxSliceNames.get(0), new String[]{sites[0], sites[1]});
     sdxSites.put(sdxSliceNames.get(1), new String[]{sites[1], sites[2]});
     sdxSites.put(sdxSliceNames.get(2), new String[]{sites[1], sites[2]});

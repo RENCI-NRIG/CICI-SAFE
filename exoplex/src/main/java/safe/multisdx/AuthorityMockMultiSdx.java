@@ -6,6 +6,7 @@ import com.google.inject.Injector;
 import exoplex.common.utils.SafeUtils;
 import exoplex.demo.AbstractTestSetting;
 import exoplex.demo.multisdxsd.MultiSdxSDModule;
+import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -315,7 +316,8 @@ public class AuthorityMockMultiSdx extends Authority implements SdxRoutingSlang 
         String astag = getPrincipalId("tagauthority") + ":" + pair.getRight();
         String srcip = String.format("ipv4\\\"%s\\\"", pair.getLeft());
         safePost(postASTagAclEntrySD, userKeyFile, new String[]{astag, srcip, uip});
-      }*/
+      }
+      */
     }
     safePost(postCustomerConnectionPolicy, userKeyFile, new String[]{});
     safePost(postTagPrivilegePolicy, userKeyFile, new String[]{});

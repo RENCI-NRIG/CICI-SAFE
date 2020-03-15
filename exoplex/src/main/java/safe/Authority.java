@@ -4,8 +4,10 @@ import exoplex.common.utils.SafeUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 public abstract class Authority implements SafeLang {
   public static boolean authorizationMade = false;
@@ -14,6 +16,7 @@ public abstract class Authority implements SafeLang {
   static Logger logger = LogManager.getLogger(Authority.class);
   public String safeServer;
   public ArrayList<String> principals = new ArrayList<>();
+  public ArrayList<Thread> threadList = new ArrayList<>();
 
   public Authority() {
 
@@ -30,10 +33,27 @@ public abstract class Authority implements SafeLang {
   abstract public void makeSafePreparation();
 
   public void initPrincipals() {
+    List<Thread> tlist = new ArrayList<>();
     principals.forEach(p -> {
-      initIdSetSubjectSet(p);
-      principalMap.put(p, SafeUtils.getPrincipalId(safeServer, p));
+      Thread t = new Thread() {
+        @Override
+        public void run() {
+          initIdSetSubjectSet(p);
+          principalMap.put(p, SafeUtils.getPrincipalId(safeServer, p));
+        }
+      };
+      tlist.add(t);
     });
+    for(Thread t: tlist) {
+      t.start();
+    }
+    try {
+      for (Thread t : tlist) {
+        t.join();
+      }
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
   }
 
   public void initIdSetSubjectSet(String key) {
@@ -66,10 +86,32 @@ public abstract class Authority implements SafeLang {
     return safePost(method, principal, new Object[]{});
   }
 
+  public void safePostAsync(String method, String principal) {
+    Thread t = new Thread() {
+      @Override
+      public void run() {
+        safePost(method, principal);
+      }
+    };
+    threadList.add(t);
+    t.start();
+  }
+
   public String safePost(String method, String principal, Object[] others) {
     String p = principalMap.getOrDefault(principal, principal);
     String msg = SafeUtils.postSafeStatements(safeServer, method, p, others);
     return SafeUtils.getToken(msg);
+  }
+
+  public void safePostAsync(String method, String principal, Object[] others) {
+    Thread t = new Thread() {
+      @Override
+      public void run() {
+        safePost(method, principal, others);
+      }
+    };
+    threadList.add(t);
+    t.start();
   }
 
   public boolean authorize(String method, String principal, String[] otherValues) {
