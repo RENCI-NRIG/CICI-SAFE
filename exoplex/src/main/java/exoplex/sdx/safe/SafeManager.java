@@ -2,6 +2,8 @@ package exoplex.sdx.safe;
 
 import exoplex.common.utils.Exec;
 import exoplex.common.utils.SafeUtils;
+import exoplex.sdx.advertise.AdvertiseBase;
+import exoplex.sdx.advertise.PolicyAdvertise;
 import exoplex.sdx.advertise.RouteAdvertise;
 import exoplex.sdx.core.CoreProperties;
 import exoplex.sdx.slice.Scripts;
@@ -10,6 +12,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import safe.SdxRoutingSlang;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class SafeManager {
@@ -161,6 +164,22 @@ public class SafeManager {
     params[3] = path;
     params[4] = policyToken;
     params[5] = routeToken;
+    return SafeUtils.authorize(safeServer, SdxRoutingSlang.verifyCompliantPath, getSafeKeyHash(),
+      params);
+  }
+
+  public boolean verifyCompliantPath(PolicyAdvertise policyAdvertise,
+                                     RouteAdvertise routeAdvertise) {
+    if (!safeEnabled) return true;
+    String[] params = new String[6];
+    params[0] = policyAdvertise.ownerPID;
+    params[1] = routeAdvertise.getSrcPrefix();
+    params[2] = routeAdvertise.getDestPrefix();
+    List<String> route = new ArrayList<>(routeAdvertise.route);
+    route.remove(route.size() - 1);
+    params[3] = AdvertiseBase.getFormattedPath(route);
+    params[4] = policyAdvertise.safeToken;
+    params[5] = routeAdvertise.safeToken;
     return SafeUtils.authorize(safeServer, SdxRoutingSlang.verifyCompliantPath, getSafeKeyHash(),
       params);
   }

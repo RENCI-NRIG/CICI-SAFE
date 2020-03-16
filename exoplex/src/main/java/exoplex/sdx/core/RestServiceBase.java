@@ -16,12 +16,14 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.concurrent.locks.ReentrantLock;
 
 @Path("sdx")
 public class RestServiceBase {
   final static Logger logger = LogManager.getLogger(RestServiceBase.class);
   protected static HashMap<Integer, SdxManagerBase> sdxManagerMap = new HashMap<>();
   protected static HashSet<HttpServer> httpServers = new HashSet<>();
+  static ReentrantLock lock = new ReentrantLock();
 
   public static void registerHttpServer(HttpServer server) {
     httpServers.add(server);
@@ -93,7 +95,9 @@ public class RestServiceBase {
   @Path("/bgp")
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.TEXT_PLAIN)
-  public String receiveBgpAdvertise(@Context UriInfo uriInfo, RouteAdvertise routeAdvertise) {
+  public synchronized String receiveBgpAdvertise(@Context UriInfo uriInfo,
+                                     RouteAdvertise routeAdvertise) {
+    lock.lock();
     String result = null;
     logger.debug(uriInfo.getBaseUri());
     SdxManagerBase exoSdxManager = sdxManagerMap.get(uriInfo.getBaseUri().getPort());
@@ -102,11 +106,10 @@ public class RestServiceBase {
       result = exoSdxManager.processBgpAdvertise(routeAdvertise);
       logger.debug(result);
     } catch (Exception e) {
-      StringWriter errors = new StringWriter();
-      e.printStackTrace(new PrintWriter(errors));
-      logger.error(errors);
+      e.printStackTrace();
       result = String.format("Failed: %s", e.getMessage());
     }
+    lock.unlock();
     return result;
   }
 

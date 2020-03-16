@@ -416,7 +416,8 @@ public class ExoSdxManager extends SdxManagerBase {
         routingManager.newExternalLink(l1.getLinkName(), ip, myNode, gateway);
         String remoteGUID = res.getString("reservID");
         String remoteSafeKeyHash = res.getString("safeKeyHash");
-        //Todo: be careful when we want to unstitch from the link side. as the net is virtual
+        //Todo: be careful when we want to unstitch from the link side.
+        // as the net is virtual
         stitchNet.put(remoteGUID, l1.getLinkName());
         if (!customerNodes.containsKey(remoteSafeKeyHash)) {
           customerNodes.put(remoteSafeKeyHash, new HashSet<>());
@@ -429,7 +430,8 @@ public class ExoSdxManager extends SdxManagerBase {
         PeerRequest peerRequest = new PeerRequest();
         peerRequest.peerPID = safeManager.getSafeKeyHash();
         peerRequest.peerUrl = coreProperties.getServerUrl();
-        String peerRes = HttpUtil.postJSON(serverURI + "sdx/peer", peerRequest.toJsonObject());
+        String peerRes = HttpUtil.postJSON(serverURI + "sdx/peer",
+          peerRequest.toJsonObject());
         PeerRequest newPeer = new PeerRequest(peerRes);
         if (newPeer.peerPID != "") {
           updatePeer(newPeer);
@@ -450,13 +452,13 @@ public class ExoSdxManager extends SdxManagerBase {
       if (!routeAdvertise.advertiserPID.equals(newPeer)) {
         if (!routeAdvertise.route.contains(newPeer.peerPID)) {
           RouteAdvertise propagateAdvertise = new RouteAdvertise(routeAdvertise, this.getPid());
-          propagateBgpAdvertise(propagateAdvertise, propagateAdvertise.srcPid);
+          propagateRouteToPeer(propagateAdvertise, newPeer.peerPID);
         }
       }
     }
     //propagate Policies at new peering request
-    for(PolicyAdvertise policyAdvertise: advertiseManager.getAllPolicies()) {
-      propagatePolicyAdvertise(policyAdvertise);
+    for (PolicyAdvertise policyAdvertise : advertiseManager.getAllPolicies()) {
+      propagatePolicyToPeer(policyAdvertise, newPeer.peerPID);
     }
   }
 
@@ -609,13 +611,13 @@ public class ExoSdxManager extends SdxManagerBase {
       }
       customerNodes.get(customerSafeKeyHash).add(reserveId);
       customerGateway.put(reserveId, gateway);
-      if(addComputeNodeandEdgeRouter) {
+      if (addComputeNodeandEdgeRouter) {
         Pattern pattern = Pattern.compile(routerPattern);
         if (pattern.matcher(node).find()) {
-           putComputeNode(node);
-           if (node.matches(eRouterPattern)) {
-             putEdgeRouter(node);
-           }
+          putComputeNode(node);
+          if (node.matches(eRouterPattern)) {
+            putEdgeRouter(node);
+          }
         }
       }
     } else {
@@ -856,7 +858,7 @@ public class ExoSdxManager extends SdxManagerBase {
 
   @Override
   synchronized public String connectionRequest(String self_prefix,
-    String target_prefix, long bandwidth) throws Exception {
+                                               String target_prefix, long bandwidth) throws Exception {
     logger.info(String.format("Connection request between %s and %s", self_prefix, target_prefix));
     //String n1=computenodes.get(site1).get(0);
     //String n2=computenodes.get(site2).get(0);
@@ -946,7 +948,7 @@ public class ExoSdxManager extends SdxManagerBase {
       int numPort2 = routingManager.getPortCount(SDNController, n2);
       updateOvsInterface(n1);
       updateOvsInterface(n2);
-      while ( routingManager.getPortCount(SDNController, n1) == numPort1
+      while (routingManager.getPortCount(SDNController, n1) == numPort1
         || routingManager.getPortCount(SDNController, n2) == numPort2) {
         sleep(5);
         logger.debug("Wait for new port to be reported to sdn controller");
@@ -985,9 +987,9 @@ public class ExoSdxManager extends SdxManagerBase {
         return "route configured: " + res;
       } else {
         logger.info(logPrefix + "Route for " + self_prefix + " and " + target_prefix +
-            "Failed");
+          "Failed");
         logger.debug(logPrefix + "Route for " + self_prefix + " and " + target_prefix +
-            "Failed");
+          "Failed");
       }
     }
     return "route configured: " + res;
@@ -1000,8 +1002,8 @@ public class ExoSdxManager extends SdxManagerBase {
     logger.info("SDX network reset");
   }
 
-  public String processPolicyAdvertise(PolicyAdvertise policyAdvertise) {
-    if(!coreProperties.doRouteAdvertise()) {
+  public synchronized String processPolicyAdvertise(PolicyAdvertise policyAdvertise) {
+    if (!coreProperties.doRouteAdvertise()) {
       return "Safe routing disabled, no processing this request";
     }
     /*
@@ -1028,21 +1030,20 @@ public class ExoSdxManager extends SdxManagerBase {
           String customerReservId = customerNodes.get(((RouteAdvertise) newAdvertise).srcPid).iterator().next();
           String gateway = customerGateway.get(customerReservId);
           String edgeNode = routingManager.getEdgeRouterByGateway(gateway);
+          String logMsg = String.format("Debug Msg: configuring route for policy %s\n new " +
+            "advertise: %s", policyAdvertise.toString(), newAdvertise.toString());
+          logger.debug(logMsg);
           if (newAdvertise.srcPrefix != null) {
-            logger.debug(String.format("Debug Msg: configuring route for policy %s\n new " +
-              "advertise: %s", policyAdvertise.toString(), newAdvertise.toString()));
             routingManager.removePath(newAdvertise.destPrefix, newAdvertise.srcPrefix);
             routingManager.configurePath(newAdvertise.destPrefix, newAdvertise.srcPrefix,
               edgeNode, gateway);
           } else {
-            logger.debug(String.format("Debug Msg: configuring route for policy %s\n new " +
-              "advertise: %s", policyAdvertise.toString(), newAdvertise.toString()));
             routingManager.removePath(newAdvertise.destPrefix);
             routingManager.configurePath(newAdvertise.destPrefix,
               edgeNode, gateway);
           }
         }
-        propagateBgpAdvertise((RouteAdvertise) newAdvertise, ((RouteAdvertise) newAdvertise).srcPid);
+        propagateBgpAdvertise((RouteAdvertise) newAdvertise);
       } else {
         propagatePolicyAdvertise((PolicyAdvertise) newAdvertise);
       }
@@ -1050,8 +1051,10 @@ public class ExoSdxManager extends SdxManagerBase {
     return newAdvertises.stream().map(AdvertiseBase::toString).collect(Collectors.joining(","));
   }
 
-  public String processBgpAdvertise(RouteAdvertise routeAdvertise) {
-    if(!coreProperties.doRouteAdvertise()) {
+  public synchronized String processBgpAdvertise(RouteAdvertise routeAdvertise) {
+    logger.debug(String.format("%s process bpg advertise %s", getSliceName(),
+      routeAdvertise ));
+    if (!coreProperties.doRouteAdvertise()) {
       return "Safe routing disabled, not processing this request";
     }
     if (coreProperties.isSafeEnabled() && !safeManager.authorizeBgpAdvertise(routeAdvertise)) {
@@ -1074,7 +1077,7 @@ public class ExoSdxManager extends SdxManagerBase {
           //routingManager.retriveRouteOfPrefix(routeAdvertise.prefix, SDNController);
           String customerReservId = customerNodes.get(routeAdvertise.advertiserPID).iterator().next();
           String gateway = customerGateway.get(customerReservId);
-          if(!gateway.equals(routingManager.getGateway(routeAdvertise.destPrefix))) {
+          if (!gateway.equals(routingManager.getGateway(routeAdvertise.destPrefix))) {
             String edgeNode = routingManager.getEdgeRouterByGateway(gateway);
             logger.debug(String.format("Debug Msg: configuring route for %s", routeAdvertise.toString
               ()));
@@ -1082,7 +1085,7 @@ public class ExoSdxManager extends SdxManagerBase {
             routingManager.configurePath(routeAdvertise.destPrefix, edgeNode, gateway);
           }
         }
-        propagateBgpAdvertise(newAdvertise, newAdvertise.srcPid);
+        propagateBgpAdvertise(newAdvertise);
         return newAdvertise.toString();
       }
     } else {
@@ -1091,7 +1094,7 @@ public class ExoSdxManager extends SdxManagerBase {
       if (newAdvertises.size() > 0) {
         String customerReservId = customerNodes.get(routeAdvertise.advertiserPID).iterator().next();
         String gateway = customerGateway.get(customerReservId);
-        if(!gateway.equals(routingManager.getGateway(routeAdvertise.destPrefix, routeAdvertise.srcPrefix))) {
+        if (!gateway.equals(routingManager.getGateway(routeAdvertise.destPrefix, routeAdvertise.srcPrefix))) {
           String edgeNode = routingManager.getEdgeRouterByGateway(gateway);
           logger.debug(String.format("Debug Msg: configuring route for %s", routeAdvertise.toString
             ()));
@@ -1101,7 +1104,7 @@ public class ExoSdxManager extends SdxManagerBase {
         }
       }
       for (RouteAdvertise newAdvertise : newAdvertises) {
-        propagateBgpAdvertise(newAdvertise, routeAdvertise.advertiserPID);
+        propagateBgpAdvertise(newAdvertise);
       }
       return newAdvertises.stream().map(RouteAdvertise::toString).collect(Collectors.joining(","));
     }
@@ -1117,59 +1120,89 @@ public class ExoSdxManager extends SdxManagerBase {
 
   private void propagatePolicyAdvertise(PolicyAdvertise advertise) {
     logger.debug(String.format("Propagate policy advertise %s", advertise));
-    for (String peer : peerUrls.keySet()) {
-      if (!peer.equals(advertise.ownerPID) && !peer.equals(advertise.advertiserPID)) {
-        if (!advertise.route.contains(peer)) {
-          if (advertise.srcPrefix == null && safeManager.verifyAS(advertise.ownerPID, advertise
-            .getDestPrefix(), peer, advertise.safeToken)) {
-            advertisePolicyAsync(peerUrls.get(peer), advertise);
-          } else if (advertise.srcPrefix != null && safeManager.verifyAS(advertise.ownerPID,
-            advertise.getSrcPrefix(), advertise.getDestPrefix(), peer, advertise.safeToken)) {
-            advertisePolicyAsync(peerUrls.get(peer), advertise);
-          }
+    Thread t = new Thread() {
+      @Override
+      public void run() {
+        for (String peer : peerUrls.keySet()) {
+          propagatePolicyToPeer(advertise, peer);
+        }
+      }
+    };
+    t.start();
+    try {
+      t.join();
+    } catch (Exception e) {
+    }
+  }
+
+  private void propagatePolicyToPeer(PolicyAdvertise advertise, String peer) {
+    if (!peer.equals(advertise.ownerPID) && !peer.equals(advertise.advertiserPID)) {
+      if (!advertise.route.contains(peer)) {
+        if (advertise.srcPrefix == null && safeManager.verifyAS(advertise.ownerPID, advertise
+          .getDestPrefix(), peer, advertise.safeToken)) {
+          advertisePolicyAsync(peerUrls.get(peer), advertise);
+        } else if (advertise.srcPrefix != null && safeManager.verifyAS(advertise.ownerPID,
+          advertise.getSrcPrefix(), advertise.getDestPrefix(), peer, advertise.safeToken)) {
+          advertisePolicyAsync(peerUrls.get(peer), advertise);
         }
       }
     }
   }
 
-  private void propagateBgpAdvertise(RouteAdvertise advertise, String srcPid) {
-    for (String peer : peerUrls.keySet()) {
-      if (!peer.equals(advertise.ownerPID) && !peer.equals(advertise.advertiserPID)) {
-        if (!advertise.route.contains(peer)) {
-          if (advertise.srcPrefix == null && safeManager.verifyAS(advertise.ownerPID, advertise
-            .getDestPrefix(), peer, advertise.safeToken)) {
-            String path = advertise.getFormattedPath();
-            String[] params = new String[4];
-            params[0] = advertise.getDestPrefix();
-            params[1] = path;
-            params[2] = peer;
-            params[3] = advertise.safeToken;
-            String token = safeManager.post(SdxRoutingSlang.postAdvertise, params);
-            advertise.safeToken = token;
-            advertiseBgpAsync(peerUrls.get(peer), advertise);
-          } else if (advertise.srcPrefix != null && safeManager.verifyAS(advertise.ownerPID,
-            advertise.getSrcPrefix(), advertise.getDestPrefix(), peer, advertise.safeToken)) {
-            String path = advertise.getFormattedPath();
-            String[] params = new String[5];
-            params[0] = advertise.getSrcPrefix();
-            params[1] = advertise.getDestPrefix();
-            params[2] = path;
-            params[3] = peer;
-            params[4] = advertise.safeToken;
-            //TODO: update Safe script and modify this part
-            String token = safeManager.post(SdxRoutingSlang.postAdvertiseSD, params);
-            advertise.safeToken = token;
-            advertiseBgpAsync(peerUrls.get(peer), advertise);
-          }
+  private void propagateBgpAdvertise(RouteAdvertise advertise) {
+    Thread t = new Thread() {
+      @Override
+      public void run() {
+        for (String peer : peerUrls.keySet()) {
+          propagateRouteToPeer(advertise, peer);
+        }
+      }
+    };
+    t.start();
+    try {
+      t.join();
+    }catch (Exception e) {
+      e.printStackTrace();
+    }
+  }
+
+  private void propagateRouteToPeer(RouteAdvertise advertise,
+                                    String peer) {
+    if (!peer.equals(advertise.ownerPID) && !peer.equals(advertise.advertiserPID)) {
+      if (!advertise.route.contains(peer)) {
+        if (advertise.srcPrefix == null && safeManager.verifyAS(advertise.ownerPID, advertise
+          .getDestPrefix(), peer, advertise.safeToken)) {
+          String path = advertise.getFormattedPath();
+          String[] params = new String[4];
+          params[0] = advertise.getDestPrefix();
+          params[1] = path;
+          params[2] = peer;
+          params[3] = advertise.safeToken;
+          String token = safeManager.post(SdxRoutingSlang.postAdvertise, params);
+          advertise.safeToken = token;
+          advertiseBgpAsync(peerUrls.get(peer), advertise);
+        } else if (advertise.srcPrefix != null && safeManager.verifyAS(advertise.ownerPID,
+          advertise.getSrcPrefix(), advertise.getDestPrefix(), peer, advertise.safeToken)) {
+          String path = advertise.getFormattedPath();
+          String[] params = new String[5];
+          params[0] = advertise.getSrcPrefix();
+          params[1] = advertise.getDestPrefix();
+          params[2] = path;
+          params[3] = peer;
+          params[4] = advertise.safeToken;
+          //TODO: update Safe script and modify this part
+          String token = safeManager.post(SdxRoutingSlang.postAdvertiseSD, params);
+          advertise.safeToken = token;
+          advertiseBgpAsync(peerUrls.get(peer), advertise);
         }
       }
     }
   }
 
-  private void revokePrefix(String customerSafeKeyHash, String prefix) {
-    prefixGateway.remove(prefix);
-    prefixKeyHash.remove(prefix);
-    if (customerPrefixes.containsKey(customerSafeKeyHash)) {
+    private void revokePrefix(String customerSafeKeyHash, String prefix) {
+      prefixGateway.remove(prefix);
+      prefixKeyHash.remove(prefix);
+      if (customerPrefixes.containsKey(customerSafeKeyHash)) {
       customerPrefixes.get(customerSafeKeyHash).remove(prefix);
     }
     routingManager.retriveRouteOfPrefix(prefix, SDNController);
@@ -1177,12 +1210,12 @@ public class ExoSdxManager extends SdxManagerBase {
 
   @Override
   synchronized public String stitchChameleon(String site, String nodeName, String customer_keyhash,
-    String stitchport, String vlan, String gateway, String ip, String creservid) {
+                                             String stitchport, String vlan, String gateway, String ip, String creservid) {
     String res = "Stitch request unauthorized";
     String sdxsite = SiteBase.get(site);
     if (stitchport.toLowerCase().equals("tacc")) {
       stitchport = STITCHPORT_TACC;
-    } else if(stitchport.toLowerCase().equals("uc")) {
+    } else if (stitchport.toLowerCase().equals("uc")) {
       stitchport = STITCHPORT_UC;
     }
     if (!coreProperties.isSafeEnabled() || safeManager.authorizeChameleonStitchRequest(customer_keyhash, stitchport,
@@ -1222,7 +1255,7 @@ public class ExoSdxManager extends SdxManagerBase {
         updateOvsInterface(nodeName);
         //routingManager.replayCmds(routingManager.getDPID(nodeName));
         routingManager.newExternalLink(stitchname, ip, nodeName, gateway);
-        if(addComputeNodeandEdgeRouter) {
+        if (addComputeNodeandEdgeRouter) {
           if (nodeName.matches(routerPattern)) {
             putComputeNode(nodeName);
             if (nodeName.matches(eRouterPattern)) {
@@ -1282,10 +1315,10 @@ public class ExoSdxManager extends SdxManagerBase {
         + "ryu/ryu/app/rest_conf_switch.py ryu/ryu/app/rest_router.py "
         + "ryu/ryu/app/ofctl_rest.py %s\"\n";
       // Set public url to plexus server
-      if(coreProperties.isPlexusInSlice()) {
-          String publicUrl = "http://" + plexusip + ":8888/";
-          coreProperties.setPublicUrl(publicUrl);
-      }      
+      if (coreProperties.isPlexusInSlice()) {
+        String publicUrl = "http://" + plexusip + ":8888/";
+        coreProperties.setPublicUrl(publicUrl);
+      }
       String sdxMonitorUrl = coreProperties.getPublicUrl() + "sdx/flow/packetin";
       //reuse ryu-manager option for sdx url
       script = String.format(script, String.format("--zapi-db-url %s", sdxMonitorUrl));

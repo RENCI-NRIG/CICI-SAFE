@@ -852,7 +852,7 @@ public class ExoSliceManager extends SliceManager {
     AtomicInteger num = expectInterfaceNumMap.computeIfAbsent(nodeName, k -> new AtomicInteger());
     if(num.get() == 0) {
       num.set(getPhysicalInterfaces(nodeName).size());
-      logger.debug(String.format("%s %s $Number of dataplane interfaces before " +
+      logger.debug(String.format("%s %s Number of dataplane interfaces before " +
         "stitching: %s", sliceName, nodeName, num.get()));
     }
     num.incrementAndGet();
@@ -862,7 +862,7 @@ public class ExoSliceManager extends SliceManager {
     while(getPhysicalInterfaces(nodeName).size() < expectInterfaceNumMap.get(nodeName).get()) {
       sleep(5);
     }
-    logger.debug(String.format("%s %s $Number of dataplane interfaces before " +
+    logger.debug(String.format("%s %s Number of dataplane interfaces after " +
       "stitching: %s", sliceName, nodeName, expectInterfaceNumMap.get(nodeName).get()));
     expectInterfaceNumMap.get(nodeName).set(0);
   }

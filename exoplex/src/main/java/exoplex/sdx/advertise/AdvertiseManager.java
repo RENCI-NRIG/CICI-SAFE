@@ -51,7 +51,7 @@ public class AdvertiseManager {
     }
   }
 
-  public ArrayList<AdvertiseBase> receiveStPolicy(PolicyAdvertise policyAdvertise) {
+  public synchronized ArrayList<AdvertiseBase> receiveStPolicy(PolicyAdvertise policyAdvertise) {
     ArrayList<AdvertiseBase> newAdvertises = new ArrayList<>();
     newAdvertises.add(new PolicyAdvertise(policyAdvertise, myPID));
     String destPrefix = policyAdvertise.destPrefix;
@@ -127,6 +127,8 @@ public class AdvertiseManager {
   Else: Check if there is an matching advertisement in the other direction, verify the
   conjunct path
       If no: advertise any path for the src-dst pair
+
+   TODO: sort out the logic
    */
   public ArrayList<RouteAdvertise> receiveStAdvertise(RouteAdvertise routeAdvertise) {
     ArrayList<RouteAdvertise> newAdvertises = new ArrayList<>();
@@ -137,9 +139,20 @@ public class AdvertiseManager {
     routeIndex.insert(key);
     ArrayList<ImmutablePair<PolicyAdvertise, RouteAdvertise>> existingCompliantPairs =
       compliantPairs.getOrDefault(key, new ArrayList<>());
-    if (existingCompliantPairs.size() > 0 && existingCompliantPairs.get(0).getRight().srcPrefix
-      != null) {
-      //Do nothing for now
+    ArrayList<ImmutablePair<PolicyAdvertise, RouteAdvertise>> cpairs = new ArrayList<>();
+    if (existingCompliantPairs.size() > 0) {
+      for (ImmutablePair<PolicyAdvertise, RouteAdvertise> pair :
+        existingCompliantPairs) {
+        if (routeAdvertise.route.size() < pair.getRight().route.size() &&
+          (safeManager.verifyCompliantPath(pair.getLeft(), routeAdvertise))) {
+            cpairs.add(new ImmutablePair<>(pair.getLeft(), routeAdvertise));
+        }
+      }
+      if(!cpairs.isEmpty()) {
+        compliantPairs.put(key, cpairs);
+        RouteAdvertise propagateAdvertise = new RouteAdvertise(routeAdvertise, myPID);
+        newAdvertises.add(propagateAdvertise);
+      }
     } else {
       ArrayList<Rectangle> matchedKeys = new ArrayList<>(policyIndex.query(key));
       if (matchedKeys.size() > 0) {
@@ -149,17 +162,11 @@ public class AdvertiseManager {
             return (int) (o1.getArea() - o2.getArea());
           }
         });
-        ArrayList<ImmutablePair<PolicyAdvertise, RouteAdvertise>> cpairs = new ArrayList<>();
         //TODO more complex strategy for route policy matching
         for (Rectangle matchedKey : matchedKeys) {
           PolicyAdvertise policyAdvertise = policyTable.get(matchedKey);
-          String token2 = policyAdvertise.safeToken;
-          RouteAdvertise newAd = new RouteAdvertise(routeAdvertise, myPID);
-          //TODO: update policy and add it back
-          newAd.route.remove(newAd.route.size() - 1);
-          String path = newAd.getFormattedPath();
           //don't use path containing self because the tag set for self is not linked yet.
-          if (safeManager.verifyCompliantPath(policyAdvertise.ownerPID, routeAdvertise.getSrcPrefix(), routeAdvertise.getDestPrefix(), token2, routeAdvertise.safeToken, newAd.getFormattedPath())) {
+          if (safeManager.verifyCompliantPath(policyAdvertise, routeAdvertise)) {
             cpairs.add(new ImmutablePair<PolicyAdvertise, RouteAdvertise>(policyAdvertise, routeAdvertise));
           }
         }
@@ -181,7 +188,6 @@ public class AdvertiseManager {
     }
     return newAdvertises;
   }
-
 
   public RouteAdvertise initAdvertise(String userPid, String destPrefix) {
     RouteAdvertise advertise = new RouteAdvertise();

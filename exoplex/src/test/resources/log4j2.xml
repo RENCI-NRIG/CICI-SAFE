@@ -194,6 +194,7 @@
         </Logger>
         <Logger name="exoplex.common.utils.SafeUtils" level="warn" additivity="false">
             <AppenderRef ref="Console"/>
+            <AppenderRef ref="RollingFile"/>
         </Logger>
         <Logger name="exoplex.common.utils.HttpUtil" level="debug" additivity="false">
             <AppenderRef ref="RollingFile"/>
