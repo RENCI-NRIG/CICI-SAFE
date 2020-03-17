@@ -173,11 +173,12 @@ public class SafeManager {
     if (!safeEnabled) return true;
     String[] params = new String[6];
     params[0] = policyAdvertise.ownerPID;
-    params[1] = routeAdvertise.getSrcPrefix();
-    params[2] = routeAdvertise.getDestPrefix();
-    List<String> route = new ArrayList<>(routeAdvertise.route);
-    route.remove(route.size() - 1);
-    params[3] = AdvertiseBase.getFormattedPath(route);
+    params[1] = policyAdvertise.getSrcPrefix();
+    params[2] = policyAdvertise.getDestPrefix();
+    //List<String> route = new ArrayList<>(routeAdvertise.route);
+    //route.remove(route.size() - 1);
+    //params[3] = AdvertiseBase.getFormattedPath(route);
+    params[3] = routeAdvertise.getFormattedPath();
     params[4] = policyAdvertise.safeToken;
     params[5] = routeAdvertise.safeToken;
     return SafeUtils.authorize(safeServer, SdxRoutingSlang.verifyCompliantPath, getSafeKeyHash(),

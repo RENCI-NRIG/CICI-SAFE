@@ -257,7 +257,9 @@ public class RoutingManager extends AbstractRoutingManager {
   }
 
   //gateway is the gateway for nodename
-  public boolean configurePath(String dstIP, String dstNode, String srcIP, String srcNode,
+  public synchronized boolean configurePath(String dstIP, String dstNode,
+                               String srcIP,
+                               String srcNode,
                                String gateway, String bandWitdth) {
     long bw = Long.valueOf(bandWitdth);
     return configurePath(dstIP, dstNode, srcIP, srcNode, gateway, bw);

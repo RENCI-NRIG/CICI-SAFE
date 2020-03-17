@@ -1079,8 +1079,9 @@ public class ExoSdxManager extends SdxManagerBase {
           String gateway = customerGateway.get(customerReservId);
           if (!gateway.equals(routingManager.getGateway(routeAdvertise.destPrefix))) {
             String edgeNode = routingManager.getEdgeRouterByGateway(gateway);
-            logger.debug(String.format("Debug Msg: configuring route for %s", routeAdvertise.toString
-              ()));
+            logger.debug(String.format("[%s] Debug Msg: configuring route for" +
+              " %s", getSliceName(),
+              routeAdvertise.toString()));
             routingManager.removePath(routeAdvertise.destPrefix);
             routingManager.configurePath(routeAdvertise.destPrefix, edgeNode, gateway);
           }
@@ -1150,20 +1151,22 @@ public class ExoSdxManager extends SdxManagerBase {
   }
 
   private void propagateBgpAdvertise(RouteAdvertise advertise) {
-    Thread t = new Thread() {
-      @Override
-      public void run() {
+    logger.debug(String.format("[%s] Propagate route advertise %s",
+      getSliceName(), advertise));
+    //Thread t = new Thread() {
+    //  @Override
+    //  public void run() {
         for (String peer : peerUrls.keySet()) {
           propagateRouteToPeer(advertise, peer);
         }
-      }
-    };
-    t.start();
-    try {
-      t.join();
-    }catch (Exception e) {
-      e.printStackTrace();
-    }
+    //  }
+    //};
+    //t.start();
+    //try {
+    //  t.join();
+    //}catch (Exception e) {
+    //  e.printStackTrace();
+    //}
   }
 
   private void propagateRouteToPeer(RouteAdvertise advertise,
@@ -1172,6 +1175,8 @@ public class ExoSdxManager extends SdxManagerBase {
       if (!advertise.route.contains(peer)) {
         if (advertise.srcPrefix == null && safeManager.verifyAS(advertise.ownerPID, advertise
           .getDestPrefix(), peer, advertise.safeToken)) {
+          logger.debug(String.format("propagate to peer %s the advertise %s",
+            peer, advertise));
           String path = advertise.getFormattedPath();
           String[] params = new String[4];
           params[0] = advertise.getDestPrefix();
@@ -1183,6 +1188,8 @@ public class ExoSdxManager extends SdxManagerBase {
           advertiseBgpAsync(peerUrls.get(peer), advertise);
         } else if (advertise.srcPrefix != null && safeManager.verifyAS(advertise.ownerPID,
           advertise.getSrcPrefix(), advertise.getDestPrefix(), peer, advertise.safeToken)) {
+          logger.debug(String.format("propagate to peer %s the advertise %s",
+            peer, advertise));
           String path = advertise.getFormattedPath();
           String[] params = new String[5];
           params[0] = advertise.getSrcPrefix();
@@ -1194,6 +1201,8 @@ public class ExoSdxManager extends SdxManagerBase {
           String token = safeManager.post(SdxRoutingSlang.postAdvertiseSD, params);
           advertise.safeToken = token;
           advertiseBgpAsync(peerUrls.get(peer), advertise);
+        } else {
+          logger.debug(String.format("Not propagating to %s", peer));
         }
       }
     }

@@ -113,7 +113,6 @@ public class MultiSdxTestSD extends AbstractTest {
    * Cnert 2019 demo
    */
   public void testMultiSdxWithEvents() {
-    Authority.authorizationMade = true;
     startSdxServersAndClients(reset);
     //stitch sdx slices
     Long t0 = System.currentTimeMillis();
@@ -124,18 +123,22 @@ public class MultiSdxTestSD extends AbstractTest {
     stitchCustomerSlices();
     Long t2 = System.currentTimeMillis();
 
-    logger.info("Start advertiseing routes and policies");
+    try{
+      Thread.sleep(10000);
+    }catch (Exception e){}
+    logger.info("Start advertising routes and policies");
     advertiseSDRoutesAndPolicies();
-    //wait for route to be stablized
     try{
       Thread.sleep(60000);
+    }catch (Exception e){}
+    //wait for route to be stablized
+    try{
+      //Thread.sleep(60000);
     }catch (Exception e){
 
     }
-
     //connectCustomerNetwork();
     Long t3 = System.currentTimeMillis();
-
 
     logger.info("Start checking connections");
     checkConnection(3);
@@ -172,7 +175,7 @@ public class MultiSdxTestSD extends AbstractTest {
       e.printStackTrace();
     }
     try{
-      Thread.sleep(60000);
+      Thread.sleep(6000000);
     }catch (Exception e){
 
     }
