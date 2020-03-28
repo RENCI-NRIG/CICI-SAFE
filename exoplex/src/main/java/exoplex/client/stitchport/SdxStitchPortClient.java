@@ -52,8 +52,10 @@ public class SdxStitchPortClient {
     try {
       java.io.BufferedReader stdin = new java.io.BufferedReader(new java.io.InputStreamReader(System.in));
       while (true) {
-        System.out.print("Enter Commands:stitch stitchport vlan gateway ip sdx_site sdx_node \n" +
-          " Or advertise route: route dest gateway sdx_slice_name routername,\n$>");
+        System.out.print("Enter Commands:\n" + "" +
+            "stitch stitchport vlan gateway ip sdx_site sdx_node \n" +
+          "stitchvfc site vlan gateway ip" +
+          "route dest gateway\n$>");
         input = stdin.readLine();
         System.out.print("continue?[y/n]\n$>" + input);
 
@@ -77,6 +79,8 @@ public class SdxStitchPortClient {
         processStitchCmd(params);
       } else if (params[0].equals("route")) {
         processPrefixCmd(params);
+      } else if(params[0].equals("stitchvfc")) {
+        processStitchVfcCmd(params);
       } else {
         processConnectionCmd(params);
       }
@@ -155,6 +159,36 @@ public class SdxStitchPortClient {
       }
       logger.debug("posted stitch request, requesting to Sdx server");
       String res = HttpUtil.postJSON(coreProperties.getServerUrl() + "sdx/stitchchameleon", jsonparams);
+      logger.debug(res);
+      System.out.println(res);
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+  }
+
+  private void processStitchVfcCmd(String[] params) {
+    try {
+      //post stitch request to SAFE
+      logger.debug("posting stitch request statements to SAFE Sets");
+      JSONObject jsonparams = new JSONObject();
+      jsonparams.put("vfcsite", params[1]);
+      jsonparams.put("vlan", params[2]);
+      jsonparams.put("gateway", params[3]);
+      jsonparams.put("ip", params[4]);
+      jsonparams.put("cslice", coreProperties.getSliceName());
+      if (coreProperties.isSafeEnabled()) {
+        coreProperties.setSafeKeyHash(SafeUtils.getPrincipalId(coreProperties.getSafeServer(),
+          coreProperties.getSafeKeyFile()));
+        jsonparams.put("ckeyhash", coreProperties.getSafeKeyHash());
+        postSafeStitchRequest(coreProperties.getSafeKeyHash(),
+          jsonparams.getString("vfcsite"), jsonparams
+          .getString("vlan"));
+      } else {
+        jsonparams.put("ckeyhash", jsonparams.getString("cslice"));
+      }
+      logger.debug("posted stitch request, requesting to Sdx server");
+      String res = HttpUtil.postJSON(coreProperties.getServerUrl() + "sdx" +
+        "/stitchvfc", jsonparams);
       logger.debug(res);
       System.out.println(res);
     } catch (Exception e) {

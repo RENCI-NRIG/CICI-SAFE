@@ -8,33 +8,64 @@
     },
     {
         "router": {
-                "name": "vfc-1",
-                "dpid": "0000fe754c80b54d",
+                "name": "vfc-2",
+                "dpid": "0000b2f7a78bd34b",
                 "site": "TACC"
         }
     },
     {
-        "stitch": {
-                "name": "net-exogeni-sc19-safe1",
-                "router": "vfc-1",
-                "site": "UC",
-                "vlan": "3297"
+        "link": {
+                "name": "link0",
+                "node1": "vfc-1",
+                "node2": "vfc-2"
         }
     },
     {
         "stitch": {
-                "name": "net-exogeni-sc19-safe2",
+                "name": "net-physnet1-sc19safe",
                 "router": "vfc-1",
                 "site": "UC",
-                "vlan": "3294"
+                "vlan": "3022"
         }
     },
     {
         "stitch": {
-                "name": "net-exogeni-sc19-safe3",
+                "name": "net-exogeni-sc19safe-1",
                 "router": "vfc-1",
+                "site": "UC",
+                "vlan": "3298"
+        }
+    },
+    {
+        "stitch": {
+                "name": "net-exogeni-sc19safe-2",
+                "router": "vfc-1",
+                "site": "UC",
+                "vlan": "3296"
+        }
+    },
+    {
+        "stitch": {
+                "name": "net-physnet1-sc19yy",
+                "router": "vfc-2",
+                "site": "TACC",
+                "vlan": "2085"
+        }
+    },
+    {
+        "stitch": {
+                "name": "net-exogeni-sc19yy-1",
+                "router": "vfc-2",
                 "site": "TACC",
                 "vlan": "3506"
+        }
+    },
+    {
+        "stitch": {
+                "name": "net-exogeni-sc19yy-2",
+                "router": "vfc-2",
+                "site": "TACC",
+                "vlan": "3502"
         }
     }
 ]

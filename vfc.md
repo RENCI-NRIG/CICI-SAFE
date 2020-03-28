@@ -1,64 +1,91 @@
-# Connect exogeni slices with networks in Chameleon
+# Run SDX on VFC in Chameleon
 
-## 1. Create VFC with ExoGENI-stitchable networks
+In this demo, we run SDX on VFC in Chameleon and connect client networks on Chameleon and ExoGENI with SDX. The video is available here, https://youtu.be/lKLTVAnOG74.
+
+## 1. VFC with ExoGENI-stitchable networks
 
 Run SDN controller,
 
-    ryu-manager --ofp-tcp-listen-port 6653 ~/CICI-SAFE/ryu-apps/vfc_router.py ~/CICI-SAFE/ryu-apps/ofctl_rest.py
+        ryu-manager --ofp-tcp-listen-port 6653 ~/CICI-SAFE/ryu-apps/vfc_router.py ~/CICI-SAFE/ryu-apps/ofctl_rest.py
 
-## 2. Create ExoGENI client networks
-        
-        ./scripts/createclientslice.sh -c client-config/alice.conf
+Or run SDN controller in docker
 
-## 3. Save topology of the VFC in json file. For exmaple,
+        PLEXUSIMG="yaoyj11/plexus-v3"
+        sudo docker pull ${PLEXUSIMG}
+        sudo docker run -i -t -d -p 8080:8080 -p 6653:6653 -p 3000:3000 -h plexus --name plexus ${PLEXUSIMG}
+        sudo docker exec -itd plexus /bin/bash -c  "cd /root;pkill ryu-manager; ryu-manager --ofp-tcp-listen-port 6653 --log-file ~/ryu.log --default-log-level 1 ryu/ryu/app/rest_conf_switch.py ryu/ryu/app/vfc_router.py ryu/ryu/app/ofctl_rest.py"
 
-        [
-            {
-                "router": {
-                        "name": "vfc-1",
-                        "dpid": "0000fe754c80b54d",
-                        "site": "UC"
-                }
-            },
-            {
-                "stitch": {
-                        "name": "net-exogeni-sc19-safe1",
-                        "router": "vfc-1",
-                        "site": "UC",
-                        "vlan": "3295"
-                }
-            },
-            {
-                "stitch": {
-                        "name": "net-exogeni-sc19-safe2",
-                        "router": "vfc-1",
-                        "site": "UC",
-                        "vlan": "3293"
-                }
-            }
-        ]
 
-## 4. Start vfc server
+If necessary, delete all flows on the VFC and restart SDN controller
+
+        curl -X DELETE http://198.129.50.26:8080/stats/flowentry/clear/196776737624907
+        curl -X DELETE http://198.129.50.26:8080/stats/flowentry/clear/279779748132173
+
+
+
+## 2. Save topology of the VFC in json file (exoplex/vfc-config/topo.json).
+Key words are "router", "link" and "stitch". "router" represents the OpenFlow-Enabled vfc, "link" represents the link between two VFCs (ExoGENI circuits), and "stitch" represents ExoGENI switchable network on the VFC.
+
+
+## 3. Start vfc server
 
         ./scripts/vfcserver.sh -c vfc-config/vfc.conf
 
-## 5. Stitch ExoGENI client slice to VFC
+## 4. Create ExoGENI client networks or Chameleon client networks
+To create ExoGENI client network
+        
+        ./scripts/createclientslice.sh -c client-config/alice.conf
 
-        ./scripts/sdx_exogeni_client.sh -c client-config/vfc/c0.conf -e "stitchvfc CNode0 UC 3293 192.168.10.2 192.168.10.1/24"
+## 5. Stitch client network to VFC
+        
+### Stitch ExoGENI client slice to VFC
 
-        ./scripts/sdx_exogeni_client.sh -c client-config/vfc/c1.conf -e "stitchvfc CNode0 UC 3295 192.168.20.2 192.168.20.1/24"
+        ./scripts/sdx_exogeni_client.sh -c client-config/sc1.conf -e "stitchvfc CNode1 UC 3298 192.168.10.2 192.168.10.1/24"
+
+        ./scripts/sdx_exogeni_client.sh -c client-config/sc2.conf -e "stitchvfc CNode1 TACC 3502 192.168.20.2 192.168.20.1/24"
+
+### Stitch Chameleon network to VFC
+        
+        ./scripts/sdx_stitchport_client.sh -c chameleon-config/c1.conf -e "stitchvfc TACC 2085 192.168.100.17 192.168.100.1/24"
+
+        ./scripts/sdx_stitchport_client.sh -c chameleon-config/c2.conf -e "stitchvfc UC 3022 192.168.200.17 192.168.200.1/24"
 
 ## 6. Client networks advertise prefix
 
-        ./scripts/sdx_exogeni_client.sh -c client-config/vfc/c0.conf -e "route 192.168.10.1/24 192.168.10.2"
+### ExoGENI client
 
-        ./scripts/sdx_exogeni_client.sh -c client-config/vfc/c1.conf -e "route 192.168.20.1/24 192.168.20.2"
+        ./scripts/sdx_exogeni_client.sh -c client-config/sc1.conf -e "route 192.168.10.1/24 192.168.10.2"
+
+        ./scripts/sdx_exogeni_client.sh -c client-config/sc2.conf -e "route 192.168.20.1/24 192.168.20.2"
+
+### Chameleon client
+
+        ./scripts/sdx_stitchport_client.sh -c chameleon-config/c1.conf -e "route  192.168.100.1/24 192.168.100.17"
+
+        ./scripts/sdx_stitchport_client.sh -c chameleon-config/c2.conf -e "route  192.168.200.1/24 192.168.200.17"
 
 ## 7. Client networks request for connection
 
-        ./scripts/sdx_exogeni_client.sh -c client-config/vfc/c0.conf -e "link 192.168.10.1/24 192.168.20.1/24"
+### ExoGENI client
 
-        ./scripts/sdx_exogeni_client.sh -c client-config/vfc/c1.conf -e "link 192.168.20.1/24 192.168.10.1/24"
+        ./scripts/sdx_exogeni_client.sh -c client-config/sc1.conf -e "link 192.168.10.1/24 192.168.20.1/24"
+        ./scripts/sdx_exogeni_client.sh -c client-config/sc1.conf -e "link 192.168.10.1/24 192.168.100.1/24"
+        ./scripts/sdx_exogeni_client.sh -c client-config/sc1.conf -e "link 192.168.10.1/24 192.168.200.1/24"
+
+        ./scripts/sdx_exogeni_client.sh -c client-config/sc2.conf -e "link 192.168.20.1/24 192.168.10.1/24"
+        ./scripts/sdx_exogeni_client.sh -c client-config/sc2.conf -e "link 192.168.20.1/24 192.168.100.1/24"
+        ./scripts/sdx_exogeni_client.sh -c client-config/sc2.conf -e "link 192.168.20.1/24 192.168.200.1/24"
+
+### Chameleon client
+
+        ./scripts/sdx_stitchport_client.sh -c chameleon-config/c2.conf -e "link  192.168.200.1/24 192.168.100.1/24"
+        ./scripts/sdx_stitchport_client.sh -c chameleon-config/c2.conf -e "link  192.168.200.1/24 192.168.10.1/24"
+        ./scripts/sdx_stitchport_client.sh -c chameleon-config/c2.conf -e "link  192.168.200.1/24 192.168.20.1/24"
+
+        ./scripts/sdx_stitchport_client.sh -c chameleon-config/c1.conf -e "link  192.168.100.1/24 192.168.200.1/24"
+        ./scripts/sdx_stitchport_client.sh -c chameleon-config/c1.conf -e "link  192.168.100.1/24 192.168.20.1/24"
+        ./scripts/sdx_stitchport_client.sh -c chameleon-config/c1.conf -e "link  192.168.100.1/24 192.168.10.1/24"
+
 
 
 # Deploy SDX for VFC
@@ -131,34 +158,8 @@ The SDN controller of the switch on the VFC is fixed.
         cd ${WORKING_DIR}/CICI-SAFE/exoplex
         mvn  clean package appassembler:assemble -DskipTests
 
-## 4. create a VFC on Chameleon with a switch and two ExoGENI-stitchable networks. Save the topology in a Json file. For example,
-
-        [
-            {
-                "router": {
-                        "name": "vfc-1",
-                        "dpid": "0000fe754c80b54d",
-                        "site": "UC"
-                }
-            },
-            {
-                "stitch": {
-                        "name": "net-exogeni-sc19-safe1",
-                        "router": "vfc-1",
-                        "site": "UC",
-                        "vlan": "3297"
-                }
-            },
-            {
-                "stitch": {
-                        "name": "net-exogeni-sc19-safe2",
-                        "router": "vfc-1",
-                        "site": "UC",
-                        "vlan": "3292"
-                }
-            }
-        ]
-
+## 4. create a VFC on Chameleon with a switch and two ExoGENI-stitchable networks. Save the topology in a Json file (exoplex/vfc-config/topo.json). 
+Key words are "router", "link" and "stitch". "router" represents the OpenFlow-Enabled vfc, "link" represents the link between two VFCs (ExoGENI circuits), and "stitch" represents ExoGENI switchable network on the VFC.
 The name of the router doesn't matter. The name of the stitch should start with "net".
 
 ## 5. start SDX server
@@ -176,7 +177,7 @@ Authorities makes delegations to the client Key
         sudo docker run -i -t -d -p 7777:7777 -h safe --name safe ${SAFEIMG}
         sudo docker exec -itd safe /bin/bash -c  "cd /root/safe;sed -i 's/RIAKSERVER/$riak_ip/g' safe-server/src/main/resources/application.conf;./${SAFE_SCRIPT}"
 
-## 2. make delegations to a client: exogeni slice authorization, ip allocation, tag delegation
+## 2. make delegations to a client: client slice authorization, ip allocation, tag delegation
 
         SAFE_SERVER=localhost
         USERKEYHASH="MfIPn0qnsuGiJtb3xJyAUOB1dBmGw9IJm5-wKUgVOlU="
@@ -222,22 +223,5 @@ Authorities makes delegations to the client Key
 
         ${BIN_DIR}/AuthorityMock update ${principalId} passDelegation P00xfQR3bdW649Ti6dCIrFboDKaZz4uDEzjXL_nsngQ= SF5x9ObjJWzzTBIn0aachXlIEbcOq7hkJdjbJuyoLfA=:project1 ${SAFE_SERVER}
 
-## 6. Create client slice
+## 6. Create client slice, stitch client networks, advertise client IP prefix and request for connection are shown at the beginning of this guide. For client networks, we can do ExoGENI client networks only, Chameleon networks only or a mix of those two kinds of client networks.
 
-        ${BIN_DIR}/SafeSdxClientSliceServer -c client-config/c0.conf
-
-## 7. stitch to sdx
-
-        sudo ${BIN_DIR}/SafeSdxExogeniClient -c client-config/c0.conf -e "stitchvfc CNode1 UC 3297 192.168.10.2 192.168.10.1/24"
-
-        sudo ${BIN_DIR}/SafeSdxExogeniClient -c client-config/c1.conf -e "stitchvfc CNode1 UC 3292 192.168.20.2 192.168.20.1/24"
-
-## 8. client advertise prefix
-
-        sudo ${BIN_DIR}/SafeSdxExogeniClient -c client-config/c0.conf -e 'route 192.168.10.1/24 192.168.10.2'
-        sudo ${BIN_DIR}/SafeSdxExogeniClient -c client-config/c1.conf -e 'route 192.168.20.1/24 192.168.20.2'
-
-## 9. both client request for connection [optional]
-
-        sudo ${BIN_DIR}/SafeSdxExogeniClient -c client-config/c0.conf -e 'link 192.168.10.1/24 192.168.20.1/24'
-        sudo ${BIN_DIR}/SafeSdxExogeniClient -c client-config/c1.conf -e 'link 192.168.20.1/24 192.168.10.1/24'

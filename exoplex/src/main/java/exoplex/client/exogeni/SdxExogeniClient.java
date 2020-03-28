@@ -368,13 +368,13 @@ public class SdxExogeniClient {
     //configure ip address on the client node
     String localIp = gateway + "/" + vfcip.split("/")[1];
     logger.info(logPrefix + "set IP address of the stitch interface to " + vfcip);
-    List<String> interfaces = serverSlice.getPhysicalInterfaces(nodeName);
-    String newInterface = interfaces.get(interfaces.size() - 1);
-    String result = serverSlice.runCmdNode(String.format("sudo ifconfig " +
-        "%s %s", newInterface, localIp),
-      nodeName, false);
     String vfcGateway = vfcip.split("/")[0];
-    setUpQuaggaRouting("192.168.1.1/16", vfcGateway, nodeName);
+    if(coreProperties.getQuaggaRoute()) {
+      List<String> interfaces = serverSlice.getPhysicalInterfaces(nodeName);
+      String newInterface = interfaces.get(interfaces.size() - 1);
+      String result = serverSlice.runCmdNode(String.format("sudo ifconfig " + "%s %s", newInterface, localIp), nodeName, false);
+      setUpQuaggaRouting("192.168.1.1/16", vfcGateway, nodeName);
+    }
     //send stitch request to vfc server
     //post stitch request to SAFE
     JSONObject jsonparams = new JSONObject();
@@ -395,11 +395,16 @@ public class SdxExogeniClient {
     String r = HttpUtil.postJSON(coreProperties.getServerUrl() + "sdx/stitchvfc", jsonparams);
     logger.debug(r);
 
-    if (ping(nodeName, vfcGateway)) {
-      logger.info(String.format("Ping to %s works", vfcGateway));
-      logger.info(logPrefix + "stitch completed.");
+    if(coreProperties.getQuaggaRoute()) {
+      if (ping(nodeName, vfcGateway)) {
+        logger.info(String.format("Ping to %s works", vfcGateway));
+        logger.info(logPrefix + "stitch completed.");
+      } else {
+        logger.warn(String.format("Ping to %s doesn't work", vfcGateway));
+      }
     } else {
-      logger.warn(String.format("Ping to %s doesn't work", vfcGateway));
+      serverSlice.runCmdNode("/bin/bash ~/ovsbridge.sh", nodeName, false);
+      logger.info("Added the new interface to ovs bridge br0");
     }
   }
 

@@ -26,7 +26,6 @@ import java.util.regex.Pattern;
 public class VfcSdxManager extends SdxManagerBase {
 
   static String eRouterPattern = "(vfc.*)";
-  static String stosVlanPattern = "(^stitch_vfc.*_\\d+.*)";
   static String routerPattern = "(vfc.*)";
 
   @Inject
@@ -62,14 +61,21 @@ public class VfcSdxManager extends SdxManagerBase {
   @Override
   public void startSdxServer(CoreProperties coreProperties) throws Exception {
     this.coreProperties = coreProperties;
+    if (coreProperties.getIpPrefix() != null) {
+      computeIP(coreProperties.getIpPrefix());
+    }
     loadSlice();
     initializeSdx();
+    loadSdxNetwork(routerPattern);
     configRouting();
-    //delFlows();
+    if(coreProperties.getReset()) {
+      logger.info("delete flows");
+      delFlows();
+      return;
+    }
   }
 
-  private void loadSdxNetwork(String routerpattern, String stitchportpattern, String
-    bropattern) {
+  private void loadSdxNetwork(String routerpattern) {
     logger.debug("Loading Sdx Network Topology");
     try {
       //Nodes: Get all router information
@@ -81,51 +87,11 @@ public class VfcSdxManager extends SdxManagerBase {
           }
         }
       }
-      logger.debug("get links from Slice");
-      usedip = new HashSet<Integer>();
-      HashSet<String> ifs = new HashSet<String>();
-      // get all links, and then
-      for (String i : serverSlice.getInterfaces()) {
-        routingmanager.updateInterfaceMac(serverSlice.getNodeOfInterface(i),
-          serverSlice.getLinkOfInterface(i),
-          serverSlice.getMacAddressOfInterface(i)
-        );
-        logger.debug(i);
-        logger.debug("linkname: " + serverSlice.getLinkOfInterface(i) + " bandwidth: " +
-          serverSlice.getBandwidthOfLink(serverSlice.getLinkOfInterface(i)));
-        if (ifs.contains(i) || serverSlice.getNodeOfInterface(i).matches(routerpattern)) {
-          logger.debug("continue");
-          continue;
+      for(String linkName: serverSlice.getLinks()) {
+        Link link = ((VfcSliceManager) serverSlice).getLink(linkName);
+        if(link.getNodeA()!= null && link.getNodeB()!= null) {
+          links.put(linkName, link);
         }
-        ifs.add(i);
-        Link logLink = links.get(serverSlice.getLinkOfInterface(i));
-
-        if (logLink == null) {
-          logLink = new Link();
-          logLink.setName(serverSlice.getLinkOfInterface(i));
-          logLink.addNode(serverSlice.getNodeOfInterface(i));
-          if (logLink.getLinkName().matches(stosVlanPattern)){
-            String[] parts = logLink.getLinkName().split("_");
-            String ip = parts[parts.length - 3];
-            usedip.add(Integer.valueOf(ip));
-            logLink.setIP(IPPrefix + ip);
-            logLink.setMask(mask);
-          }
-        } else {
-          logLink.addNode(serverSlice.getNodeOfInterface(i));
-        }
-        logger.debug(serverSlice.getBandwidthOfLink(serverSlice.getLinkOfInterface(i)));
-        links.put(serverSlice.getLinkOfInterface(i), logLink);
-        //System.out.println(logPrefix + inode2net.getNode()+" "+inode2net.getLink());
-      }
-      //Stitchports
-      logger.debug("setting up sttichports");
-      for (String sp : serverSlice.getStitchPorts()) {
-        logger.debug(sp);
-        if (!sp.matches(stitchportpattern)) {
-          continue;
-        }
-        stitchports.add(sp);
       }
     } catch (Exception e) {
       e.printStackTrace();
@@ -179,56 +145,25 @@ public class VfcSdxManager extends SdxManagerBase {
 
     //routingmanager.waitTillAllOvsConnected(SDNController, serverSlice.mocked);
 
-    logger.debug("setting up sttichports");
-    HashSet<Integer> usedip = new HashSet<Integer>();
-    HashSet<String> ifs = new HashSet<String>();
-    for (String sp : stitchports) {
-      logger.debug("Setting up stitchport " + sp);
-      String[] parts = sp.split("-");
-      String ip = parts[2].replace("__", "/").replace("_", ".");
-      String nodeName = parts[1];
-      String[] ipseg = ip.split("\\.");
-      String gw = ipseg[0] + "." + ipseg[1] + "." + ipseg[2] + "." + parts[3];
-      routingmanager.newExternalLink(sp, ip, nodeName, gw);
-    }
-
     Set<String> keyset = links.keySet();
     //logger.debug(keyset);
     for (String k : keyset) {
       Link logLink = links.get(k);
-      logger.debug("Setting up stitch " + logLink.getLinkName());
-      if (k.matches(stosVlanPattern) || k.matches(broLinkPattern)) {
-        usedip.add(Integer.valueOf(logLink.getIP(1).split("\\.")[2]));
-        routingmanager.newExternalLink(logLink.getLinkName(),
-          ((VfcSliceManager)serverSlice).getIPOfExternalLink(logLink.getLinkName()),
-          logLink.getNodeA(),
-          ((VfcSliceManager)serverSlice).getGatewayOfExternalLink(logLink.getLinkName()));
-      }
-    }
-
-    for (String k : keyset) {
-      Link logLink = links.get(k);
       logger.debug("Setting up logLink " + logLink.getLinkName());
-      if (isValidLink(k)) {
-        logger.debug("Setting up logLink " + logLink.getLinkName());
-        if (logLink.getIpPrefix().equals("")) {
-          int ip_to_use = getAvailableIP();
-          logLink.setIP(IPPrefix + ip_to_use);
-          logLink.setMask(mask);
-        }
-        //logger.debug(logLink.nodea+":"+logLink.getIP(1)+" "+logLink.nodeb+":"+logLink.getIP(2));
-        routingmanager.newInternalLink(logLink.getLinkName(),
-          logLink.getIP(1),
-          logLink.getNodeA(),
-          logLink.getIP(2),
-          logLink.getNodeB(),
-          logLink.getCapacity());
+      logger.debug("Setting up logLink " + logLink.getLinkName());
+      if (logLink.getIpPrefix().equals("")) {
+        int ip_to_use = getAvailableIP();
+        logLink.setIP(IPPrefix + ip_to_use);
+        logLink.setMask(mask);
       }
+      //logger.debug(logLink.nodea+":"+logLink.getIP(1)+" "+logLink.nodeb+":"+logLink.getIP(2));
+      routingmanager.newInternalLink(logLink.getLinkName(), logLink.getIP(1),
+        logLink.getNodeA(), logLink.getIP(2), logLink.getNodeB(), logLink.getCapacity());;
     }
   }
 
   private int getAvailableIP() {
-    int ip_to_use = curip;
+    int ip_to_use;
     iplock.lock();
     try {
       while (usedip.contains(curip)) {
@@ -245,7 +180,7 @@ public class VfcSdxManager extends SdxManagerBase {
 
   @Override
   public void delFlows() {
-    routingmanager.deleteAllFlows(getSDNController());
+    routingmanager.deleteAllFlows();
   }
 
   synchronized public JSONObject stitchVfc(
@@ -303,6 +238,37 @@ public class VfcSdxManager extends SdxManagerBase {
         customerSafeKeyHash, customerSlice));
     }
     return res;
+  }
+
+  @Override
+  synchronized public NotifyResult notifyPrefix(String dest, String gateway,
+                                                String customer_keyhash) {
+    logger.info(logPrefix + "received notification for ip prefix " + dest);
+    NotifyResult notifyResult = new NotifyResult();
+    notifyResult.message = "received notification for " + dest;
+    boolean flag = false;
+    String router = routingmanager.getEdgeRouterByGateway(gateway);
+    if (router == null) {
+      logger.warn(logPrefix + "Cannot find a router with cusotmer gateway" + gateway);
+      notifyResult.message = notifyResult.message + " Cannot find a router with customer gateway " +
+        gateway;
+    } else {
+      prefixGateway.put(dest, gateway);
+      prefixKeyHash.put(dest, customer_keyhash);
+      if (!customerPrefixes.containsKey(customer_keyhash)) {
+        customerPrefixes.put(customer_keyhash, new HashSet<>());
+      }
+      customerPrefixes.get(customer_keyhash).add(dest);
+      if (!gatewayPrefixes.containsKey(gateway)) {
+        gatewayPrefixes.put(gateway, new HashSet());
+      }
+      gatewayPrefixes.get(gateway).add(dest);
+      notifyResult.result = true;
+      if (coreProperties.isSafeEnabled()) {
+        notifyResult.safeKeyHash = safeManager.getSafeKeyHash();
+      }
+    }
+    return notifyResult;
   }
 
   @Override

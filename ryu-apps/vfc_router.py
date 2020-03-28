@@ -297,7 +297,6 @@ class RestRouterAPI(app_manager.RyuApp):
 
     @set_ev_cls(ofp_event.EventOFPPacketIn, MAIN_DISPATCHER)
     def packet_in_handler(self, ev):
-        print("packet in handler")
         RouterController.packet_in_handler(ev.msg)
 
     #NOTE 0: yjyao
@@ -421,10 +420,8 @@ class RouterController(ControllerBase):
     @classmethod
     def packet_in_handler(cls, msg):
         dp_id = msg.datapath.id
-        print("RC packet in ")
         if dp_id in cls._ROUTER_LIST:
             router = cls._ROUTER_LIST[dp_id]
-            print("dispatch to router")
             router.packet_in_handler(msg)
 
     # GET /router/{switch_id}
@@ -534,8 +531,6 @@ class Router(dict):
     def update(self,dp,logger):
         self.port_data=PortData(dp.ports)
         self[VLANID_NONE].port_data=self.port_data
-        print dp.ports
-        self.logger.info("Update port data.", extra=self.sw_id)
     #==========
 
     def delete(self):
@@ -1021,7 +1016,6 @@ class VlanRouter(object):
 
     def packet_in_handler(self, msg, header_list):
         # Check invalid TTL (for OpenFlow V1.2/1.3)
-        print("VR packet in")
         ofproto = self.dp.ofproto
         if ofproto.OFP_VERSION == ofproto_v1_2.OFP_VERSION or \
                 ofproto.OFP_VERSION == ofproto_v1_3.OFP_VERSION:
@@ -1031,7 +1025,6 @@ class VlanRouter(object):
 
         # Analyze event type.
         if ARP in header_list:
-            print("VR arp in")
             self._packetin_arp(msg, header_list)
             return
 
@@ -1055,22 +1048,21 @@ class VlanRouter(object):
         try:
             src_mac = self.port_data[in_port].mac
             if src_mac == "00:00:00:00:00:00":
-                p1 = "{}".format(hex((in_port%10000)/100)).replace("0x", "")
-                p2 = "{}".format(hex(in_port%100)).replace("0x", "")
-                src_mac = "{}:{}:{}".format(MAC_PREFIX, p1, p2)
-            print("mac for {} is {}".format(in_port, src_mac))
+                mac = str(hex((self.dp.id*16067+in_port)%65521)).replace("0x","")
+                while len(mac) < 4:
+                    mac = "0" + mac
+                src_mac = MAC_PREFIX
+                for i in range(0, 4, 2):
+                    src_mac = src_mac + ":" + mac[i:i + 2]
+                print("mac for {} is {}".format(in_port, src_mac))
         except:
             print("exception when getting mac for inport {} ".format(in_port))
             return "00:00:00:00:00:00"
         return src_mac
 
     def _packetin_arp(self, msg, header_list):
-        print("src_ip {}".format(header_list[ARP].src_ip))
         src_addr = self.address_data.get_data(ip=header_list[ARP].src_ip)
-        print("VR _packetin_arp {}".format(src_addr))
         if src_addr is None:
-            for key in self.address_data:
-                print("{} -> {}".format(key, self.address_data[key]))
             return
 
         # case: Receive ARP from the gateway
@@ -1160,7 +1152,7 @@ class VlanRouter(object):
         dstip = ip_addr_ntoa(header_list[IPV4].dst)
         log_msg = 'Receive ICMP echo request from [%s] to router port [%s].'
         self.logger.info(log_msg, srcip, dstip, extra=self.sw_id)
-        self.logger.info('Send ICMP echo reply to [%s].', srcip,
+        self.logger.info('Send ICMP echo reply to [%s] [%s].', srcip, in_port,
                          extra=self.sw_id)
 
     def _packetin_tcp_udp(self, msg, header_list):
@@ -1205,22 +1197,6 @@ class VlanRouter(object):
                 if gw_address is not None:
                     src_ip = gw_address.default_gw
                     dst_ip = route.gateway_ip
-            else:
-            #note: yjyao
-                data={}
-                data['src'] = srcip
-                data['dest'] = dstip
-                self.packet_buffer.add_route_packet(in_port, header_list, msg.data)
-                try:
-                    self.logger.debug(data)
-                    self.logger.debug("sending request to sdx controller")
-                    req = urllib2.Request(get_sdx_url())
-                    req.add_header('Content-Type', 'application/json')
-                    response = urllib2.urlopen(req, json.dumps(data))
-                    self.logger.debug("send request to sdx", extra = self.sw_id)
-                except:
-                    self.logger.info("An exception when sending request to sdx {}\n src {} dst {}"
-                                    .format(get_sdx_url(), srcip, dstip), extra=self.sw_id)
 
         if src_ip is not None:
             self.packet_buffer.add(in_port, header_list, msg.data)
@@ -1327,7 +1303,8 @@ class VlanRouter(object):
         # Set flow: routing to internal Host.
         out_port = self.ofctl.get_packetin_inport(msg)
         src_mac = header_list[ARP].src_mac
-        dst_mac = self.port_data[out_port].mac
+        #dst_mac = self.port_data[out_port].mac
+        dst_mac = self.get_mac(out_port)
         src_ip = header_list[ARP].src_ip
 
         gateways = self.routing_tbl.get_gateways()
@@ -1409,7 +1386,6 @@ class AddressData(dict):
         ip_str = ip_addr_ntoa(nw_addr)
         key = '%s/%d' % (ip_str, mask)
         self[key] = address
-        print("add address data {} {}".format(key, address))
 
         self.address_id += 1
         self.address_id &= UINT32_MAX
@@ -1926,7 +1902,6 @@ class OfCtl_after_v1_2(OfCtl):
     def set_icmp_reply_flow(self, cookie, priority, dl_type=0, dl_dst=0, dl_vlan=0,
                  nw_src=0, src_mask=32, nw_dst=0, dst_mask=32,
                  nw_proto=1, idle_timeout=0, actions=None):
-        print("1.2 set icmp flow===============")
         ofp = self.dp.ofproto
         ofp_parser = self.dp.ofproto_parser
         cmd = ofp.OFPFC_ADD
