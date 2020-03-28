@@ -3,15 +3,14 @@ package exoplex.sdx.advertise;
 import aqt.AreaBasedQuadTree;
 import aqt.PrefixUtil;
 import aqt.Rectangle;
+import com.google.inject.internal.cglib.core.$ProcessArrayCallback;
 import exoplex.sdx.safe.SafeManager;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.core.appender.routing.Route;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class AdvertiseManager {
@@ -24,164 +23,175 @@ public class AdvertiseManager {
   AreaBasedQuadTree policyIndex = new AreaBasedQuadTree();
   ConcurrentHashMap<Rectangle, ArrayList<RouteAdvertise>> routeTable = new ConcurrentHashMap<>();
   ConcurrentHashMap<Rectangle, PolicyAdvertise> policyTable = new ConcurrentHashMap<>();
-  ConcurrentHashMap<Rectangle, RouteAdvertise> advertisedRoutes = new ConcurrentHashMap<>();
+  ConcurrentHashMap<Rectangle, RouteAdvertise> chosenRoutes = new ConcurrentHashMap<>();
   ConcurrentHashMap<Rectangle, PolicyAdvertise> advertisedPolicies = new ConcurrentHashMap<>();
-  ConcurrentHashMap<Rectangle, ArrayList<ImmutablePair<PolicyAdvertise,
-    RouteAdvertise>>> compliantPairs = new ConcurrentHashMap<>();
+  ConcurrentHashMap<ImmutablePair<PolicyAdvertise,
+    RouteAdvertise>, Boolean> checkedPairs = new ConcurrentHashMap();
+  HashSet<RouteAdvertise> advertisedRoutes = new HashSet<>();
 
   public AdvertiseManager(String myPID, SafeManager safeManager) {
     this.myPID = myPID;
     this.safeManager = safeManager;
   }
 
-  //TODO: do we need to match for policies here?
-  public RouteAdvertise receiveAdvertise(RouteAdvertise routeAdvertise) {
-    Rectangle key = PrefixUtil.prefixPairToRectangle(routeAdvertise.destPrefix, DEFAULT_PREFIX);
-    routeIndex.insert(key);
-    if (routeTable.containsKey(key) &&
-      advertisedRoutes.get(key).route.size() <= routeAdvertise.route.size()) {
-      //Todo: implement stategy for chosing from multiple advertisements here
-      addToBgpTable(key, routeAdvertise);
-      return null;
+  public String getMyPID() {
+    return myPID;
+  }
+
+
+  private boolean isCompliant(PolicyAdvertise policyAdvertise, RouteAdvertise
+    routeAdvertise) {
+    ImmutablePair<PolicyAdvertise, RouteAdvertise> pair =
+      new ImmutablePair<>(policyAdvertise, routeAdvertise);
+    if(checkedPairs.containsKey(pair)) {
+      return checkedPairs.get(pair);
     } else {
-      addToBgpTable(key, routeAdvertise);
-      advertisedRoutes.put(key, routeAdvertise);
-      RouteAdvertise propagateAdvertise = new RouteAdvertise(routeAdvertise, myPID);
-      return propagateAdvertise;
+      boolean res = safeManager.verifyCompliantPath(policyAdvertise,
+        routeAdvertise);
+      checkedPairs.put(pair, res);
+      return res;
     }
   }
 
-  public ArrayList<AdvertiseBase> receiveStPolicy(PolicyAdvertise policyAdvertise) {
-    ArrayList<AdvertiseBase> newAdvertises = new ArrayList<>();
+  public synchronized ImmutablePair<List<RouteAdvertise>,
+    List<AdvertiseBase>> receiveStPolicy(PolicyAdvertise policyAdvertise) {
+    ImmutablePair<List<RouteAdvertise>, List<AdvertiseBase>> newPair =
+      new ImmutablePair<>(new ArrayList<>(), new ArrayList<>());
+    List<RouteAdvertise> configRoutes = newPair.getLeft();
+    List<AdvertiseBase> newAdvertises = newPair.getRight();
     newAdvertises.add(new PolicyAdvertise(policyAdvertise, myPID));
     String destPrefix = policyAdvertise.destPrefix;
     String srcPrefix = policyAdvertise.srcPrefix;
     Rectangle key = PrefixUtil.prefixPairToRectangle(destPrefix, srcPrefix);
     addToStPairPolicyTable(key, policyAdvertise);
     policyIndex.insert(key);
-    ArrayList<ImmutablePair<PolicyAdvertise, RouteAdvertise>> existingCompliantPairs =
-      compliantPairs.getOrDefault(key, new ArrayList<>());
-    if (existingCompliantPairs.size() > 0) {
-      //TODO update for new policies
-      //Do nothing for now
-    } else {
-      Collection<Rectangle> matchedKeys = routeIndex.query(key);
-      for (Rectangle matchedKey : matchedKeys) {
-        ArrayList<RouteAdvertise> matchedRoutes = routeTable.get(matchedKey);
-        ArrayList<ImmutablePair<PolicyAdvertise, RouteAdvertise>> cpairs = new ArrayList<>();
-        for (RouteAdvertise matchedAdvertise : matchedRoutes) {
-          String token1 = policyAdvertise.safeToken;
-          String token2 = matchedAdvertise.safeToken;
-          RouteAdvertise newAd = new RouteAdvertise(matchedAdvertise, myPID);
-          newAd.route.remove(newAd.route.size() - 1);
-          String path = newAd.getFormattedPath();
-          if (safeManager.verifyCompliantPath(policyAdvertise.ownerPID, policyAdvertise
-            .getSrcPrefix(), policyAdvertise.getDestPrefix(), token1, token2, path)) {
-            cpairs.add(new ImmutablePair<>(policyAdvertise, matchedAdvertise));
-          }
-        }
-        if (cpairs.size() > 0) {
-          compliantPairs.put(key, cpairs);
 
-          //get previously advertised route in other direction, if it is not in the  compliant
-          // pair, correct the advertisement
-          boolean compliant = false;
-          for (ImmutablePair<PolicyAdvertise, RouteAdvertise> pair : cpairs) {
-            ImmutablePair<String, String> k = new ImmutablePair<>(destPrefix, pair.getRight()
-              .srcPrefix);
-            RouteAdvertise otherRoute = advertisedRoutes.getOrDefault(key, null);
-            if (pair.getRight().equals(otherRoute)) {
-              compliant = true;
+    Collection<Rectangle> matchedKeys = routeIndex.query(key);
+    for (Rectangle matchedKey : matchedKeys) {
+      ArrayList<RouteAdvertise> matchedRoutes = routeTable.get(matchedKey);
+      for (RouteAdvertise matchedAdvertise : matchedRoutes) {
+        if (isCompliant(policyAdvertise, matchedAdvertise)) {
+          Rectangle newKey = key.intersect(matchedKey);
+          if (!chosenRoutes.containsKey(newKey)
+            || (chosenRoutes.get(newKey).srcPrefix == null &&
+              matchedAdvertise.srcPrefix != null)
+            || chosenRoutes.get(newKey).length() > matchedAdvertise.length()
+            || !isCompliant(policyAdvertise, chosenRoutes.get(newKey))) {
+            chosenRoutes.put(newKey, matchedAdvertise);
+            RouteAdvertise configRoute = new RouteAdvertise(matchedAdvertise);
+            configRoute.srcPrefix = srcPrefix;
+            configRoutes.add(configRoute);
+            if(!advertisedRoutes.contains(matchedAdvertise)) {
+              newAdvertises.add(matchedAdvertise);
             }
-          }
-          if (!compliant) {
-            Collections.sort(cpairs, new Comparator<ImmutablePair<PolicyAdvertise, RouteAdvertise>>() {
-              @Override
-              public int compare(ImmutablePair<PolicyAdvertise, RouteAdvertise> o1,
-                                 ImmutablePair<PolicyAdvertise, RouteAdvertise> o2) {
-                return o1.getRight().route.size() - o2.getRight().route.size();
-              }
-            });
-            RouteAdvertise correctOtherRoute = cpairs.get(0).getRight();
-            RouteAdvertise propagateOtherAdvertise = new RouteAdvertise(correctOtherRoute, myPID);
-            advertisedRoutes.put(key, correctOtherRoute);
-            newAdvertises.add(propagateOtherAdvertise);
-          }
-        } else {
-          if (!advertisedPolicies.containsKey(key)) {
-            advertisedPolicies.put(key, policyAdvertise);
-            PolicyAdvertise propagateAdvertise = new PolicyAdvertise(policyAdvertise, myPID);
-            newAdvertises.add(propagateAdvertise);
           }
         }
       }
     }
-    return newAdvertises;
+    return newPair;
   }
 
-  /*
-  Find matching advertisements with the received one and return all the routes that need to be
-  updated and propagated.
-  If there is already an compliant advertisement, check is the new routeAdvertise is compliant
-  and choose to update or not
-  Else: Check if there is an matching advertisement in the other direction, verify the
-  conjunct path
-      If no: advertise any path for the src-dst pair
+  //TODO: The logic is about the same as receiveStAdvertise, consider mering
+  /**
+   * When receiving a route advertisement, two possible actions:
+   * 1. install routing flows with both source and destination specified
+   * 2. install destination only routing flows.
+   * But we only propagate is once.
+   * @param routeAdvertise
+   * @return
    */
-  public ArrayList<RouteAdvertise> receiveStAdvertise(RouteAdvertise routeAdvertise) {
-    ArrayList<RouteAdvertise> newAdvertises = new ArrayList<>();
+  public ImmutablePair<List<RouteAdvertise>, List<RouteAdvertise>>
+    receiveAdvertise(RouteAdvertise routeAdvertise) {
+    ImmutablePair<List<RouteAdvertise>, List<RouteAdvertise>> ret =
+      new ImmutablePair<>(new ArrayList<>(), new ArrayList<>());
+    List<RouteAdvertise> configRoutes = ret.getLeft();
+    List<RouteAdvertise> propagateRoutes = ret.getRight();
+    Rectangle key = PrefixUtil.prefixPairToRectangle(routeAdvertise.destPrefix, DEFAULT_PREFIX);
+    routeIndex.insert(key);
+    addToBgpTable(key, routeAdvertise);
+    ArrayList<Rectangle> matchedKeys = new ArrayList<>(policyIndex.query(key));
+    if (matchedKeys.size() > 0) {
+      Collections.sort(matchedKeys, new Comparator<Rectangle>() {
+        @Override
+        public int compare(Rectangle o1, Rectangle o2) {
+          return (int) (o1.getArea() - o2.getArea());
+        }
+      });
+      //TODO more complex strategy for route policy matching
+      for (Rectangle matchedKey : matchedKeys) {
+        PolicyAdvertise policyAdvertise = policyTable.get(matchedKey);
+        if(isCompliant(policyAdvertise, routeAdvertise)) {
+          Rectangle newKey = key.intersect(matchedKey);
+          RouteAdvertise advertised = chosenRoutes.get(newKey);
+          if (advertised == null
+            || advertised.length() > routeAdvertise.length()) {
+            chosenRoutes.put(newKey, routeAdvertise);
+            RouteAdvertise newAdvertise = new RouteAdvertise(routeAdvertise);
+            newAdvertise.srcPrefix = policyAdvertise.srcPrefix;
+            configRoutes.add(newAdvertise);
+            if(!advertisedRoutes.contains(routeAdvertise)) {
+              propagateRoutes.add(routeAdvertise);
+              advertisedRoutes.add(routeAdvertise);
+            }
+          }
+        }
+      }
+    }
+
+    if (!chosenRoutes.containsKey(key)
+        || chosenRoutes.get(key).length() > routeAdvertise.length()) {
+      chosenRoutes.put(key, routeAdvertise);
+      configRoutes.add(routeAdvertise);
+      if(!advertisedRoutes.contains(routeAdvertise)) {
+        propagateRoutes.add(routeAdvertise);
+        advertisedRoutes.add(routeAdvertise);
+      }
+    }
+    return ret;
+  }
+
+  public RouteAdvertise receiveStAdvertise(RouteAdvertise routeAdvertise) {
+    boolean propagate = false;
     String destPrefix = routeAdvertise.destPrefix;
     String srcPrefix = routeAdvertise.srcPrefix;
     Rectangle key = PrefixUtil.prefixPairToRectangle(destPrefix, srcPrefix);
-    addToStPairBgpTable(key, routeAdvertise);
+    addToBgpTable(key, routeAdvertise);
     routeIndex.insert(key);
-    ArrayList<ImmutablePair<PolicyAdvertise, RouteAdvertise>> existingCompliantPairs =
-      compliantPairs.getOrDefault(key, new ArrayList<>());
-    if (existingCompliantPairs.size() > 0 && existingCompliantPairs.get(0).getRight().srcPrefix
-      != null) {
-      //Do nothing for now
-    } else {
-      ArrayList<Rectangle> matchedKeys = new ArrayList<>(policyIndex.query(key));
-      if (matchedKeys.size() > 0) {
-        Collections.sort(matchedKeys, new Comparator<Rectangle>() {
-          @Override
-          public int compare(Rectangle o1, Rectangle o2) {
-            return (int) (o1.getArea() - o2.getArea());
-          }
-        });
-        ArrayList<ImmutablePair<PolicyAdvertise, RouteAdvertise>> cpairs = new ArrayList<>();
-        //TODO more complex strategy for route policy matching
-        for (Rectangle matchedKey : matchedKeys) {
-          PolicyAdvertise policyAdvertise = policyTable.get(matchedKey);
-          String token2 = policyAdvertise.safeToken;
-          RouteAdvertise newAd = new RouteAdvertise(routeAdvertise, myPID);
-          //TODO: update policy and add it back
-          newAd.route.remove(newAd.route.size() - 1);
-          String path = newAd.getFormattedPath();
-          //don't use path containing self because the tag set for self is not linked yet.
-          if (safeManager.verifyCompliantPath(policyAdvertise.ownerPID, routeAdvertise.getSrcPrefix(), routeAdvertise.getDestPrefix(), token2, routeAdvertise.safeToken, newAd.getFormattedPath())) {
-            cpairs.add(new ImmutablePair<PolicyAdvertise, RouteAdvertise>(policyAdvertise, routeAdvertise));
-          }
+    //find overlapping policies
+    ArrayList<Rectangle> matchedKeys = new ArrayList<>(policyIndex.query(key));
+    if (matchedKeys.size() > 0) {
+      Collections.sort(matchedKeys, new Comparator<Rectangle>() {
+        @Override
+        public int compare(Rectangle o1, Rectangle o2) {
+          return (int) (o1.getArea() - o2.getArea());
         }
-        if (cpairs.size() > 0) {
-          compliantPairs.put(key, cpairs);
-          if (!routeAdvertise.equals(advertisedRoutes.getOrDefault(key, new RouteAdvertise()))) {
-            advertisedRoutes.put(key, routeAdvertise);
-            RouteAdvertise propagateAdvertise = new RouteAdvertise(routeAdvertise, myPID);
-            newAdvertises.add(propagateAdvertise);
+      });
+      //TODO more complex strategy for route policy matching
+      for (Rectangle matchedKey : matchedKeys) {
+        PolicyAdvertise policyAdvertise = policyTable.get(matchedKey);
+        if(isCompliant(policyAdvertise, routeAdvertise)) {
+          Rectangle newKey = key.intersect(matchedKey);
+          RouteAdvertise advertised = chosenRoutes.get(newKey);
+          if (advertised == null || advertised.srcPrefix == null
+            || advertised.length() > routeAdvertise.length()) {
+            chosenRoutes.put(newKey, routeAdvertise);
+            propagate = true;
           }
-        }
-      } else {
-        if (!advertisedRoutes.containsKey(key) || advertisedRoutes.get(key).route.size() > routeAdvertise.route.size()) {
-          advertisedRoutes.put(key, routeAdvertise);
-          RouteAdvertise propagateAdvertise = new RouteAdvertise(routeAdvertise, myPID);
-          newAdvertises.add(propagateAdvertise);
         }
       }
+    } else {
+      if (!chosenRoutes.containsKey(key)
+        || chosenRoutes.get(key).length() > routeAdvertise.length()) {
+        chosenRoutes.put(key, routeAdvertise);
+        propagate = true;
+      }
     }
-    return newAdvertises;
+    if(propagate) {
+      return routeAdvertise;
+    } else {
+      return null;
+    }
   }
-
 
   public RouteAdvertise initAdvertise(String userPid, String destPrefix) {
     RouteAdvertise advertise = new RouteAdvertise();
@@ -195,22 +205,9 @@ public class AdvertiseManager {
   }
 
   private void addToBgpTable(Rectangle key, RouteAdvertise routeAdvertise) {
-    if (!routeTable.containsKey(routeAdvertise.destPrefix)) {
-      ArrayList<RouteAdvertise> advertises = new ArrayList<>();
-      routeTable.put(key, advertises);
-    }
-    ArrayList<RouteAdvertise> routes = routeTable.get(key);
-    synchronized (routes) {
-      routes.add(routeAdvertise);
-    }
-  }
-
-  private void addToStPairBgpTable(Rectangle key, RouteAdvertise routeAdvertise) {
-    ArrayList<RouteAdvertise> stLists = routeTable.getOrDefault(key, new ArrayList());
-    synchronized (stLists) {
-      stLists.add(routeAdvertise);
-    }
-    routeTable.put(key, stLists);
+    ArrayList<RouteAdvertise> advertises = routeTable.computeIfAbsent(key,
+      k-> new ArrayList<>());
+    advertises.add(routeAdvertise);
   }
 
   private void addToStPairPolicyTable(Rectangle key, PolicyAdvertise policyAdvertise) {
@@ -221,6 +218,14 @@ public class AdvertiseManager {
     ArrayList<RouteAdvertise> advertises = new ArrayList<>();
     for (Rectangle key : routeTable.keySet()) {
       advertises.add(routeTable.get(key).get(0));
+    }
+    return advertises;
+  }
+
+  public ArrayList<PolicyAdvertise> getAllPolicies() {
+    ArrayList<PolicyAdvertise> advertises = new ArrayList<>();
+    for (Rectangle key : policyTable.keySet()) {
+      advertises.add(policyTable.get(key));
     }
     return advertises;
   }

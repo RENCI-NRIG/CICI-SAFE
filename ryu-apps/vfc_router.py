@@ -1995,10 +1995,10 @@ class OfCtl_after_v1_2(OfCtl):
         if outport is not None:
             actions.append(ofp_parser.OFPActionOutput(outport, 0))
 
-	if nw_src and nw_dst:
-		self.set_icmp_reply_flow(cookie, priority, dl_type=dl_type, dl_vlan=dl_vlan,
-			      nw_dst=nw_dst, dst_mask=dst_mask,
-			      idle_timeout=idle_timeout, actions=actions)
+	#if nw_src and nw_dst:
+	#	self.set_icmp_reply_flow(cookie, priority, dl_type=dl_type, dl_vlan=dl_vlan,
+	#		      nw_dst=nw_dst, dst_mask=dst_mask,
+	#		      idle_timeout=idle_timeout, actions=actions)
 
         self.set_flow(cookie, priority, dl_type=dl_type, dl_vlan=dl_vlan,
                       nw_src=nw_src, src_mask=src_mask,

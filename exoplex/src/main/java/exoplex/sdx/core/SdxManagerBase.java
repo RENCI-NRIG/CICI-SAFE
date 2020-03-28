@@ -10,6 +10,7 @@ import exoplex.sdx.bro.BroManager;
 import exoplex.sdx.core.exogeni.SliceHelper;
 import exoplex.sdx.core.restutil.NotifyResult;
 import exoplex.sdx.core.restutil.PeerRequest;
+import exoplex.sdx.network.AbstractRoutingManager;
 import exoplex.sdx.network.Link;
 import exoplex.sdx.network.RoutingManager;
 import exoplex.sdx.network.SdnUtil;
@@ -21,6 +22,7 @@ import org.apache.logging.log4j.Logger;
 import org.json.JSONObject;
 import safe.Authority;
 import safe.SdxRoutingSlang;
+import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -58,7 +60,7 @@ public class SdxManagerBase extends SliceHelper implements SdxManagerInterface {
   protected final ReentrantLock nodelock = new ReentrantLock();
   protected final ReentrantLock brolock = new ReentrantLock();
   protected HashMap<String, ArrayList<String>> edgeRouters = new HashMap<String, ArrayList<String>>();
-  protected RoutingManager routingmanager = new RoutingManager();
+  protected AbstractRoutingManager routingManager;
   protected AdvertiseManager advertiseManager;
   protected SafeManager safeManager = null;
   protected SliceManager serverSlice = null;
@@ -90,8 +92,9 @@ public class SdxManagerBase extends SliceHelper implements SdxManagerInterface {
 
 
   @Inject
-  public SdxManagerBase(Authority authority) {
+  public SdxManagerBase(Authority authority, AbstractRoutingManager routingManager) {
     super(authority);
+    this.routingManager = routingManager;
   }
 
   public String getSDNControllerIP() {
@@ -119,7 +122,7 @@ public class SdxManagerBase extends SliceHelper implements SdxManagerInterface {
   }
 
   public String getDPID(String rname) {
-    return routingmanager.getDPID(rname);
+    return routingManager.getDPID(rname);
   }
 
   protected void configSdnControllerAddr(String ip) {
@@ -289,7 +292,7 @@ public class SdxManagerBase extends SliceHelper implements SdxManagerInterface {
     Long t2 = System.currentTimeMillis();
     serverSlice.removeLink(stitchLinkName);
     serverSlice.commitAndWait();
-    routingmanager.removeExternalLink(stitchName, stitchName.split("_")[1]);
+    routingManager.removeExternalLink(stitchName, stitchName.split("_")[1]);
     releaseIP(Integer.valueOf(stitchName.split("_")[2]));
     updateOvsInterface(stitchNodeName);
     logger.debug("Finished UnStitching, time elapsed: " + (t2 - t1) + "\n");
@@ -340,7 +343,7 @@ public class SdxManagerBase extends SliceHelper implements SdxManagerInterface {
     usedip.add(ip_to_use);
     logLink.setIP(IPPrefix + ip_to_use);
     logLink.setMask(mask);
-    routingmanager.newExternalLink(logLink.getLinkName(),
+    routingManager.newExternalLink(logLink.getLinkName(),
       logLink.getIP(1),
       logLink.getNodeA(),
       logLink.getIP(2).split("/")[0]);
@@ -473,7 +476,7 @@ public class SdxManagerBase extends SliceHelper implements SdxManagerInterface {
   }
 
   private String getCoreRouterByEdgeRouter(String edgeRouterName) {
-    return routingmanager.getNeighbors(edgeRouterName).get(0);
+    return routingManager.getNeighbors(edgeRouterName).get(0);
   }
 
   protected  String findGatewayForPrefix(String prefix) {
@@ -503,113 +506,11 @@ public class SdxManagerBase extends SliceHelper implements SdxManagerInterface {
   }
 
   public String processPolicyAdvertise(PolicyAdvertise policyAdvertise) {
-    if(!coreProperties.doRouteAdvertise()) {
-      return "Safe routing disabled, no processing this request";
-    }
-    /*
-    if(safeEnabled && !safeManager.authorizeOwnPrefix(policyAdvertise.ownerPID, policyAdvertise.srcPrefix)){
-      logger.debug(String.format("%s doesn't own the source prefix %s", policyAdvertise.ownerPID,
-          policyAdvertise.srcPrefix));
-      return "Authorized policy advertise, the owner doesn't own the prefix";
-    }
-    */
-    //Verify the owner owns the source IP prefix
-
-    // route with both source and destination address, find matching pairs
-    ArrayList<AdvertiseBase> newAdvertises = advertiseManager.receiveStPolicy
-      (policyAdvertise);
-    for (int i = 0; i < newAdvertises.size(); i++) {
-      AdvertiseBase newAdvertise = newAdvertises.get(i);
-      if (newAdvertise instanceof RouteAdvertise) {
-        logger.info(String.format("%s Updating Bgp advertisement after receiving policies " +
-          "advertisement%s", coreProperties.getSliceName(), policyAdvertise.toString()));
-        logger.info(String.format("new advertise: %s", newAdvertise.toString()));
-        if (newAdvertise.route.size() > 1) {
-          //configure the route if the advertisement is not from a direct customer for access control
-          //routingmanager.retriveRouteOfPrefix(routeAdvertise.prefix, SDNController);
-          String customerReservId = customerNodes.get(((RouteAdvertise) newAdvertise).srcPid).iterator().next();
-          String gateway = customerGateway.get(customerReservId);
-          String edgeNode = routingmanager.getEdgeRouterByGateway(gateway);
-          if (newAdvertise.srcPrefix != null) {
-            logger.debug(String.format("Debug Msg: configuring route for policy %s\n new " +
-              "advertise: %s", policyAdvertise.toString(), newAdvertise.toString()));
-            routingmanager.removePath(newAdvertise.destPrefix, newAdvertise.srcPrefix,
-              getSDNController());
-            routingmanager.configurePath(newAdvertise.destPrefix, newAdvertise.srcPrefix,
-              edgeNode, gateway);
-          } else {
-            logger.debug(String.format("Debug Msg: configuring route for policy %s\n new " +
-              "advertise: %s", policyAdvertise.toString(), newAdvertise.toString()));
-            routingmanager.removePath(newAdvertise.destPrefix,
-              getSDNController());
-            routingmanager.configurePath(newAdvertise.destPrefix,
-              edgeNode, gateway,
-              getSDNController
-                ());
-          }
-        }
-        propagateBgpAdvertise((RouteAdvertise) newAdvertise, ((RouteAdvertise) newAdvertise).srcPid);
-      } else {
-        propagatePolicyAdvertise((PolicyAdvertise) newAdvertise);
-      }
-    }
-    return newAdvertises.stream().map(AdvertiseBase::toString).collect(Collectors.joining(","));
+    throw new NotImplementedException();
   }
 
   public String processBgpAdvertise(RouteAdvertise routeAdvertise) {
-    if(!coreProperties.doRouteAdvertise()) {
-      return "Safe routing disabled, not processing this request";
-    }
-    if (coreProperties.isSafeEnabled() && !safeManager.authorizeBgpAdvertise(routeAdvertise)) {
-      logger.warn(String.format("Unauthorized routeAdvertise :%s", routeAdvertise));
-      return "";
-    }
-    safeManager.postPathToken(routeAdvertise);
-    if (!routeAdvertise.hasSrcPrefix()) {
-      // routes with destination address only
-      //TODO: find mathcing pairs and correct the routes
-      RouteAdvertise newAdvertise = advertiseManager.receiveAdvertise(routeAdvertise);
-      if (newAdvertise == null) {
-        //No change
-        return "";
-      } else {
-        newAdvertise.safeToken = routeAdvertise.safeToken;
-        //Updates
-        //TODO retrive previous routes, how to do it safely?
-        if (routeAdvertise.route.size() > 1) {
-          //configure the route if the advertisement is not from a direct customer for access control
-          //routingmanager.retriveRouteOfPrefix(routeAdvertise.prefix, SDNController);
-          String customerReservId = customerNodes.get(routeAdvertise.advertiserPID).iterator().next();
-          String gateway = customerGateway.get(customerReservId);
-          String edgeNode = routingmanager.getEdgeRouterByGateway(gateway);
-          logger.debug(String.format("Debug Msg: configuring route for %s", routeAdvertise.toString
-            ()));
-          routingmanager.removePath(routeAdvertise.destPrefix, getSDNController());
-          routingmanager.configurePath(routeAdvertise.destPrefix, edgeNode, gateway, getSDNController
-            ());
-        }
-        propagateBgpAdvertise(newAdvertise, newAdvertise.srcPid);
-        return newAdvertise.toString();
-      }
-    } else {
-      // route with both source and destination address, find matching pairs
-      ArrayList<RouteAdvertise> newAdvertises = advertiseManager.receiveStAdvertise(routeAdvertise);
-      if (newAdvertises.size() > 0) {
-        String customerReservId = customerNodes.get(routeAdvertise.advertiserPID).iterator().next();
-        String gateway = customerGateway.get(customerReservId);
-        String edgeNode = routingmanager.getEdgeRouterByGateway(gateway);
-        logger.debug(String.format("Debug Msg: configuring route for %s", routeAdvertise.toString
-          ()));
-        routingmanager.removePath(routeAdvertise.destPrefix, routeAdvertise.srcPrefix,
-          getSDNController());
-        routingmanager.configurePath(routeAdvertise.destPrefix, routeAdvertise.srcPrefix, edgeNode,
-          gateway);
-      }
-      for (RouteAdvertise newAdvertise : newAdvertises) {
-        propagateBgpAdvertise(newAdvertise, routeAdvertise.advertiserPID);
-      }
-      return newAdvertises.stream().map(RouteAdvertise::toString).collect(Collectors.joining(","));
-    }
+    throw new NotImplementedException();
   }
 
   synchronized public PeerRequest processPeerRequest(PeerRequest peerRequest) {
@@ -626,7 +527,7 @@ public class SdxManagerBase extends SliceHelper implements SdxManagerInterface {
     NotifyResult notifyResult = new NotifyResult();
     notifyResult.message = "received notification for " + dest;
     boolean flag = false;
-    String router = routingmanager.getEdgeRouterByGateway(gateway);
+    String router = routingManager.getEdgeRouterByGateway(gateway);
     if (router == null) {
       logger.warn(logPrefix + "Cannot find a router with cusotmer gateway" + gateway);
       notifyResult.message = notifyResult.message + " Cannot find a router with customer gateway " +
@@ -647,8 +548,8 @@ public class SdxManagerBase extends SliceHelper implements SdxManagerInterface {
         notifyResult.safeKeyHash = safeManager.getSafeKeyHash();
       }
       //monitor the frist package
-      routingmanager.monitorOnAllRouter(dest, SdnUtil.DEFAULT_ROUTE);
-      routingmanager.monitorOnAllRouter(SdnUtil.DEFAULT_ROUTE, dest);
+      routingManager.monitorOnAllRouter(dest, SdnUtil.DEFAULT_ROUTE);
+      routingManager.monitorOnAllRouter(SdnUtil.DEFAULT_ROUTE, dest);
     }
     return notifyResult;
   }
@@ -712,7 +613,7 @@ public class SdxManagerBase extends SliceHelper implements SdxManagerInterface {
     if (customerPrefixes.containsKey(customerSafeKeyHash)) {
       customerPrefixes.get(customerSafeKeyHash).remove(prefix);
     }
-    routingmanager.retriveRouteOfPrefix(prefix, SDNController);
+    routingManager.retriveRouteOfPrefix(prefix, SDNController);
   }
 
   synchronized public String stitchChameleon(String site, String nodeName, String customer_keyhash, String stitchport,
@@ -766,7 +667,7 @@ public class SdxManagerBase extends SliceHelper implements SdxManagerInterface {
     }
     result = result.replace("\n", "");
     logger.debug(String.format("Get router info %s %s %s", nodeName, mip, result));
-    routingmanager.newRouter(nodeName, result, getSDNController(), mip);
+    routingManager.newRouter(nodeName, result, getSDNController(), mip);
   }
 
   protected void configRouters(SliceManager slice) {
@@ -812,8 +713,8 @@ public class SdxManagerBase extends SliceHelper implements SdxManagerInterface {
   }
 
   public String delMirror(String dpid, String source, String dst) {
-    String res = routingmanager.delMirror(SDNController, dpid, source, dst);
-    res += "\n" + routingmanager.delMirror(SDNController, dpid, dst, source);
+    String res = routingManager.delMirror(SDNController, dpid, source, dst);
+    res += "\n" + routingManager.delMirror(SDNController, dpid, dst, source);
     return res;
   }
 

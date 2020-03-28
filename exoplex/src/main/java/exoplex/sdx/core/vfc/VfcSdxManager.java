@@ -7,21 +7,19 @@ import exoplex.sdx.advertise.RouteAdvertise;
 import exoplex.sdx.core.CoreProperties;
 import exoplex.sdx.core.SdxManagerBase;
 import exoplex.sdx.core.restutil.NotifyResult;
+import exoplex.sdx.network.AbstractRoutingManager;
 import exoplex.sdx.network.Link;
 import exoplex.sdx.network.SdnUtil;
 import exoplex.sdx.safe.SafeManager;
 import exoplex.sdx.slice.SliceManager;
 import exoplex.sdx.slice.vfc.VfcSliceManager;
 import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.json.JSONObject;
 import safe.Authority;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class VfcSdxManager extends SdxManagerBase {
 
@@ -29,8 +27,8 @@ public class VfcSdxManager extends SdxManagerBase {
   static String routerPattern = "(vfc.*)";
 
   @Inject
-  public VfcSdxManager(Authority authority) {
-    super(authority);
+  public VfcSdxManager(Authority authority, AbstractRoutingManager routingManager) {
+    super(authority, routingManager);
     logger = LogManager.getLogger(VfcSdxManager.class);
   }
 
@@ -102,7 +100,7 @@ public class VfcSdxManager extends SdxManagerBase {
   protected void configRouter(String nodeName) {
     logger.debug(String.format("Configuring router %s", nodeName));
     String result = serverSlice.getDpid(nodeName, coreProperties.getSshKey());
-    routingmanager.newRouter(nodeName, result, serverSlice.getController(nodeName)
+    routingManager.newRouter(nodeName, result, serverSlice.getController(nodeName)
       , null);
   }
 
@@ -143,7 +141,7 @@ public class VfcSdxManager extends SdxManagerBase {
     //add all interfaces other than eth0 to ovs bridge br0
     configRouters(serverSlice);
 
-    //routingmanager.waitTillAllOvsConnected(SDNController, serverSlice.mocked);
+    //routingManager.waitTillAllOvsConnected(SDNController, serverSlice.mocked);
 
     Set<String> keyset = links.keySet();
     //logger.debug(keyset);
@@ -157,7 +155,7 @@ public class VfcSdxManager extends SdxManagerBase {
         logLink.setMask(mask);
       }
       //logger.debug(logLink.nodea+":"+logLink.getIP(1)+" "+logLink.nodeb+":"+logLink.getIP(2));
-      routingmanager.newInternalLink(logLink.getLinkName(), logLink.getIP(1),
+      routingManager.newInternalLink(logLink.getLinkName(), logLink.getIP(1),
         logLink.getNodeA(), logLink.getIP(2), logLink.getNodeB(), logLink.getCapacity());;
     }
   }
@@ -180,7 +178,7 @@ public class VfcSdxManager extends SdxManagerBase {
 
   @Override
   public void delFlows() {
-    routingmanager.deleteAllFlows();
+    routingManager.deleteAllFlows();
   }
 
   synchronized public JSONObject stitchVfc(
@@ -215,12 +213,12 @@ public class VfcSdxManager extends SdxManagerBase {
       if (coreProperties.isSafeEnabled()) {
         res.put("safeKeyHash", safeManager.getSafeKeyHash());
       }
-      routingmanager.newExternalLink(
+      routingManager.newExternalLink(
         logLink.getLinkName(),
         ip,
         logLink.getNodeA(),
         gateway);
-      //routingmanager.configurePath(ip,node.getName(),ip.split("/")[0],SDNController);
+      //routingManager.configurePath(ip,node.getName(),ip.split("/")[0],SDNController);
       logger.info(logPrefix + "stitching operation  completed, time elapsed(s): " + (System
         .currentTimeMillis() - start) / 1000);
 
@@ -247,7 +245,7 @@ public class VfcSdxManager extends SdxManagerBase {
     NotifyResult notifyResult = new NotifyResult();
     notifyResult.message = "received notification for " + dest;
     boolean flag = false;
-    String router = routingmanager.getEdgeRouterByGateway(gateway);
+    String router = routingManager.getEdgeRouterByGateway(gateway);
     if (router == null) {
       logger.warn(logPrefix + "Cannot find a router with cusotmer gateway" + gateway);
       notifyResult.message = notifyResult.message + " Cannot find a router with customer gateway " +
@@ -325,25 +323,25 @@ public class VfcSdxManager extends SdxManagerBase {
           self_prefix, target_prefix));
       }
     }
-    String n1 = routingmanager.getEdgeRouterByGateway(prefixGateway.get(self_prefix));
+    String n1 = routingManager.getEdgeRouterByGateway(prefixGateway.get(self_prefix));
     String n2 = null;
     if (prefixGateway.containsKey(target_prefix)) {
-      n2 = routingmanager.getEdgeRouterByGateway(prefixGateway.get(target_prefix));
+      n2 = routingManager.getEdgeRouterByGateway(prefixGateway.get(target_prefix));
     } else {
       RouteAdvertise advertise = advertiseManager.getAdvertise(target_prefix, self_prefix);
       if (advertise != null) {
         String peerNode = customerNodes.get(advertise.advertiserPID).iterator().next();
-        n2 = routingmanager.getEdgeRouterByGateway(customerGateway.get(peerNode));
+        n2 = routingManager.getEdgeRouterByGateway(customerGateway.get(peerNode));
       }
     }
     if (n1 == null || n2 == null) {
       return "Prefix unrecognized.";
     }
-    if (!routingmanager.findPath(n1, n2, bandwidth)) {
+    if (!routingManager.findPath(n1, n2, bandwidth)) {
       return "Cannot find a path";
     } else {
       logger.debug("Available path found, configuring routes");
-      if (routingmanager.configurePath(self_prefix, n1, target_prefix, n2, findGatewayForPrefix
+      if (routingManager.configurePath(self_prefix, n1, target_prefix, n2, findGatewayForPrefix
         (self_prefix), bandwidth)
       ) {
         logger.info(logPrefix + "Routing set up for " + self_prefix + " and " + target_prefix);

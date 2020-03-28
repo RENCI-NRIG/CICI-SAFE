@@ -4,6 +4,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.List;
 
 //TODO: differentiate between policy advertisement and route advertisement
 public class AdvertiseBase {
@@ -33,6 +34,16 @@ public class AdvertiseBase {
     route.addAll(advertise.route);
   }
 
+  public AdvertiseBase(AdvertiseBase advertise) {
+    this.ownerPID = advertise.ownerPID;
+    this.destPrefix = advertise.destPrefix;
+    this.srcPrefix = advertise.srcPrefix;
+    //Set the safe token to the previous one first, for authorizing neighbor ASes. May update later.
+    this.safeToken = advertise.safeToken;
+    route = new ArrayList<>();
+    route.addAll(advertise.route);
+  }
+
   public String getLength() {
     return String.valueOf(route.size());
   }
@@ -58,7 +69,11 @@ public class AdvertiseBase {
   }
 
   public String getFormattedPath() {
-    String path = String.join(",", route);
+    return getFormattedPath(route);
+  }
+
+  public static String getFormattedPath(List<String> routeList) {
+    String path = String.join(",", routeList);
     return String.format("[%s]", path);
   }
 
@@ -68,9 +83,9 @@ public class AdvertiseBase {
 
   public JSONObject toJsonObject() {
     JSONObject obj = new JSONObject();
-    obj.put("ownerPID", ownerPID);
-    obj.put("destPrefix", destPrefix);
     obj.put("srcPrefix", srcPrefix);
+    obj.put("destPrefix", destPrefix);
+    obj.put("ownerPID", ownerPID);
     obj.put("advertiserPID", advertiserPID);
     obj.put("route", new JSONArray(route));
     obj.put("safeToken", safeToken);

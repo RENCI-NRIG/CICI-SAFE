@@ -10,7 +10,7 @@ import org.json.JSONObject;
 
 import java.util.*;
 
-public class RoutingManager {
+public class RoutingManager extends AbstractRoutingManager {
   final static Logger logger = LogManager.getLogger(RoutingManager.class);
   final static Logger sdnLogger = LogManager.getLogger("SdnCmds");
   final static int MAX_RATE = 2000000;
@@ -26,6 +26,7 @@ public class RoutingManager {
   private HashMap<String, String> macInterfaceMap = new HashMap<>();
   private HashMap<String, String> macPortMap = new HashMap<>();
   private HashMap<String, String> linkGateway = new HashMap<>();
+  private HashMap<String, String> prefixGatewayMap = new HashMap<>();
 
   //pathIds of paths configured for the ip prefix
   private HashMap<String, HashSet<String>> prefixPaths = new HashMap<>();
@@ -36,7 +37,7 @@ public class RoutingManager {
     networkManager = new NetworkManager();
   }
 
-  public static String postSdnCmd(String cmd, JSONObject params) {
+  private static String postSdnCmd(String cmd, JSONObject params) {
     sdnLogger.info(String.format("%s\n%s", cmd, params.toString()));
     logger.debug(String.format("curl -X POST -d '%s' %s", params.toString(), cmd));
     String res = HttpUtil.postJSON(cmd, params);
@@ -195,20 +196,35 @@ public class RoutingManager {
     try {
       ArrayList<String[]> paths = getBroadcastRoutes(gwdpid, gateway);
       String pathId = getPathID(null, destIP);
-
-      pairPath.put(pathId, paths);
+      prefixGatewayMap.put(pathId, gateway);
       if (!prefixPaths.containsKey(destIP)) {
         prefixPaths.put(destIP, new HashSet<>());
       }
       prefixPaths.get(destIP).add(pathId);
-
+      ArrayList<String[]> oldPaths = pairPath.getOrDefault(pathId, new ArrayList<>());
       for (String[] path : paths) {
         String controller =
           networkManager.getRouterByDPID(path[0]).getController();
-        String res = singleStepRouting(destIP, path[1], path[0], controller);
+        boolean update = true;
+        for(String[] oldPath: oldPaths) {
+          if(oldPath[0].equals(path[0]) && oldPath[1].equals(path[1])) {
+            if (route_id.containsKey(getRouteKey(pathId, oldPath[0]))) {
+              update = false;
+              break;
+            }
+          }
+        }
+        if(update) {
+          int routeid = route_id.getOrDefault(getRouteKey(pathId, path[0]), -1);
+          if(routeid != -1) {
+            deleteRoute(path[0], String.valueOf(routeid));
+          }
+          String res = singleStepRouting(destIP, path[1], path[0], controller);
+        }
         //addRoute(destIP, path[1], path[0], pathId, controller);
         //logger.debug(path[0]+" "+path[1]);
       }
+      pairPath.put(pathId, paths);
     } catch (Exception e) {
       e.printStackTrace();
     }
@@ -225,28 +241,54 @@ public class RoutingManager {
     }
     try {
       ArrayList<String[]> paths = getBroadcastRoutes(gwdpid, gateway);
-      String pathId = getPathID(null, destIP);
-
+      String pathId = getPathID(srcIP, destIP);
+      prefixGatewayMap.put(pathId, gateway);
       pairPath.put(pathId, paths);
       if (!prefixPaths.containsKey(destIP)) {
         prefixPaths.put(destIP, new HashSet<>());
       }
       prefixPaths.get(destIP).add(pathId);
-
+      ArrayList<String[]> oldPaths = pairPath.getOrDefault(pathId, new ArrayList<>());
       for (String[] path : paths) {
         String controller =
           networkManager.getRouterByDPID(path[0]).getController();
-        String res = singleStepRouting(destIP, srcIP, path[1], path[0], controller);
-        //addRoute(destIP, path[1], path[0], pathId, controller);
-        //logger.debug(path[0]+" "+path[1]);
+        boolean update = true;
+        for(String[] oldPath: oldPaths) {
+          if(oldPath[0].equals(path[0]) && oldPath[1].equals(path[1])) {
+            if (route_id.containsKey(getRouteKey(pathId, oldPath[0]))) {
+              update = false;
+              break;
+            }
+          }
+        }
+        if(update) {
+          int routeid = route_id.getOrDefault(getRouteKey(pathId, path[0]), -1);
+          if(routeid != -1) {
+            deleteRoute(path[0], String.valueOf(routeid));
+          }
+          String res = singleStepRouting(destIP, srcIP, path[1], path[0],
+            controller);
+        }
       }
     } catch (Exception e) {
       e.printStackTrace();
     }
   }
 
+  public String getGateway(String dstIP) {
+    String pathId = getPathID(null, dstIP);
+    return prefixGatewayMap.get(pathId);
+  }
+
+  public String getGateway(String dstIP, String srcIP) {
+    String pathId = getPathID(srcIP, dstIP);
+    return prefixGatewayMap.get(pathId);
+  }
+
   //gateway is the gateway for nodename
-  public boolean configurePath(String dstIP, String dstNode, String srcIP, String srcNode,
+  public synchronized boolean configurePath(String dstIP, String dstNode,
+                               String srcIP,
+                               String srcNode,
                                String gateway, String bandWitdth) {
     long bw = Long.valueOf(bandWitdth);
     return configurePath(dstIP, dstNode, srcIP, srcNode, gateway, bw);
@@ -307,25 +349,25 @@ public class RoutingManager {
   }
 
 
-  public void removePath(String dstIP, String controller) {
-    logger.info(String.format("removePath %s %s", dstIP, controller));
+  public void removePath(String dstIP) {
+    logger.info(String.format("removePath %s", dstIP));
     try {
-      removePathId(getPathID(null, dstIP), controller);
+      removePathId(getPathID(null, dstIP));
     } catch (Exception e) {
-      logger.warn(String.format("Exception when removing path %s %s", dstIP, controller));
+      logger.warn(String.format("Exception when removing path %s", dstIP));
     }
   }
 
-  public void removePath(String dstIP, String srcIP, String controller) {
-    logger.info(String.format("removePath %s %s %s", dstIP, srcIP, controller));
+  public void removePath(String dstIP, String srcIP) {
+    logger.info(String.format("removePath %s %s", dstIP, srcIP));
     try {
-      removePathId(getPathID(dstIP, srcIP), controller);
+      removePathId(getPathID(dstIP, srcIP));
     } catch (Exception e) {
-      logger.warn(String.format("Exception when removing path %s %s %s", dstIP, srcIP, controller));
+      logger.warn(String.format("Exception when removing path %s %s", dstIP, srcIP));
     }
   }
 
-  private void removePathId(String pathId, String controller) {
+  private void removePathId(String pathId) {
     if (pairPath.containsKey(pathId)) {
       ArrayList<String[]> paths = pairPath.get(pathId);
       for (String[] path : paths) {
@@ -341,7 +383,7 @@ public class RoutingManager {
   public void retriveRouteOfPrefix(String prefix, String sdnController) {
     if (prefixPaths.containsKey(prefix)) {
       for (String pathId : prefixPaths.get(prefix)) {
-        removePathId(pathId, sdnController);
+        removePathId(pathId);
       }
     }
   }

@@ -13,7 +13,7 @@ public class MultiSdxSDSetting extends AbstractTestSetting {
     numSdx = 4;
     clientArgs = new String[]{"-c", exoplexDir +
       "client-config/multisdx/client" + ".conf"};
-    sliceNameSuffix = "tc";
+    sliceNameSuffix = "cn";
 
     addSdxNeighbors();
     addClientConnectionPairs();
@@ -61,7 +61,7 @@ public class MultiSdxSDSetting extends AbstractTestSetting {
   public void addSdxSlices() {
     int sdxKeyBase = 100;
     int sdxIpBase = 100;
-    String[] sliceNames = new String[]{"SDX-1", "NSP-1", "NSP-2", "SDX-2"};
+    String[] sliceNames = new String[]{"S1-cn", "N1-cn", "N2-cn", "S2-cn"};
     for (int i = 0; i < numSdx; i++) {
       String sdxSliceName = sliceNames[i];
       sdxConfs.put(sdxSliceName, String.format("%ssdx%s.conf", sdxConfigDir, i + 1));
@@ -81,7 +81,7 @@ public class MultiSdxSDSetting extends AbstractTestSetting {
     int keyBase = 10;
     int ipBase = 10;
     for (int i = 0; i < clientSites.size(); i++) {
-      String clientName = "c" + i + "-" + sliceNameSuffix;
+      String clientName = "c" + i + sliceNameSuffix;
       clientSlices.add(clientName);
       clientKeyMap.put(clientName, "key_p" + (keyBase + i));
       clientSiteMap.put(clientName, clientSites.get(i));
@@ -97,6 +97,10 @@ public class MultiSdxSDSetting extends AbstractTestSetting {
     clientSdxMap.put(clientSlices.get(1), sdxSliceNames.get(0));
     clientSdxMap.put(clientSlices.get(2), sdxSliceNames.get(3));
     clientSdxMap.put(clientSlices.get(3), sdxSliceNames.get(3));
+    clientSdxNode.put(clientSlices.get(0), "e0");
+    clientSdxNode.put(clientSlices.get(1), "e0");
+    clientSdxNode.put(clientSlices.get(2), "e1");
+    clientSdxNode.put(clientSlices.get(3), "e1");
   }
 
   public void setSdxASTags() {

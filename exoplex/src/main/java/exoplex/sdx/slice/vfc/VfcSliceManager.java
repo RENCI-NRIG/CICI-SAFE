@@ -48,6 +48,10 @@ public class VfcSliceManager extends SliceManager {
   public void permitStitch(String secret, String GUID) throws TransportException {
   }
 
+  public boolean revokeStitch(String GUID) throws TransportException {
+    return true;
+  }
+
   public String permitStitch(String GUID) throws TransportException {
     return null;
   }
@@ -63,6 +67,14 @@ public class VfcSliceManager extends SliceManager {
     //  "-physnet1", "192.168.201.10");
     //networkManager.addLink("stitch_net-physnet1_192_168_202_1_24", "192.168.202.1/24", "net" +
     //  "-physnet1", "192.168.202.10");
+  }
+
+  public void expectOneMoreInterface(String node){
+
+  }
+
+  public void waitForNewInterfaces(String node) {
+
   }
 
   public void loadSlice(String topofile) throws Exception {

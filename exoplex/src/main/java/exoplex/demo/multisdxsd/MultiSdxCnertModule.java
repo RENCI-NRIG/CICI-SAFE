@@ -14,14 +14,14 @@ import exoplex.sdx.slice.exogeni.ExoSliceManager;
 import safe.Authority;
 import safe.multisdx.AuthorityMockMultiSdx;
 
-public class MultiSdxSDModule extends AbstractModule {
+public class MultiSdxCnertModule extends AbstractModule{
   @Override
   protected void configure() {
     bind(Authority.class).to(AuthorityMockMultiSdx.class);
-    bind(AbstractTestSetting.class).to(MultiSdxSDSetting.class);
-    bind(SdxServerBase.class).to(ExoSdxServer.class);
-    bind(AbstractRoutingManager.class).to(RoutingManager.class);
+    bind(AbstractTestSetting.class).to(MultiSdxCnertSetting.class);
     bind(AbstractTestSlice.class).to(MultiSdxSlice.class);
+    bind(AbstractRoutingManager.class).to(RoutingManager.class);
+    bind(SdxServerBase.class).to(ExoSdxServer.class);
     bind(SliceManagerFactory.class).toProvider(FactoryProvider.newFactory(SliceManagerFactory
       .class, ExoSliceManager.class));
   }

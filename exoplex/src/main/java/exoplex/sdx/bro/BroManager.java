@@ -1,6 +1,7 @@
 package exoplex.sdx.bro;
 
 import exoplex.sdx.core.exogeni.ExoSdxManager;
+import exoplex.sdx.network.AbstractRoutingManager;
 import exoplex.sdx.network.RoutingManager;
 import exoplex.sdx.slice.SliceManager;
 import org.apache.logging.log4j.LogManager;
@@ -17,14 +18,14 @@ public class BroManager {
   final Logger logger = LogManager.getLogger(BroManager.class);
   private final ReentrantLock ticketLock = new ReentrantLock();
   SliceManager slice = null;
-  RoutingManager networkManager = null;
+  AbstractRoutingManager networkManager = null;
   ExoSdxManager exoSdxManager = null;
   private HashMap<String, Long> requiredbw = new HashMap<>();
   private HashMap<String, ArrayList<BroInstance>> routerBroMap = new HashMap<>();
   private LinkedList<BroFlow> jobQueue = new LinkedList<BroFlow>();
   private HashMap<String, Long> tickedBroCapacity = new HashMap<>();
 
-  public BroManager(SliceManager slice, RoutingManager networkManager, ExoSdxManager exoSdxManager) {
+  public BroManager(SliceManager slice, AbstractRoutingManager networkManager, ExoSdxManager exoSdxManager) {
     this.slice = slice;
     this.networkManager = networkManager;
     this.exoSdxManager = exoSdxManager;

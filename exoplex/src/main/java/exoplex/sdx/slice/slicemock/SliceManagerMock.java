@@ -48,7 +48,6 @@ public class SliceManagerMock extends SliceManager implements Serializable {
   private ISliceTransportAPIv1 sliceProxy;
   private SliceAccessContext<SSHAccessToken> sctx;
   private Slice slice;
-  private HashSet<String> reachableNodes = new HashSet<>();
 
   @Inject
   public SliceManagerMock(@Assisted("sliceName") String sliceName,
@@ -80,6 +79,12 @@ public class SliceManagerMock extends SliceManager implements Serializable {
     }
     return sliceProxy;
   }
+
+  public void expectOneMoreInterface(String node){
+
+  }
+
+  public void waitForNewInterfaces(String node){}
 
   public void writeToFile(String fileName) {
     File f = new File(fileName);
@@ -133,6 +138,10 @@ public class SliceManagerMock extends SliceManager implements Serializable {
   public void createSlice() {
     logger.info(String.format("create %s", sliceName));
     slice = Slice.create(sliceProxy, sctx, sliceName);
+  }
+
+  public boolean revokeStitch(String GUID) throws TransportException {
+    return true;
   }
 
   public void permitStitch(String secret, String GUID) throws TransportException {
@@ -361,15 +370,6 @@ public class SliceManagerMock extends SliceManager implements Serializable {
 
   public String getComputeNode(String nm) {
     ComputeNode node = (ComputeNode) this.slice.getResourceByName(nm);
-    while (node == null || node.getState() == null || node.getManagementIP() == null) {
-      logger.debug(String.format("getComputeNode %s", nm));
-      try {
-        reloadSlice();
-      } catch (Exception e) {
-
-      }
-      node = (ComputeNode) this.slice.getResourceByName(nm);
-    }
     return node.getName();
   }
 

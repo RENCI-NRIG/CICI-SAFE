@@ -5,7 +5,6 @@ import com.google.inject.Inject;
 import com.google.inject.Injector;
 import com.google.inject.Provider;
 import exoplex.client.exogeni.ExogeniClientSlice;
-import exoplex.common.utils.Exec;
 import exoplex.demo.AbstractTestSetting;
 import exoplex.demo.AbstractTestSlice;
 import exoplex.sdx.core.exogeni.SliceHelper;

@@ -39,7 +39,7 @@ public class SingleSdxTest extends AbstractTest {
   public void before() throws Exception {
     deleteSliceAfterTest = true;
     initTests();
-    //deleteSlices();
+    deleteSlices();
     super.before();
   }
 

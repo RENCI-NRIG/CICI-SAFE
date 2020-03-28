@@ -16,12 +16,14 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.concurrent.locks.ReentrantLock;
 
 @Path("sdx")
 public class RestServiceBase {
   final static Logger logger = LogManager.getLogger(RestServiceBase.class);
   protected static HashMap<Integer, SdxManagerBase> sdxManagerMap = new HashMap<>();
   protected static HashSet<HttpServer> httpServers = new HashSet<>();
+  static ReentrantLock lock = new ReentrantLock();
 
   public static void registerHttpServer(HttpServer server) {
     httpServers.add(server);
@@ -54,7 +56,6 @@ public class RestServiceBase {
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.TEXT_PLAIN)
   public String processAdminCmd(@Context UriInfo uriInfo, AdminCmd cmd) {
-    logger.debug("STARTED");
     String result = null;
     logger.debug(uriInfo.getBaseUri());
     SdxManagerBase exoSdxManager = sdxManagerMap.get(uriInfo.getBaseUri().getPort());
@@ -67,7 +68,6 @@ public class RestServiceBase {
       logger.error(errors);
       result = String.format("Failed: %s", e.getMessage());
     }
-    logger.debug("COMPLETED");
     return result;
   }
 
@@ -76,7 +76,6 @@ public class RestServiceBase {
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.TEXT_PLAIN)
   public String processFlowPacketIn(@Context UriInfo uriInfo, Flow packetin) {
-    logger.debug("STARTED");
     String result = null;
     logger.debug(uriInfo.getBaseUri());
     SdxManagerBase exoSdxManager = sdxManagerMap.get(uriInfo.getBaseUri().getPort());
@@ -89,7 +88,6 @@ public class RestServiceBase {
       logger.error(errors);
       result = String.format("Failed: %s", e.getMessage());
     }
-    logger.debug("COMPLETED");
     return result;
   }
 
@@ -97,21 +95,21 @@ public class RestServiceBase {
   @Path("/bgp")
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.TEXT_PLAIN)
-  public String receiveBgpAdvertise(@Context UriInfo uriInfo, RouteAdvertise routeAdvertise) {
-    logger.debug("STARTED");
+  public synchronized String receiveBgpAdvertise(@Context UriInfo uriInfo,
+                                     RouteAdvertise routeAdvertise) {
+    lock.lock();
     String result = null;
     logger.debug(uriInfo.getBaseUri());
     SdxManagerBase exoSdxManager = sdxManagerMap.get(uriInfo.getBaseUri().getPort());
     logger.info(translatePids(String.format("%s got bgp advertisement %s", exoSdxManager.getSliceName(), routeAdvertise)));
     try {
       result = exoSdxManager.processBgpAdvertise(routeAdvertise);
+      logger.debug(result);
     } catch (Exception e) {
-      StringWriter errors = new StringWriter();
-      e.printStackTrace(new PrintWriter(errors));
-      logger.error(errors);
+      e.printStackTrace();
       result = String.format("Failed: %s", e.getMessage());
     }
-    logger.debug("COMPLETED");
+    lock.unlock();
     return result;
   }
 
@@ -119,7 +117,6 @@ public class RestServiceBase {
   @Path("/getpid")
   @Produces(MediaType.TEXT_PLAIN)
   public String getPid(@Context UriInfo uriInfo) {
-    logger.debug("STARTED");
     String result = null;
     logger.debug(uriInfo.getBaseUri());
     SdxManagerBase exoSdxManager = sdxManagerMap.get(uriInfo.getBaseUri().getPort());
@@ -132,7 +129,6 @@ public class RestServiceBase {
       logger.error(errors);
       result = String.format("Failed: %s", e.getMessage());
     }
-    logger.debug("COMPLETED");
     return result;
   }
 
@@ -140,7 +136,6 @@ public class RestServiceBase {
   @Path("/flow")
   @Produces(MediaType.TEXT_PLAIN)
   public String getFLow(@Context UriInfo uriInfo, Flow flow) {
-    logger.debug("STARTED");
     String result = null;
     logger.debug(uriInfo.getBaseUri());
     SdxManagerBase exoSdxManager = sdxManagerMap.get(uriInfo.getBaseUri().getPort());
@@ -162,7 +157,6 @@ public class RestServiceBase {
       logger.error(errors);
       result = String.format("Failed: %s", e.getMessage());
     }
-    logger.debug("COMPLETED");
     return result;
   }
 
@@ -171,7 +165,6 @@ public class RestServiceBase {
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.TEXT_PLAIN)
   public String receivePolicyAdvertise(@Context UriInfo uriInfo, PolicyAdvertise policyAdvertise) {
-    logger.debug("STARTED");
     String result = null;
     logger.debug(uriInfo.getBaseUri());
     SdxManagerBase exoSdxManager = sdxManagerMap.get(uriInfo.getBaseUri().getPort());
@@ -184,7 +177,6 @@ public class RestServiceBase {
       logger.error(errors);
       result = String.format("Failed: %s", e.getMessage());
     }
-    logger.debug("COMPLETED");
     return result;
   }
 
@@ -193,7 +185,6 @@ public class RestServiceBase {
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.TEXT_PLAIN)
   public String connectionRequest(@Context UriInfo uriInfo, ConnectionRequest sr) {
-    logger.debug("STARTED");
     String result = null;
     SdxManagerBase exoSdxManager = sdxManagerMap.get(uriInfo.getBaseUri().getPort());
     logger.debug(String.format("%s got link request between %s and %s", exoSdxManager.getSliceName(), sr.self_prefix, sr.target_prefix));
@@ -206,7 +197,6 @@ public class RestServiceBase {
       logger.error(errors);
       result = String.format("Failed: %s", e.getMessage());
     }
-    logger.debug("COMPLETED");
     return result;
   }
 
@@ -215,7 +205,6 @@ public class RestServiceBase {
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.APPLICATION_JSON)
   public NotifyResult notifyPrefix(@Context UriInfo uriInfo, PrefixNotification pn) {
-    logger.debug("STARTED");
     NotifyResult result = null;
     try {
       SdxManagerBase exoSdxManager = sdxManagerMap.get(uriInfo.getBaseUri().getPort());
@@ -230,7 +219,6 @@ public class RestServiceBase {
       result.result = false;
       result.message = e.getMessage();
     }
-    logger.debug("COMPLETED");
     return result;
   }
 

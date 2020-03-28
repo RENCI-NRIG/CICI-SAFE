@@ -32,9 +32,7 @@ public class SingleSdxSetting extends AbstractTestSetting {
   @Override
   public void addClientSites() {
     clientSites.add("TAMU");
-    //clientSites.add("UH");
     clientSites.add("UH");
-    //clientSites.add("UFL");
   }
 
   @Override

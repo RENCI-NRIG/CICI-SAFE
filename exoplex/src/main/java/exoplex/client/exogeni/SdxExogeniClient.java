@@ -18,6 +18,7 @@ import exoplex.sdx.slice.Scripts;
 import exoplex.sdx.slice.SliceManager;
 import exoplex.sdx.slice.SliceManagerFactory;
 import exoplex.sdx.slice.SliceProperties;
+import exoplex.sdx.slice.exogeni.ExoSliceManager;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.json.JSONObject;
@@ -25,7 +26,6 @@ import safe.SdxRoutingSlang;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -340,7 +340,7 @@ public class SdxExogeniClient {
       logger.debug(res);
     }
     //Post SAFE sets
-    //postInitRouteSD
+    //postStartRouteSD
   }
 
   /**
@@ -421,19 +421,13 @@ public class SdxExogeniClient {
 
   private boolean addStitchPort(String spName, String nodeName, String stitchUrl, String vlan, long
     bw) {
-    int numInterfaces = serverSlice.getPhysicalInterfaces(nodeName).size();
+    serverSlice.expectOneMoreInterface(nodeName);
     serverSlice.refresh();
     try {
       String node = serverSlice.getComputeNode(nodeName);
       String mysp = serverSlice.addStitchPort(spName, vlan, stitchUrl, bw);
       serverSlice.stitchSptoNode(mysp, node);
-      int newNum;
-      if (serverSlice.commitAndWait(10, Arrays.asList(spName + "-net"))) {
-        do {
-          serverSlice.sleep(5);
-          newNum = serverSlice.getPhysicalInterfaces(nodeName).size();
-        } while (newNum <= numInterfaces);
-      }
+      serverSlice.waitForNewInterfaces(nodeName);
     } catch (Exception e) {
       e.printStackTrace();
       return false;
@@ -462,17 +456,16 @@ public class SdxExogeniClient {
       logger.debug(res);
     }
     //Post SAFE sets
-    //postInitRouteSD
+    //postStartRouteSD
 
-    String[] safeparams = new String[5];
+    String[] safeparams = new String[4];
     safeparams[0] = advertise.getSrcPrefix();
     safeparams[1] = advertise.getDestPrefix();
     safeparams[2] = advertise.getFormattedPath();
     String sdxPid = HttpUtil.get(coreProperties.getServerUrl() + "sdx/getpid");
     safeparams[3] = sdxPid;
-    safeparams[4] = String.valueOf(1);
     logger.debug(String.format("Safe principal Id of sdx server is %s", sdxPid));
-    String routeToken = safeManager.post(SdxRoutingSlang.postInitRouteSD, safeparams);
+    String routeToken = safeManager.post(SdxRoutingSlang.postStartRouteSD, safeparams);
     advertise.safeToken = routeToken;
     //pass the token when making bgpAdvertise
     advertiseBgpAsync(coreProperties.getServerUrl(), advertise);
@@ -513,7 +506,7 @@ public class SdxExogeniClient {
       if (coreProperties.isSafeEnabled() && coreProperties.doRouteAdvertise()) {
         //Make initRoute advertisement
         //dstip, path, targeas, length
-        String[] safeparams = new String[4];
+        String[] safeparams = new String[3];
         safeparams[0] = String.format("ipv4\\\"%s\\\"", params[1]);
         safeparams[1] = String.format("[%s]", safeManager.getSafeKeyHash());
         String sdxSafeKeyHash = jsonRes.getString("safeKeyHash");
@@ -521,8 +514,7 @@ public class SdxExogeniClient {
           logger.warn("SDX safekeyhash empty");
         }
         safeparams[2] = sdxSafeKeyHash;
-        safeparams[3] = String.valueOf(1);
-        String token = safeManager.post(SdxRoutingSlang.postInitRoute, safeparams);
+        String token = safeManager.post(SdxRoutingSlang.postStartRoute, safeparams);
         RouteAdvertise advertise = new RouteAdvertise();
         advertise.safeToken = token;
         advertise.advertiserPID = safeManager.getSafeKeyHash();
@@ -572,9 +564,7 @@ public class SdxExogeniClient {
       } else {
         jsonparams.put("ckeyhash", coreProperties.getSliceName());
       }
-      int interfaceNum = serverSlice.getPhysicalInterfaces(nodeName).size();
-      logger.debug(String.format(logPrefix + "Number of dataplane interfaces before " +
-        "stitching: %s", interfaceNum));
+      serverSlice.expectOneMoreInterface(nodeName);
       logger.debug(logPrefix + "Sending stitch request to Sdx server");
       String r = HttpUtil.postJSON(coreProperties.getServerUrl() + "sdx/stitchrequest", jsonparams);
       logger.debug(r);
@@ -584,13 +574,8 @@ public class SdxExogeniClient {
         logger.warn(logPrefix + "stitch request failed");
       } else {
         String ip = params[2] + "/" + params[3].split("/")[1];
+        serverSlice.waitForNewInterfaces(nodeName);
         List<String> interfaces = serverSlice.getPhysicalInterfaces(nodeName);
-        while (interfaces.size() <= interfaceNum) {
-          sleep(5);
-          interfaces = serverSlice.getPhysicalInterfaces(nodeName);
-          logger.debug(String.format(logPrefix + "Number of dataplane " +
-            "interfaces: %s", interfaces.size()));
-        }
         String newInterface = interfaces.get(interfaces.size() - 1);
         if(coreProperties.getQuaggaRoute()) {
           logger.info(logPrefix + "set IP address of the stitch interface to " + ip);

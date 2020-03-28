@@ -22,7 +22,6 @@ public class AreaBasedQuadTree {
   private AreaBasedQuadTree[] children;
 
   //Crossing filter set
-
   private PrefixTree cfsX;
 
   private PrefixTree cfsY;
