@@ -34,6 +34,16 @@ public class AdvertiseBase {
     route.addAll(advertise.route);
   }
 
+  public AdvertiseBase(AdvertiseBase advertise) {
+    this.ownerPID = advertise.ownerPID;
+    this.destPrefix = advertise.destPrefix;
+    this.srcPrefix = advertise.srcPrefix;
+    //Set the safe token to the previous one first, for authorizing neighbor ASes. May update later.
+    this.safeToken = advertise.safeToken;
+    route = new ArrayList<>();
+    route.addAll(advertise.route);
+  }
+
   public String getLength() {
     return String.valueOf(route.size());
   }

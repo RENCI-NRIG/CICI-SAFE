@@ -14,15 +14,18 @@ public class PolicyAdvertise extends AdvertiseBase {
 
   @Override
   public boolean equals(Object route) {
-    RouteAdvertise routeAdvertise = (RouteAdvertise) route;
+    PolicyAdvertise routeAdvertise = (PolicyAdvertise) route;
     if(!routeAdvertise.ownerPID.equals(this.ownerPID) ||
-      !routeAdvertise.srcPrefix.equals(this.srcPrefix) ||
       !routeAdvertise.destPrefix.equals(this.destPrefix)
     ) {
       return false;
     }
     if((this.safeToken == null && routeAdvertise.safeToken != null)
       || (this.safeToken != null && routeAdvertise.safeToken == null)) {
+      return false;
+    }
+    if((this.srcPrefix == null && routeAdvertise.srcPrefix != null)
+      || (this.srcPrefix != null && routeAdvertise.srcPrefix == null)) {
       return false;
     }
     if(this.safeToken != null && routeAdvertise.safeToken != null
@@ -36,5 +39,11 @@ public class PolicyAdvertise extends AdvertiseBase {
   public int hashCode() {
     return Objects.hash(this.ownerPID, this.advertiserPID,
       this.srcPrefix, this.destPrefix, String.join(",", this.route));
+  }
+
+  @Override
+  public String toString() {
+    //return toJsonObject().toString();
+    return String.format("src: %s dst: %s", srcPrefix, destPrefix);
   }
 }

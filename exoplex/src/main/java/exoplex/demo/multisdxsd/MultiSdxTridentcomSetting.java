@@ -34,7 +34,7 @@ public class MultiSdxTridentcomSetting extends MultiSdxSDLargeSetting {
   public void addClientSlices() {
     int keyBase = 10;
     int ipBase = 10;
-    String[] clientNames = new String[]{"c0-cn", "c1-cn", "c2-cn", "c3-cn"};
+    String[] clientNames = new String[]{"c0cn", "c1cn", "c2cn", "c3cn"};
     for (int i = 0; i < clientSites.size(); i++) {
       //String clientName = String.format("c%s-%s", i, sliceNameSuffix);
       String clientName = clientNames[i];
@@ -51,7 +51,8 @@ public class MultiSdxTridentcomSetting extends MultiSdxSDLargeSetting {
   public void addSdxSlices() {
     int sdxKeyBase = 100;
     int sdxIpBase = 110;
-    String[] sliceNames = new String[]{"S1cn", "N1cn", "N2cn", "N3cn", "N4cn", "S2cn"};
+    String[] sliceNames = new String[]{"S1-cn", "N1-cn", "N2-cn", "N3-cn",
+      "N4-cn", "S2-cn"};
     for (int i = 0; i < numSdx; i++) {
       String sdxSliceName = sliceNames[i];
       sdxConfs.put(sdxSliceName, String.format("%ssdx%s.conf", sdxConfigDir, i + 1));
@@ -68,15 +69,15 @@ public class MultiSdxTridentcomSetting extends MultiSdxSDLargeSetting {
 
   @Override
   public void addClientSites() {
-    clientSites.add("TAMU");
-    clientSites.add("TAMU");
-    clientSites.add("TAMU");
-    clientSites.add("TAMU");
+    clientSites.add("UFL");
+    clientSites.add("UFL");
+    clientSites.add("UFL");
+    clientSites.add("UFL");
   }
 
   @Override
   public void addSdxSites() {
-    String[] sites = new String[]{"TAMU", "TAMU", "TAMU", "TAMU", "TAMU"};
+    String[] sites = new String[]{"UFL", "UFL", "UFL", "UFL", "UFL"};
     sdxSites.put(sdxSliceNames.get(0), new String[]{sites[0], sites[1]});
     sdxSites.put(sdxSliceNames.get(1), new String[]{sites[1], sites[2]});
     sdxSites.put(sdxSliceNames.get(2), new String[]{sites[1], sites[2]});
@@ -107,7 +108,7 @@ public class MultiSdxTridentcomSetting extends MultiSdxSDLargeSetting {
   public void setClientASTagAcls() {
     clientASTagAcls.put(clientSlices.get(0), Arrays.asList("tag0", "tag2"));
     clientASTagAcls.put(clientSlices.get(2), Arrays.asList("tag0", "tag1"));
-    clientASTagAcls.put(clientSlices.get(1), Arrays.asList("tag0", "tag1"));
+    clientASTagAcls.put(clientSlices.get(1), Arrays.asList("tag1"));
     clientASTagAcls.put(clientSlices.get(3), Arrays.asList("tag1", "tag2"));
   }
 
@@ -122,22 +123,50 @@ public class MultiSdxTridentcomSetting extends MultiSdxSDLargeSetting {
   @Override
   public void setClientASTagAclsForSD() {
     //tag for inbound traffic
-    clientRouteASTagAcls.put(clientSlices.get(0), Arrays.asList(new ImmutablePair<String, String>("192.168.30.1/24", "tag0"),
-      new ImmutablePair<String, String>("192.168.40.1/24", "tag2")));
-    clientRouteASTagAcls.put(clientSlices.get(1), Arrays.asList(new ImmutablePair<String, String>("192.168.40.1/24", "tag0"),
-      new ImmutablePair<String, String>("192.168.40.1/24", "tag1")));
-    clientRouteASTagAcls.put(clientSlices.get(2), Arrays.asList(new ImmutablePair<String, String>("192.168.10.1/24", "tag0")
-      , new ImmutablePair<String, String>("192.168.10.1/24", "tag1")));
-    clientRouteASTagAcls.put(clientSlices.get(3), Arrays.asList(new ImmutablePair<String, String>("192.168.20.1/24", "tag1"),
-      new ImmutablePair<String, String>("192.168.10.1/24", "tag2")));
+
+    clientRouteASTagAcls.put(clientSlices.get(0),
+      Arrays.asList(
+        new ImmutablePair<>("192.168.30.1/24", "tag0"),
+        new ImmutablePair<>("192.168.40.1/24", "tag2")
+      ));
+    clientRouteASTagAcls.put(clientSlices.get(1),
+      Arrays.asList(
+        new ImmutablePair<>("192.168.40.1/24", "tag0"),
+        new ImmutablePair<>("192.168.40.1/24", "tag1")
+      ));
+    clientRouteASTagAcls.put(clientSlices.get(2),
+      Arrays.asList(
+        new ImmutablePair<>("192.168.10.1/24", "tag0"),
+        new ImmutablePair<>("192.168.10.1/24", "tag1")
+      ));
     //policy for outbound traffic
-    clientPolicyASTagAcls.put(clientSlices.get(0), Arrays.asList(new ImmutablePair<String, String>("192.168.30.1/24", "tag0"),
-      new ImmutablePair<String, String>("192.168.40.1/24", "tag2")));
-    clientPolicyASTagAcls.put(clientSlices.get(1), Arrays.asList(new ImmutablePair<String, String>("192.168.40.1/24", "tag0"),
-      new ImmutablePair<String, String>("192.168.40.1/24", "tag1")));
-    clientPolicyASTagAcls.put(clientSlices.get(2), Arrays.asList(new ImmutablePair<String, String>("192.168.10.1/24", "tag0")
-      , new ImmutablePair<String, String>("192.168.10.1/24", "tag1")));
-    clientPolicyASTagAcls.put(clientSlices.get(3), Arrays.asList(new ImmutablePair<String, String>("192.168.20.1/24", "tag1"),
-      new ImmutablePair<String, String>("192.168.10.1/24", "tag2")));
+    clientPolicyASTagAcls.put(clientSlices.get(0),
+      Arrays.asList(
+        new ImmutablePair<>("192.168.30.1/24", "tag0"),
+        new ImmutablePair<>("192.168.40.1/24", "tag2")
+      ));
+    clientPolicyASTagAcls.put(clientSlices.get(1),
+      Arrays.asList(
+        //new ImmutablePair<>("192.168.30.1/24", "tag0"),
+        new ImmutablePair<>("192.168.40.1/24", "tag0"),
+        new ImmutablePair<>("192.168.40.1/24", "tag1")
+      ));
+    clientPolicyASTagAcls.put(clientSlices.get(2),
+      Arrays.asList(
+        //new ImmutablePair<>("192.168.20.1/24", "tag0"),
+        new ImmutablePair<>("192.168.10.1/24", "tag0"),
+        new ImmutablePair<>("192.168.10.1/24", "tag1")
+      ));
+    clientRouteASTagAcls.put(clientSlices.get(3),
+      Arrays.asList(
+        new ImmutablePair<String, String>("192.168.20.1/24", "tag1"),
+        new ImmutablePair<String, String>("192.168.10.1/24", "tag2")
+      ));
+    //policy for outbound traffic
+    clientPolicyASTagAcls.put(clientSlices.get(3),
+      Arrays.asList(
+        new ImmutablePair<String, String>("192.168.20.1/24", "tag1"),
+        new ImmutablePair<String, String>("192.168.10.1/24", "tag2")
+      ));
   }
 }

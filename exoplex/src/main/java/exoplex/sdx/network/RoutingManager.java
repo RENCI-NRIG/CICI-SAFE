@@ -197,19 +197,34 @@ public class RoutingManager extends AbstractRoutingManager {
       ArrayList<String[]> paths = getBroadcastRoutes(gwdpid, gateway);
       String pathId = getPathID(null, destIP);
       prefixGatewayMap.put(pathId, gateway);
-      pairPath.put(pathId, paths);
       if (!prefixPaths.containsKey(destIP)) {
         prefixPaths.put(destIP, new HashSet<>());
       }
       prefixPaths.get(destIP).add(pathId);
-
+      ArrayList<String[]> oldPaths = pairPath.getOrDefault(pathId, new ArrayList<>());
       for (String[] path : paths) {
         String controller =
           networkManager.getRouterByDPID(path[0]).getController();
-        String res = singleStepRouting(destIP, path[1], path[0], controller);
+        boolean update = true;
+        for(String[] oldPath: oldPaths) {
+          if(oldPath[0].equals(path[0]) && oldPath[1].equals(path[1])) {
+            if (route_id.containsKey(getRouteKey(pathId, oldPath[0]))) {
+              update = false;
+              break;
+            }
+          }
+        }
+        if(update) {
+          int routeid = route_id.getOrDefault(getRouteKey(pathId, path[0]), -1);
+          if(routeid != -1) {
+            deleteRoute(path[0], String.valueOf(routeid));
+          }
+          String res = singleStepRouting(destIP, path[1], path[0], controller);
+        }
         //addRoute(destIP, path[1], path[0], pathId, controller);
         //logger.debug(path[0]+" "+path[1]);
       }
+      pairPath.put(pathId, paths);
     } catch (Exception e) {
       e.printStackTrace();
     }
@@ -233,13 +248,27 @@ public class RoutingManager extends AbstractRoutingManager {
         prefixPaths.put(destIP, new HashSet<>());
       }
       prefixPaths.get(destIP).add(pathId);
-
+      ArrayList<String[]> oldPaths = pairPath.getOrDefault(pathId, new ArrayList<>());
       for (String[] path : paths) {
         String controller =
           networkManager.getRouterByDPID(path[0]).getController();
-        String res = singleStepRouting(destIP, srcIP, path[1], path[0], controller);
-        //addRoute(destIP, path[1], path[0], pathId, controller);
-        //logger.debug(path[0]+" "+path[1]);
+        boolean update = true;
+        for(String[] oldPath: oldPaths) {
+          if(oldPath[0].equals(path[0]) && oldPath[1].equals(path[1])) {
+            if (route_id.containsKey(getRouteKey(pathId, oldPath[0]))) {
+              update = false;
+              break;
+            }
+          }
+        }
+        if(update) {
+          int routeid = route_id.getOrDefault(getRouteKey(pathId, path[0]), -1);
+          if(routeid != -1) {
+            deleteRoute(path[0], String.valueOf(routeid));
+          }
+          String res = singleStepRouting(destIP, srcIP, path[1], path[0],
+            controller);
+        }
       }
     } catch (Exception e) {
       e.printStackTrace();

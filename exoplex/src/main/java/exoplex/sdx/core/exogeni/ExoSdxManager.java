@@ -20,7 +20,9 @@ import exoplex.sdx.safe.SafeManager;
 import exoplex.sdx.slice.SliceManager;
 import exoplex.sdx.slice.SliceProperties;
 import exoplex.sdx.slice.exogeni.SiteBase;
+import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.core.appender.routing.Route;
 import org.json.JSONObject;
 import org.renci.ahab.libndl.resources.request.InterfaceNode2Net;
 import safe.Authority;
@@ -1016,39 +1018,36 @@ public class ExoSdxManager extends SdxManagerBase {
     //Verify the owner owns the source IP prefix
 
     // route with both source and destination address, find matching pairs
-    ArrayList<AdvertiseBase> newAdvertises = advertiseManager.receiveStPolicy
-      (policyAdvertise);
-    for (int i = 0; i < newAdvertises.size(); i++) {
-      AdvertiseBase newAdvertise = newAdvertises.get(i);
-      if (newAdvertise instanceof RouteAdvertise) {
-        logger.info(String.format("%s Updating Bgp advertisement after receiving policies " +
-          "advertisement%s", coreProperties.getSliceName(), policyAdvertise.toString()));
-        logger.info(String.format("new advertise: %s", newAdvertise.toString()));
-        if (newAdvertise.route.size() > 1) {
-          //configure the route if the advertisement is not from a direct customer for access control
-          //routingManager.retriveRouteOfPrefix(routeAdvertise.prefix, SDNController);
-          String customerReservId = customerNodes.get(((RouteAdvertise) newAdvertise).srcPid).iterator().next();
-          String gateway = customerGateway.get(customerReservId);
-          String edgeNode = routingManager.getEdgeRouterByGateway(gateway);
-          String logMsg = String.format("Debug Msg: configuring route for policy %s\n new " +
-            "advertise: %s", policyAdvertise.toString(), newAdvertise.toString());
-          logger.debug(logMsg);
-          if (newAdvertise.srcPrefix != null) {
-            routingManager.removePath(newAdvertise.destPrefix, newAdvertise.srcPrefix);
-            routingManager.configurePath(newAdvertise.destPrefix, newAdvertise.srcPrefix,
-              edgeNode, gateway);
-          } else {
-            routingManager.removePath(newAdvertise.destPrefix);
-            routingManager.configurePath(newAdvertise.destPrefix,
-              edgeNode, gateway);
-          }
-        }
-        propagateBgpAdvertise((RouteAdvertise) newAdvertise);
-      } else {
+    ImmutablePair<List<RouteAdvertise>, List<AdvertiseBase>> newPair =
+      advertiseManager.receiveStPolicy(policyAdvertise);
+    for(AdvertiseBase newAdvertise: newPair.getRight()) {
+      if(newAdvertise instanceof PolicyAdvertise) {
         propagatePolicyAdvertise((PolicyAdvertise) newAdvertise);
+      } else {
+        propagateBgpAdvertise((RouteAdvertise) newAdvertise);
       }
     }
-    return newAdvertises.stream().map(AdvertiseBase::toString).collect(Collectors.joining(","));
+    for(RouteAdvertise configAdvertise: newPair.getLeft()) {
+      logger.info(String.format("%s Updating Bgp advertisement after receiving policies " +
+        "advertisement%s", coreProperties.getSliceName(), policyAdvertise.toString()));
+      logger.info(String.format("new advertise: %s",
+        configAdvertise.toString()));
+      //configure the route if the advertisement is not from a direct customer for access control
+      //routingManager.retriveRouteOfPrefix(routeAdvertise.prefix, SDNController);
+      String customerReservId =
+        customerNodes.get((configAdvertise).advertiserPID).iterator().next();
+      String gateway = customerGateway.get(customerReservId);
+      String edgeNode = routingManager.getEdgeRouterByGateway(gateway);
+      String logMsg = String.format("[%s] Debug Msg: configuring route " +
+          "for policy %s\n new advertise: %s", getSliceName(),
+        policyAdvertise.toString(), configAdvertise.toString());
+      logger.debug(logMsg);
+      routingManager.configurePath(configAdvertise.destPrefix,
+        policyAdvertise.srcPrefix,
+        edgeNode, gateway);
+    }
+    return String.format("Config for %s routes and propaget %s advertises",
+      newPair.getLeft().size(), newPair.getRight().size());
   }
 
   public synchronized String processBgpAdvertise(RouteAdvertise routeAdvertise) {
@@ -1064,50 +1063,59 @@ public class ExoSdxManager extends SdxManagerBase {
     if (!routeAdvertise.hasSrcPrefix()) {
       // routes with destination address only
       //TODO: find mathcing pairs and correct the routes
-      RouteAdvertise newAdvertise = advertiseManager.receiveAdvertise(routeAdvertise);
-      if (newAdvertise == null) {
-        //No change
-        return "";
-      } else {
+      ImmutablePair<List<RouteAdvertise>, List<RouteAdvertise>> newPair =
+        advertiseManager.receiveAdvertise(routeAdvertise);
+      for (RouteAdvertise newAdvertise : newPair.getLeft()) {
         newAdvertise.safeToken = routeAdvertise.safeToken;
         //Updates
         //TODO retrive previous routes, how to do it safely?
-        if (routeAdvertise.route.size() > 1) {
-          //configure the route if the advertisement is not from a direct customer for access control
-          //routingManager.retriveRouteOfPrefix(routeAdvertise.prefix, SDNController);
-          String customerReservId = customerNodes.get(routeAdvertise.advertiserPID).iterator().next();
-          String gateway = customerGateway.get(customerReservId);
+        String customerReservId = customerNodes.get(routeAdvertise.advertiserPID).iterator().next();
+        String gateway = customerGateway.get(customerReservId);
+        if (newAdvertise.srcPrefix == null) {
           if (!gateway.equals(routingManager.getGateway(routeAdvertise.destPrefix))) {
             String edgeNode = routingManager.getEdgeRouterByGateway(gateway);
             logger.debug(String.format("[%s] Debug Msg: configuring route for" +
-              " %s", getSliceName(),
-              routeAdvertise.toString()));
-            routingManager.removePath(routeAdvertise.destPrefix);
-            routingManager.configurePath(routeAdvertise.destPrefix, edgeNode, gateway);
+              " %s", getSliceName(), newAdvertise.toString()));
+            //routingManager.removePath(routeAdvertise.destPrefix);
+            routingManager.configurePath(newAdvertise.destPrefix, edgeNode, gateway);
+          }
+        } else {
+          if (!gateway.equals(routingManager.getGateway(routeAdvertise.destPrefix,
+            routeAdvertise.srcPrefix))) {
+            String edgeNode = routingManager.getEdgeRouterByGateway(gateway);
+            logger.debug(String.format("[%s] Debug Msg: configuring route for" +
+              " %s", getSliceName(), newAdvertise.toString()));
+            //routingManager.removePath(routeAdvertise.destPrefix);
+            routingManager.configurePath(newAdvertise.destPrefix,
+              newAdvertise.srcPrefix, edgeNode, gateway);
           }
         }
-        propagateBgpAdvertise(newAdvertise);
-        return newAdvertise.toString();
       }
+      for (RouteAdvertise propagateRoute : newPair.getRight()) {
+        propagateBgpAdvertise(propagateRoute);
+      }
+      return String.format("propagate %s new routes",
+        newPair.getRight().size());
     } else {
       // route with both source and destination address, find matching pairs
-      ArrayList<RouteAdvertise> newAdvertises = advertiseManager.receiveStAdvertise(routeAdvertise);
-      if (newAdvertises.size() > 0) {
-        String customerReservId = customerNodes.get(routeAdvertise.advertiserPID).iterator().next();
-        String gateway = customerGateway.get(customerReservId);
-        if (!gateway.equals(routingManager.getGateway(routeAdvertise.destPrefix, routeAdvertise.srcPrefix))) {
-          String edgeNode = routingManager.getEdgeRouterByGateway(gateway);
-          logger.debug(String.format("Debug Msg: configuring route for %s", routeAdvertise.toString
-            ()));
-          routingManager.removePath(routeAdvertise.destPrefix, routeAdvertise.srcPrefix);
-          routingManager.configurePath(routeAdvertise.destPrefix, routeAdvertise.srcPrefix, edgeNode,
-            gateway);
-        }
+      RouteAdvertise newAdvertise =
+        advertiseManager.receiveStAdvertise(routeAdvertise);
+      if(newAdvertise == null) {
+        return "";
       }
-      for (RouteAdvertise newAdvertise : newAdvertises) {
-        propagateBgpAdvertise(newAdvertise);
+      String customerReservId = customerNodes.get(routeAdvertise.advertiserPID).iterator().next();
+      String gateway = customerGateway.get(customerReservId);
+      if (!gateway.equals(routingManager.getGateway(routeAdvertise.destPrefix, routeAdvertise.srcPrefix))) {
+        String edgeNode = routingManager.getEdgeRouterByGateway(gateway);
+        logger.debug(String.format("[%s] Debug Msg: configuring route for %s",
+          getSliceName(), routeAdvertise.toString()));
+        //routingManager.removePath(routeAdvertise.destPrefix,
+        //  routeAdvertise.srcPrefix);
+        routingManager.configurePath(routeAdvertise.destPrefix, routeAdvertise.srcPrefix, edgeNode,
+          gateway);
       }
-      return newAdvertises.stream().map(RouteAdvertise::toString).collect(Collectors.joining(","));
+      propagateBgpAdvertise(newAdvertise);
+      return newAdvertise.toString();
     }
   }
 
@@ -1151,6 +1159,7 @@ public class ExoSdxManager extends SdxManagerBase {
   }
 
   private void propagateBgpAdvertise(RouteAdvertise advertise) {
+    advertise = new RouteAdvertise(advertise, getPid());
     logger.debug(String.format("[%s] Propagate route advertise %s",
       getSliceName(), advertise));
     //Thread t = new Thread() {

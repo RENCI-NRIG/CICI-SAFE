@@ -20,6 +20,7 @@ import org.apache.logging.log4j.Logger;
 import org.json.JSONObject;
 import safe.Authority;
 import safe.SdxRoutingSlang;
+import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -503,107 +504,11 @@ public class SdxManagerBase extends SliceHelper implements SdxManagerInterface {
   }
 
   public String processPolicyAdvertise(PolicyAdvertise policyAdvertise) {
-    if(!coreProperties.doRouteAdvertise()) {
-      return "Safe routing disabled, no processing this request";
-    }
-    /*
-    if(safeEnabled && !safeManager.authorizeOwnPrefix(policyAdvertise.ownerPID, policyAdvertise.srcPrefix)){
-      logger.debug(String.format("%s doesn't own the source prefix %s", policyAdvertise.ownerPID,
-          policyAdvertise.srcPrefix));
-      return "Authorized policy advertise, the owner doesn't own the prefix";
-    }
-    */
-    //Verify the owner owns the source IP prefix
-
-    // route with both source and destination address, find matching pairs
-    ArrayList<AdvertiseBase> newAdvertises = advertiseManager.receiveStPolicy
-      (policyAdvertise);
-    for (int i = 0; i < newAdvertises.size(); i++) {
-      AdvertiseBase newAdvertise = newAdvertises.get(i);
-      if (newAdvertise instanceof RouteAdvertise) {
-        logger.info(String.format("%s Updating Bgp advertisement after receiving policies " +
-          "advertisement%s", coreProperties.getSliceName(), policyAdvertise.toString()));
-        logger.info(String.format("new advertise: %s", newAdvertise.toString()));
-        if (newAdvertise.route.size() > 1) {
-          //configure the route if the advertisement is not from a direct customer for access control
-          //routingManager.retriveRouteOfPrefix(routeAdvertise.prefix, SDNController);
-          String customerReservId = customerNodes.get(((RouteAdvertise) newAdvertise).srcPid).iterator().next();
-          String gateway = customerGateway.get(customerReservId);
-          String edgeNode = routingManager.getEdgeRouterByGateway(gateway);
-          if (newAdvertise.srcPrefix != null) {
-            logger.debug(String.format("Debug Msg: configuring route for policy %s\n new " +
-              "advertise: %s", policyAdvertise.toString(), newAdvertise.toString()));
-            routingManager.removePath(newAdvertise.destPrefix, newAdvertise.srcPrefix);
-            routingManager.configurePath(newAdvertise.destPrefix, newAdvertise.srcPrefix,
-              edgeNode, gateway);
-          } else {
-            logger.debug(String.format("Debug Msg: configuring route for policy %s\n new " +
-              "advertise: %s", policyAdvertise.toString(), newAdvertise.toString()));
-            routingManager.removePath(newAdvertise.destPrefix,
-              getSDNController());
-            routingManager.configurePath(newAdvertise.destPrefix,
-              edgeNode, gateway);
-          }
-        }
-        propagateBgpAdvertise((RouteAdvertise) newAdvertise, ((RouteAdvertise) newAdvertise).srcPid);
-      } else {
-        propagatePolicyAdvertise((PolicyAdvertise) newAdvertise);
-      }
-    }
-    return newAdvertises.stream().map(AdvertiseBase::toString).collect(Collectors.joining(","));
+    throw new NotImplementedException();
   }
 
   public String processBgpAdvertise(RouteAdvertise routeAdvertise) {
-    if(!coreProperties.doRouteAdvertise()) {
-      return "Safe routing disabled, not processing this request";
-    }
-    if (coreProperties.isSafeEnabled() && !safeManager.authorizeBgpAdvertise(routeAdvertise)) {
-      logger.warn(String.format("Unauthorized routeAdvertise :%s", routeAdvertise));
-      return "";
-    }
-    if (!routeAdvertise.hasSrcPrefix()) {
-      // routes with destination address only
-      //TODO: find mathcing pairs and correct the routes
-      RouteAdvertise newAdvertise = advertiseManager.receiveAdvertise(routeAdvertise);
-      if (newAdvertise == null) {
-        //No change
-        return "";
-      } else {
-        newAdvertise.safeToken = routeAdvertise.safeToken;
-        //Updates
-        //TODO retrive previous routes, how to do it safely?
-        if (routeAdvertise.route.size() > 1) {
-          //configure the route if the advertisement is not from a direct customer for access control
-          //routingManager.retriveRouteOfPrefix(routeAdvertise.prefix, SDNController);
-          String customerReservId = customerNodes.get(routeAdvertise.advertiserPID).iterator().next();
-          String gateway = customerGateway.get(customerReservId);
-          String edgeNode = routingManager.getEdgeRouterByGateway(gateway);
-          logger.debug(String.format("Debug Msg: configuring route for %s", routeAdvertise.toString
-            ()));
-          routingManager.removePath(routeAdvertise.destPrefix, getSDNController());
-          routingManager.configurePath(routeAdvertise.destPrefix, edgeNode, gateway);
-        }
-        propagateBgpAdvertise(newAdvertise, newAdvertise.srcPid);
-        return newAdvertise.toString();
-      }
-    } else {
-      // route with both source and destination address, find matching pairs
-      ArrayList<RouteAdvertise> newAdvertises = advertiseManager.receiveStAdvertise(routeAdvertise);
-      if (newAdvertises.size() > 0) {
-        String customerReservId = customerNodes.get(routeAdvertise.advertiserPID).iterator().next();
-        String gateway = customerGateway.get(customerReservId);
-        String edgeNode = routingManager.getEdgeRouterByGateway(gateway);
-        logger.debug(String.format("Debug Msg: configuring route for %s", routeAdvertise.toString
-          ()));
-        routingManager.removePath(routeAdvertise.destPrefix, routeAdvertise.srcPrefix);
-        routingManager.configurePath(routeAdvertise.destPrefix, routeAdvertise.srcPrefix, edgeNode,
-          gateway);
-      }
-      for (RouteAdvertise newAdvertise : newAdvertises) {
-        propagateBgpAdvertise(newAdvertise, routeAdvertise.advertiserPID);
-      }
-      return newAdvertises.stream().map(RouteAdvertise::toString).collect(Collectors.joining(","));
-    }
+    throw new NotImplementedException();
   }
 
   synchronized public PeerRequest processPeerRequest(PeerRequest peerRequest) {

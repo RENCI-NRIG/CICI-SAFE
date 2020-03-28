@@ -5,7 +5,6 @@ import org.json.JSONObject;
 import java.util.Objects;
 
 public class RouteAdvertise extends AdvertiseBase {
-  public String srcPid;
 
   public RouteAdvertise() {
     super();
@@ -13,8 +12,12 @@ public class RouteAdvertise extends AdvertiseBase {
 
   public RouteAdvertise(RouteAdvertise advertise, String myPid) {
     super(advertise, myPid);
-    this.srcPid = advertise.advertiserPID;
     this.advertiserPID = myPid;
+  }
+
+  public RouteAdvertise(RouteAdvertise advertise) {
+    super(advertise);
+    this.advertiserPID = advertise.advertiserPID;
   }
 
   public int length() {
@@ -24,7 +27,6 @@ public class RouteAdvertise extends AdvertiseBase {
   @Override
   public JSONObject toJsonObject() {
     JSONObject obj = super.toJsonObject();
-    obj.put("srcPid", srcPid);
     return obj;
   }
 
@@ -39,7 +41,6 @@ public class RouteAdvertise extends AdvertiseBase {
   public boolean equals(Object route) {
     RouteAdvertise routeAdvertise = (RouteAdvertise) route;
     if(!routeAdvertise.ownerPID.equals(this.ownerPID) ||
-      !routeAdvertise.srcPid.equals(this.srcPid) ||
       !routeAdvertise.destPrefix.equals(this.destPrefix) ||
       !routeAdvertise.advertiserPID.equals(this.advertiserPID)
     ) {
@@ -70,7 +71,7 @@ public class RouteAdvertise extends AdvertiseBase {
 
   @Override
   public int hashCode() {
-    return Objects.hash(this.ownerPID, this.srcPid, this.advertiserPID,
+    return Objects.hash(this.ownerPID, this.advertiserPID,
       this.srcPrefix, this.destPrefix, String.join(",", this.route));
   }
 }

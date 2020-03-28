@@ -21,6 +21,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import static safe.SdxRoutingSlang.postASTagAclEntry;
+
 public class MultiSdxTestSD extends AbstractTest {
   final static Logger logger = LogManager.getLogger(MultiSdxTestSD.class);
   final static AbstractModule module = new MultiSdxCnertModule();
@@ -83,11 +85,11 @@ public class MultiSdxTestSD extends AbstractTest {
 
     Long t2 = System.currentTimeMillis();
 
-    logger.info("Start advertiseing routes and policies");
+    logger.info("Start advertising routes and policies");
     advertiseSDRoutesAndPolicies();
     //wait for route to be stablized
     try{
-      Thread.sleep(60000);
+      Thread.sleep(20000);
     }catch (Exception e){
 
     }
@@ -106,6 +108,7 @@ public class MultiSdxTestSD extends AbstractTest {
     logger.info("test done");
     logger.info(String.format("Time\n stitch sdx: %s s\n stitch customers: %s s\n check " +
       "connection: %s s", (t1 - t0) / 1000.0, (t2 - t1) / 1000.0, (t4 - t3) / 1000.0));
+    logFlowTables(true);
   }
 
   @Test
@@ -114,6 +117,11 @@ public class MultiSdxTestSD extends AbstractTest {
    */
   public void testMultiSdxWithEvents() {
     startSdxServersAndClients(reset);
+    try{
+      if(!(module instanceof MultiSdxCnertMockModule)) {
+        Thread.sleep(120000);
+      }
+    }catch (Exception e){}
     //stitch sdx slices
     Long t0 = System.currentTimeMillis();
 
@@ -122,14 +130,14 @@ public class MultiSdxTestSD extends AbstractTest {
 
     stitchCustomerSlices();
     Long t2 = System.currentTimeMillis();
-
     try{
       Thread.sleep(10000);
     }catch (Exception e){}
+
     logger.info("Start advertising routes and policies");
     advertiseSDRoutesAndPolicies();
     try{
-      Thread.sleep(60000);
+      Thread.sleep(20000);
     }catch (Exception e){}
     //wait for route to be stablized
     try{
@@ -157,7 +165,7 @@ public class MultiSdxTestSD extends AbstractTest {
     //Advertise routes and policies SD for client 4
     advertise(testSetting.clientSlices.get(3));
     try{
-      Thread.sleep(60000);
+      Thread.sleep(20000);
     }catch (Exception e){
 
     }
@@ -175,16 +183,40 @@ public class MultiSdxTestSD extends AbstractTest {
       e.printStackTrace();
     }
     try{
-      Thread.sleep(6000000);
+      Thread.sleep(20000);
     }catch (Exception e){
 
     }
     checkConnection(3);
     logFlowTables(false);
 
+    changePolicy();
+    try{
+      Thread.sleep(10000);
+    }catch (Exception e){}
+    checkConnection(3);
+    logFlowTables(false);
+
     logger.info("test done");
     logger.info(String.format("Time\n stitch sdx: %s s\n stitch customers: %s s\n check " +
       "connection: %s s", (t1 - t0) / 1000.0, (t2 - t1) / 1000.0, (t4 - t3) / 1000.0));
+  }
+
+  private void changePolicy() {
+    String client1 = testSetting.clientSlices.get(1);
+    String client2 = testSetting.clientSlices.get(2);
+    //Authority authority = injector.getInstance(Authority.class);
+    //String astag = authority.getPrincipalId("tagauthority") + ":tag0";
+    //authority.safePost(postASTagAclEntry, testSetting.clientKeyMap.get(client1),
+    //  new String[]{astag, "192.168.30.1/24"});
+    //authority.safePost(postASTagAclEntry, testSetting.clientKeyMap.get(client2),
+    //  new String[]{astag, "192.168.20.1/24"});
+    logger.info("Advertise policy after policy change");
+
+    exogeniClients.get(client1).processCmd(String.format("policy %s %s %s",
+      "192.168.30.1/24", "192.168.20.1/24", "tag0"));
+    exogeniClients.get(client2).processCmd(String.format("policy %s %s %s",
+      "192.168.20.1/24", "192.168.30.1/24", "tag0"));
   }
 
   @Override
