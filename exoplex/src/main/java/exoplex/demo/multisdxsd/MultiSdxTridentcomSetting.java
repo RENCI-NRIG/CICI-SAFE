@@ -108,7 +108,7 @@ public class MultiSdxTridentcomSetting extends MultiSdxSDLargeSetting {
   public void setClientASTagAcls() {
     clientASTagAcls.put(clientSlices.get(0), Arrays.asList("tag0", "tag2"));
     clientASTagAcls.put(clientSlices.get(2), Arrays.asList("tag0", "tag1"));
-    clientASTagAcls.put(clientSlices.get(1), Arrays.asList("tag1"));
+    clientASTagAcls.put(clientSlices.get(1), Arrays.asList("tag0", "tag1"));
     clientASTagAcls.put(clientSlices.get(3), Arrays.asList("tag1", "tag2"));
   }
 
