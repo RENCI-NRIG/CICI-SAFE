@@ -12,6 +12,13 @@ public class PolicyAdvertise extends AdvertiseBase {
     this.advertiserPID = myPid;
   }
 
+  static PolicyAdvertise defaultPolicy() {
+    PolicyAdvertise policyAdvertise = new PolicyAdvertise();
+    policyAdvertise.srcPrefix = AdvertiseManager.DEFAULT_PREFIX;
+    policyAdvertise.destPrefix = AdvertiseManager.DEFAULT_PREFIX;
+    return policyAdvertise;
+  }
+
   @Override
   public boolean equals(Object route) {
     PolicyAdvertise routeAdvertise = (PolicyAdvertise) route;

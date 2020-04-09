@@ -5,12 +5,11 @@ import exoplex.client.exogeni.SdxExogeniClient;
 import exoplex.sdx.core.CoreProperties;
 import exoplex.sdx.core.SdxManagerBase;
 import exoplex.sdx.core.exogeni.ExoRestService;
-import exoplex.sdx.core.exogeni.ExoSdxManager;
 import exoplex.sdx.core.exogeni.ExoSdxServer;
 import exoplex.sdx.network.SdnReplay;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import riak.RiakSlice;
+import safe.RiakSlice;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;

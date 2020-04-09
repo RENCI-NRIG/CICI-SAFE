@@ -1,4 +1,4 @@
-package riak;
+package safe;
 
 import com.google.inject.Guice;
 import com.google.inject.Inject;

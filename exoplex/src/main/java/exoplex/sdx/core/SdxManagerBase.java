@@ -766,6 +766,9 @@ public class SdxManagerBase extends SliceHelper implements SdxManagerInterface {
     return res;
   }
 
+  public void logFib() {
+  }
+
   String getEchoTimeCMD() {
     return "echo currentMillis:$(/bin/date \"+%s%3N\");";
   }

@@ -170,7 +170,7 @@ public class SafeManager {
 
   public boolean verifyCompliantPath(PolicyAdvertise policyAdvertise,
                                      RouteAdvertise routeAdvertise) {
-    if (!safeEnabled) return true;
+    if (!safeEnabled || policyAdvertise.safeToken == null) return true;
     String[] params = new String[6];
     params[0] = policyAdvertise.ownerPID;
     params[1] = policyAdvertise.getSrcPrefix();
