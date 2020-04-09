@@ -6,17 +6,15 @@ import exoplex.client.exogeni.SdxExogeniClient;
 import exoplex.demo.AbstractTest;
 import exoplex.demo.AbstractTestSetting;
 import exoplex.demo.AbstractTestSlice;
-import exoplex.demo.singlesdx.SingleSdxModule;
 import exoplex.sdx.core.CoreProperties;
 import exoplex.sdx.core.SdxManagerBase;
 import exoplex.sdx.core.SdxServerBase;
-import exoplex.sdx.slice.exogeni.ExoGeniSliceModule;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import riak.RiakSlice;
+import safe.RiakSlice;
 
 import java.util.ArrayList;
 import java.util.List;

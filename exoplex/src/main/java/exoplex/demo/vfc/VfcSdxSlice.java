@@ -11,7 +11,6 @@ import exoplex.demo.singlesdx.SingleSdxModule;
 import exoplex.sdx.core.exogeni.SliceHelper;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import riak.RiakSlice;
 
 public class VfcSdxSlice extends AbstractTestSlice {
   final Logger logger = LogManager.getLogger(VfcSdxSlice.class);

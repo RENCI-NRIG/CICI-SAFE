@@ -1,10 +1,8 @@
 package exoplex.safe.multisdx;
 
 import com.google.inject.Guice;
-import com.google.inject.Inject;
 import com.google.inject.Injector;
 import exoplex.common.utils.SafeUtils;
-import exoplex.demo.AbstractTestSetting;
 import exoplex.demo.multisdx.MultiSdxSetting;
 import exoplex.sdx.advertise.AdvertiseManager;
 import exoplex.sdx.advertise.PolicyAdvertise;
@@ -12,7 +10,6 @@ import exoplex.sdx.advertise.RouteAdvertise;
 import exoplex.sdx.safe.SafeManager;
 import exoplex.demo.multisdx.MultiSdxModule;
 import org.apache.commons.lang3.tuple.ImmutablePair;
-import org.apache.logging.log4j.core.appender.routing.Route;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -21,7 +18,6 @@ import safe.multisdx.AuthorityMockMultiSdx;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 
 @Ignore
 public class SafeAuthorizationTest extends AuthorityMockMultiSdx {
@@ -78,11 +74,11 @@ public class SafeAuthorizationTest extends AuthorityMockMultiSdx {
     SafeManager safeManagerSdx1 = safeManagerHashMap.get(testSetting.sdxSliceNames.get(0));
     assert safeManagerSdx1.authorizeBgpAdvertise(routeAdvertise);
 
-    List<RouteAdvertise> advertises =
+    RouteAdvertise advertise =
       bgpManagerHashMap.get(testSetting.sdxSliceNames.get(0))
-      .receiveAdvertise(routeAdvertise).getLeft();
+      .receiveAdvertise(routeAdvertise).getRight();
 
-    RouteAdvertise advertise1 = advertises.get(0);
+    RouteAdvertise advertise1 = advertise;
 
     advertise1 = safeManagerSdx1.forwardAdvertise(advertise1, getPrincipalId(sliceKeyMap.get
       (testSetting.sdxSliceNames.get(1))), routeAdvertise.advertiserPID);
@@ -94,7 +90,7 @@ public class SafeAuthorizationTest extends AuthorityMockMultiSdx {
     AdvertiseManager advertiseManagerSdx2 = bgpManagerHashMap.get(testSetting.sdxSliceNames.get(1));
 
     RouteAdvertise advertise2 =
-      advertiseManagerSdx2.receiveAdvertise(advertise1).getLeft().get(0);
+      advertiseManagerSdx2.receiveAdvertise(advertise1).getRight();
 
     advertise2 = safeManagerSdx2.forwardAdvertise(advertise2, getPrincipalId(sliceKeyMap.get
       (testSetting.sdxSliceNames.get(3))), advertise1.advertiserPID);
@@ -142,7 +138,7 @@ public class SafeAuthorizationTest extends AuthorityMockMultiSdx {
     assert safeManagerSdx1.authorizeBgpAdvertise(routeAdvertise);
 
     RouteAdvertise advertise = bgpManagerHashMap.get(testSetting.sdxSliceNames.get
-      (0)).receiveStAdvertise(routeAdvertise);
+      (0)).receiveAdvertise(routeAdvertise).getRight();
     advertise = new RouteAdvertise(advertise, bgpManagerHashMap.get(testSetting.sdxSliceNames.get
       (0)).getMyPID());
 
@@ -155,7 +151,8 @@ public class SafeAuthorizationTest extends AuthorityMockMultiSdx {
 
     AdvertiseManager advertiseManagerSdx2 = bgpManagerHashMap.get(testSetting.sdxSliceNames.get(1));
 
-    RouteAdvertise advertise2 = advertiseManagerSdx2.receiveStAdvertise(advertise);
+    RouteAdvertise advertise2 =
+      advertiseManagerSdx2.receiveAdvertise(advertise).getRight();
 
     advertise2 = new RouteAdvertise(advertise2,
       advertiseManagerSdx2.getMyPID());

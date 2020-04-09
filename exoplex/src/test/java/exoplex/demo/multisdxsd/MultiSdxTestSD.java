@@ -109,6 +109,7 @@ public class MultiSdxTestSD extends AbstractTest {
     logger.info(String.format("Time\n stitch sdx: %s s\n stitch customers: %s s\n check " +
       "connection: %s s", (t1 - t0) / 1000.0, (t2 - t1) / 1000.0, (t4 - t3) / 1000.0));
     logFlowTables(true);
+    logFib();
   }
 
   @Test
@@ -137,7 +138,7 @@ public class MultiSdxTestSD extends AbstractTest {
     logger.info("Start advertising routes and policies");
     advertiseSDRoutesAndPolicies();
     try{
-      Thread.sleep(20000);
+      Thread.sleep(15000);
     }catch (Exception e){}
     //wait for route to be stablized
     try{
@@ -165,7 +166,7 @@ public class MultiSdxTestSD extends AbstractTest {
     //Advertise routes and policies SD for client 4
     advertise(testSetting.clientSlices.get(3));
     try{
-      Thread.sleep(20000);
+      Thread.sleep(10000);
     }catch (Exception e){
 
     }
@@ -183,10 +184,11 @@ public class MultiSdxTestSD extends AbstractTest {
       e.printStackTrace();
     }
     try{
-      Thread.sleep(20000);
+      Thread.sleep(10000);
     }catch (Exception e){
 
     }
+
     checkConnection(3);
     logFlowTables(false);
 
@@ -196,11 +198,23 @@ public class MultiSdxTestSD extends AbstractTest {
     }catch (Exception e){}
     checkConnection(3);
     logFlowTables(false);
+    logFib();
 
     logger.info("test done");
     logger.info(String.format("Time\n stitch sdx: %s s\n stitch customers: %s s\n check " +
       "connection: %s s", (t1 - t0) / 1000.0, (t2 - t1) / 1000.0, (t4 - t3) / 1000.0));
   }
+
+  void logFib() {
+    for (SdxManagerBase sdxManager : sdxManagerMap.values()) {
+      try {
+        sdxManager.logFib();
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
+    }
+  }
+
 
   private void changePolicy() {
     String client1 = testSetting.clientSlices.get(1);

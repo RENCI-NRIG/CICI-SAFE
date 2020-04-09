@@ -4,10 +4,7 @@ import aqt.PrefixUtil;
 import aqt.Range;
 import com.google.inject.Inject;
 import exoplex.common.utils.HttpUtil;
-import exoplex.sdx.advertise.AdvertiseBase;
-import exoplex.sdx.advertise.AdvertiseManager;
-import exoplex.sdx.advertise.PolicyAdvertise;
-import exoplex.sdx.advertise.RouteAdvertise;
+import exoplex.sdx.advertise.*;
 import exoplex.sdx.bro.BroManager;
 import exoplex.sdx.core.CoreProperties;
 import exoplex.sdx.core.SdxManagerBase;
@@ -22,7 +19,6 @@ import exoplex.sdx.slice.SliceProperties;
 import exoplex.sdx.slice.exogeni.SiteBase;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.core.appender.routing.Route;
 import org.json.JSONObject;
 import org.renci.ahab.libndl.resources.request.InterfaceNode2Net;
 import safe.Authority;
@@ -31,7 +27,6 @@ import safe.SdxRoutingSlang;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 
@@ -1016,10 +1011,9 @@ public class ExoSdxManager extends SdxManagerBase {
     }
     */
     //Verify the owner owns the source IP prefix
-
     // route with both source and destination address, find matching pairs
-    ImmutablePair<List<RouteAdvertise>, List<AdvertiseBase>> newPair =
-      advertiseManager.receiveStPolicy(policyAdvertise);
+    ImmutablePair<List<ForwardInfo>, List<AdvertiseBase>> newPair =
+      advertiseManager.receiveOutboundPolicy(policyAdvertise);
     for(AdvertiseBase newAdvertise: newPair.getRight()) {
       if(newAdvertise instanceof PolicyAdvertise) {
         propagatePolicyAdvertise((PolicyAdvertise) newAdvertise);
@@ -1027,32 +1021,17 @@ public class ExoSdxManager extends SdxManagerBase {
         propagateBgpAdvertise((RouteAdvertise) newAdvertise);
       }
     }
-    for(RouteAdvertise configAdvertise: newPair.getLeft()) {
-      logger.info(String.format("%s Updating Bgp advertisement after receiving policies " +
-        "advertisement%s", coreProperties.getSliceName(), policyAdvertise.toString()));
-      logger.info(String.format("new advertise: %s",
-        configAdvertise.toString()));
-      //configure the route if the advertisement is not from a direct customer for access control
-      //routingManager.retriveRouteOfPrefix(routeAdvertise.prefix, SDNController);
-      String customerReservId =
-        customerNodes.get((configAdvertise).advertiserPID).iterator().next();
-      String gateway = customerGateway.get(customerReservId);
-      String edgeNode = routingManager.getEdgeRouterByGateway(gateway);
-      String logMsg = String.format("[%s] Debug Msg: configuring route " +
-          "for policy %s\n new advertise: %s", getSliceName(),
-        policyAdvertise.toString(), configAdvertise.toString());
-      logger.debug(logMsg);
-      routingManager.configurePath(configAdvertise.destPrefix,
-        policyAdvertise.srcPrefix,
-        edgeNode, gateway);
+    for(ForwardInfo forwardInfo: newPair.getLeft()) {
+      configFib(forwardInfo);
     }
-    return String.format("Config for %s routes and propaget %s advertises",
+    return String.format("%s: Config for %s routes and " +
+      "propaget %s advertises", serverSlice.getName(),
       newPair.getLeft().size(), newPair.getRight().size());
   }
 
   public synchronized String processBgpAdvertise(RouteAdvertise routeAdvertise) {
     logger.debug(String.format("%s process bpg advertise %s", getSliceName(),
-      routeAdvertise ));
+      routeAdvertise));
     if (!coreProperties.doRouteAdvertise()) {
       return "Safe routing disabled, not processing this request";
     }
@@ -1060,62 +1039,34 @@ public class ExoSdxManager extends SdxManagerBase {
       logger.warn(String.format("Unauthorized routeAdvertise :%s", routeAdvertise));
       return "";
     }
-    if (!routeAdvertise.hasSrcPrefix()) {
-      // routes with destination address only
-      //TODO: find mathcing pairs and correct the routes
-      ImmutablePair<List<RouteAdvertise>, List<RouteAdvertise>> newPair =
-        advertiseManager.receiveAdvertise(routeAdvertise);
-      for (RouteAdvertise newAdvertise : newPair.getLeft()) {
-        newAdvertise.safeToken = routeAdvertise.safeToken;
-        //Updates
-        //TODO retrive previous routes, how to do it safely?
-        String customerReservId = customerNodes.get(routeAdvertise.advertiserPID).iterator().next();
-        String gateway = customerGateway.get(customerReservId);
-        if (newAdvertise.srcPrefix == null) {
-          if (!gateway.equals(routingManager.getGateway(routeAdvertise.destPrefix))) {
-            String edgeNode = routingManager.getEdgeRouterByGateway(gateway);
-            logger.debug(String.format("[%s] Debug Msg: configuring route for" +
-              " %s", getSliceName(), newAdvertise.toString()));
-            //routingManager.removePath(routeAdvertise.destPrefix);
-            routingManager.configurePath(newAdvertise.destPrefix, edgeNode, gateway);
-          }
-        } else {
-          if (!gateway.equals(routingManager.getGateway(routeAdvertise.destPrefix,
-            routeAdvertise.srcPrefix))) {
-            String edgeNode = routingManager.getEdgeRouterByGateway(gateway);
-            logger.debug(String.format("[%s] Debug Msg: configuring route for" +
-              " %s", getSliceName(), newAdvertise.toString()));
-            //routingManager.removePath(routeAdvertise.destPrefix);
-            routingManager.configurePath(newAdvertise.destPrefix,
-              newAdvertise.srcPrefix, edgeNode, gateway);
-          }
-        }
+    ImmutablePair<List<ForwardInfo>, RouteAdvertise> pair =
+      advertiseManager.receiveAdvertise(routeAdvertise);
+    for (ForwardInfo forwardInfo : pair.getLeft()) {
+      configFib(forwardInfo);
+    }
+    if (pair.getRight() != null) {
+      propagateBgpAdvertise(pair.getRight());
+      return pair.getRight().toString();
+    }
+    return "no route to propagate";
+  }
+
+  void configFib(ForwardInfo forwardInfo) {
+    String customerReservId =
+      customerNodes.get(forwardInfo.neighborPid).iterator().next();
+    String gateway = customerGateway.get(customerReservId);
+    if (!gateway.equals(routingManager.getGateway(forwardInfo.destPrefix,
+      forwardInfo.srcPrefix))) {
+      String edgeNode = routingManager.getEdgeRouterByGateway(gateway);
+      logger.debug(String.format("[%s] Debug Msg: configuring route for %s",
+        getSliceName(), forwardInfo));
+      if(forwardInfo.srcPrefix != null &&
+        !forwardInfo.srcPrefix.equals(AdvertiseManager.DEFAULT_PREFIX)) {
+        routingManager.configurePath(forwardInfo.destPrefix, forwardInfo.srcPrefix
+          , edgeNode, gateway);
+      } else {
+        routingManager.configurePath(forwardInfo.destPrefix, edgeNode, gateway);
       }
-      for (RouteAdvertise propagateRoute : newPair.getRight()) {
-        propagateBgpAdvertise(propagateRoute);
-      }
-      return String.format("propagate %s new routes",
-        newPair.getRight().size());
-    } else {
-      // route with both source and destination address, find matching pairs
-      RouteAdvertise newAdvertise =
-        advertiseManager.receiveStAdvertise(routeAdvertise);
-      if(newAdvertise == null) {
-        return "";
-      }
-      String customerReservId = customerNodes.get(routeAdvertise.advertiserPID).iterator().next();
-      String gateway = customerGateway.get(customerReservId);
-      if (!gateway.equals(routingManager.getGateway(routeAdvertise.destPrefix, routeAdvertise.srcPrefix))) {
-        String edgeNode = routingManager.getEdgeRouterByGateway(gateway);
-        logger.debug(String.format("[%s] Debug Msg: configuring route for %s",
-          getSliceName(), routeAdvertise.toString()));
-        //routingManager.removePath(routeAdvertise.destPrefix,
-        //  routeAdvertise.srcPrefix);
-        routingManager.configurePath(routeAdvertise.destPrefix, routeAdvertise.srcPrefix, edgeNode,
-          gateway);
-      }
-      propagateBgpAdvertise(newAdvertise);
-      return newAdvertise.toString();
     }
   }
 
@@ -1147,7 +1098,9 @@ public class ExoSdxManager extends SdxManagerBase {
   private void propagatePolicyToPeer(PolicyAdvertise advertise, String peer) {
     if (!peer.equals(advertise.ownerPID) && !peer.equals(advertise.advertiserPID)) {
       if (!advertise.route.contains(peer)) {
-        if (advertise.srcPrefix == null && safeManager.verifyAS(advertise.ownerPID, advertise
+        if ((advertise.srcPrefix == null
+          || advertise.srcPrefix.equals(AdvertiseManager.DEFAULT_PREFIX))
+          && safeManager.verifyAS(advertise.ownerPID, advertise
           .getDestPrefix(), peer, advertise.safeToken)) {
           advertisePolicyAsync(peerUrls.get(peer), advertise);
         } else if (advertise.srcPrefix != null && safeManager.verifyAS(advertise.ownerPID,
@@ -1182,7 +1135,10 @@ public class ExoSdxManager extends SdxManagerBase {
                                     String peer) {
     if (!peer.equals(advertise.ownerPID) && !peer.equals(advertise.advertiserPID)) {
       if (!advertise.route.contains(peer)) {
-        if (advertise.srcPrefix == null && safeManager.verifyAS(advertise.ownerPID, advertise
+        if ((advertise.srcPrefix == null ||
+          advertise.srcPrefix.equals(AdvertiseManager.DEFAULT_PREFIX))
+          && safeManager.verifyAS(advertise.ownerPID,
+          advertise
           .getDestPrefix(), peer, advertise.safeToken)) {
           logger.debug(String.format("propagate to peer %s the advertise %s",
             peer, advertise));
@@ -1709,6 +1665,11 @@ public class ExoSdxManager extends SdxManagerBase {
         serverSlice.getLinkOfInterface(i),
         serverSlice.getMacAddressOfInterface(i));
     }
+  }
+
+  @Override
+  public void logFib() {
+    logger.info(serverSlice.getName() + "\n" + advertiseManager.logFib());
   }
 
   String getEchoTimeCMD() {

@@ -21,6 +21,11 @@ public class AdvertiseBase {
 
   public AdvertiseBase() {
     route = new ArrayList<>();
+    this.ownerPID = null;
+    this.destPrefix = null;
+    this.srcPrefix = null;
+    this.advertiserPID = null;
+    this.safeToken = null;
   }
 
   public AdvertiseBase(AdvertiseBase advertise, String myPid) {
