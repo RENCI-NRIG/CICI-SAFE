@@ -1332,7 +1332,7 @@ public class ExoSdxManager extends SdxManagerBase {
   public void restartPlexus() {
     coreProperties.setSdnControllerIp(serverSlice.getManagementIP(plexusName));
     //restartPlexus(coreProperties.getSdnControllerIp(), "rest_router");
-    restartPlexus(coreProperties.getSdnControllerIp(), "rest_mirror");
+    restartPlexus(coreProperties.getSdnControllerIp(), coreProperties.getSdnApp());
   }
 
   /*

@@ -69,7 +69,9 @@ public class QoSTest extends ExoSdxManager {
   }
 
   public void promptEnterKey(){
-    System.out.println("Press \"ENTER\" to continue...");
+    System.out.println("Press " +
+      "\"ENTER\" " +
+      "to continue...");
     try {
       System.in.read();
     } catch (IOException e) {
@@ -81,6 +83,7 @@ public class QoSTest extends ExoSdxManager {
     CommandLine cmd = ServerOptions.parseCmd(arg1);
     String configFilePath = cmd.getOptionValue("config");
     this.readConfig(configFilePath);
+    coreProperties.setSdnApp("rest_mirror");
     createNetwork();
   }
 
