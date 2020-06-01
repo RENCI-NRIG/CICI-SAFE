@@ -3,15 +3,12 @@ package exoplex.sdx.network;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import exoplex.common.utils.ServerOptions;
-import exoplex.demo.AbstractTestSetting;
-import exoplex.demo.AbstractTestSlice;
-import exoplex.demo.singlesdx.SingleSdxModule;
-import exoplex.experiment.ExperimentBase;
 import exoplex.sdx.core.CoreProperties;
 import exoplex.sdx.core.exogeni.ExoSdxManager;
 import exoplex.sdx.slice.Scripts;
 import exoplex.sdx.slice.SliceManager;
-import exoplex.sdx.slice.exogeni.ExoGeniSliceModule;
+import exoplex.sdx.slice.exogeni.ExoSliceManager;
+import exoplex.sdx.slice.exogeni.NodeBase;
 import exoplex.sdx.slice.exogeni.SiteBase;
 import org.apache.commons.cli.CommandLine;
 import org.apache.logging.log4j.LogManager;
@@ -19,15 +16,14 @@ import org.apache.logging.log4j.Logger;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import sun.security.pkcs11.Secmod;
 
+import java.io.IOException;
 import java.lang.reflect.Method;
-import java.util.HashMap;
 
 public class QoSTest extends ExoSdxManager {
   static Logger logger = LogManager.getLogger(QoSTest.class);
   static String site1 = SiteBase.get("TAMU");
-  static String site2 = SiteBase.get("UH");
+  static String site2 = SiteBase.get("UFL");
   static String userDir = System.getProperty("user.dir");
   static String sdxSimpleDir = userDir.split("exoplex")[0] + "exoplex/";
   static String[] arg1 = {"-c", sdxSimpleDir + "config/qos/qos.conf"};
@@ -39,27 +35,53 @@ public class QoSTest extends ExoSdxManager {
 
   @BeforeClass
   public static void setUp() throws Exception {
-    Injector injector = Guice.createInjector(new ExoGeniSliceModule());
+    Injector injector = Guice.createInjector(new QoSModule());
     qosTest = injector.getInstance(QoSTest.class);
+    qosTest.routingManager = injector.getInstance(AbstractRoutingManager.class);
     qosTest.initTest();
   }
 
   @AfterClass
   public static void cleanUp() {
-    qosTest.deleteSlice();
+    //qosTest.deleteSlice();
   }
 
   @Test
   public void testQoS() throws Exception {
-    //qosTest.startExoPlex();
-    logger.info("test");
+    qosTest.startExoPlex();
+    qosTest.notifyPrefix("192.168.10.1/24", "192.168.10.2", "CNode0");
+    qosTest.notifyPrefix("192.168.20.1/24", "192.168.20.2", "CNode1");
+    qosTest.notifyPrefix("192.168.30.1/24", "192.168.30.2", "CNode2");
+    qosTest.notifyPrefix("192.168.40.1/24", "192.168.40.2", "CNode3");
+    qosTest.connectionRequest("192.168.10.1/24", "192.168.30.1/24", 300000000);
+    qosTest.connectionRequest("192.168.20.1/24", "192.168.40.1/24", 100000000);
+    logger.info("Now no QoS rule has been installed, the bandwidth are " +
+      "limited to the link capacity");
+    promptEnterKey();
+    qosTest.setQos("192.168.10.1/24", "192.168.30.1/24", 300000000);
+    logger.info("Now QoS rule has been installed to limit bandwith between " +
+        "192.168.10.1/24 and 192.168.30.1/24 to 300Mbps");
+    promptEnterKey();
+    qosTest.setQos("192.168.20.1/24", "192.168.40.1/24", 100000000);
+    logger.info("Now QoS rule has been installed to limit bandwith between " +
+      "192.168.20.1/24 and 192.168.40.1/24 to 100Mbps");
+    logger.info("test ends");
+  }
+
+  public void promptEnterKey(){
+    System.out.println("Press \"ENTER\" to continue...");
+    try {
+      System.in.read();
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
   }
 
   public void initTest() throws Exception {
     CommandLine cmd = ServerOptions.parseCmd(arg1);
     String configFilePath = cmd.getOptionValue("config");
     this.readConfig(configFilePath);
-    createNetwork();
+    //createNetwork();
   }
 
   public void startExoPlex() throws Exception {
@@ -70,12 +92,8 @@ public class QoSTest extends ExoSdxManager {
     loadSlice();
     initializeSdx();
     delFlows();
-    Method configRouting = super.getClass().getDeclaredMethod("configRouting");
-    configRouting.setAccessible(true);
-    configRouting.invoke(this);
-    Method updateMacAddr = super.getClass().getDeclaredMethod("updateMacAddr");
-    updateMacAddr.setAccessible(true);
-    updateMacAddr.invoke(this);
+    configRouting();
+    updateMacAddr();
   }
 
   public void createNetwork() throws Exception {
@@ -96,24 +114,38 @@ public class QoSTest extends ExoSdxManager {
   }
 
   public void configTestSlice(SliceManager carrier) {
-    carrier.runCmdSlice("apt-get update;apt-get -y install quagga", coreProperties.getSshKey(), "(CNode\\d+)", true);
-    carrier.runCmdSlice("sed -i -- 's/zebra=no/zebra=yes/g' /etc/quagga/daemons", coreProperties.getSshKey(), "(CNode\\d+)", true);
+    carrier.runCmdSlice("sudo apt-get update;apt-get -y install quagga",
+      coreProperties.getSshKey(), "(CNode\\d+)", true);
+    carrier.runCmdSlice("sudo sed -i -- 's/zebra=no/zebra=yes/g' " +
+      "/etc/quagga/daemons", coreProperties.getSshKey(), "(CNode\\d+)", true);
     //carrier.runCmdSlice("sed -i -- 's/ospfd=no/ospfd=yes/g' /etc/quagga/daemons", coreProperties.getSshKey(),
     // "(node\\d+)", true);
-    carrier.runCmdSlice("echo \"1\" > /proc/sys/net/ipv4/ip_forward", coreProperties.getSshKey(), "(CNode\\d+)", true);
+    carrier.runCmdSlice("sudo echo \"1\" > /proc/sys/net/ipv4/ip_forward",
+      coreProperties.getSshKey(), "(CNode\\d+)", true);
     try {
-      carrier.runCmdSlice("ifconfig eth1 192.168.10.2/24 up", coreProperties.getSshKey(), "(CNode0)", true);
-      carrier.runCmdSlice("ifconfig eth1 192.168.20.2/24 up", coreProperties.getSshKey(), "(CNode1)", true);
-      carrier.runCmdSlice("ifconfig eth1 192.168.30.2/24 up", coreProperties.getSshKey(), "(CNode2)", true);
+      carrier.runCmdSlice("sudo ifconfig ens6 192.168.10.2/24 up",
+        coreProperties.getSshKey(), "(CNode0)", true);
+      carrier.runCmdSlice("sudo ifconfig ens6 192.168.20.2/24 up",
+        coreProperties.getSshKey(), "(CNode1)", true);
+      carrier.runCmdSlice("sudo ifconfig ens6 192.168.30.2/24 up",
+        coreProperties.getSshKey(), "(CNode2)", true);
+      carrier.runCmdSlice("sudo ifconfig ens6 192.168.40.2/24 up",
+        coreProperties.getSshKey(), "(CNode3)", true);
     } catch (Exception e) {
       e.printStackTrace();
     }
-    carrier.runCmdSlice("echo \"ip route 192.168.1.1/16 192.168.10.1\" >>/etc/quagga/zebra" +
+    carrier.runCmdSlice("sudo echo \"ip route 192.168.1.1/16 192.168.10.1\" " +
+      "| sudo tee /etc/quagga/zebra" +
       ".conf", coreProperties.getSshKey(), "(CNode0)", true);
-    carrier.runCmdSlice("echo \"ip route 192.168.1.1/16 192.168.20.1\" >>/etc/quagga/zebra" +
+    carrier.runCmdSlice("sudo echo \"ip route 192.168.1.1/16 192.168.20.1\" " +
+      "| sudo tee /etc/quagga/zebra" +
       ".conf", coreProperties.getSshKey(), "(CNode1)", true);
-    carrier.runCmdSlice("echo \"ip route 192.168.1.1/16 192.168.30.1\" >>/etc/quagga/zebra" +
+    carrier.runCmdSlice("sudo echo \"ip route 192.168.1.1/16 192.168.30.1\" " +
+      "| sudo tee /etc/quagga/zebra" +
       ".conf", coreProperties.getSshKey(), "(CNode2)", true);
+    carrier.runCmdSlice("sudo echo \"ip route 192.168.1.1/16 192.168.40.1\" " +
+      "| sudo tee /etc/quagga/zebra" +
+      ".conf", coreProperties.getSshKey(), "(CNode3)", true);
     carrier.runCmdSlice(Scripts.restartQuagga(), coreProperties.getSshKey(), "(CNode\\d+)", true);
   }
 
@@ -123,100 +155,41 @@ public class QoSTest extends ExoSdxManager {
       coreProperties.getExogeniKey(),
       coreProperties.getSshKey(),
       coreProperties.getExogeniSm()));
-    SliceManager slice = sliceManagerFactory.create(
+    ExoSliceManager slice = (ExoSliceManager) sliceManagerFactory.create(
       coreProperties.getSliceName(),
       coreProperties.getExogeniKey(),
       coreProperties.getExogeniKey(),
       coreProperties.getExogeniSm(),
       coreProperties.getSshKey());
-    slice.addComputeNode(site1, "CNode0");
-    slice.addComputeNode(site2, "CNode1");
-    slice.addComputeNode(site2, "CNode2");
+    slice.addComputeNode(site1, "CNode0", NodeBase.xoExtraLarge);
+    slice.addComputeNode(site1, "CNode1", NodeBase.xoExtraLarge);
+    slice.addComputeNode(site2, "CNode2", NodeBase.xoExtraLarge);
+    slice.addComputeNode(site2, "CNode3", NodeBase.xoExtraLarge);
     slice.addOVSRouter(site1, "c0");
     slice.addOVSRouter(site2, "c1");
-    slice.addBroadcastLink("stitch_c0_10");
+    slice.addBroadcastLink("stitch_c0_10", 500000000);
     slice.attach("CNode0", "stitch_c0_10", "192.168.10.2", "255.255.255.0");
     slice.attach("c0", "stitch_c0_10", null, null);
-    slice.addBroadcastLink("clink0");
-    slice.attach("clink0", "c0");
-    slice.attach("clink0", "c1");
-    slice.addBroadcastLink("stitch_c1_20");
-    slice.attach("stitch_c1_20", "CNode1", "192.168.20.2", "255.255.255.0");
-    slice.attach("stitch_c1_20", "c1");
-    slice.addBroadcastLink("stitch_c1_30");
-    slice.attach("stitch_c1_30", "CNode2", "192.168.30.2", "255.255.255.0");
-    slice.attach("stitch_c1_30", "c1");
+
+    slice.addBroadcastLink("stitch_c0_20", 500000000);
+    slice.attach("CNode1", "stitch_c0_20", "192.168.20.2", "255.255.255.0");
+    slice.attach("c0", "stitch_c0_20", null, null);
+    //slice.addBroadcastLink("clink0", 500000000);
+    //slice.attach("clink0", "c0");
+    //slice.attach("clink0", "c1");
+    slice.addBroadcastLink("stitch_c1_30", 500000000);
+    slice.attach("CNode2","stitch_c1_30",  "192.168.30.2", "255.255" +
+      ".255.0");
+    slice.attach("c1", "stitch_c1_30");
+    slice.addBroadcastLink("stitch_c1_40", 500000000);
+    slice.attach("stitch_c1_40", "CNode3", "192.168.40.2", "255.255.255.0");
+    slice.attach("stitch_c1_40", "c1");
     if (coreProperties.isPlexusInSlice()) {
       slice.addPlexusController(coreProperties.getSdnSite(), plexusName);
     }
     return slice;
   }
 
-  public void installTestGroup() {
-    //===>>c0 =>c1 c2
-    HashMap<String, Integer> nbs = new HashMap<>();
-    int weight1 = 2;
-    int weight2 = 1;
-    nbs.put("c1", weight1);
-    nbs.put("c2", weight2);
-    int groupId = 1;
-    SdnUtil.deleteGroup(getSDNController(), getDPID("c0"), groupId);
-    routingManager.setNextHops("c0", getSDNController(), groupId, "192.168.20.0/24", nbs);
-    String res = SdnUtil.getGroupDescStats(getSDNController(), getDPID("c0"), groupId);
-    logger.info("get group stats");
-    logger.info(res);
-    //==> c1->c3 c2->c3
-    nbs.clear();
-    nbs.put("c3", weight2);
-    SdnUtil.deleteGroup(getSDNController(), getDPID("c1"), groupId);
-    routingManager.setNextHops("c1", getSDNController(), groupId, "192.168.20.0/24", nbs);
-    res = SdnUtil.getGroupDescStats(getSDNController(), getDPID("c1"), groupId);
-    logger.info("get group stats");
-    logger.info(res);
-    SdnUtil.deleteGroup(getSDNController(), getDPID("c2"), groupId);
-    routingManager.setNextHops("c2", getSDNController(), groupId, "192.168.20.0/24", nbs);
-    res = SdnUtil.getGroupDescStats(getSDNController(), getDPID("c2"), groupId);
-    logger.info("get group stats");
-    logger.info(res);
-
-    ////last hop
-    //routingManager.setOutPort("c3", getSDNController(),
-    //    "stitch_c3_20","192.168.20.0/24" );
-    //res = SdnUtil.getGroupDescStats(getSDNController(), getDPID("c3"), groupId);
-    //logger.info(res);
-    routingManager.singleStepRouting("192.168.20.0/24", "192.168.20.2",
-      getDPID("c3"), getSDNController());
-
-    //<<==== c3-> c1 c2
-    groupId = 2;
-    nbs.clear();
-    nbs.put("c1", weight1);
-    nbs.put("c2", weight2);
-    SdnUtil.deleteGroup(getSDNController(), getDPID("c3"), groupId);
-    routingManager.setNextHops("c3", getSDNController(), groupId, "192.168.10.0/24", nbs);
-    res = SdnUtil.getGroupDescStats(getSDNController(), getDPID("c3"), groupId);
-    logger.info("get group stats");
-    logger.info(res);
-    //<<===== c1->c0 c2 -> c0
-    nbs.clear();
-    nbs.put("c0", weight2);
-    SdnUtil.deleteGroup(getSDNController(), getDPID("c1"), groupId);
-    routingManager.setNextHops("c1", getSDNController(), groupId, "192.168.10.0/24", nbs);
-    res = SdnUtil.getGroupDescStats(getSDNController(), getDPID("c1"), groupId);
-    logger.info("get group stats");
-    logger.info(res);
-    SdnUtil.deleteGroup(getSDNController(), getDPID("c2"), groupId);
-    routingManager.setNextHops("c2", getSDNController(), groupId, "192.168.10.0/24", nbs);
-    res = SdnUtil.getGroupDescStats(getSDNController(), getDPID("c2"), groupId);
-    logger.info("get group stats");
-    logger.info(res);
-    ///<<<===last hop
-    //routingManager.setOutPort("c0", getSDNController(),
-    //    "stitch_c0_10","192.168.10.0/24" );
-    routingManager.singleStepRouting("192.168.10.0/24", "192.168.10.2",
-      getDPID("c0"), getSDNController());
-    logger.info(res);
-  }
 
   public void logFlowTables() {
     try {
@@ -226,65 +199,9 @@ public class QoSTest extends ExoSdxManager {
       logFlowTables.setAccessible(true);
       logFlowTables.invoke(this, "c0");
       logFlowTables.invoke(this, "c1");
-      logFlowTables.invoke(this, "c2");
-      logFlowTables.invoke(this, "c3");
     } catch (Exception e) {
       e.printStackTrace();
     }
   }
 
-  public void sendTraffic() {
-    ExperimentBase experiment = new ExperimentBase(this);
-    experiment.addClient("CNode0", serverSlice.getManagementIP("CNode0"),
-      "192.168.10.2");
-    experiment.addClient("CNode1", serverSlice.getManagementIP("CNode1"),
-      "192.168.20.2");
-    experiment.addClient("CNode2", serverSlice.getManagementIP("CNode2"),
-      "192.168.30.2");
-    experiment.addTcpFlow("CNode0", "CNode1", "1m", 20);
-    experiment.addTcpFlow("CNode0", "CNode2", "1m", 20);
-    //experiment.addTcpFlow("CNode2", "CNode0", "1m", 20);
-    //experiment.addTcpFlow("CNode1", "CNode0", "1m", 20);
-    experiment.setLatencyTask("CNode0", "CNode1");
-    experiment.startLatencyTask();
-    experiment.startFlows(10);
-    logger.warn(String.format("start time %s", System.currentTimeMillis() / 1000));
-    sleep(15);
-    experiment.stopFlows();
-    experiment.printFlowServerResult();
-    experiment.stopLatencyTask();
-    experiment.printLatencyResult();
-    logger.warn(String.format("stop time %s", System.currentTimeMillis() / 1000));
-  }
-
-  public void getGroupStats() {
-    int gid = 1;
-    logger.info("---------------------");
-    String res = SdnUtil.getGroupStats(getSDNController(), getDPID("c0"), gid);
-    logger.info(res);
-    logger.info("---------------------");
-    res = SdnUtil.getGroupStats(getSDNController(), getDPID("c1"), gid);
-    logger.info(res);
-    logger.info("---------------------");
-    res = SdnUtil.getGroupStats(getSDNController(), getDPID("c2"), gid);
-    logger.info(res);
-    logger.info("---------------------");
-    res = SdnUtil.getGroupStats(getSDNController(), getDPID("c3"), gid);
-    logger.info(res);
-    logger.info("---------------------");
-    gid = 2;
-    logger.info("---------------------");
-    res = SdnUtil.getGroupStats(getSDNController(), getDPID("c0"), gid);
-    logger.info(res);
-    logger.info("---------------------");
-    res = SdnUtil.getGroupStats(getSDNController(), getDPID("c1"), gid);
-    logger.info(res);
-    logger.info("---------------------");
-    res = SdnUtil.getGroupStats(getSDNController(), getDPID("c2"), gid);
-    logger.info(res);
-    logger.info("---------------------");
-    res = SdnUtil.getGroupStats(getSDNController(), getDPID("c3"), gid);
-    logger.info(res);
-    logger.info("---------------------");
-  }
 }

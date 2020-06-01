@@ -7,6 +7,7 @@ import exoplex.sdx.network.Link;
 import exoplex.sdx.network.NetworkManager;
 import exoplex.sdx.network.Router;
 import exoplex.sdx.slice.SliceManager;
+import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.json.simple.JSONArray;
@@ -314,7 +315,7 @@ public class VfcSliceManager extends SliceManager {
     return "";
   }
 
-  public List<String> getPhysicalInterfaces(String nodeName) {
+  public List<ImmutablePair<String, String>> getPhysicalInterfaces(String nodeName) {
     return new ArrayList<>();
   }
 

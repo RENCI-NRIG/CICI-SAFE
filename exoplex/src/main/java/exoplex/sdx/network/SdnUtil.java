@@ -26,12 +26,18 @@ public class SdnUtil {
     return "http://" + controller + "/qos/queue/" + dpid;
   }
 
-  static JSONObject queueData(int maxrate, List<Long> queuerate) {
+  static JSONObject queueData(long maxrate, List<Long> queuerate,
+                              String portName) {
     JSONObject params = new JSONObject();
     params.put("type", "linux-htb");
     params.put("max_rate", String.valueOf(maxrate));
+    //params.put("port_name", portName);
     JSONArray queues = new JSONArray();
-    for (Long r : queuerate) {
+    JSONObject defaultQ = new JSONObject();
+    defaultQ.put("max_rate", String.valueOf(maxrate));
+    queues.put(defaultQ);
+    for (int i = 1; i < queuerate.size(); i ++) {
+      long r = queuerate.get(i);
       JSONObject q = new JSONObject();
       q.put("max_rate", String.valueOf(r));
       queues.put(q);
