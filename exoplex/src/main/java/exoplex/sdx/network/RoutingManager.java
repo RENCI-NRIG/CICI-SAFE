@@ -13,7 +13,7 @@ import java.util.*;
 public class RoutingManager extends AbstractRoutingManager {
   final static Logger logger = LogManager.getLogger(RoutingManager.class);
   final static Logger sdnLogger = LogManager.getLogger("SdnCmds");
-  final static int MAX_RATE = 2000000;
+  final static long MAX_RATE = 5000000000l;
   private NetworkManager networkManager;
   private HashMap<String, ArrayList<Long>> router_queues = new HashMap<>();
   private HashMap<String, ArrayList<JSONObject>> router_matches = new HashMap<>();
@@ -24,6 +24,7 @@ public class RoutingManager extends AbstractRoutingManager {
   private HashMap<String, ArrayList<String[]>> pairPath = new HashMap<>();
   private HashMap<String, ArrayList<String>> routes = new HashMap<>();
   private HashMap<String, String> macInterfaceMap = new HashMap<>();
+  private HashMap<String, String> macEthMap = new HashMap<>();
   private HashMap<String, String> macPortMap = new HashMap<>();
   private HashMap<String, String> linkGateway = new HashMap<>();
   private HashMap<String, String> prefixGatewayMap = new HashMap<>();
@@ -61,7 +62,8 @@ public class RoutingManager extends AbstractRoutingManager {
       networkManager.putRouter(new Router(routerName, dpid, controller,
         managementIP));
       ArrayList<Long> newqueue = new ArrayList<>();
-      newqueue.add(Long.valueOf(1000000));
+      newqueue.add(Long.valueOf(MAX_RATE));
+
       router_queues.put(dpid, newqueue);
     }
   }
@@ -518,9 +520,11 @@ public class RoutingManager extends AbstractRoutingManager {
     }
   }
 
-  synchronized public void updateInterfaceMac(String node, String link, String mac) {
+  synchronized public void updateInterfaceMac(String node, String link,
+                                              String mac, String ethName) {
     if (mac != null) {
       String oldValue = macInterfaceMap.put(mac, NetworkUtil.computeInterfaceName(node, link));
+      macEthMap.put(mac, ethName);
       if (!mac.equals(oldValue)) {
         logger.debug(String.format("Mac address for %s updated from %s to %s",
           NetworkUtil.computeInterfaceName(node, link), oldValue, mac));
@@ -644,7 +648,8 @@ public class RoutingManager extends AbstractRoutingManager {
     setQos(controller, dpid, srcip, destip, Long.valueOf(bw));
   }
 
-  public void setQos(String controller, String dpid, String srcip, String destip, long bw) {
+  public void setQos(String controller, String dpid, String srcip,
+                     String destip, long bw) {
     logger.info(String.format("setQos %s %s %s %s %s", controller, dpid, srcip, destip, bw));
     JSONObject match = new JSONObject();
     match.put("nw_src", srcip);
@@ -656,13 +661,19 @@ public class RoutingManager extends AbstractRoutingManager {
       m.add(match);
       router_matches.put(dpid, m);
     }
+    //set queue
     router_queues.get(dpid).add(bw);
     String qurl = SdnUtil.queueURL(controller, dpid);
-    JSONObject qdata = SdnUtil.queueData(MAX_RATE, router_queues.get(dpid));
+    JSONObject qdata = SdnUtil.queueData(MAX_RATE,
+      router_queues.get(dpid),
+      null);
+    logger.info(qurl + " " + qdata.toString());
     String res = postSdnCmd(qurl, qdata);
     logger.debug(res);
+    //select queue
     String qosurl = SdnUtil.qosRuleURL(controller, dpid);
     JSONObject qosdata = SdnUtil.qosRuleData(match, router_queues.get(dpid).size() - 1);
+    logger.info(qosurl + " " + qosdata.toString());
     String qosres = postSdnCmd(qosurl, qosdata);
     logger.debug(qosres);
   }
