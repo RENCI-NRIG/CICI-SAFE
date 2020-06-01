@@ -81,7 +81,7 @@ public class QoSTest extends ExoSdxManager {
     CommandLine cmd = ServerOptions.parseCmd(arg1);
     String configFilePath = cmd.getOptionValue("config");
     this.readConfig(configFilePath);
-    //createNetwork();
+    createNetwork();
   }
 
   public void startExoPlex() throws Exception {
