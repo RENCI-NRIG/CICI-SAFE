@@ -2,6 +2,7 @@ package exoplex.sdx.slice.exogeni;
 
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
+import com.google.inject.internal.asm.$Type;
 import exoplex.common.utils.Exec;
 import exoplex.common.utils.NetworkUtil;
 import exoplex.common.utils.PathUtil;
@@ -12,6 +13,7 @@ import exoplex.sdx.slice.SliceManager;
 import exoplex.sdx.slice.SliceProperties;
 import net.jcip.annotations.ThreadSafe;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.renci.ahab.libndl.Slice;
@@ -37,7 +39,7 @@ import java.util.regex.Pattern;
 
 @ThreadSafe
 public class ExoSliceManager extends SliceManager {
-  final static long DEFAULT_BW = 1000000000;
+  final static long DEFAULT_BW = 100000000;
   final static Logger logger = LogManager.getLogger(ExoSliceManager.class);
   private static final int COMMIT_COUNT = 5;
   private static final int INTERVAL = 10;
@@ -272,6 +274,10 @@ public class ExoSliceManager extends SliceManager {
   }
 
   public String addComputeNode(String site, String name) {
+    return addComputeNode(site, name, NodeBase.xoMedium);
+  }
+
+  public String addComputeNode(String site, String name, String type) {
     logger.debug(String.format("Adding new compute node %s to slice %s", name, sliceName));
     if (slice == null) {
       createSlice();
@@ -281,7 +287,7 @@ public class ExoSliceManager extends SliceManager {
     String nodeImageURL = ninfo.imageUrl;
     //http://geni-images.renci.org/images/standard/ubuntu/ub1304-ovs-opendaylight-v1.0.0.xml
     String nodeImageHash = ninfo.imageHash;
-    String nodeNodeType = "XO Medium";
+    String nodeNodeType = type;
     String nodePostBootScript = Scripts.getCustomerScript();
     ComputeNode node0 = slice.addComputeNode(name);
     node0.setImage(nodeImageURL, nodeImageHash, nodeImageShortName);
@@ -290,6 +296,7 @@ public class ExoSliceManager extends SliceManager {
     node0.setPostBootScript(nodePostBootScript);
     postBootScriptsMap.put(name, nodePostBootScript);
     return node0.getName();
+
   }
 
   public StorageNode addStorageNode(String name, long capacity, String mountpnt) {
@@ -867,18 +874,19 @@ public class ExoSliceManager extends SliceManager {
     expectInterfaceNumMap.get(nodeName).set(0);
   }
 
-  public List<String> getPhysicalInterfaces(String nodeName) {
+  public List<ImmutablePair<String, String>> getPhysicalInterfaces(String nodeName) {
     String res = runCmdNode(String.format("sudo /bin/bash %s/ifaces.sh",
       SliceProperties.homeDir),
       nodeName);
     logger.debug(String.format("%s %s Interfaces: %s", sliceName, nodeName, res).replace("\n",
       " "));
-    String[] ifaces = res.replace(" ", "").split("\n");
-    ArrayList<String> interfaces = new ArrayList<>();
+    String[] ifaces = res.split("\n");
+    ArrayList<ImmutablePair<String, String>> interfaces = new ArrayList<>();
     for (String s : ifaces) {
-      String ss = s.replace(" ", "").replace("\n", "");
+      String ss = s.replaceAll("\\s*", " ").replace("\n", "");
       if (ss.length() > 1) {
-        interfaces.add(ss);
+        String[] parts = ss.split("\\s*");
+        interfaces.add(new ImmutablePair<>(parts[0], parts[1]));
       }
     }
     return interfaces;

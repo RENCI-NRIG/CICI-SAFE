@@ -169,7 +169,7 @@ public class Scripts {
   }
 
   public static String restartQuagga() {
-    return "sudo service zebra restart;";
+    return "sudo service zebra restart; sudo service quagga restart";
   }
 
   public static String stopQuagga() {

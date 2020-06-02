@@ -163,7 +163,8 @@ public class RoutingManagerMock extends AbstractRoutingManager {
   public void setOvsdbAddr(String controller) {
   }
 
-  synchronized public void updateInterfaceMac(String node, String link, String mac) {
+  synchronized public void updateInterfaceMac(String node, String link,
+                                              String mac, String eth) {
     if (mac != null) {
       String oldValue = macInterfaceMap.put(mac, NetworkUtil.computeInterfaceName(node, link));
       if (!mac.equals(oldValue)) {
@@ -232,4 +233,5 @@ public class RoutingManagerMock extends AbstractRoutingManager {
 
   public void printLinks() {
   }
+
 }

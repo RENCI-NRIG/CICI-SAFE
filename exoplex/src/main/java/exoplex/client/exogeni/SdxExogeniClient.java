@@ -19,6 +19,7 @@ import exoplex.sdx.slice.SliceManager;
 import exoplex.sdx.slice.SliceManagerFactory;
 import exoplex.sdx.slice.SliceProperties;
 import exoplex.sdx.slice.exogeni.ExoSliceManager;
+import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.json.JSONObject;
@@ -370,8 +371,9 @@ public class SdxExogeniClient {
     logger.info(logPrefix + "set IP address of the stitch interface to " + vfcip);
     String vfcGateway = vfcip.split("/")[0];
     if(coreProperties.getQuaggaRoute()) {
-      List<String> interfaces = serverSlice.getPhysicalInterfaces(nodeName);
-      String newInterface = interfaces.get(interfaces.size() - 1);
+      List<ImmutablePair<String, String>> interfaces =
+        serverSlice.getPhysicalInterfaces(nodeName);
+      String newInterface = interfaces.get(interfaces.size() - 1).left;
       String result = serverSlice.runCmdNode(String.format("sudo ifconfig " + "%s %s", newInterface, localIp), nodeName, false);
       setUpQuaggaRouting("192.168.1.1/16", vfcGateway, nodeName);
     }
@@ -575,8 +577,9 @@ public class SdxExogeniClient {
       } else {
         String ip = params[2] + "/" + params[3].split("/")[1];
         serverSlice.waitForNewInterfaces(nodeName);
-        List<String> interfaces = serverSlice.getPhysicalInterfaces(nodeName);
-        String newInterface = interfaces.get(interfaces.size() - 1);
+        List<ImmutablePair<String, String>> interfaces =
+          serverSlice.getPhysicalInterfaces(nodeName);
+        String newInterface = interfaces.get(interfaces.size() - 1).left;
         if(coreProperties.getQuaggaRoute()) {
           logger.info(logPrefix + "set IP address of the stitch interface to " + ip);
           String result = serverSlice.runCmdNode(String.format("sudo ifconfig " + "%s %s", newInterface, ip), nodeName, false);
