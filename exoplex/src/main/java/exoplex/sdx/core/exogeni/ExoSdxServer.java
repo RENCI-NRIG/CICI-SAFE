@@ -12,6 +12,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.glassfish.grizzly.http.server.HttpServer;
 import org.glassfish.jersey.grizzly2.httpserver.GrizzlyHttpServerFactory;
+import org.glassfish.jersey.moxy.json.MoxyJsonConfig;
+import org.glassfish.jersey.moxy.json.MoxyJsonFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 
 import javax.ws.rs.ext.ContextResolver;
@@ -38,10 +40,14 @@ public class ExoSdxServer extends SdxServerBase {
 
   @Override
   public HttpServer startServer(URI uri) {
+    final MoxyJsonConfig moxyJsonConfig = new MoxyJsonConfig();
+    final ContextResolver jsonConfigResolver = moxyJsonConfig.resolver();
 
     // create a resource config that scans for JAX-RS resources and providers
     // in com.example package
-    final ResourceConfig rc = new ResourceConfig().packages("exoplex.sdx.core.exogeni");
+    final ResourceConfig rc = new ResourceConfig().packages("exoplex.sdx.core.exogeni")
+            .register(MoxyJsonFeature.class)
+            .register(jsonConfigResolver);
     // create and start a new instance of grizzly http server
     // exposing the Jersey application at BASE_URI
     return GrizzlyHttpServerFactory.createHttpServer(uri, rc);

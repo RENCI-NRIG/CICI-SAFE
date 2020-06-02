@@ -14,7 +14,11 @@ public class Scripts {
     String script = aptUpdate()
       + "sudo docker pull %s\n"
       + "sudo docker run -i -t -d -p 8080:8080 -p 6633:6633 -p 3000:3000 -h " +
-      "plexus --name plexus %s\n";
+      "plexus --name plexus %s\n" +
+            "sudo docker exec -itd plexus /bin/bash -c  " +
+            "\"cd /root;pkill ryu-manager; ryu-manager --log-file ~/ryu.log --default-log-level 1 " +
+            "ryu/ryu/app/rest_conf_switch.py ryu/ryu/app/rest_router_mirror.py ryu/ryu/app/ofctl_rest.py  " +
+            "ryu/ryu/app/rest_qos.py";
     script = String.format(script, plexusImage, plexusImage);
     //+"docker exec -d plexus /bin/bash -c  \"cd /root/;./sdx.sh\"\n";
     return script;

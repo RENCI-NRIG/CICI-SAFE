@@ -10,7 +10,7 @@ public class NodeBase {
 
   public static final String CENTOS_7_6 = "Centos 7.6";
   public static final String UBUNTU16 = "Ubuntu 16.04";
-  public static final String UBUNTU19 = "Ubuntu 19.04";
+  public static final String UBUNTU19 = "Ubuntu 19.10";
   public static final String xoMedium = "XO Medium";
   public static final String xoLarge = "XO Large";
   public static final String xoExtraLarge = "XO Extra large";
@@ -35,9 +35,9 @@ public class NodeBase {
     images.put(
       UBUNTU19,
       new NodeBaseInfo(
-        "Ubuntu 19.04 QCOW2 v1.0.4",
-        "http://geni-images.renci.org/images/standard/ubuntu-comet/ubuntu-19.04.v4/ubuntu-19.04.v4.xml",
-        "c7baea709ee9c4b354a175a315c6cf74a1c1a1f5"
+        "Ubuntu 19.10 QCOW2 v1.0.3",
+        "http://geni-images.renci.org/images/standard/ubuntu-comet/ubuntu-19.10.v3/ubuntu-19.10.v3.xml",
+        "e93f0db00998e45b73dbc2c3dd1c2d44ae1820aa"
       )
     );
 

@@ -19,6 +19,7 @@
         <dockerfile-maven-version>1.4.10</dockerfile-maven-version>
         <docker.image.prefix>rencinrig</docker.image.prefix>
         <docker.image.name.sdx>sdxserver</docker.image.name.sdx>
+        <docker.image.label>latest</docker.image.label>
         <docker.image.name.sdx.sdxSlice>sdxserverslice</docker.image.name.sdx.sdxSlice>
     </properties>
 
@@ -108,14 +109,14 @@
                         <configuration>
                             <dockerfile>Dockerfile</dockerfile>
                             <repository>${docker.image.prefix}/${docker.image.name.sdx}</repository>
-                            <tag>${project.version}</tag>
+                            <tag>${docker.image.label}</tag>
                             <buildArgs>
                                 <JAR_FILE_SERVER>SafeSdxServer.jar-jar-with-dependencies.jar
                                 </JAR_FILE_SERVER>
                                 <JAR_FILE_SLICE>SafeSdxSliceServer.jar-jar-with-dependencies.jar
                                 </JAR_FILE_SLICE>
                             </buildArgs>
-                            <skip>true</skip>
+                            <skip>false</skip>
                         </configuration>
                     </execution>
                 </executions>
