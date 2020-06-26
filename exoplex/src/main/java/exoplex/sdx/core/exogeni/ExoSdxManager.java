@@ -975,6 +975,9 @@ public class ExoSdxManager extends SdxManagerBase {
         logger.debug(logPrefix + "Routing set up for " + self_prefix + " and " + target_prefix);
         //TODO: auto select edge router
         //setMirror(n1, self_prefix, target_prefix, bandwidth);
+        if (bandwidth > 0) {
+          setQos(self_prefix, target_prefix, bandwidth);
+        }
         return "route configured: " + res;
       } else {
         logger.info(logPrefix + "Route for " + self_prefix + " and " + target_prefix +

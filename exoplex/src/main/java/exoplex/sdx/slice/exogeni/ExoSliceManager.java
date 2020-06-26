@@ -395,8 +395,9 @@ public class ExoSliceManager extends SliceManager {
         logger.info("Broadcast network");
         String stitchNetReserveId = net.getStitchingGUID();
         try {
-            sliceProxy.undoSliceStitch(sliceName, stitchNetReserveId, customerSlice,
-                    customerGUID);
+          // TODO KOMAL
+          //sliceProxy.undoSliceStitch(sliceName, stitchNetReserveId, customerSlice, customerGUID);
+          sliceProxy.undoSliceStitch(customerSlice, customerGUID, sliceName, stitchNetReserveId);
         } catch (TransportException e) {
             StringWriter errors = new StringWriter();
             e.printStackTrace(new PrintWriter(errors));
@@ -1106,7 +1107,10 @@ public class ExoSliceManager extends SliceManager {
       //s2
       Properties p = new Properties();
       p.setProperty("ip", newip);
-      sliceProxy.performSliceStitch(sliceName, RID, customerName, CID, secret, p);
+      //sliceProxy.performSliceStitch(sliceName, RID, customerName, CID, secret, p);
+      // TODO KOMAL
+      sliceProxy.permitSliceStitch(sliceName, RID, secret);
+      sliceProxy.performSliceStitch(customerName, CID, sliceName, RID, secret, p);
     } catch (TransportException e) {
       // TODO Auto-generated catch block
       e.printStackTrace();
