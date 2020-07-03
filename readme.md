@@ -8,6 +8,10 @@ a. Deploy ExoPlex on ESNET VFCs, https://www.youtube.com/watch?v=Ari_7kQLyV4.
 b. Deploy Exoplex on VFCs in Chameleon Cloud to connect two Chameleon client networks, https://www.youtube.com/watch?v=UONDVUBuMsU.
 
 Guide for running ExoPlex server based on VFC on Chameleon is available at https://github.com/RENCI-NRIG/CICI-SAFE/blob/vfc/vfc.md.
+
+## Run ExoPlex on ESNet
+
+## Run ExoPlex on ExoGENI slice
 ### 1. Compile code
 The java code is compiled with JDK8.
 a. Install Orca5 (https://github.com/RENCI-NRIG/orca5)
