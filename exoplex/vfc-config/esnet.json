@@ -27,7 +27,7 @@
                 "name": "net-exogenisc19yy1",
                 "router": "vfc-esnet-tacc",
                 "site": "TACC",
-                "vlan": "3508"
+                "vlan": "3505"
         }
     },
     {
@@ -35,7 +35,7 @@
                 "name": "netexogenivfcyy1",
                 "router": "vfc-esnet-uc",
                 "site": "UC",
-                "vlan": "3293"
+                "vlan": "3296"
         }
     }
 ]
