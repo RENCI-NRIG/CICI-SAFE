@@ -227,7 +227,7 @@ Client node at RENCI:
 
 
 ### 6. Check connectivity between subnets.
-Now we should be able to ping between the three subnets. It takes some time(several seconds) for the $ping$ request to succeed. This is due to the nature of ryu/rest_router application. It needs to learn MAC addresses along the path before two client nodes can talk.
+Now we should be able to ping between the three subnets. It takes some time(5 to30 seconds) for the $ping$ request to succeed. This is due to the nature of ryu/rest_router application. It needs to learn MAC addresses along the path before two client nodes can talk.
 
 ### 7. Resetting the network.
 We may want to reset the VFC network for another run of the process.
