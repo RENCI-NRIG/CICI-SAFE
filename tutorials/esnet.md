@@ -1,4 +1,6 @@
-The is the tutorial for running ExoPlex on ESNet VFCs to connect Chameleon networks and ExoGENI networks. In this tutorial, we will run ExoPlex on VFC network in ESNet and connect customer networks in Chameleon@TACC, Chameleon@UC and ExoGENI slice@RENCI. In this tutorial, we are not authorizing requests for stitching and connections with SAFE, as stitching operations are only performed mannually with privileges, and the authorizaiton policies and process are similar to the other demos.
+The is the tutorial for running ExoPlex on ESNet VFCs to connect Chameleon networks and ExoGENI networks. In this tutorial, we will run ExoPlex on VFC network in ESNet and connect customer networks in Chameleon@TACC, Chameleon@UC and ExoGENI slice@RENCI. In this tutorial, we are not authorizing requests for stitching and connections with SAFE, as stitching operations are only performed mannually with privileges, and the authorizaiton policies and process are similar to the other demos. 
+
+A demo video is available at https://youtu.be/oLNKjQL0EGY.
 
 ### 1. Set up the network topology.
 The topology of the network in this tutorial is as follows.
@@ -168,10 +170,12 @@ Though stitching operations are already completed, we still call the stitching A
 The config file is *CICI-SAFE/exoplex/chameleon-config/c1.conf*
 
         config{
-            slicename="alice"
-            type="client"
-            safe=false
-            serverurl="http://127.0.0.1:8888/"
+          slicename="alice"
+          type="client2"
+          safe=false
+          safekey="key_p14"
+          serverurl="http://127.0.0.1:8888/"
+          safeserver="127.0.0.1"
         }
 
 Stitch request with stitching properties. IP address *192.168.110.11/24* will be assigned to the VFC interface. *192.168.110.239* is the IP address of the client node.
