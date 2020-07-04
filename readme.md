@@ -3,7 +3,7 @@ This is the code repository for Exoplex. The SDN controller code we used are in 
 # Exoplex
 
 ### 0. Demos
-a. Deploy ExoPlex on ESNET VFCs, https://www.youtube.com/watch?v=Ari_7kQLyV4.
+a. Deploy ExoPlex on ESNET VFCs: tutorials/esnet.md (https://youtu.be/oLNKjQL0EGY)
 
 b. Deploy Exoplex on VFCs in Chameleon Cloud to connect two Chameleon client networks, https://www.youtube.com/watch?v=UONDVUBuMsU.
 
