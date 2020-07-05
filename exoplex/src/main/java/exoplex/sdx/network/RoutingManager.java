@@ -573,7 +573,7 @@ public class RoutingManager extends AbstractRoutingManager {
   }
 
   String getControllerByDpid(String dpid) {
-    return networkManager.getRouter(dpid).getController();
+    return networkManager.getRouterByDPID(dpid).getController();
   }
 
   public boolean waitTillAllOvsConnected(String controller, boolean mocked) {
