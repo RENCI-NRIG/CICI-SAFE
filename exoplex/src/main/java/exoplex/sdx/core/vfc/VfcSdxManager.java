@@ -158,6 +158,7 @@ public class VfcSdxManager extends SdxManagerBase {
       routingManager.newInternalLink(logLink.getLinkName(), logLink.getIP(1),
         logLink.getNodeA(), logLink.getIP(2), logLink.getNodeB(), logLink.getCapacity());;
     }
+    routingManager.setOvsdbAddr();
   }
 
   private int getAvailableIP() {
