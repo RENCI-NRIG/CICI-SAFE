@@ -23,7 +23,7 @@ import java.lang.reflect.Method;
 public class QoSTest extends ExoSdxManager {
   static Logger logger = LogManager.getLogger(QoSTest.class);
   static String site1 = SiteBase.get("TAMU");
-  static String site2 = SiteBase.get("UFL");
+  static String site2 = SiteBase.get("TAMU");
   static String userDir = System.getProperty("user.dir");
   static String sdxSimpleDir = userDir.split("exoplex")[0] + "exoplex/";
   static String[] arg1 = {"-c", sdxSimpleDir + "config/qos/qos.conf"};
@@ -57,11 +57,11 @@ public class QoSTest extends ExoSdxManager {
     qosTest.connectionRequest("192.168.20.1/24", "192.168.40.1/24", 100000000);
     logger.info("Now no QoS rule has been installed, the bandwidth are " +
       "limited to the link capacity");
-    promptEnterKey();
+    //promptEnterKey();
     qosTest.setQos("192.168.10.1/24", "192.168.30.1/24", 300000000);
     logger.info("Now QoS rule has been installed to limit bandwith between " +
         "192.168.10.1/24 and 192.168.30.1/24 to 300Mbps");
-    promptEnterKey();
+    //promptEnterKey();
     qosTest.setQos("192.168.20.1/24", "192.168.40.1/24", 100000000);
     logger.info("Now QoS rule has been installed to limit bandwith between " +
       "192.168.20.1/24 and 192.168.40.1/24 to 100Mbps");
@@ -84,7 +84,7 @@ public class QoSTest extends ExoSdxManager {
     String configFilePath = cmd.getOptionValue("config");
     this.readConfig(configFilePath);
     coreProperties.setSdnApp("rest_mirror");
-    createNetwork();
+    //createNetwork();
   }
 
   public void startExoPlex() throws Exception {

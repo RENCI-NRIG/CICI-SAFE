@@ -13,7 +13,7 @@ import java.util.*;
 public class RoutingManager extends AbstractRoutingManager {
   final static Logger logger = LogManager.getLogger(RoutingManager.class);
   final static Logger sdnLogger = LogManager.getLogger("SdnCmds");
-  final static long MAX_RATE = 5000000000l;
+  final static long MAX_RATE = 10000000000l;
   private NetworkManager networkManager;
   private HashMap<String, ArrayList<Long>> router_queues = new HashMap<>();
   private HashMap<String, ArrayList<JSONObject>> router_matches = new HashMap<>();
@@ -330,7 +330,6 @@ public class RoutingManager extends AbstractRoutingManager {
       prefixPaths.put(srcIP, new HashSet<>());
     }
     prefixPaths.get(srcIP).add(pathId);
-    ArrayList<String> dpids = new ArrayList<String>();
     boolean res = true;
     for (String[] path : paths) {
       Router logRouter = networkManager.getRouterByDPID(path[0]);
@@ -339,7 +338,8 @@ public class RoutingManager extends AbstractRoutingManager {
           Link link =
             networkManager.getLink(networkManager.getInterface(interfaceName).getLinkName());
           if (link.hasNode(path[2])) {
-            link.useBW(bw);
+            link.useBW(logRouter.getRouterName(),
+              link.getPairNodeName(logRouter.getRouterName()), bw);
             networkManager.putLink(link);
             break;
           }
@@ -873,9 +873,7 @@ public class RoutingManager extends AbstractRoutingManager {
     int start = 0;
     int end = 0;
     boolean foundpath = false;
-    if (srcdpid.equals(dstdpid)) {
-      foundpath = true;
-    }
+    //find path with bfs
     while (start <= end && !foundpath) {
       //logger.debug("queue[start]"+queue.get(start));
       String rid = queue.get(start);
@@ -888,7 +886,8 @@ public class RoutingManager extends AbstractRoutingManager {
           Link link = networkManager.getLink(neighborInterface.getLinkName());
           String pairip = neighborInterface.getIp();
           //logger.debug("neighborIP: "+ip);
-          if (link.getAvailableBW() < bw) {
+          if (link.getAvailableBW(logRouter.getRouterName(),
+            link.getPairNodeName(logRouter.getRouterName())) < bw) {
             continue;
           }
           String pairrouter = getDPID(neighborInterface.getNodeName());

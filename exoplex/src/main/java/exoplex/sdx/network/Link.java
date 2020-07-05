@@ -76,10 +76,10 @@ public class Link {
     return null;
   }
 
-  public String getPairNodeame(String nodeName) {
+  public String getPairNodeName(String nodeName) {
     if (nodeName.equals(nodeA)) {
       return nodeB;
-    } else if (nodeName.equals(interfaceB)) {
+    } else if (nodeName.equals(nodeB)) {
       return nodeA;
     }
     return null;

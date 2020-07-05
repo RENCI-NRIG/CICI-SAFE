@@ -968,7 +968,7 @@ public class ExoSdxManager extends SdxManagerBase {
       if (routingManager.configurePath(self_prefix, n1, target_prefix, n2,
         findGatewayForPrefix(self_prefix), bandwidth) &&
           routingManager.configurePath(target_prefix, n2, self_prefix, n1,
-            findGatewayForPrefix(target_prefix), 0)) {
+            findGatewayForPrefix(target_prefix), bandwidth)) {
         logger.info(logPrefix + "Routing set up for " + self_prefix + " and " + target_prefix);
         logger.debug(logPrefix + "Routing set up for " + self_prefix + " and " + target_prefix);
         //TODO: auto select edge router
