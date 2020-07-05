@@ -857,8 +857,6 @@ public class ExoSdxManager extends SdxManagerBase {
   synchronized public String connectionRequest(String self_prefix,
                                                String target_prefix, long bandwidth) throws Exception {
     logger.info(String.format("Connection request between %s and %s", self_prefix, target_prefix));
-    //String n1=computenodes.get(site1).get(0);
-    //String n2=computenodes.get(site2).get(0);
     String targetHash = null;
     String cKeyHash = null;
     Range selfRange, targetRange;
