@@ -98,7 +98,8 @@ public abstract class AbstractRoutingManager {
 
   public abstract boolean findPath(String node1, String node2, long bw);
 
-  public abstract void updateInterfaceMac(String node, String link, String mac);
+  public abstract void updateInterfaceMac(String node, String link,
+                                          String mac, String ethName);
 
   public abstract void updatePortMac(String controller, String dpid);
 
@@ -132,4 +133,6 @@ public abstract class AbstractRoutingManager {
   public abstract void deleteAllFlows();
 
   public abstract void printLinks();
+
+  public abstract void setOvsdbAddr(String sdnController);
 }

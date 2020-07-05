@@ -64,6 +64,7 @@ public class CoreProperties {
   private boolean reset = false;
   private String command = null;
   private String topologyFile = null;
+  private String sdnApp = "rest_router";
   private int numClientNode = 1;
   private boolean quaggaRoute = true;
   static private boolean routeAdvertise = false;
@@ -211,6 +212,9 @@ public class CoreProperties {
     }
     if (conf.hasPath("config.topofile")) {
       setTopologyFile(conf.getString("config.topofile"));
+    }
+    if (conf.hasPath("config.sdnapp")) {
+      setSdnApp(conf.getString("config.sdnapp"));
     }
     logger.debug(this.toString());
   }
@@ -474,6 +478,14 @@ public class CoreProperties {
 
   public void setCommand(String cmd) {
     this.command = cmd;
+  }
+
+  public void setSdnApp(String sdnApp) {
+    this.sdnApp = sdnApp;
+  }
+
+  public String getSdnApp() {
+    return sdnApp;
   }
 
   static public void setRouteAdvertise(boolean advertiseRoute) {

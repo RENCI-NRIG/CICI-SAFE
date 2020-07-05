@@ -1,5 +1,6 @@
 package exoplex.sdx.slice;
 
+import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.renci.ahab.libtransport.util.TransportException;
 import org.renci.ahab.libtransport.xmlrpc.XMLRPCTransportException;
 
@@ -120,7 +121,7 @@ public abstract class SliceManager {
 
   abstract public String runCmdNode(final String cmd, String nodeName);
 
-  abstract public List<String> getPhysicalInterfaces(String nodeName);
+  abstract public List<ImmutablePair<String, String>> getPhysicalInterfaces(String nodeName);
 
   abstract public String runCmdByIP(final String cmd, String mip, boolean repeat);
 

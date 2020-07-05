@@ -244,7 +244,8 @@ public class ExoSdxManager extends SdxManagerBase {
     } finally {
       serverSlice.unLockSlice();
     }
-    updateMacAddr();
+    updateMacAddr(node1);
+    updateMacAddr(node2);
     return true;
   }
 
@@ -271,7 +272,7 @@ public class ExoSdxManager extends SdxManagerBase {
           times++;
         }
       }
-      updateMacAddr();
+      updateMacAddr(nodeName);
       return true;
     } catch (Exception e) {
       e.printStackTrace();
@@ -307,7 +308,7 @@ public class ExoSdxManager extends SdxManagerBase {
     } finally {
       serverSlice.unLockSlice();
     }
-    updateMacAddr();
+    updateMacAddr(nodeName);
     return true;
   }
 
@@ -926,15 +927,19 @@ public class ExoSdxManager extends SdxManagerBase {
       serverSlice.loadSlice();
       String link1 = allocateCLinkName();
       logger.debug(logPrefix + "Add link: " + link1);
-      long linkbw = 2 * bandwidth;
-      addLink(link1, n1, n2, coreProperties.getBw());
-
       Link l1 = new Link();
       l1.setName(link1);
       l1.addNode(n1);
       l1.addNode(n2);
-      l1.setCapacity(linkbw);
       l1.setMask(mask);
+      long linkbw =(long)(1.5 * bandwidth);
+      if(linkbw > 0) {
+        addLink(link1, n1, n2, linkbw);
+        l1.setCapacity(linkbw);
+      } else {
+        addLink(link1, n1, n2, coreProperties.getBw());
+        l1.setCapacity(coreProperties.getBw());
+      }
       links.put(link1, l1);
       int ip_to_use = getAvailableIP();
       l1.setIP(IPPrefix + ip_to_use);
@@ -960,25 +965,14 @@ public class ExoSdxManager extends SdxManagerBase {
     //configure routing
     if (res) {
       logger.debug("Available path found, configuring routes");
-      if (routingManager.configurePath(self_prefix, n1, target_prefix, n2, findGatewayForPrefix
-        (self_prefix), bandwidth)
-        //&&
-        //  routingManager.configurePath(target_prefix, n2, self_prefix, n1, prefixGateway.get
-        //      (target_prefix), SDNController, 0)){
-      ) {
+      if (routingManager.configurePath(self_prefix, n1, target_prefix, n2,
+        findGatewayForPrefix(self_prefix), bandwidth) &&
+          routingManager.configurePath(target_prefix, n2, self_prefix, n1,
+            findGatewayForPrefix(target_prefix), 0)) {
         logger.info(logPrefix + "Routing set up for " + self_prefix + " and " + target_prefix);
         logger.debug(logPrefix + "Routing set up for " + self_prefix + " and " + target_prefix);
         //TODO: auto select edge router
         //setMirror(n1, self_prefix, target_prefix, bandwidth);
-        /*
-        TODO: qos
-        if (bandwidth > 0) {
-          routingManager.setQos(SDNController, routingManager.getDPID(n1), self_prefix,
-              target_prefix, bandwidth);
-          routingManager.setQos(SDNController, routingManager.getDPID(n2), target_prefix,
-              self_prefix, bandwidth);
-        }
-        */
         return "route configured: " + res;
       } else {
         logger.info(logPrefix + "Route for " + self_prefix + " and " + target_prefix +
@@ -988,6 +982,18 @@ public class ExoSdxManager extends SdxManagerBase {
       }
     }
     return "route configured: " + res;
+  }
+
+  synchronized public void setQos(String prefix1, String prefix2,
+                                    long bandwidth)  {
+    String n1 =
+      routingManager.getEdgeRouterByGateway(prefixGateway.get(prefix1));
+    String n2 =
+      routingManager.getEdgeRouterByGateway(prefixGateway.get(prefix2));
+    routingManager.setQos(SDNController, routingManager.getDPID(n1), prefix1,
+      prefix2, bandwidth);
+    routingManager.setQos(SDNController, routingManager.getDPID(n2), prefix2,
+      prefix1, bandwidth);
   }
 
   public void reset() {
@@ -1297,12 +1303,34 @@ public class ExoSdxManager extends SdxManagerBase {
       //String script = "docker exec -d plexus /bin/bash -c  \"cd /root;pkill ryu-manager;
       // ryu-manager ryu/ryu/app/rest_router.py|tee log\"\n";
       serverSlice.runCmdByIP(script, plexusip, false);
+    } else if(type.equals("rest_mirror")) {
+      //rest router application with QoS table and mirror function
+      logger.debug("Restarting Plexus Controller");
+      logger.info(logPrefix + "Restarting Plexus Controller: " + plexusip);
+      delFlows();
+      String script = "sudo docker exec -d plexus /bin/bash -c  \"cd /root;pkill ryu-manager; "
+        + "ryu-manager --log-file ~/log --default-log-level 10 --verbose "
+        + "ryu/ryu/app/rest_conf_switch.py ryu/ryu/app/rest_router_mirror.py "
+        + "ryu/ryu/app/rest_qos.py "
+        + "ryu/ryu/app/ofctl_rest.py %s\"\n";
+      // Set public url to plexus server
+      if (coreProperties.isPlexusInSlice()) {
+        String publicUrl = "http://" + plexusip + ":8888/";
+        coreProperties.setPublicUrl(publicUrl);
+      }
+      String sdxMonitorUrl = coreProperties.getPublicUrl() + "sdx/flow/packetin";
+      //reuse ryu-manager option for sdx url
+      script = String.format(script, String.format("--zapi-db-url %s", sdxMonitorUrl));
+      //String script = "docker exec -d plexus /bin/bash -c  \"cd /root;pkill ryu-manager;
+      // ryu-manager ryu/ryu/app/rest_router.py|tee log\"\n";
+      serverSlice.runCmdByIP(script, plexusip, false);
     }
   }
 
   public void restartPlexus() {
     coreProperties.setSdnControllerIp(serverSlice.getManagementIP(plexusName));
-    restartPlexus(coreProperties.getSdnControllerIp(), "rest_router");
+    //restartPlexus(coreProperties.getSdnControllerIp(), "rest_router");
+    restartPlexus(coreProperties.getSdnControllerIp(), coreProperties.getSdnApp());
   }
 
   /*
@@ -1343,10 +1371,6 @@ public class ExoSdxManager extends SdxManagerBase {
       HashSet<String> ifs = new HashSet<String>();
       // get all links, and then
       for (String i : serverSlice.getInterfaces()) {
-        routingManager.updateInterfaceMac(serverSlice.getNodeOfInterface(i),
-          serverSlice.getLinkOfInterface(i),
-          serverSlice.getMacAddressOfInterface(i)
-        );
         if (i.contains("node") || i.contains("bro")) {
           continue;
         }
@@ -1389,6 +1413,7 @@ public class ExoSdxManager extends SdxManagerBase {
         }
         stitchports.add(sp);
       }
+      updateMacAddr();
     } catch (Exception e) {
       e.printStackTrace();
     }
@@ -1468,7 +1493,7 @@ public class ExoSdxManager extends SdxManagerBase {
     return res;
   }
 
-  private void configRouting() {
+  protected void configRouting() {
     logger.debug("Configurating Routing");
     if (coreProperties.isPlexusInSlice()) {
       restartPlexus();
@@ -1530,7 +1555,7 @@ public class ExoSdxManager extends SdxManagerBase {
     }
     //set ovsdb address
     routingManager.updateAllPorts(SDNController);
-    //routingManager.setOvsdbAddr(SDNController);
+    routingManager.setOvsdbAddr(SDNController);
   }
 
   private int getAvailableIP() {
@@ -1657,11 +1682,41 @@ public class ExoSdxManager extends SdxManagerBase {
     return ret;
   }
 
-  private void updateMacAddr() {
+  protected void updateMacAddr() {
+    HashMap<String, String> mac2EtherName = new HashMap<>();
+    for(String node: serverSlice.getComputeNodes()) {
+      if(node.matches(routerPattern)) {
+        for(ImmutablePair<String, String> iface:
+          serverSlice.getPhysicalInterfaces(node)) {
+          mac2EtherName.put(iface.right, iface.left);
+        }
+      }
+    }
     for (String i : serverSlice.getInterfaces()) {
-      routingManager.updateInterfaceMac(serverSlice.getNodeOfInterface(i),
+      String node = serverSlice.getNodeOfInterface(i);
+      String mac =serverSlice.getMacAddressOfInterface(i);
+      routingManager.updateInterfaceMac(node,
         serverSlice.getLinkOfInterface(i),
-        serverSlice.getMacAddressOfInterface(i));
+        mac,
+        mac2EtherName.get(mac));
+    }
+  }
+
+  protected void updateMacAddr(String node) {
+    HashMap<String, String> mac2EtherName = new HashMap<>();
+      for(ImmutablePair<String, String> iface:
+        serverSlice.getPhysicalInterfaces(node)) {
+        mac2EtherName.put(iface.right, iface.left);
+      }
+    for (String i : serverSlice.getInterfaces()) {
+      String nodeName = serverSlice.getNodeOfInterface(i);
+      if(nodeName.equals(node)) {
+        String mac = serverSlice.getMacAddressOfInterface(i);
+        routingManager.updateInterfaceMac(node,
+          serverSlice.getLinkOfInterface(i),
+          mac,
+          mac2EtherName.get(mac));
+      }
     }
   }
 
