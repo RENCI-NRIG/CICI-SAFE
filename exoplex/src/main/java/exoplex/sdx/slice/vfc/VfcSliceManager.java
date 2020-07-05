@@ -137,7 +137,7 @@ public class VfcSliceManager extends SliceManager {
           (String) obj.get("node1"),
           null,
           (String) obj.get("node2"),
-          10000000000l);
+          (Long) obj.getOrDefault("bw", 10000000000l));
       } catch (Exception e) {
         logger.warn(String.format("unknown link format: \n %s", obj.toString()));
       }

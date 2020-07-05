@@ -27,21 +27,24 @@
         "link": {
                 "name": "link0",
                 "node1": "vfc-esnet-atla",
-                "node2": "vfc-esnet-star"
+                "node2": "vfc-esnet-star",
+                "bw": 1000000000
         }
     },
     {
         "link": {
                 "name": "link1",
                 "node1": "vfc-esnet-atla",
-                "node2": "vfc-esnet-wash"
+                "node2": "vfc-esnet-wash",
+                "bw": 1000000000
         }
     },
     {
         "link": {
                 "name": "link2",
                 "node1": "vfc-esnet-star",
-                "node2": "vfc-esnet-wash"
+                "node2": "vfc-esnet-wash",
+                "bw": 1000000000
         }
     },
     {
