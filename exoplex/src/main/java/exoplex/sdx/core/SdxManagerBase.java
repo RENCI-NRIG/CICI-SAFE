@@ -749,6 +749,18 @@ public class SdxManagerBase extends SliceHelper implements SdxManagerInterface {
     }
   }
 
+  synchronized public void setQos(String prefix1, String prefix2,
+                                  long bandwidth)  {
+    String n1 =
+      routingManager.getEdgeRouterByGateway(prefixGateway.get(prefix1));
+    String n2 =
+      routingManager.getEdgeRouterByGateway(prefixGateway.get(prefix2));
+    routingManager.setQos(SDNController, routingManager.getDPID(n1), prefix1,
+      prefix2, bandwidth);
+    routingManager.setQos(SDNController, routingManager.getDPID(n2), prefix2,
+      prefix1, bandwidth);
+  }
+
 
   public String getFlowInstallationTime(String routername, String flowPattern) {
     logger.debug("Get flow installation time on " + routername + " for " + flowPattern);
