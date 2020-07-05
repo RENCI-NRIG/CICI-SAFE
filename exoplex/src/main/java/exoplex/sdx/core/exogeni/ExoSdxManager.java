@@ -944,12 +944,12 @@ public class ExoSdxManager extends SdxManagerBase {
       int ip_to_use = getAvailableIP();
       l1.setIP(IPPrefix + ip_to_use);
       String param = "";
-      int numPort1 = routingManager.getPortCount(SDNController, n1);
-      int numPort2 = routingManager.getPortCount(SDNController, n2);
+      int numPort1 = routingManager.getPortCount(n1);
+      int numPort2 = routingManager.getPortCount(n2);
       updateOvsInterface(n1);
       updateOvsInterface(n2);
-      while (routingManager.getPortCount(SDNController, n1) == numPort1
-        || routingManager.getPortCount(SDNController, n2) == numPort2) {
+      while (routingManager.getPortCount(n1) == numPort1
+        || routingManager.getPortCount(n2) == numPort2) {
         sleep(5);
         logger.debug("Wait for new port to be reported to sdn controller");
       }
@@ -1172,7 +1172,7 @@ public class ExoSdxManager extends SdxManagerBase {
       if (customerPrefixes.containsKey(customerSafeKeyHash)) {
       customerPrefixes.get(customerSafeKeyHash).remove(prefix);
     }
-    routingManager.retriveRouteOfPrefix(prefix, SDNController);
+    routingManager.retriveRouteOfPrefix(prefix);
   }
 
   @Override
@@ -1477,8 +1477,8 @@ public class ExoSdxManager extends SdxManagerBase {
   }
 
   public String delMirror(String dpid, String source, String dst) {
-    String res = routingManager.delMirror(SDNController, dpid, source, dst);
-    res += "\n" + routingManager.delMirror(SDNController, dpid, dst, source);
+    String res = routingManager.delMirror(dpid, source, dst);
+    res += "\n" + routingManager.delMirror(dpid, dst, source);
     return res;
   }
 
@@ -1543,8 +1543,8 @@ public class ExoSdxManager extends SdxManagerBase {
       }
     }
     //set ovsdb address
-    routingManager.updateAllPorts(SDNController);
-    routingManager.setOvsdbAddr(SDNController);
+    routingManager.updateAllPorts();
+    routingManager.setOvsdbAddr();
   }
 
   private int getAvailableIP() {
