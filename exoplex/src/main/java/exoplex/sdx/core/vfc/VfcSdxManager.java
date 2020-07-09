@@ -346,24 +346,6 @@ public class VfcSdxManager extends SdxManagerBase {
       ) {
         logger.info(logPrefix + "Routing set up for " + self_prefix + " and " + target_prefix);
         logger.debug(logPrefix + "Routing set up for " + self_prefix + " and " + target_prefix);
-      } else {
-        logger.info(logPrefix + "Route for " + self_prefix + " and " + target_prefix +
-          "Failed");
-        logger.debug(logPrefix + "Route for " + self_prefix + " and " + target_prefix +
-          "Failed");
-        return "route not successfully configured";
-      }
-      if (routingManager.configurePath(target_prefix, n2, self_prefix, n1,
-        findGatewayForPrefix
-        (target_prefix), bandwidth)
-      ) {
-        logger.info(logPrefix + "Routing set up for " + self_prefix + " and " + target_prefix);
-        logger.debug(logPrefix + "Routing set up for " + self_prefix + " and " + target_prefix);
-        if(bandwidth > 0) {
-          setQos(self_prefix, target_prefix, bandwidth);
-          logger.info(String.format("Set qos rule for %s %s %s", self_prefix,
-           target_prefix, bandwidth));
-        }
         return "route configured";
       } else {
         logger.info(logPrefix + "Route for " + self_prefix + " and " + target_prefix +
@@ -372,6 +354,25 @@ public class VfcSdxManager extends SdxManagerBase {
           "Failed");
         return "route not successfully configured";
       }
+      //if (routingManager.configurePath(target_prefix, n2, self_prefix, n1,
+      //  findGatewayForPrefix
+      //  (target_prefix), bandwidth)
+      //) {
+      //  logger.info(logPrefix + "Routing set up for " + self_prefix + " and " + target_prefix);
+      //  logger.debug(logPrefix + "Routing set up for " + self_prefix + " and " + target_prefix);
+      //  if(bandwidth > 0) {
+      //    setQos(self_prefix, target_prefix, bandwidth);
+      //    logger.info(String.format("Set qos rule for %s %s %s", self_prefix,
+      //     target_prefix, bandwidth));
+      //  }
+      //  return "route configured";
+      //} else {
+      //  logger.info(logPrefix + "Route for " + self_prefix + " and " + target_prefix +
+      //    "Failed");
+      //  logger.debug(logPrefix + "Route for " + self_prefix + " and " + target_prefix +
+      //    "Failed");
+      //  return "route not successfully configured";
+      //}
     }
   }
 
