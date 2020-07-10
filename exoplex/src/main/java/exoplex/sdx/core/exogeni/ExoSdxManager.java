@@ -8,6 +8,7 @@ import exoplex.sdx.advertise.*;
 import exoplex.sdx.bro.BroManager;
 import exoplex.sdx.core.CoreProperties;
 import exoplex.sdx.core.SdxManagerBase;
+import exoplex.sdx.core.restutil.NotifyResult;
 import exoplex.sdx.core.restutil.PeerRequest;
 import exoplex.sdx.network.AbstractRoutingManager;
 import exoplex.sdx.network.Link;
@@ -992,6 +993,17 @@ public class ExoSdxManager extends SdxManagerBase {
     logger.info("SDX network reset");
   }
 
+  @Override
+  synchronized public NotifyResult notifyPrefix(String dest, String gateway,
+                                                String customer_keyhash) {
+    NotifyResult result = super.notifyPrefix(dest, gateway, customer_keyhash);
+    if(result.result) {
+      routingManager.monitorOnAllRouter(dest, SdnUtil.DEFAULT_ROUTE);
+      routingManager.monitorOnAllRouter(SdnUtil.DEFAULT_ROUTE, dest);
+    }
+    return result;
+  }
+
   public synchronized String processPolicyAdvertise(PolicyAdvertise policyAdvertise) {
     if (!coreProperties.doRouteAdvertise()) {
       return "Safe routing disabled, no processing this request";
@@ -1104,24 +1116,24 @@ public class ExoSdxManager extends SdxManagerBase {
     }
   }
 
-  private void propagateBgpAdvertise(RouteAdvertise advertise) {
-    advertise = new RouteAdvertise(advertise, getPid());
+  private void propagateBgpAdvertise(RouteAdvertise routeAdvertise) {
+    RouteAdvertise advertise = new RouteAdvertise(routeAdvertise, getPid());
     logger.debug(String.format("[%s] Propagate route advertise %s",
       getSliceName(), advertise));
-    //Thread t = new Thread() {
-    //  @Override
-    //  public void run() {
-        for (String peer : peerUrls.keySet()) {
-          propagateRouteToPeer(advertise, peer);
-        }
-    //  }
-    //};
-    //t.start();
-    //try {
-    //  t.join();
-    //}catch (Exception e) {
-    //  e.printStackTrace();
-    //}
+    Thread t = new Thread() {
+      @Override
+      public void run() {
+      for (String peer : peerUrls.keySet()) {
+        propagateRouteToPeer(advertise, peer);
+      }
+      }
+    };
+    t.start();
+    try {
+      t.join();
+    }catch (Exception e) {
+      e.printStackTrace();
+    }
   }
 
   private void propagateRouteToPeer(RouteAdvertise advertise,
