@@ -73,7 +73,7 @@ public class RoutingManagerMock extends AbstractRoutingManager {
   /**
    * Forward matched packets to controller
    */
-  public void monitorOnAllRouter(String dstIP, String srcIP) {}
+  public void monitorOnAllRouter(String dstIP, String srcIP, int tableId) {}
 
   /**
    * configure path for destIP in the network.

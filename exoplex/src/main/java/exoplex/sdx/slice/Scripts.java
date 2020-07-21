@@ -13,8 +13,8 @@ public class Scripts {
   public static String getPlexusScript(String plexusImage) {
     String script = aptUpdate()
       + "sudo docker pull %s\n"
-      + "sudo docker run -i -t -d -p 8080:8080 -p 6633:6633 -p 3000:3000 -h " +
-      "plexus --name plexus %s\n";
+      + "sudo docker run -i -t -d -p 8080:8080 -p  6633:6633 "
+      + "-p 3000:3000 -h plexus --name plexus %s\n";
     script = String.format(script, plexusImage, plexusImage);
     //+"docker exec -d plexus /bin/bash -c  \"cd /root/;./sdx.sh\"\n";
     return script;

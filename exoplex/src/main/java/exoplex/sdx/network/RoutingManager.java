@@ -157,10 +157,12 @@ public class RoutingManager extends AbstractRoutingManager {
     return result;
   }
 
-  private void monitor(String dstIP, String srcIP, String routerName) {
+  private void monitor(String dstIP, String srcIP, String routerName,
+                       int tableId) {
     logger.info(String.format("monitor %s %s %s", dstIP, srcIP, routerName));
     String controller = networkManager.getRouter(routerName).getController();
-    String[] cmd = SdnUtil.controllerFlowCmd(controller, getDPID(routerName), dstIP, srcIP, 3);
+    String[] cmd = SdnUtil.controllerFlowCmd(controller, getDPID(routerName),
+      dstIP, srcIP, 3, tableId);
     addEntry_HashList(sdncmds, getDPID(routerName), cmd);
     String res = postSdnCmd(cmd[0], new JSONObject(cmd[1]));
     logger.debug(res);
@@ -174,9 +176,9 @@ public class RoutingManager extends AbstractRoutingManager {
   /**
    * Forward matched packets to controller
    */
-  public void monitorOnAllRouter(String dstIP, String srcIP) {
+  public void monitorOnAllRouter(String dstIP, String srcIP, int tableId) {
     for (String routerName : networkManager.getAllRouters()) {
-      monitor(dstIP, srcIP, routerName);
+      monitor(dstIP, srcIP, routerName, tableId);
     }
   }
 
@@ -309,14 +311,18 @@ public class RoutingManager extends AbstractRoutingManager {
                                             long bw) {
     logger.info(String.format("configurePath %s %s %s %s %s %s", dstIP, dstNode, srcIP,
       srcNode, gateway, bw));
-    logger.debug("Network Manager: Configuring path for " + dstIP + " " + dstNode + " " + srcIP + " " + srcNode + " " + gateway);
+    logger.debug("Configuring path for " + dstIP + " " + dstNode + " " + srcIP + " " + srcNode + " " + gateway);
     String gwdpid = networkManager.getRouter(dstNode).getDPID();
     String targetdpid = networkManager.getRouter(srcNode).getDPID();
     if (gwdpid == null || targetdpid == null) {
-      logger.debug("No router named " + dstNode + " not found");
+      logger.warn("No router named " + dstNode + " not found");
       return false;
     }
     ArrayList<String[]> paths = getPairRoutes(gwdpid, targetdpid, gateway, bw);
+    if(paths.size() == 0) {
+      logger.warn("No path found");
+      return false;
+    }
     String pathId = getPathID(dstIP, srcIP);
     pairPath.put(pathId, paths);
     if (!prefixPaths.containsKey(dstIP)) {
@@ -330,17 +336,13 @@ public class RoutingManager extends AbstractRoutingManager {
     boolean res = true;
     for (String[] path : paths) {
       Router logRouter = networkManager.getRouterByDPID(path[0]);
-      if (path[2] != null) {
-        for (String interfaceName : logRouter.getInterfaces()) {
-          Link link =
-            networkManager.getLink(networkManager.getInterface(interfaceName).getLinkName());
-          if (link.hasNode(path[2])) {
-            link.useBW(logRouter.getRouterName(),
-              link.getPairNodeName(logRouter.getRouterName()), bw);
-            networkManager.putLink(link);
-            break;
-          }
-        }
+      if (path[3] != null) {
+        Link link = networkManager.getLink(path[3]);
+        link.useBW(logRouter.getRouterName(), path[2], bw);
+        logger.debug(String.format("Consume %s bps bandwidth on link %s from " +
+          "%s to %s", bw, link.getLinkName(),logRouter.getRouterName(),
+          link.getPairNodeName(logRouter.getRouterName())));
+        networkManager.putLink(link);
       }
       res &= addRoute(dstIP, srcIP, path[1], path[0], pathId);
     }
@@ -857,23 +859,23 @@ public class RoutingManager extends AbstractRoutingManager {
     }
   }
 
-  //TODO: get shortest path for two pairs
-  private ArrayList<String[]> getPairRoutes(String srcdpid, String dstdpid, String gateway,
+  ArrayList<String[]> computeRoutes(String gwDpid, String dstdpid,
+                                      String gateway,
                                             long bw) {
     HashSet<String> knownrouters = new HashSet<String>();
     //path queue: [dpid, path]
-    //format of path:Arraylist([router_id,gateway, IP prefix of the gateway])
+    //format of path:Arraylist([router_id, linkName, gateway])
     ArrayList<String> queue = new ArrayList<String>();
-    queue.add(srcdpid);
-    knownrouters.add(srcdpid);
+    queue.add(gwDpid);
+    knownrouters.add(gwDpid);
     //{router-id:gateway}
     ArrayList<String[]> knownpaths = new ArrayList<String[]>();
     String[] initroute = new String[3];
-    initroute[0] = srcdpid;
-    initroute[1] = gateway;
-    initroute[2] = null;
+    initroute[0] = gwDpid;
+    initroute[1] = null;
+    initroute[2] = gateway;
     knownpaths.add(initroute);
-    if (srcdpid.equals(dstdpid)) {
+    if (gwDpid.equals(dstdpid)) {
       return knownpaths;
     }
     int start = 0;
@@ -903,11 +905,90 @@ public class RoutingManager extends AbstractRoutingManager {
             String[] path = new String[3];
             path[0] = pairrouter;
             logger.debug(pairip);
+            path[1] = link.getLinkName();
+            path[2] = null;
+            logger.debug(path[1]);
+            knownpaths.add(path);
+            if (pairrouter.equals(dstdpid)) {
+              foundpath = true;
+              break;
+            } else {
+              queue.add(pairrouter);
+            }
+          }
+        }
+      } else {
+        logger.debug("LogRouter null");
+      }
+    }
+    ArrayList<String[]> spaths = new ArrayList<String[]>();
+    if (foundpath) {
+      String[] curpath = knownpaths.get(knownpaths.size() - 1);
+      spaths.add(curpath);
+      for (int i = knownpaths.size() - 2; i >= 0; i--) {
+        Link link = networkManager.getLink(curpath[1]);
+        if (link.match(networkManager.getRouterByDPID(knownpaths.get(i)[0]).getRouterName(),
+          networkManager.getRouterByDPID(curpath[0]).getRouterName())) {
+          spaths.add(knownpaths.get(i));
+          curpath = knownpaths.get(i);
+        }
+      }
+    }
+    return spaths;
+  }
+
+  //TODO: get shortest path for two pairs
+  private ArrayList<String[]> getPairRoutes(String srcdpid, String dstdpid, String gateway,
+                                            long bw) {
+    HashSet<String> knownrouters = new HashSet<String>();
+    //path queue: [dpid, path]
+    //format of path:Arraylist([router_id,gateway, IP prefix of the gateway,
+    // link Name])
+    ArrayList<String> queue = new ArrayList<String>();
+    queue.add(srcdpid);
+    knownrouters.add(srcdpid);
+    //{router-id:gateway}
+    ArrayList<String[]> knownpaths = new ArrayList<String[]>();
+    String[] initroute = new String[4];
+    initroute[0] = srcdpid;
+    initroute[1] = gateway;
+    initroute[2] = null;
+    initroute[3] = null;
+    knownpaths.add(initroute);
+    if (srcdpid.equals(dstdpid)) {
+      return knownpaths;
+    }
+    int start = 0;
+    int end = 0;
+    boolean foundpath = false;
+    //find path with bfs
+    while (start <= end && !foundpath) {
+      //logger.debug("queue[start]"+queue.get(start));
+      String rid = queue.get(start);
+      start += 1;
+      Router logRouter = networkManager.getRouterByDPID(rid);
+      if (logRouter != null) {
+        for (Interface neighborInterface :
+          networkManager.getNeighborInterfaces(logRouter.getRouterName())) {
+          //ip the ip of hte neighbor interface
+          Link link = networkManager.getLink(neighborInterface.getLinkName());
+          String pairip = neighborInterface.getIp();
+          //logger.debug("neighborIP: "+ip);
+          if (link.getAvailableBW(link.getPairNodeName(logRouter.getRouterName()),
+            logRouter.getRouterName()) < bw) {
+            continue;
+          }
+          String pairrouter = getDPID(neighborInterface.getNodeName());
+          if (!knownrouters.contains(pairrouter)) {
+            knownrouters.add(pairrouter);
+            end += 1;
+            String[] path = new String[4];
+            path[0] = pairrouter;
             String ip =
               networkManager.getInterface(link.getPairInterfaceName(neighborInterface.getName())).getIp();
             path[1] = ip.split("/")[0];
             path[2] = logRouter.getRouterName();
-            logger.debug(path[1]);
+            path[3] = link.getLinkName();
             knownpaths.add(path);
             if (pairrouter.equals(dstdpid)) {
               foundpath = true;
@@ -935,7 +1016,6 @@ public class RoutingManager extends AbstractRoutingManager {
     return spaths;
   }
 
-  //FIXME: There might be bug, but haven't got the chance to look into it.
   private ArrayList<String[]> getBroadcastRoutes(String gwdpid, String gateway) {
     HashSet<String> knownrouters = new HashSet<String>();
     //path queue: [dpid, path]

@@ -38,7 +38,8 @@ public abstract class AbstractRoutingManager {
   /**
    * Forward matched packets to controller
    */
-  public abstract void monitorOnAllRouter(String dstIP, String srcIP);
+  public abstract void monitorOnAllRouter(String dstIP, String srcIP,
+                                          int tableId);
 
   /**
    * configure path for destIP in the network.

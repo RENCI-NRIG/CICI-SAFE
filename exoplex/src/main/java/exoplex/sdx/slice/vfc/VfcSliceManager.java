@@ -70,11 +70,11 @@ public class VfcSliceManager extends SliceManager {
     //  "-physnet1", "192.168.202.10");
   }
 
-  public void expectOneMoreInterface(String node){
+  public void expectOneInterfaceDiff(String node, boolean add){
 
   }
 
-  public void waitForNewInterfaces(String node) {
+  public void waitForInterfaces(String node) {
 
   }
 

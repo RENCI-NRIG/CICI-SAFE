@@ -290,14 +290,15 @@ public class SdnUtil {
     String dpid,
     String destIP,
     String srcIP,
-    int priority) {
+    int priority,
+    int tableId) {
     String url = "http://" + controller + "/stats/flowentry/add";
 
     JSONObject entity = new JSONObject();
     entity.put("dpid", Long.parseLong(dpid, 16));
     entity.put("cookie", cookie.incrementAndGet());
     entity.put("cookie_mask", 1);
-    entity.put("table_id", 0);
+    entity.put("table_id", tableId);
     //entity.put("idle_timeout", 300);
     //entity.put("hard_timeout", 300);
     entity.put("priority", priority);

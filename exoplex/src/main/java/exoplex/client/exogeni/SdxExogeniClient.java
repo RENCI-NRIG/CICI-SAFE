@@ -18,7 +18,6 @@ import exoplex.sdx.slice.Scripts;
 import exoplex.sdx.slice.SliceManager;
 import exoplex.sdx.slice.SliceManagerFactory;
 import exoplex.sdx.slice.SliceProperties;
-import exoplex.sdx.slice.exogeni.ExoSliceManager;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -423,13 +422,14 @@ public class SdxExogeniClient {
 
   private boolean addStitchPort(String spName, String nodeName, String stitchUrl, String vlan, long
     bw) {
-    serverSlice.expectOneMoreInterface(nodeName);
+    serverSlice.expectOneInterfaceDiff(nodeName, true);
     serverSlice.refresh();
     try {
       String node = serverSlice.getComputeNode(nodeName);
       String mysp = serverSlice.addStitchPort(spName, vlan, stitchUrl, bw);
       serverSlice.stitchSptoNode(mysp, node);
-      serverSlice.waitForNewInterfaces(nodeName);
+      serverSlice.commitAndWait();
+      serverSlice.waitForInterfaces(nodeName);
     } catch (Exception e) {
       e.printStackTrace();
       return false;
@@ -566,7 +566,7 @@ public class SdxExogeniClient {
       } else {
         jsonparams.put("ckeyhash", coreProperties.getSliceName());
       }
-      serverSlice.expectOneMoreInterface(nodeName);
+      serverSlice.expectOneInterfaceDiff(nodeName, true);
       logger.debug(logPrefix + "Sending stitch request to Sdx server");
       String r = HttpUtil.postJSON(coreProperties.getServerUrl() + "sdx/stitchrequest", jsonparams);
       logger.debug(r);
@@ -576,7 +576,7 @@ public class SdxExogeniClient {
         logger.warn(logPrefix + "stitch request failed");
       } else {
         String ip = params[2] + "/" + params[3].split("/")[1];
-        serverSlice.waitForNewInterfaces(nodeName);
+        serverSlice.waitForInterfaces(nodeName);
         List<ImmutablePair<String, String>> interfaces =
           serverSlice.getPhysicalInterfaces(nodeName);
         String newInterface = interfaces.get(interfaces.size() - 1).left;

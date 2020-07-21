@@ -8,6 +8,7 @@ public class SiteBase {
   static {
     sites.put("BBN", "BBN/GPO (Boston, MA USA) XO Rack");
     sites.put("CIENA", "CIENA (Ottawa,  CA) XO Rack");
+    sites.put("CIENA2", "CIENA2 (Hanover, MD) XO Rack");
     sites.put("FIU", "FIU (Miami, FL USA) XO Rack");
     sites.put("GWU", "GWU (Washington DC,  USA) XO Rack");
     sites.put("OSF", "OSF (Oakland, CA USA) XO Rack");
@@ -22,7 +23,7 @@ public class SiteBase {
     sites.put("UVA", "UvA (Amsterdam, The Netherlands) XO Rack");
     sites.put("WSU", "WSU (Detroit, MI, USA) XO Rack");
     sites.put("WVN", "WVN (UCS-B series rack in Morgantown, WV, USA)");
-    sites.put("PSC", "PSC (Pittsburgh, PA, USA) XO Rack");
+    sites.put("PSC", "PSC (Pittsburgh, TX, USA) XO Rack");
   }
 
   public static String get(String site) {

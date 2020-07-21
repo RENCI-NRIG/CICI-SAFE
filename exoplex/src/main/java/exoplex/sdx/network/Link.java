@@ -154,9 +154,9 @@ public class Link {
   public void useBW(String node1, String node2, long bw) {
     try {
       if (node1.equals(nodeA) && node2.equals(nodeB)) {
-        usedBwAB -= bw;
+        usedBwAB += bw;
       } else if (node2.equals(nodeA) && node1.equals(nodeB)) {
-        usedBwBA -= bw;
+        usedBwBA += bw;
       }
     } catch (Exception e) {
       e.printStackTrace();
@@ -166,9 +166,9 @@ public class Link {
   public void releaseBW(String node1, String node2, long bw) {
     try {
       if (node1.equals(nodeA) && node2.equals(nodeB)) {
-        usedBwAB += bw;
+        usedBwAB -= bw;
       } else if (node2.equals(nodeA) && node1.equals(nodeB)) {
-        usedBwBA += bw;
+        usedBwBA -= bw;
       }
     } catch (Exception e) {
       e.printStackTrace();
@@ -181,7 +181,7 @@ public class Link {
   }
 
   public String toString() {
-    return nodeA + ":" + nodeB + " " + getAvailableBW();
+    return String.format("%s:%s", nodeA, nodeB);
   }
 
   public boolean hasNode(String nodeName) {

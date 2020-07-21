@@ -81,11 +81,11 @@ public class SliceManagerMock extends SliceManager implements Serializable {
     return sliceProxy;
   }
 
-  public void expectOneMoreInterface(String node){
+  public void expectOneInterfaceDiff(String node, boolean add){
 
   }
 
-  public void waitForNewInterfaces(String node){}
+  public void waitForInterfaces(String node){}
 
   public void writeToFile(String fileName) {
     File f = new File(fileName);

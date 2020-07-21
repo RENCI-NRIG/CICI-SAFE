@@ -27,6 +27,7 @@ public class ReactiveFlowTest {
             "10.0.1.2");
         routingManager.newInternalLink("link0", "10.0.3.1/24", "s1",
             "10.0.3.2/24", "s2", 10);
-        routingManager.monitorOnAllRouter("10.0.2.0/24", SdnUtil.DEFAULT_ROUTE);
+        routingManager.monitorOnAllRouter("10.0.2.0/24",
+          SdnUtil.DEFAULT_ROUTE, 0);
     }
 }

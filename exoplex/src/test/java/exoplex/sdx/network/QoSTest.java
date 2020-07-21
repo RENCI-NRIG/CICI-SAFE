@@ -22,8 +22,8 @@ import java.lang.reflect.Method;
 
 public class QoSTest extends ExoSdxManager {
   static Logger logger = LogManager.getLogger(QoSTest.class);
-  static String site1 = SiteBase.get("TAMU");
-  static String site2 = SiteBase.get("TAMU");
+  static String site1 = SiteBase.get("PSC");
+  static String site2 = SiteBase.get("UNF");
   static String userDir = System.getProperty("user.dir");
   static String sdxSimpleDir = userDir.split("exoplex")[0] + "exoplex/";
   static String[] arg1 = {"-c", sdxSimpleDir + "config/qos/qos.conf"};
@@ -44,6 +44,14 @@ public class QoSTest extends ExoSdxManager {
   @AfterClass
   public static void cleanUp() {
     //qosTest.deleteSlice();
+  }
+
+  public void initTest() throws Exception {
+    CommandLine cmd = ServerOptions.parseCmd(arg1);
+    String configFilePath = cmd.getOptionValue("config");
+    this.readConfig(configFilePath);
+    coreProperties.setSdnApp("rest_mirror");
+    createNetwork();
   }
 
   @Test
@@ -68,6 +76,49 @@ public class QoSTest extends ExoSdxManager {
     logger.info("test ends");
   }
 
+  @Test
+  public void testQoSDynamicLink() throws Exception {
+    qosTest.startExoPlex();
+    qosTest.notifyPrefix("192.168.10.1/24", "192.168.10.2", "CNode0");
+    qosTest.notifyPrefix("192.168.20.1/24", "192.168.20.2", "CNode1");
+    qosTest.notifyPrefix("192.168.30.1/24", "192.168.30.2", "CNode2");
+    qosTest.notifyPrefix("192.168.40.1/24", "192.168.40.2", "CNode3");
+    qosTest.connectionRequest("192.168.10.1/24", "192.168.30.1/24", 100000000);
+    qosTest.setQos("192.168.10.1/24", "192.168.30.1/24", 100000000);
+    logger.info("Now QoS rule has been installed to limit bandwith between " +
+      "192.168.10.1/24 and 192.168.30.1/24 to 300Mbps");
+    qosTest.connectionRequest("192.168.20.1/24", "192.168.40.1/24", 300000000);
+    qosTest.setQos("192.168.20.1/24", "192.168.40.1/24", 300000000);
+    logger.info("Now QoS rule has been installed to limit bandwith between " +
+      "192.168.20.1/24 and 192.168.40.1/24 to 100Mbps");
+    qosTest.connectionRequest("192.168.10.1/24", "192.168.40.1/24", 100000000);
+    qosTest.setQos("192.168.10.1/24", "192.168.40.1/24", 100000000);
+    qosTest.connectionRequest("192.168.20.1/24", "192.168.30.1/24", 200000000);
+    qosTest.setQos("192.168.20.1/24", "192.168.30.1/24", 200000000);
+    logger.info("test ends");
+  }
+
+  public void testDeleteLink() throws Exception{
+    ExoSliceManager slice = (ExoSliceManager) sliceManagerFactory.create(
+      "testsp",
+      coreProperties.getExogeniKey(),
+      coreProperties.getExogeniKey(),
+      coreProperties.getExogeniSm(),
+      coreProperties.getSshKey());
+   // slice.addComputeNode(site1, "Node0", NodeBase.xoMedium);
+   // slice.addComputeNode(site2, "Node1", NodeBase.xoMedium);
+   // slice.addLink("clink0", "Node0", "Node1", 10000000);
+   // slice.commitAndWait();
+    slice.loadSlice();
+    slice.deleteResource("clink0");
+    slice.commitAndWait();
+  }
+
+  @Test
+  public void test1() throws Exception {
+    qosTest.testDeleteLink();
+  }
+
   public void promptEnterKey(){
     System.out.println("Press " +
       "\"ENTER\" " +
@@ -77,14 +128,6 @@ public class QoSTest extends ExoSdxManager {
     } catch (IOException e) {
       e.printStackTrace();
     }
-  }
-
-  public void initTest() throws Exception {
-    CommandLine cmd = ServerOptions.parseCmd(arg1);
-    String configFilePath = cmd.getOptionValue("config");
-    this.readConfig(configFilePath);
-    coreProperties.setSdnApp("rest_mirror");
-    //createNetwork();
   }
 
   public void startExoPlex() throws Exception {
@@ -105,9 +148,7 @@ public class QoSTest extends ExoSdxManager {
     configTestSlice(serverSlice);
     if (coreProperties.isPlexusInSlice()) {
       checkPlexus(serverSlice, serverSlice.getManagementIP(plexusName), CoreProperties.getPlexusImage());
-    }
-    if (coreProperties.isSafeInSlice()) {
-      configSdnControllerAddr(serverSlice.getManagementIP(plexusName));
+      configSdnControllerAddr(serverSlice.getManagementIP("plexuscontroller"));
     } else {
       configSdnControllerAddr(coreProperties.getSdnControllerIp());
     }
@@ -164,10 +205,10 @@ public class QoSTest extends ExoSdxManager {
       coreProperties.getExogeniKey(),
       coreProperties.getExogeniSm(),
       coreProperties.getSshKey());
-    slice.addComputeNode(site1, "CNode0", NodeBase.xoExtraLarge);
-    slice.addComputeNode(site1, "CNode1", NodeBase.xoExtraLarge);
-    slice.addComputeNode(site2, "CNode2", NodeBase.xoExtraLarge);
-    slice.addComputeNode(site2, "CNode3", NodeBase.xoExtraLarge);
+    slice.addComputeNode(site1, "CNode0", NodeBase.xoMedium);
+    slice.addComputeNode(site1, "CNode1", NodeBase.xoMedium);
+    slice.addComputeNode(site2, "CNode2", NodeBase.xoMedium);
+    slice.addComputeNode(site2, "CNode3", NodeBase.xoMedium);
     slice.addOVSRouter(site1, "c0");
     slice.addOVSRouter(site2, "c1");
     slice.addBroadcastLink("stitch_c0_10", 500000000);
@@ -177,9 +218,14 @@ public class QoSTest extends ExoSdxManager {
     slice.addBroadcastLink("stitch_c0_20", 500000000);
     slice.attach("CNode1", "stitch_c0_20", "192.168.20.2", "255.255.255.0");
     slice.attach("c0", "stitch_c0_20", null, null);
-    //slice.addBroadcastLink("clink0", 500000000);
+
+    //slice.addBroadcastLink("clink0", 100000000);
     //slice.attach("clink0", "c0");
     //slice.attach("clink0", "c1");
+    //slice.addBroadcastLink("clink1", 200000000);
+    //slice.attach("clink1", "c0");
+    //slice.attach("clink1", "c1");
+
     slice.addBroadcastLink("stitch_c1_30", 500000000);
     slice.attach("CNode2","stitch_c1_30",  "192.168.30.2", "255.255" +
       ".255.0");
