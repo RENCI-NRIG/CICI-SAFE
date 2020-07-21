@@ -689,6 +689,8 @@ class VlanRouter(object):
         self.logger = logger
 
         self.port_data = port_data
+        self.ip_mac = {}
+        self.mac_ip = {}
         self.address_data = AddressData()
         self.routing_tbl = RoutingTable()
         self.mirroring_tbl = RoutingTable()
@@ -1177,6 +1179,25 @@ class VlanRouter(object):
         if src_addr is None:
             return
 
+        in_port = self.ofctl.get_packetin_inport(msg)
+        src_ip = header_list[ARP].src_ip
+        dst_ip = header_list[ARP].dst_ip
+        dst_mac = header_list[ARP].src_mac
+        srcip = ip_addr_ntoa(src_ip)
+        dstip = ip_addr_ntoa(dst_ip)
+
+        # arp packet via the other link than the first learned one.
+        if (src_ip in self.ip_mac and self.ip_mac[src_ip] != dst_mac)\
+            or (dst_mac in self.mac_ip and self.mac_ip[dst_mac] != src_ip):
+            log_msg = 'DROP: Receive ARP from [%s] [%s] to router port [%s] [%s].'
+            self.logger.info(log_msg, srcip, dst_mac, dstip, header_list[ARP].dst_mac,
+                extra=self.sw_id)
+            return
+        else:
+            log_msg = 'Accept: Receive ARP from [%s] [%s] to router port [%s] [%s].'
+            self.logger.info(log_msg, srcip, dst_mac, dstip, header_list[ARP].dst_mac,
+                extra=self.sw_id)
+
         # case: Receive ARP from the gateway
         #  Update routing table.
         # case: Receive ARP from an internal host
@@ -1187,23 +1208,19 @@ class VlanRouter(object):
         #    self._learning_host_mac(msg, header_list)
 
         # ARP packet handling.
-        in_port = self.ofctl.get_packetin_inport(msg)
-        src_ip = header_list[ARP].src_ip
-        dst_ip = header_list[ARP].dst_ip
-        srcip = ip_addr_ntoa(src_ip)
-        dstip = ip_addr_ntoa(dst_ip)
         rt_ports = self.address_data.get_default_gw()
 
-        if src_ip == dst_ip:
-            # GARP -> packet forward (normal)
-            output = self.ofctl.dp.ofproto.OFPP_NORMAL
-            self.ofctl.send_packet_out(in_port, output, msg.data)
+        #if src_ip == dst_ip:
+        #    # GARP -> packet forward (normal)
+        #    output = self.ofctl.dp.ofproto.OFPP_NORMAL
+        #    self.ofctl.send_packet_out(in_port, output, msg.data)
 
-            self.logger.info('Receive GARP from [%s].', srcip,
-                             extra=self.sw_id)
-            self.logger.info('Send GARP (normal).', extra=self.sw_id)
+        #    self.logger.info('Receive GARP from [%s].', srcip,
+        #                     extra=self.sw_id)
+        #    self.logger.info('Send GARP (normal).', extra=self.sw_id)
 
-        elif dst_ip not in rt_ports:
+        #elif dst_ip not in rt_ports:
+        if dst_ip not in rt_ports:
             dst_addr = self.address_data.get_data(ip=dst_ip)
             if (dst_addr is not None and
                     src_addr.address_id == dst_addr.address_id):
@@ -1215,22 +1232,28 @@ class VlanRouter(object):
                                  srcip, extra=self.sw_id)
                 self.logger.info('Send ARP (normal)', extra=self.sw_id)
         else:
+            #update ip_mac and mac_ip for arp request and arp replies
+            self.ip_mac[src_ip] = dst_mac
+            self.mac_ip[dst_mac] = src_ip
             if header_list[ARP].opcode == arp.ARP_REQUEST:
                 # ARP request to router port -> send ARP reply
                 src_mac = self.port_data[in_port].mac
-                dst_mac = header_list[ARP].src_mac
-                arp_target_mac = dst_mac
-                output = in_port
-                in_port = self.ofctl.dp.ofproto.OFPP_CONTROLLER
+                # Handle with two links between two routers
+                if dst_ip not in self.ip_mac or self.ip_mac[dst_ip] == src_mac:
+                    self.ip_mac[dst_ip] = src_mac
+                    self.mac_ip[src_mac] = dst_ip
+                    arp_target_mac = dst_mac
+                    output = in_port
+                    in_port = self.ofctl.dp.ofproto.OFPP_CONTROLLER
 
-                self.ofctl.send_arp(arp.ARP_REPLY, self.vlan_id,
-                                    src_mac, dst_mac, dst_ip, src_ip,
-                                    arp_target_mac, in_port, output)
+                    self.ofctl.send_arp(arp.ARP_REPLY, self.vlan_id,
+                                        src_mac, dst_mac, dst_ip, src_ip,
+                                        arp_target_mac, in_port, output)
 
-                log_msg = 'Receive ARP request from [%s] to router port [%s].'
-                self.logger.info(log_msg, srcip, dstip, extra=self.sw_id)
-                self.logger.info('Send ARP reply to [%s]', srcip,
-                                 extra=self.sw_id)
+                    log_msg = 'Receive ARP request from [%s] to router port [%s].'
+                    self.logger.info(log_msg, srcip, dstip, extra=self.sw_id)
+                    self.logger.info('Send ARP reply to [%s]', srcip,
+                                     extra=self.sw_id)
 
             elif header_list[ARP].opcode == arp.ARP_REPLY:
                 #  ARP reply to router port -> suspend packets forward
@@ -1239,8 +1262,8 @@ class VlanRouter(object):
 
                 packet_list = self.packet_buffer.get_data(src_ip)
                 #DEBUG:
-                print packet_list
-                print 'Receive ARP reply from [%s] to router port [%s].'.format(srcip,dstip)
+                print "packet list {}".format(packet_list)
+                print 'Receive ARP reply from {} to router port {}.'.format(srcip,dstip)
                 ##DEBUG:
                 if packet_list:
                     # stop ARP reply wait thread.
