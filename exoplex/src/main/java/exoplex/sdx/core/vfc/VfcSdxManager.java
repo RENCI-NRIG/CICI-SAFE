@@ -12,6 +12,7 @@ import exoplex.sdx.network.Link;
 import exoplex.sdx.network.SdnUtil;
 import exoplex.sdx.safe.SafeManager;
 import exoplex.sdx.slice.SliceManager;
+import exoplex.sdx.slice.SliceProperties;
 import exoplex.sdx.slice.vfc.VfcSliceManager;
 import org.apache.logging.log4j.LogManager;
 import org.json.JSONObject;
@@ -49,7 +50,7 @@ public class VfcSdxManager extends SdxManagerBase {
     OVSController = coreProperties.getSdnControllerIp() + ":6653";
     if (coreProperties.isSafeEnabled()) {
       if (coreProperties.isSafeInSlice()) {
-        coreProperties.setSafeServerIp(serverSlice.getManagementIP("safe-server"));
+        coreProperties.setSafeServerIp(serverSlice.getManagementIP(SliceProperties.SAFESERVER));
       }
       safeManager = new SafeManager(coreProperties.getSafeServerIp(), coreProperties.getSafeKeyFile(),
         coreProperties.getSshKey(), true);

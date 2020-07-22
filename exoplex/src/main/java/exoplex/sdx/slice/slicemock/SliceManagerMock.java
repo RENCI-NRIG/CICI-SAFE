@@ -680,7 +680,9 @@ public class SliceManagerMock extends SliceManager implements Serializable {
 
   public void addSafeServer(String siteName, String riakIp, String safeDockerImage, String
     safeServerScript) {
-    addDocker(siteName, "safe-server", Scripts.getSafeScript_v1(riakIp, safeDockerImage,
+    addDocker(siteName, SliceProperties.SAFESERVER,
+      Scripts.getSafeScript_v1(riakIp,
+      safeDockerImage,
       safeServerScript), NodeBase.xoMedium);
   }
 

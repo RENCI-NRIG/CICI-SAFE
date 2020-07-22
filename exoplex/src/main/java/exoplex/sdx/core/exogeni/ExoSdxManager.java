@@ -131,7 +131,7 @@ public class ExoSdxManager extends SdxManagerBase {
     }
     if (coreProperties.isSafeEnabled()) {
       if (coreProperties.isSafeInSlice()) {
-        coreProperties.setSafeServerIp(serverSlice.getManagementIP("safe-server"));
+        coreProperties.setSafeServerIp(serverSlice.getManagementIP(SliceProperties.SAFESERVER));
       }
       safeManager = new SafeManager(coreProperties.getSafeServerIp(), coreProperties.getSafeKeyFile(),
         coreProperties.getSshKey(), true);
@@ -415,8 +415,8 @@ public class ExoSdxManager extends SdxManagerBase {
 
       if (coreProperties.isSafeEnabled()) {
         if (!safeChecked) {
-          if (serverSlice.getResourceByName("safe-server") != null) {
-            coreProperties.setSafeServerIp(serverSlice.getManagementIP("safe-server"));
+          if (serverSlice.getResourceByName(SliceProperties.SAFESERVER) != null) {
+            coreProperties.setSafeServerIp(serverSlice.getManagementIP(SliceProperties.SAFESERVER));
           }
           safeManager.setSafeServerIp(coreProperties.getSafeServerIp());
           safeChecked = true;
@@ -1148,7 +1148,7 @@ public class ExoSdxManager extends SdxManagerBase {
 
   private void propagatePolicyToPeer(PolicyAdvertise advertise, String peer) {
     if (!peer.equals(advertise.ownerPID) && !peer.equals(advertise.advertiserPID)) {
-      if (!advertise.route.contains(peer)) {
+      if (!advertise.route.contains(peer) && advertise.ownerPID != null) {
         if ((advertise.srcPrefix == null
           || advertise.srcPrefix.equals(AdvertiseManager.DEFAULT_PREFIX))
           && safeManager.verifyAS(advertise.ownerPID, advertise
@@ -1191,8 +1191,8 @@ public class ExoSdxManager extends SdxManagerBase {
           && safeManager.verifyAS(advertise.ownerPID,
           advertise
           .getDestPrefix(), peer, advertise.safeToken)) {
-          logger.debug(String.format("propagate to peer %s the advertise %s",
-            peer, advertise));
+          logger.debug(String.format("[%s]propagate to peer %s the advertise " +
+              "%s", getSliceName(), peer, advertise));
           String path = advertise.getFormattedPath();
           String[] params = new String[4];
           params[0] = advertise.getDestPrefix();
@@ -1204,8 +1204,8 @@ public class ExoSdxManager extends SdxManagerBase {
           advertiseBgpAsync(peerUrls.get(peer), advertise);
         } else if (advertise.srcPrefix != null && safeManager.verifyAS(advertise.ownerPID,
           advertise.getSrcPrefix(), advertise.getDestPrefix(), peer, advertise.safeToken)) {
-          logger.debug(String.format("propagate to peer %s the advertise %s",
-            peer, advertise));
+          logger.info(String.format("[%s] propagate to peer %s the advertise " +
+              "%s", getSliceName(), peer, advertise));
           String path = advertise.getFormattedPath();
           String[] params = new String[5];
           params[0] = advertise.getSrcPrefix();

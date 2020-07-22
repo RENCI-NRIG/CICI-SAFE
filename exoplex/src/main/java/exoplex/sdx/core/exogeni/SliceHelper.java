@@ -11,6 +11,7 @@ import exoplex.sdx.safe.SafeManager;
 import exoplex.sdx.slice.Scripts;
 import exoplex.sdx.slice.SliceManager;
 import exoplex.sdx.slice.SliceManagerFactory;
+import exoplex.sdx.slice.SliceProperties;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import safe.Authority;
@@ -235,7 +236,7 @@ public class SliceHelper {
     });
     if (coreProperties.isSafeEnabled()) {
       if (coreProperties.isSafeInSlice()) {
-        coreProperties.setSafeServerIp(serverSlice.getManagementIP("safe-server"));
+        coreProperties.setSafeServerIp(serverSlice.getManagementIP(SliceProperties.SAFESERVER));
       }
       tlist.add(new Thread() {
         @Override

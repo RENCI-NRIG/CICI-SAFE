@@ -889,9 +889,9 @@ public class ExoSliceManager extends SliceManager {
     String[] ifaces = res.split("\n");
     ArrayList<ImmutablePair<String, String>> interfaces = new ArrayList<>();
     for (String s : ifaces) {
-      String ss = s.replaceAll("\\s*", " ").replace("\n", "");
+      String ss = s.replaceAll("\\s+", " ").replace("\n", "");
       if (ss.length() > 1) {
-        String[] parts = ss.split("\\s*");
+        String[] parts = ss.split(" ");
         interfaces.add(new ImmutablePair<>(parts[0], parts[1]));
       }
     }
@@ -1078,7 +1078,8 @@ public class ExoSliceManager extends SliceManager {
   public void addSafeServer(String siteName, String riakIp,
                                          String safeDockerImage, String
                                            safeServerScript) {
-    addDocker(siteName, "safe-server", Scripts.getSafeScript_v1(riakIp, safeDockerImage,
+    addDocker(siteName, SliceProperties.SAFESERVER, Scripts.getSafeScript_v1(riakIp,
+      safeDockerImage,
       safeServerScript), NodeBase.xoLarge);
   }
 

@@ -109,18 +109,19 @@ public class Scripts {
   }
 
   public static String stopAptDailyService() {
-    return "\nsystemctl stop apt-daily.service\n" +
-           "systemctl kill --kill-who=all apt-daily.service\n" +
-           "while ! (systemctl list-units --all apt-daily.service | egrep -q '(dead|failed)')\n" +
+    return "\nsudo systemctl stop apt-daily.service\n" +
+           "sudo systemctl kill --kill-who=all apt-daily.service\n" +
+           "while ! (systemctl list-units --all apt-daily.service | " +
+           "egrep -q '(dead|failed)')\n" +
            "do\n" +
            "  echo 'sleepig kill loop'\n" +
            "  sleep 1\n" +
-           "done\n" +
-           "sleep 60\n" +
-           "while (pgrep -af 'apt'|grep -v docker)\n" +
-           "do\n" +
-           "  echo 'sleepig apt loop'\n" +
-           "  sleep 1\n" +
+           //"done\n" +
+           //"sleep 60\n" +
+           //"while (pgrep -af 'apt'|grep -v docker)\n" +
+           //"do\n" +
+           //"  echo 'sleepig apt loop'\n" +
+           //"  sleep 1\n" +
            "done\n";      
   }
 

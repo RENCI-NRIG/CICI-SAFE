@@ -20,7 +20,7 @@
         riak_ip="IP address of VM1"
         sudo docker pull yaoyj11/safeserver-v7
         sudo docker run -i -t -d -p 7777:7777 -h safe --name safe yaoyj11/safeserver-v7
-        sudo docker exec -itd safe /bin/bash -c  "cd /root/safe;sed -i 's/RIAKSERVER/$riak_ip/g' safe-server/src/main/resources/application.conf;./prdn.sh"
+        sudo docker exec -itd safe /bin/bash -c  "cd /root/safe;sed -i 's/http:\/\/.*:8098/http:\/\/${riak_ip}:8098/g' safe-server/src/main/resources/application.conf;./${SAFE_SCRIPT}"
 
 ###  b) deploy SDN controller
 
@@ -71,7 +71,7 @@
         riak_ip="IP address of VM1"
         sudo docker pull yaoyj11/safeserver-v7
         sudo docker run -i -t -d -p 7777:7777 -h safe --name safe yaoyj11/safeserver-v7
-        sudo docker exec -itd safe /bin/bash -c  "cd /root/safe;sed -i 's/RIAKSERVER/$riak_ip/g' safe-server/src/main/resources/application.conf;./prdn.sh"
+        sudo docker exec -itd safe /bin/bash -c  "cd /root/safe;sed -i 's/http:\/\/.*:8098/http:\/\/${riak_ip}:8098/g' safe-server/src/main/resources/application.conf;./${SAFE_SCRIPT}"
         
 ## 2. [NOT NOW, will come back to this step after creating client SAFE key] make delegations to a client: exogeni slice authorization, ip allocation, tag delegation
 
@@ -94,7 +94,7 @@
         export riak_ip="IP address of VM1"
         sudo docker pull yaoyj11/safeserver-v7
         sudo docker run -i -t -d -p 7777:7777 -h safe --name safe yaoyj11/safeserver-v7
-        sudo docker exec -itd safe /bin/bash -c  "cd /root/safe;sed -i 's/RIAKSERVER/$riak_ip/g' safe-server/src/main/resources/application.conf;./prdn.sh"
+        sudo docker exec -itd safe /bin/bash -c  "cd /root/safe;sed -i 's/http:\/\/.*:8098/http:\/\/${riak_ip}:8098/g' safe-server/src/main/resources/application.conf;./${SAFE_SCRIPT}"
 
 ## 3. generate safe key-pair for client
 
