@@ -311,11 +311,10 @@ class RestRouterAPI(app_manager.RyuApp):
     #NOTE 0: yjyao
     @set_ev_cls(stplib.EventPortStateChange, MAIN_DISPATCHER)
     def _port_state_change_handler(self, ev):
-        print "port state change handler"
         RouterController.update_router(ev.dp)
         dpid_str = dpid_lib.dpid_to_str(ev.dp.id)
-        print ev.dp
-        print ev.dp.ports
+        #print ev.dp
+        #print ev.dp.ports
         of_state = {stplib.PORT_STATE_DISABLE: 'DISABLE',
                     stplib.PORT_STATE_BLOCK: 'BLOCK',
                     stplib.PORT_STATE_LISTEN: 'LISTEN',
@@ -514,7 +513,7 @@ class Router(dict):
         self.port_data = PortData(dp.ports)
         #DEBUG
         #We may be able to add port number here
-        print self.port_data
+        #print self.port_data
         ##DEBUG
 
         ofctl = OfCtl.factory(dp, logger)
@@ -554,7 +553,7 @@ class Router(dict):
     def update(self,dp,logger):
         self.port_data=PortData(dp.ports)
         self[VLANID_NONE].port_data=self.port_data
-        print dp.ports
+        #print dp.ports
         self.logger.info("Update port data.", extra=self.sw_id)
     #==========
 
@@ -1151,8 +1150,8 @@ class VlanRouter(object):
 
         # Analyze event type.
         #DEBUG
-        self.logger.debug("Router packet_in_handler")
-        print header_list
+        #self.logger.debug("Router packet_in_handler")
+        #print header_list
         ##DEBUG
         if ARP in header_list:
             self._packetin_arp(msg, header_list)
@@ -1262,8 +1261,8 @@ class VlanRouter(object):
 
                 packet_list = self.packet_buffer.get_data(src_ip)
                 #DEBUG:
-                print "packet list {}".format(packet_list)
-                print 'Receive ARP reply from {} to router port {}.'.format(srcip,dstip)
+                #print "packet list {}".format(packet_list)
+                #print 'Receive ARP reply from {} to router port {}.'.format(srcip,dstip)
                 ##DEBUG:
                 if packet_list:
                     # stop ARP reply wait thread.
@@ -1271,7 +1270,7 @@ class VlanRouter(object):
                         self.packet_buffer.delete(pkt=suspend_packet)
 
                     # send suspend packet.
-                    output = self.ofctl.dp.ofproto.OFPP_TABLE
+                    output = in_port
                     for suspend_packet in packet_list:
                         self.ofctl.send_packet_out(suspend_packet.in_port,
                                                    output,
@@ -1705,8 +1704,8 @@ class SuspendPacketList(list):
 
     def get_data(self, dst_ip):
         #DEBUG
-        for pkt in self:
-          print pkt.header_list
+        #for pkt in self:
+        #  print pkt.header_list
         return [pkt for pkt in self if pkt.dst_ip == dst_ip]
         ##DEBUG
 
@@ -1877,7 +1876,7 @@ class OfCtl(object):
         # self.logger.debug('Packet out = %s', data_str, extra=self.sw_id)
 
     def set_default_mirroring_flow(self, cookie, priority):
-        print "set default mirroring flow"
+        #print "set default mirroring flow"
         ofp = self.dp.ofproto
         ofp_parser = self.dp.ofproto_parser
         table_id=ROUTING_TABLE_ID
@@ -1895,7 +1894,7 @@ class OfCtl(object):
         out_port = self.dp.ofproto.OFPP_NORMAL
         actions = [self.dp.ofproto_parser.OFPActionOutput(out_port, 0)]
         #DEBUG
-        print "set_normal_flow actiosn",actions
+        #print "set_normal_flow actios",actions
         ##DEBUG
         self.set_flow(cookie, priority, actions=actions)
 
@@ -2136,7 +2135,7 @@ class OfCtl_after_v1_2(OfCtl):
                       idle_timeout=idle_timeout, actions=actions,table_id=MIRROR_TABLE_ID,insts=inst)
 
     def delete_flow(self, flow_stats):
-	print "delete flow"
+	#print "delete flow"
         ofp = self.dp.ofproto
         ofp_parser = self.dp.ofproto_parser
 

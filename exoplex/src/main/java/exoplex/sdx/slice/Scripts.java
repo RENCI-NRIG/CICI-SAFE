@@ -116,12 +116,12 @@ public class Scripts {
            "do\n" +
            "  echo 'sleepig kill loop'\n" +
            "  sleep 1\n" +
-           //"done\n" +
-           //"sleep 60\n" +
-           //"while (pgrep -af 'apt'|grep -v docker)\n" +
-           //"do\n" +
-           //"  echo 'sleepig apt loop'\n" +
-           //"  sleep 1\n" +
+           "done\n" +
+           "sleep 60\n" +
+           "while (pgrep -af 'apt'|grep -v docker)\n" +
+           "do\n" +
+           "  echo 'sleepig apt loop'\n" +
+           "  sleep 1\n" +
            "done\n";      
   }
 

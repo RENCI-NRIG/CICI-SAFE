@@ -529,7 +529,7 @@ class Router(dict):
     def update(self,dp,logger):
         self.port_data=PortData(dp.ports)
         self[VLANID_NONE].port_data=self.port_data
-        print dp.ports
+        #print dp.ports
         self.logger.info("Update port data.", extra=self.sw_id)
     #==========
 
@@ -1890,7 +1890,7 @@ class OfCtl_after_v1_2(OfCtl):
     def set_icmp_reply_flow(self, cookie, priority, dl_type=0, dl_dst=0, dl_vlan=0,
                  nw_src=0, src_mask=32, nw_dst=0, dst_mask=32,
                  nw_proto=1, idle_timeout=0, actions=None):
-        print("1.2 set icmp flow===============")
+        #print("1.2 set icmp flow===============")
         ofp = self.dp.ofproto
         ofp_parser = self.dp.ofproto_parser
         cmd = ofp.OFPFC_ADD

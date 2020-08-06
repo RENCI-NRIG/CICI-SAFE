@@ -24,20 +24,22 @@ public class SingleSdxSetting extends AbstractTestSetting {
 
   @Override
   public void addClientConnectionPairs() {
-    clientConnectionPairs.add(new Integer[]{0, 1});
-    //clientConnectionPairs.add(new Integer[]{1, 2});
+    clientConnectionPairs.add(new Integer[]{0, 2});
+    clientConnectionPairs.add(new Integer[]{1, 3});
     //clientConnectionPairs.add(new Integer[]{0, 2});
   }
 
   @Override
   public void addClientSites() {
-    clientSites.add("TAMU");
-    clientSites.add("UH");
+    clientSites.add("UFL");
+    clientSites.add("UFL");
+    clientSites.add("UNF");
+    clientSites.add("UNF");
   }
 
   @Override
   public void addSdxSites() {
-    sdxSites.put(sdxSliceNames.get(0), new String[]{"TAMU"});
+    sdxSites.put(sdxSliceNames.get(0), new String[]{"UFL", "UNF"});
   }
 
   @Override
@@ -78,12 +80,16 @@ public class SingleSdxSetting extends AbstractTestSetting {
   public void setClientSdxMap() {
     clientSdxMap.put(clientSlices.get(0), sdxSliceNames.get(0));
     clientSdxMap.put(clientSlices.get(1), sdxSliceNames.get(0));
+    clientSdxMap.put(clientSlices.get(2), sdxSliceNames.get(0));
+    clientSdxMap.put(clientSlices.get(3), sdxSliceNames.get(0));
     //clientSdxMap.put(clientSlices.get(2), sdxSliceNames.get(0));
   }
 
   public void setUserConnectionTagAcls() {
     clientTags.put(clientSlices.get(0), Arrays.asList("tag0"));
-    clientTags.put(clientSlices.get(1), Arrays.asList("tag0"));
+    clientTags.put(clientSlices.get(2), Arrays.asList("tag0"));
+    clientTags.put(clientSlices.get(1), Arrays.asList("tag1"));
+    clientTags.put(clientSlices.get(3), Arrays.asList("tag1"));
     //clientTags.put(clientSlices.get(2), Arrays.asList(new String[]{"tag0"}));
   }
 }
