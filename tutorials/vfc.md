@@ -10,7 +10,7 @@ Run SDN controller,
 
 Or run SDN controller in docker
 
-        PLEXUSIMG="yaoyj11/plexus-v3"
+        PLEXUSIMG="yaoyj11/plexus-v4"
         sudo docker pull ${PLEXUSIMG}
         sudo docker run -i -t -d -p 8080:8080 -p 6653:6653 -p 3000:3000 -h plexus --name plexus ${PLEXUSIMG}
         sudo docker exec -itd plexus /bin/bash -c  "cd /root;pkill ryu-manager; ryu-manager --ofp-tcp-listen-port 6653 --log-file ~/ryu.log --default-log-level 1 ryu/ryu/app/rest_conf_switch.py ryu/ryu/app/vfc_router.py ryu/ryu/app/ofctl_rest.py"
@@ -102,7 +102,7 @@ Generate ssh key (the default key pair created by ssh-keygen command  without op
 Set the version and safe docker image, plexus sdn controller docker image and safe server script as environment variable. Set the public ip addresses of riak server and SDX controller. Run this in all nodes.
 
         SAFEIMG="yaoyj11/safeserver-v8"
-        PLEXUSIMG="yaoyj11/plexus-v3"
+        PLEXUSIMG="yaoyj11/plexus-v4"
         SAFE_SCRIPT="sdx-routing.sh"
         riak_ip="128.194.6.235"
         sdx_ip="128.194.6.161"

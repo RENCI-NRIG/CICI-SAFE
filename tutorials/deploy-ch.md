@@ -11,7 +11,7 @@ Generate ssh key (the default key pair created by ssh-keygen command  without op
 Set the version and safe docker image, plexus sdn controller docker image and safe server script as environment variable. Set the public ip addresses of riak server and SDX controller. Run this in all nodes.
 
         SAFEIMG="yaoyj11/safeserver-v8"
-        PLEXUSIMG="yaoyj11/plexus-v3"
+        PLEXUSIMG="yaoyj11/plexus-v4"
         SAFE_SCRIPT="sdx-routing.sh"
         riak_ip="IP address of VM1"
         sdx_ip="IP address of sdx"
@@ -161,7 +161,7 @@ b). Configure routing with Quagga on every Chameleon client node
 
 c). Run sdn controller adapted from ryu/simple_switch_13 application.
 
-        PLEXUSIMG="yaoyj11/plexus-v3"
+        PLEXUSIMG="yaoyj11/plexus-v4"
         sudo docker pull ${PLEXUSIMG}
         sudo docker run -i -t -d -p 8080:8080 -p 6653:6653 -p 3000:3000 -h plexus --name plexus ${PLEXUSIMG}
         sudo docker exec -itd plexus /bin/bash -c  "cd /root;pkill ryu-manager; ryu-manager --log-file ~/ryu.log --default-log-level 1 --ofp-tcp-listen-port 6653 ryu/ryu/app/simple_switch_13.py"

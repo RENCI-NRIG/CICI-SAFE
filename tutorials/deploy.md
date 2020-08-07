@@ -11,7 +11,7 @@ Generate ssh key (the default key pair created by ssh-keygen command  without op
 Set the version and safe docker image, plexus sdn controller docker image and safe server script as environment variable. Set the public ip addresses of riak server and SDX controller. Run this in all nodes.
 
         SAFEIMG="yaoyj11/safeserver-v8"
-        PLEXUSIMG="yaoyj11/plexus-v3"
+        PLEXUSIMG="yaoyj11/plexus-v4"
         SAFE_SCRIPT="sdx-routing.sh"
         riak_ip="IP address of VM1"
         sdx_ip="IP address of sdx"
@@ -53,14 +53,14 @@ For security, plexus controller and safe server should only listen on localhost 
         git clone https://github.com/RENCI-NRIG/orca5.git
         cd orca5
         mvn install
-        
+
         echo Git Ahab
         cd $WORKING_DIR
         cat .ssh/id_rsa.pub >>.ssh/authorized_keys
         git clone https://github.com/RENCI-NRIG/ahab.git
         cd ahab
         mvn install
-        
+
         echo Git SDX
         cd $WORKING_DIR
         git clone --single-branch -b master https://github.com/RENCI-NRIG/CICI-SAFE.git
@@ -69,7 +69,7 @@ For security, plexus controller and safe server should only listen on localhost 
         mvn  clean package appassembler:assemble -DskipTests
 
 ## 4. create an Exogeni slice for SDX.
-      
+
 Modify ${WORKING_DIR}/CICI-SAFE/SDX-Simple/config/sdx.conf.
 
         cd ${WORKING_DIR}/CICI-SAFE/exoplex
