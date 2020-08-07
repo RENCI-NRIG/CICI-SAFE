@@ -334,6 +334,8 @@ public class RoutingManager extends AbstractRoutingManager {
     }
     prefixPaths.get(srcIP).add(pathId);
     boolean res = true;
+    ArrayList<Thread> tlist = new ArrayList<>();
+    ArrayList<Boolean> results = new ArrayList<>();
     for (String[] path : paths) {
       Router logRouter = networkManager.getRouterByDPID(path[0]);
       if (path[3] != null) {
@@ -344,7 +346,27 @@ public class RoutingManager extends AbstractRoutingManager {
           link.getPairNodeName(logRouter.getRouterName())));
         networkManager.putLink(link);
       }
-      res &= addRoute(dstIP, srcIP, path[1], path[0], pathId);
+      tlist.add(new Thread(){
+        @Override
+        public void run () {
+          synchronized (results) {
+            results.add(addRoute(dstIP, srcIP, path[1], path[0], pathId));
+          }
+        }
+      });
+    }
+    for(Thread t: tlist) {
+      t.start();
+    }
+    try {
+      for(Thread t:tlist) {
+        t.join();
+      }
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+    for(Boolean r: results) {
+      res = res & r;
     }
     return res;
   }
