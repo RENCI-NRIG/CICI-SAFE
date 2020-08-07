@@ -548,7 +548,7 @@ public class ExoSdxManager extends SdxManagerBase {
   }
 
   @Override
-  public JSONObject stitchRequest(
+  synchronized public JSONObject stitchRequest(
     String site,
     String customerSafeKeyHash,
     String customerSlice,
@@ -653,7 +653,7 @@ public class ExoSdxManager extends SdxManagerBase {
     return res;
   }
 
-  public String undoStitch(
+  synchronized public String undoStitch(
     String customerSafeKeyHash,
     String customerSlice,
     String customerReserveId) throws Exception {
@@ -1336,14 +1336,9 @@ public class ExoSdxManager extends SdxManagerBase {
       logger.info(logPrefix + "Restarting Plexus Controller: " + plexusip);
       delFlows();
       String script = "sudo docker exec -d plexus /bin/bash -c  \"cd /root;pkill ryu-manager; "
-        + "ryu-manager --log-file ~/log --default-log-level 10 --verbose "
+        + "ryu-manager --log-file ~/log --default-log-level 1 --verbose "
         + "ryu/ryu/app/rest_conf_switch.py ryu/ryu/app/rest_router.py "
         + "ryu/ryu/app/ofctl_rest.py %s\"\n";
-      // Set public url to plexus server
-      if (coreProperties.isPlexusInSlice()) {
-        String publicUrl = "http://" + plexusip + ":8888/";
-        coreProperties.setPublicUrl(publicUrl);
-      }
       String sdxMonitorUrl = coreProperties.getPublicUrl() + "sdx/flow/packetin";
       //reuse ryu-manager option for sdx url
       script = String.format(script, String.format("--zapi-db-url %s", sdxMonitorUrl));
@@ -1356,7 +1351,7 @@ public class ExoSdxManager extends SdxManagerBase {
       logger.info(logPrefix + "Restarting Plexus Controller: " + plexusip);
       delFlows();
       String script = "sudo docker exec -d plexus /bin/bash -c  \"cd /root;pkill ryu-manager; "
-        + "ryu-manager --log-file ~/log --default-log-level 10 --verbose "
+        + "ryu-manager --log-file ~/log --default-log-level 1 --verbose "
         + "ryu/ryu/app/rest_conf_switch.py ryu/ryu/app/rest_router_mirror.py "
         + "ryu/ryu/app/rest_qos.py "
         + "ryu/ryu/app/ofctl_rest.py %s\"\n";
@@ -1548,10 +1543,6 @@ public class ExoSdxManager extends SdxManagerBase {
     if(coreProperties.getSdnApp().equals("rest_mirror")) {
       monitorTableId = 2;
     }
-    // run ovsbridge scritps to add the all interfaces to the ovsbridge br0, if new interface is
-    // added to the ovs bridge, then we reset the controller?
-    // FIXME: maybe this is not the best way to do.
-    //add all interfaces other than eth0 to ovs bridge br0
     configRouters(serverSlice);
 
     routingManager.waitTillAllOvsConnected(SDNController, serverSlice.mocked);
