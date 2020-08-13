@@ -106,6 +106,8 @@ public abstract class AbstractTest {
             coreProperties.setSafeEnabled(testSetting.safeEnabled);
             if (reset) {
               coreProperties.setReset(true);
+            } else {
+              coreProperties.setReset(false);
             }
             SdxManagerBase sdxManager = exoSdxServer.run(coreProperties);
             sdxManagerMap.put(slice, sdxManager);
@@ -156,14 +158,32 @@ public abstract class AbstractTest {
   }
 
   public void stitchCustomerSlices() {
+    ArrayList<Thread> tlist = new ArrayList<>();
     for (String clientSlice : testSetting.clientSlices) {
-      String clientGateWay = testSetting.clientIpMap.get(clientSlice).replace(".1/24", ".2");
-      String sdxInterfaceIP = testSetting.clientIpMap.get(clientSlice).replace(".1/24", ".1/24");
-      String gw = exogeniClients.get(clientSlice).processCmd(String.format("stitch CNode1 %s %s",
-        clientGateWay, sdxInterfaceIP));
-      exogeniClients.get(clientSlice).processCmd(String.format("route %s %s",
-        testSetting.clientIpMap.get(clientSlice),
-        gw));
+      Thread t = new Thread() {
+        @Override
+        public void run() {
+          String clientGateWay = testSetting.clientIpMap.get(clientSlice).replace(".1/24", ".2");
+          String sdxInterfaceIP = testSetting.clientIpMap.get(clientSlice).replace(".1/24", ".1/24");
+          String gw = exogeniClients.get(clientSlice).processCmd(String.format("stitch CNode1 %s %s",
+            clientGateWay, sdxInterfaceIP));
+          exogeniClients.get(clientSlice).processCmd(String.format("route %s %s",
+            testSetting.clientIpMap.get(clientSlice),
+            gw));
+
+        }
+      };
+      tlist.add(t);
+    }
+    for (Thread t : tlist) {
+      t.start();
+    }
+    try {
+      for (Thread t : tlist) {
+        t.join();
+      }
+    } catch (Exception e) {
+      e.printStackTrace();
     }
   }
 
@@ -293,7 +313,7 @@ public abstract class AbstractTest {
   public void replaySdnConfiguration(String logFile) {
     //startSdxServersAndClients(false);
     SdnReplay.replay(logFile);
-    checkConnection();
+    //checkConnection();
     logger.info("replay done");
   }
 

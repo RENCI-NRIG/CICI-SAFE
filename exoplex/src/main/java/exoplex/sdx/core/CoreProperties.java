@@ -19,7 +19,7 @@ import java.util.List;
 public class CoreProperties {
   Logger logger = LogManager.getLogger(CoreProperties.class);
 
-  private static String plexusImage = "yaoyj11/plexus-v3";
+  private static String plexusImage = "yaoyj11/plexus-v4";
   private static String safeDockerImage = "safeserver-v8";
   private static String safeServerScript = "sdx-routing.sh";
 

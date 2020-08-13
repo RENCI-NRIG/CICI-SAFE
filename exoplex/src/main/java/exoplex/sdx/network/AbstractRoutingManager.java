@@ -38,7 +38,8 @@ public abstract class AbstractRoutingManager {
   /**
    * Forward matched packets to controller
    */
-  public abstract void monitorOnAllRouter(String dstIP, String srcIP);
+  public abstract void monitorOnAllRouter(String dstIP, String srcIP,
+                                          int tableId);
 
   /**
    * configure path for destIP in the network.
@@ -80,16 +81,16 @@ public abstract class AbstractRoutingManager {
 
   public abstract void removePath(String dstIP, String srcIP);
 
-  public abstract void retriveRouteOfPrefix(String prefix, String sdnController);
+  public abstract void retriveRouteOfPrefix(String prefix);
 
-  public abstract String setMirror(String controller, String dpid, String source, String dst, String gw);
+  public abstract String setMirror(String dpid, String source, String dst, String gw);
 
-  public abstract String delMirror(String controller, String dpid, String source, String dst);
+  public abstract String delMirror(String dpid, String source, String dst);
 
-  public abstract String singleStepRouting(String dest, String gateway, String dpid, String controller);
+  public abstract String singleStepRouting(String dest, String gateway, String dpid);
 
-  public abstract String singleStepRouting(String dest, String src, String gateway, String dpid,
-                                  String controller);
+  public abstract String singleStepRouting(String dest, String src,
+                                           String gateway, String dpid);
 
   public abstract void checkFLowTableForPair(String srcIp, String destIp, String p1, String p2,
                                     String sshKey, Logger logger);
@@ -101,22 +102,29 @@ public abstract class AbstractRoutingManager {
   public abstract void updateInterfaceMac(String node, String link,
                                           String mac, String ethName);
 
-  public abstract void updatePortMac(String controller, String dpid);
+  public abstract void updatePortMac(String dpid);
 
-  public abstract void updateAllPorts(String controller);
+  public abstract void updateAllPorts();
 
-  public abstract boolean waitTillAllOvsConnected(String controller, boolean mocked);
+  public abstract boolean waitTillAllOvsConnected(String controller,
+                                                  boolean mocked);
 
-  public abstract int getPortCount(String controller, String nodeName);
+  public abstract int getPortCount(String nodeName);
 
-  public abstract boolean setNextHops(String nodeName, String controller, int groupId, String destIP,
+  public abstract boolean setNextHops(String nodeName,
+                                      String controller,
+                                      int groupId,
+                                      String destIP,
                              HashMap<String, Integer> nbs);
 
-  public abstract boolean setOutPort(String nodeName, String controller, String linkName, String destIP);
+  public abstract boolean setOutPort(String nodeName,
+                                     String controller,
+                                     String linkName,
+                                     String destIP);
 
-  public abstract void setQos(String controller, String dpid, String srcip, String destip, String bw);
+  public abstract void setQos(String dpid, String srcip, String destip, String bw);
 
-  public abstract void setQos(String controller, String dpid, String srcip, String destip, long bw);
+  public abstract void setQos(String dpid, String srcip, String destip, long bw);
 
   public abstract void replayCmds(String dpid);
 
@@ -134,5 +142,5 @@ public abstract class AbstractRoutingManager {
 
   public abstract void printLinks();
 
-  public abstract void setOvsdbAddr(String sdnController);
+  public abstract void setOvsdbAddr();
 }

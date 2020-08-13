@@ -18,7 +18,6 @@ import exoplex.sdx.slice.Scripts;
 import exoplex.sdx.slice.SliceManager;
 import exoplex.sdx.slice.SliceManagerFactory;
 import exoplex.sdx.slice.SliceProperties;
-import exoplex.sdx.slice.exogeni.ExoSliceManager;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -364,13 +363,13 @@ public class SdxExogeniClient {
       "sp-" + nodeName + "-" + gateway.replace(".", "_") + "__" + vfcip.split("/")[1];
     logger.info(logPrefix + "Stitching to Chameleon {" + "stitchname: " + stitchname + " vlan:" +
       vlan + " site: " + site + "}");
-    String stitchport = site.toLowerCase().equals("tacc") ? STITCHPORT_TACC: STITCHPORT_UC;
+    String stitchport = site.toLowerCase().equals("tacc") ? STITCHPORT_TACC : STITCHPORT_UC;
     addStitchPort(stitchname, nodeName, stitchport, vlan, coreProperties.getBw());
     //configure ip address on the client node
     String localIp = gateway + "/" + vfcip.split("/")[1];
     logger.info(logPrefix + "set IP address of the stitch interface to " + vfcip);
     String vfcGateway = vfcip.split("/")[0];
-    if(coreProperties.getQuaggaRoute()) {
+    if (coreProperties.getQuaggaRoute()) {
       List<ImmutablePair<String, String>> interfaces =
         serverSlice.getPhysicalInterfaces(nodeName);
       String newInterface = interfaces.get(interfaces.size() - 1).left;
@@ -397,7 +396,7 @@ public class SdxExogeniClient {
     String r = HttpUtil.postJSON(coreProperties.getServerUrl() + "sdx/stitchvfc", jsonparams);
     logger.debug(r);
 
-    if(coreProperties.getQuaggaRoute()) {
+    if (coreProperties.getQuaggaRoute()) {
       if (ping(nodeName, vfcGateway)) {
         logger.info(String.format("Ping to %s works", vfcGateway));
         logger.info(logPrefix + "stitch completed.");
@@ -423,13 +422,14 @@ public class SdxExogeniClient {
 
   private boolean addStitchPort(String spName, String nodeName, String stitchUrl, String vlan, long
     bw) {
-    serverSlice.expectOneMoreInterface(nodeName);
+    serverSlice.expectOneInterfaceDiff(nodeName, true);
     serverSlice.refresh();
     try {
       String node = serverSlice.getComputeNode(nodeName);
       String mysp = serverSlice.addStitchPort(spName, vlan, stitchUrl, bw);
       serverSlice.stitchSptoNode(mysp, node);
-      serverSlice.waitForNewInterfaces(nodeName);
+      serverSlice.commitAndWait();
+      serverSlice.waitForInterfaces(nodeName);
     } catch (Exception e) {
       e.printStackTrace();
       return false;
@@ -566,9 +566,10 @@ public class SdxExogeniClient {
       } else {
         jsonparams.put("ckeyhash", coreProperties.getSliceName());
       }
-      serverSlice.expectOneMoreInterface(nodeName);
+      serverSlice.expectOneInterfaceDiff(nodeName, true);
       logger.debug(logPrefix + "Sending stitch request to Sdx server");
-      String r = HttpUtil.postJSON(coreProperties.getServerUrl() + "sdx/stitchrequest", jsonparams);
+      String r = HttpUtil.postJSON(coreProperties.getServerUrl()
+        + "sdx/stitchrequest", jsonparams);
       logger.debug(r);
       JSONObject res = new JSONObject(r);
       logger.info(logPrefix + "Got Stitch Information From Server:\n " + res.toString());
@@ -576,13 +577,14 @@ public class SdxExogeniClient {
         logger.warn(logPrefix + "stitch request failed");
       } else {
         String ip = params[2] + "/" + params[3].split("/")[1];
-        serverSlice.waitForNewInterfaces(nodeName);
+        serverSlice.waitForInterfaces(nodeName);
         List<ImmutablePair<String, String>> interfaces =
           serverSlice.getPhysicalInterfaces(nodeName);
         String newInterface = interfaces.get(interfaces.size() - 1).left;
-        if(coreProperties.getQuaggaRoute()) {
+        if (coreProperties.getQuaggaRoute()) {
           logger.info(logPrefix + "set IP address of the stitch interface to " + ip);
-          String result = serverSlice.runCmdNode(String.format("sudo ifconfig " + "%s %s", newInterface, ip), nodeName, false);
+          String result = serverSlice.runCmdNode(String.format(
+            "sudo ifconfig %s %s", newInterface, ip), nodeName, false);
           String gateway = params[3].split("/")[0];
           setUpQuaggaRouting("192.168.1.1/16", gateway, nodeName);
           if (ping(nodeName, gateway)) {
@@ -592,7 +594,8 @@ public class SdxExogeniClient {
             logger.warn(String.format("Ping to %s doesn't work", gateway));
           }
         } else {
-          serverSlice.runCmdSlice("/bin/bash ~/ovsbridge.sh", coreProperties.getSshKey(), "CNode1", true);
+          serverSlice.runCmdSlice("/bin/bash ~/ovsbridge.sh",
+            coreProperties.getSshKey(), "CNode1", true);
         }
         return ip.split("/")[0];
       }

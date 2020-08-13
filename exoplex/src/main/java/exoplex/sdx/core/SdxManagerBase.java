@@ -547,9 +547,6 @@ public class SdxManagerBase extends SliceHelper implements SdxManagerInterface {
       if (coreProperties.isSafeEnabled()) {
         notifyResult.safeKeyHash = safeManager.getSafeKeyHash();
       }
-      //monitor the frist packet
-      //routingManager.monitorOnAllRouter(dest, SdnUtil.DEFAULT_ROUTE);
-      //routingManager.monitorOnAllRouter(SdnUtil.DEFAULT_ROUTE, dest);
     }
     return notifyResult;
   }
@@ -613,7 +610,7 @@ public class SdxManagerBase extends SliceHelper implements SdxManagerInterface {
     if (customerPrefixes.containsKey(customerSafeKeyHash)) {
       customerPrefixes.get(customerSafeKeyHash).remove(prefix);
     }
-    routingManager.retriveRouteOfPrefix(prefix, SDNController);
+    routingManager.retriveRouteOfPrefix(prefix);
   }
 
   synchronized public String stitchChameleon(String site, String nodeName, String customer_keyhash, String stitchport,
@@ -713,8 +710,8 @@ public class SdxManagerBase extends SliceHelper implements SdxManagerInterface {
   }
 
   public String delMirror(String dpid, String source, String dst) {
-    String res = routingManager.delMirror(SDNController, dpid, source, dst);
-    res += "\n" + routingManager.delMirror(SDNController, dpid, dst, source);
+    String res = routingManager.delMirror(dpid, source, dst);
+    res += "\n" + routingManager.delMirror(dpid, dst, source);
     return res;
   }
 
@@ -747,6 +744,18 @@ public class SdxManagerBase extends SliceHelper implements SdxManagerInterface {
     } finally {
       iplock.unlock();
     }
+  }
+
+  synchronized public void setQos(String prefix1, String prefix2,
+                                  long bandwidth)  {
+    String n1 =
+      routingManager.getEdgeRouterByGateway(prefixGateway.get(prefix1));
+    String n2 =
+      routingManager.getEdgeRouterByGateway(prefixGateway.get(prefix2));
+    routingManager.setQos(routingManager.getDPID(n1), prefix1,
+      prefix2, bandwidth);
+    routingManager.setQos(routingManager.getDPID(n2), prefix2,
+      prefix1, bandwidth);
   }
 
 

@@ -1,41 +1,74 @@
 [
     {
         "router": {
-                "name": "vfc-esnet-tacc",
+                "name": "vfc-esnet-atla",
                 "dpid": "0000ce045cc7b141",
-                "site": "TACC",
+                "site": "ATLA",
                 "controller":"192.168.120.122:8080"
         }
     },
     {
         "router": {
-                "name": "vfc-esnet-uc",
+                "name": "vfc-esnet-star",
                 "dpid": "0000f2e345426c44",
-                "site": "UC",
+                "site": "STAR",
                 "controller":"192.168.120.15:8080"
+        }
+    },
+    {
+        "router": {
+                "name": "vfc-esnet-wash",
+                "dpid": "0000d652c7eac84e",
+                "site": "WASH",
+                "controller":"192.168.120.123:8080"
         }
     },
     {
         "link": {
                 "name": "link0",
-                "node1": "vfc-esnet-tacc",
-                "node2": "vfc-esnet-uc"
+                "node1": "vfc-esnet-atla",
+                "node2": "vfc-esnet-star",
+                "bw": 1000000000
+        }
+    },
+    {
+        "link": {
+                "name": "link1",
+                "node1": "vfc-esnet-atla",
+                "node2": "vfc-esnet-wash",
+                "bw": 1000000000
+        }
+    },
+    {
+        "link": {
+                "name": "link2",
+                "node1": "vfc-esnet-star",
+                "node2": "vfc-esnet-wash",
+                "bw": 1000000000
         }
     },
     {
         "stitch": {
-                "name": "net-exogenisc19yy1",
+                "name": "net-atlastitch",
                 "router": "vfc-esnet-tacc",
-                "site": "TACC",
-                "vlan": "3508"
+                "site": "ATLA",
+                "vlan": "3505"
         }
     },
     {
         "stitch": {
-                "name": "netexogenivfcyy1",
+                "name": "net-washstitch",
+                "router": "vfc-esnet-wash",
+                "site": "WASH",
+                "vlan": "3800"
+        }
+    },
+    {
+        "stitch": {
+                "name": "net-starstitch",
                 "router": "vfc-esnet-uc",
-                "site": "UC",
-                "vlan": "3293"
+                "site": "STAR",
+                "vlan": "3296"
         }
     }
 ]

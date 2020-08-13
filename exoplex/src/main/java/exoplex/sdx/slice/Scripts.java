@@ -10,15 +10,15 @@ public class Scripts {
     return "";
   }
 
-    public static String getPlexusScript(String plexusImage) {
-        String script = aptUpdate()
-                + "sudo docker pull %s\n"
-                + "sudo docker run -i -t -d -p 8080:8080 -p 6633:6633 -p 3000:3000 -h " +
-                "plexus --name plexus %s\n";
-        script = String.format(script, plexusImage, plexusImage);
-        //+"docker exec -d plexus /bin/bash -c  \"cd /root/;./sdx.sh\"\n";
-        return script;
-    }
+  public static String getPlexusScript(String plexusImage) {
+    String script = aptUpdate()
+      + "sudo docker pull %s\n"
+      + "sudo docker run -i -t -d -p 8080:8080 -p  6633:6633 "
+      + "-p 3000:3000 -h plexus --name plexus %s\n";
+    script = String.format(script, plexusImage, plexusImage);
+    //+"docker exec -d plexus /bin/bash -c  \"cd /root/;./sdx.sh\"\n";
+    return script;
+  }
 
   public static String getBroScripts() {
     String script = "sudo yum install -y tcpdump bc htop";
@@ -109,9 +109,10 @@ public class Scripts {
   }
 
   public static String stopAptDailyService() {
-    return "\nsystemctl stop apt-daily.service\n" +
-           "systemctl kill --kill-who=all apt-daily.service\n" +
-           "while ! (systemctl list-units --all apt-daily.service | egrep -q '(dead|failed)')\n" +
+    return "\nsudo systemctl stop apt-daily.service\n" +
+           "sudo systemctl kill --kill-who=all apt-daily.service\n" +
+           "while ! (systemctl list-units --all apt-daily.service | " +
+           "egrep -q '(dead|failed)')\n" +
            "do\n" +
            "  echo 'sleepig kill loop'\n" +
            "  sleep 1\n" +

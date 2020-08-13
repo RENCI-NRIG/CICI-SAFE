@@ -12,6 +12,7 @@ import exoplex.sdx.slice.SliceManager;
 import exoplex.sdx.slice.SliceProperties;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.renci.ahab.libndl.Slice;
 import org.renci.ahab.libtransport.util.TransportException;
 import safe.Authority;
 
@@ -58,7 +59,7 @@ public class ExogeniClientSlice extends SliceHelper {
       }
       c1.refresh();
       if (coreProperties.isSafeEnabled() && coreProperties.isSafeInSlice()) {
-        String safeIp = c1.getManagementIP("safe-server");
+        String safeIp = c1.getManagementIP(SliceProperties.SAFESERVER);
         checkSafeServer(safeIp, coreProperties.getRiakIp());
       }
       checkScripts(c1, "CNode1");
@@ -130,7 +131,7 @@ public class ExogeniClientSlice extends SliceHelper {
       c1.commitAndWait();
       c1.refresh();
       if (coreProperties.isSafeEnabled() && coreProperties.isSafeInSlice()) {
-        String safeIp = c1.getManagementIP("safe-server");
+        String safeIp = c1.getManagementIP(SliceProperties.SAFESERVER);
         checkSafeServer(safeIp, riakIp);
       }
       checkScripts(c1, "CNode1");

@@ -20,7 +20,9 @@ import numbers
 import socket
 import struct
 
+import sys
 import json
+import urllib2
 
 from ryu.app.wsgi import ControllerBase
 from ryu.app.wsgi import Response
@@ -88,7 +90,7 @@ from ryu.lib import stplib
 #    parameter = {"destination": "A.B.C.D/M", "gateway": "E.F.G.H"}
 #  case2-2: set default route.
 #    parameter = {"gateway": "E.F.G.H"}
-#  case2-1: set static route.
+#  case2-3: set static route.
 #    parameter = {"source":"A.B.C.D/M","destination": "A.B.C.D/M", "gateway": "E.F.G.H"}
 #  case2-4: set static mirror rule:.
 #    parameter = {"destination": "A.B.C.D/M", "mirror": "E.F.G.H"}
@@ -130,6 +132,7 @@ MAX_SUSPENDPACKETS = 50  # Threshold of the packet suspends thread count.
 
 ARP_REPLY_TIMER = 2  # sec
 OFP_REPLY_TIMER = 1.0  # sec
+ROUTE_REPLY_TIMER = 4  # sec
 CHK_ROUTING_TBL_INTERVAL = 1800  # sec
 
 SWITCHID_PATTERN = dpid_lib.DPID_PATTERN + r'|all'
@@ -190,6 +193,8 @@ DEFAULT_FLOW_PRIORITY=0
 
 PRIORITY_TYPE_ROUTE = 'priority_route'
 
+def get_sdx_url():
+    return sys.argv[-1]
 
 def get_priority(priority_type, vid=0, route=None):
     log_msg = None
@@ -311,11 +316,10 @@ class RestRouterAPI(app_manager.RyuApp):
     #NOTE 0: yjyao
     @set_ev_cls(stplib.EventPortStateChange, MAIN_DISPATCHER)
     def _port_state_change_handler(self, ev):
-        print "port state change handler"
         RouterController.update_router(ev.dp)
         dpid_str = dpid_lib.dpid_to_str(ev.dp.id)
-        print ev.dp
-        print ev.dp.ports
+        #print ev.dp
+        #print ev.dp.ports
         of_state = {stplib.PORT_STATE_DISABLE: 'DISABLE',
                     stplib.PORT_STATE_BLOCK: 'BLOCK',
                     stplib.PORT_STATE_LISTEN: 'LISTEN',
@@ -490,10 +494,6 @@ class RouterController(ControllerBase):
             routers = self._ROUTER_LIST
         else:
             sw_id = dpid_lib.str_to_dpid(switch_id)
-            #DEBUG
-            #print "RouterController._ROUTER_LIST",sw_id
-            #print self._ROUTER_LIST
-            ##DEBUG
             if sw_id in self._ROUTER_LIST:
                 routers = {sw_id: self._ROUTER_LIST[sw_id]}
 
@@ -512,10 +512,6 @@ class Router(dict):
         self.logger = logger
 
         self.port_data = PortData(dp.ports)
-        #DEBUG
-        #We may be able to add port number here
-        print self.port_data
-        ##DEBUG
 
         ofctl = OfCtl.factory(dp, logger)
         #NOTE yjyao
@@ -535,7 +531,7 @@ class Router(dict):
         self.logger.info('Set ARP handling (packet in) flow [cookie=0x%x]',
                          cookie, extra=self.sw_id)
 
-        ## Set flow: L2 switching (normal)
+        # Set flow: L2 switching (normal)
         #priority = get_priority(PRIORITY_NORMAL)
         #ofctl.set_normal_flow(cookie, priority)
         #self.logger.info('Set L2 switching (normal) flow [cookie=0x%x]',
@@ -554,7 +550,7 @@ class Router(dict):
     def update(self,dp,logger):
         self.port_data=PortData(dp.ports)
         self[VLANID_NONE].port_data=self.port_data
-        print dp.ports
+        #print dp.ports
         self.logger.info("Update port data.", extra=self.sw_id)
     #==========
 
@@ -663,7 +659,7 @@ class Router(dict):
             # Event dispatch
             if vlan_id in self:
                 #DEBUG
-                self.logger.debug("Router packet_in_handler")
+                #self.logger.debug("Router packet_in_handler", extra = self.sw_id)
                 ##DEBUG
                 self[vlan_id].packet_in_handler(msg, header_list)
             else:
@@ -689,6 +685,9 @@ class VlanRouter(object):
         self.logger = logger
 
         self.port_data = port_data
+        self.ip_mac = {}
+        self.mac_ip = {}
+        self.mac_port = {}
         self.address_data = AddressData()
         self.routing_tbl = RoutingTable()
         self.mirroring_tbl = RoutingTable()
@@ -875,11 +874,24 @@ class VlanRouter(object):
             raise CommandFailure(msg=msg)
         else:
             src_ip = address.default_gw
-            route = self.routing_tbl.add(destination, gateway,source)
-            self._set_route_packetin(route)
-            #DEBUG
-            self.logger.info("send_arp_requst after set routing packet in: src %s dst %s",src_ip,dst_ip,extra=self.sw_id)
-            self.send_arp_request(src_ip, dst_ip)
+            #NOTE: yjyao
+            route = self.routing_tbl.add(destination, gateway, source)
+            try:
+                self.packet_buffer.add_route_data(route)
+            except:
+                self.logger.info("Exception when adding route data", extra=self.sw_id)
+            if dst_ip not in self.ip_mac or self.ip_mac[dst_ip] not in self.mac_port:
+                self._set_route_packetin(route)
+                self.logger.info("send_arp_requst after set routing packet in: src %s dst %s",src_ip,dst_ip,extra=self.sw_id)
+                self.send_arp_request(src_ip, dst_ip)
+            else:
+                out_port = self.mac_port[self.ip_mac[dst_ip]]
+                src_mac = self.ip_mac[dst_ip]
+                dst_mac = self.port_data[out_port].mac
+                self.__update_routing_tbl(out_port, src_mac, dst_mac, dst_ip)
+                #send suspend packets
+                self._send_suspended_packets(dst_ip)
+
             return route.route_id
 
     def _set_mirroring_data(self, destination, gateway,source=DEFAULT_ROUTE):
@@ -1057,6 +1069,9 @@ class VlanRouter(object):
             route_id = VlanRouter._cookie_to_id(REST_ROUTEID,
                                                 flow_stats.cookie)
             self.routing_tbl.delete(route_id)
+            #note yjyao
+            self.packet_buffer.delete_route_data(route_id)
+            #---------
             if route_id not in delete_ids:
                 delete_ids.append(route_id)
 
@@ -1149,8 +1164,8 @@ class VlanRouter(object):
 
         # Analyze event type.
         #DEBUG
-        self.logger.debug("Router packet_in_handler")
-        print header_list
+        #self.logger.debug("Router packet_in_handler")
+        #print header_list
         ##DEBUG
         if ARP in header_list:
             self._packetin_arp(msg, header_list)
@@ -1177,6 +1192,25 @@ class VlanRouter(object):
         if src_addr is None:
             return
 
+        in_port = self.ofctl.get_packetin_inport(msg)
+        src_ip = header_list[ARP].src_ip
+        dst_ip = header_list[ARP].dst_ip
+        dst_mac = header_list[ARP].src_mac
+        srcip = ip_addr_ntoa(src_ip)
+        dstip = ip_addr_ntoa(dst_ip)
+
+        # arp packet via the other link than the first learned one.
+        if (src_ip in self.ip_mac and self.ip_mac[src_ip] != dst_mac)\
+            or (dst_mac in self.mac_ip and self.mac_ip[dst_mac] != src_ip):
+            log_msg = 'DROP: Receive ARP from [%s] [%s] to router port [%s] [%s].'
+            self.logger.info(log_msg, srcip, dst_mac, dstip, header_list[ARP].dst_mac,
+                extra=self.sw_id)
+            return
+        else:
+            log_msg = 'Accept: Receive ARP from [%s] [%s] to router port [%s] [%s].'
+            self.logger.info(log_msg, srcip, dst_mac, dstip, header_list[ARP].dst_mac,
+                extra=self.sw_id)
+
         # case: Receive ARP from the gateway
         #  Update routing table.
         # case: Receive ARP from an internal host
@@ -1187,74 +1221,86 @@ class VlanRouter(object):
         #    self._learning_host_mac(msg, header_list)
 
         # ARP packet handling.
-        in_port = self.ofctl.get_packetin_inport(msg)
-        src_ip = header_list[ARP].src_ip
-        dst_ip = header_list[ARP].dst_ip
-        srcip = ip_addr_ntoa(src_ip)
-        dstip = ip_addr_ntoa(dst_ip)
         rt_ports = self.address_data.get_default_gw()
 
         if src_ip == dst_ip:
             # GARP -> packet forward (normal)
-            output = self.ofctl.dp.ofproto.OFPP_NORMAL
-            self.ofctl.send_packet_out(in_port, output, msg.data)
+            self.ip_mac[src_ip] = dst_mac
+            self.mac_ip[dst_mac] = src_ip
+            self.mac_port[dst_mac] = in_port
+            self.logger.info('Receive GARP from [%s] [%s].', srcip, in_port,
+                extra=self.sw_id)
 
-            self.logger.info('Receive GARP from [%s].', srcip,
-                             extra=self.sw_id)
-            self.logger.info('Send GARP (normal).', extra=self.sw_id)
-
-        elif dst_ip not in rt_ports:
+        #elif dst_ip not in rt_ports:
+        if dst_ip not in rt_ports:
             dst_addr = self.address_data.get_data(ip=dst_ip)
             if (dst_addr is not None and
                     src_addr.address_id == dst_addr.address_id):
                 # ARP from internal host -> packet forward (normal)
-                output = self.ofctl.dp.ofproto.OFPP_NORMAL
-                self.ofctl.send_packet_out(in_port, output, msg.data)
+                src_mac = self.port_data[in_port].mac
+                src_ip = src_addr.default_gw
+                self.mac_ip[src_mac] = src_ip
+                self.mac_port[src_mac] = in_port
+                self.ip_mac[src_ip] = src_mac
+
+                arp_target_mac = mac_lib.DONTCARE_STR
+                inport = self.ofctl.dp.ofproto.OFPP_CONTROLLER
+                output = in_port
+                self.ofctl.send_arp(arp.ARP_REQUEST, self.vlan_id,
+                                    src_mac, dst_mac, src_ip, dst_ip,
+                                    arp_target_mac, inport, output)
 
                 self.logger.info('Receive ARP from an internal host [%s].',
                                  srcip, extra=self.sw_id)
-                self.logger.info('Send ARP (normal)', extra=self.sw_id)
+                self.logger.info('Send ARP Request Back', extra=self.sw_id)
         else:
+            #update ip_mac and mac_ip for arp request and arp replies
+            self.ip_mac[src_ip] = dst_mac
+            self.mac_ip[dst_mac] = src_ip
+            self.mac_port[dst_mac] = in_port
             if header_list[ARP].opcode == arp.ARP_REQUEST:
                 # ARP request to router port -> send ARP reply
                 src_mac = self.port_data[in_port].mac
-                dst_mac = header_list[ARP].src_mac
-                arp_target_mac = dst_mac
-                output = in_port
-                in_port = self.ofctl.dp.ofproto.OFPP_CONTROLLER
+                # Handle with two links between two routers
+                if dst_ip not in self.ip_mac or self.ip_mac[dst_ip] == src_mac:
+                    self.ip_mac[dst_ip] = src_mac
+                    self.mac_ip[src_mac] = dst_ip
+                    self.mac_port[src_mac] = in_port
+                    arp_target_mac = dst_mac
+                    output = in_port
+                    in_port = self.ofctl.dp.ofproto.OFPP_CONTROLLER
 
-                self.ofctl.send_arp(arp.ARP_REPLY, self.vlan_id,
-                                    src_mac, dst_mac, dst_ip, src_ip,
-                                    arp_target_mac, in_port, output)
+                    self.ofctl.send_arp(arp.ARP_REPLY, self.vlan_id,
+                                        src_mac, dst_mac, dst_ip, src_ip,
+                                        arp_target_mac, in_port, output)
 
-                log_msg = 'Receive ARP request from [%s] to router port [%s].'
-                self.logger.info(log_msg, srcip, dstip, extra=self.sw_id)
-                self.logger.info('Send ARP reply to [%s]', srcip,
-                                 extra=self.sw_id)
+                    log_msg = 'Receive ARP request from [%s] to router port [%s].'
+                    self.logger.info(log_msg, srcip, dstip, extra=self.sw_id)
+                    self.logger.info('Send ARP reply to [%s]', srcip,
+                                     extra=self.sw_id)
 
             elif header_list[ARP].opcode == arp.ARP_REPLY:
                 #  ARP reply to router port -> suspend packets forward
                 log_msg = 'Receive ARP reply from [%s] to router port [%s].'
                 self.logger.info(log_msg, srcip, dstip, extra=self.sw_id)
+                self._send_suspended_packets(src_ip)
 
-                packet_list = self.packet_buffer.get_data(src_ip)
-                #DEBUG:
-                print packet_list
-                print 'Receive ARP reply from [%s] to router port [%s].'.format(srcip,dstip)
-                ##DEBUG:
-                if packet_list:
-                    # stop ARP reply wait thread.
-                    for suspend_packet in packet_list:
-                        self.packet_buffer.delete(pkt=suspend_packet)
+    def _send_suspended_packets(self, dst_ip):
+        packet_list = self.packet_buffer.get_data(dst_ip)
+        if packet_list:
+            # stop ARP reply wait thread.
+            for suspend_packet in packet_list:
+                self.packet_buffer.delete(pkt=suspend_packet)
 
-                    # send suspend packet.
-                    output = self.ofctl.dp.ofproto.OFPP_TABLE
-                    for suspend_packet in packet_list:
-                        self.ofctl.send_packet_out(suspend_packet.in_port,
-                                                   output,
-                                                   suspend_packet.data)
-                        self.logger.info('Send suspend packet to [%s].',
-                                         srcip, extra=self.sw_id)
+            # send suspend packet.
+            output = self.ofctl.dp.ofproto.OFPP_TABLE
+            for suspend_packet in packet_list:
+                self.ofctl.send_packet_out(suspend_packet.in_port,
+                                           output,
+                                           suspend_packet.data)
+                self.logger.info('Send suspend packet to [%s].',
+                                 dst_ip, extra=self.sw_id)
+
 
     def _packetin_icmp_req(self, msg, header_list):
         # Send ICMP echo reply.
@@ -1300,12 +1346,17 @@ class VlanRouter(object):
         dstip = ip_addr_ntoa(dst_ip)
 
         address = self.address_data.get_data(ip=dst_ip)
-        if address is not None:
+        if address is not None and header_list[IPV4].src in address:
             log_msg = 'Receive IP packet from [%s] to an internal host [%s].'
             self.logger.info(log_msg, srcip, dstip, extra=self.sw_id)
             src_ip = address.default_gw
+
+            if src_ip is not None:
+                self.packet_buffer.add(in_port, header_list, msg.data)
+                self.send_arp_request(src_ip, dst_ip, in_port=in_port)
+                self.logger.info('packetin_to_node: Send ARP request (flood)', extra=self.sw_id)
         else:
-            route = self.routing_tbl.get_data(dst_ip=dst_ip)
+            route = self.routing_tbl.get_data(dst_ip=dst_ip, src_ip = header_list[IPV4].src)
             if route is not None:
                 log_msg = 'Receive IP packet from [%s] to [%s].'
                 self.logger.info(log_msg, srcip, dstip, extra=self.sw_id)
@@ -1313,11 +1364,36 @@ class VlanRouter(object):
                 if gw_address is not None:
                     src_ip = gw_address.default_gw
                     dst_ip = route.gateway_ip
+                if src_ip is not None:
+                    self.packet_buffer.add(in_port, header_list, msg.data)
+                    self.send_arp_request(src_ip, dst_ip, in_port=in_port)
+                    self.logger.info('packetin_to_node: Send ARP request (flood)', extra=self.sw_id)
+                # TODO do same for mirror
+            else:
+            #note: yjyao
+                data={}
+                data['src'] = srcip
+                data['dest'] = dstip
+                # avoid ddos attack
+                query = True
+                for suspend_packet in self.packet_buffer:
+                    if suspend_packet.src_ip == header_list[IPV4].src and \
+                        suspend_packet.dst_ip == dst_ip:
+                        query = False
+                        break
+                self.packet_buffer.add_route_packet(in_port, header_list, msg.data)
+                if query:
+                    try:
+                        self.logger.debug(data, extra = self.sw_id)
+                        self.logger.debug("sending request to sdx controller", extra = self.sw_id)
+                        req = urllib2.Request(get_sdx_url())
+                        req.add_header('Content-Type', 'application/json')
+                        response = urllib2.urlopen(req, json.dumps(data))
+                        self.logger.debug("sent request to sdx", extra = self.sw_id)
+                    except:
+                        self.logger.info("An exception when sending request to sdx {}\n src {} dst {}"
+                                        .format(get_sdx_url(), srcip, dstip), extra=self.sw_id)
 
-        if src_ip is not None:
-            self.packet_buffer.add(in_port, header_list, msg.data)
-            self.send_arp_request(src_ip, dst_ip, in_port=in_port)
-            self.logger.info('packetin_to_node: Send ARP request (flood)', extra=self.sw_id)
 
     def _packetin_invalid_ttl(self, msg, header_list):
         # Send ICMP TTL error.
@@ -1379,6 +1455,9 @@ class VlanRouter(object):
         dst_mac = self.port_data[out_port].mac
         src_ip = header_list[ARP].src_ip
 
+        return self.__update_routing_tbl(out_port, src_mac, dst_mac, src_ip)
+
+    def __update_routing_tbl(self, out_port, src_mac, dst_mac, src_ip):
         gateway_flg = False
         for key, value in self.routing_tbl.items():
             if value.gateway_ip == src_ip:
@@ -1622,7 +1701,7 @@ class RoutingTable(dict):
     def get_gateways(self):
         return [routing_data.gateway_ip for routing_data in self.values()]
 
-    def get_data(self, gw_mac=None, dst_ip=None):
+    def get_data(self, gw_mac=None, dst_ip=None, src_ip = None):
         if gw_mac is not None:
             for route in self.values():
                 if gw_mac == route.gateway_mac:
@@ -1631,13 +1710,20 @@ class RoutingTable(dict):
 
         elif dst_ip is not None:
             get_route = None
-            mask = 0
+            prio = 0
             for route in self.values():
-                if ipv4_apply_mask(dst_ip, route.netmask) == route.dst_ip:
+                if route.src_ip == 0 and \
+                    ipv4_apply_mask(dst_ip, route.netmask) == route.dst_ip:
                     # For longest match
-                    if mask < route.netmask:
+                    if prio < get_priority(PRIORITY_TYPE_ROUTE, 0, route):
                         get_route = route
-                        mask = route.netmask
+                        prio = get_priority(PRIORITY_TYPE_ROUTE, 0, route)
+                elif route.src_ip != 0 and src_ip is not None and \
+                    ipv4_apply_mask(dst_ip, route.netmask) == route.dst_ip and \
+                    ipv4_apply_mask(src_ip, route.src_netmask) == route.src_ip:
+                    if prio < get_priority(PRIORITY_TYPE_ROUTE, 0, route):
+                        get_route = route
+                        prio = get_priority(PRIORITY_TYPE_ROUTE, 0, route)
 
             if get_route is None:
                 get_route = self.get(DEFAULT_ROUTE, None)
@@ -1662,10 +1748,25 @@ class SuspendPacketList(list):
     def __init__(self, timeout_function):
         super(SuspendPacketList, self).__init__()
         self.timeout_function = timeout_function
+        self.routes = []
+
+    def add_route_data(self, route):
+        self.routes.append(route)
+        self.routes = sorted(self.routes, key=lambda route: - get_priority(PRIORITY_TYPE_ROUTE, 0, route)[0])
+
+    def delete_route_data(self, route_id):
+        for route in self.routes:
+            if route.route_id == route_id:
+                self.routes.remove(route)
 
     def add(self, in_port, header_list, data):
         suspend_pkt = SuspendPacket(in_port, header_list, data,
                                     self.wait_arp_reply_timer)
+        self.append(suspend_pkt)
+
+    def add_route_packet(self, in_port, header_list, data):
+        suspend_pkt = SuspendPacket(in_port, header_list, data,
+                                    self.wait_route_reply_timer)
         self.append(suspend_pkt)
 
     def delete(self, pkt=None, del_addr=None):
@@ -1681,14 +1782,28 @@ class SuspendPacketList(list):
             pkt.wait_thread.wait()
 
     def get_data(self, dst_ip):
-        #DEBUG
+        res = []
         for pkt in self:
-          print pkt.header_list
-        return [pkt for pkt in self if pkt.dst_ip == dst_ip]
-        ##DEBUG
+            if pkt.dst_ip == dst_ip:
+                res.append(pkt)
+            else:
+                for route in self.routes:
+                    #if match
+                    if match_route_packet(route, pkt):
+                        if dst_ip == route.gateway_ip:
+                            res.append(pkt)
+                        else:
+                            break
+        return res
 
     def wait_arp_reply_timer(self, suspend_pkt):
         hub.sleep(ARP_REPLY_TIMER)
+        if suspend_pkt in self:
+            self.timeout_function(suspend_pkt)
+            self.delete(pkt=suspend_pkt)
+
+    def wait_route_reply_timer(self, suspend_pkt):
+        hub.sleep(ROUTE_REPLY_TIMER)
         if suspend_pkt in self:
             self.timeout_function(suspend_pkt)
             self.delete(pkt=suspend_pkt)
@@ -1699,6 +1814,7 @@ class SuspendPacket(object):
         super(SuspendPacket, self).__init__()
         self.in_port = in_port
         self.dst_ip = header_list[IPV4].dst
+        self.src_ip = header_list[IPV4].src
         self.header_list = header_list
         self.data = data
         # Start ARP reply wait timer.
@@ -1854,7 +1970,7 @@ class OfCtl(object):
         # self.logger.debug('Packet out = %s', data_str, extra=self.sw_id)
 
     def set_default_mirroring_flow(self, cookie, priority):
-        print "set default mirroring flow"
+        #print "set default mirroring flow"
         ofp = self.dp.ofproto
         ofp_parser = self.dp.ofproto_parser
         table_id=ROUTING_TABLE_ID
@@ -1872,7 +1988,7 @@ class OfCtl(object):
         out_port = self.dp.ofproto.OFPP_NORMAL
         actions = [self.dp.ofproto_parser.OFPActionOutput(out_port, 0)]
         #DEBUG
-        print "set_normal_flow actiosn",actions
+        #print "set_normal_flow actios",actions
         ##DEBUG
         self.set_flow(cookie, priority, actions=actions)
 
@@ -2113,7 +2229,7 @@ class OfCtl_after_v1_2(OfCtl):
                       idle_timeout=idle_timeout, actions=actions,table_id=MIRROR_TABLE_ID,insts=inst)
 
     def delete_flow(self, flow_stats):
-	print "delete flow"
+	#print "delete flow"
         ofp = self.dp.ofproto
         ofp_parser = self.dp.ofproto_parser
 
@@ -2251,3 +2367,9 @@ def nw_addr_aton(nw_addr, err_msg=None):
         raise ValueError(msg)
     nw_addr = ipv4_apply_mask(default_route, netmask, err_msg)
     return nw_addr, netmask, default_route
+
+def match_route_packet(route, pkt):
+    if route.src_ip == ipv4_apply_mask(pkt.src_ip, route.src_netmask) and\
+            route.dst_ip == ipv4_apply_mask(pkt.dst_ip, route.netmask):
+        return True
+    return False

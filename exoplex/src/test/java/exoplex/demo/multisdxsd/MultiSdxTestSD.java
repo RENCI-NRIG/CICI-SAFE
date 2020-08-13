@@ -9,6 +9,8 @@ import exoplex.demo.AbstractTestSlice;
 import exoplex.experiment.ExperimentBase;
 import exoplex.sdx.core.CoreProperties;
 import exoplex.sdx.core.SdxManagerBase;
+import exoplex.sdx.network.AbstractRoutingManager;
+import exoplex.sdx.network.RoutingManagerMock;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -26,6 +28,7 @@ import static safe.SdxRoutingSlang.postASTagAclEntry;
 public class MultiSdxTestSD extends AbstractTest {
   final static Logger logger = LogManager.getLogger(MultiSdxTestSD.class);
   final static AbstractModule module = new MultiSdxCnertModule();
+  //final static AbstractModule module = new MultiSdxCnertMockModule();
   //final static AbstractModule module = new MultiSdxTridentcomModule();
   //final static AbstractModule module = new MultiSdxSDLargeModule();
   //final static AbstractModule module = new MultiSdxSDModule();
@@ -61,9 +64,9 @@ public class MultiSdxTestSD extends AbstractTest {
   public void before() throws Exception {
     deleteSliceAfterTest = true;
     initTests();
-    Authority.authorizationMade = true;
+    Authority.authorizationMade = false;
     //deleteSlices();
-    //super.before();
+    super.before();
   }
 
   @After
@@ -75,6 +78,10 @@ public class MultiSdxTestSD extends AbstractTest {
   @Test
   public void testMultiSdxSD() throws Exception {
     startSdxServersAndClients(reset);
+    if(!(injector.getInstance(AbstractRoutingManager.class)
+      instanceof RoutingManagerMock)) {
+      sleep(120);
+    }
     //stitch sdx slices
     Long t0 = System.currentTimeMillis();
 
@@ -97,7 +104,6 @@ public class MultiSdxTestSD extends AbstractTest {
     //connectCustomerNetwork();
     Long t3 = System.currentTimeMillis();
 
-
     logger.info("Start checking connections");
     checkConnection(3);
     Long t4 = System.currentTimeMillis();
@@ -114,15 +120,14 @@ public class MultiSdxTestSD extends AbstractTest {
 
   @Test
   /**
-   * Cnert 2019 demo
+   * CNERT 2020 demo
    */
   public void testMultiSdxWithEvents() {
     startSdxServersAndClients(reset);
-    try{
-      if(!(module instanceof MultiSdxCnertMockModule)) {
-        Thread.sleep(120000);
-      }
-    }catch (Exception e){}
+    if(!(injector.getInstance(AbstractRoutingManager.class)
+      instanceof RoutingManagerMock)) {
+      sleep(120);
+    }
     //stitch sdx slices
     Long t0 = System.currentTimeMillis();
 

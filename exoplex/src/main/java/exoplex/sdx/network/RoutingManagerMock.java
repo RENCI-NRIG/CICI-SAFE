@@ -73,7 +73,7 @@ public class RoutingManagerMock extends AbstractRoutingManager {
   /**
    * Forward matched packets to controller
    */
-  public void monitorOnAllRouter(String dstIP, String srcIP) {}
+  public void monitorOnAllRouter(String dstIP, String srcIP, int tableId) {}
 
   /**
    * configure path for destIP in the network.
@@ -126,23 +126,22 @@ public class RoutingManagerMock extends AbstractRoutingManager {
   public void removePath(String dstIP, String srcIP) {
   }
 
-  public void retriveRouteOfPrefix(String prefix, String sdnController) {
+  public void retriveRouteOfPrefix(String prefix) {
   }
 
-  public String setMirror(String controller, String dpid, String source, String dst, String gw) {
+  public String setMirror(String dpid, String source, String dst, String gw) {
     return null;
   }
 
-  public String delMirror(String controller, String dpid, String source, String dst) {
+  public String delMirror(String dpid, String source, String dst) {
     return null;
   }
 
-  public String singleStepRouting(String dest, String gateway, String dpid, String controller) {
+  public String singleStepRouting(String dest, String gateway, String dpid) {
     return null;
   }
 
-  public String singleStepRouting(String dest, String src, String gateway, String dpid,
-                                  String controller) {
+  public String singleStepRouting(String dest, String src, String gateway, String dpid) {
     return null;
   }
 
@@ -160,7 +159,7 @@ public class RoutingManagerMock extends AbstractRoutingManager {
 
   //==========SEPERATOR===================//
 
-  public void setOvsdbAddr(String controller) {
+  public void setOvsdbAddr() {
   }
 
   synchronized public void updateInterfaceMac(String node, String link,
@@ -176,17 +175,17 @@ public class RoutingManagerMock extends AbstractRoutingManager {
     }
   }
 
-  synchronized public void updatePortMac(String controller, String dpid) {
+  synchronized public void updatePortMac(String dpid) {
   }
 
-  public void updateAllPorts(String controller) {
+  public void updateAllPorts() {
   }
 
   public boolean waitTillAllOvsConnected(String controller, boolean mocked) {
     return true;
   }
 
-  public int getPortCount(String controller, String nodeName) {
+  public int getPortCount(String nodeName) {
     return 0;
   }
 
@@ -199,10 +198,10 @@ public class RoutingManagerMock extends AbstractRoutingManager {
     return true;
   }
 
-  public void setQos(String controller, String dpid, String srcip, String destip, String bw) {
+  public void setQos(String dpid, String srcip, String destip, String bw) {
   }
 
-  public void setQos(String controller, String dpid, String srcip, String destip, long bw) {
+  public void setQos(String dpid, String srcip, String destip, long bw) {
   }
 
   public void replayCmds(String dpid) {

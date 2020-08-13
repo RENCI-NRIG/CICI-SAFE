@@ -278,7 +278,8 @@ public class ExoSliceManager extends SliceManager {
   }
 
   public String addComputeNode(String site, String name, String type) {
-    logger.debug(String.format("Adding new compute node %s to slice %s", name, sliceName));
+    logger.debug(String.format("Adding new %s node %s to slice %s on %s", type,
+      name, sliceName, site));
     if (slice == null) {
       createSlice();
     }
@@ -856,22 +857,27 @@ public class ExoSliceManager extends SliceManager {
     }
   }
 
-  synchronized public void expectOneMoreInterface(String nodeName) {
+  synchronized public void expectOneInterfaceDiff(String nodeName,
+                                                  boolean add) {
     AtomicInteger num = expectInterfaceNumMap.computeIfAbsent(nodeName, k -> new AtomicInteger());
     if(num.get() == 0) {
       num.set(getPhysicalInterfaces(nodeName).size());
-      logger.debug(String.format("%s %s Number of dataplane interfaces before " +
-        "stitching: %s", sliceName, nodeName, num.get()));
+      logger.debug(String.format("%s %s Number of dataplane interfaces " +
+        "before:%s", sliceName, nodeName, num.get()));
     }
-    num.incrementAndGet();
+    if(add) {
+      num.incrementAndGet();
+    } else {
+      num.decrementAndGet();
+    }
   }
 
-  synchronized public void waitForNewInterfaces(String nodeName) {
-    while(getPhysicalInterfaces(nodeName).size() < expectInterfaceNumMap.get(nodeName).get()) {
+  synchronized public void waitForInterfaces(String nodeName) {
+    while(getPhysicalInterfaces(nodeName).size() != expectInterfaceNumMap.get(nodeName).get()) {
       sleep(5);
     }
-    logger.debug(String.format("%s %s Number of dataplane interfaces after " +
-      "stitching: %s", sliceName, nodeName, expectInterfaceNumMap.get(nodeName).get()));
+    logger.debug(String.format("%s %s Number of dataplane interfaces after: " +
+      "%s", sliceName, nodeName, expectInterfaceNumMap.get(nodeName).get()));
     expectInterfaceNumMap.get(nodeName).set(0);
   }
 
@@ -884,9 +890,9 @@ public class ExoSliceManager extends SliceManager {
     String[] ifaces = res.split("\n");
     ArrayList<ImmutablePair<String, String>> interfaces = new ArrayList<>();
     for (String s : ifaces) {
-      String ss = s.replaceAll("\\s*", " ").replace("\n", "");
+      String ss = s.replaceAll("\\s+", " ").replace("\n", "");
       if (ss.length() > 1) {
-        String[] parts = ss.split("\\s*");
+        String[] parts = ss.split(" ");
         interfaces.add(new ImmutablePair<>(parts[0], parts[1]));
       }
     }
@@ -1049,6 +1055,7 @@ public class ExoSliceManager extends SliceManager {
 
   public void addDocker(String siteName, String nodeName, String script,
                                      String type) {
+    logger.info(String.format("Add docker node %s on %s", nodeName, siteName));
     NodeBaseInfo ninfo = NodeBase.getImageInfo(SliceProperties.DockerVersion);
     String dockerImageShortName = ninfo.imageName;
     String dockerImageURL = ninfo.imageUrl;
@@ -1072,7 +1079,8 @@ public class ExoSliceManager extends SliceManager {
   public void addSafeServer(String siteName, String riakIp,
                                          String safeDockerImage, String
                                            safeServerScript) {
-    addDocker(siteName, "safe-server", Scripts.getSafeScript_v1(riakIp, safeDockerImage,
+    addDocker(siteName, SliceProperties.SAFESERVER, Scripts.getSafeScript_v1(riakIp,
+      safeDockerImage,
       safeServerScript), NodeBase.xoLarge);
   }
 

@@ -10,7 +10,7 @@ Run SDN controller,
 
 Or run SDN controller in docker
 
-        PLEXUSIMG="yaoyj11/plexus-v3"
+        PLEXUSIMG="yaoyj11/plexus-v4"
         sudo docker pull ${PLEXUSIMG}
         sudo docker run -i -t -d -p 8080:8080 -p 6653:6653 -p 3000:3000 -h plexus --name plexus ${PLEXUSIMG}
         sudo docker exec -itd plexus /bin/bash -c  "cd /root;pkill ryu-manager; ryu-manager --ofp-tcp-listen-port 6653 --log-file ~/ryu.log --default-log-level 1 ryu/ryu/app/rest_conf_switch.py ryu/ryu/app/vfc_router.py ryu/ryu/app/ofctl_rest.py"
@@ -102,7 +102,7 @@ Generate ssh key (the default key pair created by ssh-keygen command  without op
 Set the version and safe docker image, plexus sdn controller docker image and safe server script as environment variable. Set the public ip addresses of riak server and SDX controller. Run this in all nodes.
 
         SAFEIMG="yaoyj11/safeserver-v8"
-        PLEXUSIMG="yaoyj11/plexus-v3"
+        PLEXUSIMG="yaoyj11/plexus-v4"
         SAFE_SCRIPT="sdx-routing.sh"
         riak_ip="128.194.6.235"
         sdx_ip="128.194.6.161"
@@ -126,7 +126,7 @@ For security, plexus controller and safe server should only listen on localhost 
 
         sudo docker pull ${SAFEIMG}
         sudo docker run -i -t -d -p 7777:7777 -h safe --name safe ${SAFEIMG}
-        sudo docker exec -itd safe /bin/bash -c  "cd /root/safe;sed -i 's/RIAKSERVER/$riak_ip/g' safe-server/src/main/resources/application.conf;./${SAFE_SCRIPT}"
+        sudo docker exec -itd safe /bin/bash -c  "cd /root/safe;sed -i 's/http:\/\/.*:8098/http:\/\/${riak_ip}:8098/g' safe-server/src/main/resources/application.conf;./${SAFE_SCRIPT}"
 
 ###  b) deploy SDN controller
 The SDN controller of the switch on the VFC is fixed. 
@@ -175,7 +175,7 @@ Authorities makes delegations to the client Key
 
         sudo docker pull yaoyj11/safeserver-v7
         sudo docker run -i -t -d -p 7777:7777 -h safe --name safe ${SAFEIMG}
-        sudo docker exec -itd safe /bin/bash -c  "cd /root/safe;sed -i 's/RIAKSERVER/$riak_ip/g' safe-server/src/main/resources/application.conf;./${SAFE_SCRIPT}"
+        sudo docker exec -itd safe /bin/bash -c  "cd /root/safe;sed -i 's/http:\/\/.*:8098/http:\/\/${riak_ip}:8098/g' safe-server/src/main/resources/application.conf;./${SAFE_SCRIPT}"
 
 ## 2. make delegations to a client: client slice authorization, ip allocation, tag delegation
 
@@ -195,7 +195,7 @@ Authorities makes delegations to the client Key
 
         sudo docker pull yaoyj11/safeserver-v7
         sudo docker run -i -t -d -p 7777:7777 -h safe --name safe ${SAFEIMG}
-        sudo docker exec -itd safe /bin/bash -c  "cd /root/safe;sed -i 's/RIAKSERVER/$riak_ip/g' safe-server/src/main/resources/application.conf;./${SAFE_SCRIPT}"
+        sudo docker exec -itd safe /bin/bash -c  "cd /root/safe;sed -i 's/http:\/\/.*:8098/http:\/\/${riak_ip}:8098/g' safe-server/src/main/resources/application.conf;./${SAFE_SCRIPT}"
 
 ## 3. generate safe key-pair for client
 

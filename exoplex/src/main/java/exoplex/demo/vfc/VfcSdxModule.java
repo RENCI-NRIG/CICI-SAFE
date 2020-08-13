@@ -8,6 +8,8 @@ import exoplex.sdx.core.SdxManagerBase;
 import exoplex.sdx.core.SdxServerBase;
 import exoplex.sdx.core.vfc.VfcSdxManager;
 import exoplex.sdx.core.vfc.VfcSdxServer;
+import exoplex.sdx.network.AbstractRoutingManager;
+import exoplex.sdx.network.RoutingManager;
 import exoplex.sdx.slice.SliceManagerFactory;
 import exoplex.sdx.slice.vfc.VfcSliceManager;
 import safe.Authority;
@@ -21,6 +23,7 @@ public class VfcSdxModule extends AbstractModule {
     bind(AbstractTestSetting.class).to(VfcSdxSetting.class);
     bind(AbstractTestSlice.class).to(VfcSdxSlice.class);
     bind(SdxServerBase.class).to(VfcSdxServer.class);
+    bind(AbstractRoutingManager.class).to(RoutingManager.class);
     bind(SdxManagerBase.class).to(VfcSdxManager.class);
     bind(SliceManagerFactory.class).toProvider(FactoryProvider.newFactory(SliceManagerFactory
       .class, VfcSliceManager.class));

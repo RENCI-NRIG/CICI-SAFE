@@ -54,7 +54,8 @@ public class ExoRestService extends RestServiceBase {
   public StitchResult stitchRequest(@Context UriInfo uriInfo, StitchRequest sr) {
     StitchResult result = null;
     SdxManagerBase exoSdxManager = sdxManagerMap.get(uriInfo.getBaseUri().getPort());
-    logger.debug(String.format("%s got sittch request %s", exoSdxManager.getSliceName(), sr));
+    logger.debug(String.format("%s got stitch request %s",
+      exoSdxManager.getSliceName(), sr));
     try {
       JSONObject res = exoSdxManager.stitchRequest(sr.sdxsite, sr.ckeyhash, sr.cslice,
         sr.creservid, sr.secret, sr.sdxnode, sr.gateway, sr.ip);

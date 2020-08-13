@@ -130,9 +130,9 @@ public abstract class SliceManager {
 
   abstract public void addLink(String linkName, String nodeName, long bw);
 
-  abstract public void expectOneMoreInterface(String node);
+  abstract public void expectOneInterfaceDiff(String node, boolean add);
 
-  abstract public void waitForNewInterfaces(String node);
+  abstract public void waitForInterfaces(String node);
 
   abstract public void removeLink(String linkName);
 

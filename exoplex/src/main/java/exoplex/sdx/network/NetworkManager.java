@@ -93,7 +93,7 @@ public class NetworkManager {
   public String getPairRouter(String ip) {
     Interface intf = ipInterfaceMap.get(ip);
     if (intf != null) {
-      return linkMap.get(intf.getLinkName()).getPairNodeame(intf.getNodeName());
+      return linkMap.get(intf.getLinkName()).getPairNodeName(intf.getNodeName());
     }
     return null;
   }

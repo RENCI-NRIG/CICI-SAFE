@@ -81,11 +81,11 @@ public class SliceManagerMock extends SliceManager implements Serializable {
     return sliceProxy;
   }
 
-  public void expectOneMoreInterface(String node){
+  public void expectOneInterfaceDiff(String node, boolean add){
 
   }
 
-  public void waitForNewInterfaces(String node){}
+  public void waitForInterfaces(String node){}
 
   public void writeToFile(String fileName) {
     File f = new File(fileName);
@@ -680,7 +680,9 @@ public class SliceManagerMock extends SliceManager implements Serializable {
 
   public void addSafeServer(String siteName, String riakIp, String safeDockerImage, String
     safeServerScript) {
-    addDocker(siteName, "safe-server", Scripts.getSafeScript_v1(riakIp, safeDockerImage,
+    addDocker(siteName, SliceProperties.SAFESERVER,
+      Scripts.getSafeScript_v1(riakIp,
+      safeDockerImage,
       safeServerScript), NodeBase.xoMedium);
   }
 

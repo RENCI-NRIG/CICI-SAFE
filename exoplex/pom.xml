@@ -19,7 +19,7 @@
         <dockerfile-maven-version>1.4.10</dockerfile-maven-version>
         <docker.image.prefix>rencinrig</docker.image.prefix>
         <docker.image.name.sdx>sdxserver</docker.image.name.sdx>
-        <docker.image.label>latest</docker.image.label>
+        <docker.image.label>1.0.0</docker.image.label>
         <docker.image.name.sdx.sdxSlice>sdxserverslice</docker.image.name.sdx.sdxSlice>
     </properties>
 
@@ -271,12 +271,12 @@
         <dependency>
             <groupId>org.apache.logging.log4j</groupId>
             <artifactId>log4j-api</artifactId>
-            <version>2.11.0</version>
+            <version>2.13.2</version>
         </dependency>
         <dependency>
             <groupId>org.apache.logging.log4j</groupId>
             <artifactId>log4j-core</artifactId>
-            <version>2.11.0</version>
+            <version>2.13.2</version>
         </dependency>
         <dependency>
             <groupId>commons-net</groupId>

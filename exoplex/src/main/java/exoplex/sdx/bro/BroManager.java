@@ -104,8 +104,8 @@ public class BroManager {
           String dpid = exoSdxManager.getDPID(f.routerName);
           String gw = bro.getIP();
           bro.addBroFlow(f);
-          String res = networkManager.setMirror(exoSdxManager.getSDNController(), dpid, f.src, f.dst, gw);
-          res += networkManager.setMirror(exoSdxManager.getSDNController(), dpid, f.dst, f.src, gw);
+          String res = networkManager.setMirror(dpid, f.src, f.dst, gw);
+          res += networkManager.setMirror(dpid, f.dst, f.src, gw);
           logger.info("Excuting job: " + f.src + " " + f.dst + " " + f.bw + ": \n" + res);
           toRemove.add(f);
         }
