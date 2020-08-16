@@ -127,69 +127,6 @@ public class AdvertiseManager {
     return newPair;
   }
 
-
-
-  //TODO: The logic is about the same as receiveStAdvertise, consider mering
-  /**
-   * When receiving a route advertisement, two possible actions:
-   * 1. install routing flows with both source and destination specified
-   * 2. install destination only routing flows.
-   * But we only propagate is once.
-   * @param routeAdvertise
-   * @return
-   */
-  /*
-  public ImmutablePair<List<RouteAdvertise>, List<RouteAdvertise>>
-    receiveAdvertise(RouteAdvertise routeAdvertise) {
-    ImmutablePair<List<RouteAdvertise>, List<RouteAdvertise>> ret =
-      new ImmutablePair<>(new ArrayList<>(), new ArrayList<>());
-    List<RouteAdvertise> configRoutes = ret.getLeft();
-    List<RouteAdvertise> propagateRoutes = ret.getRight();
-    Rectangle key = PrefixUtil.prefixPairToRectangle(routeAdvertise.destPrefix, DEFAULT_PREFIX);
-    routeIndex.insert(key);
-    addToBgpTable(key, routeAdvertise);
-    ArrayList<Rectangle> matchedKeys = new ArrayList<>(policyIndex.query(key));
-    if (matchedKeys.size() > 0) {
-      Collections.sort(matchedKeys, new Comparator<Rectangle>() {
-        @Override
-        public int compare(Rectangle o1, Rectangle o2) {
-          return (int) (o1.getArea() - o2.getArea());
-        }
-      });
-      //TODO more complex strategy for route policy matching
-      for (Rectangle matchedKey : matchedKeys) {
-        PolicyAdvertise policyAdvertise = policyTable.get(matchedKey);
-        if(isCompliant(policyAdvertise, routeAdvertise)) {
-          Rectangle newKey = key.intersect(matchedKey);
-          RouteAdvertise advertised = chosenRoutes.get(newKey);
-          if (advertised == null
-            || advertised.length() > routeAdvertise.length()) {
-            chosenRoutes.put(newKey, routeAdvertise);
-            RouteAdvertise newAdvertise = new RouteAdvertise(routeAdvertise);
-            newAdvertise.srcPrefix = policyAdvertise.srcPrefix;
-            configRoutes.add(newAdvertise);
-            if(!advertisedRoutes.contains(routeAdvertise)) {
-              propagateRoutes.add(routeAdvertise);
-              advertisedRoutes.add(routeAdvertise);
-            }
-          }
-        }
-      }
-    }
-
-    if (!chosenRoutes.containsKey(key)
-        || chosenRoutes.get(key).length() > routeAdvertise.length()) {
-      chosenRoutes.put(key, routeAdvertise);
-      configRoutes.add(routeAdvertise);
-      if(!advertisedRoutes.contains(routeAdvertise)) {
-        propagateRoutes.add(routeAdvertise);
-        advertisedRoutes.add(routeAdvertise);
-      }
-    }
-    return ret;
-  }
-   */
-
   public ImmutablePair<List<ForwardInfo>, RouteAdvertise> receiveAdvertise(RouteAdvertise routeAdvertise) {
     String destPrefix = routeAdvertise.destPrefix;
     String srcPrefix = routeAdvertise.srcPrefix == null? DEFAULT_PREFIX:
