@@ -521,8 +521,8 @@ class Router(dict):
         ingress_cookie = COOKIE_DEFAULT_ID + INGRESS_COOKIE_OFFSET
 
         #DEBUG: set default mirroring flow NOTE yjyao
-        ofctl.set_default_ingress_flow(ingress_cookie,DEFAULT_FLOW_PRIORITY)
-        ofctl.set_default_mirroring_flow(mirror_cookie,DEFAULT_FLOW_PRIORITY)
+        ofctl.set_default_ingress_flow(ingress_cookie, DEFAULT_FLOW_PRIORITY)
+        ofctl.set_default_mirroring_flow(mirror_cookie, DEFAULT_FLOW_PRIORITY)
 
         # Set SW config: TTL error packet in (for OFPv1.2/1.3)
         ofctl.set_sw_config_for_ttl()
@@ -1923,6 +1923,9 @@ class OfCtl(object):
         #     data_str = str(packet.Packet(data))
         # self.logger.debug('Packet out = %s', data_str, extra=self.sw_id)
 
+    '''
+    Default flow to drop all packets.
+    '''
     def set_default_ingress_flow(self, cookie, priority):
         self.logger.info("set default ingress flow", extra = self.sw_id)
         ofp = self.dp.ofproto
