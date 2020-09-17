@@ -18,3 +18,11 @@ Use multiple tables for different functions:
 ### Customized rest_router for Corsa VFC: vfc_router.py
 
 Synthesize MAC addresses for VFC ports.
+
+### Customized rest_router for ingress filtering: ingress_router.py
+
+Ingress filtering on external ports. 
+
+1. Table 0: Acceptlisted ingress filtering rules.
+2. Table 1: routing rules
+
