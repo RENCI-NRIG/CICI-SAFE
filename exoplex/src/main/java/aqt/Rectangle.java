@@ -122,7 +122,7 @@ public class Rectangle extends Object {
 
   @Override
   public String toString() {
-    return String.format("(%s, %s),(%s, %s)", this.getX(),
+    return String.format("[%s, %s),[%s, %s)", this.getX(),
       this.getX() + this.getW(), this.getY(), this.getY() + this.getH());
   }
 }

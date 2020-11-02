@@ -10,7 +10,7 @@ import java.util.List;
 public class PrefixTree {
   static final Logger logger = LogManager.getLogger(PrefixTree.class);
 
-  static final int MAX_NUM = 8;
+  static final int MAX_NUM = 0;
   final HashSet<Range> cachedObjects;
   //Prefix range of the node
   Range range;
