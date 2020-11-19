@@ -33,13 +33,13 @@ public abstract class AbstractTestSetting {
   public HashMap<String, List<String>> clientTags = new HashMap<>();
   public ArrayList<Integer[]> clientConnectionPairs = new ArrayList<>();
   public String userDir = System.getProperty("user.dir");
-  public String sdxSimpleDir = userDir.split("exoplex")[0] + "exoplex/";
+  public String exoplexDir = userDir.split("exoplex")[0] + "exoplex/";
   public String[] clientArgs;
   public String dockerImage = "safeserver-v8";
   public String safeServerScript = "sdx-routing.sh";
   public boolean explicitConnectionRequest = true;
-  public boolean safeEnabled = false;
-  String[] riakArgs = new String[]{"-c", sdxSimpleDir + "config/riak.conf"};
+  public boolean safeEnabled = true;
+  public String[] riakArgs = new String[]{"-c", exoplexDir + "config/riak.conf"};
 
   public AbstractTestSetting() {
   }

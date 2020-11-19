@@ -31,10 +31,10 @@ vsis=$(sudo ovs-vsctl show|grep -E "Port.*(eth|ens)" |sed 's/Port.*"\(.*\)".*/\1
 
 newport=0
 while read -r line; do
+  sudo ifconfig $line up
   if [[ $brinterfaces == *"$line"* ]]; then
   :
   else
-    sudo ifconfig $line up
     sudo ifconfig $line 0
     if [[ $vsinterfaces == *"$line"* ]]; then
         sudo ovs-vsctl del-port br0 $line

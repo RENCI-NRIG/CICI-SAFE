@@ -6,7 +6,7 @@ import org.apache.commons.lang3.tuple.ImmutablePair;
 import java.util.Arrays;
 
 public class MultiSdxSDLargeSetting extends AbstractTestSetting {
-  public String sdxConfigDir = sdxSimpleDir + "config/multisdx/";
+  public String sdxConfigDir = exoplexDir + "config/multisdx/";
 
   public MultiSdxSDLargeSetting() {
     setting();
@@ -15,7 +15,7 @@ public class MultiSdxSDLargeSetting extends AbstractTestSetting {
   public void setting() {
     numSdx = 6;
     sliceNameSuffix = "tri";
-    clientArgs = new String[]{"-c", sdxSimpleDir +
+    clientArgs = new String[]{"-c", exoplexDir +
       "client-config/multisdx/client" + ".conf"};
 
     addSdxNeighbors();

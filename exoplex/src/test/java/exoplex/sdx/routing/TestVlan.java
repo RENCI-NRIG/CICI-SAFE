@@ -2,8 +2,7 @@ package exoplex.sdx.routing;
 
 import exoplex.common.utils.ServerOptions;
 import exoplex.sdx.core.CoreProperties;
-import exoplex.sdx.core.SdxManager;
-import exoplex.sdx.network.RoutingManager;
+import exoplex.sdx.core.exogeni.ExoSdxManager;
 import exoplex.sdx.slice.Scripts;
 import exoplex.sdx.slice.SliceManager;
 import exoplex.sdx.slice.exogeni.SiteBase;
@@ -18,7 +17,7 @@ import org.junit.Test;
 import java.lang.reflect.Method;
 
 @Ignore
-public class TestVlan extends SdxManager {
+public class TestVlan extends ExoSdxManager {
   static Logger logger = LogManager.getLogger(TestVlan.class);
   static String site = SiteBase.get("TAMU");
   static String userDir = System.getProperty("user.dir");
@@ -27,7 +26,7 @@ public class TestVlan extends SdxManager {
   static TestVlan vlan;
 
   public TestVlan() {
-    super(null);
+    super(null, null);
   }
 
   @BeforeClass

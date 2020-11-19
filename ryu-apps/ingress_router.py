@@ -729,9 +729,9 @@ class VlanRouter(object):
             cookie = (rest_id << COOKIE_SHIFT_VLANID) + ROUTING_COOKIE_OFFSET
         elif id_type == REST_ADDRESSID:
             cookie = vid + rest_id + ROUTING_COOKIE_OFFSET
-	elif id_type == REST_MIRRORID:
+        elif id_type == REST_MIRRORID:
             cookie = vid + (rest_id << COOKIE_SHIFT_ROUTEID) + MIRROR_COOKIE_OFFSET
-	elif id_type == REST_INGRESSID:
+        elif id_type == REST_INGRESSID:
             cookie = vid + (rest_id << COOKIE_SHIFT_ROUTEID) + INGRESS_COOKIE_OFFSET
         else:
             assert id_type == REST_ROUTEID
@@ -840,7 +840,7 @@ class VlanRouter(object):
                                      dl_vlan=self.vlan_id,
                                      dst_ip=address.nw_addr,
                                      dst_mask=address.netmask,
-				     table_id=ROUTING_TABLE_ID)
+                                     table_id=ROUTING_TABLE_ID)
         log_msg = 'Set host MAC learning (packet in) flow [cookie=0x%x]'
         self.logger.info(log_msg, cookie, extra=self.sw_id)
 
@@ -850,7 +850,7 @@ class VlanRouter(object):
                                      dl_type=ether.ETH_TYPE_IP,
                                      dl_vlan=self.vlan_id,
                                      dst_ip=address.default_gw,
-				     table_id = ROUTING_TABLE_ID)
+                                     table_id = ROUTING_TABLE_ID)
         self.logger.info('Set IP handling (packet in) flow [cookie=0x%x]',
                          cookie, extra=self.sw_id)
 
@@ -956,7 +956,7 @@ class VlanRouter(object):
                                      ##DEBUG
                                      dst_ip=route.dst_ip,
                                      dst_mask=route.netmask,
-				     table_id = MIRROR_TABLE_ID)
+                                     table_id = MIRROR_TABLE_ID)
         self.logger.info('Set mirror %s (packet in) flow [cookie=0x%x]', log_msg,
                          cookie, extra=self.sw_id)
 
@@ -1748,7 +1748,7 @@ class SuspendPacketList(list):
                             res.append(pkt)
                         else:
                             break
-	return res
+        return res
 
     def wait_arp_reply_timer(self, suspend_pkt):
         hub.sleep(ARP_REPLY_TIMER)
@@ -1962,8 +1962,19 @@ class OfCtl(object):
         actions = [self.dp.ofproto_parser.OFPActionOutput(out_port, 0)]
         self.set_flow(cookie, priority, actions=actions)
 
-    def set_packetin_flow(self, cookie, priority, dl_type=0, dl_dst=0,
-                          dl_vlan=0,src_ip=0,src_mask=32, dst_ip=0, dst_mask=32, nw_proto=0, table_id = ROUTING_TABLE_ID):
+    def set_packetin_flow(
+            self,
+            cookie,
+            priority,
+            dl_type=0,
+            dl_dst=0,
+            dl_vlan=0,
+            src_ip=0,
+            src_mask=32,
+            dst_ip=0,
+            dst_mask=32,
+            nw_proto=0,
+            table_id = ROUTING_TABLE_ID):
         miss_send_len = UINT16_MAX
         actions = [self.dp.ofproto_parser.OFPActionOutput(
             self.dp.ofproto.OFPP_CONTROLLER, miss_send_len)]
@@ -2198,7 +2209,7 @@ class OfCtl_after_v1_2(OfCtl):
         cookie_mask = UINT64_MAX
         match = ofp_parser.OFPMatch()
         inst = []
-	table_id = flow_stats.table_id
+        table_id = flow_stats.table_id
 
         flow_mod = ofp_parser.OFPFlowMod(self.dp, cookie, cookie_mask, table_id, cmd,
                                          0, 0, 0, UINT32_MAX, ofp.OFPP_ANY,

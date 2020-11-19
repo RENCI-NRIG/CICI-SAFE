@@ -11,7 +11,7 @@ Generate ssh key (the default key pair created by ssh-keygen command  without op
 Set the version and safe docker image, plexus sdn controller docker image and safe server script as environment variable. Set the public ip addresses of riak server and SDX controller. Run this in all nodes.
 
         SAFEIMG="yaoyj11/safeserver-v8"
-        PLEXUSIMG="yaoyj11/plexus-v3"
+        PLEXUSIMG="yaoyj11/plexus-v4"
         SAFE_SCRIPT="sdx-routing.sh"
         riak_ip="IP address of VM1"
         sdx_ip="IP address of sdx"
@@ -37,7 +37,7 @@ For security, plexus controller and safe server should only listen on localhost 
 
         sudo docker pull ${SAFEIMG}
         sudo docker run -i -t -d -p 7777:7777 -h safe --name safe ${SAFEIMG}
-        sudo docker exec -itd safe /bin/bash -c  "cd /root/safe;sed -i 's/RIAKSERVER/$riak_ip/g' safe-server/src/main/resources/application.conf;./${SAFE_SCRIPT}"
+        sudo docker exec -itd safe /bin/bash -c  "cd /root/safe;sed -i 's/http:\/\/.*:8098/http:\/\/${riak_ip}:8098/g' safe-server/src/main/resources/application.conf;./${SAFE_SCRIPT}"
 
 ###  b) deploy SDN controller
 
@@ -64,7 +64,6 @@ For security, plexus controller and safe server should only listen on localhost 
         echo Git SDX
         cd $WORKING_DIR
         git clone --single-branch -b master https://github.com/RENCI-NRIG/CICI-SAFE.git
-        
         echo Build SDX
         cd ${WORKING_DIR}/CICI-SAFE/exoplex
         mvn  clean package appassembler:assemble -DskipTests
@@ -89,7 +88,7 @@ Authorities makes delegations to the client Key
 
         sudo docker pull yaoyj11/safeserver-v7
         sudo docker run -i -t -d -p 7777:7777 -h safe --name safe ${SAFEIMG}
-        sudo docker exec -itd safe /bin/bash -c  "cd /root/safe;sed -i 's/RIAKSERVER/$riak_ip/g' safe-server/src/main/resources/application.conf;./${SAFE_SCRIPT}"
+        sudo docker exec -itd safe /bin/bash -c  "cd /root/safe;sed -i 's/http:\/\/.*:8098/http:\/\/${riak_ip}:8098/g' safe-server/src/main/resources/application.conf;./${SAFE_SCRIPT}"
 
 ## 2. make delegations to a client: exogeni slice authorization, ip allocation, tag delegation
 
@@ -109,11 +108,11 @@ Authorities makes delegations to the client Key
 
         sudo docker pull yaoyj11/safeserver-v7
         sudo docker run -i -t -d -p 7777:7777 -h safe --name safe ${SAFEIMG}
-        sudo docker exec -itd safe /bin/bash -c  "cd /root/safe;sed -i 's/RIAKSERVER/$riak_ip/g' safe-server/src/main/resources/application.conf;./${SAFE_SCRIPT}"
+        sudo docker exec -itd safe /bin/bash -c  "cd /root/safe;sed -i 's/http:\/\/.*:8098/http:\/\/${riak_ip}:8098/g' safe-server/src/main/resources/application.conf;./${SAFE_SCRIPT}"
 
 ## 3. generate safe key-pair for client
 
-        SAFE_KEYPAIR="alice"
+        SAFE_KEYPAIR="bob"
         SAFE_SERVER=localhost
         sudo docker exec -itd safe /bin/bash /root/safe_keygen.sh ${SAFE_KEYPAIR} /root/safe/safe-server/src/main/resources/prdnsmall
         res=$(curl http://localhost:7777/whoami \
@@ -133,23 +132,49 @@ Authorities makes delegations to the client Key
         BIN_DIR=${WORKING_DIR}/CICI-SAFE/exoplex/target/appassembler/bin
         ${BIN_DIR}/AuthorityMock init ${principalId} $TAGACL ${SAFE_SERVER}
 
-## 5. Ask the authorities to make delegations to the client. After that, copy and paste each line from the output of authority to Params
+## 5. Choose a fake slice name for Chameleon network for authorization purpose. Ask the authorities to make delegations to the client. After that, save the delegation tokens in the user's safe sets. (Copy and run the output commands from the authority delegation, 5 commands in total)
 
-        PARAMS='updateTagSet c0WrmnifdojXcYv5zS1dCSSHHKY9rbAfHbjllwZxj14= 0_ah37_Nyt8Xgqq1JFHfAD3TA9Mrx0WpLgrRx2w7Dgc=:tag0'
-        sudo ${BIN_DIR}/AuthorityMock update ${principalId} ${PARAMS} ${SAFE_SERVER}
+        ${BIN_DIR}/AuthorityMock update ${principalId} passDelegation P00xfQR3bdW649Ti6dCIrFboDKaZz4uDEzjXL_nsngQ= SF5x9ObjJWzzTBIn0aachXlIEbcOq7hkJdjbJuyoLfA=:project1 ${SAFE_SERVER}
 
-## 6. Create client slice
+## 6. Create client network on Chameleon, configure routing on Chameleon nodes.
+a). Choose the IP address of one Chameleon node as gateway for the Chameleon network. Enable IP forwarding on the node
 
-        ${BIN_DIR}/SafeSdxClientSliceServer -c client-config/c0.conf
+        echo 1 > /proc/sys/net/ipv4/ip_forward
+
+b). Configure routing with Quagga on every Chameleon client node
+
+### Install Quagga
+
+        sudo apt install -y quagga
+
+### Enable zebra
+
+        sudo echo "zebra=yes" >> /etc/quagga/daemons
+
+### Set up routing with zebra
+
+        # Assume that the gateway IP address is 192.168.100.1
+        sudo echo "ip route 192.168.0.0/16 192.168.100.1" >> /etc/quagga/zebra.conf
+
+        # In old versions of Quaaga, this could be "service quagga restart"
+        sudo service zebra restart
+
+c). Run sdn controller adapted from ryu/simple_switch_13 application.
+
+        PLEXUSIMG="yaoyj11/plexus-v4"
+        sudo docker pull ${PLEXUSIMG}
+        sudo docker run -i -t -d -p 8080:8080 -p 6653:6653 -p 3000:3000 -h plexus --name plexus ${PLEXUSIMG}
+        sudo docker exec -itd plexus /bin/bash -c  "cd /root;pkill ryu-manager; ryu-manager --log-file ~/ryu.log --default-log-level 1 --ofp-tcp-listen-port 6653 ryu/ryu/app/simple_switch_13.py"
 
 ## 7. stitch to sdx
 
-        sudo ${BIN_DIR}/SafeSdxExogeniClient -c client-config/c0.conf -e 'stitch CNode1 192.168.10.2 192.168.10.1/24'
+        sudo ${BIN_DIR}/SafeSdxStitchPortClient -c chameleon-config/c1.conf -e "stitch TACC 3506 192.168.100.17 192.168.100.1/24 UFL"
 
 ## 8. client advertise prefix
 
-        sudo ${BIN_DIR}/SafeSdxExogeniClient -c client-config/c0.conf -e 'route 192.168.10.1/24 192.168.10.2'
+        sudo ${BIN_DIR}/SafeSdxStitchPortClient -c chameleon-config/c1.conf -e 'route 192.168.100.1/24 192.168.10.17'
 
 ## 9. both client request for connection [optional]
 
-        sudo ${BIN_DIR}/SafeSdxExogeniClient -c client-config/c0.conf -e 'link 192.168.10.1/24 192.168.20.1/24'
+        sudo ${BIN_DIR}/SafeSdxStitchPortClient -c client-config/c1.conf -e 'link 192.168.100.1/24 192.168.200.1/24'
+

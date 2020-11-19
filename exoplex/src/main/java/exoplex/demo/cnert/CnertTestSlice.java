@@ -4,13 +4,12 @@ import com.google.inject.Inject;
 import exoplex.common.utils.Exec;
 import exoplex.common.utils.PathUtil;
 import exoplex.sdx.core.CoreProperties;
-import exoplex.sdx.core.SliceHelper;
+import exoplex.sdx.core.exogeni.SliceHelper;
 import exoplex.sdx.slice.Scripts;
 import exoplex.sdx.slice.SliceManager;
 import exoplex.sdx.slice.SliceManagerFactory;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.renci.ahab.libtransport.util.TransportException;
 import org.renci.ahab.libtransport.xmlrpc.XMLRPCTransportException;
 import safe.Authority;
 

@@ -38,7 +38,7 @@ public class Range {
 
   @Override
   public String toString() {
-    return String.format("(%s, %s)", start, start + length - 1);
+    return String.format("[%s, %s)", start, start + length - 1);
   }
 
   public boolean covers(Range range) {

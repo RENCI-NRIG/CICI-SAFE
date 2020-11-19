@@ -2,6 +2,8 @@ package exoplex.sdx.safe;
 
 import exoplex.common.utils.Exec;
 import exoplex.common.utils.SafeUtils;
+import exoplex.sdx.advertise.AdvertiseBase;
+import exoplex.sdx.advertise.PolicyAdvertise;
 import exoplex.sdx.advertise.RouteAdvertise;
 import exoplex.sdx.core.CoreProperties;
 import exoplex.sdx.slice.Scripts;
@@ -10,6 +12,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import safe.SdxRoutingSlang;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class SafeManager {
@@ -82,26 +85,6 @@ public class SafeManager {
     othervalues[3] = String.format("ipv4\\\"%s\\\"", dstip);
     return SafeUtils.authorize(safeServer, SdxRoutingSlang.authZByUserAttr, getSafeKeyHash(),
       othervalues);
-  }
-
-  public void postPathToken(RouteAdvertise advertise) {
-    if (!safeEnabled) return;
-    if (advertise.srcPrefix == null) {
-      String[] params = new String[4];
-      params[0] = advertise.safeToken;
-      params[1] = advertise.getDestPrefix();
-      params[2] = advertise.advertiserPID;
-      params[3] = String.valueOf(advertise.route.size());
-      post(SdxRoutingSlang.postPathToken, params);
-    } else {
-      String[] params = new String[5];
-      params[0] = advertise.safeToken;
-      params[1] = advertise.getSrcPrefix();
-      params[2] = advertise.getDestPrefix();
-      params[3] = advertise.advertiserPID;
-      params[4] = String.valueOf(advertise.route.size());
-      post(SdxRoutingSlang.postPathTokenSD, params);
-    }
   }
 
   public String post(String operation, String[] params) {
@@ -185,26 +168,41 @@ public class SafeManager {
       params);
   }
 
+  public boolean verifyCompliantPath(PolicyAdvertise policyAdvertise,
+                                     RouteAdvertise routeAdvertise) {
+    if (!safeEnabled || policyAdvertise.safeToken == null) return true;
+    String[] params = new String[6];
+    params[0] = policyAdvertise.ownerPID;
+    params[1] = policyAdvertise.getSrcPrefix();
+    params[2] = policyAdvertise.getDestPrefix();
+    //List<String> route = new ArrayList<>(routeAdvertise.route);
+    //route.remove(route.size() - 1);
+    //params[3] = AdvertiseBase.getFormattedPath(route);
+    params[3] = routeAdvertise.getFormattedPath();
+    params[4] = policyAdvertise.safeToken;
+    params[5] = routeAdvertise.safeToken;
+    return SafeUtils.authorize(safeServer, SdxRoutingSlang.verifyCompliantPath, getSafeKeyHash(),
+      params);
+  }
+
   public RouteAdvertise forwardAdvertise(RouteAdvertise routeAdvertise, String targetPid, String
     srcPid) {
     if (routeAdvertise.srcPrefix == null) {
-      String[] params = new String[5];
+      String[] params = new String[4];
       params[0] = routeAdvertise.getDestPrefix();
       params[1] = routeAdvertise.getFormattedPath();
       params[2] = targetPid;
-      params[3] = srcPid;
-      params[4] = routeAdvertise.getLength(1);
+      params[3] = routeAdvertise.safeToken;
       String token1 = post(SdxRoutingSlang.postAdvertise, params);
       routeAdvertise.safeToken = token1;
       return routeAdvertise;
     } else {
-      String[] params = new String[6];
+      String[] params = new String[5];
       params[0] = routeAdvertise.getSrcPrefix();
       params[1] = routeAdvertise.getDestPrefix();
       params[2] = routeAdvertise.getFormattedPath();
       params[3] = targetPid;
-      params[4] = srcPid;
-      params[5] = routeAdvertise.getLength(1);
+      params[4] = routeAdvertise.safeToken;
       String token1 = post(SdxRoutingSlang.postAdvertiseSD, params);
       routeAdvertise.safeToken = token1;
       return routeAdvertise;
@@ -264,8 +262,8 @@ public class SafeManager {
     othervalues[0] = customerSafeKeyHash;
     othervalues[1] = stitchPort;
     othervalues[2] = vlan;
-    String sdxHash = SafeUtils.getPrincipalId(safeServer, "sdx");
-    return SafeUtils.authorize(safeServer, "authorizeChameleonStitchByUID", sdxHash, othervalues);
+    return SafeUtils.authorize(safeServer, "authorizeChameleonStitchByUID", getSafeKeyHash(),
+      othervalues);
   }
 
   public void restartSafeServer() {

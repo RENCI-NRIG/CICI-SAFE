@@ -59,10 +59,10 @@ public interface SdxRoutingSlang {
   String postPathToken = "postPathToken";
   String postAdvertise = "postAdvertise";
   String postAdvertiseSD = "postAdvertiseSD";
-  String postInitRoute = "postInitRoute";
+  String postStartRoute = "postStartRoute";
   String postPathTokenSD = "postPathTokenSD";
   String verifyRouteSD = "verifyRouteSD";
-  String postInitRouteSD = "postInitRouteSD";
+  String postStartRouteSD = "postStartRouteSD";
   String verifyASSD = "verifyASSD";
   String verifyAS = "verifyAS";
   String verifyCompliantPath = "verifyCompliantPath";

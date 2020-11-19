@@ -1,5 +1,6 @@
 package exoplex.sdx.slice;
 
+import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.renci.ahab.libtransport.util.TransportException;
 import org.renci.ahab.libtransport.xmlrpc.XMLRPCTransportException;
 
@@ -8,196 +9,204 @@ import java.util.Date;
 import java.util.List;
 
 public abstract class SliceManager {
-  protected static int extensionDays = 2;
-  public boolean mocked = true;
-  protected String pemLocation;
-  protected String keyLocation;
-  protected String controllerUrl;
-  protected String sliceName;
-  protected String sshKey;
+    protected static int extensionDays = 2;
+    public boolean mocked = true;
+    protected String pemLocation;
+    protected String keyLocation;
+    protected String controllerUrl;
+    protected String sliceName;
+    protected String sshKey;
 
-  public SliceManager(String sliceName, String pemLocation, String keyLocation, String
-    controllerUrl, String sshKey) {
-    this.sliceName = sliceName;
-    this.pemLocation = pemLocation;
-    this.keyLocation = keyLocation;
-    this.controllerUrl = controllerUrl;
-    this.sshKey = sshKey;
-  }
+    public SliceManager(String sliceName, String pemLocation, String keyLocation, String
+            controllerUrl, String sshKey) {
+        this.sliceName = sliceName;
+        this.pemLocation = pemLocation;
+        this.keyLocation = keyLocation;
+        this.controllerUrl = controllerUrl;
+        this.sshKey = sshKey;
+    }
 
 
-  abstract public void createSlice();
+    abstract public void createSlice();
 
-  abstract public void permitStitch(String secret, String GUID) throws TransportException;
+    abstract public void permitStitch(String secret, String GUID) throws TransportException;
 
-  abstract public String permitStitch(String GUID) throws TransportException;
+    abstract public String permitStitch(String GUID) throws TransportException;
 
-  abstract public void loadSlice() throws Exception;
+    abstract public boolean revokeStitch(String GUID) throws TransportException;
 
-  abstract public void resetHostNames();
+    abstract public void loadSlice() throws Exception;
 
-  abstract public String addComputeNode(String name);
+    abstract public void resetHostNames();
 
-  abstract public String addComputeNode(String site, String name);
+    abstract public String addComputeNode(String name);
 
-  abstract public String stitchNetToNode(String netName, String nodeName);
+    abstract public String addComputeNode(String site, String name);
 
-  abstract public String stitchNetToNode(String netName, String nodeName, String ip, String
-    netmask);
+    abstract public String stitchNetToNode(String netName, String nodeName);
 
-  abstract public String addComputeNode(
-    String name, String nodeImageURL,
-    String nodeImageHash, String nodeImageShortName, String nodeNodeType, String site,
-    String nodePostBootScript);
+    abstract public String stitchNetToNode(String netName, String nodeName, String ip, String
+            netmask);
 
-  abstract public String addStitchPort(String name, String label, String port, long bandwidth);
+    abstract public String addComputeNode(
+            String name, String nodeImageURL,
+            String nodeImageHash, String nodeImageShortName, String nodeNodeType, String site,
+            String nodePostBootScript);
 
-  abstract public void stitchSptoNode(String spName, String nodeName);
+    abstract public String addStitchPort(String name, String label, String port, long bandwidth);
 
-  abstract public String addBroadcastLink(String name, long bandwidth);
+    abstract public void stitchSptoNode(String spName, String nodeName);
 
-  abstract public String addBroadcastLink(String name);
+    abstract public String addBroadcastLink(String name, long bandwidth);
 
-  abstract public String attach(String nodeName, String linkName, String ip, String netmask);
+    abstract public String addBroadcastLink(String name);
 
-  abstract public String attach(String nodeName, String linkName);
+    abstract public String attach(String nodeName, String linkName, String ip, String netmask);
 
-  abstract public String getStitchingGUID(String netName);
+    abstract public String attach(String nodeName, String linkName);
 
-  abstract public String getComputeNode(String nm);
+    abstract public String getStitchingGUID(String netName);
 
-  abstract public void unstitch(String stitchLinkName, String customerSlice, String customerGUID);
+    abstract public String getComputeNode(String nm);
 
-  abstract public String getName();
+    abstract public void unstitch(String stitchLinkName, String customerSlice, String customerGUID);
 
-  abstract public void setName(String sliceName);
+    abstract public String getName();
 
-  abstract public void commit(int count, int sleepInterval) throws XMLRPCTransportException;
+    abstract public void setName(String sliceName);
 
-  abstract public void commit() throws XMLRPCTransportException;
+    abstract public void commit(int count, int sleepInterval) throws XMLRPCTransportException;
 
-  abstract public void delete();
+    abstract public void commit() throws XMLRPCTransportException;
 
+    abstract public void delete();
 
-  abstract public Collection<String> getAllResources();
 
-  abstract public Collection<String> getInterfaces();
+    abstract public Collection<String> getAllResources();
 
-  abstract public Collection<String> getLinks();
+    abstract public Collection<String> getInterfaces();
 
-  abstract public Collection<String> getBroadcastLinks();
+    abstract public Collection<String> getLinks();
 
-  abstract public Collection<String> getComputeNodes();
+    abstract public Collection<String> getBroadcastLinks();
 
-  abstract public Collection<String> getStitchPorts();
+    abstract public Collection<String> getComputeNodes();
 
-  abstract public void refresh();
+    abstract public Collection<String> getStitchPorts();
 
-  abstract public void commitSlice() throws TransportException;
+    abstract public void refresh();
 
-  abstract public void commitAndWait() throws Exception;
+    abstract public void commitSlice() throws TransportException;
 
-  abstract public boolean commitAndWait(int interval) throws Exception;
+    abstract public void commitAndWait() throws Exception;
 
-  abstract public boolean commitAndWait(int interval, List<String> resources) throws Exception;
+    abstract public boolean commitAndWait(int interval) throws Exception;
 
-  abstract public void waitTillActive() throws Exception;
+    abstract public boolean commitAndWait(int interval, List<String> resources) throws Exception;
 
-  abstract public void waitTillActive(int interval) throws Exception;
+    abstract public void waitTillActive() throws Exception;
 
-  abstract public boolean waitTillActive(int interval, List<String> resources) throws Exception;
+    abstract public void waitTillActive(int interval) throws Exception;
 
-  abstract public void copyFile2Slice(String lfile, String rfile, String privkey);
+    abstract public boolean waitTillActive(int interval, List<String> resources) throws Exception;
 
-  abstract public void copyFile2Slice(String lfile, String rfile, String privkey,
-                                      String patn);
+    abstract public void copyFile2Slice(String lfile, String rfile, String privkey);
 
-  abstract public void copyFile2Node(String lfile, String rfile, String privkey, String nodeName);
+    abstract public void copyFile2Slice(String lfile, String rfile, String privkey,
+                                        String patn);
 
-  abstract public String runCmdNode(final String cmd, String nodeName, boolean repeat);
+    abstract public void copyFile2Node(String lfile, String rfile, String privkey, String nodeName);
 
-  abstract public String runCmdNode(final String cmd, String nodeName);
+    abstract public String runCmdNode(final String cmd, String nodeName, boolean repeat);
 
-  abstract public List<String> getPhysicalInterfaces(String nodeName);
+    abstract public String runCmdNode(final String cmd, String nodeName);
 
-  abstract public String runCmdByIP(final String cmd, String mip, boolean repeat);
+    abstract public List<ImmutablePair<String, String>> getPhysicalInterfaces(String nodeName);
 
-  abstract public void runCmdSlice(final String cmd, final String sshkey, final String pattern,
-                                   final boolean repeat);
+    abstract public String runCmdByIP(final String cmd, String mip, boolean repeat);
 
-  abstract public List<String> addLink(String linkName, String nodeName, long bw);
+    abstract public void runCmdSlice(final String cmd, final String sshkey, final String pattern,
+                                     final boolean repeat);
 
-  abstract public void removeLink(String linkName);
+    abstract public List<String> addLink(String linkName, String nodeName, long bw);
 
-  abstract public List<String> addLink(String linkName, String ip, String netmask, String nodeName,
-                                    long
-    bw);
+    abstract public void expectOneInterfaceDiff(String node, boolean add);
 
-  abstract public List<String> addLink(String linkName, String ip1, String ip2, String netmask,
-                                      String
-    node1, String node2, long bw);
+    abstract public void waitForInterfaces(String node);
 
-  abstract public List<String> addLink(String linkName, String
-    node1, String node2, long bw);
+    abstract public void removeLink(String linkName);
 
-  abstract public String getNodeDomain(String nodeName);
+    abstract public List<String> addLink(String linkName, String ip, String netmask, String nodeName, long
+            bw);
 
-  abstract public void addCoreEdgeRouterPair(String site, String router1, String router2, String
-    linkname, long bw);
+    abstract public List<String> addLink(String linkName, String ip1, String ip2, String netmask,
+                                         String node1, String node2, long bw);
 
-  abstract public void addOvsRouter(String site, String router1);
+    abstract public List<String> addLink(String linkName, String
+            node1, String node2, long bw);
 
-  abstract public void addDocker(String siteName, String nodeName, String script, String size);
+    abstract public String getNodeDomain(String nodeName);
 
-  abstract public void addRiakServer(String siteName, String nodeName);
+    abstract public void addCoreEdgeRouterPair(String site, String router1, String router2, String
+            linkname, long bw);
 
-  abstract public void addSafeServer(String siteName, String riakIp, String safeDockerImage, String
-    safeServerScript);
+    abstract public void addOvsRouter(String site, String router1);
 
-  abstract public void addPlexusController(String controllerSite, String name);
+    abstract public void addDocker(String siteName, String nodeName, String script, String size);
 
-  //We always add the bro when we add the edge router
-  abstract public String addBro(String broname, String domain);
+    abstract public void addRiakServer(String siteName, String nodeName);
 
-  abstract public void stitch(String RID, String customerName, String CID, String secret,
-                              String newip);
+    abstract public void addSafeServer(String siteName, String riakIp, String safeDockerImage, String
+            safeServerScript);
 
-  abstract public void configBroNode(String nodeName, String edgeRouter, String resourceDir, String
-    SDNControllerIP, String serverurl, String sshkey);
+    abstract public void addPlexusController(String controllerSite, String name);
 
-  abstract public String getDpid(String routerName, String sshkey);
+    //We always add the bro when we add the edge router
+    abstract public String addBro(String broname, String domain);
 
-  abstract public String addOVSRouter(String site, String name);
+    abstract public void stitch(String RID, String customerName, String CID, String secret,
+                                String newip);
 
-  abstract public void printNetworkInfo();
+    abstract public void configBroNode(String nodeName, String edgeRouter, String resourceDir, String
+            SDNControllerIP, String serverurl, String sshkey);
 
-  abstract public void printSliceInfo();
+    abstract public String getDpid(String routerName, String sshkey);
 
-  abstract public String getState(String resourceName);
+    public String getController(String routerName) {
+        return null;
+    }
 
-  abstract public String getManagementIP(String nodeName);
+    abstract public String addOVSRouter(String site, String name);
 
-  abstract public void deleteResource(String name);
+    abstract public void printNetworkInfo();
 
-  abstract public void lockSlice();
+    abstract public void printSliceInfo();
 
-  abstract public void unLockSlice();
+    abstract public String getState(String resourceName);
 
-  abstract public String getResourceByName(String name);
+    abstract public String getManagementIP(String nodeName);
 
-  abstract public Collection<String> getNodeInterfaces(String nodeName);
+    abstract public void deleteResource(String name);
 
-  abstract public String getNodeOfInterface(String ifName);
+    abstract public void lockSlice();
 
-  abstract public String getLinkOfInterface(String ifName);
+    abstract public void unLockSlice();
 
-  abstract public String getMacAddressOfInterface(String ifName);
+    abstract public String getResourceByName(String name);
 
-  abstract public Long getBandwidthOfLink(String linkName);
+    abstract public Collection<String> getNodeInterfaces(String nodeName);
 
-  abstract public void sleep(int seconds);
+    abstract public String getNodeOfInterface(String ifName);
 
-  abstract public void renew(Date newdate);
+    abstract public String getLinkOfInterface(String ifName);
 
-  abstract public void renew();
+    abstract public String getMacAddressOfInterface(String ifName);
+
+    abstract public Long getBandwidthOfLink(String linkName);
+
+    abstract public void sleep(int seconds);
+
+    abstract public void renew(Date newdate);
+
+    abstract public void renew();
 }

@@ -3,8 +3,7 @@ package exoplex.sdx.routing;
 import exoplex.common.utils.ServerOptions;
 import exoplex.experiment.ExperimentBase;
 import exoplex.sdx.core.CoreProperties;
-import exoplex.sdx.core.SdxManager;
-import exoplex.sdx.network.RoutingManager;
+import exoplex.sdx.core.exogeni.ExoSdxManager;
 import exoplex.sdx.network.SdnUtil;
 import exoplex.sdx.slice.Scripts;
 import exoplex.sdx.slice.SliceManager;
@@ -12,7 +11,6 @@ import exoplex.sdx.slice.exogeni.SiteBase;
 import org.apache.commons.cli.CommandLine;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.logging.log4j.core.Core;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
@@ -22,7 +20,7 @@ import java.lang.reflect.Method;
 import java.util.HashMap;
 
 @Ignore
-public class TestMpRouting extends SdxManager {
+public class TestMpRouting extends ExoSdxManager {
   static Logger logger = LogManager.getLogger(TestMpRouting.class);
   static String site = SiteBase.get("TAMU");
   static String userDir = System.getProperty("user.dir");
@@ -31,7 +29,7 @@ public class TestMpRouting extends SdxManager {
   static TestMpRouting mpr;
 
   public TestMpRouting() {
-    super(null);
+    super(null, null);
   }
 
   @BeforeClass
@@ -180,7 +178,7 @@ public class TestMpRouting extends SdxManager {
     nbs.put("c2", weight2);
     int groupId = 1;
     SdnUtil.deleteGroup(getSDNController(), getDPID("c0"), groupId);
-    routingmanager.setNextHops("c0", getSDNController(), groupId, "192.168.20.0/24", nbs);
+    routingManager.setNextHops("c0", getSDNController(), groupId, "192.168.20.0/24", nbs);
     String res = SdnUtil.getGroupDescStats(getSDNController(), getDPID("c0"), groupId);
     logger.info("get group stats");
     logger.info(res);
@@ -188,22 +186,22 @@ public class TestMpRouting extends SdxManager {
     nbs.clear();
     nbs.put("c3", weight2);
     SdnUtil.deleteGroup(getSDNController(), getDPID("c1"), groupId);
-    routingmanager.setNextHops("c1", getSDNController(), groupId, "192.168.20.0/24", nbs);
+    routingManager.setNextHops("c1", getSDNController(), groupId, "192.168.20.0/24", nbs);
     res = SdnUtil.getGroupDescStats(getSDNController(), getDPID("c1"), groupId);
     logger.info("get group stats");
     logger.info(res);
     SdnUtil.deleteGroup(getSDNController(), getDPID("c2"), groupId);
-    routingmanager.setNextHops("c2", getSDNController(), groupId, "192.168.20.0/24", nbs);
+    routingManager.setNextHops("c2", getSDNController(), groupId, "192.168.20.0/24", nbs);
     res = SdnUtil.getGroupDescStats(getSDNController(), getDPID("c2"), groupId);
     logger.info("get group stats");
     logger.info(res);
 
     ////last hop
-    //routingmanager.setOutPort("c3", getSDNController(),
+    //routingManager.setOutPort("c3", getSDNController(),
     //    "stitch_c3_20","192.168.20.0/24" );
     //res = SdnUtil.getGroupDescStats(getSDNController(), getDPID("c3"), groupId);
     //logger.info(res);
-    routingmanager.singleStepRouting("192.168.20.0/24", "192.168.20.2",
+    routingManager.singleStepRouting("192.168.20.0/24", "192.168.20.2",
       getDPID("c3"), getSDNController());
 
     //<<==== c3-> c1 c2
@@ -212,7 +210,7 @@ public class TestMpRouting extends SdxManager {
     nbs.put("c1", weight1);
     nbs.put("c2", weight2);
     SdnUtil.deleteGroup(getSDNController(), getDPID("c3"), groupId);
-    routingmanager.setNextHops("c3", getSDNController(), groupId, "192.168.10.0/24", nbs);
+    routingManager.setNextHops("c3", getSDNController(), groupId, "192.168.10.0/24", nbs);
     res = SdnUtil.getGroupDescStats(getSDNController(), getDPID("c3"), groupId);
     logger.info("get group stats");
     logger.info(res);
@@ -220,19 +218,19 @@ public class TestMpRouting extends SdxManager {
     nbs.clear();
     nbs.put("c0", weight2);
     SdnUtil.deleteGroup(getSDNController(), getDPID("c1"), groupId);
-    routingmanager.setNextHops("c1", getSDNController(), groupId, "192.168.10.0/24", nbs);
+    routingManager.setNextHops("c1", getSDNController(), groupId, "192.168.10.0/24", nbs);
     res = SdnUtil.getGroupDescStats(getSDNController(), getDPID("c1"), groupId);
     logger.info("get group stats");
     logger.info(res);
     SdnUtil.deleteGroup(getSDNController(), getDPID("c2"), groupId);
-    routingmanager.setNextHops("c2", getSDNController(), groupId, "192.168.10.0/24", nbs);
+    routingManager.setNextHops("c2", getSDNController(), groupId, "192.168.10.0/24", nbs);
     res = SdnUtil.getGroupDescStats(getSDNController(), getDPID("c2"), groupId);
     logger.info("get group stats");
     logger.info(res);
     ///<<<===last hop
-    //routingmanager.setOutPort("c0", getSDNController(),
+    //routingManager.setOutPort("c0", getSDNController(),
     //    "stitch_c0_10","192.168.10.0/24" );
-    routingmanager.singleStepRouting("192.168.10.0/24", "192.168.10.2",
+    routingManager.singleStepRouting("192.168.10.0/24", "192.168.10.2",
       getDPID("c0"), getSDNController());
     logger.info(res);
   }

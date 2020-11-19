@@ -1,12 +1,9 @@
 package safe.sdx;
 
 import exoplex.common.utils.SafeUtils;
-import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.LoggerContext;
-import org.apache.logging.log4j.core.config.Configuration;
-import org.apache.logging.log4j.core.config.LoggerConfig;
 import safe.Authority;
 import safe.SdxRoutingSlang;
 
@@ -40,11 +37,6 @@ public class AuthorityMockSdx extends Authority implements SdxRoutingSlang {
 
   public static void main(String[] args) {
     if (args.length == 0) {
-      LoggerContext ctx = (LoggerContext) LogManager.getContext(false);
-      Configuration config = ctx.getConfiguration();
-      LoggerConfig loggerConfig = config.getLoggerConfig(LogManager.ROOT_LOGGER_NAME);
-      loggerConfig.setLevel(Level.DEBUG);
-      ctx.updateLoggers();
       AuthorityMockSdx authorityMock = new AuthorityMockSdx(defaultSafeServer);
       authorityMock.makeSafePreparation();
     } else if (args.length >= 4) {
@@ -103,13 +95,16 @@ public class AuthorityMockSdx extends Authority implements SdxRoutingSlang {
     //User membership
     String token = SafeUtils.getToken(SafeUtils.postSafeStatements(safeServer,
       postUserEndorsement, "key_p1", new String[]{userKey}));
-    System.out.println(String.format("passDelegation %s %s", token, "User"));
+    String CMD = "${BIN_DIR}/AuthorityMock update ${principalId} %s ${SAFE_SERVER}";
+    String params = String.format("passDelegation %s %s", token, "User");
+    System.out.println(String.format(CMD, params));
     //PI delegate to users
     HashMap<String, String> envs = new HashMap<>();
     String projectId = getPrincipalId("key_p2") + ":project1";
     String pmToken = safePost(postProjectMembership, "key_p4", new String[]{userKey,
       projectId, "true"});
-    System.out.println(String.format("passDelegation %s %s", pmToken, projectId));
+    params = String.format("passDelegation %s %s", pmToken, projectId);
+    System.out.println(String.format(CMD, params));
     envs.clear();
 
     /*
@@ -126,8 +121,9 @@ public class AuthorityMockSdx extends Authority implements SdxRoutingSlang {
       new String[]{userKey, sliceId, projectId,
         sliceControlRef,
         slicePrivRef}));
-    System.out.println(String.format("passDelegation %s %s", sliceToken.get(slice),
-      sliceId));
+    params = String.format("passDelegation %s %s", sliceToken.get(slice),
+      sliceId);
+    System.out.println(String.format(CMD, params));
 
     //UserAcl
     safePost(postUserAclEntry, "sdx", new String[]{userKey});
@@ -137,17 +133,21 @@ public class AuthorityMockSdx extends Authority implements SdxRoutingSlang {
     String uip = String.format("ipv4\\\"%s\\\"", userIP);
     String ipToken = safePost(postIPAllocate, "rpkiroot", new String[]{userKey, uip,
       parentPrefix});
-    System.out.println(String.format("postDlgToken %s %s", ipToken, uip.replace("\\", "\\\\\\")));
+    params = String.format("postDlgToken %s %s", ipToken, uip.replace("\\", "\\\\\\"));
+    System.out.println(String.format(CMD, params));
 
     //Tag delegation
     String tag = getPrincipalId("tagauthority") + ":" + tag1;
     safePost(postTagSet, "tagauthority", new String[]{tag});
     String tagToken = safePost(postGrantTagPriv, "tagauthority", new Object[]{userKey, tag, true});
-    System.out.println(String.format("updateTagSet %s %s", tagToken, tag));
+    params = String.format("updateTagSet %s %s", tagToken, tag);
+    System.out.println(String.format(CMD, params));
   }
 
   public void updateTokens(String userKey, String method, String token, String name) {
-    System.out.println(safePost(method, userKey, new String[]{token, name}));
+    String setToken = safePost(method, userKey, new String[]{token, name});
+    logger.debug(setToken);
+    System.out.println("Done");
   }
 
   public void initUser(String userKey, String tagAcl) {
@@ -155,11 +155,13 @@ public class AuthorityMockSdx extends Authority implements SdxRoutingSlang {
     initIdSetSubjectSet(userKey);
     //User membership
     String tagAuth = getPrincipalId("tagauthority");
-    System.out.println(safePost(postUserTagAclEntry, userKey, new String[]{tagAuth + ":" +
-      tagAcl}));
-    System.out.println(safePost(postCustomerConnectionPolicy, userKey, new String[]{}));
-    System.out.println(safePost(postTagPrivilegePolicy, userKey, new String[]{}));
-    System.out.println(safePost(postCustomerPolicy, userKey, new String[]{}));
+    logger.debug(safePost(postUserTagAclEntry, userKey,
+      new String[]{tagAuth + ":" + tagAcl}));
+    logger.debug(safePost(postCustomerConnectionPolicy, userKey,
+      new String[]{}));
+    logger.debug(safePost(postTagPrivilegePolicy, userKey, new String[]{}));
+    logger.debug(safePost(postCustomerPolicy, userKey, new String[]{}));
+    System.out.println("Done initializing safe sets for customers");
   }
 
   public void makeSafePreparation() {

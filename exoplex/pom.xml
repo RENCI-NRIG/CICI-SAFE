@@ -38,42 +38,60 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-assembly-plugin</artifactId>
                 <executions>
-                <execution>
-                    <id>SafeSdxServer</id>
-                    <configuration>
-                        <archive>
-                            <manifest>
-                                <mainClass>exoplex.sdx.core.SdxServer</mainClass>
-                            </manifest>
-                        </archive>
-                        <descriptorRefs>
-                            <descriptorRef>jar-with-dependencies</descriptorRef>
-                        </descriptorRefs>
-                        <finalName>SafeSdxServer.jar</finalName>
-                    </configuration>
-                    <phase>package</phase>
-                    <goals>
-                        <goal>single</goal>
-                    </goals>
-                </execution>
-                <execution>
-                    <id>SafeSdxSliceServer</id>
-                    <configuration>
-                        <archive>
-                            <manifest>
-                                <mainClass>exoplex.sdx.core.SliceHelper</mainClass>
-                            </manifest>
-                        </archive>
-                        <descriptorRefs>
-                            <descriptorRef>jar-with-dependencies</descriptorRef>
-                        </descriptorRefs>
-                        <finalName>SafeSdxSliceServer.jar</finalName>
-                    </configuration>
-                    <phase>package</phase>
-                    <goals>
-                        <goal>single</goal>
-                    </goals>
-                </execution>
+                    <execution>
+                        <id>SafeSdxServer</id>
+                        <configuration>
+                            <archive>
+                                <manifest>
+                                    <mainClass>exoplex.sdx.core.exogeni.ExoSdxServer</mainClass>
+                                </manifest>
+                            </archive>
+                            <descriptorRefs>
+                                <descriptorRef>jar-with-dependencies</descriptorRef>
+                            </descriptorRefs>
+                            <finalName>SafeSdxServer.jar</finalName>
+                        </configuration>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>VfcSdxServer</id>
+                        <configuration>
+                            <archive>
+                                <manifest>
+                                    <mainClass>exoplex.sdx.core.vfc.VfcSdxServer</mainClass>
+                                </manifest>
+                            </archive>
+                            <descriptorRefs>
+                                <descriptorRef>jar-with-dependencies</descriptorRef>
+                            </descriptorRefs>
+                            <finalName>VfcSdxServer.jar</finalName>
+                        </configuration>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>SafeSdxSliceServer</id>
+                        <configuration>
+                            <archive>
+                                <manifest>
+                                    <mainClass>exoplex.sdx.core.exogeni.SliceHelper</mainClass>
+                                </manifest>
+                            </archive>
+                            <descriptorRefs>
+                                <descriptorRef>jar-with-dependencies</descriptorRef>
+                            </descriptorRefs>
+                            <finalName>SafeSdxSliceServer.jar</finalName>
+                        </configuration>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                    </execution>
                 </executions>
             </plugin>
             <plugin>
@@ -92,8 +110,10 @@
                             <repository>${docker.image.prefix}/${docker.image.name.sdx}</repository>
                             <tag>${project.version}</tag>
                             <buildArgs>
-                                <JAR_FILE_SERVER>SafeSdxServer.jar-jar-with-dependencies.jar</JAR_FILE_SERVER>
-                                <JAR_FILE_SLICE>SafeSdxSliceServer.jar-jar-with-dependencies.jar</JAR_FILE_SLICE>
+                                <JAR_FILE_SERVER>SafeSdxServer.jar-jar-with-dependencies.jar
+                                </JAR_FILE_SERVER>
+                                <JAR_FILE_SLICE>SafeSdxSliceServer.jar-jar-with-dependencies.jar
+                                </JAR_FILE_SLICE>
                             </buildArgs>
                             <skip>true</skip>
                         </configuration>
@@ -107,11 +127,15 @@
                 <configuration>
                     <programs>
                         <program>
-                            <mainClass>exoplex.sdx.core.SdxServer</mainClass>
+                            <mainClass>exoplex.sdx.core.exogeni.ExoSdxServer</mainClass>
                             <name>SafeSdxServer</name>
                         </program>
                         <program>
-                            <mainClass>exoplex.sdx.core.SliceHelper</mainClass>
+                            <mainClass>exoplex.sdx.core.vfc.VfcSdxServer</mainClass>
+                            <name>VfcSdxServer</name>
+                        </program>
+                        <program>
+                            <mainClass>exoplex.sdx.core.exogeni.SliceHelper</mainClass>
                             <name>SafeSdxSliceServer</name>
                         </program>
                         <program>
@@ -213,7 +237,7 @@
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
-            <version>4.9</version>
+            <version>4.13.1</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -246,12 +270,12 @@
         <dependency>
             <groupId>org.apache.logging.log4j</groupId>
             <artifactId>log4j-api</artifactId>
-            <version>2.11.0</version>
+            <version>2.13.2</version>
         </dependency>
         <dependency>
             <groupId>org.apache.logging.log4j</groupId>
             <artifactId>log4j-core</artifactId>
-            <version>2.11.0</version>
+            <version>2.13.2</version>
         </dependency>
         <dependency>
             <groupId>commons-net</groupId>

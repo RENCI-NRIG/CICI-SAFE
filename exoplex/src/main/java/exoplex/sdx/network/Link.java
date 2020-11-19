@@ -4,12 +4,14 @@ public class Link {
   private String linkName = "";
   private String ipPrefix = "";
   private String mask = "/24";
-  private long capacity = 0;
+  private long capacityAB = 0;
+  private long usedBwAB;
+  private long capacityBA = 0;
+  private long usedBwBA;
   private String interfaceA = null;
   private String nodeA = null;
   private String interfaceB = null;
   private String nodeB = null;
-  private long usedBw;
 
   public Link() {
   }
@@ -43,8 +45,10 @@ public class Link {
       this.interfaceB = NetworkUtil.computeInterfaceName(nodeb, linkname);
       this.nodeB = nodeb;
     }
-    this.capacity = cap;
-    this.usedBw = 0;
+    this.capacityAB = cap;
+    this.usedBwAB = 0;
+    this.capacityBA = cap;
+    this.usedBwBA = 0;
   }
 
   public String getLinkName() {
@@ -82,7 +86,7 @@ public class Link {
   public String getPairNodeName(String nodeName) {
     if (nodeName.equals(nodeA)) {
       return nodeB;
-    } else if (nodeName.equals(interfaceB)) {
+    } else if (nodeName.equals(nodeB)) {
       return nodeA;
     }
     return null;
@@ -127,23 +131,64 @@ public class Link {
   }
 
   public long getAvailableBW() {
-    return this.capacity - this.usedBw;
+    return getAvailableBW(nodeA, nodeB);
   }
 
   public void useBW(long bw) {
-    this.usedBw += bw;
+    this.useBW(nodeA, nodeB, bw);
+    this.useBW(nodeB, nodeA, bw);
   }
 
   public void releaseBW(long bw) {
-    this.usedBw -= bw;
+    this.releaseBW(nodeA, nodeB, bw);
+    this.releaseBW(nodeB, nodeA, bw);
   }
+
+  public long getAvailableBW(String node1, String node2) {
+    try {
+      if (node1.equals(nodeA) && node2.equals(nodeB)) {
+        return this.capacityAB - usedBwAB;
+      } else if (node2.equals(nodeA) && node1.equals(nodeB)) {
+        return this.capacityBA - usedBwBA;
+      }
+    } catch (Exception e) {
+      e.printStackTrace();
+      return 0;
+    }
+    return 0;
+  }
+
+  public void useBW(String node1, String node2, long bw) {
+    try {
+      if (node1.equals(nodeA) && node2.equals(nodeB)) {
+        usedBwAB += bw;
+      } else if (node2.equals(nodeA) && node1.equals(nodeB)) {
+        usedBwBA += bw;
+      }
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+  }
+
+  public void releaseBW(String node1, String node2, long bw) {
+    try {
+      if (node1.equals(nodeA) && node2.equals(nodeB)) {
+        usedBwAB -= bw;
+      } else if (node2.equals(nodeA) && node1.equals(nodeB)) {
+        usedBwBA -= bw;
+      }
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+  }
+
 
   public boolean equals(Link link) {
     return linkName.equals(link.linkName);
   }
 
   public String toString() {
-    return nodeA + ":" + nodeB + " " + getAvailableBW();
+    return String.format("%s:%s", nodeA, nodeB);
   }
 
   public boolean hasNode(String nodeName) {
@@ -151,10 +196,36 @@ public class Link {
   }
 
   public long getCapacity() {
-    return capacity;
+    return this.getCapacity(nodeA, nodeB);
   }
 
   public void setCapacity(long cap) {
-    this.capacity = cap;
+    this.setCapacity(nodeA, nodeB, cap);
+    this.setCapacity(nodeB, nodeA, cap);
+  }
+
+  public long getCapacity(String node1, String node2) {
+    try {
+      if (node1.equals(nodeA) && node2.equals(nodeB)) {
+        return capacityAB;
+      } else if (node2.equals(nodeA) && node1.equals(nodeB)) {
+        return capacityBA;
+      }
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+    return 0;
+  }
+
+  public void setCapacity(String node1, String node2, long cap) {
+    try {
+      if (node1.equals(nodeA) && node2.equals(nodeB)) {
+        capacityAB = cap;
+      } else if (node2.equals(nodeA) && node1.equals(nodeB)) {
+        capacityBA = cap;
+      }
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
   }
 }

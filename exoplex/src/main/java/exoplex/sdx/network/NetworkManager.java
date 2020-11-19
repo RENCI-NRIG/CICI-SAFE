@@ -2,6 +2,8 @@ package exoplex.sdx.network;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.json.JSONArray;
+import org.json.JSONObject;
 import sun.nio.ch.Net;
 
 import java.util.*;
@@ -112,7 +114,7 @@ public class NetworkManager {
     putInterface(intf);
     Router logRouter = getRouter(ra);
     if (logRouter != null) {
-      logRouter.addGateway(gw);
+      logRouter.addGateway(linkName, gw);
       logRouter.addInterface(intf.getName());
       putRouter(logRouter);
       //logRouters.put(ra,logRouter);
@@ -183,7 +185,7 @@ public class NetworkManager {
     return iface.equals(link.getInterfaceA()) ? link.getInterfaceB() : link.getInterfaceA();
   }
 
-  public void updateInterfaceMac(String node, String link, String mac) {
+  public void setInterfaceMac(String node, String link, String mac) {
     if (mac != null) {
       String iface = NetworkUtil.computeInterfaceName(node, link);
       String oldValue = macInterfaceMap.put(mac, iface);
@@ -196,16 +198,37 @@ public class NetworkManager {
     }
   }
 
-  public void updatePortMac(String dpid, String portNum, String hwAddr) {
+  public void updatePortData(String dpid, JSONArray ports) {
     HashSet<String> macSet = dpidMacsMap.computeIfAbsent(dpid, k -> new HashSet<>());
-    String oldVal = macPortMap.put(hwAddr, portNum);
-    macSet.add(hwAddr);
-    if (!portNum.equals(oldVal)) {
-      logger.debug(String.format("Port number for hw: %s on dpid: %s updated from %s to " +
-        "%s", hwAddr, dpid, oldVal, portNum));
-      if (macInterfaceMap.containsKey(hwAddr)) {
-        updateInterface(macInterfaceMap.get(hwAddr), portNum, hwAddr);
+    HashSet<String> staleMacs = new HashSet<>(macSet);
+    for (int i = 0; i < ports.length(); i++) {
+      try {
+        JSONObject port = ports.getJSONObject(i);
+        String hwAddr = port.getString("hw_addr");
+        String portNum = String.valueOf(port.getInt("port_no"));
+        if (staleMacs.contains(hwAddr)) {
+          staleMacs.remove(hwAddr);
+        } else {
+          macSet.add(hwAddr);
+        }
+        String oldVal = macPortMap.put(hwAddr, portNum);
+        if (!portNum.equals(oldVal)) {
+          logger.debug(String.format("Port number for hw: %s on dpid: %s updated from %s to " +
+                  "%s", hwAddr, dpid, oldVal, portNum));
+          if (macInterfaceMap.containsKey(hwAddr)) {
+            updateInterface(macInterfaceMap.get(hwAddr), portNum, hwAddr);
+          }
+        }
+      } catch (Exception e) {
+        logger.trace(e.getMessage());
       }
+    }
+    //remove stale interface
+    for (String staleMac: staleMacs) {
+        macSet.remove(staleMac);
+        macPortMap.remove(staleMac);
+        String interfaceName = macInterfaceMap.remove(staleMac);
+        interfaceMap.remove(interfaceName);
     }
   }
 
@@ -233,6 +256,14 @@ public class NetworkManager {
     return interfaceMap.get(interfaceName);
   }
 
+  public String getInterfaceIP(String interfaceName) {
+    return interfaceMap.get(interfaceName).getIp();
+  }
+
+  public String getGateWayOfExternalLink(String linkName) {
+    return getRouter(getLink(linkName).getNodeA()).getGateWay(linkName);
+  }
+
   public Collection<Router> getRouters() {
     return nameRouterMap.values();
   }
@@ -241,7 +272,7 @@ public class NetworkManager {
     return linkMap.values();
   }
 
-  public Collection<Interface> getInterfaces() {
-    return interfaceMap.values();
+  public Collection<String> getInterfaces() {
+    return interfaceMap.keySet();
   }
 }

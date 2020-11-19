@@ -26,7 +26,6 @@ public class AreaBasedQuadTree {
   private AreaBasedQuadTree[] children;
 
   //Crossing filter set
-
   private PrefixTree cfsX;
 
   private PrefixTree cfsY;
@@ -65,8 +64,8 @@ public class AreaBasedQuadTree {
 
   public void insert(Rectangle rect) {
     if (!this.area.contains(rect)) {
-      logger.debug(String.format("Rectangle %s is fully contained in this node, not added",
-        rect));
+      logger.debug(String.format("Rectangle %s is not fully contained in this node, not added",
+              rect));
       return;
     }
     this.empty = false;
@@ -84,21 +83,27 @@ public class AreaBasedQuadTree {
     //check if children are not null
     if (children[0] == null) {
       objects.add(rect);
-    }
-    //split node
-    if (objects.size() > MAX_CACHED) {
-      if (children[0] == null) {
-        splitNode();
-      }
-      for (Rectangle r : objects) {
-        for (AreaBasedQuadTree child : this.children) {
-          if (child.contains(r)) {
-            child.insert(r);
-            break;
+      //split node
+      if (objects.size() > MAX_CACHED) {
+        if (children[0] == null) {
+          splitNode();
+        }
+        for (Rectangle r : objects) {
+          for (AreaBasedQuadTree child : this.children) {
+            if (child.contains(r)) {
+              child.insert(r);
+              break;
+            }
           }
         }
+        objects.clear();
       }
-      objects.clear();
+    } else {
+      for (AreaBasedQuadTree child : this.children) {
+        if (child.contains(rect)) {
+          child.insert(rect);
+        }
+      }
     }
   }
 

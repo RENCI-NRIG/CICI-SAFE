@@ -4,10 +4,9 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import exoplex.common.utils.ServerOptions;
 import exoplex.sdx.core.CoreProperties;
-import exoplex.sdx.core.SliceHelper;
-import exoplex.sdx.network.RoutingManager;
-import exoplex.sdx.safe.SafeManager;
+import exoplex.sdx.core.exogeni.SliceHelper;
 import exoplex.sdx.slice.SliceManager;
+import exoplex.sdx.slice.SliceProperties;
 import exoplex.sdx.slice.exogeni.SiteBase;
 import exoplex.sdx.slice.exogeni.ExoGeniSliceModule;
 import org.apache.commons.cli.CommandLine;
@@ -54,7 +53,8 @@ public class DockerServerSlice extends SliceHelper {
     s.addPlexusController(SiteBase.get("BBN"), "plexus");
     s.commitAndWait();
     s.loadSlice();
-    checkSafeServer(s.getManagementIP("safe-server"), coreProperties.getRiakIp());
+    checkSafeServer(s.getManagementIP(SliceProperties.SAFESERVER),
+      coreProperties.getRiakIp());
     checkPlexus(s, s.getManagementIP("plexus"), CoreProperties.getPlexusImage());
     System.out.println(String.format("Safe server IP %s", s.getManagementIP("safe-server")));
     System.out.println(String.format("plexus server IP %s", s.getManagementIP("plexus")));

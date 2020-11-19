@@ -3,13 +3,13 @@ package exoplex.demo;
 import com.google.inject.Injector;
 import exoplex.client.exogeni.SdxExogeniClient;
 import exoplex.sdx.core.CoreProperties;
-import exoplex.sdx.core.RestService;
-import exoplex.sdx.core.SdxManager;
-import exoplex.sdx.core.SdxServer;
+import exoplex.sdx.core.SdxManagerBase;
+import exoplex.sdx.core.exogeni.ExoRestService;
+import exoplex.sdx.core.exogeni.ExoSdxServer;
 import exoplex.sdx.network.SdnReplay;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import riak.RiakSlice;
+import safe.RiakSlice;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -18,7 +18,7 @@ import java.util.HashMap;
 
 public abstract class AbstractTest {
   final static Logger logger = LogManager.getLogger(AbstractTest.class);
-  public HashMap<String, SdxManager> sdxManagerMap = new HashMap<>();
+  public HashMap<String, SdxManagerBase> sdxManagerMap = new HashMap<>();
   public HashMap<String, SdxExogeniClient> exogeniClients = new HashMap<>();
   public Injector injector;
   public boolean deleteSliceAfterTest = true;
@@ -40,6 +40,7 @@ public abstract class AbstractTest {
     if (testSetting.safeEnabled) {
       RiakSlice riakSlice = injector.getInstance(RiakSlice.class);
       riakIP = riakSlice.run(new CoreProperties(testSetting.riakArgs));
+      logger.info(String.format("Riak IP: %s", riakIP));
     }
     testSlice.createSdxSlices(riakIP);
     testSlice.createClientSlices(riakIP);
@@ -47,10 +48,10 @@ public abstract class AbstractTest {
   }
 
   public void deleteSlices() throws Exception {
-    RiakSlice riakSlice = injector.getInstance(RiakSlice.class);
+    //RiakSlice riakSlice = injector.getInstance(RiakSlice.class);
     CoreProperties coreProperties = new CoreProperties(testSetting.riakArgs);
     coreProperties.setType("delete");
-    riakSlice.run(coreProperties);
+    //riakSlice.run(coreProperties);
     testSlice.deleteSdxSlices();
     testSlice.deleteClientSlices();
   }
@@ -61,7 +62,7 @@ public abstract class AbstractTest {
       deleteSlices();
     }
     logger.info("shuttin down all http servers");
-    RestService.shutDownAllHttpServers();
+    ExoRestService.shutDownAllHttpServers();
   }
 
   public void startClients() {
@@ -78,6 +79,18 @@ public abstract class AbstractTest {
     }
   }
 
+  public void startClient(String clientSlice) {
+    SdxExogeniClient sdxExogeniClient = injector.getProvider(SdxExogeniClient.class).get();
+    CoreProperties coreProperties = new CoreProperties(testSetting.clientArgs);
+    coreProperties.setIpPrefix(testSetting.clientIpMap.get(clientSlice));
+    coreProperties.setSafeKeyFile(testSetting.clientKeyMap.get(clientSlice));
+    coreProperties.setSliceName(clientSlice);
+    coreProperties.setSafeEnabled(testSetting.safeEnabled);
+    coreProperties.setServerUrl(testSetting.sdxUrls.get(testSetting.clientSdxMap.get(clientSlice)));
+    sdxExogeniClient.config(coreProperties);
+    exogeniClients.put(clientSlice, sdxExogeniClient);
+  }
+
   public void startSdxServersAndClients(boolean reset) {
     ArrayList<Thread> tlist = new ArrayList<>();
     for (String slice : testSetting.sdxSliceNames) {
@@ -85,7 +98,7 @@ public abstract class AbstractTest {
         @Override
         public void run() {
           try {
-            SdxServer sdxServer = injector.getProvider(SdxServer.class).get();
+            ExoSdxServer exoSdxServer = injector.getProvider(ExoSdxServer.class).get();
             CoreProperties coreProperties = new CoreProperties(testSetting.sdxArgs.get(slice));
             coreProperties.setServerUrl(testSetting.sdxUrls.get(slice));
             coreProperties.setSliceName(slice);
@@ -93,8 +106,10 @@ public abstract class AbstractTest {
             coreProperties.setSafeEnabled(testSetting.safeEnabled);
             if (reset) {
               coreProperties.setReset(true);
+            } else {
+              coreProperties.setReset(false);
             }
-            SdxManager sdxManager = sdxServer.run(coreProperties);
+            SdxManagerBase sdxManager = exoSdxServer.run(coreProperties);
             sdxManagerMap.put(slice, sdxManager);
           } catch (Exception e) {
             e.printStackTrace();
@@ -117,17 +132,17 @@ public abstract class AbstractTest {
     startClients();
   }
 
-  public String getSafeServerIPfromSdxManager(SdxManager sdxManager) {
+  public String getSafeServerIPfromSdxManager(SdxManagerBase exoSdxManager) {
     Method getSafeServerIP = null;
     try {
-      getSafeServerIP = sdxManager.getClass().getDeclaredMethod("getSafeServerIP", null);
+      getSafeServerIP = exoSdxManager.getClass().getDeclaredMethod("getSafeServerIP", null);
     } catch (NoSuchMethodException e) {
       e.printStackTrace();
     }
     getSafeServerIP.setAccessible(true);
     String safeServerIp = null;
     try {
-      safeServerIp = (String) getSafeServerIP.invoke(sdxManager);
+      safeServerIp = (String) getSafeServerIP.invoke(exoSdxManager);
     } catch (IllegalAccessException e) {
       e.printStackTrace();
     } catch (InvocationTargetException e) {
@@ -143,14 +158,32 @@ public abstract class AbstractTest {
   }
 
   public void stitchCustomerSlices() {
+    ArrayList<Thread> tlist = new ArrayList<>();
     for (String clientSlice : testSetting.clientSlices) {
-      String clientGateWay = testSetting.clientIpMap.get(clientSlice).replace(".1/24", ".2");
-      String sdxInterfaceIP = testSetting.clientIpMap.get(clientSlice).replace(".1/24", ".1/24");
-      String gw = exogeniClients.get(clientSlice).processCmd(String.format("stitch CNode1 %s %s",
-        clientGateWay, sdxInterfaceIP));
-      exogeniClients.get(clientSlice).processCmd(String.format("route %s %s",
-        testSetting.clientIpMap.get(clientSlice),
-        gw));
+      Thread t = new Thread() {
+        @Override
+        public void run() {
+          String clientGateWay = testSetting.clientIpMap.get(clientSlice).replace(".1/24", ".2");
+          String sdxInterfaceIP = testSetting.clientIpMap.get(clientSlice).replace(".1/24", ".1/24");
+          String gw = exogeniClients.get(clientSlice).processCmd(String.format("stitch CNode1 %s %s",
+            clientGateWay, sdxInterfaceIP));
+          exogeniClients.get(clientSlice).processCmd(String.format("route %s %s",
+            testSetting.clientIpMap.get(clientSlice),
+            gw));
+
+        }
+      };
+      tlist.add(t);
+    }
+    for (Thread t : tlist) {
+      t.start();
+    }
+    try {
+      for (Thread t : tlist) {
+        t.join();
+      }
+    } catch (Exception e) {
+      e.printStackTrace();
     }
   }
 
@@ -181,7 +214,7 @@ public abstract class AbstractTest {
     return checkConnection(3);
   }
 
-  public boolean checkConnection(int times) {
+  public boolean checkConnection(int maxTimes) {
     logger.debug("checking connections");
     boolean flag = true;
     for (Integer[] pair : testSetting.clientConnectionPairs) {
@@ -190,18 +223,21 @@ public abstract class AbstractTest {
       String client = testSetting.clientSlices.get(i);
       String peer = testSetting.clientSlices.get(j);
       String peerIp = testSetting.clientIpMap.get(peer);
-      for (int t = 0; t < times; t++) {
+      for (int t = 0; t < maxTimes; t++) {
         if (!exogeniClients.get(client).checkConnectivity("CNode1",
           peerIp.replace(".1/24", ".2"), 1)) {
           flag = false;
-          logFlowTables(true);
         } else {
           flag = true;
           break;
         }
       }
     }
-    assert flag;
+    if(!flag) {
+      deleteSliceAfterTest = false;
+      logFlowTables(false);
+    }
+    //assert flag;
     return flag;
   }
 
@@ -265,7 +301,7 @@ public abstract class AbstractTest {
         patterns.add(String.format(routeFlowPattern1, ip1));
       }
     }
-    for (SdxManager sdxManager : sdxManagerMap.values()) {
+    for (SdxManagerBase sdxManager : sdxManagerMap.values()) {
       try {
         sdxManager.logFlowTables(patterns, unWantedPatterns);
       } catch (Exception e) {
@@ -277,8 +313,7 @@ public abstract class AbstractTest {
   public void replaySdnConfiguration(String logFile) {
     //startSdxServersAndClients(false);
     SdnReplay.replay(logFile);
-    startClients();
-    checkConnection();
+    //checkConnection();
     logger.info("replay done");
   }
 

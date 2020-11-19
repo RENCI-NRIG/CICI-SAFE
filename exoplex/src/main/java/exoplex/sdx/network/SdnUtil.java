@@ -26,12 +26,18 @@ public class SdnUtil {
     return "http://" + controller + "/qos/queue/" + dpid;
   }
 
-  static JSONObject queueData(int maxrate, List<Long> queuerate) {
+  static JSONObject queueData(long maxrate, List<Long> queuerate,
+                              String portName) {
     JSONObject params = new JSONObject();
     params.put("type", "linux-htb");
     params.put("max_rate", String.valueOf(maxrate));
+    //params.put("port_name", portName);
     JSONArray queues = new JSONArray();
-    for (Long r : queuerate) {
+    JSONObject defaultQ = new JSONObject();
+    defaultQ.put("max_rate", String.valueOf(maxrate));
+    queues.put(defaultQ);
+    for (int i = 1; i < queuerate.size(); i ++) {
+      long r = queuerate.get(i);
       JSONObject q = new JSONObject();
       q.put("max_rate", String.valueOf(r));
       queues.put(q);
@@ -167,7 +173,7 @@ public class SdnUtil {
         JSONObject obj = new JSONObject(res);
         return obj;
       } catch (Exception e) {
-        logger.error(e.getMessage());
+        e.printStackTrace();
         logger.error(res);
       }
     } catch (Exception e) {
@@ -295,6 +301,9 @@ public class SdnUtil {
     entity.put("cookie", cookie.incrementAndGet());
     entity.put("cookie_mask", 0);
     entity.put("table_id", 0);
+//    entity.put("cookie_mask", 1);
+//    entity.put("table_id", tableId);
+    logger.error("Ingress flow command is not checked after merging");
     //entity.put("idle_timeout", 300);
     //entity.put("hard_timeout", 300);
     entity.put("priority", priority);
@@ -358,9 +367,9 @@ public class SdnUtil {
     return new String[]{url, entity.toString()};
   }
 
-  public static void deleteAllFlows(String controller, String dpid) {
+  public static String deleteAllFlows(String controller, String dpid) {
     String url = "http://" + controller + "/stats/flowentry/clear/" + Long.parseLong(dpid, 16);
-    HttpUtil.delete(url);
+    return HttpUtil.delete(url);
   }
 
   public static String getAllFlowStats(String controller, String dpid) {

@@ -12,6 +12,7 @@ import exoplex.sdx.slice.exogeni.NodeBaseInfo;
 import exoplex.sdx.slice.exogeni.SiteBase;
 import org.apache.commons.lang.time.DateUtils;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.renci.ahab.libndl.Slice;
@@ -48,7 +49,6 @@ public class SliceManagerMock extends SliceManager implements Serializable {
   private ISliceTransportAPIv1 sliceProxy;
   private SliceAccessContext<SSHAccessToken> sctx;
   private Slice slice;
-  private HashSet<String> reachableNodes = new HashSet<>();
 
   @Inject
   public SliceManagerMock(@Assisted("sliceName") String sliceName,
@@ -80,6 +80,12 @@ public class SliceManagerMock extends SliceManager implements Serializable {
     }
     return sliceProxy;
   }
+
+  public void expectOneInterfaceDiff(String node, boolean add){
+
+  }
+
+  public void waitForInterfaces(String node){}
 
   public void writeToFile(String fileName) {
     File f = new File(fileName);
@@ -133,6 +139,10 @@ public class SliceManagerMock extends SliceManager implements Serializable {
   public void createSlice() {
     logger.info(String.format("create %s", sliceName));
     slice = Slice.create(sliceProxy, sctx, sliceName);
+  }
+
+  public boolean revokeStitch(String GUID) throws TransportException {
+    return true;
   }
 
   public void permitStitch(String secret, String GUID) throws TransportException {
@@ -361,15 +371,6 @@ public class SliceManagerMock extends SliceManager implements Serializable {
 
   public String getComputeNode(String nm) {
     ComputeNode node = (ComputeNode) this.slice.getResourceByName(nm);
-    while (node == null || node.getState() == null || node.getManagementIP() == null) {
-      logger.debug(String.format("getComputeNode %s", nm));
-      try {
-        reloadSlice();
-      } catch (Exception e) {
-
-      }
-      node = (ComputeNode) this.slice.getResourceByName(nm);
-    }
     return node.getName();
   }
 
@@ -547,7 +548,7 @@ public class SliceManagerMock extends SliceManager implements Serializable {
     return "to be implemented";
   }
 
-  public List<String> getPhysicalInterfaces(String nodeName) {
+  public List<ImmutablePair<String, String>> getPhysicalInterfaces(String nodeName) {
     String key = String.format("%s_%s", sliceName, nodeName);
     if (interfaceNumMap.containsKey(key)) {
       int num = interfaceNumMap.get(key);
@@ -557,9 +558,10 @@ public class SliceManagerMock extends SliceManager implements Serializable {
       interfaceNumMap.put(key, 1);
     }
     int num = interfaceNumMap.get(key);
-    ArrayList<String> res = new ArrayList<>();
+    ArrayList<ImmutablePair<String, String>> res = new ArrayList<>();
     for (int i = 1; i <= num; i++) {
-      res.add("eth" + i);
+      res.add(new ImmutablePair<>("eth" + i, String.format("00:00:00:00:00:0" +
+        "%s", i)));
     }
     return res;
   }
@@ -692,7 +694,9 @@ public class SliceManagerMock extends SliceManager implements Serializable {
 
   public void addSafeServer(String siteName, String riakIp, String safeDockerImage, String
     safeServerScript) {
-    addDocker(siteName, "safe-server", Scripts.getSafeScript_v1(riakIp, safeDockerImage,
+    addDocker(siteName, SliceProperties.SAFESERVER,
+      Scripts.getSafeScript_v1(riakIp,
+      safeDockerImage,
       safeServerScript), NodeBase.xoMedium);
   }
 

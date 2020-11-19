@@ -49,12 +49,12 @@ public class PrefixPairMatchingTest {
     }
 
     @Test
-    public void test(){
-	int[] multiplier = new int[]{1,2,3,4,5,6,7,8,9,10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20};
-	for( int m: multiplier){
+    public void test() {
+        int[] multiplier = new int[]{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20};
+        for (int m : multiplier) {
             aqt = new AreaBasedQuadTree();
-       	    testIPPrefixMatching(prefixPairBase * m, 10000, 50 - m);
-	}
+            testIPPrefixMatching(prefixPairBase * m, 10000, 50 - m);
+        }
     }
 
     private void testIPPrefixMatching(int prefixPairNum, int dOnly, int ratio){
@@ -139,74 +139,74 @@ public class PrefixPairMatchingTest {
      * @param ratio  number of prefixPairs
      */
     private void generatePrefixPairs(int totalNum, int numDestOnly, int ratio
-        , int levels){
+        , int levels) {
         //generated
         int nd = 0;
         int[] threshold = new int[levels];
         int base = 1;
         threshold[0] = 1;
-        for(int i = 1; i< levels; i++){
+        for (int i = 1; i < levels; i++) {
             threshold[i] = threshold[i - 1] * (ratio + 1);
         }
         ArrayList<String>[] pls = new ArrayList[levels];
-        for(int i = 0; i< levels; i++){
+        for (int i = 0; i < levels; i++) {
             pls[i] = new ArrayList<>(prefixesByLength[i]);
         }
-        int MAX  = threshold[levels - 1];
-	long sumLength = 0;
+        int MAX = threshold[levels - 1];
+        long sumLength = 0;
         long numPrefix = 0;
-        while(prefixPairs.size() < totalNum){
+        while (prefixPairs.size() < totalNum) {
             int rand = random.nextInt(MAX);
             int rand2 = random.nextInt(MAX);
-            String prefix1=null;
-            String prefix2=null;
-            for(int i = 0; i< levels; i++){
-                if(rand < threshold[i]){
+            String prefix1 = null;
+            String prefix2 = null;
+            for (int i = 0; i < levels; i++) {
+                if (rand < threshold[i]) {
                     int idx1 = random.nextInt(pls[i].size());
                     prefix1 = pls[i].get(idx1);
-                    if(nd < numDestOnly && Integer.valueOf(prefix1.split("/")[1]) >8){
-                        nd ++;
+                    if (nd < numDestOnly && Integer.valueOf(prefix1.split("/")[1]) > 8) {
+                        nd++;
                         ImmutablePair<String, String> pair =
-                            new ImmutablePair<>("0.0.0.0/0", prefix1);
+                                new ImmutablePair<>("0.0.0.0/0", prefix1);
                         prefixPairs.add(pair);
-			numPrefix += 2;
-			sumLength += Integer.valueOf(prefix1.split("/")[1]);
+                        numPrefix += 2;
+                        sumLength += Integer.valueOf(prefix1.split("/")[1]);
                         queries.add(pair);
                         Rectangle rectangle =
-                            PrefixUtil.prefixPairToRectangle("0.0.0.0/0",
-                            prefix1);
+                                PrefixUtil.prefixPairToRectangle("0.0.0.0/0",
+                                        prefix1);
                         rectanglePrefixPair.put(rectangle, pair);
                         prefixPairRectangle.put(pair, rectangle);
                     }
                     break;
                 }
             }
-            for(int i = 0; i< levels; i++){
-                if(rand2 < threshold[i]){
+            for (int i = 0; i < levels; i++) {
+                if (rand2 < threshold[i]) {
                     int idx2 = random.nextInt(pls[i].size());
                     prefix2 = pls[i].get(idx2);
                     break;
                 }
             }
-	    if( !prefix1.endsWith("/8")
-	        || !prefix2.endsWith("/8")){
+            if (!prefix1.endsWith("/8")
+                    || !prefix2.endsWith("/8")) {
                 ImmutablePair<String, String> pair = new ImmutablePair<>(prefix1,
-                    prefix2);
+                        prefix2);
                 prefixPairs.add(pair);
-		numPrefix += 2;
-		sumLength = sumLength + Integer.valueOf(prefix1.split("/")[1])
-		    + Integer.valueOf(prefix2.split("/")[1]);
+                numPrefix += 2;
+                sumLength = sumLength + Integer.valueOf(prefix1.split("/")[1])
+                        + Integer.valueOf(prefix2.split("/")[1]);
                 queries.add(pair);
                 Rectangle rectangle = PrefixUtil.prefixPairToRectangle(prefix1,
-                    prefix2);
+                        prefix2);
                 rectanglePrefixPair.put(rectangle, pair);
                 prefixPairRectangle.put(pair, rectangle);
- 	    }
+            }
         }
         logger.info(String.format("number of unique prefix pairs %s\nnumber" +
-                " of prefix pairs %s", rectanglePrefixPair.size(),
-            prefixPairs.size()));
-	logger.info(String.format("Average prefix lenth for prefix pairs: %s", sumLength * 1.0 /numPrefix));
+                        " of prefix pairs %s", rectanglePrefixPair.size(),
+                prefixPairs.size()));
+        logger.info(String.format("Average prefix lenth for prefix pairs: %s", sumLength * 1.0 / numPrefix));
     }
 
     private void generatePrefixPairs(int num){

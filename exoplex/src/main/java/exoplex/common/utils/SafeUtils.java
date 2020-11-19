@@ -82,7 +82,7 @@ public class SafeUtils {
     principal, HashMap<String, String> envs, Object[] othervalues) {
     /** Post to remote safesets using apache httpclient */
     String logitem = String.format("curl http://%s/%s -H \"Content-Type:application/json\" -d " +
-        "'{\"principal\": \"%s\", \"methodParams\": [OTHER]}'",
+        "\"{\\\"principal\\\": \\\"%s\\\", \\\"methodParams\\\": [OTHER]}\"",
       safeserver, requestName, principal);
     String res = null;
     try {
@@ -101,7 +101,6 @@ public class SafeUtils {
       params = params.replace("OTHER", othersString);
       logitem = logitem.replace("OTHER", othersString);
       logger.info(logitem);
-      logger.debug(requestName + "  " + params);
 
       StringEntity input = new StringEntity(params);
       input.setContentType("application/json");

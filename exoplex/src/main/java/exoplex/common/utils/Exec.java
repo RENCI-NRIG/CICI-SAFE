@@ -123,6 +123,10 @@ public class Exec {
   }
 
   public static String[] sshExec(String user, String host, String command, String privkey) {
+    if(host == null) {
+      logger.error("host is null");
+      return new String[]{null, null};
+    }
     StringBuilder result = new StringBuilder();
     StringBuilder errResult = new StringBuilder();
     logger.debug(host + ":" + command);

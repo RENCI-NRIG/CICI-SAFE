@@ -1,4 +1,4 @@
-This is the code repository for Exoplex. The SDN controller code we used are in ryu-apps. The SAFE engine code is available at https://github.com/RENCI-NRIG/SAFE. The SAFE policy based routing scripts are available at https://github.com/yaoyj11/safe-multisdx
+This is the code repository for Exoplex. The SDN controller code we used are in ryu-apps. The SAFE enginer code is available at https://github.com/RENCI-NRIG/SAFE. The SAFE policy based routing scripts are available at https://github.com/yaoyj11/safe-multisdx
 
 # Exoplex
 
@@ -9,13 +9,13 @@ b. Deploy Exoplex on VFCs in Chameleon Cloud to connect two Chameleon client net
 
 Guide for running ExoPlex server based on VFC on Chameleon is available at https://github.com/RENCI-NRIG/CICI-SAFE/blob/vfc/vfc.md.
 
+## Run ExoPlex on ESNet
 
 ## Run ExoPlex on ExoGENI slice
-
 ### 1. Compile code
 The java code is compiled with JDK8.
-1. Install Orca5 (https://github.com/RENCI-NRIG/orca5)
-2. Install ahab1.7 (https://github.com/RENCI-NRIG/ahab)
+a. Install Orca5 (https://github.com/RENCI-NRIG/orca5)
+b. Install ahab1.7 (https://github.com/RENCI-NRIG/ahab)
 
         sudo apt install -y maven openjdk-8-jdk
         WORKING_DIR=~
@@ -29,7 +29,7 @@ The java code is compiled with JDK8.
         cd ahab
         mvn install
 
-3. Compile the code
+c. Compile the code
 
         cd CICI-SAFE/exoplex
         mvn  clean package appassembler:assemble -DskipTests

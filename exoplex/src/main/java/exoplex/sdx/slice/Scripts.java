@@ -13,8 +13,8 @@ public class Scripts {
   public static String getPlexusScript(String plexusImage) {
     String script = aptUpdate()
       + "sudo docker pull %s\n"
-      + "sudo docker run -i -t -d -p 8080:8080 -p 6633:6633 -p 3000:3000 -h " +
-      "plexus --name plexus %s\n";
+      + "sudo docker run -i -t -d -p 8080:8080 -p  6633:6633 "
+      + "-p 3000:3000 -h plexus --name plexus %s\n";
     script = String.format(script, plexusImage, plexusImage);
     //+"docker exec -d plexus /bin/bash -c  \"cd /root/;./sdx.sh\"\n";
     return script;
@@ -56,10 +56,9 @@ public class Scripts {
     String script = String.format(
       "sudo docker pull yaoyj11/%s\n"
         + "sudo docker run -i -t -d -p 7777:7777 -h safe --name safe yaoyj11/%s\n"
-        + "sudo docker exed -d safe /usr/bin/git clone -b multisdx " +
-        "https://github" +
-        ".com/yaoyj11/safe-multisdx.git\n"
-        + "sudo docker exec -d safe /bin/bash -c  \"cd /root/safe;"
+        + "sudo docker exec -itd safe /usr/bin/git clone -b multisdx " +
+        "https://github.com/yaoyj11/safe-multisdx.git\n"
+        + "sudo docker exec -itd safe /bin/bash -c  \"cd /root/safe;"
         + "sed -i 's/http:\\/\\/.*:8098/http:\\/\\/" + riakip + ":8098/g' "
         + "safe-server/src/main/resources/application.conf;"
         + "cd /root; ./safe-multisdx/%s\"\n", safeDockerImg, safeDockerImg, safeServerScript);
@@ -110,12 +109,20 @@ public class Scripts {
   }
 
   public static String stopAptDailyService() {
-    return "systemctl stop apt-daily.service\n" +
-      "systemctl kill --kill-who=all apt-daily.service\n" +
-      "while ! (systemctl list-units --all apt-daily.service | egrep -q '(dead|failed)')\n" +
-      "do\n" +
-      "  sleep 1;\n" +
-      "done\n";
+    return "\nsudo systemctl stop apt-daily.service\n" +
+           "sudo systemctl kill --kill-who=all apt-daily.service\n" +
+           "while ! (systemctl list-units --all apt-daily.service | " +
+           "egrep -q '(dead|failed)')\n" +
+           "do\n" +
+           "  echo 'sleepig kill loop'\n" +
+           "  sleep 1\n" +
+           "done\n" +
+           "sleep 60\n" +
+           "while (pgrep -af 'apt'|grep -v docker)\n" +
+           "do\n" +
+           "  echo 'sleepig apt loop'\n" +
+           "  sleep 1\n" +
+           "done\n";      
   }
 
   public static String installDocker() {
@@ -163,7 +170,7 @@ public class Scripts {
   }
 
   public static String restartQuagga() {
-    return "sudo service zebra restart;";
+    return "sudo service zebra restart; sudo service quagga restart";
   }
 
   public static String stopQuagga() {

@@ -68,6 +68,43 @@ public class Rectangle extends Object {
       && rectangle.getY() + rectangle.getH() <= this.getY() + this.getH();
   }
 
+  /**
+   * If this has higher priority, return 1
+   * @param o1
+   * @return
+   */
+  public int compareInbound(Rectangle o1) {
+    if(this.getW() > o1.getW()) {
+      return -1;
+    } else if (this.getW() < o1.getW()) {
+      return 1;
+    } else {
+      if(this.getH() > o1.getH()) {
+        return -1;
+      } else if (this.getH() < o1.getH()) {
+        return 1;
+      } else {
+        return 0;
+      }
+    }
+  }
+
+  public int compareOutbound(Rectangle o1) {
+    if(this.getH() > o1.getH()) {
+      return -1;
+    } else if (this.getH() < o1.getH()) {
+      return 1;
+    } else {
+      if(this.getW() > o1.getW()) {
+        return -1;
+      } else if (this.getW() < o1.getW()) {
+        return 1;
+      } else {
+        return 0;
+      }
+    }
+  }
+
   @Override
   public boolean equals(Object rectangle) {
     if (!(rectangle instanceof Rectangle)) {
@@ -85,7 +122,7 @@ public class Rectangle extends Object {
 
   @Override
   public String toString() {
-    return String.format("(%s, %s),(%s, %s)", this.getX(),
+    return String.format("[%s, %s),[%s, %s)", this.getX(),
       this.getX() + this.getW(), this.getY(), this.getY() + this.getH());
   }
 }

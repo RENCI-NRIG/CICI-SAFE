@@ -1,15 +1,17 @@
-package exoplex.sdx.core;
+package exoplex.sdx.core.exogeni;
 
 import com.google.inject.Guice;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
 import exoplex.common.utils.PathUtil;
 import exoplex.demo.singlesdx.SingleSdxModule;
+import exoplex.sdx.core.CoreProperties;
 import exoplex.sdx.network.Link;
 import exoplex.sdx.safe.SafeManager;
 import exoplex.sdx.slice.Scripts;
 import exoplex.sdx.slice.SliceManager;
 import exoplex.sdx.slice.SliceManagerFactory;
+import exoplex.sdx.slice.SliceProperties;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import safe.Authority;
@@ -39,7 +41,6 @@ public class SliceHelper {
   protected String mask = "/24";
   protected Authority authority;
   protected CoreProperties coreProperties;
-
   protected HashMap<String, Link> links = new HashMap<String, Link>();
   protected HashMap<String, ArrayList<String>> computenodes = new HashMap<String,
     ArrayList<String>>();
@@ -235,7 +236,7 @@ public class SliceHelper {
     });
     if (coreProperties.isSafeEnabled()) {
       if (coreProperties.isSafeInSlice()) {
-        coreProperties.setSafeServerIp(serverSlice.getManagementIP("safe-server"));
+        coreProperties.setSafeServerIp(serverSlice.getManagementIP(SliceProperties.SAFESERVER));
       }
       tlist.add(new Thread() {
         @Override

@@ -5,7 +5,7 @@ import com.google.inject.Provider;
 import exoplex.client.exogeni.ExogeniClientSlice;
 import exoplex.common.utils.Exec;
 import exoplex.sdx.core.CoreProperties;
-import exoplex.sdx.core.SliceHelper;
+import exoplex.sdx.core.exogeni.SliceHelper;
 import exoplex.sdx.slice.SliceManager;
 import exoplex.sdx.slice.exogeni.SiteBase;
 import org.apache.logging.log4j.LogManager;
