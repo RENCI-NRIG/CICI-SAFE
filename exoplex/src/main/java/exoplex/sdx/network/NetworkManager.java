@@ -28,6 +28,9 @@ public class NetworkManager {
 
   public Router getRouter(String routerName) {
     logger.info(String.format("getDPID %s", routerName));
+    if (!nameRouterMap.containsKey(routerName)) {
+        logger.warn("Router not found: " + routerName);
+    }
     Router logRouter = nameRouterMap.get(routerName);
     return logRouter;
   }

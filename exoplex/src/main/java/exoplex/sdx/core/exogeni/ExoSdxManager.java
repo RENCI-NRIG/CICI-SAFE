@@ -1553,7 +1553,6 @@ public class ExoSdxManager extends SdxManagerBase {
     configRouters(serverSlice);
     routingManager.waitTillAllOvsConnected(SDNController, serverSlice.mocked);
 
-    logger.error("The following two lines unchecked");
     routingManager.queryAllPortData();
     updateMacAddr();
 

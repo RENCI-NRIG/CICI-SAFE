@@ -95,8 +95,8 @@ public class RoutingManager extends AbstractRoutingManager {
     } else {
       result = false;
     }
-    allowIngress(SdnUtil.DEFAULT_ROUTE, ipa, networkManager.getPort(routerA, linkName), 1, "ip",
-      20, routerA, controller);
+    //allowIngress(SdnUtil.DEFAULT_ROUTE, ipa, networkManager.getPort(routerA, linkName), 1, "ip",
+    //  20, routerA, controller);
     return result;
   }
 
@@ -156,12 +156,14 @@ public class RoutingManager extends AbstractRoutingManager {
       logger.warn(res);
       result = false;
     }
+    /*
     allowIngress(SdnUtil.DEFAULT_ROUTE, SdnUtil.DEFAULT_ROUTE,
       networkManager.getPort(routerA, linkName), 2, null, 60000,
       routerA, controller);
     allowIngress(SdnUtil.DEFAULT_ROUTE, SdnUtil.DEFAULT_ROUTE,
       networkManager.getPort(routerB, linkName), 2, null, 60000,
       routerB, controller);
+    */
     return result;
   }
 
@@ -618,8 +620,8 @@ public class RoutingManager extends AbstractRoutingManager {
   }
 
   public void queryAllPortData() {
-    for (String dpid : networkManager.getAllDpids()) {
-      queryPortData(dpid);
+    for (String routerName : networkManager.getAllRouters()) {
+      queryPortData(routerName);
     }
   }
 

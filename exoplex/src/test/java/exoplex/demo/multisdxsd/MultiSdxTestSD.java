@@ -65,7 +65,7 @@ public class MultiSdxTestSD extends AbstractTest {
     deleteSliceAfterTest = true;
     initTests();
     Authority.authorizationMade = false;
-    //deleteSlices();
+    deleteSlices();
     super.before();
   }
 
