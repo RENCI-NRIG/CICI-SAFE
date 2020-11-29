@@ -395,6 +395,9 @@ public class CoreProperties {
 
   public void setPublicUrl(String publicUrl) {
     this.publicUrl = publicUrl;
+    if (!this.publicUrl.endsWith("/")) {
+      this.publicUrl = this.publicUrl + "/";
+    }
   }
 
   public long getBw() {
@@ -494,6 +497,10 @@ public class CoreProperties {
 
   static public boolean doRouteAdvertise() {
     return CoreProperties.routeAdvertise;
+  }
+
+  public boolean isIngressFilteringEnabled() {
+    return this.sdnApp.equals("rest_ingress");
   }
 
   @Override

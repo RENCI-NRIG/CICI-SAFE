@@ -22,9 +22,9 @@ public class ReactiveFlowTest {
         routingManager.newRouter("s1", "0000000000000001", controller, manageIP);
         routingManager.newRouter("s2", "0000000000000002", controller, manageIP);
         routingManager.newExternalLink("elink0", "10.0.1.1/24", "s1",
-            "10.0.0.2");
+            "10.0.0.2", false);
         routingManager.newExternalLink("elink1", "10.0.2.1/24", "s2",
-            "10.0.1.2");
+            "10.0.1.2", false);
         routingManager.newInternalLink("link0", "10.0.3.1/24", "s1",
             "10.0.3.2/24", "s2", 10);
         routingManager.monitorOnAllRouter("10.0.2.0/24",

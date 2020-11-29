@@ -53,6 +53,7 @@ public class ExoSliceManager extends SliceManager {
   private List<Thread> threadList = new ArrayList<>();
   private HashMap<String, AtomicInteger> expectInterfaceNumMap= new HashMap<>();
   private HashMap<String, String> stitchingSecrets = new HashMap<>();
+  private HashMap<String, String> interfaceMacMap = new HashMap<>();
 
   @Inject
   public ExoSliceManager(@Assisted("sliceName") String sliceName,
@@ -1297,10 +1298,34 @@ public class ExoSliceManager extends SliceManager {
     for (Interface iface : slice.getInterfaces()) {
       if (iface.getName().equals(ifName)) {
         InterfaceNode2Net interfaceNode2Net = (InterfaceNode2Net) iface;
-        return interfaceNode2Net.getMacAddress();
+        String mac = interfaceNode2Net.getMacAddress();
+        if (mac != null) {
+          return mac;
+        }
+        if (mac == null && !interfaceMacMap.containsKey(ifName)) {
+          updateMacFromManifest();
+        }
+        return interfaceMacMap.getOrDefault(ifName, null);
       }
     }
     return null;
+  }
+
+  private void updateMacFromManifest() {
+    try {
+      String manifestRDFString = sliceProxy.sliceStatus(sliceName);
+      String[] lines = manifestRDFString.split("\n");
+      for (int i = lines.length - 1; i > 0; i--) {
+        String line = lines[i];
+        if (line.contains("macAddress")) {
+          String mac = line.split("macAddress>")[1].split("<")[0];
+          String ifaceName = lines[i - 1].split("#")[1].split("\"")[0];
+          interfaceMacMap.put(ifaceName, mac);
+        }
+      }
+    } catch (TransportException e) {
+      logger.warn(e.getMessage());
+    }
   }
 
   public Long getBandwidthOfLink(String linkName) {

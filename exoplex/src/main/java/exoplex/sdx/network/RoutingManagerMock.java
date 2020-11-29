@@ -38,7 +38,7 @@ public class RoutingManagerMock extends AbstractRoutingManager {
    * @return
    */
   public boolean newExternalLink(String linkName, String ipa, String routerA,
-                                 String gw) {
+                                 String gw, boolean ingress) {
     networkManager.addLink(linkName, ipa, routerA, gw);
     String dpid = networkManager.getRouter(routerA).getDPID();
     String controller = networkManager.getRouter(routerA).getController();
@@ -162,17 +162,25 @@ public class RoutingManagerMock extends AbstractRoutingManager {
   public void setOvsdbAddr() {
   }
 
-  synchronized public void setInterfaceMac(String node, String link,
-                                           String mac, String eth) {
+  synchronized public void setInterfaceMac(String node, String link, String mac) {
     if (mac != null) {
       String oldValue = macInterfaceMap.put(mac, NetworkUtil.computeInterfaceName(node, link));
       if (!mac.equals(oldValue)) {
         if (macPortMap.containsKey(mac)) {
           networkManager.updateInterface(NetworkUtil.computeInterfaceName(node, link),
-            macPortMap.get(mac), mac);
+            mac);
         }
       }
     }
+  }
+
+  public boolean installDefaultIngressFilter(
+    String dstIP,
+    String srcIp,
+    String routerName,
+    String gw
+  ) {
+    return true;
   }
 
   synchronized public void queryPortData(String dpid) {
@@ -233,6 +241,15 @@ public class RoutingManagerMock extends AbstractRoutingManager {
   public void printLinks() {
   }
 
-  public void allowIngress(String dstIP, String srcIP, String routerName, String linkName,
-                           int priority, String controller) {}
+  public boolean installIngressFilter(
+    String dstIP,
+    String srcIP,
+    String routerName,
+    String linkName,
+    String dlType,
+    boolean drop) {
+    return true;
+  }
+
+  public void setMacEth(String mac, String eth) {}
 }

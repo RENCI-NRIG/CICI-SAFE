@@ -19,7 +19,20 @@ public abstract class AbstractRoutingManager {
    * @return
    */
   public abstract boolean newExternalLink(String linkName, String ipa, String routerA,
-                                 String gw);
+                                 String gw, boolean ingress);
+
+  /**
+   * Set default ingress filter to drop all IP packets from the ingress port,
+   * and allow arp packets in the same subnet
+   * @param linkName
+   * @param routerName
+   * @return
+   */
+  public abstract boolean installDefaultIngressFilter(
+    String linkName,
+    String ipa,
+    String routerName,
+    String gw);
 
   public abstract void removeExternalLink(String linkName, String routerName);
 
@@ -41,8 +54,24 @@ public abstract class AbstractRoutingManager {
   public abstract void monitorOnAllRouter(String dstIP, String srcIP,
                                           int tableId);
 
-  public abstract void allowIngress(String dstIP, String srcIP, String routerName, String linkName,
-                           int priority, String controller);
+  /**
+   *
+   * @param dstIP
+   * @param srcIP
+   * @param routerName
+   * @param gateway Gateway address in peer node or customer node. Routing
+   *                manager figures out the ingress interface by the gateway
+   *                address
+   * @param dlType ip, arp or all
+   * @param drop
+   */
+  public abstract boolean installIngressFilter(
+    String dstIP,
+    String srcIP,
+    String routerName,
+    String gateway,
+    String dlType,
+    boolean drop);
 
   /**
    * configure path for destIP in the network.
@@ -102,14 +131,13 @@ public abstract class AbstractRoutingManager {
 
   public abstract boolean findPath(String node1, String node2, long bw);
 
-  public abstract void setInterfaceMac(String node, String link,
-                                       String mac, String ethName);
+  public abstract void setInterfaceMac(String node, String link, String mac);
 
   /**
    * Query and save port desc data from SDN controller, including the mac addresses
-   * @param dpid
+   * @param routerName
    */
-  public abstract void queryPortData(String dpid);
+  public abstract void queryPortData(String routerName);
 
   public abstract void queryAllPortData();
 
@@ -150,4 +178,6 @@ public abstract class AbstractRoutingManager {
   public abstract void printLinks();
 
   public abstract void setOvsdbAddr();
+
+  public abstract void setMacEth(String mac, String ethName);
 }

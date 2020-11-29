@@ -119,6 +119,37 @@ public class SdnUtil {
     return res;
   }
 
+  static String[] filterCMD(
+    String dst,
+    String src,
+    int port,
+    String dpid,
+    String dlType,
+    boolean drop,
+    String controller) {
+    //String cmd="curl -X POST -d {\"destination\":\""+dst+"\",\"gateway\":\""+gw+"\"} "+controller+"/router/"+dpid;
+    String[] res = new String[4];
+    res[0] = "http://" + controller + "/router/" + dpid;
+    JSONObject obj = new JSONObject();
+    obj.put("destination", dst);
+    obj.put("source", src);
+    obj.put("in_port", port);
+    if (drop) {
+      obj.put("filter", "drop");
+    } else {
+      obj.put("filter", "accept");
+    }
+    if(dlType.equals("ip")) {
+      obj.put("dl_type", "ip");
+    } else if (dlType.equals("arp")) {
+      obj.put("dl_type", "arp");
+    }
+    res[1] = obj.toString();
+    res[2] = "postJSON";
+    res[3] = "resultHolder";
+    return res;
+  }
+
   static String[] routingCMD(String dst, String src, String gw, String dpid, String controller) {
     //String cmd="curl -X POST -d {\"destination\":\""+dst+"\",\"source\":\""+src+"\",\"gateway\":\""+gw+"\"} "+controller+"/router/"+dpid;
     String[] cmd = new String[4];

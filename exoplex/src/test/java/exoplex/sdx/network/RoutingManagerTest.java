@@ -71,9 +71,9 @@ public class RoutingManagerTest {
     routingManager.newRouter("c0", "0", null, null);
     routingManager.newRouter("c1", "1", null, null);
     routingManager.newExternalLink("stitch0", "192.168.10.1/24",
-      "c0", "192.168.10.2");
+      "c0", "192.168.10.2", false);
     routingManager.newExternalLink("stitch1", "192.168.20.1/24",
-      "c1", "192.168.20.2");
+      "c1", "192.168.20.2", false);
     routingManager.newInternalLink("clink0", "192.168.128.1/24", "c0", "192" +
       ".168.128.2/24", "c1", 10);
     routingManager.configurePath("192.168.10.1/24", "c0", "192.168.20.1/24",
@@ -90,9 +90,9 @@ public class RoutingManagerTest {
     RoutingManager routingManager = new RoutingManager();
     routingManager.newRouter("c0", "0", null, null);
     routingManager.newExternalLink("stitch0", "192.168.10.1/24",
-      "c0", "192.168.10.2");
+      "c0", "192.168.10.2", false);
     routingManager.newExternalLink("stitch1", "192.168.20.1/24",
-      "c0", "192.168.20.2");
+      "c0", "192.168.20.2", false);
     routingManager.configurePath("192.168.10.1/24", "c0", "192.168.20.1/24",
       "c0",
       "192.168.10.2", 1);

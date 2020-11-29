@@ -36,7 +36,7 @@ c. Compile the code
 
 ### 2. Update configuration files
 
-About configuration files in SDX-Simple/config and SDX-Simple/client-config:.
+About configuration files in exoplex/config and exoplex/client-config:.
 
         slicename:    Name of the slice
         safekey:         Principal ID (safe key hash) or the file name of safe key 
@@ -48,6 +48,12 @@ About configuration files in SDX-Simple/config and SDX-Simple/client-config:.
         safeserver:      Ip address of safe server
         serverinslice:   Whether safe server and plexus controller is in the exogeni slice
         plexusserver:    IP address of plexus server
+        sdnapp           SDN controller
+                         "rest_router": extended rest_router module that route traffic based on destination/prefix pair
+                         "rest_mirror": rest_router_mirror and rest_qos module that supports QoS and traffic mirroring in 
+                          addition to rest_router
+                         "rest_ingress": ingress_router and rest_qos module that supports secure ingress filtering in
+                          addition to rest_mirror
 
 Generally, you need to change the above configuration fields, and leave the rest alone.
 

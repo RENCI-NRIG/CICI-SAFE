@@ -343,10 +343,12 @@ public class SdxManagerBase extends SliceHelper implements SdxManagerInterface {
     usedip.add(ip_to_use);
     logLink.setIP(IPPrefix + ip_to_use);
     logLink.setMask(mask);
-    routingManager.newExternalLink(logLink.getLinkName(),
+    routingManager.newExternalLink(
+      logLink.getLinkName(),
       logLink.getIP(1),
       logLink.getNodeA(),
-      logLink.getIP(2).split("/")[0]);
+      logLink.getIP(2).split("/")[0],
+      coreProperties.isIngressFilteringEnabled());
     Long t2 = System.currentTimeMillis();
     logger.info(logPrefix + "Deployed new Bro node successfully, time elapsed: " + (t2 - t1) +
       "milliseconds");
@@ -547,9 +549,16 @@ public class SdxManagerBase extends SliceHelper implements SdxManagerInterface {
       if (coreProperties.isSafeEnabled()) {
         notifyResult.safeKeyHash = safeManager.getSafeKeyHash();
       }
-      if (coreProperties.getSdnApp().equals("rest_ingress")) {
-        routingManager.allowIngress(SdnUtil.DEFAULT_ROUTE, dest, router,
-                stitchNet.get(gateway), 20, SDNController);
+      if (coreProperties.isIngressFilteringEnabled()) {
+        // install ingress filter on the ingress interface to allow all traffic
+        // sourced from the advertised prefix
+        routingManager.installIngressFilter(
+          SdnUtil.DEFAULT_ROUTE,
+          dest,
+          router,
+          gateway,
+          "ip",
+          false);
       }
     }
     return notifyResult;

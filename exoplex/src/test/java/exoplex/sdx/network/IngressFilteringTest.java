@@ -4,6 +4,7 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import exoplex.common.utils.ServerOptions;
 import exoplex.sdx.core.CoreProperties;
+import exoplex.sdx.core.SdxManagerBase;
 import exoplex.sdx.core.exogeni.ExoSdxManager;
 import exoplex.sdx.slice.Scripts;
 import exoplex.sdx.slice.SliceManager;
@@ -20,24 +21,25 @@ import org.junit.Test;
 import java.io.IOException;
 import java.lang.reflect.Method;
 
-public class QoSTest extends SingleSliceTestBase {
-  static QoSTest qosTest;
+public class IngressFilteringTest extends SingleSliceTestBase {
+  static IngressFilteringTest ingressFilteringTest;
 
-  public QoSTest() {
-    super.logger = LogManager.getLogger(QoSTest.class);
+  public IngressFilteringTest() {
+    super.logger = LogManager.getLogger(IngressFilteringTest.class);
     super.site1 = SiteBase.get("TAMU");
     super.site2 = SiteBase.get("TAMU");
     super.userDir = System.getProperty("user.dir");
     super.sdxSimpleDir = userDir.split("exoplex")[0] + "exoplex/";
-    super.arg1 = new String[]{"-c", sdxSimpleDir + "config/qos/qos.conf"};
+    super.arg1 = new String[]{"-c", sdxSimpleDir + "config/ingress/ingress.conf"};
   }
 
   @BeforeClass
   public static void setUp() throws Exception {
     Injector injector = Guice.createInjector(new QoSModule());
-    qosTest = injector.getInstance(QoSTest.class);
-    qosTest.routingManager = injector.getInstance(AbstractRoutingManager.class);
-    qosTest.initTest();
+
+    ingressFilteringTest = injector.getInstance(IngressFilteringTest.class);
+    ingressFilteringTest.routingManager = injector.getInstance(AbstractRoutingManager.class);
+    ingressFilteringTest.initTest();
   }
 
   @AfterClass
@@ -49,52 +51,22 @@ public class QoSTest extends SingleSliceTestBase {
     CommandLine cmd = ServerOptions.parseCmd(arg1);
     String configFilePath = cmd.getOptionValue("config");
     this.readConfig(configFilePath);
-    qosTest.coreProperties.setSdnApp("rest_mirror");
-    //qosTest.deleteSlice();
-    createNetwork();
+    ingressFilteringTest.coreProperties.setSdnApp("rest_router");
+    //ingressFilteringTest.deleteSlice();
+    //createNetwork();
   }
 
   @Test
-  public void testQoS() throws Exception {
-    qosTest.startExoPlex();
-    qosTest.notifyPrefix("192.168.10.1/24", "192.168.10.2", "CNode0");
-    qosTest.notifyPrefix("192.168.20.1/24", "192.168.20.2", "CNode1");
-    qosTest.notifyPrefix("192.168.30.1/24", "192.168.30.2", "CNode2");
-    qosTest.notifyPrefix("192.168.40.1/24", "192.168.40.2", "CNode3");
-    qosTest.connectionRequest("192.168.10.1/24", "192.168.30.1/24", 300000000);
-    qosTest.connectionRequest("192.168.20.1/24", "192.168.40.1/24", 100000000);
-    logger.info("Now no QoS rule has been installed, the bandwidth are " +
-      "limited to the link capacity");
-    //promptEnterKey();
-    qosTest.setQos("192.168.10.1/24", "192.168.30.1/24", 300000000);
-    logger.info("Now QoS rule has been installed to limit bandwith between " +
-        "192.168.10.1/24 and 192.168.30.1/24 to 300Mbps");
-    //promptEnterKey();
-    qosTest.setQos("192.168.20.1/24", "192.168.40.1/24", 100000000);
-    logger.info("Now QoS rule has been installed to limit bandwith between " +
-      "192.168.20.1/24 and 192.168.40.1/24 to 100Mbps");
-    logger.info("test ends");
-  }
-
-  @Test
-  public void testQoSDynamicLink() throws Exception {
-    qosTest.startExoPlex();
-    qosTest.notifyPrefix("192.168.10.1/24", "192.168.10.2", "CNode0");
-    qosTest.notifyPrefix("192.168.20.1/24", "192.168.20.2", "CNode1");
-    qosTest.notifyPrefix("192.168.30.1/24", "192.168.30.2", "CNode2");
-    qosTest.notifyPrefix("192.168.40.1/24", "192.168.40.2", "CNode3");
-    qosTest.connectionRequest("192.168.10.1/24", "192.168.30.1/24", 100000000);
-    qosTest.setQos("192.168.10.1/24", "192.168.30.1/24", 100000000);
-    logger.info("Now QoS rule has been installed to limit bandwith between " +
-      "192.168.10.1/24 and 192.168.30.1/24 to 300Mbps");
-    qosTest.connectionRequest("192.168.20.1/24", "192.168.40.1/24", 300000000);
-    qosTest.setQos("192.168.20.1/24", "192.168.40.1/24", 300000000);
-    logger.info("Now QoS rule has been installed to limit bandwith between " +
-      "192.168.20.1/24 and 192.168.40.1/24 to 100Mbps");
-    qosTest.connectionRequest("192.168.10.1/24", "192.168.40.1/24", 100000000);
-    qosTest.setQos("192.168.10.1/24", "192.168.40.1/24", 100000000);
-    qosTest.connectionRequest("192.168.20.1/24", "192.168.30.1/24", 200000000);
-    qosTest.setQos("192.168.20.1/24", "192.168.30.1/24", 200000000);
+  public void testIf() throws Exception {
+    ingressFilteringTest.startExoPlex();
+    ingressFilteringTest.notifyPrefix("192.168.10.1/24", "192.168.10.2", "CNode0");
+    ingressFilteringTest.notifyPrefix("192.168.20.1/24", "192.168.20.2", "CNode1");
+    ingressFilteringTest.notifyPrefix("192.168.30.1/24", "192.168.30.2", "CNode2");
+    ingressFilteringTest.notifyPrefix("192.168.40.1/24", "192.168.40.2", "CNode3");
+    ingressFilteringTest.connectionRequest("192.168.10.1/24", "192.168.30.1/24", 0);
+    ingressFilteringTest.connectionRequest("192.168.20.1/24", "192.168.40.1/24", 0);
+    ingressFilteringTest.checkConnectivity("CNode0", "192.168.30.2");
+    ingressFilteringTest.logFlowTables();
     logger.info("test ends");
   }
 
@@ -125,9 +97,9 @@ public class QoSTest extends SingleSliceTestBase {
     slice.attach("CNode1", "stitch_c0_20", "192.168.20.2", "255.255.255.0");
     slice.attach("c0", "stitch_c0_20", null, null);
 
-    //slice.addBroadcastLink("clink0", 100000000);
-    //slice.attach("clink0", "c0");
-    //slice.attach("clink0", "c1");
+    slice.addBroadcastLink("clink0", 100000000);
+    slice.attach("clink0", "c0");
+    slice.attach("clink0", "c1");
     //slice.addBroadcastLink("clink1", 200000000);
     //slice.attach("clink1", "c0");
     //slice.attach("clink1", "c1");

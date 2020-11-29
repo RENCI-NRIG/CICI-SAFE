@@ -34,8 +34,16 @@ class Interface {
     return nodeName;
   }
 
+  public void setNodeName(String nodeName) {
+    this.nodeName = nodeName;
+  }
+
   public String getLinkName() {
     return linkName;
+  }
+
+  public void setLinkName(String linkName) {
+    this.linkName = linkName;
   }
 
   public String getMacAddr() {

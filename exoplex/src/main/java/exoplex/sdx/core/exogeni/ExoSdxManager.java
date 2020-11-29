@@ -46,7 +46,7 @@ import java.io.StringWriter;
  *    Call SAFE to authorize the request
  *
  * 4. Private Perform slice stitch
- *    Create a link for stitching
+ *    Create a link for stitthing
  *
  * 5. Get the connectivity list from SAFE
  *
@@ -432,7 +432,12 @@ public class ExoSdxManager extends SdxManagerBase {
         String gateway = urAddressPrefix.split("/")[0];
         serverSlice.waitForInterfaces(myNode);
         updateOvsInterface(myNode);
-        routingManager.newExternalLink(l1.getLinkName(), ip, myNode, gateway);
+        routingManager.newExternalLink(
+          l1.getLinkName(),
+          ip,
+          myNode,
+          gateway,
+          coreProperties.isIngressFilteringEnabled());
         String remoteGUID = res.getString("reservID");
         String remoteSafeKeyHash = res.getString("safeKeyHash");
         //Todo: be careful when we want to unstitch from the link side.
@@ -614,16 +619,17 @@ public class ExoSdxManager extends SdxManagerBase {
         res.put("safeKeyHash", safeManager.getSafeKeyHash());
       }
       updateOvsInterface(node);
+      routingManager.queryPortData(node);
       routingManager.newExternalLink(logLink.getLinkName(),
         ip,
         logLink.getNodeA(),
-        gateway);
+        gateway,
+        coreProperties.isIngressFilteringEnabled());
       //routingManager.configurePath(ip,node.getName(),ip.split("/")[0],SDNController);
       logger.info(logPrefix + "stitching operation  completed, time elapsed(s): " + (System
         .currentTimeMillis() - start) / 1000);
 
       //update states
-      stitchNet.put(gateway, stitchname);
       if (!customerNodes.containsKey(customerSafeKeyHash)) {
         customerNodes.put(customerSafeKeyHash, new HashSet<>());
       }
@@ -741,7 +747,8 @@ public class ExoSdxManager extends SdxManagerBase {
     routingManager.newExternalLink(logLink.getLinkName(),
       logLink.getIP(1),
       logLink.getNodeA(),
-      logLink.getIP(2).split("/")[0]);
+      logLink.getIP(2).split("/")[0],
+      coreProperties.isIngressFilteringEnabled());
     Long t2 = System.currentTimeMillis();
     logger.info(logPrefix + "Deployed new Bro node successfully, time elapsed: " + (t2 - t1) +
       "milliseconds");
@@ -917,7 +924,8 @@ public class ExoSdxManager extends SdxManagerBase {
       sleep(5);
       logger.debug("Wait for new port to be reported to sdn controller");
     }
-    //TODO: why nodeb dpid could be null
+    routingManager.queryPortData(n1);
+    routingManager.queryPortData(n2);
     res = routingManager.newInternalLink(link.getLinkName(),
       link.getIP(1),
       link.getNodeA(),
@@ -1272,7 +1280,12 @@ public class ExoSdxManager extends SdxManagerBase {
         addStitchPort(stitchname, nodeName, stitchport, vlan, coreProperties.getBw());
         updateOvsInterface(nodeName);
         //routingManager.replayCmds(routingManager.getDPID(nodeName));
-        routingManager.newExternalLink(stitchname, ip, nodeName, gateway);
+        routingManager.newExternalLink(
+          stitchname,
+          ip,
+          nodeName,
+          gateway,
+          coreProperties.isIngressFilteringEnabled());
         if (addComputeNodeandEdgeRouter) {
           if (nodeName.matches(routerPattern)) {
             putComputeNode(nodeName);
@@ -1324,56 +1337,39 @@ public class ExoSdxManager extends SdxManagerBase {
   }
 
   private void restartPlexus(String plexusip, String type) {
+    logger.debug("Restarting Plexus Controller");
+    logger.info(logPrefix + "Restarting Plexus Controller: " + plexusip);
+    logger.info(String.format("%sRestarting plexus controller <%s, %s>", logPrefix,
+      plexusip, type));
+    delFlows();
+    String script;
     if (type.equals("rest_router")) {
-      logger.debug("Restarting Plexus Controller");
-      logger.info(logPrefix + "Restarting Plexus Controller: " + plexusip);
-      delFlows();
-      String script = "sudo docker exec -d plexus /bin/bash -c  \"cd /root;pkill ryu-manager; "
+      script = "sudo docker exec -d plexus /bin/bash -c  \"cd /root;pkill ryu-manager; "
         + "ryu-manager --log-file ~/log --default-log-level 1 --verbose "
         + "ryu/ryu/app/rest_conf_switch.py ryu/ryu/app/rest_router.py "
         + "ryu/ryu/app/ofctl_rest.py %s\"\n";
-      String sdxMonitorUrl = coreProperties.getPublicUrl() + "sdx/flow/packetin";
-      //reuse ryu-manager option for sdx url
-      script = String.format(script, String.format("--zapi-db-url %s", sdxMonitorUrl));
-      //String script = "docker exec -d plexus /bin/bash -c  \"cd /root;pkill ryu-manager;
-      // ryu-manager ryu/ryu/app/rest_router.py|tee log\"\n";
-      serverSlice.runCmdByIP(script, plexusip, false);
     } else if(type.equals("rest_mirror")) {
       //rest router application with QoS table and mirror function
-      logger.debug("Restarting Plexus Controller");
-      logger.info(logPrefix + "Restarting Plexus Controller: " + plexusip);
-      delFlows();
-      String script = "sudo docker exec -d plexus /bin/bash -c  \"cd /root;pkill ryu-manager; "
+      script = "sudo docker exec -d plexus /bin/bash -c  \"cd /root;pkill ryu-manager; "
         + "ryu-manager --log-file ~/log --default-log-level 1 --verbose "
         + "ryu/ryu/app/rest_conf_switch.py ryu/ryu/app/rest_router_mirror.py "
         + "ryu/ryu/app/rest_qos.py "
         + "ryu/ryu/app/ofctl_rest.py %s\"\n";
-      String sdxMonitorUrl = coreProperties.getPublicUrl() + "sdx/flow/packetin";
-      //reuse ryu-manager option for sdx url
-      script = String.format(script, String.format("--zapi-db-url %s", sdxMonitorUrl));
-      //String script = "docker exec -d plexus /bin/bash -c  \"cd /root;pkill ryu-manager;
-      // ryu-manager ryu/ryu/app/rest_router.py|tee log\"\n";
-      serverSlice.runCmdByIP(script, plexusip, false);
-    } else if (type.equals("ingress_router")) {
-      logger.debug("Restarting Plexus Controller");
-      logger.info(logPrefix + "Restarting Plexus Controller: " + plexusip);
-      delFlows();
-      String script = "sudo docker exec -d plexus /bin/bash -c  \"cd /root;pkill ryu-manager; "
+    } else if (type.equals("rest_ingress")) {
+      script = "sudo docker exec -d plexus /bin/bash -c  \"cd /root;pkill ryu-manager; "
         + "ryu-manager --log-file ~/log --default-log-level 10 --verbose "
         + "ryu/ryu/app/rest_conf_switch.py ryu/ryu/app/ingress_router.py "
-        + "ryu/ryu/app/ofctl_rest.py %s\"\n";
-      // Set public url to plexus server
-      if(coreProperties.isPlexusInSlice()) {
-        String publicUrl = "http://" + plexusip + ":8888";
-        coreProperties.setPublicUrl(publicUrl);
-      }
-      String sdxMonitorUrl = coreProperties.getPublicUrl() + "sdx/flow/packetin";
-      //reuse ryu-manager option for sdx url
-      script = String.format(script, String.format("--zapi-db-url %s", sdxMonitorUrl));
-      //String script = "docker exec -d plexus /bin/bash -c  \"cd /root;pkill ryu-manager;
-      // ryu-manager ryu/ryu/app/rest_router.py|tee log\"\n";
-      serverSlice.runCmdByIP(script, plexusip, false);
+        + "ryu/ryu/app/ofctl_rest.py ryu/ryu/app/rest_qos.py %s\"\n";
+    } else {
+      logger.error("Unknown Sdn app");
+      script = "%s";
     }
+    String sdxMonitorUrl = coreProperties.getPublicUrl() + "sdx/flow/packetin";
+    //reuse ryu-manager option for sdx url
+    script = String.format(script, String.format("--zapi-db-url %s", sdxMonitorUrl));
+    //String script = "docker exec -d plexus /bin/bash -c  \"cd /root;pkill ryu-manager;
+    // ryu-manager ryu/ryu/app/rest_router.py|tee log\"\n";
+    serverSlice.runCmdByIP(script, plexusip, false);
   }
 
   public void restartPlexus() {
@@ -1549,10 +1545,11 @@ public class ExoSdxManager extends SdxManagerBase {
     }
     if(coreProperties.getSdnApp().equals("rest_mirror")) {
       monitorTableId = 2;
+    } else if (coreProperties.isIngressFilteringEnabled()) {
+      monitorTableId = 3;
     }
     configRouters(serverSlice);
     routingManager.waitTillAllOvsConnected(SDNController, serverSlice.mocked);
-
     routingManager.queryAllPortData();
     updateMacAddr();
 
@@ -1565,7 +1562,8 @@ public class ExoSdxManager extends SdxManagerBase {
       String nodeName = parts[1];
       String[] ipseg = ip.split("\\.");
       String gw = ipseg[0] + "." + ipseg[1] + "." + ipseg[2] + "." + parts[3];
-      routingManager.newExternalLink(sp, ip, nodeName, gw);
+      routingManager.newExternalLink(sp, ip, nodeName, gw,
+        coreProperties.isIngressFilteringEnabled());
     }
 
     Set<String> keyset = links.keySet();
@@ -1578,7 +1576,8 @@ public class ExoSdxManager extends SdxManagerBase {
         routingManager.newExternalLink(logLink.getLinkName(),
           logLink.getIP(1),
           logLink.getNodeA(),
-          logLink.getIP(2).split("/")[0]);
+          logLink.getIP(2).split("/")[0],
+          coreProperties.isIngressFilteringEnabled());
       }
     }
 
@@ -1600,8 +1599,7 @@ public class ExoSdxManager extends SdxManagerBase {
           logLink.getCapacity());
       }
     }
-    //set ovsdb address
-    routingManager.queryAllPortData();
+
     routingManager.setOvsdbAddr();
   }
 
@@ -1730,22 +1728,10 @@ public class ExoSdxManager extends SdxManagerBase {
   }
 
   protected void updateMacAddr() {
-    HashMap<String, String> mac2EtherName = new HashMap<>();
     for(String node: serverSlice.getComputeNodes()) {
       if(node.matches(routerPattern)) {
-        for(ImmutablePair<String, String> iface:
-          serverSlice.getPhysicalInterfaces(node)) {
-          mac2EtherName.put(iface.right, iface.left);
-        }
+        updateMacAddr(node);
       }
-    }
-    for (String i : serverSlice.getInterfaces()) {
-      String node = serverSlice.getNodeOfInterface(i);
-      String mac =serverSlice.getMacAddressOfInterface(i);
-      routingManager.setInterfaceMac(node,
-        serverSlice.getLinkOfInterface(i),
-        mac,
-        mac2EtherName.get(mac));
     }
   }
 
@@ -1761,8 +1747,7 @@ public class ExoSdxManager extends SdxManagerBase {
         String mac = serverSlice.getMacAddressOfInterface(i);
         routingManager.setInterfaceMac(node,
           serverSlice.getLinkOfInterface(i),
-          mac,
-          mac2EtherName.get(mac));
+          mac);
       }
     }
   }

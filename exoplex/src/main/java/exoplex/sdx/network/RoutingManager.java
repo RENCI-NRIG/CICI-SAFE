@@ -10,6 +10,8 @@ import org.json.JSONObject;
 
 import java.util.*;
 
+import static exoplex.sdx.network.SdnUtil.DEFAULT_ROUTE;
+
 public class RoutingManager extends AbstractRoutingManager {
   final static Logger logger = LogManager.getLogger(RoutingManager.class);
   final static Logger sdnLogger = LogManager.getLogger("SdnCmds");
@@ -25,8 +27,8 @@ public class RoutingManager extends AbstractRoutingManager {
   private HashMap<String, ArrayList<String>> routes = new HashMap<>();
   private HashMap<String, String> macInterfaceMap = new HashMap<>();
   private HashMap<String, String> macEthMap = new HashMap<>();
-  private HashMap<String, String> macPortMap = new HashMap<>();
   private HashMap<String, String> linkGateway = new HashMap<>();
+  private HashMap<String, String> gatewayLink = new HashMap<>();
   private HashMap<String, String> prefixGatewayMap = new HashMap<>();
 
   //pathIds of paths configured for the ip prefix
@@ -73,10 +75,11 @@ public class RoutingManager extends AbstractRoutingManager {
    * @param ipa
    * @param routerA
    * @param gw
+   * @param ingress
    * @return
    */
   public boolean newExternalLink(String linkName, String ipa, String routerA,
-                                 String gw) {
+                                 String gw, boolean ingress) {
     logger.info(String.format("newLink %s %s %s %s", linkName, ipa, routerA, gw));
     logger.debug("RoutingManager: new stitchpoint " + routerA + " " + ipa);
     networkManager.addLink(linkName, ipa, routerA, gw);
@@ -91,17 +94,31 @@ public class RoutingManager extends AbstractRoutingManager {
       int id = Integer.valueOf(res.split("address_id=")[1].split("]")[0]);
       address_id.put(linkName, id);
       linkGateway.put(linkName, gw);
+      gatewayLink.put(gw, linkName);
       addEntry_HashList(sdncmds, dpid, cmd);
     } else {
       result = false;
     }
-    //allowIngress(SdnUtil.DEFAULT_ROUTE, ipa, networkManager.getPort(routerA, linkName), 1, "ip",
-    //  20, routerA, controller);
+    if (result && ingress) {
+      result = installDefaultIngressFilter(linkName, ipa, routerA, gw);
+    }
     return result;
+  }
+
+  public boolean installDefaultIngressFilter(
+    String linkName,
+    String ipa,
+    String routerName,
+    String gw) {
+    installIngressFilter(ipa, ipa, routerName, gw, "arp", false);
+    installIngressFilter(DEFAULT_ROUTE, DEFAULT_ROUTE, routerName, gw, "arp", true);
+    installIngressFilter(DEFAULT_ROUTE, DEFAULT_ROUTE, routerName, gw, "ip", true);
+    return true;
   }
 
   public void removeExternalLink(String linkName, String routerName){
     String gw = linkGateway.remove(linkName);
+    gatewayLink.remove(gw);
     networkManager.delLink(linkName, routerName, gw);
     String[] cmd = SdnUtil.delAddrCMD(
       String.valueOf(address_id.get(linkName)),
@@ -156,23 +173,72 @@ public class RoutingManager extends AbstractRoutingManager {
       logger.warn(res);
       result = false;
     }
-    /*
-    allowIngress(SdnUtil.DEFAULT_ROUTE, SdnUtil.DEFAULT_ROUTE,
-      networkManager.getPort(routerA, linkName), 2, null, 60000,
-      routerA, controller);
-    allowIngress(SdnUtil.DEFAULT_ROUTE, SdnUtil.DEFAULT_ROUTE,
-      networkManager.getPort(routerB, linkName), 2, null, 60000,
-      routerB, controller);
-    */
     return result;
   }
 
-  public void allowIngress(String dstIP, String srcIP, String routerName, String linkName,
-    int priority, String controller) {
-    allowIngress(dstIP, srcIP, networkManager.getPort(routerName, linkName), 1, "ip", priority,
-      routerName, controller);
+  /**
+   *
+   * @param dstIP
+   * @param srcIP
+   * @param routerName
+   * @param gateway
+   * @param dlType "arp" or "ip", "all"
+   * @param drop
+   * @return
+   */
+  public boolean installIngressFilter(
+    String dstIP,
+    String srcIP,
+    String routerName,
+    String gateway,
+    String dlType,
+    boolean drop) {
+    String controller = networkManager.getRouter(routerName).getController();
+    //allowIngress(dstIP, srcIP, networkManager.getPort(routerName, linkName), 1, "ip", 20,
+    //  routerName, controller);
+    String linkName = gatewayLink.getOrDefault(gateway, null);
+    if(linkName == null) {
+      logger.warn("No external link found for gateway %s".format(gateway));
+    }
+    return installIngressFilter(
+      dstIP,
+      srcIP,
+      Integer.valueOf(networkManager.getPort(routerName, linkName)),
+      routerName,
+      dlType,
+      drop,
+      controller);
   }
 
+  private boolean installIngressFilter(
+    String dstIP,
+    String srcIP,
+    int inPort,
+    String routerName,
+    String dlType,
+    boolean drop,
+    String controller
+  ) {
+    logger.info(String.format("Install ingress filter {src:%s dst:%s"
+      + "port:%s router:%s drop:%s}", srcIP, dstIP, inPort, routerName, drop));
+    String dpid = getDPID(routerName);
+    String[] cmd = SdnUtil.filterCMD(dstIP, srcIP, inPort, dpid, dlType, drop,
+      controller);
+    String res = postSdnCmd(cmd[0], new JSONObject(cmd[1]));
+    boolean ret = false;
+    if (res.contains("success") || res.contains("exists")) {
+      logger.debug(res);
+      ret = true;
+    } else {
+      logger.warn(res);
+      ret = false;
+    }
+    cmd[cmd.length - 1] = res;
+    addEntry_HashList(sdncmds, dpid, cmd);
+    return ret;
+  }
+
+  @Deprecated
   private void allowIngress(String dstIP, String srcIP, String inPort, int toTable, String dl_type,
     int priority, String routerName, String controller) {
     logger.info(String.format("allowIngress %s %s %s %s %s", dstIP, srcIP, inPort, routerName,
@@ -577,19 +643,19 @@ public class RoutingManager extends AbstractRoutingManager {
     }
   }
 
+  synchronized public void setMacEth(String mac, String ethName) {
+    macEthMap.put(mac, ethName);
+  }
+
   synchronized public void setInterfaceMac(String node, String link,
-                                           String mac, String ethName) {
+                                           String mac) {
     if (mac != null) {
       String interfaceName = NetworkUtil.computeInterfaceName(node, link);
       String oldValue = macInterfaceMap.put(mac, interfaceName);
-      macEthMap.put(mac, ethName);
       if (!mac.equals(oldValue)) {
         logger.debug(String.format("Mac address for %s updated from %s to %s",
           interfaceName, oldValue, mac));
-        if (macPortMap.containsKey(mac)) {
-          networkManager.updateInterface(interfaceName,
-            macPortMap.get(mac), mac);
-        }
+        networkManager.updateInterface(interfaceName, mac);
       }
     }
   }
@@ -837,6 +903,7 @@ public class RoutingManager extends AbstractRoutingManager {
       addEntry_HashList(sdncmds, dpid, cmd);
       return true;
     } else {
+      logger.warn(res);
       return false;
     }
   }

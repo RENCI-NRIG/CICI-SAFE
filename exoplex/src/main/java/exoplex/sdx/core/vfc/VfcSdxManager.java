@@ -218,7 +218,8 @@ public class VfcSdxManager extends SdxManagerBase {
         logLink.getLinkName(),
         ip,
         logLink.getNodeA(),
-        gateway);
+        gateway,
+        coreProperties.isIngressFilteringEnabled());
       //routingManager.configurePath(ip,node.getName(),ip.split("/")[0],SDNController);
       logger.info(logPrefix + "stitching operation  completed, time elapsed(s): " + (System
         .currentTimeMillis() - start) / 1000);
