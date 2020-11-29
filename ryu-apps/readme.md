@@ -24,5 +24,6 @@ Synthesize MAC addresses for VFC ports.
 Ingress filtering on external ports. 
 
 1. Table 0: Acceptlisted ingress filtering rules.
-2. Table 1: routing rules
+2. Table 1: Mirroring table.
+3. Table 2: routing rules
 
