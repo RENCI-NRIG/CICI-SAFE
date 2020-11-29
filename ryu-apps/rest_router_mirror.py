@@ -882,7 +882,7 @@ class VlanRouter(object):
                 self.logger.info("Exception when adding route data", extra=self.sw_id)
             if dst_ip not in self.ip_mac or self.ip_mac[dst_ip] not in self.mac_port:
                 self._set_route_packetin(route)
-                self.logger.info("send_arp_requst after set routing packet in: src %s dst %s",src_ip,dst_ip,extra=self.sw_id)
+                self.logger.info("send_arp_request after set routing packet in: src %s dst %s",src_ip,dst_ip,extra=self.sw_id)
                 self.send_arp_request(src_ip, dst_ip)
             else:
                 out_port = self.mac_port[self.ip_mac[dst_ip]]

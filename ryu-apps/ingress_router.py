@@ -130,9 +130,9 @@ CHK_ROUTING_TBL_INTERVAL = 1800  # sec
 SWITCHID_PATTERN = dpid_lib.DPID_PATTERN + r'|all'
 VLANID_PATTERN = r'[0-9]{1,4}|all'
 
-FILTER_TABLE_ID=0
-MIRROR_TABLE_ID=1
-ROUTING_TABLE_ID=2
+FILTER_TABLE_ID=1
+MIRROR_TABLE_ID=2
+ROUTING_TABLE_ID=3
 
 VLANID_NONE = 0
 VLANID_MIN = 2
@@ -2537,7 +2537,7 @@ class OfCtl_after_v1_2(OfCtl):
         goto_table_id=MIRROR_TABLE_ID
         insts=None
         if accept:
-            insts = [ofp_parser.OFPInstructionGotoTable(MIRROR_TABLE_ID)]
+            insts = [ofp_parser.OFPInstructionGotoTable(goto_table_id)]
         self.set_flow(cookie, priority, dl_type=dl_type, dl_dst=dl_dst,
                       dl_vlan=dl_vlan,nw_src=src_ip,src_mask=src_mask, nw_dst=dst_ip, dst_mask=dst_mask,
                       nw_proto=nw_proto, table_id=table_id, insts=insts, in_port=in_port)
